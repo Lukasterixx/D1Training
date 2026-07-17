@@ -53,30 +53,37 @@ D1_GRIPPER_JOINTS = ["Joint7_1", "Joint7_2"]
 # so the reach clamps and IK targets ported from there still mean what they say.
 ARM_MOUNT_Z = 0.08
 
-# Drive gains. The arm's are Rescue's, unchanged. The gripper's are not, and the
-# difference is a bug fix.
+# Drive gains. Neither of these is Rescue's, and both changes are bug fixes.
 #
-# Rescue drives the jaws at 200 N/m against a 15 N force limit and 30 mm of
-# travel -- so the drive only reaches its own force limit at 75 mm, past the end
-# of the stroke. It is a servo that can never use its motor: at a typical 2.5 mm
-# error it makes 0.5 N. Rescue gets away with that because it teleports the
-# arm's root and zeroes its velocity every step, so the fingers ride in an
-# artificially quiet frame. Welding the arm removes that accidental damper, the
-# fingers feel the arm's real motion, and 0.5 N loses -- both fingers get pushed
-# into their travel limits and pinned there, and the gripper stops responding
-# entirely. Measured, not theorised: at 200 N/m the drive commands 4.5 N and the
-# joint does not move a micron.
-#
-# 4000 N/m reaches the 15 N limit at 3.75 mm, comfortably inside the stroke,
-# which is what a jaw servo should do.
-#
-# These are drive gains, not physical spec -- they say how hard the servo chases
-# its target, and PhysX clamps the result at the joint's published effort limit
-# regardless. They are deliberately NOT scaled with `--arm_mass`: Unitree
+# These are gains, not physical spec: they say how hard the servo chases its
+# target, and PhysX still clamps the torque it produces at the joint's published
+# effort limit (3.3 Nm on J0/J1, 1.7 Nm on J2-J5). Raising them buys tracking,
+# never strength. They are deliberately NOT scaled with `--arm_mass` -- Unitree
 # publishes the D1-550's mass and its per-joint torques independently, so a
 # heavier arm does not imply stronger motors.
-ARM_BASE_STIFFNESS = 800.0
-ARM_BASE_DAMPING = 80.0
+#
+# ARM: Rescue uses 800, which behaves as a soft spring rather than a servo. A
+# P-only drive droops by torque/stiffness, so ~1 Nm of gravity against 800 leaves
+# several degrees of error on every joint, and those compound down the chain into
+# ~13 cm of end-effector error -- the shortfall Rescue documents and blames on
+# the IK. It is not the IK. Measured, holding the same target: 100 -> 30.3 cm,
+# 400 -> 19.6 cm, 800 -> 13.1 cm, 4000 -> 3.3 cm. A real D1 servo closes its own
+# position loop and holds the angle; 4000 models that. The effort limit is doing
+# the physical work of saying what the arm cannot lift.
+#
+# GRIPPER: Rescue drives the jaws at 200 N/m against a 15 N force limit and 30 mm
+# of travel -- so the drive only reaches its force limit at 75 mm, past the end
+# of the stroke. It is a servo that can never use its motor: at a typical 2.5 mm
+# error it makes 0.5 N. Rescue gets away with it because it teleports the arm's
+# root and zeroes its velocity every step, so the fingers ride in an artificially
+# quiet frame. Welding removes that accidental damper, the fingers feel the arm's
+# real motion, and 0.5 N loses -- both get pushed into their travel limits and
+# pinned, and the gripper stops responding at all. Measured, not theorised: at
+# 200 N/m the drive commands 4.5 N and the joint does not move a micron. 4000 N/m
+# reaches 15 N at 3.75 mm, inside the stroke, which is what a jaw servo should do.
+# `--selftest` checks the jaws still track, so this cannot regress silently.
+ARM_BASE_STIFFNESS = 4000.0
+ARM_BASE_DAMPING = 400.0
 GRIPPER_BASE_STIFFNESS = 4000.0
 GRIPPER_BASE_DAMPING = 400.0
 

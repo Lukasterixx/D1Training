@@ -125,56 +125,115 @@ def _demote_articulation_root(subtree_root: Usd.Prim) -> int:
     return removed
 
 
-def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> float:
-    """Scale the arm's link masses so the subtree totals `target_kg`.
+# Bus-servo mass carried by each link, in kg. The servo driving a joint sits at
+# that joint, which is its child link's frame origin -- so Link1 carries J0's
+# servo, Link2 carries J1's, and so on. Link6 carries two: J5's and the
+# gripper's (J6), which lives in the wrist.
+#
+# Unitree does not publish per-servo masses, so these come from comparable bus
+# servos: the D1's 3.3 Nm joints are the class of a Feetech STS3215 (55 g at
+# 30 kg.cm / 2.94 Nm), and its 1.7 Nm joints sit between that and a Feetech
+# STS3032 (25 g at 4.5 kg.cm), with a Dynamixel XL430-W250 at 57 g / 1.5 Nm as a
+# cross-check. Rounded to 60 g and 45 g. They are small either way -- 345 g out
+# of the arm's 3152 g -- which is exactly the point. See _apply_d1_mass_model.
+_SERVO_MASS_BY_LINK = {
+    "Link1": 0.060,          # J0, 3.3 Nm
+    "Link2": 0.060,          # J1, 3.3 Nm
+    "Link3": 0.045,          # J2, 1.7 Nm
+    "Link4": 0.045,          # J3, 1.7 Nm
+    "Link5": 0.045,          # J4, 1.7 Nm
+    "Link6": 0.045 + 0.045,  # J5, 1.7 Nm, plus the gripper servo J6, 1.7 Nm
+}
 
-    The shipped URDF's inertials are a SolidWorks export of the shells alone --
-    they total 0.719 kg, where Unitree publishes 3152 g for the D1-550. Left
-    alone the arm is ~5% of the Go2's mass and the gait barely notices it, which
-    would make this whole testbed answer "yes it walks fine" for the wrong
-    reason.
+# Where the arm's remaining mass lives: a heavy metal cylinder at the base.
+# It is welded to the Go2, so it loads the dog but never any arm joint.
+_ARM_BASE_LINK = "base_link"
 
-    Only mass and inertia are touched. The joint effort limits are NOT scaled
-    with it: Unitree publishes the mass and the per-joint torques as separate
-    facts (3.3 Nm on J0/J1, 1.7 Nm on J2-J5), so the real arm is 3.152 kg with
-    3.3 Nm motors -- not 3.152 kg with motors sized in proportion to its mass.
-    Scaling the two together would invent a robot that does not exist. The
-    URDF's efforts already match the spec; leave them be.
 
-    Inertia tensors are scaled by the same factor as the mass. That is only
-    strictly correct if the missing mass has the shell's spatial distribution,
-    which it does not -- the motors sit at the joints. It is a deliberate
-    approximation: total mass and its rough placement dominate the gait
-    disturbance, and getting those right is worth more than an exact tensor we
-    do not have.
+def _apply_d1_mass_model(subtree_root: Usd.Prim, total_kg: float) -> float:
+    """Bring the arm up to `total_kg`, putting the mass where it actually is.
+
+    The shipped URDF's inertials are a SolidWorks export of the shells alone and
+    total 0.719 kg, where Unitree publishes 3152 g for the D1-550. That 2.4 kg
+    gap has to go somewhere, and where matters more than you would guess.
+
+    Spreading it evenly across every link -- the obvious move, and what this did
+    first -- is wrong, and wrong in a way that shows up immediately: it loads the
+    wrist as heavily as the base, the shoulder then needs ~6 Nm against its
+    published 3.3 Nm limit, and the arm sags to its stops instead of holding the
+    pose the IK asks for. That is not a D1, it is an artefact of the smear.
+
+    The real distribution: the base is a heavy metal cylinder and the servos are
+    small. So the model is
+
+      - every link keeps its shell inertial,
+      - plus the servo sitting at its joint (_SERVO_MASS_BY_LINK),
+      - and everything still missing goes on `base_link`.
+
+    That leaves ~2.1 kg at the base and ~1.0 kg of moving arm, which a 3.3 Nm
+    shoulder can hold.
+
+    It matters for the gait too, and not in the direction you might guess: the
+    base is welded to the Go2, so its share is dead payload bolted to the dog's
+    back at the mount -- low and centred -- rather than swinging on the end of a
+    lever. The arm's full mass still reaches the policy; it just reaches it in
+    the right place.
+
+    Each link's inertia is scaled by its own mass factor, which keeps the shell's
+    shape and raises its density. For `base_link` that is not an approximation at
+    all: a solid metal cylinder is the same shape as its shell, only denser. For
+    the rest, the servo is treated as spread through the link rather than as a
+    point mass at the joint -- they are tens of grams, so the error is small.
     """
-    if target_kg <= 0.0:
-        raise ValueError(f"arm mass must be positive, got {target_kg}")
+    if total_kg <= 0.0:
+        raise ValueError(f"arm mass must be positive, got {total_kg}")
 
-    links = [p for p in Usd.PrimRange(subtree_root) if p.HasAPI(UsdPhysics.MassAPI)]
-    current = 0.0
-    for prim in links:
-        attr = UsdPhysics.MassAPI(prim).GetMassAttr()
-        current += attr.Get() or 0.0
-
-    if current <= 0.0:
-        print("[weld][WARN] Arm links report no mass; skipping rescale.")
+    links = {
+        p.GetName(): p for p in Usd.PrimRange(subtree_root) if p.HasAPI(UsdPhysics.MassAPI)
+    }
+    shell = {n: (UsdPhysics.MassAPI(p).GetMassAttr().Get() or 0.0) for n, p in links.items()}
+    shell_total = sum(shell.values())
+    if shell_total <= 0.0:
+        print("[weld][WARN] Arm links report no mass; skipping the mass model.")
         return 1.0
 
-    factor = target_kg / current
-    for prim in links:
-        mass_api = UsdPhysics.MassAPI(prim)
-        mass_attr = mass_api.GetMassAttr()
-        mass_attr.Set((mass_attr.Get() or 0.0) * factor)
+    # A renamed link would otherwise silently drop a servo, or worse, silently
+    # dump 2 kg nowhere.
+    expected = set(_SERVO_MASS_BY_LINK) | {_ARM_BASE_LINK}
+    if not expected <= links.keys():
+        raise RuntimeError(
+            f"[weld] Mass model does not match the URDF. Missing: "
+            f"{sorted(expected - links.keys())}. Found: {sorted(links)}"
+        )
 
+    servo_total = sum(_SERVO_MASS_BY_LINK.values())
+    base_extra = total_kg - shell_total - servo_total
+    if base_extra < 0.0:
+        raise ValueError(
+            f"[weld] Arm mass {total_kg:.3f} kg is below shells plus servos "
+            f"({shell_total + servo_total:.3f} kg); nothing left for the base."
+        )
+
+    target = {n: shell[n] + _SERVO_MASS_BY_LINK.get(n, 0.0) for n in links}
+    target[_ARM_BASE_LINK] += base_extra
+
+    for name, prim in links.items():
+        factor = target[name] / shell[name] if shell[name] > 0.0 else 1.0
+        mass_api = UsdPhysics.MassAPI(prim)
+        mass_api.GetMassAttr().Set(target[name])
         diag_attr = mass_api.GetDiagonalInertiaAttr()
         diag = diag_attr.Get()
         if diag:
             diag_attr.Set(Gf.Vec3f(diag[0] * factor, diag[1] * factor, diag[2] * factor))
 
-    print(f"[weld] Arm mass rescaled {current:.3f} kg -> {target_kg:.3f} kg (x{factor:.2f}). "
-          f"Joint effort limits left at the URDF's published-spec values.")
-    return factor
+    moving = total_kg - target[_ARM_BASE_LINK]
+    print(f"[weld] D1 mass model -> {total_kg:.3f} kg "
+          f"(shells {shell_total:.3f} + servos {servo_total:.3f} + base fill {base_extra:.3f})")
+    print(f"[weld]   {_ARM_BASE_LINK}: {shell[_ARM_BASE_LINK]:.3f} -> {target[_ARM_BASE_LINK]:.3f} kg "
+          f"-- welded to the Go2, so it loads the dog, not the arm's joints")
+    print(f"[weld]   moving arm above the base: {moving:.3f} kg")
+    print(f"[weld]   joint effort limits left at the URDF's published-spec values")
+    return total_kg / shell_total
 
 
 def build_welded_robot_usd(
@@ -224,7 +283,7 @@ def build_welded_robot_usd(
 
     arm_mass_scale = 1.0
     if arm_mass_kg is not None:
-        arm_mass_scale = _rescale_arm(arm_prim, arm_mass_kg)
+        arm_mass_scale = _apply_d1_mass_model(arm_prim, arm_mass_kg)
 
     go2_base = _find_prim_named(root_prim, go2_base_link)
     arm_base = _find_prim_named(arm_prim, d1_base_link)

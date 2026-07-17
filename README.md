@@ -43,10 +43,10 @@ portable if this ever needs to talk to a real arm again.
 ## Running
 
 ```bash
-./run_sim.sh                      # teleop, arm at the URDF's own mass
-./run_sim.sh --arm_mass 2.4       # realistic D1 mass, motors scaled to match
+./run_sim.sh                      # teleop, arm at its real published 3.152 kg
 ./run_sim.sh --no_arm             # bare-Go2 baseline
-./run_sim.sh --headless --selftest 10 --arm_mass 2.4   # walk 10 s, print gait stats
+./run_sim.sh --arm_mass 6.0       # heavier base cylinder
+./run_sim.sh --headless --selftest 10   # walk 10 s, print gait + arm + gripper stats
 ```
 
 Needs the `env_isaaclab` conda env from Rescue's setup (Isaac Sim 5.1, Isaac Lab
@@ -74,108 +74,116 @@ gains does not make the arm sag, because its root is teleported every tick and
 so it can never build up any falling motion. The welded arm genuinely goes limp
 and sags — and the dog feels it do so.
 
-The gripper needed a stiffer drive than Rescue's to work at all here; see the
-gain comments in `flat_env_cfg.py`. Rescue's 200 N/m jaw drive is pinned solid
-by the welded arm's motion, because the root teleport it relies on was also
-acting as an accidental vibration damper.
+The gripper needed a stiffer drive than Rescue's to work at all here: Rescue's
+200 N/m jaw drive gets pinned solid by the welded arm's motion, because the root
+teleport it relies on was also acting as an accidental vibration damper. See the
+gain comments in `flat_env_cfg.py`; `--selftest` now checks the jaws track, so it
+cannot regress silently.
 
-## The arm's mass is a trap
+## The arm's mass, and where it lives
 
 **The shipped `d1_arm/d1.urdf` describes a 0.72 kg arm.** Its inertials are a
-SolidWorks export of the bare shells: no motors, no gearing, no wiring. At
-0.72 kg the arm is ~5% of the Go2's mass and the gait does not notice it at all.
+SolidWorks export of the bare shells: no motors, no gearing, no wiring. Unitree
+publishes **3152 g** for the D1-550. Unitree's own `d1_description` ships the
+same 0.719 kg shells *and* effort limits of literally zero, so their URDF cannot
+be used as-is — which is why Rescue's copy has hand-filled numbers.
 
-How the URDF compares to Unitree's published D1 spec — worth knowing which parts
-of this file to trust:
+How the URDF compares to [the published spec][spec]:
 
-| Quantity | URDF says | Unitree publishes | Verdict |
+| Quantity | URDF said | Unitree publishes | |
 | --- | --- | --- | --- |
-| Joint ranges | ±134.6°, ±90°, ±90°, ±134.6°, ±90°, ±134.6° | J1 ±135°, J2 ±90°, J3 ±90°, J4 ±135°, J5 ±90°, J6 ±135° | **matches** — trust it |
-| Reach | — | 495–550 mm excl. jaw | matches `ARM_MAX_REACH = 0.55` |
-| Total mass | 0.72 kg | not published for D1; the D1-T variant is listed at 2.37 kg | **too light** |
-| Joint effort | 3.33 Nm (J1–J3), 1.67 Nm (wrist) | **not published** | **too weak — see below** |
+| Joint ranges | ±134.6°, ±90°, ±90°, ±134.6°, ±90°, ±134.6° | J0 ±135°, J1 ±90°, J2 ±90°, J3 ±135°, J4 ±90°, J5 ±135° | matches |
+| Reach | — | 550 mm excl. jaw | matches `ARM_MAX_REACH` |
+| Claw stroke | 60 mm (2 × 30 mm fingers) | 0–65 mm | close enough |
+| Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | **Joint3 was ~2× too strong — fixed** |
+| Total mass | 0.719 kg | 3.152 kg | **too light — see below** |
 
-The joint ranges matching the spec exactly is good evidence the geometry came
-from Unitree. The effort limits did not: Rescue's notes say this URDF shipped
-with effort and velocity limits of **zero** and had them filled in by hand.
+Mapping uses the protocol's offset (`d1_protocol.py`: "Protocol id 0 is URDF
+Joint1"). All six ranges matching exactly is what confirms that offset. Whoever
+filled in the zeros assumed "first three joints strong, last three weak"; the D1
+is first *two* strong, last *four* weak, so `Joint3` carried double its real
+torque. Now corrected in the URDF.
 
-You can show 3.33 Nm is wrong without any hardware. Unitree rates the D1 at a
-500 g payload over a 550 mm span. Holding *just the payload* at full extension
-needs `0.5 × 9.81 × 0.55 ≈ 2.7 Nm` at the shoulder — before the arm's own ~2.4 kg,
-which adds roughly `2.37 × 9.81 × 0.20 ≈ 4.7 Nm`. So a real D1 shoulder needs on
-the order of **7 Nm**, and 3.33 Nm could not hold the arm's own rated payload at
-reach. It is a placeholder.
+[spec]: https://support.unitree.com/home/en/developer/D1Arm_services
 
-**Use `--arm_mass 2.4`** as the best available estimate (the D1-T's 2.37 kg is
-the closest published figure; the Go2-mounted D1's own mass is not published).
-That happens to scale the effort limits to ~11 Nm at the shoulder, comfortably
-above the ~7 Nm the spec implies — so it is a physically plausible arm, even
-though the absolute torque is still inferred rather than known.
+### Where the missing 2.4 kg goes matters more than you would guess
 
-Results:
+`--arm_mass` (default **3.152**, the published figure) brings the arm up to its
+real weight. It scales mass and inertia only — **not** the effort limits, which
+Unitree publishes independently. A heavier arm does not imply stronger motors,
+and scaling the two together invents a robot that does not exist.
 
-| Configuration | Total mass | Distance in 10 s | Max tilt | Arm EE error | Verdict |
-| --- | --- | --- | --- | --- | --- |
-| `--no_arm` (baseline) | 15.02 kg | 9.56 m | 6.3° | — | stayed up |
-| arm at URDF mass | 15.74 kg | 9.59 m | 6.2° | 12.4 cm | stayed up |
-| **`--arm_mass 2.4`** (realistic) | 17.42 kg | 9.64 m | 8.0° | 4.7 cm | **stayed up** |
-| `--arm_mass 3.6` | 18.62 kg | 9.82 m | 15.9° | 3.8 cm | stayed up |
-| `--arm_mass 6.0` | 21.02 kg | 2.22 m | 106.2° | 0.7 cm | **FELL OVER** |
+Spreading the missing mass evenly across the links is the obvious move and it is
+wrong, visibly: it loads the wrist as heavily as the base, the shoulder then
+needs ~6 Nm against its published 3.3 Nm, and the arm sags to its stops instead
+of holding the pose the IK asks for (EE error 31.5 cm). That is not a D1, it is
+an artefact of the smear.
 
-**The headline: at a realistic 2.4 kg the Go2 walks with the arm on its back** —
-96% of commanded speed, 8° of tilt, versus 6.3° for the bare dog. The policy was
-never trained on this payload and carries it anyway. It fails somewhere between
-3.6 kg and 6 kg, which is well outside anything a real D1 weighs.
+The real D1's base is a heavy metal cylinder; the servos are small. So
+`weld.py`'s mass model is:
 
-Run with the URDF's own mass and you will conclude "the arm doesn't affect
-walking" — which is true, and meaningless, because that arm weighs nothing.
-Use `--arm_mass` for any result you intend to believe.
+- every link keeps its shell inertial,
+- plus the bus servo sitting at its joint — 60 g for the 3.3 Nm joints, 45 g for
+  the 1.7 Nm ones, sized from comparable parts ([Feetech STS3215][sts], 55 g at
+  2.94 Nm; [Dynamixel XL430-W250][xl], 57 g at 1.5 Nm; [Feetech STS3032][s32],
+  25 g at 0.44 Nm). Unitree does not publish per-servo masses, so these are
+  inferred — but at 345 g of 3152 g they barely matter, which is the point.
+- everything still missing (**2.09 kg**) goes on `base_link`.
 
-Read the EE error column alongside the verdict — the two are coupled, and
-ignoring that is how you get a false pass. A lighter arm tracks its IK target
-worse (see *Known behaviour*), so it sits folded near the dog's back rather than
-held out at the commanded 0.3 m forward. A payload tucked against the body
-barely moves the centre of mass. The 6 kg row falls over precisely *because* its
-arm holds the commanded pose: the same mass, actually extended, tips the dog.
-An arm that droops is a lenient test.
+That leaves **2.165 kg at the base and 0.987 kg of moving arm**, which a 3.3 Nm
+shoulder holds comfortably. Because `base_link` is welded to the Go2, its share
+is dead payload bolted to the dog's back at the mount — low and centred — rather
+than swinging on the end of a lever. The full 3.152 kg still reaches the policy;
+it just reaches it in the right place.
 
-`--arm_mass` scales the link masses, the inertia tensors **and the joint drive
-force limits**, all by the same factor. The last part is not optional: the
-URDF's effort limits (3.33 Nm on J1–J3, 1.67 Nm on the wrist) are sized for the
-0.72 kg shell. Scale the mass alone and the motors cannot hold the arm up — it
-sags to its limits, the IK sees an error it can never null, the joint targets
-wind up, and the arm thrashes. That is not a heavy D1; it is a robot that does
-not exist. Scaling the limits together models a D1 of that mass whose motors are
-sized in proportion.
+Consequence: the minimum expressible arm is shells + servos = 1.064 kg. Asking
+for less is an error, not a silent clamp.
 
-The inertia tensors are scaled by the same factor as the mass, which assumes the
-added mass has the shell's spatial distribution. It does not — the motors sit at
-the joints. It is a deliberate approximation: total mass and its rough placement
-dominate the gait disturbance. **If you want a result you can quote, fix the
-URDF's inertials properly rather than leaning on this knob.**
+[sts]: https://www.robotshop.com/products/feetech-12v-30kgcm-magnetic-encoding-servo-sts3215
+[xl]: https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/
+[s32]: https://www.feetechrc.com/6v-45kg-magnetic-code-360-degree-serial-bus-steering-gear.html
+
+## Results
+
+10 s of walking at a commanded 1.0 m/s on flat ground:
+
+| Configuration | Total mass | Distance | Speed | Max tilt | Arm EE error | Gripper | Verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `--no_arm` (baseline) | 15.02 kg | 9.56 m | 96% | 5.9° | — | — | stayed up |
+| **D1-550 as published** (default) | 18.17 kg | 9.51 m | 95% | 7.3° | 3.7 cm | 59.0 / 60 mm | **stayed up** |
+| `--arm_mass 6.0` | 21.02 kg | 9.10 m | 91% | 9.3° | 3.5 cm | 59.4 / 60 mm | stayed up |
+
+**The Go2 walks with a real D1 on its back, and barely notices it** — 95% of
+commanded speed against 96% bare, 7.3° of tilt against 5.9°. The policy was
+never trained on the payload and carries it anyway. Even at 6 kg it stays up,
+because the weight sits at the mount rather than out on a lever.
+
+That last row is worth reading carefully: it is *not* "the arm can be 6 kg". The
+mass model puts everything above shells-and-servos on the base cylinder, so
+`--arm_mass 6.0` is a heavier *base*, not a heavier reach. A payload in the
+gripper would be a different experiment, and a much harsher one.
 
 ## Known behaviour
 
-**The arm's IK falls short of its target, and how short depends on drive
-authority.** At the URDF's own mass and effort limits it settles ~12 cm short;
-scale the arm up (and its motors with it) and the error collapses — 3.8 cm at
-3.6 kg, 0.7 cm at 6 kg.
+**The arm's IK used to settle ~13 cm short of its target, and it was not the
+IK.** Rescue documents this shortfall and attributes it to the solver; both the
+first version of this repo and its README repeated that. It is wrong.
 
-This is *not* the DLS solver trading position error against orientation error.
-The evidence against that: the arm's joints do not reach their commanded angles
-at all — with the URDF's limits the IK asks Joint4 for −11.6° and gets −56.3°.
-The solver is fine; the joint never arrives. What moves the number is the arm's
-effort limit (3.33 Nm on J1–J3, 1.67 Nm on the wrist) together with its drive
-stiffness, both of which `--arm_mass` scales.
+The cause is that a P-only drive droops by `torque / stiffness`. At Rescue's
+800 Nm/rad, ~1 Nm of gravity leaves several degrees of error on every joint, and
+those compound down the chain. Measured, holding the same target:
 
-So the shortfall is fixable, and the fix is to get the arm's *specification*
-right rather than to touch the solver. If the real D1-550's motors are stronger
-than the 3.33 Nm this URDF claims, correct that and the arm will track. Treat
-the ~12 cm at the shipped URDF mass as a symptom of an under-specified arm.
+| Arm drive stiffness | EE error |
+| --- | --- |
+| 100 | 30.3 cm |
+| 400 | 19.6 cm |
+| 800 (Rescue's) | 13.1 cm |
+| **4000** (used here) | **3.3 cm** |
 
-The self-test reports this as `arm EE ... -> error N cm`. If it grows without
-settling, the arm is diverging rather than merely short — check that the drive
-force limits were scaled with the mass.
+A real D1 servo closes its own position loop and holds the commanded angle
+rather than sagging like a spring, so the gains are now 4000. This buys tracking
+and never strength: PhysX still clamps every joint at its published effort limit,
+so the arm's 3.3/1.7 Nm remain the physical statement of what it cannot lift.
 
 **Contact sensing does not cover the arm.** `FlatSceneCfg.contact_forces` uses
 `{ENV_REGEX_NS}/Robot/.*`, which matches the Go2's links but not the arm's —
@@ -183,6 +191,13 @@ those sit one level deeper, at `Robot/D1/...`, because the weld nests them. This
 is reporting only: arm collisions still happen in physics, they just are not
 readable from the sensor. The locomotion policy does not use them. Widen the
 regex if you ever need to detect the gripper touching something.
+
+**The inertia model is approximate.** Each link's inertia is scaled by its own
+mass factor, keeping the shell's shape and raising its density. For `base_link`
+that is not an approximation at all — a solid metal cylinder really is the same
+shape as its shell, only denser. For the rest, each servo is treated as spread
+through its link rather than as a point mass at the joint; at tens of grams the
+error is small. Real per-link inertials would still be better.
 
 ## Files
 

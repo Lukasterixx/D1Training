@@ -114,6 +114,11 @@ class DirectD1:
         with self._lock:
             return list(self._measured_deg)
 
+    def get_gripper_mm(self) -> float:
+        """The jaws' measured opening, in mm. Sim loop only (reads PhysX)."""
+        finger_m = float(self._robot.data.joint_pos[0, self._grip_ids[0]].detach().cpu())
+        return finger_m_to_gripper_mm(finger_m)
+
     # -------------------------------------------------------- sim loop only
 
     def refresh(self) -> None:

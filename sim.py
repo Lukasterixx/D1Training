@@ -301,10 +301,15 @@ class SelfTest:
     SETTLE_S = 1.0
     FALLEN_HEIGHT_M = 0.15
 
-    def __init__(self, duration_s: float, command=(1.0, 0.0, 0.0), kin=None):
+    # Jaw opening the gripper is commanded to during the walk, in mm. Chosen
+    # near the 65 mm stroke so a pinned finger is unmistakable.
+    GRIPPER_TEST_MM = 60.0
+
+    def __init__(self, duration_s: float, command=(1.0, 0.0, 0.0), kin=None, d1=None):
         self.duration_s = duration_s
         self.command = list(command)
         self.kin = kin  # IsaacKinematics, if the arm is fitted
+        self.d1 = d1    # DirectD1, if the arm is fitted
         self.t = 0.0
         self.walking = False
         self.start_pos = None
@@ -325,6 +330,11 @@ class SelfTest:
             self.t = 0.0
             self.start_pos = robot.data.root_state_w[0, :3].clone()
             flat_env_cfg.base_command["0"] = list(self.command)
+            if self.d1 is not None:
+                # Regression guard: the jaws were once pinned solid by the arm's
+                # motion while still accepting commands, so command them open and
+                # check they actually got there.
+                self.d1.set_gripper(self.GRIPPER_TEST_MM)
             print(f"[selftest] Walking at {self.command} for {self.duration_s:.0f} s...")
             return True
 
@@ -363,6 +373,13 @@ class SelfTest:
             err = float(np.linalg.norm(actual - np.asarray(ARM_TELEOP_POS)))
             print(f"[selftest] arm EE target  : {np.round(ARM_TELEOP_POS, 3)} (base-relative)")
             print(f"[selftest] arm EE actual  : {np.round(actual, 3)}  -> error {err * 100:.1f} cm")
+        if self.d1 is not None:
+            jaw = self.d1.get_gripper_mm()
+            # The URDF's fingers travel 30 mm each, so a full-open command
+            # saturates at 60 mm of jaw -- reaching the commanded 60 is a pass.
+            ok = "ok" if jaw > 0.8 * self.GRIPPER_TEST_MM else "PINNED -- gripper is not tracking"
+            print(f"[selftest] gripper        : commanded {self.GRIPPER_TEST_MM:.0f} mm "
+                  f"-> measured {jaw:.1f} mm  ({ok})")
         print("=" * 62 + "\n")
         return False
 
@@ -462,7 +479,7 @@ def run(args_cli, simulation_app):
         _CONTROLLER = controller
 
     sim_dt = env.unwrapped.step_dt
-    selftest = SelfTest(args_cli.selftest, kin=kin) if args_cli.selftest > 0 else None
+    selftest = SelfTest(args_cli.selftest, kin=kin, d1=_D1) if args_cli.selftest > 0 else None
     if selftest is None:
         print("\n[keys] W/A/S/D walk, Q/E turn | arrows + 1/0 move the arm | , . gripper "
               "| Z home | P e-stop | R reset\n")
