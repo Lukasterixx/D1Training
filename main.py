@@ -20,9 +20,10 @@ parser.add_argument(
 parser.add_argument("--num_envs", type=int, default=1, help="Number of robots to simulate.")
 parser.add_argument(
     "--arm_mass", type=float, default=None,
-    help="Rescale the arm to this total mass in kg. The shipped URDF's inertials are a "
-         "SolidWorks export of the shells alone and total only ~0.72 kg, which is far too "
-         "light to perturb the gait. Omit to use the URDF's own values.",
+    help="Rescale the arm to this total mass in kg, scaling its inertia tensors and joint "
+         "effort limits by the same factor. The shipped URDF's inertials are a SolidWorks "
+         "export of the shells alone and total only ~0.72 kg -- far too light to perturb the "
+         "gait. Use 2.4 for a realistic D1 (see README). Omit to use the URDF's own values.",
 )
 parser.add_argument(
     "--no_arm", action="store_true",

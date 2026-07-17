@@ -44,9 +44,9 @@ portable if this ever needs to talk to a real arm again.
 
 ```bash
 ./run_sim.sh                      # teleop, arm at the URDF's own mass
-./run_sim.sh --arm_mass 3.6       # arm rescaled to 3.6 kg, motors scaled to match
+./run_sim.sh --arm_mass 2.4       # realistic D1 mass, motors scaled to match
 ./run_sim.sh --no_arm             # bare-Go2 baseline
-./run_sim.sh --headless --selftest 10 --arm_mass 3.6   # walk 10 s, print gait stats
+./run_sim.sh --headless --selftest 10 --arm_mass 2.4   # walk 10 s, print gait stats
 ```
 
 Needs the `env_isaaclab` conda env from Rescue's setup (Isaac Sim 5.1, Isaac Lab
@@ -82,16 +82,50 @@ acting as an accidental vibration damper.
 ## The arm's mass is a trap
 
 **The shipped `d1_arm/d1.urdf` describes a 0.72 kg arm.** Its inertials are a
-SolidWorks export of the bare shells: no motors, no gearing, no wiring. A real
-D1-550 is several kilos. At 0.72 kg the arm is ~5% of the Go2's mass and the
-gait does not notice it at all:
+SolidWorks export of the bare shells: no motors, no gearing, no wiring. At
+0.72 kg the arm is ~5% of the Go2's mass and the gait does not notice it at all.
+
+How the URDF compares to Unitree's published D1 spec — worth knowing which parts
+of this file to trust:
+
+| Quantity | URDF says | Unitree publishes | Verdict |
+| --- | --- | --- | --- |
+| Joint ranges | ±134.6°, ±90°, ±90°, ±134.6°, ±90°, ±134.6° | J1 ±135°, J2 ±90°, J3 ±90°, J4 ±135°, J5 ±90°, J6 ±135° | **matches** — trust it |
+| Reach | — | 495–550 mm excl. jaw | matches `ARM_MAX_REACH = 0.55` |
+| Total mass | 0.72 kg | not published for D1; the D1-T variant is listed at 2.37 kg | **too light** |
+| Joint effort | 3.33 Nm (J1–J3), 1.67 Nm (wrist) | **not published** | **too weak — see below** |
+
+The joint ranges matching the spec exactly is good evidence the geometry came
+from Unitree. The effort limits did not: Rescue's notes say this URDF shipped
+with effort and velocity limits of **zero** and had them filled in by hand.
+
+You can show 3.33 Nm is wrong without any hardware. Unitree rates the D1 at a
+500 g payload over a 550 mm span. Holding *just the payload* at full extension
+needs `0.5 × 9.81 × 0.55 ≈ 2.7 Nm` at the shoulder — before the arm's own ~2.4 kg,
+which adds roughly `2.37 × 9.81 × 0.20 ≈ 4.7 Nm`. So a real D1 shoulder needs on
+the order of **7 Nm**, and 3.33 Nm could not hold the arm's own rated payload at
+reach. It is a placeholder.
+
+**Use `--arm_mass 2.4`** as the best available estimate (the D1-T's 2.37 kg is
+the closest published figure; the Go2-mounted D1's own mass is not published).
+That happens to scale the effort limits to ~11 Nm at the shoulder, comfortably
+above the ~7 Nm the spec implies — so it is a physically plausible arm, even
+though the absolute torque is still inferred rather than known.
+
+Results:
 
 | Configuration | Total mass | Distance in 10 s | Max tilt | Arm EE error | Verdict |
 | --- | --- | --- | --- | --- | --- |
 | `--no_arm` (baseline) | 15.02 kg | 9.56 m | 6.3° | — | stayed up |
 | arm at URDF mass | 15.74 kg | 9.59 m | 6.2° | 12.4 cm | stayed up |
+| **`--arm_mass 2.4`** (realistic) | 17.42 kg | 9.64 m | 8.0° | 4.7 cm | **stayed up** |
 | `--arm_mass 3.6` | 18.62 kg | 9.82 m | 15.9° | 3.8 cm | stayed up |
 | `--arm_mass 6.0` | 21.02 kg | 2.22 m | 106.2° | 0.7 cm | **FELL OVER** |
+
+**The headline: at a realistic 2.4 kg the Go2 walks with the arm on its back** —
+96% of commanded speed, 8° of tilt, versus 6.3° for the bare dog. The policy was
+never trained on this payload and carries it anyway. It fails somewhere between
+3.6 kg and 6 kg, which is well outside anything a real D1 weighs.
 
 Run with the URDF's own mass and you will conclude "the arm doesn't affect
 walking" — which is true, and meaningless, because that arm weighs nothing.
