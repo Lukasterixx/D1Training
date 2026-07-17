@@ -7,7 +7,7 @@
 # PYTHONPATH, which fails with an opaque import error deep inside omni.
 #
 # Any arguments are forwarded to main.py, e.g.:
-#   ./run_sim.sh --arm_mass 2.4      # rescale the arm to a realistic mass
+#   ./run_sim.sh --arm_mass 6.0      # heavier base cylinder (default is the real 3.152 kg)
 #   ./run_sim.sh --no_arm            # bare-Go2 baseline
 set -e
 
