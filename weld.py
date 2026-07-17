@@ -29,10 +29,11 @@ class WeldResult:
     """What the weld produced, and what the env cfg needs to know about it."""
 
     usd_path: str
-    # Factor the arm's masses and effort limits were scaled by (1.0 if untouched).
-    # The env cfg scales the arm's drive gains by the same amount, so the servos
-    # keep saturating at the same angle instead of degrading into relays.
-    arm_gain_scale: float = 1.0
+    # Factor the arm's link masses were scaled by (1.0 if untouched). Reported
+    # for logging only -- notably NOT applied to the drive gains or the effort
+    # limits, which come from Unitree's published per-joint torques and are
+    # independent of how heavy the arm is.
+    arm_mass_scale: float = 1.0
 
 
 def import_d1_urdf(urdf_path: str, dest_usd_path: str) -> str:
@@ -124,49 +125,28 @@ def _demote_articulation_root(subtree_root: Usd.Prim) -> int:
     return removed
 
 
-def _scale_joint_efforts(subtree_root: Usd.Prim, factor: float) -> int:
-    """Scale the arm joints' drive force limits by `factor`.
-
-    This has to happen with any mass rescale, not as an option. The URDF's
-    effort limits (3.33 Nm on J1-J3, 1.67 Nm on the wrist) are sized for the
-    0.72 kg shell it describes. Multiply the mass by five and leave them alone
-    and you get an arm whose motors cannot hold it up: it sags to its limits,
-    the IK sees an error it can never null, and the joint targets wind up and
-    diverge. That is not a heavy D1 -- it is a robot that does not exist.
-
-    Scaling the limits alongside the mass models the thing we actually want: a
-    D1 of this mass whose motors are sized in proportion to it.
-    """
-    scaled = 0
-    for prim in Usd.PrimRange(subtree_root):
-        for drive_token in ("angular", "linear"):
-            if not prim.HasAPI(UsdPhysics.DriveAPI, drive_token):
-                continue
-            drive = UsdPhysics.DriveAPI(prim, drive_token)
-            attr = drive.GetMaxForceAttr()
-            val = attr.Get()
-            # The importer writes inf for "unlimited"; scaling that is a no-op.
-            if val is None or val == float("inf"):
-                continue
-            attr.Set(val * factor)
-            scaled += 1
-    return scaled
-
-
 def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> float:
-    """Scale the arm to `target_kg`, motors included.
+    """Scale the arm's link masses so the subtree totals `target_kg`.
 
-    The shipped URDF's inertials come from a SolidWorks export of the shells
-    alone -- they total ~0.72 kg, where a real D1-550 is several kilos once
-    motors, gearing and wiring are counted. Left alone the arm is ~5% of the
-    Go2's mass and the gait barely notices it, which would make this whole
-    testbed answer "yes it walks fine" for the wrong reason.
+    The shipped URDF's inertials are a SolidWorks export of the shells alone --
+    they total 0.719 kg, where Unitree publishes 3152 g for the D1-550. Left
+    alone the arm is ~5% of the Go2's mass and the gait barely notices it, which
+    would make this whole testbed answer "yes it walks fine" for the wrong
+    reason.
 
-    Inertia tensors are scaled by the same factor. That is only strictly correct
-    if the added mass has the same spatial distribution as the shell, which it
-    does not -- the motors sit at the joints. It is a deliberate approximation:
-    total mass and its rough placement dominate the gait disturbance, and
-    getting those right is worth more than an exact tensor we do not have.
+    Only mass and inertia are touched. The joint effort limits are NOT scaled
+    with it: Unitree publishes the mass and the per-joint torques as separate
+    facts (3.3 Nm on J0/J1, 1.7 Nm on J2-J5), so the real arm is 3.152 kg with
+    3.3 Nm motors -- not 3.152 kg with motors sized in proportion to its mass.
+    Scaling the two together would invent a robot that does not exist. The
+    URDF's efforts already match the spec; leave them be.
+
+    Inertia tensors are scaled by the same factor as the mass. That is only
+    strictly correct if the missing mass has the shell's spatial distribution,
+    which it does not -- the motors sit at the joints. It is a deliberate
+    approximation: total mass and its rough placement dominate the gait
+    disturbance, and getting those right is worth more than an exact tensor we
+    do not have.
     """
     if target_kg <= 0.0:
         raise ValueError(f"arm mass must be positive, got {target_kg}")
@@ -192,9 +172,8 @@ def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> float:
         if diag:
             diag_attr.Set(Gf.Vec3f(diag[0] * factor, diag[1] * factor, diag[2] * factor))
 
-    n = _scale_joint_efforts(subtree_root, factor)
-    print(f"[weld] Arm rescaled {current:.3f} kg -> {target_kg:.3f} kg (x{factor:.2f}); "
-          f"scaled {n} joint drive force limits to match.")
+    print(f"[weld] Arm mass rescaled {current:.3f} kg -> {target_kg:.3f} kg (x{factor:.2f}). "
+          f"Joint effort limits left at the URDF's published-spec values.")
     return factor
 
 
@@ -243,9 +222,9 @@ def build_welded_robot_usd(
     n_removed = _demote_articulation_root(arm_prim)
     print(f"[weld] Stripped {n_removed} ArticulationRootAPI from the arm subtree.")
 
-    arm_gain_scale = 1.0
+    arm_mass_scale = 1.0
     if arm_mass_kg is not None:
-        arm_gain_scale = _rescale_arm(arm_prim, arm_mass_kg)
+        arm_mass_scale = _rescale_arm(arm_prim, arm_mass_kg)
 
     go2_base = _find_prim_named(root_prim, go2_base_link)
     arm_base = _find_prim_named(arm_prim, d1_base_link)
@@ -281,4 +260,4 @@ def build_welded_robot_usd(
     stage.GetRootLayer().Save()
     print(f"[weld] Welded robot written to {out_usd_path}")
     print(f"[weld] Rigid bodies ({len(names)}): {names}")
-    return WeldResult(usd_path=out_usd_path, arm_gain_scale=arm_gain_scale)
+    return WeldResult(usd_path=out_usd_path, arm_mass_scale=arm_mass_scale)

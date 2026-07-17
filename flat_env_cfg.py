@@ -68,8 +68,13 @@ ARM_MOUNT_Z = 0.08
 # joint does not move a micron.
 #
 # 4000 N/m reaches the 15 N limit at 3.75 mm, comfortably inside the stroke,
-# which is what a jaw servo should do. See `--arm_mass`: the arm's gains scale
-# with its effort limits so its servos saturate at a fixed angle at any mass.
+# which is what a jaw servo should do.
+#
+# These are drive gains, not physical spec -- they say how hard the servo chases
+# its target, and PhysX clamps the result at the joint's published effort limit
+# regardless. They are deliberately NOT scaled with `--arm_mass`: Unitree
+# publishes the D1-550's mass and its per-joint torques independently, so a
+# heavier arm does not imply stronger motors.
 ARM_BASE_STIFFNESS = 800.0
 ARM_BASE_DAMPING = 80.0
 GRIPPER_BASE_STIFFNESS = 4000.0
@@ -309,9 +314,7 @@ class Go2D1FlatEnvCfg(ManagerBasedRLEnvCfg):
         self.scene.contact_forces.update_period = self.sim.dt
 
 
-def make_robot_cfg(
-    robot_usd_path: str, with_arm: bool = True, arm_gain_scale: float = 1.0
-) -> ArticulationCfg:
+def make_robot_cfg(robot_usd_path: str, with_arm: bool = True) -> ArticulationCfg:
     """The Go2's stock cfg, pointed at `robot_usd_path` and given arm drives.
 
     Everything else about UNITREE_GO2_CFG is left alone -- same leg actuator
@@ -351,13 +354,10 @@ def make_robot_cfg(
     # Keep the Go2's own leg actuators; add the arm's alongside them.
     cfg.actuators = dict(cfg.actuators)
     if with_arm:
-        # Scaled with the effort limits (see weld._rescale_arm), so a heavier arm
-        # gets proportionally stronger motors AND proportionally stiffer gains --
-        # its servos saturate at the same angle rather than turning into relays.
         cfg.actuators["d1_arm"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint[1-6]"],
-            stiffness=ARM_BASE_STIFFNESS * arm_gain_scale,
-            damping=ARM_BASE_DAMPING * arm_gain_scale,
+            stiffness=ARM_BASE_STIFFNESS,
+            damping=ARM_BASE_DAMPING,
         )
         cfg.actuators["d1_gripper"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint7_.*"],
@@ -368,12 +368,9 @@ def make_robot_cfg(
 
 
 def make_env_cfg(
-    robot_usd_path: str,
-    num_envs: int = 1,
-    with_arm: bool = True,
-    arm_gain_scale: float = 1.0,
+    robot_usd_path: str, num_envs: int = 1, with_arm: bool = True
 ) -> Go2D1FlatEnvCfg:
     cfg = Go2D1FlatEnvCfg()
     cfg.scene.num_envs = num_envs
-    cfg.scene.robot = make_robot_cfg(robot_usd_path, with_arm=with_arm, arm_gain_scale=arm_gain_scale)
+    cfg.scene.robot = make_robot_cfg(robot_usd_path, with_arm=with_arm)
     return cfg

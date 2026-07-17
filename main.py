@@ -10,6 +10,10 @@ import argparse
 
 from isaaclab.app import AppLauncher
 
+# Unitree's published D1-550 figure (3152 g).
+# https://support.unitree.com/home/en/developer/D1Arm_services
+D1_550_MASS_KG = 3.152
+
 parser = argparse.ArgumentParser(
     description="Drive a Go2 with a welded-on D1 arm around a flat testing area."
 )
@@ -19,11 +23,12 @@ parser.add_argument(
 )
 parser.add_argument("--num_envs", type=int, default=1, help="Number of robots to simulate.")
 parser.add_argument(
-    "--arm_mass", type=float, default=None,
-    help="Rescale the arm to this total mass in kg, scaling its inertia tensors and joint "
-         "effort limits by the same factor. The shipped URDF's inertials are a SolidWorks "
-         "export of the shells alone and total only ~0.72 kg -- far too light to perturb the "
-         "gait. Use 2.4 for a realistic D1 (see README). Omit to use the URDF's own values.",
+    "--arm_mass", type=float, default=D1_550_MASS_KG, metavar="KG",
+    help=f"Total arm mass in kg. Defaults to {D1_550_MASS_KG}, Unitree's published D1-550 figure, "
+         "because the URDF's own inertials are a SolidWorks export of the bare shells and total "
+         "only 0.719 kg -- far too light to perturb the gait. Pass 0.719 to use the URDF as-is. "
+         "Only mass and inertia scale; the joint effort limits are published separately and are "
+         "left alone.",
 )
 parser.add_argument(
     "--no_arm", action="store_true",
