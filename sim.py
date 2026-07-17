@@ -403,21 +403,25 @@ def run(args_cli, simulation_app):
     _input, _keyboard, _sub_keyboard = _subscribe_keyboard()
 
     with_arm = not args_cli.no_arm
+    arm_gain_scale = 1.0
     if with_arm:
-        robot_usd = build_welded_robot_usd(
+        weld = build_welded_robot_usd(
             go2_usd_path=_resolve_go2_usd(),
             d1_urdf_path=os.path.join(os.path.dirname(__file__), "d1_arm", "d1.urdf"),
             out_usd_path=os.path.join(os.path.dirname(__file__), "generated", "go2_d1.usd"),
             mount_pos=(0.0, 0.0, ARM_MOUNT_Z),
             arm_mass_kg=args_cli.arm_mass,
         )
+        robot_usd, arm_gain_scale = weld.usd_path, weld.arm_gain_scale
     else:
         # Baseline: the same flat course with a bare Go2, so the arm's effect on
         # the gait can be seen as a difference rather than guessed at.
         print("[weld] --no_arm: running the bare Go2 as a baseline.")
         robot_usd = _resolve_go2_usd()
 
-    env_cfg = make_env_cfg(robot_usd, num_envs=args_cli.num_envs, with_arm=with_arm)
+    env_cfg = make_env_cfg(
+        robot_usd, num_envs=args_cli.num_envs, with_arm=with_arm, arm_gain_scale=arm_gain_scale
+    )
     for i in range(args_cli.num_envs):
         flat_env_cfg.base_command[str(i)] = [0.0, 0.0, 0.0]
 
@@ -442,8 +446,11 @@ def run(args_cli, simulation_app):
             arm_joint_names=D1_ARM_JOINTS,
             gripper_joint_names=D1_GRIPPER_JOINTS,
             device=device,
-            arm_stiffness=ARM_BASE_STIFFNESS,
-            arm_damping=ARM_BASE_DAMPING,
+            # Must match the env cfg's scaled gains -- DirectD1 re-writes these
+            # on the e-stop toggle, and unscaled values would silently soften a
+            # rescaled arm the first time P is pressed.
+            arm_stiffness=ARM_BASE_STIFFNESS * arm_gain_scale,
+            arm_damping=ARM_BASE_DAMPING * arm_gain_scale,
             gripper_stiffness=GRIPPER_BASE_STIFFNESS,
             gripper_damping=GRIPPER_BASE_DAMPING,
         )

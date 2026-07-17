@@ -53,13 +53,27 @@ D1_GRIPPER_JOINTS = ["Joint7_1", "Joint7_2"]
 # so the reach clamps and IK targets ported from there still mean what they say.
 ARM_MOUNT_Z = 0.08
 
-# Drive gains, carried over from Rescue. The jaws are a small stiff prismatic
-# pair and need far less than the arm; keeping them separate stops a re-write of
-# the arm's gains from stiffening the fingers 4x.
+# Drive gains. The arm's are Rescue's, unchanged. The gripper's are not, and the
+# difference is a bug fix.
+#
+# Rescue drives the jaws at 200 N/m against a 15 N force limit and 30 mm of
+# travel -- so the drive only reaches its own force limit at 75 mm, past the end
+# of the stroke. It is a servo that can never use its motor: at a typical 2.5 mm
+# error it makes 0.5 N. Rescue gets away with that because it teleports the
+# arm's root and zeroes its velocity every step, so the fingers ride in an
+# artificially quiet frame. Welding the arm removes that accidental damper, the
+# fingers feel the arm's real motion, and 0.5 N loses -- both fingers get pushed
+# into their travel limits and pinned there, and the gripper stops responding
+# entirely. Measured, not theorised: at 200 N/m the drive commands 4.5 N and the
+# joint does not move a micron.
+#
+# 4000 N/m reaches the 15 N limit at 3.75 mm, comfortably inside the stroke,
+# which is what a jaw servo should do. See `--arm_mass`: the arm's gains scale
+# with its effort limits so its servos saturate at a fixed angle at any mass.
 ARM_BASE_STIFFNESS = 800.0
 ARM_BASE_DAMPING = 80.0
-GRIPPER_BASE_STIFFNESS = 200.0
-GRIPPER_BASE_DAMPING = 20.0
+GRIPPER_BASE_STIFFNESS = 4000.0
+GRIPPER_BASE_DAMPING = 400.0
 
 ROBOT_START_POS = (0.0, 0.0, 0.42)
 
@@ -295,7 +309,9 @@ class Go2D1FlatEnvCfg(ManagerBasedRLEnvCfg):
         self.scene.contact_forces.update_period = self.sim.dt
 
 
-def make_robot_cfg(robot_usd_path: str, with_arm: bool = True) -> ArticulationCfg:
+def make_robot_cfg(
+    robot_usd_path: str, with_arm: bool = True, arm_gain_scale: float = 1.0
+) -> ArticulationCfg:
     """The Go2's stock cfg, pointed at `robot_usd_path` and given arm drives.
 
     Everything else about UNITREE_GO2_CFG is left alone -- same leg actuator
@@ -335,10 +351,13 @@ def make_robot_cfg(robot_usd_path: str, with_arm: bool = True) -> ArticulationCf
     # Keep the Go2's own leg actuators; add the arm's alongside them.
     cfg.actuators = dict(cfg.actuators)
     if with_arm:
+        # Scaled with the effort limits (see weld._rescale_arm), so a heavier arm
+        # gets proportionally stronger motors AND proportionally stiffer gains --
+        # its servos saturate at the same angle rather than turning into relays.
         cfg.actuators["d1_arm"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint[1-6]"],
-            stiffness=ARM_BASE_STIFFNESS,
-            damping=ARM_BASE_DAMPING,
+            stiffness=ARM_BASE_STIFFNESS * arm_gain_scale,
+            damping=ARM_BASE_DAMPING * arm_gain_scale,
         )
         cfg.actuators["d1_gripper"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint7_.*"],
@@ -348,8 +367,13 @@ def make_robot_cfg(robot_usd_path: str, with_arm: bool = True) -> ArticulationCf
     return cfg
 
 
-def make_env_cfg(robot_usd_path: str, num_envs: int = 1, with_arm: bool = True) -> Go2D1FlatEnvCfg:
+def make_env_cfg(
+    robot_usd_path: str,
+    num_envs: int = 1,
+    with_arm: bool = True,
+    arm_gain_scale: float = 1.0,
+) -> Go2D1FlatEnvCfg:
     cfg = Go2D1FlatEnvCfg()
     cfg.scene.num_envs = num_envs
-    cfg.scene.robot = make_robot_cfg(robot_usd_path, with_arm=with_arm)
+    cfg.scene.robot = make_robot_cfg(robot_usd_path, with_arm=with_arm, arm_gain_scale=arm_gain_scale)
     return cfg

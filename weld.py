@@ -19,8 +19,20 @@ scoped back down to the legs. See LEG_JOINTS there.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 
 from pxr import Gf, PhysxSchema, Usd, UsdGeom, UsdPhysics
+
+
+@dataclass
+class WeldResult:
+    """What the weld produced, and what the env cfg needs to know about it."""
+
+    usd_path: str
+    # Factor the arm's masses and effort limits were scaled by (1.0 if untouched).
+    # The env cfg scales the arm's drive gains by the same amount, so the servos
+    # keep saturating at the same angle instead of degrading into relays.
+    arm_gain_scale: float = 1.0
 
 
 def import_d1_urdf(urdf_path: str, dest_usd_path: str) -> str:
@@ -141,7 +153,7 @@ def _scale_joint_efforts(subtree_root: Usd.Prim, factor: float) -> int:
     return scaled
 
 
-def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> None:
+def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> float:
     """Scale the arm to `target_kg`, motors included.
 
     The shipped URDF's inertials come from a SolidWorks export of the shells
@@ -167,7 +179,7 @@ def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> None:
 
     if current <= 0.0:
         print("[weld][WARN] Arm links report no mass; skipping rescale.")
-        return
+        return 1.0
 
     factor = target_kg / current
     for prim in links:
@@ -183,6 +195,7 @@ def _rescale_arm(subtree_root: Usd.Prim, target_kg: float) -> None:
     n = _scale_joint_efforts(subtree_root, factor)
     print(f"[weld] Arm rescaled {current:.3f} kg -> {target_kg:.3f} kg (x{factor:.2f}); "
           f"scaled {n} joint drive force limits to match.")
+    return factor
 
 
 def build_welded_robot_usd(
@@ -193,8 +206,8 @@ def build_welded_robot_usd(
     go2_base_link: str = "base",
     d1_base_link: str = "base_link",
     arm_mass_kg: float | None = None,
-) -> str:
-    """Compose go2.usd + d1.usd into one articulation and return the USD path.
+) -> WeldResult:
+    """Compose go2.usd + d1.usd into one articulation.
 
     `mount_pos` is the arm base's offset from the Go2's base link, in metres.
     It matches Rescue's ARM_MOUNT_Z so the reach limits and IK targets ported
@@ -230,8 +243,9 @@ def build_welded_robot_usd(
     n_removed = _demote_articulation_root(arm_prim)
     print(f"[weld] Stripped {n_removed} ArticulationRootAPI from the arm subtree.")
 
+    arm_gain_scale = 1.0
     if arm_mass_kg is not None:
-        _rescale_arm(arm_prim, arm_mass_kg)
+        arm_gain_scale = _rescale_arm(arm_prim, arm_mass_kg)
 
     go2_base = _find_prim_named(root_prim, go2_base_link)
     arm_base = _find_prim_named(arm_prim, d1_base_link)
@@ -267,4 +281,4 @@ def build_welded_robot_usd(
     stage.GetRootLayer().Save()
     print(f"[weld] Welded robot written to {out_usd_path}")
     print(f"[weld] Rigid bodies ({len(names)}): {names}")
-    return out_usd_path
+    return WeldResult(usd_path=out_usd_path, arm_gain_scale=arm_gain_scale)

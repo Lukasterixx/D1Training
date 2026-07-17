@@ -74,6 +74,11 @@ gains does not make the arm sag, because its root is teleported every tick and
 so it can never build up any falling motion. The welded arm genuinely goes limp
 and sags — and the dog feels it do so.
 
+The gripper needed a stiffer drive than Rescue's to work at all here; see the
+gain comments in `flat_env_cfg.py`. Rescue's 200 N/m jaw drive is pinned solid
+by the welded arm's motion, because the root teleport it relies on was also
+acting as an accidental vibration damper.
+
 ## The arm's mass is a trap
 
 **The shipped `d1_arm/d1.urdf` describes a 0.72 kg arm.** Its inertials are a
@@ -81,16 +86,24 @@ SolidWorks export of the bare shells: no motors, no gearing, no wiring. A real
 D1-550 is several kilos. At 0.72 kg the arm is ~5% of the Go2's mass and the
 gait does not notice it at all:
 
-| Configuration | Total mass | Distance in 10 s | Max tilt | Verdict |
-| --- | --- | --- | --- | --- |
-| `--no_arm` (baseline) | 15.02 kg | 9.56 m | 6.3° | stayed up |
-| arm at URDF mass | 15.74 kg | 9.59 m | 6.6° | stayed up |
-| `--arm_mass 3.6` | 18.62 kg | 9.51 m | 12.2° | stayed up |
-| `--arm_mass 6.0` | 21.02 kg | 10.64 m | 16.5° | stayed up |
+| Configuration | Total mass | Distance in 10 s | Max tilt | Arm EE error | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| `--no_arm` (baseline) | 15.02 kg | 9.56 m | 6.3° | — | stayed up |
+| arm at URDF mass | 15.74 kg | 9.59 m | 6.2° | 12.4 cm | stayed up |
+| `--arm_mass 3.6` | 18.62 kg | 9.82 m | 15.9° | 3.8 cm | stayed up |
+| `--arm_mass 6.0` | 21.02 kg | 2.22 m | 106.2° | 0.7 cm | **FELL OVER** |
 
 Run with the URDF's own mass and you will conclude "the arm doesn't affect
 walking" — which is true, and meaningless, because that arm weighs nothing.
 Use `--arm_mass` for any result you intend to believe.
+
+Read the EE error column alongside the verdict — the two are coupled, and
+ignoring that is how you get a false pass. A lighter arm tracks its IK target
+worse (see *Known behaviour*), so it sits folded near the dog's back rather than
+held out at the commanded 0.3 m forward. A payload tucked against the body
+barely moves the centre of mass. The 6 kg row falls over precisely *because* its
+arm holds the commanded pose: the same mass, actually extended, tips the dog.
+An arm that droops is a lenient test.
 
 `--arm_mass` scales the link masses, the inertia tensors **and the joint drive
 force limits**, all by the same factor. The last part is not optional: the
@@ -109,14 +122,33 @@ URDF's inertials properly rather than leaning on this knob.**
 
 ## Known behaviour
 
-- **The arm's IK settles ~13 cm short of its target.** This is inherited from
-  Rescue, not introduced here — Rescue's own `D1_EE_REST_ROT` comment describes
-  the same shortfall. `command_type="pose"` makes the DLS solver trade position
-  error against orientation error, and it converges to a stable compromise. It
-  is stable at every arm mass tested; it simply does not fully arrive.
-- The self-test reports this as `arm EE ... -> error N cm`. Around 13 cm is
-  expected. Tens of centimetres, or a number that grows, means the arm is
-  diverging — check that the drive limits were scaled.
+**The arm's IK falls short of its target, and how short depends on drive
+authority.** At the URDF's own mass and effort limits it settles ~12 cm short;
+scale the arm up (and its motors with it) and the error collapses — 3.8 cm at
+3.6 kg, 0.7 cm at 6 kg.
+
+This is *not* the DLS solver trading position error against orientation error.
+The evidence against that: the arm's joints do not reach their commanded angles
+at all — with the URDF's limits the IK asks Joint4 for −11.6° and gets −56.3°.
+The solver is fine; the joint never arrives. What moves the number is the arm's
+effort limit (3.33 Nm on J1–J3, 1.67 Nm on the wrist) together with its drive
+stiffness, both of which `--arm_mass` scales.
+
+So the shortfall is fixable, and the fix is to get the arm's *specification*
+right rather than to touch the solver. If the real D1-550's motors are stronger
+than the 3.33 Nm this URDF claims, correct that and the arm will track. Treat
+the ~12 cm at the shipped URDF mass as a symptom of an under-specified arm.
+
+The self-test reports this as `arm EE ... -> error N cm`. If it grows without
+settling, the arm is diverging rather than merely short — check that the drive
+force limits were scaled with the mass.
+
+**Contact sensing does not cover the arm.** `FlatSceneCfg.contact_forces` uses
+`{ENV_REGEX_NS}/Robot/.*`, which matches the Go2's links but not the arm's —
+those sit one level deeper, at `Robot/D1/...`, because the weld nests them. This
+is reporting only: arm collisions still happen in physics, they just are not
+readable from the sensor. The locomotion policy does not use them. Widen the
+regex if you ever need to detect the gripper touching something.
 
 ## Files
 
