@@ -39,8 +39,24 @@ parser.add_argument(
     help="Skip teleop: walk forward for this long, print gait stats and exit. "
          "Pair with --headless to compare arm masses without a viewport.",
 )
+parser.add_argument(
+    "--no_ros2", action="store_true",
+    help="Skip the ROS 2 bridge: no /utlidar/cloud, no /joint_states, no TF. "
+         "Use this when running main.py outside run_sim.sh, which is what sets "
+         "the bridge's environment up.",
+)
+parser.add_argument(
+    "--lidar_debug", action="store_true",
+    help="Also draw the L1's returns in the Isaac viewport, not just publish them.",
+)
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
+
+if not args_cli.no_ros2:
+    # The RTX lidar renders through the same pipeline as a camera, so a headless
+    # run produces an empty cloud without this. Harmless when there is a
+    # viewport, and cheaper to force than to explain in a runtime error.
+    args_cli.enable_cameras = True
 
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app

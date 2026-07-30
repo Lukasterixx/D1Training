@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 # Launch the flat Go2+D1 testbed.
 #
-# Trimmed from Rescue's run_sim.sh: there is no ROS 2 bridge, no RTX lidar and no
-# CycloneDDS here, so all of that setup is gone. What remains is the one hazard
-# that still bites -- system ROS's Python 3.10 leaking into Isaac Sim's 3.11 via
-# PYTHONPATH, which fails with an opaque import error deep inside omni.
+# Trimmed from Rescue's run_sim.sh: no CycloneDDS, and no lidar JSON to install
+# (the L1 is built from Isaac's shipped Example_Rotary asset, overridden in
+# ros2.py). The ROS 2 bridge setup below is Rescue's, because the sim publishes
+# its L1 cloud and joint states again -- see run_rviz.sh.
+#
+# The one hazard that still bites: system ROS's Python 3.10 leaking into Isaac
+# Sim's 3.11 via PYTHONPATH, which fails with an opaque import error deep inside
+# omni. So do NOT source /opt/ros/humble/setup.bash before this -- Isaac's own
+# bundled Humble libraries are what the bridge uses.
 #
 # Any arguments are forwarded to main.py, e.g.:
 #   ./run_sim.sh --arm_mass 6.0      # heavier base cylinder (default is the real 3.152 kg)
 #   ./run_sim.sh --no_arm            # bare-Go2 baseline
+#   ./run_sim.sh --no_ros2           # no lidar, no /joint_states
 set -e
 
 cd "$(dirname "$0")"
@@ -49,6 +55,19 @@ conda activate "$CONDA_ENV_NAME"
 
 # Keep system ROS's Python 3.10 out of Isaac Sim's 3.11.
 unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
+
+# ROS 2 bridge. Fast DDS, matching run_rviz.sh -- the two will not discover each
+# other on different middleware, and the failure is silent (topics simply never
+# appear). Any CycloneDDS config left in the environment would do the same.
+export ROS_DISTRO=humble
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"
+export ROS_LOCALHOST_ONLY=0
+unset CYCLONEDDS_URI CYCLONEDDS_HOME CYCLONEDDS_CONFIG ROS_DISCOVERY_SERVER
+
+# Use Isaac Sim's bundled ROS 2 libraries, not /opt/ros/humble's.
+ISAAC_BRIDGE_EXT="$CONDA_PREFIX/lib/python3.11/site-packages/isaacsim/exts/isaacsim.ros2.bridge"
+export LD_LIBRARY_PATH="$ISAAC_BRIDGE_EXT/humble/lib:${LD_LIBRARY_PATH}"
 
 # Still needed on Ubuntu 22.04.
 export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6

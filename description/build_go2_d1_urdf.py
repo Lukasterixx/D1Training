@@ -1,0 +1,152 @@
+"""Regenerate `go2_d1.urdf` from its two sources.
+
+The committed output is what `run_rviz.sh` uses; this script only has to run
+again if one of the sources changes. It needs P2Dingo checked out, since the Go2
+half comes from there (pass the path as argv[1] if it is not the default).
+
+The merge mirrors `weld.py`: the arm's base is fixed to the Go2's `base_link` at
+ARM_MOUNT_Z, so the URDF and the simulated articulation agree about where the D1
+sits. Everything else the script does is about being a *drawing* rather than a
+second source of truth -- see description/README.md.
+
+    python3 description/build_go2_d1_urdf.py [path/to/P2Dingo]
+"""
+from __future__ import annotations
+
+import os
+import sys
+import xml.etree.ElementTree as ET
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+
+P2DINGO = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/P2Dingo")
+GO2_URDF = os.path.join(P2DINGO, "Isaac/go2_ws/src/go2_control_cpp/config/go2.urdf")
+D1_URDF = os.path.join(REPO, "d1_arm", "d1.urdf")
+OUT = os.path.join(HERE, "go2_d1.urdf")
+
+# Must match flat_env_cfg.ARM_MOUNT_Z, which is where weld.py actually puts it.
+ARM_MOUNT_Z = 0.08
+
+# One named material for the whole arm; see the comment where it is applied.
+ARM_MATERIAL = "d1_arm"
+ARM_MATERIAL_RGBA = "0.85 0.45 0.10 1"
+
+
+def main() -> None:
+    if not os.path.exists(GO2_URDF):
+        raise SystemExit(
+            f"No Go2 description at {GO2_URDF}.\n"
+            f"Pass the path to your P2Dingo checkout: "
+            f"python3 {sys.argv[0]} /path/to/P2Dingo"
+        )
+
+    go2 = ET.parse(GO2_URDF).getroot()
+    go2.set("name", "go2_d1")
+
+    # The L1's frame comes from the sim's TF (base_link -> utlidar_lidar, see
+    # ros2.py), so the URDF must not declare it too: two publishers of one
+    # transform is a TF authority conflict, and RViz flags it.
+    for child in list(go2):
+        if child.get("name") in ("radar", "radar_joint"):
+            go2.remove(child)
+
+    for mesh in go2.iter("mesh"):
+        fn = mesh.get("filename")
+        prefix = "package://go2_control_cpp/meshes/"
+        assert fn.startswith(prefix), fn
+        mesh.set("filename", "package://d1_training/description/meshes/go2/" + fn[len(prefix):])
+
+    d1 = ET.parse(D1_URDF).getroot()
+    for el in d1.iter():
+        # The D1's root link is also called base_link, which collides.
+        if el.tag == "link" and el.get("name") == "base_link":
+            el.set("name", "d1_base_link")
+        if el.tag in ("parent", "child") and el.get("link") == "base_link":
+            el.set("link", "d1_base_link")
+    for mesh in d1.iter("mesh"):
+        fn = mesh.get("filename")
+        assert fn.startswith("meshes/"), fn
+        mesh.set("filename", f"package://d1_training/d1_arm/{fn}")
+
+    # The D1's STLs carry no colour of their own, and the URDF's materials are
+    # unnamed placeholders. Left alone, RViz falls back to its default red, which
+    # reads as "this link has no material" rather than as a decision. Point every
+    # arm visual at one named material instead: the arm should be obvious against
+    # the Go2's white shell, since seeing where it is *is* the point of drawing it.
+    for visual in d1.iter("visual"):
+        for material in list(visual.findall("material")):
+            visual.remove(material)
+        ET.SubElement(visual, "material", {"name": ARM_MATERIAL})
+
+    mount = ET.SubElement(go2, "joint", {"name": "arm_mount_joint", "type": "fixed"})
+    ET.SubElement(mount, "parent", {"link": "base_link"})
+    ET.SubElement(mount, "child", {"link": "d1_base_link"})
+    ET.SubElement(mount, "origin", {"xyz": f"0 0 {ARM_MOUNT_Z}", "rpy": "0 0 0"})
+
+    for child in list(d1):
+        go2.append(child)
+
+    # Defined once at robot level and referenced by name above, which is the
+    # idiom urdfdom wants -- repeating the definition per visual makes it warn
+    # about a non-unique material.
+    arm_material = ET.SubElement(go2, "material", {"name": ARM_MATERIAL})
+    ET.SubElement(arm_material, "color", {"rgba": ARM_MATERIAL_RGBA})
+
+    # Unnamed materials are legal in these SolidWorks exports, and RViz logs a
+    # warning for each one. The Go2's colours come from its .dae files, so the
+    # placeholders carry nothing worth keeping.
+    for parent in go2.iter():
+        for material in list(parent.findall("material")):
+            if not material.get("name"):
+                parent.remove(material)
+
+    # Inertials come out. weld.py owns the mass model; a second set of numbers
+    # here would only drift out of step with it and be mistaken for spec.
+    # Dropping base_link's also silences KDL's "root link has an inertia"
+    # warning from robot_state_publisher.
+    for link in go2.findall("link"):
+        for inertial in list(link.findall("inertial")):
+            link.remove(inertial)
+
+    _check(go2)
+
+    ET.indent(go2, space="  ")
+    with open(OUT, "w") as f:
+        f.write(
+            '<?xml version="1.0"?>\n'
+            "<!-- GENERATED by description/build_go2_d1_urdf.py from P2Dingo's\n"
+            "     go2.urdf and d1_arm/d1.urdf. Visualisation only: the physics\n"
+            "     model is weld.py's. See description/README.md. -->\n"
+        )
+        f.write(ET.tostring(go2, encoding="unicode") + "\n")
+    print(f"[urdf] wrote {OUT}")
+
+
+def _check(robot: ET.Element) -> None:
+    """Fail loudly on the two mistakes that would show up only in RViz.
+
+    A dangling link reference gives 'Failed to build tree' from KDL, and a second
+    root gives a robot that silently draws in the wrong place.
+    """
+    links = {link.get("name") for link in robot.findall("link")}
+    joints = robot.findall("joint")
+    for joint in joints:
+        for side in ("parent", "child"):
+            ref = joint.find(side).get("link")
+            if ref not in links:
+                raise SystemExit(f"[urdf] joint {joint.get('name')} has unknown {side} '{ref}'")
+
+    roots = links - {joint.find("child").get("link") for joint in joints}
+    if roots != {"base_link"}:
+        raise SystemExit(f"[urdf] expected base_link as the only root, got {sorted(roots)}")
+
+    movable = [j.get("name") for j in joints if j.get("type") != "fixed"]
+    print(f"[urdf] {len(links)} links, {len(joints)} joints, "
+          f"{len(movable)} movable: {movable}")
+    print("[urdf] those names must match what the sim puts on /joint_states -- "
+          "sim.py prints the articulation's joints at startup.")
+
+
+if __name__ == "__main__":
+    main()

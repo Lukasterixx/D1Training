@@ -34,11 +34,14 @@ Joint1 FL_calf FR_calf RL_calf RR_calf Joint2 Joint3 Joint4 Joint5 Joint6 Joint7
         ^^^^^^ arm joints interleaved, legs keep their relative order
 ```
 
-The other simplification: no ROS 2, no RTX lidar, and no CycloneDDS. Rescue
-drives the arm over the real D1's wire protocol so the same code path runs
-against hardware; `d1_direct.py` replaces that with a direct PhysX write. The
-`KinematicsBackend` seam in `d1_ik_controller.py` is kept, so the solver stays
-portable if this ever needs to talk to a real arm again.
+The other simplification: no CycloneDDS, and no arm wire protocol. Rescue drives
+the arm over the real D1's protocol so the same code path runs against hardware;
+`d1_direct.py` replaces that with a direct PhysX write. The `KinematicsBackend`
+seam in `d1_ik_controller.py` is kept, so the solver stays portable if this ever
+needs to talk to a real arm again.
+
+The ROS 2 side is back, though, in the smaller shape described under
+[Watching it in RViz](#watching-it-in-rviz).
 
 ## Running
 
@@ -47,6 +50,7 @@ portable if this ever needs to talk to a real arm again.
 ./run_sim.sh --no_arm             # bare-Go2 baseline
 ./run_sim.sh --arm_mass 6.0       # heavier base cylinder
 ./run_sim.sh --headless --selftest 10   # walk 10 s, print gait + arm + gripper stats
+./run_sim.sh --no_ros2            # no lidar, no /joint_states (see below)
 ```
 
 Needs the `env_isaaclab` conda env from Rescue's setup (Isaac Sim 5.1, Isaac Lab
@@ -54,9 +58,51 @@ Needs the `env_isaaclab` conda env from Rescue's setup (Isaac Sim 5.1, Isaac Lab
 run; the D1 URDF is re-imported and the weld rebuilt into `generated/` on every
 run, so that directory is disposable and gitignored.
 
+## Watching it in RViz
+
+The sim publishes the same front **Unitree 4D L1 lidar** P2Dingo simulates —
+`PointCloud2` on `/utlidar/cloud`, frame `utlidar_lidar`, mounted per the Go2
+URDF's `radar_joint` — plus `/joint_states`, `/odom`, `/clock` and TF. So the
+welded robot can be watched from outside the viewport, arm included:
+
+```bash
+./run_sim.sh          # terminal 1
+./run_rviz.sh         # terminal 2 -- robot_state_publisher + RViz 2
+```
+
+`run_rviz.sh` needs `/opt/ros/humble` (`ros-humble-desktop`); `run_sim.sh` must
+*not* see it, which is why they are separate scripts and why neither sources the
+other's environment. Both pin Fast DDS on `ROS_DOMAIN_ID` 0 — a middleware
+mismatch here shows up as topics that simply never arrive.
+
+| Topic | Contents |
+| --- | --- |
+| `/utlidar/cloud` | L1 point cloud, ~12 Hz, xyz only, frame `utlidar_lidar` |
+| `/joint_states` | all 20 joints: 12 legs, 6 arm, 2 jaws |
+| `/odom` + `/tf` | `odom -> base_link`, and `base_link -> utlidar_lidar` |
+| `/clock` | Isaac's timeline; everything downstream runs `use_sim_time` |
+
+The robot model itself comes from `description/go2_d1.urdf`, a **generated** merge
+of P2Dingo's Go2 description and `d1_arm/d1.urdf`, joined at the same
+`ARM_MOUNT_Z` the weld uses, with the Go2's meshes copied in beside the arm's.
+See [description/README.md](description/README.md) — including how to regenerate
+it, and why the arm draws in orange.
+
+Two things worth knowing:
+
+- **The L1 needs the renderer, and Isaac Lab only runs it on request.** Isaac Lab
+  renders during `env.step()` only if `sim.has_gui() or sim.has_rtx_sensors()`,
+  and the latter is a carb setting that its *own* `Camera` sensor sets. `LidarRtx`
+  is created outside Isaac Lab, so `ros2.py` sets it explicitly. Without that, a
+  headless run publishes one cloud and then freezes `/clock` at 0.1 s — which
+  looks like a DDS problem and is not one.
+- **`--no_arm` still draws the arm**, folded at its zero pose: the URDF describes
+  the fitted robot, and joints missing from `/joint_states` just hold at zero.
+
 ## Keybinds
 
-Identical to Rescue, minus `T` (there is no lidar here).
+Identical to Rescue, minus `T` — that resets Rescue's odom origin onto the robot,
+and odom here is just the sim's world frame, with nothing to re-anchor.
 
 | Key | Action |
 | --- | --- |
@@ -206,6 +252,8 @@ error is small. Real per-link inertials would still be better.
 | `main.py` | argument parsing, launches Isaac Sim, hands off to `sim.py` |
 | `sim.py` | teleop keybinds, the sim loop, and the `--selftest` harness |
 | `weld.py` | URDF import + the go2/D1 weld; mass and effort rescaling |
+| `ros2.py` | the L1 lidar, and the state publishers RViz needs |
+| `description/` | the URDF + meshes + RViz layout for `run_rviz.sh` |
 | `flat_env_cfg.py` | flat-plane scene, and the leg-scoped obs/action terms |
 | `d1_ik_controller.py` | DLS Cartesian IK at the D1's real 10 Hz, ported from Rescue |
 | `d1_direct.py` | buffers arm commands off the keyboard thread, writes to PhysX |

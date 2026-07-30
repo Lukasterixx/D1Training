@@ -80,8 +80,29 @@ def quat_mul_wxyz(a, b):
     ]
 
 
+def _start_ros2(env, args_cli):
+    """Bring up the L1 lidar and the state publishers, or explain why not.
+
+    `ros2` is imported here rather than at module scope because importing it
+    enables Isaac's ROS 2 bridge extension, which is what puts `rclpy` on the
+    path -- there is no point paying for that on a `--no_ros2` run.
+    """
+    try:
+        import ros2
+    except Exception as exc:  # noqa: BLE001 -- the cause is what matters here
+        raise RuntimeError(
+            f"[ros2] Could not load the ROS 2 bridge ({exc}). run_sim.sh sets the "
+            f"environment this needs (RMW_IMPLEMENTATION, the bridge's "
+            f"LD_LIBRARY_PATH); launching main.py directly does not. Pass "
+            f"--no_ros2 to run without it."
+        ) from exc
+
+    return ros2.Ros2Bridge(env, args_cli.num_envs, lidar_debug=args_cli.lidar_debug)
+
+
 # ===================== Keyboard Handling =====================
-# Identical to Rescue, minus T (no lidar in this repo):
+# Identical to Rescue, minus T -- that resets Rescue's odom origin onto the
+# robot, and odom here is just the sim's world frame, with nothing to re-anchor:
 #   W/A/S/D/Q/E    : walk  (x, y, yaw)
 #   arrows / 1 / 0 : move the Cartesian IK target (x, y, then z)
 #   , / .          : close / open the gripper (5 mm per press, 0-65 mm)
@@ -451,6 +472,8 @@ def run(args_cli, simulation_app):
     policy = _load_policy(env, unitree_go2_agent_cfg)
     obs = env.get_observations()
 
+    bridge = None if args_cli.no_ros2 else _start_ros2(env, args_cli)
+
     controller = None
     kin = None
     if with_arm:
@@ -509,9 +532,14 @@ def run(args_cli, simulation_app):
             actions = policy(obs)
             obs, _, _, _ = env.step(actions)
 
+            if bridge is not None:
+                bridge.publish()
+
             if selftest is not None and not selftest.step(robot, sim_dt):
                 break
 
     if _sub_keyboard is not None:
         _input.unsubscribe_to_keyboard_events(_keyboard, _sub_keyboard)
+    if bridge is not None:
+        bridge.shutdown()
     env.close()
