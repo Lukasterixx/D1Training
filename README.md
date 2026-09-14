@@ -2,6 +2,18 @@
 
 A flat testing area for a Unitree Go2 carrying a **hard-attached** D1 arm, in Isaac Sim.
 
+Thesis B work now starts in the [testing and training plan](docs/thesis_b_plan.md),
+[codebase investigation](docs/codebase_investigation.md), and
+[position-only task guide](docs/position_only_environment.md). The new
+`run_position_only.py` entry point is a separate whole-body reaching prototype;
+its physics and training still need GPU validation. The existing playback
+instructions and preliminary results below describe the original testbed.
+
+Results are kept week by week in [`results/`](results/README.md): notes,
+findings, decision gates, recorded runs and screenshots. Browse them with
+`./dashboard.py`, which serves <http://localhost:8765>, and copy a finished run
+in as evidence with `./dashboard.py record logs/position_only/<run>`.
+
 The question this repo exists to answer: *does the Go2's walking policy still work
 with an arm bolted to its back?* It is a payload the policy was never trained on,
 so it should show up as a disturbance.
@@ -259,6 +271,9 @@ error is small. Real per-link inertials would still be better.
 | `d1_direct.py` | buffers arm commands off the keyboard thread, writes to PhysX |
 | `agent_cfg.py` | RSL-RL config for the walking checkpoint |
 | `logs/` | the Go2 walking checkpoint, converted to the rsl_rl 2.x format |
+| `position_only/`, `run_position_only.py` | Thesis B 18-action stance-and-reach task and its launcher |
+| `motor_model.py`, `unitree_actuators.py` | Unitree's measured Go2 motor envelope (from unitree_rl_lab, Apache-2.0; see `third_party/`) |
+| `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
 
 ## Despite the name
 

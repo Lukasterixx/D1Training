@@ -1,0 +1,31 @@
+{
+  "title": "Thesis B experimental record",
+  "term": "2026 Term 3 · Thesis B",
+  "term_start": "2026-09-14",
+  "weeks": 10,
+  "log_roots": ["logs/position_only"],
+  "key_scalars": [
+    "Metrics/ee_position/position_error_m",
+    "Train/mean_reward",
+    "Train/mean_episode_length",
+    "Episode_Termination/time_out",
+    "Episode_Termination/bad_orientation",
+    "Episode_Termination/low_base",
+    "Episode_Termination/base_contact",
+    "Episode_Termination/outside_workspace",
+    "Policy/mean_std",
+    "Perf/total_fps"
+  ],
+  "scalar_labels": {
+    "Metrics/ee_position/position_error_m": "Reach error at reset (m)",
+    "Train/mean_reward": "Mean episode return",
+    "Train/mean_episode_length": "Mean episode length (steps)",
+    "Episode_Termination/time_out": "Time-limit resets (fraction)",
+    "Episode_Termination/bad_orientation": "Tilt failures (fraction)",
+    "Episode_Termination/low_base": "Low-base failures (fraction)",
+    "Episode_Termination/base_contact": "Base-contact failures (fraction)",
+    "Episode_Termination/outside_workspace": "Workspace exits (fraction)",
+    "Policy/mean_std": "Policy action std",
+    "Perf/total_fps": "Simulation throughput (steps/s)"
+  }
+}

@@ -321,8 +321,14 @@ class Go2D1FlatEnvCfg(ManagerBasedRLEnvCfg):
         self.scene.contact_forces.update_period = self.sim.dt
 
 
-def make_robot_cfg(robot_usd_path: str, with_arm: bool = True) -> ArticulationCfg:
+def make_robot_cfg(
+    robot_usd_path: str, with_arm: bool = True, leg_actuator: Literal["dc_motor", "unitree"] = "dc_motor"
+) -> ArticulationCfg:
     """The Go2's stock cfg, pointed at `robot_usd_path` and given arm drives.
+
+    `leg_actuator="unitree"` swaps the stock `DCMotor` legs for Unitree's measured
+    torque-speed model (`unitree_actuators.py`), with the same 25/0.5 gains. Playback
+    keeps the default: the walking checkpoint was trained against `DCMotor`.
 
     Everything else about UNITREE_GO2_CFG is left alone -- same leg actuator
     model, same rigid/articulation props, same activate_contact_sensors -- so
@@ -360,6 +366,15 @@ def make_robot_cfg(robot_usd_path: str, with_arm: bool = True) -> ArticulationCf
 
     # Keep the Go2's own leg actuators; add the arm's alongside them.
     cfg.actuators = dict(cfg.actuators)
+    if leg_actuator == "unitree":
+        from unitree_actuators import UnitreeGo2HVActuatorCfg
+
+        # Same gains as the stock cfg; friction as in unitree_rl_lab's Go2 config.
+        cfg.actuators["base_legs"] = UnitreeGo2HVActuatorCfg(
+            joint_names_expr=LEG_JOINTS, stiffness=25.0, damping=0.5, friction=0.01,
+        )
+    elif leg_actuator != "dc_motor":
+        raise ValueError(f"Unknown leg actuator model: {leg_actuator!r}")
     if with_arm:
         cfg.actuators["d1_arm"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint[1-6]"],
