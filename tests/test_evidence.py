@@ -145,7 +145,12 @@ class RecordFixture(unittest.TestCase):
             "mode": "train", "seed": 42, "status": "training_finished", "git_commit": "abc123",
             "git_status": " M file.py", "arguments": {"num_envs": 64, "iterations": 3},
         }))
-        (self.run / "smoke.json").write_text(json.dumps({"failure_resets": 2, "final_position_error_m": [0.1, 0.3]}))
+        (self.run / "smoke.json").write_text(json.dumps({
+            "failure_resets": 2, "final_position_error_m": [0.1, 0.3],
+            "posture_after_settling": {"base_height_m": {"min": 0.2, "mean": 0.26, "max": 0.42}}}))
+        (self.run / "verify.json").write_text(json.dumps({
+            "all_passed": False, "failed": ["arm_holds_zero_pose_at_rest"], "interpretation": "mechanism only",
+            "checks": [{"name": "a", "passed": True}, {"name": "arm_holds_zero_pose_at_rest", "passed": False}]}))
         (self.run / "model_2.pt").write_bytes(b"weights")
         (self.run / "model_10.pt").write_bytes(b"later weights")
         (self.run / "big.bin").write_bytes(b"not copied")
@@ -167,6 +172,9 @@ class RecordTests(RecordFixture):
         self.assertEqual(data["final_checkpoint"]["file"], "model_10.pt")
         self.assertEqual(data["scalar_summary"]["Train/mean_reward"]["last"], 2.0)
         self.assertEqual(data["smoke_summary"]["final_position_error_m"]["mean"], 0.2)
+        self.assertEqual(data["smoke_summary"]["posture_after_settling.base_height_m"]["mean"], 0.26)
+        self.assertEqual((data["verify_summary"]["passed"], data["verify_summary"]["total"]), (1, 2))
+        self.assertEqual(data["verify_summary"]["failed"], ["arm_holds_zero_pose_at_rest"])
         self.assertFalse((dest / "big.bin").exists())
         self.assertEqual(store.scalars_from_csv(dest / "scalars.csv"), {"Train/mean_reward": [[0, 0.0], [1, 1.0], [2, 2.0]]})
 

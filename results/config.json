@@ -3,7 +3,10 @@
   "term": "2026 Term 3 · Thesis B",
   "term_start": "2026-09-14",
   "weeks": 10,
-  "log_roots": ["logs/position_only"],
+  "log_roots": [
+    "logs/position_only",
+    "logs/playback"
+  ],
   "key_scalars": [
     "Metrics/ee_position/position_error_m",
     "Train/mean_reward",

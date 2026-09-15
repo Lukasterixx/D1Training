@@ -1,0 +1,38 @@
+{
+  "id": "20260915T103642_229904Z_verify_seed42",
+  "title": "Verify, 8 envs, pincer tip: 20/21 (tool point off by 1.1 mm in one env)",
+  "notes": "First run with the Link7_1 pincer tip as the controlled point. The tool-point kinematics check missed its 1 mm threshold at 1.12 mm; see the next two runs.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:45:09+10:00",
+  "started_utc": "2026-09-15T10:36:42+00:00",
+  "source_dir": "logs/position_only/20260915T103642_229904Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_failed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": false,
+    "passed": 20,
+    "total": 21,
+    "failed": [
+      "tool_point_matches_urdf_kinematics"
+    ],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

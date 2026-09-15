@@ -106,9 +106,14 @@ sim-to-real transfer from accurate motor models. Findings from source:
 - Sim-to-real evidence in the repo is demo footage (`doc/sim.gif`, `doc/real.gif`).
   No tracking or transfer metrics are published. MaiRo's own diff is course material:
   a gallop-gait reward, flat terrain, ±1.0 m/s pushes and README changes.
-- Not applicable to the D1 arm as-is. Its servos close their own position loop, and
-  Unitree publishes no D1 torque–speed curve. The envelope structure can take D1
-  parameters once they are identified in Thesis C.
+- No D1 content: the repo has no arm model, D1 parameters or latency values. Its
+  changelog adds delay and friction *support*; the Go2 policy uses neither. The D1's
+  servos close their own position loop, and Unitree publishes no D1 torque–speed
+  curve (searched 14 September 2026: retail spec sheets list range, reach, payload
+  and power only). So the D1 model adopted here combines published torque limits,
+  URDF speed limits (unverified) and the D1 SDK's 10 Hz command and feedback timing.
+  Leg latency uses the actuator's delay buffer, ranged from the deploy loop's
+  1 kHz structure (F-007).
 
 ## Reproducible source references
 
@@ -147,11 +152,11 @@ installation as part of reproducing an Isaac Gym paper.
 
 | Priority | Experiment | Evidence to collect / stop condition |
 | --- | --- | --- |
-| 1 | Local Isaac Lab task, then original playback | Smoke/reset/frame checks, joint mapping, model mass, tracking/fall traces; stop PPO work if physics/interface checks fail |
+| 1 | Local Isaac Lab task, then original playback | Smoke/reset/frame checks, joint mapping, model mass, tracking/fall traces; stop PPO work if physics/interface checks fail. **2026-09-15: launched; checks pass (F-009); playback replayed with forward, lateral and yaw commands (F-012)** |
 | 2 | Go2+D1 adaptation in its own Isaac Gym environment | Reproduce advertised launch; record exact assets/gains/revision and actual reaching/locomotion metrics; time-box setup to two working days |
 | 3 | UMI example checkpoint and its supplied trajectory | Verify downloads and rollout, reproduce reported metric definitions; keep original embodiment clearly labelled |
 | 4 | Deep-WBC source trace and a pilot only if useful | Identify useful curriculum/advantage-mixing features; avoid a second long reproduction unless it resolves a specific baseline failure |
-| 1b | unitree_rl_lab parts adopted into this repo | Smoke with `--leg_actuator unitree` and `dc_motor`; inspect `params/deploy.yaml`; confirm explicit-actuator stability with the welded arm. Revert to `dc_motor` if the explicit legs are unstable |
+| 1b | unitree_rl_lab parts adopted into this repo | Smoke with `--leg_actuator unitree` and `dc_motor`; inspect `params/deploy.yaml`; confirm explicit-actuator stability with the welded arm. Revert to `dc_motor` if the explicit legs are unstable. **2026-09-15: done; explicit legs stand stably, matching `dc_motor` to 0.1 mm, and the manifest checks out ([Week 1](../results/week_01/notes.md))** |
 | 5 | UniFP example when force work begins | Confirm released training starts; audit force-estimation supervision and position-only ablation before porting |
 
 Record each attempt as source-only / installed / launched / checkpoint replayed /

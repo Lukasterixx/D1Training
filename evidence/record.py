@@ -74,7 +74,8 @@ def summarise_series(points: list[tuple[int, float, float]]) -> dict:
 
 
 def summarise_json(data: dict) -> dict:
-    """Scalars pass through; numeric lists become count/mean/min/max."""
+    """Scalars pass through; numeric lists become count/mean/min/max; one level of named
+    scalars or statistics ({name: value} or {name: {min, mean, max}}) is flattened to `key.name`."""
     summary = {}
     for key, value in data.items():
         if isinstance(value, (int, float, str, bool)) or value is None:
@@ -83,7 +84,19 @@ def summarise_json(data: dict) -> dict:
             ordered = sorted(value)
             summary[key] = {"count": len(value), "mean": sum(value) / len(value), "min": ordered[0],
                             "median": ordered[len(ordered) // 2], "max": ordered[-1]}
+        elif isinstance(value, dict):
+            for name, item in value.items():
+                if isinstance(item, (int, float)) and not isinstance(item, bool):
+                    summary[f"{key}.{name}"] = item
+                elif isinstance(item, dict) and item and all(isinstance(v, (int, float)) for v in item.values()):
+                    summary[f"{key}.{name}"] = item
     return summary
+
+
+def summarise_verify(data: dict) -> dict:
+    checks = data.get("checks") or []
+    return {"all_passed": data.get("all_passed"), "passed": sum(bool(c.get("passed")) for c in checks),
+            "total": len(checks), "failed": data.get("failed") or [], "interpretation": data.get("interpretation")}
 
 
 def find_existing(root: Path, run_id: str) -> Path | None:
@@ -166,8 +179,12 @@ def record_run(run_dir: str | Path, week: int | None = None, title: str | None =
         "scalar_summary": summary,
         "copied_files": copied,
     }
-    smoke = store.load_json(source / "smoke.json")
+    # Playback self-tests carry the same kind of diagnostic summary as smoke runs.
+    smoke = store.load_json(source / "smoke.json") or store.load_json(source / "selftest.json")
     if smoke:
         record["smoke_summary"] = summarise_json(smoke)
+    verify = store.load_json(source / "verify.json")
+    if verify:
+        record["verify_summary"] = summarise_verify(verify)
     (dest / "record.json").write_text(json.dumps(record, indent=2) + "\n")
     return dest

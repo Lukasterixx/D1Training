@@ -1,0 +1,27 @@
+{
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "arguments": {
+    "num_envs": 1,
+    "selftest": 10.0,
+    "selftest_command": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "no_arm": false,
+    "arm_mass": 3.152
+  },
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_status": "M CLAUDE.md\n M docs/codebase_investigation.md\n M docs/position_only_environment.md\n M docs/thesis_b_plan.md\n M evidence/record.py\n M evidence/static/app.js\n M flat_env_cfg.py\n M main.py\n M motor_model.py\n M position_only/core.py\n M position_only/deploy.py\n M position_only/env_cfg.py\n M position_only/mdp.py\n M results/README.md\n M results/config.json\n M results/findings.md\n M results/gates.md\n M results/week_01/notes.md\n M run_position_only.py\n M sim.py\n M tests/test_evidence.py\n M tests/test_sim2real.py\n?? logs/playback/\n?? position_only/verify.py\n?? position_only/workspace.py\n?? results/week_01/external/\n?? results/week_01/figures/d1_workspace.json\n?? results/week_01/figures/d1_workspace.png\n?? results/week_01/figures/rescue_flat_ablation_gait.png\n?? results/week_01/figures/smoke_posture.png\n?? results/week_01/figures/smoke_posture.py\n?? results/week_01/runs/\n?? tests/test_workspace.py",
+  "articulation_mass_kg": 18.17099952697754,
+  "policy": {
+    "checkpoint": "/home/lukas/D1Training/logs/rsl_rl/unitree_go2_rough/2024-04-06_02-37-07/model_7850.pt",
+    "sha256": "7e684601ac6a0906954fcd5a84153a1bbc13f5a24ee9af7ef556eb3f4f5abef4",
+    "actions": "12 legs",
+    "legs": "DCMotor",
+    "note": "label corrected after the run"
+  },
+  "arm_drives": "URDF import (acceleration)"
+}

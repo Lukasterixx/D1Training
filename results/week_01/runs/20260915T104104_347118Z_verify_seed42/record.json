@@ -1,0 +1,36 @@
+{
+  "id": "20260915T104104_347118Z_verify_seed42",
+  "title": "Verify, 8 envs, pincer tip, new defaults: 21/21",
+  "notes": "Random poses for the kinematics checks now clear the body proxy. Pincer tip matches URDF kinematics to 0.9 um.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:45:09+10:00",
+  "started_utc": "2026-09-15T10:41:04+00:00",
+  "source_dir": "logs/position_only/20260915T104104_347118Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_passed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": true,
+    "passed": 21,
+    "total": 21,
+    "failed": [],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

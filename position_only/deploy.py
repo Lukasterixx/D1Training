@@ -35,12 +35,14 @@ def _bus_of(joint: str) -> tuple[str, int]:
     return matches[0]
 
 
-def build_manifest(step_dt: float, actions: list[dict], observations: list[dict], actuators: list[dict]) -> dict:
+def build_manifest(step_dt: float, actions: list[dict], observations: list[dict], actuators: list[dict],
+                   timing: dict | None = None) -> dict:
     """Assemble and check the contract.
 
     actions: in policy-output order; each {name, joints, scale, offset, raw_clip, target_limits}.
     observations: the actor group in concatenation order; each {name, dim, scale, clip, history_length}.
     actuators: each {name, model, joints, stiffness, damping, effort_limit, velocity_limit, envelope}.
+    timing: the interface timing the policy trained with (see `motor_model.interface_timing`).
     """
     action_terms, index = {}, 0
     for term in actions:
@@ -58,6 +60,7 @@ def build_manifest(step_dt: float, actions: list[dict], observations: list[dict]
             "raw_clip": list(term["raw_clip"]), "scale": list(term["scale"]), "offset": list(term["offset"]),
             "target_limits": [list(pair) for pair in term["target_limits"]],
             "target": "offset + scale * clip(raw_action, raw_clip), then clamped to target_limits",
+            "hold_steps": int(term.get("hold_steps", 1)),
         }
         index += len(joints)
 
@@ -69,6 +72,7 @@ def build_manifest(step_dt: float, actions: list[dict], observations: list[dict]
 
     return {
         "format": FORMAT, "step_dt": step_dt, "buses": BUSES,
+        "timing": {key: list(value) if isinstance(value, tuple) else value for key, value in (timing or {}).items()},
         "policy": {"input_width": width, "output_width": index},
         "actions": action_terms, "observations": obs_terms,
         "actuators": {term["name"]: {k: v for k, v in term.items() if k != "name"} for term in actuators},
@@ -85,7 +89,8 @@ def _per_joint(value, count: int) -> list[float]:
     return [float(value)] * count if isinstance(value, (int, float)) else _row(value)
 
 
-def export_deploy_cfg(env, path: str | Path, raw_clip: tuple[float, float] = (-1.0, 1.0)) -> dict:
+def export_deploy_cfg(env, path: str | Path, raw_clip: tuple[float, float] = (-1.0, 1.0),
+                      timing: dict | None = None) -> dict:
     """Build the manifest from a live `ManagerBasedRLEnv` and write it as YAML."""
     import yaml
 
@@ -97,6 +102,7 @@ def export_deploy_cfg(env, path: str | Path, raw_clip: tuple[float, float] = (-1
             "name": name, "joints": joints, "raw_clip": list(raw_clip),
             "scale": _per_joint(term._scale, len(joints)), "offset": _per_joint(term._offset, len(joints)),
             "target_limits": robot.data.soft_joint_pos_limits[0, term._joint_ids].detach().cpu().tolist(),
+            "hold_steps": getattr(term.cfg, "hold_steps", 1),
         })
 
     manager = env.observation_manager
@@ -108,6 +114,7 @@ def export_deploy_cfg(env, path: str | Path, raw_clip: tuple[float, float] = (-1
             "name": name, "dim": int(dims[-1]), "history_length": max(1, int(cfg.history_length or 0)),
             "scale": None if scale is None else [float(v) for v in scale.detach().cpu().reshape(-1).tolist()],
             "clip": None if cfg.clip is None else list(cfg.clip),
+            "sample_period_steps": int(cfg.params.get("period_steps", 1)),
         })
 
     actuators = []
@@ -122,7 +129,7 @@ def export_deploy_cfg(env, path: str | Path, raw_clip: tuple[float, float] = (-1
             "envelope": envelope or None,
         })
 
-    manifest = build_manifest(float(env.step_dt), actions, observations, actuators)
+    manifest = build_manifest(float(env.step_dt), actions, observations, actuators, timing)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(manifest, sort_keys=False, default_flow_style=None, width=120))

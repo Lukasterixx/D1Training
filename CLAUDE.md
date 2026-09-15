@@ -20,7 +20,7 @@ in the same session as the work, not as a follow-up. Layout and conventions: [re
 - **Screenshots** in `results/week_NN/screenshots/` are added by Lukas. When new ones appear, look at them
   and describe what they show in the notes. Plots you generate go in `figures/`.
 - **Scope honesty:** interface smoke ≠ reaching ability; training-time `Metrics/...` sampled at reset ≠ the
-  frozen-manifest evaluation that G1a needs; `Link6` origin ≠ registered tool tip. Say "not validated" where true.
+  frozen-manifest evaluation that G1a needs; the CAD pincer tip (the controlled point) ≠ a point measured on the arm. Say "not validated" where true.
 - If a doc in `docs/` states something a new result contradicts, fix the doc and note it in the week log.
 
 ## Running things
@@ -34,3 +34,8 @@ in the same session as the work, not as a follow-up. Layout and conventions: [re
 - `logs/` is gitignored; the recorded copy in `results/` is what gets committed.
 - Code adapted from other repositories keeps its licence and a provenance row in `third_party/<name>/NOTICE.md`.
 - Playback (`run_sim.sh`) must keep `leg_actuator="dc_motor"`: the walking checkpoint was trained against it.
+- Arm drive type matters (F-010): `--arm_actuator d1_servo` uses force drives; playback and `implicit` keep the URDF
+  import's acceleration drives. Say which when comparing arm behaviour across them.
+- `python run_position_only.py verify --headless --num_envs 8` re-runs the deliberate G0 checks after any change
+  to the task, robot config or weld.
+- Motor and timing values in `motor_model.py` carry source labels (published, URDF-unverified, estimated). Keep the labels accurate; change a label only when a measurement replaces the value.

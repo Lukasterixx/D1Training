@@ -1,0 +1,76 @@
+{
+  "id": "20260915T093809_039560Z_smoke_seed42",
+  "title": "Smoke, 4 envs, defaults",
+  "notes": "Zero actions; clone check at interface level.",
+  "week": 1,
+  "recorded_at": "2026-09-15T19:44:41+10:00",
+  "started_utc": "2026-09-15T09:38:09+00:00",
+  "source_dir": "logs/position_only/20260915T093809_039560Z_smoke_seed42",
+  "mode": "smoke",
+  "seed": 42,
+  "status": "smoke_finished",
+  "error": null,
+  "num_envs": 4,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "smoke.json",
+    "smoke_trace.csv",
+    "params_deploy.yaml"
+  ],
+  "smoke_summary": {
+    "steps": 600,
+    "transitions": 2400,
+    "failure_resets": 0,
+    "time_limit_resets": 4,
+    "posture_after_settling.base_height_m": {
+      "min": 0.19742856919765472,
+      "mean": 0.26657870411872864,
+      "max": 0.41999998688697815
+    },
+    "posture_after_settling.tilt_deg": {
+      "min": 0.0,
+      "mean": 1.8073067665100098,
+      "max": 18.857776641845703
+    },
+    "posture_after_settling.base_drift_m": {
+      "min": 0.0,
+      "mean": 0.07067804783582687,
+      "max": 0.09085436910390854
+    },
+    "posture_after_settling.leg_joint_dev_rad": {
+      "min": 0.0,
+      "mean": 0.3541261851787567,
+      "max": 0.9781026840209961
+    },
+    "posture_after_settling.arm_joint_dev_rad": {
+      "min": 0.0,
+      "mean": 0.10954847186803818,
+      "max": 0.2455589324235916
+    },
+    "posture_after_settling.leg_torque_nm": {
+      "min": 1.723066134218243e-12,
+      "mean": 8.852214813232422,
+      "max": 23.399999618530273
+    },
+    "settle_steps": 50,
+    "controller": "zero_actions_default_joint_targets",
+    "final_position_error_m": {
+      "count": 4,
+      "mean": 0.08366164471954107,
+      "min": 0.043660666793584824,
+      "median": 0.09931521117687225,
+      "max": 0.11738073825836182
+    },
+    "interpretation": "Interface smoke diagnostics only; not a baseline evaluation or success rate."
+  }
+}

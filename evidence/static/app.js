@@ -11,6 +11,7 @@
   const STATUS = {
     "passed": ["good", "✓"], "confirmed": ["good", "✓"], "complete": ["good", "✓"], "done": ["good", "✓"],
     "smoke_finished": ["good", "✓"], "training_finished": ["good", "✓"], "finished": ["good", "✓"],
+    "verify_passed": ["good", "✓"], "verify_failed": ["critical", "✕"], "selftest_finished": ["good", "✓"], "fell": ["critical", "✕"],
     "in progress": ["progress", "◐"], "running": ["progress", "◐"], "initializing": ["progress", "◐"],
     "provisional": ["warning", "!"], "partial": ["warning", "!"], "at risk": ["warning", "!"],
     "blocked": ["serious", "■"], "failed": ["critical", "✕"],
@@ -231,6 +232,8 @@
       if (smoke.failure_resets !== undefined) parts.push(`${smoke.failure_resets} failure / ${smoke.time_limit_resets} time-limit resets`);
       if (smoke.final_position_error_m) parts.push(`final error mean ${fmt(smoke.final_position_error_m.mean)} m`);
     }
+    const verify = run.verify_summary;
+    if (verify) parts.push(`${verify.passed}/${verify.total} checks passed`);
     return parts.join(" · ") || "—";
   }
 
@@ -244,12 +247,18 @@
     ];
     for (const [key, value] of Object.entries(run.smoke_summary || {})) {
       if (key === "interpretation") continue;
-      pairs.push([`smoke: ${key}`, value && typeof value === "object" ? `mean ${fmt(value.mean)} · min ${fmt(value.min)} · max ${fmt(value.max)} (n=${value.count})` : value]);
+      pairs.push([`${run.mode === "playback" ? "playback" : "smoke"}: ${key}`, value && typeof value === "object" ? `mean ${fmt(value.mean)} · min ${fmt(value.min)} · max ${fmt(value.max)}${value.count !== undefined ? ` (n=${value.count})` : ""}` : value]);
     }
+    const verify = run.verify_summary;
+    if (verify) {
+      pairs.push(["verify: checks passed", `${verify.passed} of ${verify.total}`]);
+      if (verify.failed.length) pairs.push(["verify: failed", verify.failed.join(", ")]);
+    }
+    const interpretation = (run.smoke_summary || {}).interpretation || (verify || {}).interpretation;
     return h("div", {},
       run.notes ? h("p", { text: run.notes }) : null,
       run.error ? h("p", { class: "error-text", text: run.error }) : null,
-      run.smoke_summary && run.smoke_summary.interpretation ? h("p", { class: "hint", text: run.smoke_summary.interpretation }) : null,
+      interpretation ? h("p", { class: "hint", text: interpretation }) : null,
       h("dl", { class: "kv" }, pairs.filter(([, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) =>
         h("div", {}, h("dt", { text: k }), h("dd", { text: typeof v === "number" ? fmt(v, 4) : String(v) })))),
       h("div", { class: "files" }, h("span", { class: "hint", text: "Files:" }), run.files.map((f) => h("a", { href: f.url, target: "_blank", text: f.name }))),
@@ -276,7 +285,7 @@
         row.setAttribute("aria-expanded", String(!detail.hidden));
         if (detail.hidden) openRuns.delete(run.id); else openRuns.add(run.id);
       };
-      const length = run.mode === "smoke" ? `${fmt(run.steps)} steps` : run.last_iteration !== null && run.last_iteration !== undefined ? `${fmt(run.last_iteration + 1)} it` : run.iterations ? `${fmt(run.iterations)} it` : "—";
+      const length = run.mode === "smoke" ? `${fmt(run.steps)} steps` : run.last_iteration !== null && run.last_iteration !== undefined ? `${fmt(run.last_iteration + 1)} it` : run.mode === "train" && run.iterations ? `${fmt(run.iterations)} it` : "—";
       const row = h("tr", { id: `run-${run.id}`, class: `run-row${openRuns.has(run.id) ? " open" : ""}`, tabindex: 0, "aria-expanded": String(openRuns.has(run.id)),
         onclick: toggle, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } } },
         h("td", {}, h("span", { class: "caret", text: "›" })),

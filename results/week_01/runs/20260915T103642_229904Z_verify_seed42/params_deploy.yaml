@@ -1,0 +1,156 @@
+format: d1training-deploy/1
+step_dt: 0.02
+buses:
+  go2_legs:
+    interface: unitree_sdk2 LowCmd
+    sdk_joint_order: [FR_hip_joint, FR_thigh_joint, FR_calf_joint, FL_hip_joint, FL_thigh_joint, FL_calf_joint, RR_hip_joint,
+      RR_thigh_joint, RR_calf_joint, RL_hip_joint, RL_thigh_joint, RL_calf_joint]
+  d1_arm:
+    interface: D1 arm SDK
+    sdk_joint_order: [Joint1, Joint2, Joint3, Joint4, Joint5, Joint6]
+timing:
+  leg_delay_physics_steps: [0, 2]
+  arm_command_hold_steps: 5
+  arm_feedback_period_steps: 5
+policy: {input_width: 66, output_width: 18}
+actions:
+  legs:
+    policy_output_indices: [0, 12]
+    bus: go2_legs
+    joints: [FL_hip_joint, FR_hip_joint, RL_hip_joint, RR_hip_joint, FL_thigh_joint, FR_thigh_joint, RL_thigh_joint, RR_thigh_joint,
+      FL_calf_joint, FR_calf_joint, RL_calf_joint, RR_calf_joint]
+    motor_ids: [3, 0, 9, 6, 4, 1, 10, 7, 5, 2, 11, 8]
+    raw_clip: [-1.0, 1.0]
+    scale: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+    offset: [0.10000000149011612, -0.10000000149011612, 0.10000000149011612, -0.10000000149011612, 0.800000011920929, 0.800000011920929,
+      1.0, 1.0, -1.5, -1.5, -1.5, -1.5]
+    target_limits:
+    - [-0.9424798488616943, 0.9424798488616943]
+    - [-0.9424798488616943, 0.9424798488616943]
+    - [-0.9424798488616943, 0.9424798488616943]
+    - [-0.9424798488616943, 0.9424798488616943]
+    - [-1.3177247047424316, 3.2376246452331543]
+    - [-1.3177247047424316, 3.2376246452331543]
+    - [-0.2705249786376953, 4.284824371337891]
+    - [-0.2705249786376953, 4.284824371337891]
+    - [-2.628453016281128, -0.9320070147514343]
+    - [-2.628453016281128, -0.9320070147514343]
+    - [-2.628453016281128, -0.9320070147514343]
+    - [-2.628453016281128, -0.9320070147514343]
+    target: offset + scale * clip(raw_action, raw_clip), then clamped to target_limits
+    hold_steps: 1
+  arm:
+    policy_output_indices: [12, 18]
+    bus: d1_arm
+    joints: [Joint1, Joint2, Joint3, Joint4, Joint5, Joint6]
+    motor_ids: [0, 1, 2, 3, 4, 5]
+    raw_clip: [-1.0, 1.0]
+    scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    offset: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    target_limits:
+    - [-2.114999532699585, 2.114999532699585]
+    - [-1.4129998683929443, 1.4129998683929443]
+    - [-1.4129998683929443, 1.4129998683929443]
+    - [-2.114999532699585, 2.114999532699585]
+    - [-1.4129998683929443, 1.4129998683929443]
+    - [-2.114999532699585, 2.114999532699585]
+    target: offset + scale * clip(raw_action, raw_clip), then clamped to target_limits
+    hold_steps: 5
+observations:
+  base_ang_vel:
+    input_indices: [0, 3]
+    dim: 3
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+  projected_gravity:
+    input_indices: [3, 6]
+    dim: 3
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+  leg_joint_pos:
+    input_indices: [6, 18]
+    dim: 12
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+  arm_joint_pos:
+    input_indices: [18, 24]
+    dim: 6
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 5
+  leg_joint_vel:
+    input_indices: [24, 36]
+    dim: 12
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+  arm_joint_vel:
+    input_indices: [36, 42]
+    dim: 6
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 5
+  target_position:
+    input_indices: [42, 45]
+    dim: 3
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+  tip_position:
+    input_indices: [45, 48]
+    dim: 3
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+  previous_action:
+    input_indices: [48, 66]
+    dim: 18
+    history_length: 1
+    scale: null
+    clip: null
+    sample_period_steps: 1
+actuators:
+  base_legs:
+    model: UnitreeActuator
+    joints: [FL_hip_joint, FR_hip_joint, RL_hip_joint, RR_hip_joint, FL_thigh_joint, FR_thigh_joint, RL_thigh_joint, RR_thigh_joint,
+      FL_calf_joint, FR_calf_joint, RL_calf_joint, RR_calf_joint]
+    stiffness: [25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0]
+    damping: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    effort_limit: [23.700000762939453, 23.700000762939453, 23.700000762939453, 23.700000762939453, 23.700000762939453, 23.700000762939453,
+      23.700000762939453, 23.700000762939453, 45.43000030517578, 45.43000030517578, 45.43000030517578, 45.43000030517578]
+    velocity_limit: [30.100000381469727, 30.100000381469727, 30.100000381469727, 30.100000381469727, 30.100000381469727, 30.100000381469727,
+      30.100000381469727, 30.100000381469727, 15.69999885559082, 15.69999885559082, 15.69999885559082, 15.69999885559082]
+    envelope:
+      Y1: [20.200000762939453, 20.200000762939453, 20.200000762939453, 20.200000762939453, 20.200000762939453, 20.200000762939453,
+        20.200000762939453, 20.200000762939453, 20.200000762939453, 20.200000762939453, 20.200000762939453, 20.200000762939453]
+      Y2: [23.399999618530273, 23.399999618530273, 23.399999618530273, 23.399999618530273, 23.399999618530273, 23.399999618530273,
+        23.399999618530273, 23.399999618530273, 23.399999618530273, 23.399999618530273, 23.399999618530273, 23.399999618530273]
+      X1: [13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5]
+      X2: [30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0]
+  d1_arm:
+    model: ImplicitActuator
+    joints: [Joint1, Joint2, Joint3, Joint4, Joint5, Joint6]
+    stiffness: [4000.0, 4000.0, 4000.0, 4000.0, 4000.0, 4000.0]
+    damping: [400.0, 400.0, 400.0, 400.0, 400.0, 400.0]
+    effort_limit: [3.299999952316284, 3.299999952316284, 1.7000000476837158, 1.7000000476837158, 1.7000000476837158, 1.7000000476837158]
+    velocity_limit: [1.0499999523162842, 1.0499999523162842, 1.0499999523162842, 1.7300000190734863, 1.7300000190734863, 1.7300000190734863]
+    envelope: null
+  d1_gripper:
+    model: ImplicitActuator
+    joints: [Joint7_1, Joint7_2]
+    stiffness: [4000.0, 4000.0]
+    damping: [400.0, 400.0]
+    effort_limit: [15.0, 15.0]
+    velocity_limit: [0.019999999552965164, 0.019999999552965164]
+    envelope: null

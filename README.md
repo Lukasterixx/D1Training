@@ -243,6 +243,14 @@ rather than sagging like a spring, so the gains are now 4000. This buys tracking
 and never strength: PhysX still clamps every joint at its published effort limit,
 so the arm's 3.3/1.7 Nm remain the physical statement of what it cannot lift.
 
+**Those stiffnesses were not N·m/rad** (Thesis B Week 1, finding F-010). The URDF
+import authors the D1's joints as *acceleration* drives, and PhysX scales an
+acceleration drive's gains by the joint's effective inertia. At 4000 the arm's
+distal joints behaved like roughly 3–90 N·m/rad and sagged up to 0.11 rad at rest,
+inside their torque limits. The table above measures that. Playback here still
+uses those drives. The Thesis B task (`run_position_only.py`, `--arm_actuator d1_servo`)
+switches them to force drives, which cut Link6's droop at rest from 35.5 mm to 4.1 mm.
+
 **Contact sensing does not cover the arm.** `FlatSceneCfg.contact_forces` uses
 `{ENV_REGEX_NS}/Robot/.*`, which matches the Go2's links but not the arm's —
 those sit one level deeper, at `Robot/D1/...`, because the weld nests them. This

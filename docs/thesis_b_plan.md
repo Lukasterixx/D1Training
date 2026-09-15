@@ -54,6 +54,9 @@ a controller that cannot later be executed on the D1.
    and yaw commands: the thesis reports lateral instability, while the README
    reports good forward walking. These are different tests, not interchangeable
    evidence. Neither establishes that whole-body learning is necessary by itself.
+   Rescue's flat ablation (F-008) found locomotion policies trained with the arm
+   attached gathered their feet under the body, while policies trained without it
+   walked the welded robot well.
 2. **Register frames.** Verify `world`, environment origin, Go2 base, D1 mount,
    `Link6`, grasp point and eventual tool tip. Keep a world target fixed while
    translating/yawing the base. Draw target and measured point. The initial
@@ -81,12 +84,15 @@ a controller that cannot later be executed on the D1.
    “position-only” means no force-control inputs/objective; it need not prohibit
    orientation commands. Match this pose interface in force-aware variants.
 
-The current task uses 200 Hz physics and 50 Hz joint-target updates. The existing
-D1 interface code assumes 10 Hz commands. Confirm the actual hardware path;
-introduce per-arm command holding, latency and action-history observations
-before calling a policy transfer-ready. Test 50 Hz versus the measured command
-rate as a modelling sensitivity experiment, not an undocumented change between
-ablations.
+The current task uses 200 Hz physics and 50 Hz policy steps. Its default
+`--latency estimated` profile holds D1 arm targets for 5 policy steps (the SDK's
+10 Hz streaming rate), samples arm joint angles at 10 Hz with velocities
+differenced from them, and delays Go2 leg commands by 0–10 ms. These are
+estimates from interface code (the D1 SDK's rates and unitree_rl_lab's 1 kHz
+command loop), not hardware measurements. Keep one latency profile across P0–P4.
+Run `--latency none` as a declared sensitivity experiment, not an undocumented
+change between ablations. Measure D1 command-to-motion latency, firmware
+smoothing and joint speed before calling a policy transfer-ready.
 
 ## Gates and measurement definitions
 
@@ -94,7 +100,7 @@ ablations.
 | --- | --- | --- |
 | G0: environment works | Correct articulation/action mapping; finite state; deliberate timeout/fall and partial reset tests pass; no clone interference; target-frame checks pass | Fix model/interface before PPO tuning |
 | G1a: free-space baseline | On 100 frozen 10 s episodes per seed: ≥90% reach within 5 cm for ≥1 continuous second; episode must survive to its end; ≤1% falls | Check goal feasibility, resets, actuators and reward balance; reduce workspace before adding complexity |
-| G1b: moving baseline | Same declared error/survival criteria on slow trajectories, plus reported commanded-versus-measured base velocity | Separate trajectory timing errors from locomotion failure; maintain a standing manipulation scope if necessary |
+| G1b: moving baseline | Same declared error/survival criteria on slow trajectories, plus reported commanded-versus-measured base velocity and gait quality (foot placement against the neutral point, front–rear spacing, backward motion after a forward request, turn tracking at several rates, pitch wobble) | Separate trajectory timing errors from locomotion failure; compare against a locomotion policy trained without the arm (F-008); maintain a standing manipulation scope if necessary |
 | G2: contact suite | Fixture travel/force signs and contact signals calibrated; repeatable initial states; explicit success/failure definitions; no hidden force inputs to P0/P2 | Fix measurement and freeze tasks before comparing policies |
 | G3: experiment ready | At least three independent training seeds; matched budgets and test cases; complete configs/checkpoints/metrics saved | Report exploratory results only until matched runs exist |
 
@@ -208,3 +214,8 @@ Lab automatically resets an environment. Freeze evaluation before large runs.
   episode evaluator and pressing fixture.
 - No physics results, learned checkpoints, contact-task success rates or
   sim-to-real claims have been produced by this first-session work.
+- Update, 15 September 2026: the smoke checks, deliberate `verify` checks (F-009), a
+  short PPO pilot and the playback reference with lateral and yaw commands (F-012) have
+  run. The arm's drive type was corrected (F-010). The target box starts next to the arm
+  and must change before P0 is evaluated (F-011). Details are in the
+  [Week 1 record](../results/week_01/notes.md).

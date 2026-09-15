@@ -1,0 +1,96 @@
+{
+  "id": "20260915T104334_162270Z_smoke_seed42",
+  "title": "Zero-action baseline, 256 envs, pincer tip: 12.9% within 5 cm",
+  "notes": "smoke --headless --num_envs 256 --steps 450 with the Link7_1 pincer tip as the controlled point. Final error at 9 s (no resets): mean 8.2 cm, 1.2-14.8 cm; 33 of 256 within 5 cm (Wilson 95% 9.3-17.6%). Base settled 7.5 cm back from the env origin.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:44:39+10:00",
+  "started_utc": "2026-09-15T10:43:34+00:00",
+  "source_dir": "logs/position_only/20260915T104334_162270Z_smoke_seed42",
+  "mode": "smoke",
+  "seed": 42,
+  "status": "smoke_finished",
+  "error": null,
+  "num_envs": 256,
+  "iterations": 100,
+  "steps": 450,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "smoke.json",
+    "smoke_trace.csv",
+    "params_deploy.yaml"
+  ],
+  "smoke_summary": {
+    "steps": 450,
+    "transitions": 115200,
+    "failure_resets": 0,
+    "time_limit_resets": 0,
+    "posture_after_settling.base_height_m": {
+      "min": 0.2491549551486969,
+      "mean": 0.2666245698928833,
+      "max": 0.2751530408859253
+    },
+    "posture_after_settling.tilt_deg": {
+      "min": 0.0,
+      "mean": 1.329967975616455,
+      "max": 3.3829245567321777
+    },
+    "posture_after_settling.base_drift_m": {
+      "min": 0.06373491883277893,
+      "mean": 0.0749879702925682,
+      "max": 0.09446156024932861
+    },
+    "posture_after_settling.leg_joint_dev_rad": {
+      "min": 0.2491598129272461,
+      "mean": 0.34066134691238403,
+      "max": 0.4707256555557251
+    },
+    "posture_after_settling.arm_joint_dev_rad": {
+      "min": 0.008648557588458061,
+      "mean": 0.01051999256014824,
+      "max": 0.02152537927031517
+    },
+    "posture_after_settling.leg_torque_nm": {
+      "min": 6.15460729598999,
+      "mean": 8.520960807800293,
+      "max": 11.71127700805664
+    },
+    "posture_after_settling.arm_contact_n": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "posture_after_settling.base_x_m": {
+      "min": -0.09446144104003906,
+      "mean": -0.07498789578676224,
+      "max": -0.06373405456542969
+    },
+    "posture_after_settling.base_y_m": {
+      "min": -0.0006999969482421875,
+      "mean": -4.785008786711842e-05,
+      "max": 0.0003948211669921875
+    },
+    "posture_after_settling.base_yaw_deg": {
+      "min": -0.0513029471039772,
+      "mean": -0.004061009269207716,
+      "max": 0.0324040912091732
+    },
+    "settle_steps": 50,
+    "controller": "zero_actions_default_joint_targets",
+    "final_position_error_m": {
+      "count": 256,
+      "mean": 0.0817310242455278,
+      "min": 0.012135247699916363,
+      "median": 0.08396290987730026,
+      "max": 0.14827613532543182
+    },
+    "interpretation": "Interface smoke diagnostics only; not a baseline evaluation or success rate."
+  }
+}

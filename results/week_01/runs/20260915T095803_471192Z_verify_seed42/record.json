@@ -1,0 +1,38 @@
+{
+  "id": "20260915T095803_471192Z_verify_seed42",
+  "title": "Verify, 8 envs, --arm_actuator implicit (acceleration drives): 18/19",
+  "notes": "Same check code as the force-drive run. Link6 droop at rest 35.5 mm; J3 0.080 rad, J5 0.110 rad.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:00:15+10:00",
+  "started_utc": "2026-09-15T09:58:03+00:00",
+  "source_dir": "logs/position_only/20260915T095803_471192Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_failed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": false,
+    "passed": 18,
+    "total": 19,
+    "failed": [
+      "arm_holds_zero_pose_at_rest"
+    ],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

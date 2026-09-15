@@ -1,0 +1,44 @@
+{
+  "steps": 600,
+  "transitions": 600,
+  "failure_resets": 0,
+  "time_limit_resets": 1,
+  "posture_after_settling": {
+    "base_height_m": {
+      "min": 0.19743557274341583,
+      "mean": 0.26613739132881165,
+      "max": 0.41999998688697815
+    },
+    "tilt_deg": {
+      "min": 0.0,
+      "mean": 1.7463458776474,
+      "max": 18.857776641845703
+    },
+    "base_drift_m": {
+      "min": 0.0,
+      "mean": 0.06949745863676071,
+      "max": 0.07964606583118439
+    },
+    "leg_joint_dev_rad": {
+      "min": 0.0,
+      "mean": 0.359436571598053,
+      "max": 0.9773516654968262
+    },
+    "arm_joint_dev_rad": {
+      "min": 0.0,
+      "mean": 0.10961917787790298,
+      "max": 0.24554944038391113
+    },
+    "leg_torque_nm": {
+      "min": 1.7294499166098376e-12,
+      "mean": 8.98513412475586,
+      "max": 23.399999618530273
+    }
+  },
+  "settle_steps": 50,
+  "controller": "zero_actions_default_joint_targets",
+  "final_position_error_m": [
+    0.11737805604934692
+  ],
+  "interpretation": "Interface smoke diagnostics only; not a baseline evaluation or success rate."
+}

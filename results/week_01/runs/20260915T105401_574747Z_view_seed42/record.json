@@ -1,0 +1,28 @@
+{
+  "id": "20260915T105401_574747Z_view_seed42",
+  "title": "Replay (view), 16 envs, zero actions, pincer tip: targets met without moving",
+  "notes": "python run_position_only.py view --num_envs 16, shown to Lukas on the desktop. Killed (SIGKILL) after 42 episodes; episode counts recovered from the console log.",
+  "week": 1,
+  "recorded_at": "2026-09-15T21:10:14+10:00",
+  "started_utc": "2026-09-15T10:54:01+00:00",
+  "source_dir": "logs/position_only/20260915T105401_574747Z_view_seed42",
+  "mode": "view",
+  "seed": 42,
+  "status": "killed",
+  "error": "Process received SIGKILL (exit 137) about 7 min in, after 42 episodes; no out-of-memory message was found. Episode summaries recovered from the console log after the run (values rounded to 0.1 cm).",
+  "num_envs": 16,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "params_deploy.yaml"
+  ]
+}

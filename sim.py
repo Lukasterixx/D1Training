@@ -328,7 +328,7 @@ class SelfTest:
 
     def __init__(self, duration_s: float, command=(1.0, 0.0, 0.0), kin=None, d1=None):
         self.duration_s = duration_s
-        self.command = list(command)
+        self.command = [float(c) for c in command]
         self.kin = kin  # IsaacKinematics, if the arm is fitted
         self.d1 = d1    # DirectD1, if the arm is fitted
         self.t = 0.0
@@ -337,6 +337,10 @@ class SelfTest:
         self.min_height = float("inf")
         self.max_tilt_deg = 0.0
         self.fell = False
+        # Base-frame velocity summed over the walk, so lateral and yaw commands can be scored too.
+        self.velocity_sum = np.zeros(3)
+        self.steps = 0
+        self.result = None
 
     def step(self, robot, dt: float) -> bool:
         """Advance the test. Returns False once it is done."""
@@ -369,6 +373,9 @@ class SelfTest:
 
         if float(pos[2]) < self.FALLEN_HEIGHT_M:
             self.fell = True
+        self.velocity_sum += np.array([float(robot.data.root_lin_vel_b[0, 0]), float(robot.data.root_lin_vel_b[0, 1]),
+                                       float(robot.data.root_ang_vel_b[0, 2])])
+        self.steps += 1
 
         if self.t < self.duration_s:
             return True
@@ -383,6 +390,18 @@ class SelfTest:
         print(f"[selftest] min base height: {self.min_height:.3f} m")
         print(f"[selftest] max tilt       : {self.max_tilt_deg:.1f} deg")
         print(f"[selftest] verdict        : {'FELL OVER' if self.fell else 'stayed up'}")
+        mean_velocity = self.velocity_sum / max(self.steps, 1)
+        tracking = {axis: (100.0 * mean_velocity[i] / self.command[i] if abs(self.command[i]) > 1e-6 else None)
+                    for i, axis in enumerate(("vx", "vy", "wz"))}
+        print(f"[selftest] mean base vel  : vx {mean_velocity[0]:+.3f} m/s, vy {mean_velocity[1]:+.3f} m/s, "
+              f"wz {mean_velocity[2]:+.3f} rad/s  (command {self.command})")
+        self.result = {
+            "command": self.command, "duration_s": self.duration_s, "settle_s": self.SETTLE_S,
+            "mean_base_velocity": {"vx_m_s": mean_velocity[0], "vy_m_s": mean_velocity[1], "wz_rad_s": mean_velocity[2]},
+            "tracking_pct": tracking, "travelled_xy_m": [float(travelled[0]), float(travelled[1])],
+            "planar_speed_m_s": speed, "min_base_height_m": self.min_height, "max_tilt_deg": self.max_tilt_deg,
+            "fell": self.fell,
+        }
         if self.kin is not None:
             # Proves the IK chain actually closed: the weld put the arm in the
             # Go2's articulation, so a mis-sliced Jacobian would still run
@@ -394,6 +413,7 @@ class SelfTest:
             err = float(np.linalg.norm(actual - np.asarray(ARM_TELEOP_POS)))
             print(f"[selftest] arm EE target  : {np.round(ARM_TELEOP_POS, 3)} (base-relative)")
             print(f"[selftest] arm EE actual  : {np.round(actual, 3)}  -> error {err * 100:.1f} cm")
+            self.result["arm_ee_error_m"] = err
         if self.d1 is not None:
             jaw = self.d1.get_gripper_mm()
             # The URDF's fingers travel 30 mm each, so a full-open command
@@ -401,8 +421,50 @@ class SelfTest:
             ok = "ok" if jaw > 0.8 * self.GRIPPER_TEST_MM else "PINNED -- gripper is not tracking"
             print(f"[selftest] gripper        : commanded {self.GRIPPER_TEST_MM:.0f} mm "
                   f"-> measured {jaw:.1f} mm  ({ok})")
+            self.result["gripper_measured_mm"] = float(jaw)
         print("=" * 62 + "\n")
         return False
+
+
+def _sha256(path):
+    import hashlib
+
+    with open(path, "rb") as handle:
+        return hashlib.sha256(handle.read()).hexdigest()
+
+
+def _write_selftest(args_cli, result, robot, with_arm):
+    """Write a playback run folder that `./dashboard.py record` can store: run.json and selftest.json."""
+    import json
+    import subprocess
+    from datetime import datetime, timezone
+
+    root = os.path.dirname(os.path.abspath(__file__))
+
+    def git(*args):
+        out = subprocess.run(["git", "-C", root, *args], capture_output=True, text=True)
+        return out.stdout.strip() if out.returncode == 0 else None
+
+    agent = unitree_go2_agent_cfg
+    checkpoint = get_checkpoint_path(os.path.join(root, "logs", "rsl_rl", agent["experiment_name"]),
+                                     agent["load_run"], agent["load_checkpoint"])
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
+    command = "_".join(f"{c:+.1f}" for c in result["command"])
+    run_dir = os.path.join(os.path.abspath(args_cli.selftest_out), f"{stamp}_playback_{'arm' if with_arm else 'bare'}_{command}")
+    os.makedirs(run_dir)
+    metadata = {
+        "mode": "playback", "seed": None, "status": "fell" if result["fell"] else "selftest_finished",
+        "arguments": {"num_envs": args_cli.num_envs, "selftest": args_cli.selftest,
+                      "selftest_command": result["command"], "no_arm": args_cli.no_arm, "arm_mass": args_cli.arm_mass},
+        "git_commit": git("rev-parse", "HEAD"), "git_status": git("status", "--short"),
+        "articulation_mass_kg": float(robot.root_physx_view.get_masses()[0].sum()),
+        "policy": {"checkpoint": checkpoint, "sha256": _sha256(checkpoint), "actions": "12 legs", "legs": "DCMotor"},
+        "arm_drives": "URDF import (acceleration)" if with_arm else None,
+    }
+    for name, value in (("run.json", metadata), ("selftest.json", result)):
+        with open(os.path.join(run_dir, name), "w") as handle:
+            json.dump(value, handle, indent=2)
+    print(f"[selftest] wrote {run_dir}")
 
 
 def _load_policy(env, agent_cfg):
@@ -502,7 +564,8 @@ def run(args_cli, simulation_app):
         _CONTROLLER = controller
 
     sim_dt = env.unwrapped.step_dt
-    selftest = SelfTest(args_cli.selftest, kin=kin, d1=_D1) if args_cli.selftest > 0 else None
+    selftest = (SelfTest(args_cli.selftest, command=args_cli.selftest_command, kin=kin, d1=_D1)
+                if args_cli.selftest > 0 else None)
     if selftest is None:
         print("\n[keys] W/A/S/D walk, Q/E turn | arrows + 1/0 move the arm | , . gripper "
               "| Z home | P e-stop | R reset\n")
@@ -537,6 +600,9 @@ def run(args_cli, simulation_app):
 
             if selftest is not None and not selftest.step(robot, sim_dt):
                 break
+
+    if selftest is not None and selftest.result is not None and args_cli.selftest_out:
+        _write_selftest(args_cli, selftest.result, robot, with_arm)
 
     if _sub_keyboard is not None:
         _input.unsubscribe_to_keyboard_events(_keyboard, _sub_keyboard)

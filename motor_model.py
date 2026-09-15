@@ -66,3 +66,43 @@ def dc_motor_effort_bounds(joint_vel, saturation_effort, effort_limit, velocity_
     top = (saturation_effort * (1.0 - vel / velocity_limit)).clip(max=effort_limit)
     bottom = (saturation_effort * (-1.0 - vel / velocity_limit)).clip(min=-effort_limit)
     return bottom, top
+
+
+# ---------------------------------------------------------------------------- D1-550 arm
+# Unitree publishes no torque-speed curve for the D1's servos, so the D1 model is the published
+# torque limits, the speed limits the URDF carries, and the SDK's interface timing. Each value
+# is labelled with its source; replace them once the arm is measured. flat_env_cfg applies the
+# limits to force drives: the URDF import's acceleration drives let the arm sag (F-010).
+
+D1_ARM_JOINTS = [f"Joint{i}" for i in range(1, 7)]
+
+# Unitree D1-550 published joint torques (README, "The arm's mass"): first two joints 3.3 N·m, last four 1.7.
+D1_EFFORT_LIMIT_NM = dict(zip(D1_ARM_JOINTS, (3.3, 3.3, 1.7, 1.7, 1.7, 1.7)))
+
+# From d1_arm/d1.urdf. NOT Unitree data: Unitree's d1_description ships velocity="0"; these were
+# filled in when Rescue ported the arm (2026-07-16) with no recorded source.
+D1_VELOCITY_LIMIT_RAD_S = dict(zip(D1_ARM_JOINTS, (1.05, 1.05, 1.05, 1.73, 1.73, 1.73)))
+
+# D1 SDK interface (Rescue d1_sdk, reproduced from the SDK's headers and samples): the arm publishes
+# joint angles only, at 10 Hz, and takes streamed joint-angle setpoints at about 10 Hz.
+D1_FEEDBACK_HZ = 10.0
+D1_COMMAND_HZ = 10.0
+
+# Go2 legs: unitree_rl_lab's controller publishes LowCmd from a 1 kHz thread that picks up the 50 Hz
+# policy's latest action. Isaac Lab counts actuator delay in physics steps (5 ms here); 0-2 steps
+# covers pickup, state age, inference and transport. An estimate from the loop structure, not a measurement.
+GO2_LEG_DELAY_PHYSICS_STEPS = (0, 2)
+
+
+def interface_timing(latency: str, policy_hz: float, leg_actuator: str) -> dict:
+    """Interface timing for a latency profile, in the units the config uses."""
+    if latency == "none":
+        return {"leg_delay_physics_steps": (0, 0), "arm_command_hold_steps": 1, "arm_feedback_period_steps": 1}
+    if latency != "estimated":
+        raise ValueError(f"Unknown latency profile: {latency!r}")
+    return {
+        # Isaac Lab's delay buffer lives in the explicit actuator; the stock DCMotor legs get none.
+        "leg_delay_physics_steps": GO2_LEG_DELAY_PHYSICS_STEPS if leg_actuator == "unitree" else (0, 0),
+        "arm_command_hold_steps": round(policy_hz / D1_COMMAND_HZ),
+        "arm_feedback_period_steps": round(policy_hz / D1_FEEDBACK_HZ),
+    }

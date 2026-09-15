@@ -4,7 +4,7 @@ import unittest
 
 import torch
 
-from position_only.core import point_in_world, tracking_reward, world_to_body
+from position_only.core import box_edges, point_in_world, tracking_reward, world_to_body
 
 
 class PositionFrameTests(unittest.TestCase):
@@ -31,6 +31,14 @@ class PositionFrameTests(unittest.TestCase):
         tip = point_in_world(root, quat, torch.tensor([0.0, 0.0, 0.1]))
         torch.testing.assert_close(tip, torch.tensor([[1.1, 0.0, 0.0]]), atol=1e-6, rtol=0)
         torch.testing.assert_close(point_in_world(root, -quat, torch.tensor([0.0, 0.0, 0.1])), tip)
+
+    def test_box_edges_trace_the_twelve_edges_of_the_box(self):
+        centres, sizes = box_edges(((0.24, 0.36), (-0.08, 0.08), (0.66, 0.78)), thickness=0.004)
+        self.assertEqual((tuple(centres.shape), tuple(sizes.shape)), ((12, 3), (12, 3)))
+        lows, highs = centres - sizes / 2, centres + sizes / 2
+        torch.testing.assert_close(lows.min(dim=0).values, torch.tensor([0.238, -0.082, 0.658]))
+        torch.testing.assert_close(highs.max(dim=0).values, torch.tensor([0.362, 0.082, 0.782]))
+        self.assertEqual(sorted((sizes > 0.01).sum(dim=0).tolist()), [4, 4, 4])  # four edges along each axis
 
     def test_tracking_reward_has_metric_units_and_decreases(self):
         reward = tracking_reward(torch.tensor([0.0, 0.04, 0.08]), 0.04)

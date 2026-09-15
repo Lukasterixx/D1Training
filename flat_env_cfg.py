@@ -322,13 +322,23 @@ class Go2D1FlatEnvCfg(ManagerBasedRLEnvCfg):
 
 
 def make_robot_cfg(
-    robot_usd_path: str, with_arm: bool = True, leg_actuator: Literal["dc_motor", "unitree"] = "dc_motor"
+    robot_usd_path: str,
+    with_arm: bool = True,
+    leg_actuator: Literal["dc_motor", "unitree"] = "dc_motor",
+    arm_actuator: Literal["implicit", "d1_servo"] = "implicit",
+    leg_delay_steps: tuple[int, int] = (0, 0),
 ) -> ArticulationCfg:
     """The Go2's stock cfg, pointed at `robot_usd_path` and given arm drives.
 
     `leg_actuator="unitree"` swaps the stock `DCMotor` legs for Unitree's measured
-    torque-speed model (`unitree_actuators.py`), with the same 25/0.5 gains. Playback
-    keeps the default: the walking checkpoint was trained against `DCMotor`.
+    torque-speed model (`unitree_actuators.py`), with the same 25/0.5 gains, and
+    `leg_delay_steps` gives it a per-episode random command delay in physics steps.
+    `arm_actuator="d1_servo"` keeps the stiff implicit drive (standing in for the D1's
+    internal servo loop) but states its torque and speed limits explicitly from
+    `motor_model.py` instead of inheriting whatever the URDF import wrote, and makes the
+    joints force drives so the gains are N·m/rad (the import authors acceleration drives).
+    Playback keeps the defaults: the walking checkpoint was trained against `DCMotor`, with
+    the imported acceleration drives on the arm.
 
     Everything else about UNITREE_GO2_CFG is left alone -- same leg actuator
     model, same rigid/articulation props, same activate_contact_sensors -- so
@@ -372,14 +382,31 @@ def make_robot_cfg(
         # Same gains as the stock cfg; friction as in unitree_rl_lab's Go2 config.
         cfg.actuators["base_legs"] = UnitreeGo2HVActuatorCfg(
             joint_names_expr=LEG_JOINTS, stiffness=25.0, damping=0.5, friction=0.01,
+            min_delay=leg_delay_steps[0], max_delay=leg_delay_steps[1],
         )
     elif leg_actuator != "dc_motor":
         raise ValueError(f"Unknown leg actuator model: {leg_actuator!r}")
+    elif leg_delay_steps != (0, 0):
+        raise ValueError("Leg command delay needs the explicit 'unitree' leg actuator.")
+    if arm_actuator not in ("implicit", "d1_servo"):
+        raise ValueError(f"Unknown arm actuator model: {arm_actuator!r}")
     if with_arm:
+        arm_limits = {}
+        if arm_actuator == "d1_servo":
+            from motor_model import D1_EFFORT_LIMIT_NM, D1_VELOCITY_LIMIT_RAD_S
+
+            arm_limits = {"effort_limit_sim": D1_EFFORT_LIMIT_NM, "velocity_limit_sim": D1_VELOCITY_LIMIT_RAD_S}
+            # The URDF importer authors the D1's joints as *acceleration* drives, which scale the
+            # gains by each joint's effective inertia: 4000 then behaves like 3-90 N·m/rad and the
+            # arm sags up to 0.11 rad under its own weight inside its torque limits (Week 1 verify).
+            # Force drives make the gains N·m/rad. The Go2's legs are force drives already; the
+            # gripper changes too. `replace`, because copy() shares spawn with UNITREE_GO2_CFG.
+            cfg.spawn = cfg.spawn.replace(joint_drive_props=sim_utils.JointDrivePropertiesCfg(drive_type="force"))
         cfg.actuators["d1_arm"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint[1-6]"],
             stiffness=ARM_BASE_STIFFNESS,
             damping=ARM_BASE_DAMPING,
+            **arm_limits,
         )
         cfg.actuators["d1_gripper"] = ImplicitActuatorCfg(
             joint_names_expr=["Joint7_.*"],

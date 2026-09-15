@@ -1,0 +1,113 @@
+{
+  "id": "20260915T094508_663721Z_train_seed42",
+  "title": "PPO pilot 1, 64 envs x 100 iterations, seed 42 (acceleration arm drives, self-collisions off: before the fixes)",
+  "notes": "153,600 transitions; defaults (unitree legs, d1_servo, estimated latency, robustness none). Throughput and GPU memory recorded with no other GPU job running. Not a reaching evaluation.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:16:22+10:00",
+  "started_utc": "2026-09-15T09:45:08+00:00",
+  "source_dir": "logs/position_only/20260915T094508_663721Z_train_seed42",
+  "mode": "train",
+  "seed": 42,
+  "status": "training_finished",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": 99,
+  "final_checkpoint": {
+    "file": "model_99.pt",
+    "sha256": "f52b28bed324afc893f48a1486119215bc693e362f4b85e952f288eb0ea34fc8"
+  },
+  "scalar_summary": {
+    "Metrics/ee_position/position_error_m": {
+      "last": 0.06547842919826508,
+      "last_step": 99,
+      "mean_last_10": 0.09971371814608573,
+      "min": 0.0,
+      "max": 0.6973792314529419,
+      "points": 100
+    },
+    "Train/mean_reward": {
+      "last": 16.146827697753906,
+      "last_step": 99,
+      "mean_last_10": 16.063592147827148,
+      "min": 2.3959662914276123,
+      "max": 16.146827697753906,
+      "points": 93
+    },
+    "Train/mean_episode_length": {
+      "last": 500.0,
+      "last_step": 99,
+      "mean_last_10": 500.0,
+      "min": 188.0,
+      "max": 500.0,
+      "points": 93
+    },
+    "Episode_Termination/time_out": {
+      "last": 1.0,
+      "last_step": 99,
+      "mean_last_10": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "points": 100
+    },
+    "Episode_Termination/bad_orientation": {
+      "last": 0.0,
+      "last_step": 99,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.234375,
+      "points": 100
+    },
+    "Episode_Termination/low_base": {
+      "last": 0.0,
+      "last_step": 99,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 100
+    },
+    "Episode_Termination/base_contact": {
+      "last": 0.0,
+      "last_step": 99,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 100
+    },
+    "Episode_Termination/outside_workspace": {
+      "last": 0.0,
+      "last_step": 99,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 100
+    },
+    "Policy/mean_std": {
+      "last": 0.5112465023994446,
+      "last_step": 99,
+      "mean_last_10": 0.511109983921051,
+      "min": 0.5000553727149963,
+      "max": 0.5112465023994446,
+      "points": 100
+    },
+    "Perf/total_fps": {
+      "last": 3891.0,
+      "last_step": 99,
+      "mean_last_10": 3853.1,
+      "min": 2024.0,
+      "max": 4148.0,
+      "points": 100
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "gpu_memory.csv",
+    "run.json",
+    "params_deploy.yaml"
+  ]
+}

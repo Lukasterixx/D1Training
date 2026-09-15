@@ -1,0 +1,44 @@
+{
+  "id": "20260915T093352_794571Z_smoke_seed42",
+  "title": "Smoke, 1 env, defaults: first simulator run of the task",
+  "notes": "Unitree legs, d1_servo arm, estimated latency. Predates the posture statistics; interface only.",
+  "week": 1,
+  "recorded_at": "2026-09-15T19:44:41+10:00",
+  "started_utc": "2026-09-15T09:33:52+00:00",
+  "source_dir": "logs/position_only/20260915T093352_794571Z_smoke_seed42",
+  "mode": "smoke",
+  "seed": 42,
+  "status": "smoke_finished",
+  "error": null,
+  "num_envs": 1,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "smoke.json",
+    "params_deploy.yaml"
+  ],
+  "smoke_summary": {
+    "steps": 600,
+    "transitions": 600,
+    "failure_resets": 0,
+    "time_limit_resets": 1,
+    "controller": "zero_actions_default_joint_targets",
+    "final_position_error_m": {
+      "count": 1,
+      "mean": 0.11737805604934692,
+      "min": 0.11737805604934692,
+      "median": 0.11737805604934692,
+      "max": 0.11737805604934692
+    },
+    "interpretation": "Interface smoke diagnostics only; not a baseline evaluation or success rate."
+  }
+}

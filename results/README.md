@@ -19,6 +19,7 @@ View it with `./dashboard.py` from the repository root (it opens
 | `week_NN/runs/<run id>/` | Recorded runs: `record.json`, copied config/metadata, `scalars.csv` | `dashboard.py record` |
 | `week_NN/figures/` | Generated plots for the report (PNG/SVG) | Scripts |
 | `week_NN/screenshots/` | Simulator screenshots and clips (PNG/JPG/MP4). Loose images directly in `week_NN/` also show | Lukas |
+| `week_NN/external/<name>/` | Evidence from outside this repo (another project's experiments): copied outputs, configs, source snapshots, a provenance README and any script that summarises them | Claude |
 
 Screenshots are optional in any week. They appear in name order, captioned from
 the filename: `03_arm_self_collision.png` shows as "arm self collision".
@@ -31,9 +32,11 @@ the filename: `03_arm_self_collision.png` shows as "arm self collision".
 ./dashboard.py record logs/position_only/<run id> --title "64-env PPO pilot, seed 42"
 ```
 
-This copies `run.json`, `env.yaml`, `agent.json`, `smoke.json` and any other small
-JSON/YAML/CSV outputs; writes every TensorBoard scalar to `scalars.csv` (one row per
-iteration, one column per tag); and stores the final checkpoint's name and SHA-256.
+This copies `run.json`, `env.yaml`, `agent.json`, `smoke.json`, `smoke_trace.csv`,
+`verify.json` and any other small JSON/YAML/CSV outputs. It writes every TensorBoard scalar to
+`scalars.csv` (one row per iteration, one column per tag) and stores the final checkpoint's name
+and SHA-256. Smoke, verify and playback results are summarised in `record.json`. Playback
+self-tests become run folders with `./run_sim.sh ... --selftest 10 --selftest_out logs/playback`.
 The weights stay in `logs/`. The week defaults to when the run started. Recording
 again refreshes the copy and keeps the title and notes.
 

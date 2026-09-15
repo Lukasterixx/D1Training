@@ -1,0 +1,532 @@
+{
+  "all_passed": false,
+  "failed": [
+    "termination_time_limit_env1",
+    "termination_low_base_env2",
+    "termination_tilt_env3",
+    "termination_base_contact_env4",
+    "termination_workspace_exit_env5"
+  ],
+  "checks": [
+    {
+      "name": "arm_command_hold",
+      "passed": true,
+      "expected": "arm targets change exactly every 5 policy step(s)",
+      "observed": {
+        "change_steps_per_env": {
+          "0": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "1": [
+            2,
+            7,
+            12,
+            17,
+            22,
+            27
+          ],
+          "2": [
+            1,
+            6,
+            11,
+            16,
+            21,
+            26
+          ],
+          "3": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "4": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ],
+          "5": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "6": [
+            2,
+            7,
+            12,
+            17,
+            22,
+            27
+          ],
+          "7": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ]
+        }
+      }
+    },
+    {
+      "name": "arm_feedback_sampling",
+      "passed": true,
+      "expected": "arm angle feedback changes exactly every 5 policy step(s)",
+      "observed": {
+        "change_steps_per_env": {
+          "0": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ],
+          "1": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ],
+          "2": [
+            2,
+            7,
+            12,
+            17,
+            22,
+            27
+          ],
+          "3": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "4": [
+            4,
+            9,
+            14,
+            19,
+            24,
+            29
+          ],
+          "5": [
+            2,
+            7,
+            12,
+            17,
+            22,
+            27
+          ],
+          "6": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ],
+          "7": [
+            4,
+            9,
+            14,
+            19,
+            24,
+            29
+          ]
+        }
+      }
+    },
+    {
+      "name": "arm_feedback_is_current_at_sample",
+      "passed": true,
+      "expected": "a fresh arm sample equals the simulator's joint angle at that step (< 1e-5 rad)",
+      "observed": {
+        "max_abs_error_rad": 0.0
+      }
+    },
+    {
+      "name": "arm_velocity_from_samples",
+      "passed": true,
+      "expected": "arm velocity = (sample - previous sample) / sample interval, held between samples (< 1e-3 rad/s)",
+      "observed": {
+        "max_abs_error_rad_s": 1.1920928955078125e-07,
+        "held_between_samples": true
+      }
+    },
+    {
+      "name": "leg_feedback_every_step",
+      "passed": true,
+      "expected": "leg joint angles change every policy step",
+      "observed": {
+        "envs_checked": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "name": "timing_trace_uninterrupted",
+      "passed": true,
+      "expected": "no environment resets during the timing trace",
+      "observed": {
+        "envs_without_reset": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "name": "leg_delay_in_range",
+      "passed": true,
+      "expected": "per-env leg command delay within [0, 2] physics steps",
+      "observed": {
+        "lags": [
+          2,
+          0,
+          1,
+          0,
+          1,
+          0,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "name": "termination_control_env0",
+      "passed": true,
+      "expected": "no term fires, no reset, episode length continues, same target, base moves < 0.02 m",
+      "observed": {
+        "env": 0,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.0004864180809818208
+      }
+    },
+    {
+      "name": "termination_time_limit_env1",
+      "passed": false,
+      "expected": "exactly ['time_out'] fire; the env resets to the default root pose and joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 1,
+        "role": "time_limit",
+        "induced": "episode_length_buf set to 499",
+        "terms_fired": [
+          "time_out"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_low_base_env2",
+      "passed": false,
+      "expected": "exactly ['low_base'] fire; the env resets to the default root pose and joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 2,
+        "role": "low_base",
+        "induced": "base placed at 0.10 m, level, at rest",
+        "terms_fired": [
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_tilt_env3",
+      "passed": false,
+      "expected": "exactly ['bad_orientation'] fire; the env resets to the default root pose and joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 3,
+        "role": "tilt",
+        "induced": "base rolled 60 deg at the settled height 0.271 m",
+        "terms_fired": [
+          "bad_orientation"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_base_contact_env4",
+      "passed": false,
+      "expected": "exactly ['base_contact', 'low_base'] fire; the env resets to the default root pose and joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 4,
+        "role": "base_contact",
+        "induced": "base placed at 0.05 m, level, so its underside is in the ground",
+        "terms_fired": [
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_workspace_exit_env5",
+      "passed": false,
+      "expected": "exactly ['outside_workspace'] fire; the env resets to the default root pose and joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 5,
+        "role": "workspace_exit",
+        "induced": "base moved 0.80 m along x at the settled height 0.271 m",
+        "terms_fired": [
+          "outside_workspace"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_control_env6",
+      "passed": true,
+      "expected": "no term fires, no reset, episode length continues, same target, base moves < 0.02 m",
+      "observed": {
+        "env": 6,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.000491637852974236
+      }
+    },
+    {
+      "name": "termination_control_env7",
+      "passed": true,
+      "expected": "no term fires, no reset, episode length continues, same target, base moves < 0.02 m",
+      "observed": {
+        "env": 7,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.00047453719889745116
+      }
+    },
+    {
+      "name": "no_termination_right_after_reset",
+      "passed": true,
+      "expected": "no environment terminates in the 5 steps after the induced resets",
+      "observed": {
+        "envs_terminated": []
+      }
+    }
+  ],
+  "timing": {
+    "hold_steps": 5,
+    "feedback_period_steps": 5,
+    "phases": {
+      "command": [
+        0,
+        2,
+        1,
+        0,
+        3,
+        0,
+        2,
+        3
+      ],
+      "feedback": [
+        3,
+        3,
+        2,
+        0,
+        4,
+        2,
+        3,
+        4
+      ]
+    }
+  },
+  "resets": {
+    "settle_steps": 60,
+    "settled_base_height_m": [
+      0.27055034041404724,
+      0.2705446779727936,
+      0.27054083347320557,
+      0.27063947916030884,
+      0.27053725719451904,
+      0.27055278420448303,
+      0.2705584466457367,
+      0.27051711082458496
+    ],
+    "table": [
+      {
+        "env": 0,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.0004864180809818208
+      },
+      {
+        "env": 1,
+        "role": "time_limit",
+        "induced": "episode_length_buf set to 499",
+        "terms_fired": [
+          "time_out"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 2,
+        "role": "low_base",
+        "induced": "base placed at 0.10 m, level, at rest",
+        "terms_fired": [
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 3,
+        "role": "tilt",
+        "induced": "base rolled 60 deg at the settled height 0.271 m",
+        "terms_fired": [
+          "bad_orientation"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 4,
+        "role": "base_contact",
+        "induced": "base placed at 0.05 m, level, so its underside is in the ground",
+        "terms_fired": [
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 5,
+        "role": "workspace_exit",
+        "induced": "base moved 0.80 m along x at the settled height 0.271 m",
+        "terms_fired": [
+          "outside_workspace"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_default_rad": 0.0015000002458691597,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 6,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.000491637852974236
+      },
+      {
+        "env": 7,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.00047453719889745116
+      }
+    ]
+  },
+  "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+}

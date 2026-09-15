@@ -1,0 +1,54 @@
+{
+  "id": "20260915T100348_230691Z_playback_arm_+0.0_+0.5_+0.0",
+  "title": "Playback, Go2+D1, lateral 0.5 m/s",
+  "notes": "./run_sim.sh --headless --no_ros2 --selftest 10; walking checkpoint model_7850.pt (unitree_go2_rough, DCMotor legs); arm on imported acceleration drives with the IK teleop target. One robot, one 10 s run.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:05:23+10:00",
+  "started_utc": "2026-09-15T10:03:48+00:00",
+  "source_dir": "logs/playback/20260915T100348_230691Z_playback_arm_+0.0_+0.5_+0.0",
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "error": null,
+  "num_envs": 1,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "run.json",
+    "selftest.json"
+  ],
+  "smoke_summary": {
+    "command": {
+      "count": 3,
+      "mean": 0.16666666666666666,
+      "min": 0.0,
+      "median": 0.0,
+      "max": 0.5
+    },
+    "duration_s": 10.0,
+    "settle_s": 1.0,
+    "mean_base_velocity.vx_m_s": 0.00731739472122533,
+    "mean_base_velocity.vy_m_s": 0.4360019706278861,
+    "mean_base_velocity.wz_rad_s": 0.006569283494078452,
+    "tracking_pct.vy": 87.20039412557722,
+    "travelled_xy_m": {
+      "count": 2,
+      "mean": 2.1476953104138374,
+      "min": -0.06167314946651459,
+      "median": 4.3570637702941895,
+      "max": 4.3570637702941895
+    },
+    "planar_speed_m_s": 0.43575000762939453,
+    "min_base_height_m": 0.3761354088783264,
+    "max_tilt_deg": 6.382421882126807,
+    "fell": false,
+    "arm_ee_error_m": 0.03617531302126901,
+    "gripper_measured_mm": 59.69115346670151
+  }
+}

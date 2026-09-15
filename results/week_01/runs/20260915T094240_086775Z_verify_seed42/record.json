@@ -1,0 +1,42 @@
+{
+  "id": "20260915T094240_086775Z_verify_seed42",
+  "title": "Verify, 8 envs: 11/16 checks (check design errors)",
+  "notes": "Failed on two errors in the checks, not the task: joint reset compared against the unclamped gripper default, and a 7 mm base overlap too shallow for the contact sensor's history. Superseded by the next verify run.",
+  "week": 1,
+  "recorded_at": "2026-09-15T19:44:41+10:00",
+  "started_utc": "2026-09-15T09:42:40+00:00",
+  "source_dir": "logs/position_only/20260915T094240_086775Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_failed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": false,
+    "passed": 11,
+    "total": 16,
+    "failed": [
+      "termination_time_limit_env1",
+      "termination_low_base_env2",
+      "termination_tilt_env3",
+      "termination_base_contact_env4",
+      "termination_workspace_exit_env5"
+    ],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

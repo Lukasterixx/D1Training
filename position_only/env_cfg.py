@@ -15,7 +15,9 @@ from isaaclab.utils import configclass
 from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 from flat_env_cfg import FlatSceneCfg, EventCfg, make_robot_cfg
+from motor_model import interface_timing
 from . import mdp as task_mdp
+from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 
 # An explicit common order for observations, actions and saved run manifests.
 LEG_NAMES = [f"{leg}_{joint}_joint" for joint in ("hip", "thigh", "calf")
@@ -28,10 +30,28 @@ def controlled_joints():
     return SceneEntityCfg("robot", joint_names=CONTROLLED_NAMES, preserve_order=True)
 
 
+def leg_joints():
+    return SceneEntityCfg("robot", joint_names=LEG_NAMES, preserve_order=True)
+
+
+def arm_joints():
+    return SceneEntityCfg("robot", joint_names=ARM_NAMES, preserve_order=True)
+
+
+def arm_feedback(quantity):
+    # period_steps is set by make_cfg's latency profile; 1 means exact simulator state.
+    return {"asset_cfg": arm_joints(), "period_steps": 1, "quantity": quantity}
+
+
+# configclass turns mutable class attributes into default factories, so the ground and light
+# exist only on an instance, not on the class.
+_FLAT_SCENE = FlatSceneCfg(num_envs=1, env_spacing=3.0)
+
+
 @configclass
 class ReachSceneCfg(InteractiveSceneCfg):
-    terrain = FlatSceneCfg.terrain.copy()
-    sky_light = FlatSceneCfg.sky_light.copy()
+    terrain = _FLAT_SCENE.terrain.copy()
+    sky_light = _FLAT_SCENE.sky_light.copy()
     robot = None
     # Separate sensors because the welded D1 bodies are a level deeper.
     base_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/base", history_length=3)
@@ -49,9 +69,9 @@ class ActionsCfg:
         asset_name="robot", joint_names=LEG_NAMES, preserve_order=True,
         scale=0.25, use_default_offset=True,
     )
-    arm = task_mdp.LimitedJointPositionActionCfg(
+    arm = task_mdp.HeldJointPositionActionCfg(
         asset_name="robot", joint_names=ARM_NAMES, preserve_order=True,
-        scale=1.0, use_default_offset=True,
+        scale=1.0, use_default_offset=True, hold_steps=1,
     )
 
 
@@ -67,10 +87,16 @@ class ObservationsCfg:
         """
         base_ang_vel = ObservationTermCfg(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
         projected_gravity = ObservationTermCfg(func=mdp.projected_gravity, noise=Unoise(n_min=-0.05, n_max=0.05))
-        joint_pos = ObservationTermCfg(func=mdp.joint_pos_rel, params={"asset_cfg": controlled_joints()},
-                                       noise=Unoise(n_min=-0.01, n_max=0.01))
-        joint_vel = ObservationTermCfg(func=mdp.joint_vel_rel, params={"asset_cfg": controlled_joints()},
-                                       noise=Unoise(n_min=-1.5, n_max=1.5))
+        # Legs report at the policy rate. The D1 reports joint angles only, at 10 Hz under the
+        # "estimated" latency profile, so its velocities are differenced from those samples.
+        leg_joint_pos = ObservationTermCfg(func=mdp.joint_pos_rel, params={"asset_cfg": leg_joints()},
+                                           noise=Unoise(n_min=-0.01, n_max=0.01))
+        arm_joint_pos = ObservationTermCfg(func=task_mdp.SampledJointFeedback, params=arm_feedback("pos"),
+                                           noise=Unoise(n_min=-0.01, n_max=0.01))
+        leg_joint_vel = ObservationTermCfg(func=mdp.joint_vel_rel, params={"asset_cfg": leg_joints()},
+                                           noise=Unoise(n_min=-1.5, n_max=1.5))
+        arm_joint_vel = ObservationTermCfg(func=task_mdp.SampledJointFeedback, params=arm_feedback("vel"),
+                                           noise=Unoise(n_min=-1.5, n_max=1.5))
         target_position = ObservationTermCfg(func=mdp.generated_commands, params={"command_name": "ee_position"})
         tip_position = ObservationTermCfg(func=task_mdp.tip_position_b)
         previous_action = ObservationTermCfg(func=mdp.last_action)
@@ -100,7 +126,7 @@ class ObservationsCfg:
     critic = CriticCfg()
 
 
-# Widths the launcher checks: 3+3+18+18+3+3+18 and 3+3+3+18+18+18+3+3+18.
+# Widths the launcher checks: 3+3+(12+6)+(12+6)+3+3+18 and 3+3+3+18+18+18+3+3+18.
 POLICY_OBS_DIM = 66
 CRITIC_OBS_DIM = 87
 
@@ -182,15 +208,25 @@ class PositionOnlyEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.lookat = (0.25, 0.0, 0.5)
 
 
-def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=(0.0, 0.0, 0.0),
-             leg_actuator="unitree", robustness="none", self_collisions=False):
+def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=TOOL_OFFSET_M, tip_body=TOOL_BODY,
+             leg_actuator="unitree", robustness="none", self_collisions=True, latency="estimated",
+             arm_actuator="d1_servo"):
     """`leg_actuator`: "unitree" (measured Go2 envelope) or "dc_motor" (Isaac Lab stock).
+    `arm_actuator`: "d1_servo" (explicit published torque and URDF speed limits) or "implicit".
+    `latency`: "estimated" (leg command delay; D1 commands and feedback at 10 Hz) or "none".
     `robustness`: "none" (deterministic, for bring-up) or "unitree" (observation noise and
-    unitree_rl_lab randomisation). `self_collisions` lets the arm collide with the Go2 body."""
+    unitree_rl_lab randomisation). `self_collisions` lets the arm collide with the Go2 body: on by
+    default, as in unitree_rl_lab, once Week 1 measured no resting contact from the weld."""
     if robustness not in ("none", "unitree"):
         raise ValueError(f"Unknown robustness profile: {robustness!r}")
     cfg = PositionOnlyEnvCfg()
-    cfg.scene.robot = make_robot_cfg(robot_usd_path, with_arm=True, leg_actuator=leg_actuator)
+    timing = interface_timing(latency, 1.0 / (cfg.sim.dt * cfg.decimation), leg_actuator)
+    cfg.scene.robot = make_robot_cfg(robot_usd_path, with_arm=True, leg_actuator=leg_actuator,
+                                     arm_actuator=arm_actuator,
+                                     leg_delay_steps=tuple(timing["leg_delay_physics_steps"]))
+    cfg.actions.arm.hold_steps = timing["arm_command_hold_steps"]
+    for term in (cfg.observations.policy.arm_joint_pos, cfg.observations.policy.arm_joint_vel):
+        term.params["period_steps"] = timing["arm_feedback_period_steps"]
     # unitree_rl_lab's articulation solver settings (stock Go2: 4 position, 0 velocity iterations).
     props = cfg.scene.robot.spawn.articulation_props
     props.solver_position_iteration_count = 8
@@ -202,5 +238,6 @@ def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=(
     cfg.scene.num_envs = num_envs
     cfg.seed = seed
     cfg.sim.device = device
+    cfg.commands.ee_position.body_name = tip_body
     cfg.commands.ee_position.tip_offset = tuple(tip_offset)
     return cfg

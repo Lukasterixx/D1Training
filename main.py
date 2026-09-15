@@ -40,6 +40,14 @@ parser.add_argument(
          "Pair with --headless to compare arm masses without a viewport.",
 )
 parser.add_argument(
+    "--selftest_command", type=float, nargs=3, default=(1.0, 0.0, 0.0), metavar=("VX", "VY", "WZ"),
+    help="Base command for --selftest: forward and lateral m/s, yaw rad/s.",
+)
+parser.add_argument(
+    "--selftest_out", metavar="DIR",
+    help="Also write the self-test as a run folder (run.json, selftest.json) under DIR, for ./dashboard.py record.",
+)
+parser.add_argument(
     "--no_ros2", action="store_true",
     help="Skip the ROS 2 bridge: no /utlidar/cloud, no /joint_states, no TF. "
          "Use this when running main.py outside run_sim.sh, which is what sets "

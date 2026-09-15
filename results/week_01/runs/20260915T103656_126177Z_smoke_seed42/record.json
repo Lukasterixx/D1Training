@@ -1,0 +1,81 @@
+{
+  "id": "20260915T103656_126177Z_smoke_seed42",
+  "title": "Smoke, 8 envs, pincer tip",
+  "notes": "Zero actions, 600 steps (final error after the 10 s reset): 3.4-13.3 cm, mean 8.5 cm.",
+  "week": 1,
+  "recorded_at": "2026-09-15T20:45:09+10:00",
+  "started_utc": "2026-09-15T10:36:56+00:00",
+  "source_dir": "logs/position_only/20260915T103656_126177Z_smoke_seed42",
+  "mode": "smoke",
+  "seed": 42,
+  "status": "smoke_finished",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab1a619235f50f55eb2c09606b3b3017bd86b081",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "smoke.json",
+    "smoke_trace.csv",
+    "params_deploy.yaml"
+  ],
+  "smoke_summary": {
+    "steps": 600,
+    "transitions": 4800,
+    "failure_resets": 0,
+    "time_limit_resets": 8,
+    "posture_after_settling.base_height_m": {
+      "min": 0.19725380837917328,
+      "mean": 0.2665272653102875,
+      "max": 0.41999998688697815
+    },
+    "posture_after_settling.tilt_deg": {
+      "min": 0.0,
+      "mean": 1.7212414741516113,
+      "max": 18.690298080444336
+    },
+    "posture_after_settling.base_drift_m": {
+      "min": 0.0,
+      "mean": 0.07167010754346848,
+      "max": 0.09397795051336288
+    },
+    "posture_after_settling.leg_joint_dev_rad": {
+      "min": 0.0,
+      "mean": 0.3528287708759308,
+      "max": 0.9779348373413086
+    },
+    "posture_after_settling.arm_joint_dev_rad": {
+      "min": 0.0,
+      "mean": 0.017833832651376724,
+      "max": 0.23751485347747803
+    },
+    "posture_after_settling.leg_torque_nm": {
+      "min": 1.8626343489813735e-07,
+      "mean": 8.814041137695312,
+      "max": 23.399999618530273
+    },
+    "posture_after_settling.arm_contact_n": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "settle_steps": 50,
+    "controller": "zero_actions_default_joint_targets",
+    "final_position_error_m": {
+      "count": 8,
+      "mean": 0.08457939606159925,
+      "min": 0.03430267050862312,
+      "median": 0.09008162468671799,
+      "max": 0.13289546966552734
+    },
+    "interpretation": "Interface smoke diagnostics only; not a baseline evaluation or success rate."
+  }
+}
