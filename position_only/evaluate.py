@@ -85,7 +85,10 @@ def run_episodes(env, manifest, policy=None, device="cuda:0", progress=None):
     conditions = manifest["conditions"]
     step_dt = unwrapped.step_dt
     total_steps = int(round(conditions["episode_length_s"] / step_dt))
-    dwell_steps = int(round(DWELL_S / step_dt))
+    # From the manifest, not the module default: a frozen manifest that declared a different dwell
+    # was silently evaluated at 1.0 s before, which is the manifest saying one thing and the code
+    # doing another -- the same family of defect as F-039.
+    dwell_steps = int(round(conditions.get("dwell_s", DWELL_S) / step_dt))
     final_steps = int(round(FINAL_WINDOW_S / step_dt))
     radius = conditions["success_radius_m"]
 

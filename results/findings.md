@@ -1051,3 +1051,50 @@ result that changes a conclusion gets a new entry, and the old one is marked
   effort limits — rather than the labels that select them, which makes a model change a loud mismatch instead of
   a silent one. Doing so changes all three manifest hashes and requires re-measuring the zero-action baselines,
   which is about 15 s each and is cheap **now**, before any policy of record exists. It will not be cheap later.
+
+### F-040 — Pricing the base height removes the squat and improves tracking, at one fall in a hundred
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). A `base_height_l2` reward term was added at
+  weight −50 against the measured settled stance (0.2737 m, `task_space.ZERO_ACTION_BASE_OFFSET_M`), squared
+  deviation so that small adjustments stay cheap and a collapse does not. Retrained at the same budget and seed
+  as F-019 (2048 envs × 1500 iterations = 73,728,000 transitions, 12 min 38 s, 98,966 steps/s, peak GPU
+  4,873 MiB; run `20260916T095614_757009Z`) under the measured arm model (F-020, F-033). Evaluated on the
+  re-frozen development manifest `3c5270d9b2cb` with no condition mismatches
+  (run `20260916T100927_254710Z`), against the F-019 policy re-run on the same model (F-038):
+
+  | | F-019 squat | with base-height term |
+  | --- | --- | --- |
+  | Success | 100/100 | **99/100** (Wilson 94.6–99.8%) |
+  | Falls | 0 | **1** (1.0%, Wilson 0.18–5.45%) |
+  | Final-2 s mean error | 1.33 cm | **0.93 cm** |
+  | 95th percentile | 2.66 cm | 2.39 cm |
+  | RMS | 2.50 cm | 2.51 cm |
+  | Lowest base height | 0.1588 m | **0.2182 m** |
+  | Episodes below 0.20 m | 100 of 100 | **0 of 100** |
+  | Median episode tilt | 10.89° | **8.00°** |
+  | Peak tilt | 17.63° | 42.79° |
+  | Legs at effort limit | 14.0% of steps | **6.9% of steps** |
+
+  Training-time `Episode_Reward/base_height` fell from −0.0185 at iteration 300 to −0.0039 at 1500, i.e. an RMS
+  deviation from the settled stance of 1.9 cm falling to 0.9 cm. The single failure is episode 12, target
+  (0.471, 0.080, 0.598) — the far top corner of the box, at the edge of two ranges. It reached and dwelled for
+  0.82 s, short of the 1 s needed, then tipped at 1.80 s to 42.8° against the 45.84° `bad_orientation` limit.
+  It is the only episode past 30°; the next highest is 13.2° at the 95th percentile.
+- **Scope:** one seed, one manifest, `--robustness none`, `development` (the inspectable set), deterministic
+  policy actions. `eval.json` reports `g1a.passed: true`, but on 100 episodes one fall *is* 1.0% against a
+  "≤1% falls" criterion, so this sits exactly on the boundary rather than inside it, and the Wilson interval
+  puts the true fall rate as high as 5.45%. G1a additionally wants three seeds (G3), and a development-set
+  number cannot be the reported result. The arm's commanded-effort figure stays near 1.0 and remains a
+  commanded figure (F-017).
+- **Implication:** the squat was a reward gap, not a property of the task. Pricing the base height removed it
+  outright — no episode now goes below 0.20 m, against every episode before, and the worst margin above the
+  `low_base` termination goes from 9 mm to 6.8 cm — while steady-state tracking *improved* by 30% and leg
+  saturation halved. The policy is reaching with its arm. What it exposed is a different, rarer failure: from a
+  standing posture the far top corner of the box is near the tilt limit, and one episode in a hundred tips
+  there. That is a better failure to have than a 9 mm floor margin, because it is localised to a known corner
+  rather than present in every episode, but it is not yet a G1a pass and must not be reported as one. Next:
+  three seeds, then decide whether the corner needs a posture term, a curriculum, or a box whose corners the
+  robot can hold. Do not tune against `validation` or `test`.

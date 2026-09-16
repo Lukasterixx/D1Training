@@ -1,0 +1,112 @@
+{
+  "id": "20260916T095614_757009Z_train_seed42",
+  "title": "P0 candidate v2: base-height term, measured arm model, seed 42",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-16T20:10:36+10:00",
+  "started_utc": "2026-09-16T09:56:14+00:00",
+  "source_dir": "logs/position_only/20260916T095614_757009Z_train_seed42",
+  "mode": "train",
+  "seed": 42,
+  "status": "training_finished",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 600,
+  "git_commit": "62561f313a08baf26a4c2870e3f82f882e3fdf0b",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": 1499,
+  "final_checkpoint": {
+    "file": "model_1499.pt",
+    "sha256": "bcea92f47509158a389da27bc427dba5b95cfd6791f7882a073dc0dbd6bd217c"
+  },
+  "scalar_summary": {
+    "Metrics/ee_position/position_error_m": {
+      "last": 0.004752037115395069,
+      "last_step": 1499,
+      "mean_last_10": 0.010964897507801653,
+      "min": 0.0,
+      "max": 0.5815001130104065,
+      "points": 1500
+    },
+    "Train/mean_reward": {
+      "last": 33.79634475708008,
+      "last_step": 1499,
+      "mean_last_10": 33.42446060180664,
+      "min": 2.554924249649048,
+      "max": 33.79634475708008,
+      "points": 1493
+    },
+    "Train/mean_episode_length": {
+      "last": 500.0,
+      "last_step": 1499,
+      "mean_last_10": 495.5020050048828,
+      "min": 179.0,
+      "max": 500.0,
+      "points": 1493
+    },
+    "Episode_Termination/time_out": {
+      "last": 0.99169921875,
+      "last_step": 1499,
+      "mean_last_10": 0.9929402768611908,
+      "min": 0.0,
+      "max": 1.0,
+      "points": 1500
+    },
+    "Episode_Termination/bad_orientation": {
+      "last": 0.00830078125,
+      "last_step": 1499,
+      "mean_last_10": 0.00705973319709301,
+      "min": 0.0,
+      "max": 0.16943359375,
+      "points": 1500
+    },
+    "Episode_Termination/low_base": {
+      "last": 0.0,
+      "last_step": 1499,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 1500
+    },
+    "Episode_Termination/base_contact": {
+      "last": 0.0,
+      "last_step": 1499,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 1500
+    },
+    "Episode_Termination/outside_workspace": {
+      "last": 0.0,
+      "last_step": 1499,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 1.7932637929916382,
+      "last_step": 1499,
+      "mean_last_10": 1.7719518423080445,
+      "min": 0.500221312046051,
+      "max": 1.7932637929916382,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 98966.0,
+      "last_step": 1499,
+      "mean_last_10": 96742.0,
+      "min": 60231.0,
+      "max": 104481.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "params_deploy.yaml"
+  ]
+}

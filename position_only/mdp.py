@@ -229,6 +229,29 @@ def outside_workspace(env, distance: float):
     return torch.linalg.vector_norm(delta[:, :2], dim=-1) > distance
 
 
+def base_height_l2(env, target_height: float):
+    """Squared deviation of the base from the stance the robot settles into.
+
+    Without this the reward set has nothing to say about base height: `upright` prices tilt and
+    `base_motion` prices velocity, but a slow, level squat is free. The target box sits 14-30 cm
+    *below* the resting tool point (F-016), so lowering the whole arm by crouching is a cheaper way
+    to follow it than moving the arm, and the first policy trained against that box did exactly
+    that -- every episode below 0.20 m, 9 mm above the `low_base` termination at worst, legs
+    saturated for up to a third of an episode (F-019).
+
+    This prices the squat rather than forbidding it: the plan allows stance and posture changes for
+    whole-body coordination, and the workspace analysis says the arm can reach 99.1% of the box from
+    the settled stance without one (F-016). Squared deviation is deliberately cheap for small
+    adjustments and expensive for a collapse -- at the -50 weight the task uses, a 2 cm shift costs
+    0.02 per step against reaching's 3.0, while the 10 cm crouch F-019 measured costs 0.52.
+
+    Height is read exactly as `base_too_low` reads it, so the reward and the termination cannot
+    disagree about what the base height is.
+    """
+    height = env.scene["robot"].data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
+    return torch.square(height - target_height)
+
+
 def base_too_low(env, minimum_height: float):
     height = env.scene["robot"].data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
     return height < minimum_height

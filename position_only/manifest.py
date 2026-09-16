@@ -35,6 +35,8 @@ SUCCESS_RADIUS_M = 0.05  # G1a
 DWELL_S = 1.0  # G1a: continuous time inside the success radius
 EPISODE_LENGTH_S = 10.0  # G1a
 ROLES = ("development", "validation", "test")
+POLICY_HZ = 50.0  # env_cfg: 1 / (sim.dt * decimation)
+ARM_JOINT_ORDER = tuple(f"Joint{i}" for i in range(1, 7))
 # Distinct RNG streams per role, so the three sets are drawn independently rather than being
 # prefixes of one sequence. Changing these changes every manifest, hence the recorded hash.
 ROLE_SEEDS = {"development": 20260916, "validation": 20260917, "test": 20260918}
@@ -48,7 +50,7 @@ def _digest(payload):
 
 def build(role, episodes=100, ranges=TARGET_RANGES, spawn_height=SPAWN_HEIGHT_M,
           robustness="none", latency="estimated", leg_actuator="unitree", arm_actuator="d1_servo",
-          self_collisions=True, seed=None):
+          self_collisions=True, policy_hz=POLICY_HZ, seed=None):
     """A manifest as a plain dict. Deterministic in its arguments."""
     if role not in ROLES:
         raise ValueError(f"Unknown manifest role: {role!r}; expected one of {ROLES}")
@@ -60,6 +62,11 @@ def build(role, episodes=100, ranges=TARGET_RANGES, spawn_height=SPAWN_HEIGHT_M,
     # One draw per axis in a fixed order, so the stream does not depend on numpy's broadcasting.
     targets = np.stack([rng.uniform(low, high, size=episodes) for low, high in ranges], axis=-1)
 
+    # Imported here rather than at module scope: motor_model pulls in torch, and load(), targets()
+    # and mismatches() must stay importable without it so a manifest can be inspected anywhere.
+    from motor_model import D1_EFFORT_LIMIT_NM, D1_VELOCITY_LIMIT_RAD_S, interface_timing
+
+    timing = interface_timing(latency, policy_hz, leg_actuator)
     conditions = {
         # Everything that must match across policies for the comparison to mean anything.
         "spawn_height_m": float(spawn_height),
@@ -74,6 +81,18 @@ def build(role, episodes=100, ranges=TARGET_RANGES, spawn_height=SPAWN_HEIGHT_M,
         "episode_length_s": EPISODE_LENGTH_S,
         "success_radius_m": SUCCESS_RADIUS_M,
         "dwell_s": DWELL_S,
+        # The robot model itself, resolved to numbers rather than left behind the labels that
+        # select it. `latency: "estimated"` stayed "estimated" across the 2026-09-16 hardware
+        # corrections while the values behind it changed, and two evaluations of one checkpoint on
+        # this manifest reported no mismatch although the policy's steady-state error had more than
+        # doubled (F-039). The plan requires the same robot dynamics across P0-P4, so the model is
+        # part of the frozen comparison and belongs here where a change is loud.
+        "policy_hz": float(policy_hz),
+        "arm_velocity_limits_rad_s": [float(D1_VELOCITY_LIMIT_RAD_S[j]) for j in ARM_JOINT_ORDER],
+        "arm_effort_limits_nm": [float(D1_EFFORT_LIMIT_NM[j]) for j in ARM_JOINT_ORDER],
+        "leg_delay_physics_steps": list(timing["leg_delay_physics_steps"]),
+        "arm_command_hold_steps": int(timing["arm_command_hold_steps"]),
+        "arm_feedback_period_steps": int(timing["arm_feedback_period_steps"]),
     }
     content = {
         "conditions": conditions,
@@ -116,17 +135,42 @@ def targets(manifest):
     return np.asarray([episode["target_env_frame_m"] for episode in manifest["episodes"]], dtype=np.float64)
 
 
+# Conditions the manifest dictates *to* the evaluator rather than describing the run: the evaluator
+# reads them from the manifest and applies them, so there is no independent value to compare and
+# asking a run to report them back would only compare the manifest with itself.
+MEASUREMENT_KEYS = ("success_radius_m", "dwell_s")
+
+
+def _same(expected, actual, tol=1e-6):
+    """Equality that tolerates float32 round-trips through PhysX but nothing larger.
+
+    Conditions now carry per-joint limits read back from the simulator, where 1.29 comes back as
+    1.2899999618530273, so an exact comparison on nested lists would report a mismatch on every run.
+    The tolerance is 1e-6: far above float32 noise, far below any change worth freezing a manifest
+    against -- the smallest real difference here, 1.21 against 1.25 rad/s, is 4e-2.
+    """
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        # Both must be bools: in Python True == 1, and a manifest's `true` must not match a run's 1.
+        return isinstance(expected, bool) and isinstance(actual, bool) and expected == actual
+    if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
+        return abs(float(expected) - float(actual)) <= tol
+    if isinstance(expected, (list, tuple)) and isinstance(actual, (list, tuple)):
+        return len(expected) == len(actual) and all(_same(e, a, tol) for e, a in zip(expected, actual))
+    return json.loads(json.dumps(expected)) == json.loads(json.dumps(actual))
+
+
 def mismatches(manifest, conditions):
     """Which of the manifest's conditions the given run does not meet, as human-readable lines."""
     out = []
     for key, expected in manifest["conditions"].items():
+        if key in MEASUREMENT_KEYS:
+            continue
         if key not in conditions:
+            # Not skipped: a condition the run does not report is a condition nobody checked, which
+            # is exactly how a model change slips through unnoticed (F-039).
+            out.append(f"{key}: manifest {expected!r}, run did not report it")
             continue
         actual = conditions[key]
-        if isinstance(expected, float) or isinstance(actual, float):
-            same = abs(float(expected) - float(actual)) < 1e-9
-        else:
-            same = json.loads(json.dumps(expected)) == json.loads(json.dumps(actual))
-        if not same:
+        if not _same(expected, actual):
             out.append(f"{key}: manifest {expected!r}, run {actual!r}")
     return out

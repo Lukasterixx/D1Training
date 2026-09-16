@@ -53,7 +53,8 @@ Week 2's G4 still depends on them.
 - [x] Cartesian (IK) controller for the arm: `d1_ik.py` solver and `d1_hardware.py` client (2026-09-16, F-025). **Executed on hardware**: an 11.3 cm Cartesian move tracked to a 6.0 mm residual, which is the arm settling rather than the solver (F-026). Absolute Cartesian accuracy still unvalidated pending the J1/J2 zero
 - [~] Hardware and camera half of the revised Week 1: D1 telemetry and arm response **done** on the real arm via the Go2 (F-020, F-021, F-022, F-023, 2026-09-16); RealSense/tags, box loads and fixture needs still not started
 - [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
-- [ ] Price the squat: add a base-height term to the reward and retrain, so reaching is not done by crouching to 9 mm above the fall termination (F-019)
+- [x] Price the squat: `base_height_l2` at weight −50 against the measured stance; retrained seed 42 and re-evaluated (2026-09-16, F-040). Squat gone (0 of 100 episodes below 0.20 m), tracking 30% better, 1 fall in 100 at a corner target
+- [ ] Three seeds (42/43/44) at the frozen budget, then a candidate G1a on `validation`; diagnose the far-top-corner tilt failure (F-040)
 - [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
 - [x] D1 joint speed limits measured on hardware and `motor_model.py` updated: 1.20–1.29 rad/s on every joint, no 1.05/1.73 split (2026-09-16, F-033)
 - [x] Validate the servo signs on hardware with an observer (2026-09-16, F-034): J0 and J3 inverted, J4/J5 correct, J1/J2 indirect. `SERVO_SIGN = [-1,1,1,-1,1,1]`
@@ -1519,6 +1520,105 @@ What it does not show:
 - **The arm model is still optimistic**: no command latency, no acceleration limit, and the measured
   speeds are lower bounds (F-033).
 
+### 2026-09-16 · Pricing the squat, and pinning the robot model into the manifests (sixth session, continued)
+
+Three changes in one pass, so the retrained policy carries all of them: the base-height reward term
+(F-019's fix), the measured arm model (already in from the hardware session), and the manifest
+conditions carrying the model rather than the labels that select it (F-039's fix).
+
+#### The manifests now freeze the robot, not just the episodes
+
+`conditions` gained `policy_hz`, per-joint `arm_velocity_limits_rad_s` and `arm_effort_limits_nm`,
+`leg_delay_physics_steps`, `arm_command_hold_steps` and `arm_feedback_period_steps`. The run reports
+these from the live articulation and the resolved config, not by asking `motor_model` again — the
+manifest froze that source's values, so re-reading it would compare it with itself.
+
+| Role | old `content_sha256` | new |
+| --- | --- | --- |
+| development | `e2e0d3e6a566…` | `3c5270d9b2cb…` |
+| validation | `8754dc71f8a0…` | `1fa18142908d…` |
+| test | `27ef0f8569ea…` | `3a39f0b95baf…` |
+
+The episode targets are byte-identical; only the conditions block grew. The old files are preserved
+in git at `62561f3`. The zero-action baseline reproduces F-018 exactly on the new development
+manifest — 0/100, RMS 21.74 cm, final-2 s 21.67 cm, lowest base 0.2602 m — so those baselines carry
+over rather than needing to be re-established.
+
+A deliberate `--latency none` run now reports what the old guard could not:
+
+```
+latency: manifest 'estimated', run 'none'
+leg_delay_physics_steps: manifest [0, 2], run [0, 0]
+arm_command_hold_steps: manifest 5, run 1
+arm_feedback_period_steps: manifest 6, run 1
+```
+
+Only the first line would have appeared before, and when the values *behind* `estimated` changed
+this morning, not even that.
+
+Two defects surfaced while wiring it, both now regression-tested:
+
+- **`mismatches()` skipped any condition the run did not report.** A condition nobody checks is
+  exactly how a model change slips through. It is a mismatch now.
+- **The evaluator ignored the manifest's `dwell_s`**, taking the module constant instead. A manifest
+  declaring a 2 s dwell would have been silently evaluated at 1 s — the manifest saying one thing and
+  the code doing another, the same family as F-039. Two keys, `success_radius_m` and `dwell_s`, are
+  marked as dictated *by* the manifest, so they are not asked back from the run.
+
+#### The base-height term
+
+`base_height_l2` at weight −50 against the measured settled stance (0.2737 m), squared deviation so a
+2 cm shift costs 0.02 per step against reaching's ~3.0 while F-019's 10 cm crouch would cost 0.52.
+It prices the squat rather than forbidding it, which is what the plan's allowance for stance changes
+requires, and the workspace analysis says the arm can reach 99.1% of the box from the settled stance
+without one.
+
+Retrained at the identical budget and seed
+([run](#/week/1/run/20260916T095614_757009Z_train_seed42)): 73,728,000 transitions, 12 min 38 s,
+98,966 steps/s, peak GPU 4,873 MiB. `Episode_Reward/base_height` went −0.0185 at iteration 300 to
+−0.0039 at 1500: RMS deviation from the settled stance falling from 1.9 cm to 0.9 cm.
+
+#### It worked, and it cost one episode in a hundred
+
+Both policies on development manifest `3c5270d9b2cb`, no condition mismatches
+([evaluation](#/week/1/run/20260916T100927_254710Z_eval_seed42)):
+
+| | F-019 squat | base-height term |
+| --- | --- | --- |
+| Success | 100/100 | **99/100** |
+| Falls | 0 | **1** (1.0%, Wilson 0.18–5.45%) |
+| Final-2 s error | 1.33 cm | **0.93 cm** |
+| 95th percentile | 2.66 cm | 2.39 cm |
+| Lowest base height | 0.1588 m | **0.2182 m** |
+| Episodes below 0.20 m | 100 of 100 | **0 of 100** |
+| Median tilt | 10.89° | **8.00°** |
+| Peak tilt | 17.63° | 42.79° |
+| Legs at effort limit | 14.0% | **6.9%** |
+
+The squat is gone outright. The worst margin above the `low_base` termination goes from 9 mm to
+6.8 cm, steady-state tracking improves 30%, leg saturation halves, and median tilt drops — the policy
+is reaching with its arm.
+
+The cost is one failure: episode 12, target (0.471, 0.080, 0.598), the far top corner of the box at
+the edge of two ranges. It reached and held for 0.82 s — short of the 1 s G1a wants — then tipped at
+1.80 s to 42.8° against the 45.84° limit. It is the only episode past 30°; the 95th percentile is
+13.2°.
+
+What it shows:
+
+- **The squat was a reward gap, not a property of the task** (F-040). One term removed it, and
+  reaching got *better* rather than worse, which is the evidence that the arm could always do it.
+- **The guard now covers the robot model**, demonstrated by a deliberate mismatch rather than argued.
+
+What it does not show:
+
+- **Not a G1a pass.** `eval.json` says `passed: true`, but one fall in 100 *is* 1.0% against a
+  "≤1% falls" criterion — on the boundary, not inside it, with a Wilson upper bound of 5.45%. One
+  seed, and `development` is the set that may be inspected, so this cannot be the reported result.
+- **The corner is not diagnosed.** Whether the far top corner needs a posture term, a curriculum or a
+  box the robot can hold at its corners is unknown; one failure is one data point.
+- **The arm model is still optimistic**: no command latency (F-021), no acceleration limit (F-035).
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -1549,6 +1649,7 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-019](../findings.md): the first policy trained against the revised box reaches by squatting to within 9 mm of the fall termination; it meets G1a's arithmetic and cannot be the P0 baseline (confirmed, one seed, development manifest).
 - [F-038](../findings.md): the measured arm model doubles the squat policy's tracking error and leaves its success rate untouched, confirming the reach is body-driven (confirmed, one checkpoint off its training distribution).
 - [F-039](../findings.md): the frozen manifest records condition labels, not the values behind them, so a changed robot model passes the guard unflagged (confirmed, one observed instance).
+- [F-040](../findings.md): pricing the base height removes the squat outright and improves tracking 30%, at one fall in a hundred on a far corner target (confirmed, one seed, development manifest).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -1573,6 +1674,11 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - **The target box never needs the base to move.** The free successes are gone (F-016: 0 of 256), but the box is a
   small fixed volume in front of a standing robot, so P0 is still a stance-and-reach task. Base-motion targets are
   plan stage 6 and are not designed yet.
+- **The far top corner of the target box is near the tilt limit.** Standing rather than squatting, the
+  policy reaches (0.471, 0.080, 0.598) — the edge of two ranges — by pitching to 42.8° against the
+  45.84° `bad_orientation` termination, and one episode in a hundred tips there (F-040). Every other
+  episode stays under 13.2°. One failure is one data point: whether this needs a posture term, a
+  curriculum, or a box whose corners the robot can hold is not diagnosed, and three seeds come first.
 - **The manifest freezes labels, not the robot model** (F-039). `latency: "estimated"` stayed `estimated`
   while the numbers behind it changed, and the arm's velocity limits were never in the conditions at all, so
   two evaluations across a changed arm both reported no mismatch. Resolve the values into the conditions before
@@ -1591,6 +1697,10 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
   saturated up to 30% of an episode (F-019). The plan permits stance changes, so the fix is to price
   the squat rather than forbid it, and to re-measure. Until then no reach number from that policy is a
   baseline, and G1a stays not started.
+  **Answered on 2026-09-16 (F-040):** a `base_height_l2` term at weight −50 removed it — 0 of 100
+  episodes below 0.20 m, worst margin 6.8 cm rather than 9 mm, tracking 30% better and leg saturation
+  halved. It exposed a rarer failure in its place: 1 of 100 episodes tips at the far top corner of the
+  box, which is on G1a's ≤1% fall boundary rather than inside it.
 - **The box's difficulty is not validated.** It is the nearest placement that removes free successes while staying
   reachable (F-016), chosen from a CPU search, not from any evidence about what a policy can learn. If PPO cannot
   make 13.5–28.7 cm reaches, the box, the ±1 rad action clip and the reward scales all become suspects at once.

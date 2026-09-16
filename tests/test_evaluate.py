@@ -199,11 +199,39 @@ class Aggregation(unittest.TestCase):
 
     def test_condition_mismatches_are_reported(self):
         manifest = self.manifest()
+        conditions = dict(manifest["conditions"])
+        conditions.update({"spawn_height_m": 0.42, "robustness": "unitree"})
         result = summarise([record(np.full(TOTAL_STEPS, 0.2))], manifest, controller="test",
-                           conditions={"spawn_height_m": 0.42, "robustness": "unitree"})
+                           conditions=conditions)
         self.assertEqual(len(result["condition_mismatches"]), 2)
         self.assertTrue(any("spawn_height_m" in line for line in result["condition_mismatches"]))
         self.assertTrue(any("robustness" in line for line in result["condition_mismatches"]))
+
+    def test_a_condition_the_run_does_not_report_is_a_mismatch(self):
+        """F-039: a condition nobody checked is how a model change slips through unnoticed."""
+        manifest = self.manifest()
+        conditions = dict(manifest["conditions"])
+        dropped = conditions.pop("arm_feedback_period_steps", None) or conditions.popitem()[0]
+        result = summarise([record(np.full(TOTAL_STEPS, 0.2))], manifest, controller="test",
+                           conditions=conditions)
+        self.assertEqual(len(result["condition_mismatches"]), 1)
+        self.assertIn("did not report it", result["condition_mismatches"][0])
+
+    def test_float32_roundtrip_is_not_a_mismatch_but_a_real_change_is(self):
+        """Limits read back from PhysX come back as float32; 1.29 must still equal 1.29."""
+        manifest = self.manifest()
+        conditions = dict(manifest["conditions"])
+        limits = list(conditions["arm_velocity_limits_rad_s"])
+        conditions["arm_velocity_limits_rad_s"] = [float(np.float32(v)) for v in limits]
+        result = summarise([record(np.full(TOTAL_STEPS, 0.2))], manifest, controller="test",
+                           conditions=conditions)
+        self.assertEqual(result["condition_mismatches"], [])
+        # The old URDF guess for Joint6, 1.73 against the measured 1.25, must be caught.
+        conditions["arm_velocity_limits_rad_s"] = limits[:5] + [1.73]
+        result = summarise([record(np.full(TOTAL_STEPS, 0.2))], manifest, controller="test",
+                           conditions=conditions)
+        self.assertEqual(len(result["condition_mismatches"]), 1)
+        self.assertIn("arm_velocity_limits_rad_s", result["condition_mismatches"][0])
 
     def test_matching_conditions_report_nothing(self):
         manifest = self.manifest()

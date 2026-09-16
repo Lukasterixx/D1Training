@@ -341,6 +341,17 @@ def run(args, report):
                     "self_collisions": args.self_collisions,
                     "tool_body": args.tip_body, "tool_offset_m": list(args.tip_offset),
                     "episode_length_s": cfg.episode_length_s,
+                    # Read from the live articulation and the resolved config, not re-derived from
+                    # motor_model: the manifest froze that source's values, so asking it again would
+                    # compare it with itself. These are what PhysX and the env actually got (F-039).
+                    "policy_hz": round(1.0 / (cfg.sim.dt * cfg.decimation), 6),
+                    "arm_velocity_limits_rad_s": [round(v, 6) for v in
+                                                  metadata["sim2real"]["arm_limits_in_physx"]["velocity_rad_s"]],
+                    "arm_effort_limits_nm": [round(v, 6) for v in
+                                             metadata["sim2real"]["arm_limits_in_physx"]["effort_nm"]],
+                    "leg_delay_physics_steps": list(metadata["sim2real"]["timing"]["leg_delay_physics_steps"]),
+                    "arm_command_hold_steps": metadata["sim2real"]["timing"]["arm_command_hold_steps"],
+                    "arm_feedback_period_steps": metadata["sim2real"]["timing"]["arm_feedback_period_steps"],
                 }
                 started = time.monotonic()
                 records = run_episodes(

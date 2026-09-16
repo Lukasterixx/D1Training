@@ -17,7 +17,7 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from flat_env_cfg import FlatSceneCfg, EventCfg, make_robot_cfg
 from motor_model import interface_timing
 from . import mdp as task_mdp
-from .task_space import SPAWN_HEIGHT_M
+from .task_space import SPAWN_HEIGHT_M, ZERO_ACTION_BASE_OFFSET_M
 from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 
 # An explicit common order for observations, actions and saved run manifests.
@@ -140,6 +140,10 @@ class RewardsCfg:
     failure = RewardTermCfg(func=mdp.is_terminated, weight=-2.0)
     upright = RewardTermCfg(func=mdp.flat_orientation_l2, weight=-1.0)
     base_motion = RewardTermCfg(func=task_mdp.base_motion_l2, weight=-0.2)
+    # Prices the squat that F-019 found: without it nothing in the reward opposes crouching toward a
+    # box that sits below the resting tool point. Target is the measured settled stance, not a nominal.
+    base_height = RewardTermCfg(func=task_mdp.base_height_l2, weight=-50.0,
+                                params={"target_height": ZERO_ACTION_BASE_OFFSET_M[2]})
     action_rate = RewardTermCfg(func=mdp.action_rate_l2, weight=-0.01)
     joint_vel = RewardTermCfg(func=mdp.joint_vel_l2, weight=-0.0001, params={"asset_cfg": controlled_joints()})
     joint_limits = RewardTermCfg(func=mdp.joint_pos_limits, weight=-1.0, params={"asset_cfg": controlled_joints()})

@@ -3,8 +3,8 @@
   "role": "development",
   "episode_count": 100,
   "seed": 20260916,
-  "created_utc": "2026-09-16T00:48:52Z",
-  "content_sha256": "e2e0d3e6a566b0635f8a8beaf537f41e1c214636e0affb288080fd9512631859",
+  "created_utc": "2026-09-16T09:50:19Z",
+  "content_sha256": "3c5270d9b2cbcd8c7a10946cd73b677e64c198a22dfe1c995526ed31c3f419c4",
   "note": "Frozen evaluation cases. Rebuilding with the same arguments reproduces this file; a different content_sha256 means the comparison changed.",
   "conditions": {
     "spawn_height_m": 0.3,
@@ -35,7 +35,30 @@
     ],
     "episode_length_s": 10.0,
     "success_radius_m": 0.05,
-    "dwell_s": 1.0
+    "dwell_s": 1.0,
+    "policy_hz": 50.0,
+    "arm_velocity_limits_rad_s": [
+      1.25,
+      1.29,
+      1.23,
+      1.21,
+      1.25,
+      1.25
+    ],
+    "arm_effort_limits_nm": [
+      3.3,
+      3.3,
+      1.7,
+      1.7,
+      1.7,
+      1.7
+    ],
+    "leg_delay_physics_steps": [
+      0,
+      2
+    ],
+    "arm_command_hold_steps": 5,
+    "arm_feedback_period_steps": 6
   },
   "episodes": [
     {
