@@ -6,8 +6,11 @@ Thesis B work now starts in the [testing and training plan](docs/thesis_b_plan.m
 [codebase investigation](docs/codebase_investigation.md), and
 [position-only task guide](docs/position_only_environment.md). The new
 `run_position_only.py` entry point is a separate whole-body reaching prototype;
-its physics and training still need GPU validation. The existing playback
-instructions and preliminary results below describe the original testbed.
+simulator checks and short PPO pilots have run, while reaching and transfer remain
+unvalidated. The revised plan targets an AprilTag-guided physical combiner-box
+demonstration in Thesis B, reusing UniFP and existing interfaces, with markerless
+perception and broader refinements in Thesis C. The existing playback instructions
+and preliminary results below describe the original testbed.
 
 Results are kept week by week in [`results/`](results/README.md): notes,
 findings, decision gates, recorded runs and screenshots. Browse them with

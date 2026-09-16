@@ -1,24 +1,28 @@
 # Week 2 — 21–27 September 2026
 
 **Status:** not started
-**Focus:** Validate the reaching workspace; first short PPO pilots; pressing-fixture prototype; select the primary implementation
+**Focus:** Select reusable methods; validate P0 candidate; freeze task/interface definitions and calibrate camera/tool frames
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** validate reaching workspace; run first short PPO pilots; build a pressing fixture.
-- **Testing and evidence:** compare held-out targets with the IK reference; inspect reward terms, joint saturation and learning stability; select primary implementation.
-- **Gantt activities:** codebases, *testing*; position-only baseline, *tune*; contact tasks, *refine elements + metrics*.
-- **Gate focus:** G0 complete; G1a pilot evidence; implementation selection (F-004).
+- **Reuse, simulation and learning:** Finish bounded UniFP and position-only reproduction attempts; select port versus retarget; validate candidate reaching and define slow pose trajectories plus pressing/box fixtures.
+- **Hardware and camera:** Calibrate camera-to-base, tag-to-task and tool transforms; record real observations and replay them through robot-side inference with actuation disabled.
+- **Evidence and deliverable:** Freeze sequence phases, box opening extent, tolerances, force bounds, comparison applicability, tool splits and evaluation manifests before substantive runs; calibrate contact definitions by Week 3.
+- **Gate focus:** G0; candidate G1a; G4 begins. Implementation and scope decision.
 
 ## Checklist
 
-- [ ] Target box checked against IK-reference reachability on held-out targets
-- [ ] PPO pilot(s) recorded, with reward terms, joint-limit and effort saturation inspected
-- [ ] Learning stability read from curves together with reach error and failure fractions
-- [ ] Pressing fixture prototype: button travel, spring and damping parameters
-- [ ] Primary implementation selected and F-004 updated
+- [ ] Reproduction levels and implementation choice recorded; legacy setup kept within its time budget
+- [ ] Revised target workspace and zero-action baseline evaluated on frozen cases
+- [ ] Candidate P0 evaluated with 100 frozen episodes; reaching claims distinguished from PPO diagnostics
+- [ ] Task-command schema frozen: pose/force frames, units, timestamps, interpolation and tool registration
+- [ ] Actual box sequence, loads, opening measurement, phase timeouts and tolerances documented
+- [ ] Core pressing/box tasks and tool conditions selected; applicability and held-out cases frozen
+- [ ] Camera/tag/tool calibration and recorded-state inference replay completed or blockers recorded
+- [ ] Physical trial manifests and training budgets defined from pilot costs
 
 ## Log
 

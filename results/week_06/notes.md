@@ -1,24 +1,25 @@
 # Week 6 — 19–25 October 2026
 
 **Status:** not started
-**Focus:** Freeze task definitions, metrics and training budgets; matched P0/P1 and P2/P3 comparisons
+**Focus:** First complete AprilTag-guided box-opening sequence on the real Go2+D1
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** freeze task definitions, metrics and training budgets; continue force-aware curriculum.
-- **Testing and evidence:** deliver reproducible task suite and matched P0/P1 and P2/P3 comparisons; document any scope reduction.
-- **Gantt activities:** codebases milestone; contact tasks milestone (*task set frozen*); force-aware training, *curriculum*; tools, *train policy variants*.
-- **Gate focus:** G2; G3 freeze.
+- **Reuse, simulation and learning:** Diagnose transfer failures and preserve matched training/configuration records; prioritise completing the core sequence.
+- **Hardware and camera:** Run locate → approach → engage → actuate → open → withdraw → verify using a learned force-aware tool policy; record every attempt.
+- **Evidence and deliverable:** A successful pilot establishes integration only. G7 needs repeated trials. If the sequence is incomplete, freeze new capabilities and use Weeks 7–9 for the recorded blocking phases.
+- **Gate focus:** G6 entry; G7 pilot and integration decision.
 
 ## Checklist
 
-- [ ] Task definitions, success/failure criteria and metrics frozen
-- [ ] Training transition budgets fixed and justified from pilot throughput
-- [ ] Final test manifest written and left untouched
-- [ ] Matched P0/P1 and P2/P3 comparisons
-- [ ] Any scope reduction documented (Appendix C)
+- [ ] Complete sequence attempted after G6 and simulated-sequence validation
+- [ ] Door/lid opening verified; lever angle alone is not counted as box completion
+- [ ] Every attempt, intervention, force trace and phase failure recorded
+- [ ] Pilot success distinguished from G7 repeatability and G3 comparison evidence
+- [ ] Week 6 integration decision logged; optional work paused if core sequence is incomplete
 
 ## Log
 

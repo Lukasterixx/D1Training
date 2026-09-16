@@ -1,22 +1,25 @@
 # Week 7 — 26 October – 1 November 2026
 
 **Status:** not started
-**Focus:** Train tool-conditioned P4 and unconditioned P3 on identical tool distributions; begin controlled ablations
+**Focus:** Improve integrated repeatability and complete matched tool/force comparisons
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** train tool-conditioned P4 and unconditioned P3 on identical tool distributions.
-- **Testing and evidence:** begin controlled ablations; hold out tool parameters and contact conditions; collect failures and learning curves.
-- **Gantt activities:** force-aware training, *curriculum → policy selected*; tools, *train policy variants*; ablations, *controlled ablations*.
-- **Gate focus:** G3.
+- **Reuse, simulation and learning:** Complete reduced-suite P0–P4 training with seeds 42, 43, 44; evaluate held-out tool variations on validation cases.
+- **Hardware and camera:** Repeat the tagged-box sequence across the declared placements; collect representative matched physical comparisons on applicable tasks.
+- **Evidence and deliverable:** Keep task/perception interfaces fixed across low-level comparisons; distinguish tool diversity from generalisation and repeated trials from independent training seeds.
+- **Gate focus:** G3 preparation; G7 repeatability.
 
 ## Checklist
 
-- [ ] P3 and P4 trained on identical tool distributions and budgets
-- [ ] Held-out tool parameters and contact conditions defined
-- [ ] Learning curves and failure examples collected per seed
+- [ ] P0–P4 trained on the reduced suite with matched budgets and three seeds
+- [ ] P3/P4 use identical applicable tool distributions and held-out variations
+- [ ] Physical force-aware/position-only and tool comparisons collected where applicable
+- [ ] Validation placement trials and failure analysis recorded
+- [ ] Any insufficient H3 evidence labelled preliminary with explicit C follow-up
 
 ## Log
 

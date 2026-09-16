@@ -1,24 +1,27 @@
 # Week 4 — 5–11 October 2026
 
 **Status:** not started
-**Focus:** Tune P0 and freeze a candidate checkpoint; run the free-space baseline gate
+**Focus:** Establish physical free-space control and first instrumented contact; resolve force and transfer feasibility
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** tune P0; add first position-only pressing/wiping episodes.
-- **Testing and evidence:** freeze candidate P0 checkpoint and evaluation cases; run baseline gate; diagnose failures rather than extending training blindly.
-- **Gantt activities:** position-only baseline, *validated* (milestone); contact tasks, *refine*; force-aware training, *force commands → curriculum training*.
-- **Gate focus:** G1a, G1b.
+- **Reuse, simulation and learning:** Obtain repeatable simulated pressing and box phases; run P1/P3 pilots and start matched seeds once the configuration is stable.
+- **Hardware and camera:** Complete G5 evidence; perform instrumented low-force contact after entry checks; compare estimated/measured forces and identify dynamics/timing mismatches.
+- **Evidence and deliverable:** Week 4 scope decision: protect the tagged-box sequence; defer extra tasks/large-workspace locomotion if needed. Label any sensor-assisted diagnostic method separately.
+- **Gate focus:** G5; G6 begins; G2 before substantive contact comparisons.
 
 ## Checklist
 
-- [ ] Frozen-manifest evaluator: terminal metrics captured before automatic reset
-- [ ] Candidate P0 checkpoint frozen, with hash recorded
-- [ ] G1a evaluated: 100 frozen 10 s episodes per seed
-- [ ] First position-only pressing/wiping episodes
-- [ ] Failures diagnosed and written up
+- [ ] Physical free-space pose tracking meets frozen tolerances without falls or limit violations
+- [ ] Hold/abort behaviour exercised and logged
+- [ ] Simulated pressing and box engagement phases pass declared task cases
+- [ ] First instrumented physical contact recorded after G2/G5 and simulation evidence
+- [ ] Force-estimator error, contact loss and force peaks measured independently
+- [ ] Measured dynamics/timing updates versioned consistently across comparisons
+- [ ] Core-scope decision and any deferrals documented
 
 ## Log
 

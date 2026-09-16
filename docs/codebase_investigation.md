@@ -1,19 +1,24 @@
 # Codebases for Thesis B
 
-Initial inspection: 14 September 2026. Sources are the authors' repositories,
+Initial inspection: 14 September 2026; release availability and reuse priorities
+reviewed again on 16 September for the revised B/C plan. Sources are the authors' repositories,
 project pages and actual source/configuration files. None of the external
 repositories has been installed or run during this investigation. “Available”
 here means code can be inspected, not that its reported results were reproduced.
 
 ## Recommendation
 
-Use the existing Isaac Lab/Go2+D1 model as the primary implementation. Prioritise
-the Go2+D1 Deep-WBC adaptation for robot-specific comparisons, UMI-on-Legs for
-trajectory tracking/evaluation, and UniFP for the later force-aware extension.
-Reproduce selected external examples in separate environments; importing their
-entire older simulator and PPO stacks would make it harder to isolate changes
-to this robot and the thesis ablations. This is an engineering recommendation
-from the compatibility findings below, not a measured performance ranking.
+Use the existing Isaac Lab/Go2+D1 model as the default integration platform and
+bring UniFP reproduction/adaptation into Weeks 1–3. Prioritise the Go2+D1
+Deep-WBC adaptation for the P0 reference, UMI-on-Legs for trajectory interfaces,
+and Unitree RL Lab plus the existing D1 client for robot execution. Bring up
+RealSense/AprilTags alongside these in Week 1. The [revised plan](thesis_b_plan.md)
+targets a tagged physical box-opening sequence in B and markerless refinement in C.
+
+Reproduce selected examples in isolated environments; decide by the end of
+Week 2 whether to port their methods or retarget an original stack from actual
+setup/adaptation evidence. This is an engineering recommendation from the
+compatibility findings, not a measured ranking or proof of transfer.
 
 ## Shortlist and verified availability
 
@@ -24,8 +29,8 @@ from the compatibility findings below, not a measured performance ranking.
 | [Deep Whole-Body Control](https://github.com/MarkFzp/Deep-Whole-Body-Control) | Original whole-body learning reference; `legged_gym`, custom `rsl_rl`, WidowGo1 assets | Useful policy/curriculum reference; different arm/base and older simulator. Retain per-file licence notices for any adapted code |
 | [UMI-on-Legs](https://github.com/real-stanford/umi-on-legs) | `mani-centric-wbc`, deployment components, documented checkpoint/data downloads, rollout and evaluation commands | Strong trajectory/evaluation reference; Isaac Gym and ARX5-related hardware/software. Checkpoint is not compatible with D1 without retraining |
 | [UniFP / UnifiedForce](https://github.com/unified-force/UniFP) | B2Z1 force/position environment, training/play scripts and PPO components | Closest H1 methods reference; Isaac Gym Preview 4/Python 3.8. Training release is checked off, but ROS 2 deployment, MuJoCo transfer and imitation data collection remain unchecked in the README |
-| [unitree_rl_lab](https://github.com/unitreerobotics/unitree_rl_lab) via the MaiRo RL Lab container (`~/mairo-rl-lab-rinam`, commit `a179aa0`) | Unitree's own Isaac Lab tasks: measured motor envelopes, Go2 velocity task with randomisation and an asymmetric critic, `deploy.yaml` export, ONNX export and a C++ `unitree_sdk2` controller that replays the observation and action managers on the robot. MaiRo adds a Go2 base policy and course exercises | Same simulator family as this repo (Isaac Sim 5.1); Apache-2.0. **Adopted in part** (motor model, noise/randomisation values, asymmetric critic, deploy manifest). The C++ controller is legs-only and kept as the Thesis C reference |
-| [Visual Whole-Body Control](https://github.com/Ericonaldo/visual_wholebody) | Separate low-level walking/EE tracking and high-level visuomotor components; linked low-level weights | Secondary reference; Python 3.8/Isaac Gym. High-level vision is outside immediate scope; root licence is CC BY-NC 4.0 |
+| [unitree_rl_lab](https://github.com/unitreerobotics/unitree_rl_lab) via the MaiRo RL Lab container (`~/mairo-rl-lab-rinam`, commit `a179aa0`) | Unitree's own Isaac Lab tasks: measured motor envelopes, Go2 velocity task with randomisation and an asymmetric critic, `deploy.yaml` export, ONNX export and a C++ `unitree_sdk2` controller that replays the observation and action managers on the robot. MaiRo adds a Go2 base policy and course exercises | Same simulator family as this repo (Isaac Sim 5.1); Apache-2.0. **Adopted in part** (motor model, noise/randomisation values, asymmetric critic, deploy manifest). Extend the legs-only C++ execution path for B hardware work alongside the D1 client |
+| [Visual Whole-Body Control](https://github.com/Ericonaldo/visual_wholebody) | Separate low-level walking/EE tracking and high-level visuomotor components; linked low-level weights | Secondary reference; Python 3.8/Isaac Gym. Released high-level task: multi-object picking with teacher-to-visual-student training. Learned visual control is a C extension; B uses tag poses and a programmed task sequence. Root licence is CC BY-NC 4.0 |
 
 Sources for the platform requirements and release status:
 [Go2+D1 README](https://github.com/nayon007/Loco-Manipulation-with-RL-for-Go2-D1-Robot/blob/main/README.md),
@@ -35,6 +40,19 @@ Sources for the platform requirements and release status:
 UniFP lists BSD-3-Clause and UMI lists MIT at their repository roots; check
 individual assets and submodules as part of any actual import. No external
 source code has been vendored in this first step.
+
+## Perception and task-policy reuse (16 September update)
+
+| Component | Available material | Role and remaining work |
+| --- | --- | --- |
+| [RealSense ROS](https://github.com/realsenseai/realsense-ros) and [AprilTag ROS 2](https://github.com/christianrauch/apriltag_ros) | Camera streams/calibration messages and marker poses published as ROS transforms | B perception path. Calibrate camera-to-base, tag-to-task and tool frames; test timestamps, visibility and moving-part observation |
+| [FoundationPose](https://github.com/NVlabs/FoundationPose) | Pose estimation/tracking; pretrained weights and a model-based RGB-D/mesh/mask example | C markerless candidate. Test recorded footage against task tolerances first; an articulated box needs separate part states |
+| [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) | Demonstration collection, RealSense capture, training and real-robot evaluation | C learned-task candidate. Adapt robot interface and collect task demonstrations; predicting force requires explicit force-command labels |
+
+These are source-reviewed candidates, not installed or validated components of
+this repo. Grounding DINO/SAM 2 can optionally supply detection/masks for a pose
+pipeline; their image outputs alone do not specify the handle's 3D pose. Use
+the same task-command interface for tagged, markerless and learned variants.
 
 ## Source-level findings to act on
 
@@ -154,13 +172,16 @@ installation as part of reproducing an Isaac Gym paper.
 | --- | --- | --- |
 | 1 | Local Isaac Lab task, then original playback | Smoke/reset/frame checks, joint mapping, model mass, tracking/fall traces; stop PPO work if physics/interface checks fail. **2026-09-15: launched; checks pass (F-009); playback replayed with forward, lateral and yaw commands (F-012)** |
 | 2 | Go2+D1 adaptation in its own Isaac Gym environment | Reproduce advertised launch; record exact assets/gains/revision and actual reaching/locomotion metrics; time-box setup to two working days |
-| 3 | UMI example checkpoint and its supplied trajectory | Verify downloads and rollout, reproduce reported metric definitions; keep original embodiment clearly labelled |
-| 4 | Deep-WBC source trace and a pilot only if useful | Identify useful curriculum/advantage-mixing features; avoid a second long reproduction unless it resolves a specific baseline failure |
+| Optional after core reproductions | UMI example checkpoint and its supplied trajectory | Verify downloads and rollout, reproduce reported metric definitions; keep original embodiment clearly labelled |
+| Source reference | Deep-WBC source trace and a pilot only if useful | Identify useful curriculum/advantage-mixing features; avoid a second long reproduction unless it resolves a specific baseline failure |
 | 1b | unitree_rl_lab parts adopted into this repo | Smoke with `--leg_actuator unitree` and `dc_motor`; inspect `params/deploy.yaml`; confirm explicit-actuator stability with the welded arm. Revert to `dc_motor` if the explicit legs are unstable. **2026-09-15: done; explicit legs stand stably, matching `dc_motor` to 0.1 mm, and the manifest checks out ([Week 1](../results/week_01/notes.md))** |
-| 5 | UniFP example when force work begins | Confirm released training starts; audit force-estimation supervision and position-only ablation before porting |
+| 2, B Weeks 1–2 | UniFP example before force adaptation | Time-box legacy setup to two working days; confirm released training starts; trace history encoder, force supervision, commands and force-free ablation before porting. ROS 2 deployment and imitation collection remain unchecked in the release checklist |
 
 Record each attempt as source-only / installed / launched / checkpoint replayed /
 short training passed / independently evaluated. Store setup time, throughput,
 dependencies, missing assets and errors. Select the implementation at the end
-of Week 2; continue method investigation through approximately Week 6 without
-letting it delay the local baseline.
+of Week 2. The initial runtime reproductions are UniFP and one Go2+D1 position-only
+reference; UMI and Deep-WBC remain targeted source references unless a specific
+failure justifies another run. Run camera calibration and hardware identification
+alongside this work. Later reading should resolve an implementation question,
+not delay the Week 6 integrated-demo target.

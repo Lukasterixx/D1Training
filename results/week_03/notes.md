@@ -1,24 +1,28 @@
 # Week 3 — 28 September – 4 October 2026
 
 **Status:** not started
-**Focus:** Extend P0 to slow trajectories and controlled base movement; begin force-command and sensor plumbing
+**Focus:** Adapt force estimation; calibrate contact; validate measured observations and begin gated free-space transfer
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** expand P0 to slow trajectories and controlled base movement; begin force-command and sensor plumbing.
-- **Testing and evidence:** add wiping fixture; test contact calibration and force sign. Force-aware work stays exploratory until P0 passes.
-- **Gantt activities:** position-only baseline, *tune*; contact tasks, *refine*; force-aware training, *force commands* (from mid-week).
-- **Gate focus:** G1a.
+- **Reuse, simulation and learning:** Adapt UniFP history/estimator supervision and force curriculum; finish force-sign/fixture calibration; evaluate P0 pose trajectories and required base motion.
+- **Hardware and camera:** Exercise camera-to-IK reference and measured-state kinematics; test both-bus inference parity and stale-vision behaviour. Begin bounded learned free-space trials only after G4 and candidate G1 checks.
+- **Evidence and deliverable:** Freeze calibrated contact metrics before contact comparisons; record estimator supervision, hardware timing and every physical trial.
+- **Gate focus:** G1a; G1b for moving-base scope; G2; G4; G5 entry.
 
 ## Checklist
 
-- [ ] Smooth world-frame line and circle trajectories for P0
-- [ ] Controlled base repositioning within the task
-- [ ] Wiping fixture with known surface normal
-- [ ] Contact calibration: known static load and force sign on nested D1 links
-- [ ] Force-command plumbing prototyped (not yet an input to P0)
+- [ ] Common history-based architecture and force-free P0/P2 ablation routes documented
+- [ ] UniFP-derived force estimator and force curriculum pilot recorded
+- [ ] Known-load contact calibration, force sign and sensor coverage checked (G2)
+- [ ] P0 slow pose trajectories evaluated, including tool orientation requirements
+- [ ] Camera-derived targets exercised through the IK engineering reference
+- [ ] Measured-state FK, both-bus action mapping and observation normalisation validated (G4)
+- [ ] Stale-vision hold/reacquisition and base-motion frame tests recorded
+- [ ] Gated learned free-space robot trials recorded or entry blockers documented
 
 ## Log
 

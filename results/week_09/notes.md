@@ -1,23 +1,25 @@
 # Week 9 — 9–15 November 2026
 
 **Status:** not started
-**Focus:** Complete the multi-tool comparison; analyse seed variation, failure modes and sensitivity
+**Focus:** Integration buffer, repeatability evidence and final analysis
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** complete multi-tool comparison; only targeted reruns for identified faults.
-- **Testing and evidence:** analyse seed variation, failure modes and sensitivity; write results and limitations.
-- **Gantt activities:** tools milestone (*comparison complete*); ablations, *report + review*.
-- **Gate focus:** —
+- **Reuse, simulation and learning:** Analyse final tests and seed uncertainty; allow only documented fault-driven reruns with affected comparisons repeated.
+- **Hardware and camera:** Resolve remaining core integration faults and repeat declared physical trials; retain tagged perception and the frozen task interface.
+- **Evidence and deliverable:** Report sim-to-real performance reduction, failed phases, interventions and limitations. Classify unmet B deliverables explicitly rather than as C polish.
+- **Gate focus:** G3/G7 evidence review; outstanding failures remain recorded.
 
 ## Checklist
 
-- [ ] Final test set run for P0–P4
-- [ ] Per-seed results with uncertainty across seeds
-- [ ] Failure-mode examples and sensitivity analysis
-- [ ] Results and limitations drafted
+- [ ] Final P0–P4 results and uncertainty summarised per seed
+- [ ] Tagged physical trial outcomes and sim-to-real gap analysed
+- [ ] All reruns linked to the fault, versioned fix and affected comparisons
+- [ ] Failure examples and limitations included in the results draft
+- [ ] Unmet core outcomes distinguished from optional C refinements
 
 ## Log
 

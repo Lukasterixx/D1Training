@@ -1,22 +1,26 @@
 # Week 8 — 2–8 November 2026
 
 **Status:** not started
-**Focus:** Select the force-aware policy on validation results; finish main training; freeze policies
+**Focus:** Freeze policies and demo setup; run untouched simulation and physical test manifests
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** select force-aware policy on validation results; finish main training.
-- **Testing and evidence:** run matched trials and randomisation tests; freeze policies for the final test set.
-- **Gantt activities:** force-aware training milestone (*policy selected*); tools, *comparison complete*; ablations, *failures*.
-- **Gate focus:** G3.
+- **Reuse, simulation and learning:** Select checkpoints from validation, freeze configurations and complete G3 before comparative claims.
+- **Hardware and camera:** Freeze the tagged demonstration setup and execute the physical final-test manifest; collect synchronised sensor, force and phase traces.
+- **Evidence and deliverable:** Assess G7: at least 16/20 successes across four placements × five repeats, no falls or force-limit violations, no intervention during successful sequences. Report all attempts.
+- **Gate focus:** G3; G7 final evaluation.
 
 ## Checklist
 
-- [ ] Force-aware policy selected on validation (not test) results
-- [ ] Matched trials and randomisation tests
-- [ ] Policies frozen, with hashes recorded, for the final test set
+- [ ] Checkpoints selected on validation and hashes/configurations frozen
+- [ ] Matched budgets and at least three independent training seeds verified (G3)
+- [ ] Untouched final simulation and physical manifests executed
+- [ ] G7 repeated-trial criterion evaluated without changing thresholds
+- [ ] Calibration, RGB-D/tags, joint states, forces, commands and phase events archived
+- [ ] Post-freeze change/rerun rules recorded
 
 ## Log
 
