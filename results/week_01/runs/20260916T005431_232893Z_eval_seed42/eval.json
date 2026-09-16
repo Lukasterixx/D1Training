@@ -1,0 +1,82 @@
+{
+  "controller": "zero_actions_default_joint_targets",
+  "manifest": {
+    "role": "development",
+    "episode_count": 100,
+    "seed": 20260916,
+    "content_sha256": "e2e0d3e6a566b0635f8a8beaf537f41e1c214636e0affb288080fd9512631859"
+  },
+  "condition_mismatches": [
+    "spawn_height_m: manifest 0.3, run 0.42",
+    "arm_actuator: manifest 'd1_servo', run 'implicit'"
+  ],
+  "episodes": 100,
+  "success": {
+    "count": 0,
+    "rate": 0.0,
+    "wilson95": [
+      0.0,
+      0.03699480747600191
+    ]
+  },
+  "falls": {
+    "count": 0,
+    "rate": 0.0,
+    "wilson95": [
+      0.0,
+      0.03699480747600191
+    ]
+  },
+  "survived": {
+    "count": 100,
+    "rate": 1.0
+  },
+  "truncated": {
+    "count": 0,
+    "note": "ended before the time limit; their traces stop at the last pre-reset sample and the missing tail is not filled"
+  },
+  "error_all_episodes": {
+    "rms_m": 0.16628319770097733,
+    "p95_m": 0.1924559667706489,
+    "final_m": 0.16230024017393588,
+    "transient_mean_m": 0.1643616646528244,
+    "final_2s_mean_m": 0.16231676071882248
+  },
+  "error_surviving_episodes_only": {
+    "note": "for diagnosis only; the reported result is error_all_episodes",
+    "count": 100,
+    "rms_m": 0.16628319770097733,
+    "final_2s_mean_m": 0.16231676071882248
+  },
+  "time_to_reach_s": {
+    "count": 47,
+    "mean": 0.45872340425531904,
+    "of_episodes": 100
+  },
+  "max_dwell_s": {
+    "mean": 0.0202
+  },
+  "posture": {
+    "min_base_height_m": 0.1974271833896637,
+    "max_tilt_deg": 18.93406105041504
+  },
+  "saturation": {
+    "joint_limit_steps_frac": 0.0,
+    "arm_commanded_effort_at_limit_frac": 0.9907414722442627,
+    "peak_arm_joint_torque_nm": 22.646888732910156,
+    "leg_effort_saturated_frac": 0.020661323294043542,
+    "peak_leg_torque_nm": 23.399999618530273,
+    "note": "arm_commanded_* is Isaac Lab's PD estimate clipped to the effort limit, not a PhysX measurement, and it saturates even standing still because the arm's 4000 N\u00b7m/rad gains far exceed its 1.7-3.3 N\u00b7m limits. peak_arm_joint_torque_nm is PhysX's reaction torque. The legs use an explicit actuator, so their figures are the model's own clipped output."
+  },
+  "g1a": {
+    "criterion": "\u226590% reach within 5 cm for \u22651 s continuous, surviving to episode end, with \u22641% falls",
+    "success_rate_ok": false,
+    "fall_rate_ok": true,
+    "passed": false
+  },
+  "interpretation": "One controller on one frozen manifest, one simulator seed. A zero-action run of the same manifest is the baseline this must be read against.",
+  "wall_time_s": 14.06,
+  "checkpoint": null,
+  "checkpoint_sha256": null,
+  "manifest_path": "/home/lukas/D1Training/results/manifests/development.json"
+}

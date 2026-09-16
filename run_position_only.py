@@ -1,4 +1,10 @@
-"""Launch the Thesis B starter task. Use `check` before `smoke` or `train`."""
+"""Launch the Thesis B starter task. Use `check` before `smoke` or `train`.
+
+Modes: `check` (prerequisites, no simulator), `manifest` (write a frozen evaluation manifest, no
+simulator), `smoke`, `verify`, `view`, `train`, and `eval` (run a frozen manifest under one
+controller and report the G1a measurement; without `--checkpoint` it evaluates zero actions, which
+is the baseline every reach number is read against).
+"""
 from __future__ import annotations
 
 import argparse
@@ -15,6 +21,7 @@ import sys
 import time
 import traceback
 
+from position_only.task_space import SPAWN_HEIGHT_M
 from position_only.tool_point import TOOL_BODY, TOOL_OFFSET_M
 
 ROOT = Path(__file__).resolve().parent
@@ -122,6 +129,29 @@ def write_posture(run_dir, samples):
                "max": float(settled[..., i].max())}
         for i, name in enumerate(POSTURE_FIELDS)
     }
+
+
+EPISODE_CSV_FIELDS = (
+    "index", "success", "survived", "fell", "truncated", "recorded_s", "max_dwell_s", "time_to_reach_s",
+    "final_error_m", "rms_error_m", "p95_error_m", "min_base_height_m", "max_tilt_deg",
+    "joint_limit_steps_frac", "arm_commanded_effort_at_limit_frac", "peak_arm_joint_torque_nm",
+    "leg_effort_saturated_frac", "peak_leg_torque_nm",
+)
+
+
+def _write_episode_csv(path, records):
+    import csv
+
+    with path.open("w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(EPISODE_CSV_FIELDS + ("target_x_m", "target_y_m", "target_z_m",
+                                              "transient_mean_m", "final_2s_mean_m"))
+        for record in records:
+            row = [record[name] for name in EPISODE_CSV_FIELDS]
+            row += list(record["target_env_frame_m"])
+            row += [(record["transient_error"] or {}).get("mean_m"),
+                    (record["final_2s_error"] or {}).get("mean_m")]
+            writer.writerow("" if value is None else value for value in row)
 
 
 def view(args, app, env, runner, obs, metadata, run_dir):
@@ -279,6 +309,7 @@ def run(args, report):
             if args.checkpoint:
                 metadata["checkpoint_sha256"] = hashlib.sha256(Path(args.checkpoint).read_bytes()).hexdigest()
             runner = None
+            # eval with a checkpoint needs the runner too; without one it evaluates zero actions.
             if args.mode == "train" or args.checkpoint:
                 runner = OnPolicyRunner(env, deepcopy(agent_cfg), log_dir=str(run_dir), device=args.device)
                 if args.checkpoint:
@@ -295,6 +326,49 @@ def run(args, report):
                 write_json(run_dir / "verify.json", result)
                 metadata["status"] = "verify_passed" if result["all_passed"] else "verify_failed"
                 metadata["verify_failed"] = result["failed"]
+            elif args.mode == "eval":
+                from position_only.evaluate import run_episodes, summarise
+                from position_only.manifest import load as load_manifest
+
+                manifest = load_manifest(args.manifest)
+                policy = runner.get_inference_policy(device=args.device) if runner else None
+                # What this run actually ran under, for the manifest to object to.
+                conditions = {
+                    "spawn_height_m": cfg.scene.robot.init_state.pos[2],
+                    "target_box_env_frame_m": [list(a) for a in cfg.commands.ee_position.ranges],
+                    "robustness": args.robustness, "latency": args.latency,
+                    "leg_actuator": args.leg_actuator, "arm_actuator": args.arm_actuator,
+                    "self_collisions": args.self_collisions,
+                    "tool_body": args.tip_body, "tool_offset_m": list(args.tip_offset),
+                    "episode_length_s": cfg.episode_length_s,
+                }
+                started = time.monotonic()
+                records = run_episodes(
+                    env, manifest, policy=policy, device=args.device,
+                    progress=lambda done, total: print(f"[position_only] evaluated {done}/{total} episodes",
+                                                       flush=True))
+                result = summarise(
+                    records, manifest,
+                    controller="checkpoint" if policy else "zero_actions_default_joint_targets",
+                    conditions=conditions)
+                result["wall_time_s"] = round(time.monotonic() - started, 2)
+                result["checkpoint"] = metadata.get("checkpoint")
+                result["checkpoint_sha256"] = metadata.get("checkpoint_sha256")
+                result["manifest_path"] = str(Path(args.manifest).resolve())
+                write_json(run_dir / "eval.json", result)
+                write_json(run_dir / "eval_episodes.json", records)
+                _write_episode_csv(run_dir / "eval_episodes.csv", records)
+                if result["condition_mismatches"]:
+                    print("[position_only] WARNING: run does not match the manifest's conditions:", flush=True)
+                    for line in result["condition_mismatches"]:
+                        print(f"  {line}", flush=True)
+                metadata["status"] = "eval_finished"
+                metadata["eval"] = {
+                    "manifest_role": manifest["role"], "episodes": result["episodes"],
+                    "success_rate": result["success"]["rate"], "fall_rate": result["falls"]["rate"],
+                    "g1a_passed": result["g1a"]["passed"], "controller": result["controller"],
+                    "condition_mismatches": result["condition_mismatches"],
+                }
             else:
                 policy = runner.get_inference_policy(device=args.device) if runner else None
                 terminated = truncated = 0
@@ -349,7 +423,7 @@ def run(args, report):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("check", "smoke", "verify", "view", "train"),
+    parser.add_argument("mode", choices=("check", "smoke", "verify", "view", "train", "eval", "manifest"),
                         help="verify: deliberate interface-timing, termination and partial-reset checks (>= 6 envs). "
                              "view: real-time episodes in the viewer with target, tip and box markers, until closed.")
     parser.add_argument("--headless", action="store_true")
@@ -373,6 +447,10 @@ def main():
     parser.add_argument("--self_collisions", action=argparse.BooleanOptionalAction, default=True,
                         help="Let the arm collide with the Go2 body (default). Off, the arm passes through the trunk.")
     parser.add_argument("--checkpoint", help="Explicit checkpoint from this task, for resuming training or smoke playback.")
+    parser.add_argument("--manifest", help="Evaluation manifest JSON (eval mode), or its output path (manifest mode).")
+    parser.add_argument("--role", choices=("development", "validation", "test"), default="development",
+                        help="Manifest role to build (manifest mode).")
+    parser.add_argument("--episodes", type=int, default=100, help="Episodes in a new manifest (manifest mode).")
     parser.add_argument("--spawn_height", type=float, default=None,
                         help="Base height at reset (m). Default: the task's standing spawn, env_cfg.SPAWN_HEIGHT_M.")
     parser.add_argument("--robot_usd", help="Existing local welded USD; otherwise rebuild inside the new run directory.")
@@ -384,10 +462,34 @@ def main():
         parser.error("view needs the viewer; drop --headless.")
     if args.mode == "verify" and (args.num_envs < 6 or args.checkpoint):
         parser.error("verify needs --num_envs 6 or more (one per induced termination plus a control) and no checkpoint.")
+    if args.mode == "eval":
+        if not args.manifest:
+            parser.error("eval needs --manifest pointing at a frozen manifest.")
+        if not Path(args.manifest).is_file():
+            parser.error(f"--manifest must point to an existing file: {args.manifest}")
     for name in ("checkpoint", "robot_usd"):
         value = getattr(args, name)
         if value and not Path(value).is_file():
             parser.error(f"--{name} must point to an existing local file.")
+    if args.mode == "manifest":
+        from position_only.manifest import build, write
+
+        if not args.manifest:
+            parser.error("manifest mode needs --manifest to say where to write the file.")
+        path = Path(args.manifest)
+        if path.exists():
+            parser.error(f"{path} already exists. A frozen manifest is not regenerated in place; "
+                         "delete it deliberately if you really mean to replace it.")
+        spawn = SPAWN_HEIGHT_M if args.spawn_height is None else args.spawn_height
+        manifest = build(args.role, episodes=args.episodes, spawn_height=spawn,
+                         robustness=args.robustness, latency=args.latency,
+                         leg_actuator=args.leg_actuator, arm_actuator=args.arm_actuator,
+                         self_collisions=args.self_collisions)
+        write(manifest, path)
+        print(f"[position_only] wrote {manifest['role']} manifest: {path} "
+              f"({manifest['episode_count']} episodes, sha256 {manifest['content_sha256'][:12]})", flush=True)
+        return 0
+
     report = preflight()
     if args.mode == "check":
         return 0 if report["ready_for_gpu_smoke"] else 1

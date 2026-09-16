@@ -319,3 +319,51 @@ result that changes a conclusion gets a new entry, and the old one is marked
   meant to count. The zero-action baseline must still be reported beside every reach metric, and it is now
   0%. Playback (`run_sim.sh`) keeps its 0.42 m spawn, so F-012 is unchanged.
 
+### F-017 — The arm's commanded torque saturates while the robot stands still, because its gains are 4000 N·m/rad against 1.7–3.3 N·m limits
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). Zero actions, settled, 8 environments. Isaac Lab's
+  `computed_torque` for Joint2/Joint3/Joint5 is −4.46 / −25.80 / 2.87 N·m; `applied_torque`, which is that
+  estimate clipped to the effort limit, is −3.30 / −1.70 / 1.70 N·m against limits of 3.3 / 1.7 / 1.7 N·m. Four
+  of six arm joints sit at the clip. PhysX's own incoming joint reaction torques at the same instant are
+  1.10 / 1.08 / 0.29 N·m, reproducing F-010's 1.20 / 1.10 / 0.29. J3's 0.011 rad residual times 4000 N·m/rad is
+  44.9 N·m, less 400 × 0.048 rad/s of damping, giving the 25.8 N·m demand. The arm is an `ImplicitActuator`,
+  whose `compute()` stores "approximate torques … since PhysX does not expose this quantity explicitly".
+- **Scope:** one static pose, zero actions, default gains, `--arm_actuator d1_servo` force drives. The two
+  quantities are not comparable: `applied_torque` is Isaac Lab's Python-side PD estimate, and the reaction
+  torque is PhysX's constraint force at the joint, not the drive torque either. Nothing here measures what a
+  real D1 servo does; 4000/400 is a modelling choice standing in for its internal loop (F-002, F-007).
+- **Implication:** an "effort saturation" metric built on `applied_torque` would report 100% saturation for a
+  motionless robot, which says nothing about a policy. The evaluator reports
+  `arm_commanded_effort_at_limit_frac` named as a commanded figure, with the caveat carried in `eval.json`,
+  beside `peak_arm_joint_torque_nm` from PhysX. The legs use an explicit actuator, so their figures are the
+  model's own clipped output and carry no such caveat. More broadly the arm is torque-limited rather than
+  PD-tracked in this model, so its effective bandwidth is set by the 1.7–3.3 N·m limits, not by the gains;
+  Thesis C actuator identification should replace both.
+
+### F-018 — The frozen-manifest evaluator measures 0 of 300 zero-action episodes reaching, across three balanced manifests
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). `run_position_only.py eval` over
+  `development` / `validation` / `test` manifests, 100 episodes each, zero actions, deterministic, 50
+  environments per batch (runs `20260916T005258_970617Z`, `…5318_737159Z`, `…5338_474757Z`). Success
+  0/100 in each (Wilson 95% 0.0–3.7%), 0 falls, 0 truncated, all 300 surviving to the 10 s limit. RMS error
+  21.7 / 21.6 / 22.2 cm, 95th percentile 23.1 / 23.1 / 23.6 cm, final-2 s mean 21.7 / 21.6 / 22.1 cm, lowest
+  base 0.260 m, peak tilt 5.11°. No episode entered the 5 cm radius at any step. Manifests are hashed and
+  their conditions checked against the run: a deliberate mismatch run at the old 0.42 m spawn with `implicit`
+  arm drives was flagged on both counts and reported RMS 16.6 cm, 5 cm *better* than the correct
+  configuration, because a sagging arm falls toward a box that sits below it.
+- **Scope:** zero actions only, one simulator seed, `--robustness none`. This measures the task and the
+  evaluator, not a policy: no checkpoint has been evaluated, so the truncation and fall paths have been
+  exercised only by unit tests (`tests/test_evaluate.py`), not by a real failing episode. Per-seed spread
+  across training seeds is a G3 item and is not done.
+- **Implication:** G1a now has the measurement it requires, and the zero-action reference it must be read
+  against is 0% on every manifest. The three sets agree to 0.6 cm of RMS, so development, validation and test
+  are balanced rather than three difficulties, and checkpoint selection on `validation` cannot leak into the
+  `test` figure. Any future reach claim reports success rate with failed episodes in the denominator, the
+  zero-action baseline beside it, and the manifest hash it was measured on.
+

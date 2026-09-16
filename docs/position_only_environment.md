@@ -95,6 +95,12 @@ python run_position_only.py verify --headless --num_envs 8
 python run_position_only.py view --num_envs 16                     # real-time replay with target, tip and box markers
 python run_position_only.py train --headless --num_envs 64 --iterations 100 --seed 42
 python -m position_only.workspace --out results/week_NN/figures     # CPU: workspace, tool point, start distance
+
+# Frozen evaluation (G1a). `manifest` is CPU only and does not start Isaac.
+python run_position_only.py manifest --role test --episodes 100 --manifest results/manifests/test.json
+python run_position_only.py eval --headless --num_envs 50 --manifest results/manifests/development.json
+python run_position_only.py eval --headless --num_envs 50 --manifest results/manifests/development.json \
+    --checkpoint logs/position_only/<run>/model_<n>.pt
 ```
 
 `check` returns nonzero if GPU prerequisites are unavailable. It does not start
@@ -120,6 +126,19 @@ can be met without moving the arm (F-016). Under zero actions the robot spawns
 standing at `task_space.SPAWN_HEIGHT_M` (0.30 m), settles at 0.274 m and slides
 5.6 cm back over 3.6 s; the slide is the posture settling, not the spawn, and
 lowering the spawn further does not remove it (F-014).
+
+`eval` runs every episode of a frozen manifest under one controller with deterministic actions and
+writes `eval.json`, `eval_episodes.json` and `eval_episodes.csv`. Without `--checkpoint` it evaluates
+zero actions, which is the baseline every reach number is read against; it is currently 0 of 100 on
+each manifest (F-018). Three rules are enforced in code: failed episodes stay in the success
+denominator, truncated traces are not padded, and the dwell must be continuous. The manifest fixes
+the conditions as well as the targets, and a run whose conditions differ is flagged in `eval.json`
+and on stdout. `arm_commanded_effort_at_limit_frac` is Isaac Lab's clipped PD estimate, not a PhysX
+measurement, and saturates even at rest (F-017); `peak_arm_joint_torque_nm` is the reaction torque.
+
+`manifest` writes a hashed episode set for one of the three roles: `development` (free to inspect),
+`validation` (checkpoint selection only) and `test` (untouched until the final result). It refuses to
+overwrite an existing file, and `eval` rejects a manifest whose contents no longer match its hash.
 
 `verify` needs at least 6 environments and writes `verify.json`. It checks the arm
 command hold and feedback sampling, and the leg delays. It induces time limit, low base,
@@ -163,7 +182,7 @@ pinned for a final reproducible archive; the root USD hash alone is insufficient
 | Physics/policy rate | 200/50 Hz | Timestep/solver convergence and actual D1 command-rate/latency model |
 | Arm mass and PD gains | Existing 3.152 kg mass model (matches PhysX exactly); 4000/400 force-drive gains | Step/load response and sensitivity; J3 still rests 0.010 rad off (unexplained); no identified hardware equivalence claimed |
 | Leg motor model | unitree_rl_lab Go2 envelope, explicit 25/0.5 PD | Standing matches `dc_motor` to 0.1 mm (Week 1), so the comparison needs motion. Both inherit the USD's unlabelled joint speed limits (30.1 / 15.7 rad/s) |
-| Latency | Legs 0–2 physics steps; D1 commands and feedback 10 Hz, random phase | Measure Go2 command-to-motion delay and D1 command/feedback latency and smoothing on hardware (Thesis C); compare `--latency none` in training as a sensitivity run |
+| Latency | Legs 0–2 physics steps; D1 commands and feedback 10 Hz, random phase | Measure Go2 command-to-motion delay and D1 command/feedback latency and smoothing on hardware in B Weeks 1–2 and validate the model in Weeks 3–4; compare `--latency none` in training as a sensitivity run |
 | D1 limits | Published torques; URDF speed limits (1.05/1.73 rad/s, unverified) | Measure joint speed. PhysX applies exactly these values (Week 1 smoke), with `d1_servo` and with `implicit` |
 | Randomisation | Deterministic by default; `--robustness unitree` for noise and randomisation | Enable after nominal reaching works; push size chosen for locomotion, so check it against the 0.75 m workspace termination |
 | Self-collision | On by default | No resting contact measured, and the positive control passes (Week 1). Arm-to-body contact is neither a termination nor a penalty yet |

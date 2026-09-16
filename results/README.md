@@ -14,11 +14,12 @@ View it with `./dashboard.py` from the repository root (it opens
 | --- | --- | --- |
 | `config.json` | Term start date (Week 1 Monday), week count, log folders, headline scalars and their labels | Edited by hand |
 | `findings.md` | Numbered findings (F-001, …) with status, date, evidence and implication | Claude, reviewed by Lukas |
-| `gates.md` | Decision gates G0–G3 from the plan, with current status and evidence | Claude |
+| `gates.md` | Decision gates G0–G7 from the plan, with current status and evidence | Claude |
 | `week_NN/notes.md` | The weekly log: plan, checklist, dated entries, results, issues, next steps | Claude |
 | `week_NN/runs/<run id>/` | Recorded runs: `record.json`, copied config/metadata, `scalars.csv` | `dashboard.py record` |
 | `week_NN/figures/` | Generated plots for the report (PNG/SVG) | Scripts |
 | `week_NN/screenshots/` | Simulator screenshots and clips (PNG/JPG/MP4). Loose images directly in `week_NN/` also show | Lukas |
+| `manifests/<role>.json` | Frozen evaluation manifests (development, validation, test): the episode sets G1a is measured on, hashed, with the conditions they must run under | `run_position_only.py manifest` |
 | `week_NN/external/<name>/` | Evidence from outside this repo (another project's experiments): copied outputs, configs, source snapshots, a provenance README and any script that summarises them | Claude |
 
 Screenshots are optional in any week. They appear in name order, captioned from

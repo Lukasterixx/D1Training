@@ -1,0 +1,842 @@
+{
+  "format": "position_only_eval_manifest_v1",
+  "role": "development",
+  "episode_count": 100,
+  "seed": 20260916,
+  "created_utc": "2026-09-16T00:48:52Z",
+  "content_sha256": "e2e0d3e6a566b0635f8a8beaf537f41e1c214636e0affb288080fd9512631859",
+  "note": "Frozen evaluation cases. Rebuilding with the same arguments reproduces this file; a different content_sha256 means the comparison changed.",
+  "conditions": {
+    "spawn_height_m": 0.3,
+    "target_box_env_frame_m": [
+      [
+        0.36,
+        0.48
+      ],
+      [
+        -0.08,
+        0.08
+      ],
+      [
+        0.5,
+        0.62
+      ]
+    ],
+    "robustness": "none",
+    "latency": "estimated",
+    "leg_actuator": "unitree",
+    "arm_actuator": "d1_servo",
+    "self_collisions": true,
+    "tool_body": "Link7_1",
+    "tool_offset_m": [
+      0.0547,
+      0.006,
+      0.017
+    ],
+    "episode_length_s": 10.0,
+    "success_radius_m": 0.05,
+    "dwell_s": 1.0
+  },
+  "episodes": [
+    {
+      "index": 0,
+      "target_env_frame_m": [
+        0.377784,
+        0.079741,
+        0.551393
+      ]
+    },
+    {
+      "index": 1,
+      "target_env_frame_m": [
+        0.399839,
+        0.06848,
+        0.573319
+      ]
+    },
+    {
+      "index": 2,
+      "target_env_frame_m": [
+        0.420318,
+        0.013609,
+        0.589519
+      ]
+    },
+    {
+      "index": 3,
+      "target_env_frame_m": [
+        0.399296,
+        -0.023587,
+        0.515091
+      ]
+    },
+    {
+      "index": 4,
+      "target_env_frame_m": [
+        0.380247,
+        0.0567,
+        0.59104
+      ]
+    },
+    {
+      "index": 5,
+      "target_env_frame_m": [
+        0.439947,
+        0.061314,
+        0.593299
+      ]
+    },
+    {
+      "index": 6,
+      "target_env_frame_m": [
+        0.380347,
+        0.040594,
+        0.517958
+      ]
+    },
+    {
+      "index": 7,
+      "target_env_frame_m": [
+        0.418281,
+        -0.011816,
+        0.522373
+      ]
+    },
+    {
+      "index": 8,
+      "target_env_frame_m": [
+        0.422239,
+        -0.056618,
+        0.589356
+      ]
+    },
+    {
+      "index": 9,
+      "target_env_frame_m": [
+        0.442054,
+        0.013821,
+        0.549294
+      ]
+    },
+    {
+      "index": 10,
+      "target_env_frame_m": [
+        0.381919,
+        0.053069,
+        0.607435
+      ]
+    },
+    {
+      "index": 11,
+      "target_env_frame_m": [
+        0.430795,
+        0.012681,
+        0.606117
+      ]
+    },
+    {
+      "index": 12,
+      "target_env_frame_m": [
+        0.470733,
+        0.0796,
+        0.59844
+      ]
+    },
+    {
+      "index": 13,
+      "target_env_frame_m": [
+        0.438503,
+        0.036776,
+        0.51755
+      ]
+    },
+    {
+      "index": 14,
+      "target_env_frame_m": [
+        0.386762,
+        -0.040071,
+        0.601765
+      ]
+    },
+    {
+      "index": 15,
+      "target_env_frame_m": [
+        0.425029,
+        -0.027569,
+        0.513031
+      ]
+    },
+    {
+      "index": 16,
+      "target_env_frame_m": [
+        0.386943,
+        0.030005,
+        0.605564
+      ]
+    },
+    {
+      "index": 17,
+      "target_env_frame_m": [
+        0.438912,
+        0.052147,
+        0.53142
+      ]
+    },
+    {
+      "index": 18,
+      "target_env_frame_m": [
+        0.444352,
+        0.036211,
+        0.537577
+      ]
+    },
+    {
+      "index": 19,
+      "target_env_frame_m": [
+        0.380411,
+        0.046471,
+        0.612445
+      ]
+    },
+    {
+      "index": 20,
+      "target_env_frame_m": [
+        0.442438,
+        0.072588,
+        0.599586
+      ]
+    },
+    {
+      "index": 21,
+      "target_env_frame_m": [
+        0.41533,
+        0.074027,
+        0.536958
+      ]
+    },
+    {
+      "index": 22,
+      "target_env_frame_m": [
+        0.383699,
+        0.013274,
+        0.545347
+      ]
+    },
+    {
+      "index": 23,
+      "target_env_frame_m": [
+        0.366481,
+        -0.027017,
+        0.609735
+      ]
+    },
+    {
+      "index": 24,
+      "target_env_frame_m": [
+        0.44731,
+        0.076298,
+        0.577078
+      ]
+    },
+    {
+      "index": 25,
+      "target_env_frame_m": [
+        0.375614,
+        -0.06339,
+        0.596349
+      ]
+    },
+    {
+      "index": 26,
+      "target_env_frame_m": [
+        0.426938,
+        0.054624,
+        0.518244
+      ]
+    },
+    {
+      "index": 27,
+      "target_env_frame_m": [
+        0.477409,
+        0.078635,
+        0.564809
+      ]
+    },
+    {
+      "index": 28,
+      "target_env_frame_m": [
+        0.399801,
+        -0.005217,
+        0.603835
+      ]
+    },
+    {
+      "index": 29,
+      "target_env_frame_m": [
+        0.443442,
+        0.036243,
+        0.553831
+      ]
+    },
+    {
+      "index": 30,
+      "target_env_frame_m": [
+        0.399258,
+        0.002334,
+        0.584827
+      ]
+    },
+    {
+      "index": 31,
+      "target_env_frame_m": [
+        0.362906,
+        -0.027661,
+        0.527036
+      ]
+    },
+    {
+      "index": 32,
+      "target_env_frame_m": [
+        0.385551,
+        -0.013214,
+        0.54905
+      ]
+    },
+    {
+      "index": 33,
+      "target_env_frame_m": [
+        0.396103,
+        0.035435,
+        0.514738
+      ]
+    },
+    {
+      "index": 34,
+      "target_env_frame_m": [
+        0.457963,
+        -0.046999,
+        0.534006
+      ]
+    },
+    {
+      "index": 35,
+      "target_env_frame_m": [
+        0.416543,
+        -0.066255,
+        0.612618
+      ]
+    },
+    {
+      "index": 36,
+      "target_env_frame_m": [
+        0.361754,
+        -0.044049,
+        0.586179
+      ]
+    },
+    {
+      "index": 37,
+      "target_env_frame_m": [
+        0.39658,
+        0.038425,
+        0.500907
+      ]
+    },
+    {
+      "index": 38,
+      "target_env_frame_m": [
+        0.459827,
+        -0.077853,
+        0.572334
+      ]
+    },
+    {
+      "index": 39,
+      "target_env_frame_m": [
+        0.42709,
+        -0.060469,
+        0.606361
+      ]
+    },
+    {
+      "index": 40,
+      "target_env_frame_m": [
+        0.370022,
+        0.002652,
+        0.557856
+      ]
+    },
+    {
+      "index": 41,
+      "target_env_frame_m": [
+        0.367017,
+        0.042125,
+        0.548513
+      ]
+    },
+    {
+      "index": 42,
+      "target_env_frame_m": [
+        0.405898,
+        -0.073648,
+        0.556282
+      ]
+    },
+    {
+      "index": 43,
+      "target_env_frame_m": [
+        0.423723,
+        0.037459,
+        0.619044
+      ]
+    },
+    {
+      "index": 44,
+      "target_env_frame_m": [
+        0.457256,
+        -0.007232,
+        0.508833
+      ]
+    },
+    {
+      "index": 45,
+      "target_env_frame_m": [
+        0.439071,
+        0.017788,
+        0.610346
+      ]
+    },
+    {
+      "index": 46,
+      "target_env_frame_m": [
+        0.409673,
+        -0.058804,
+        0.547191
+      ]
+    },
+    {
+      "index": 47,
+      "target_env_frame_m": [
+        0.473817,
+        0.038397,
+        0.569922
+      ]
+    },
+    {
+      "index": 48,
+      "target_env_frame_m": [
+        0.394759,
+        0.021822,
+        0.522532
+      ]
+    },
+    {
+      "index": 49,
+      "target_env_frame_m": [
+        0.416893,
+        -0.041874,
+        0.535683
+      ]
+    },
+    {
+      "index": 50,
+      "target_env_frame_m": [
+        0.437918,
+        0.053316,
+        0.535204
+      ]
+    },
+    {
+      "index": 51,
+      "target_env_frame_m": [
+        0.421311,
+        -0.036826,
+        0.611746
+      ]
+    },
+    {
+      "index": 52,
+      "target_env_frame_m": [
+        0.443673,
+        0.006498,
+        0.617943
+      ]
+    },
+    {
+      "index": 53,
+      "target_env_frame_m": [
+        0.425292,
+        -0.064265,
+        0.532102
+      ]
+    },
+    {
+      "index": 54,
+      "target_env_frame_m": [
+        0.397308,
+        0.053556,
+        0.541037
+      ]
+    },
+    {
+      "index": 55,
+      "target_env_frame_m": [
+        0.373755,
+        0.047464,
+        0.520023
+      ]
+    },
+    {
+      "index": 56,
+      "target_env_frame_m": [
+        0.425778,
+        0.04194,
+        0.578878
+      ]
+    },
+    {
+      "index": 57,
+      "target_env_frame_m": [
+        0.43365,
+        0.002459,
+        0.531144
+      ]
+    },
+    {
+      "index": 58,
+      "target_env_frame_m": [
+        0.426228,
+        -0.022076,
+        0.544226
+      ]
+    },
+    {
+      "index": 59,
+      "target_env_frame_m": [
+        0.399337,
+        -0.046159,
+        0.55522
+      ]
+    },
+    {
+      "index": 60,
+      "target_env_frame_m": [
+        0.374483,
+        0.025776,
+        0.609274
+      ]
+    },
+    {
+      "index": 61,
+      "target_env_frame_m": [
+        0.479911,
+        -0.009071,
+        0.553728
+      ]
+    },
+    {
+      "index": 62,
+      "target_env_frame_m": [
+        0.477094,
+        -0.064683,
+        0.508881
+      ]
+    },
+    {
+      "index": 63,
+      "target_env_frame_m": [
+        0.388737,
+        -0.007433,
+        0.524485
+      ]
+    },
+    {
+      "index": 64,
+      "target_env_frame_m": [
+        0.393628,
+        0.004571,
+        0.596065
+      ]
+    },
+    {
+      "index": 65,
+      "target_env_frame_m": [
+        0.362949,
+        0.066478,
+        0.573184
+      ]
+    },
+    {
+      "index": 66,
+      "target_env_frame_m": [
+        0.426364,
+        0.063963,
+        0.614575
+      ]
+    },
+    {
+      "index": 67,
+      "target_env_frame_m": [
+        0.422542,
+        -0.016748,
+        0.568144
+      ]
+    },
+    {
+      "index": 68,
+      "target_env_frame_m": [
+        0.409646,
+        -0.033254,
+        0.589339
+      ]
+    },
+    {
+      "index": 69,
+      "target_env_frame_m": [
+        0.453497,
+        0.027604,
+        0.571712
+      ]
+    },
+    {
+      "index": 70,
+      "target_env_frame_m": [
+        0.402724,
+        -0.038642,
+        0.583876
+      ]
+    },
+    {
+      "index": 71,
+      "target_env_frame_m": [
+        0.402576,
+        -0.066109,
+        0.611481
+      ]
+    },
+    {
+      "index": 72,
+      "target_env_frame_m": [
+        0.376087,
+        -0.055738,
+        0.56302
+      ]
+    },
+    {
+      "index": 73,
+      "target_env_frame_m": [
+        0.380267,
+        0.017995,
+        0.59247
+      ]
+    },
+    {
+      "index": 74,
+      "target_env_frame_m": [
+        0.439445,
+        -0.0389,
+        0.577295
+      ]
+    },
+    {
+      "index": 75,
+      "target_env_frame_m": [
+        0.366492,
+        -0.013831,
+        0.578348
+      ]
+    },
+    {
+      "index": 76,
+      "target_env_frame_m": [
+        0.438341,
+        0.041614,
+        0.522011
+      ]
+    },
+    {
+      "index": 77,
+      "target_env_frame_m": [
+        0.448458,
+        0.044211,
+        0.593405
+      ]
+    },
+    {
+      "index": 78,
+      "target_env_frame_m": [
+        0.367295,
+        -0.024298,
+        0.515523
+      ]
+    },
+    {
+      "index": 79,
+      "target_env_frame_m": [
+        0.362151,
+        -0.070735,
+        0.572469
+      ]
+    },
+    {
+      "index": 80,
+      "target_env_frame_m": [
+        0.463988,
+        -0.057823,
+        0.59145
+      ]
+    },
+    {
+      "index": 81,
+      "target_env_frame_m": [
+        0.362651,
+        -0.061835,
+        0.617119
+      ]
+    },
+    {
+      "index": 82,
+      "target_env_frame_m": [
+        0.463736,
+        -0.037182,
+        0.557979
+      ]
+    },
+    {
+      "index": 83,
+      "target_env_frame_m": [
+        0.478018,
+        -0.028387,
+        0.51653
+      ]
+    },
+    {
+      "index": 84,
+      "target_env_frame_m": [
+        0.437195,
+        -0.066433,
+        0.501881
+      ]
+    },
+    {
+      "index": 85,
+      "target_env_frame_m": [
+        0.423919,
+        0.035161,
+        0.546457
+      ]
+    },
+    {
+      "index": 86,
+      "target_env_frame_m": [
+        0.454393,
+        -0.042197,
+        0.566028
+      ]
+    },
+    {
+      "index": 87,
+      "target_env_frame_m": [
+        0.372729,
+        0.008749,
+        0.569468
+      ]
+    },
+    {
+      "index": 88,
+      "target_env_frame_m": [
+        0.451768,
+        0.023007,
+        0.504994
+      ]
+    },
+    {
+      "index": 89,
+      "target_env_frame_m": [
+        0.388897,
+        0.017488,
+        0.552984
+      ]
+    },
+    {
+      "index": 90,
+      "target_env_frame_m": [
+        0.405539,
+        -0.006729,
+        0.512513
+      ]
+    },
+    {
+      "index": 91,
+      "target_env_frame_m": [
+        0.428596,
+        0.061369,
+        0.537051
+      ]
+    },
+    {
+      "index": 92,
+      "target_env_frame_m": [
+        0.394338,
+        0.072018,
+        0.56468
+      ]
+    },
+    {
+      "index": 93,
+      "target_env_frame_m": [
+        0.395049,
+        -0.025723,
+        0.564252
+      ]
+    },
+    {
+      "index": 94,
+      "target_env_frame_m": [
+        0.421153,
+        0.01228,
+        0.60226
+      ]
+    },
+    {
+      "index": 95,
+      "target_env_frame_m": [
+        0.412172,
+        0.070047,
+        0.53806
+      ]
+    },
+    {
+      "index": 96,
+      "target_env_frame_m": [
+        0.467069,
+        0.037648,
+        0.518268
+      ]
+    },
+    {
+      "index": 97,
+      "target_env_frame_m": [
+        0.389641,
+        -0.038241,
+        0.555834
+      ]
+    },
+    {
+      "index": 98,
+      "target_env_frame_m": [
+        0.420058,
+        -0.040938,
+        0.543083
+      ]
+    },
+    {
+      "index": 99,
+      "target_env_frame_m": [
+        0.476332,
+        0.050222,
+        0.54368
+      ]
+    }
+  ]
+}

@@ -1,28 +1,24 @@
 # Week 1 — 14–20 September 2026
 
 **Status:** in progress
-**Focus:** Audit the model, runtime and candidate code; bring up the free-space stance-and-reach task
+**Focus:** Finish environment/evaluator work; begin method reproduction, camera setup and hardware measurements
 
 ## Planned
 
-From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appendix-a) and the Appendix A Gantt chart.
+From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-schedule),
+16 September 2026. This replaces the original Appendix A timing; earlier dated logs remain historical evidence.
 
-- **Training and implementation:** audit model, runtime and candidate code; bring up the stance-and-reach task.
-- **Testing and evidence:** record versions; verify welded articulation, frames, action order, resets and sensor
-  coverage; capture baseline playback runs.
-- **Gantt activities:** codebases, *testing*; position-only baseline, *check*; contact tasks, *build tasks + fixtures*.
-- **Gate focus:** G0.
+- **Reuse, simulation and learning:** Close remaining G0 checks, validate workspace/reset changes, start the frozen evaluator, and trace UniFP plus the Go2+D1 position-only reference.
+- **Hardware and camera:** Bring up RealSense/AprilTags and D1 telemetry; measure basic arm response and the real box mechanism; establish robot, fixture, GPU and storage access.
+- **Evidence and deliverable:** Record reproduction attempts and interface measurements. Freeze the task and deployment contract in Week 2.
+- **Gate focus:** G0; preparation for G1a and G4.
 
-**Revised 16 September.** The [plan was rewritten](../../docs/thesis_b_plan.md) that day, outside this record,
-making a physical AprilTag-guided combiner-box demonstration the Thesis B deliverable and adding gates G4–G7.
-Its Week 1 row asks for two tracks:
-
-- **Simulation and learning:** close remaining G0 checks; resolve and reset-test the target workspace; start the
-  frozen evaluator; trace UniFP and the position-only reference. The workspace item is done (F-016); the frozen
-  evaluator and the reference traces are not started.
-- **Hardware, camera and deliverable:** bring up RealSense/tags and D1 telemetry; measure basic arm response and
-  box loads; record access and fixture needs. **None of this has been started in this repository**, and no camera,
-  tag or D1 telemetry code exists here. It is the larger half of the revised Week 1.
+**Where the two tracks stand, 16 September.** Simulation: the workspace and reset were resolved (F-016) and the
+frozen evaluator is written and measured (F-018); the UniFP and Go2+D1 reference traces have not been started,
+and neither repository is cloned here. Hardware and camera: **not started**. This machine has no RealSense
+(no Intel USB device, no `pyrealsense2`), no serial device and no wired link to the robot, and no camera, tag
+or D1 telemetry code exists in this repository. Lukas confirmed on 16 September that the physical device cannot
+be tested on this PC today. That track is the larger half of the revised Week 1 and Week 2's G4 depends on it.
 
 ## Checklist
 
@@ -49,11 +45,23 @@ Its Week 1 row asks for two tracks:
 - [x] Playback reference: bare Go2 and Go2+D1, with forward, lateral and yaw commands (F-012)
 - [x] Short PPO pilot: 64 envs × 24 steps × 100 iterations (153,600 transitions); throughput and memory recorded (three pilots)
 - [x] Rescue flat ablation recorded as external evidence (F-008)
+- [x] Frozen-manifest evaluator written, with development/validation/test manifests and the zero-action baseline measured on all three (2026-09-16, F-018)
 - [ ] Gait-quality metrics (foot vs neutral point, front–rear spacing, backward after request, turn tracking at 0.2/0.5/1.0 rad/s, pitch wobble) added to the P0 evaluator design for G1b
+- [ ] Run the evaluator against a trained checkpoint: its truncation and fall paths are tested only by unit tests
+- [ ] Hardware and camera half of the revised Week 1: RealSense/tags, D1 telemetry, arm response, box loads, access and fixture needs (not started; no hardware on this machine)
 - [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
 - [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
 - [ ] Explain the 0.010 rad residual at J3 with force drives (F-010)
 - [ ] Decide whether playback (`run_sim.sh`) should also get force arm drives; it would change the F-012 reference
+
+### Added by the 16 September plan revision
+
+- [ ] Frozen-manifest evaluator started, including zero-action reference and terminal metrics
+- [ ] UniFP and one position-only reference reproduction attempts started with a setup time budget
+- [ ] RealSense stream and AprilTag detections recorded
+- [ ] D1 feedback/command timing and basic joint response measured on hardware
+- [ ] Box latch/lever loads, travel, geometry and tool engagement measured
+- [ ] Robot access, fixture availability, GPU sessions and recording storage budget recorded
 
 ## Environment
 
@@ -615,10 +623,130 @@ What it does not show:
 | `verify.py` | `target_box_needs_arm_motion` and `resting_tip_matches_recorded_stance` (23 checks) |
 | `workspace.py` | Reports and plots the measured resting tip beside the model's, with the model error; histogram bins follow the data instead of stopping at 22 cm |
 
+### 2026-09-16 · revised B/C plan: reuse, tagged box demonstration and C refinements
+
+- Revised the [plan](../../docs/thesis_b_plan.md) at Lukas's request: target a complete
+  AprilTag-guided real Go2+D1 box-opening sequence in B, with markerless perception and
+  broader refinements in C. First integrated attempt is targeted Week 6; Weeks 7–9
+  support repeatability and comparisons, followed by the Week 10 report/demonstration.
+- B prioritises pressing for force calibration and the box/lever as the application.
+  Additional tasks and autonomous tool changes are conditional. Source reuse centres on
+  UniFP, the Go2+D1 position-only reference, UMI-on-Legs and the existing robot interfaces.
+- Updated all ten weekly plans and the [gate record](../gates.md), adding G4–G7 for
+  measured observations, physical reaching, contact and integrated repeated trials.
+  Task/interface definitions move to Week 2 and contact calibration to Week 3.
+- This is a planning/documentation change. Existing dated logs, checked items and gate
+  statuses are retained. No new simulation, training, camera or hardware result is claimed;
+  workspace/reset findings F-014–F-016 remain separately recorded experimental evidence.
+
+### 2026-09-16 · Frozen-manifest evaluator, and the zero-action baseline G1a is read against (fifth session)
+
+The revised plan's Week 1 asks to "start frozen evaluator". It is written and running. Hardware is not
+available on this machine today, so the hardware and camera half of Week 1 stays untouched.
+
+#### What it measures
+
+`run_position_only.py eval --manifest <file>` runs every episode of a frozen manifest under one
+controller with deterministic actions, and reports what the plan's measurement section asks for:
+reach success with a continuous dwell, survival, falls, error norm, RMS, 95th percentile, time to
+reach, base tilt and height, joint-limit and effort figures, with transient and final-two-second
+tracking kept apart. Without `--checkpoint` it evaluates zero actions, which is the baseline every
+reach number has to be read against.
+
+Three rules are enforced in code rather than left to the writer, because each one can quietly flatter
+a result. They have unit tests (`tests/test_evaluate.py`, 29 tests) built around exactly those cases:
+
+- **Failed episodes stay in the success denominator.** `error_all_episodes` is the reported figure;
+  `error_surviving_episodes_only` exists but is labelled "for diagnosis only".
+- **Truncated traces are not padded.** An episode that ends early keeps the samples it produced; the
+  missing tail is not filled with the last good value, and truncated episodes are counted separately.
+- **The dwell must be continuous.** Four separate 0.5 s visits do not add up to G1a's 1 s.
+
+A terminated environment is reset inside Isaac Lab's `step()`, so the state read after that step
+belongs to the next episode. The terminating step's sample is discarded and the episode's last valid
+sample is the one before it, 20 ms earlier. An episode that ends early cannot be a success however
+close the tool point got, because G1a requires surviving to the end.
+
+#### Three manifests, and a guard on the conditions
+
+`manifest` mode writes a versioned, hashed episode set: `development` (free to look at),
+`validation` (checkpoint selection only) and `test` (untouched until the final result), 100 episodes
+each, drawn from independent RNG streams. The file fixes the targets *and* the conditions the
+episodes run under — spawn height, target box, robustness, latency, both actuator models,
+self-collisions, tool point, episode length, success radius and dwell. Loading re-checks the hash, so
+a hand-edited manifest is rejected.
+
+| Role | Seed | `content_sha256` |
+| --- | --- | --- |
+| development | 20260916 | `e2e0d3e6a566…` |
+| validation | 20260917 | `8754dc71f8a0…` |
+| test | 20260918 | `27ef0f8569ea…` |
+
+Every evaluation compares the run's actual conditions against the manifest's and records any
+mismatch in `eval.json`. [A deliberate check](#/week/1/run/20260916T005431_232893Z_eval_seed42) ran
+the development manifest at the old 0.42 m spawn with the old `implicit` arm drives: both deviations
+were named, and the mismatched run reported **RMS 16.6 cm against the correct 21.7 cm**. A sagging
+arm drops the tool point toward a box that sits below it, so the wrong configuration looks 5 cm
+*better*. That is the whole reason for the guard.
+
+#### The zero-action baseline
+
+100 episodes per manifest, zero actions, 50 environments per batch, about 14 s each:
+
+| Manifest | Success | Falls | Truncated | RMS | 95th pct | Final 2 s | Lowest base | Peak tilt |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| [development](#/week/1/run/20260916T005258_970617Z_eval_seed42) | **0/100** | 0 | 0 | 21.7 cm | 23.1 cm | 21.7 cm | 0.260 m | 5.11° |
+| [validation](#/week/1/run/20260916T005318_737159Z_eval_seed42) | **0/100** | 0 | 0 | 21.6 cm | 23.1 cm | 21.6 cm | 0.260 m | 5.11° |
+| [test](#/week/1/run/20260916T005338_474757Z_eval_seed42) | **0/100** | 0 | 0 | 22.2 cm | 23.6 cm | 22.1 cm | 0.260 m | 5.11° |
+
+No episode reached within 5 cm at any point, in any of the 300. G1a's own thresholds are checked in
+`eval.json` (`g1a.passed`), and this correctly reports `false`. The three sets agree to 0.6 cm of RMS,
+so the development/validation/test split is balanced rather than three different difficulties.
+
+#### Finding: the arm's commanded torque saturates while the robot stands still (F-017)
+
+The first evaluation reported the arm at its effort limit in 100% of steps, which sits oddly against
+F-010's measured joint loads of about 1.1 N·m against 1.7–3.3 N·m limits. Both are true, because they
+are different quantities. The arm is an `ImplicitActuator`, where PhysX runs the PD itself and Isaac
+Lab's `applied_torque` is only its own Python-side estimate clipped to the limit — the class calls
+them "approximate torques … since PhysX does not expose this quantity". Measured at rest, zero
+actions, settled:
+
+| Joint | Isaac Lab `computed_torque` | `applied_torque` (clipped) | Limit | PhysX reaction torque |
+| --- | --- | --- | --- | --- |
+| Joint2 | −4.46 N·m | −3.30 N·m | 3.3 N·m | 1.10 N·m |
+| Joint3 | −25.80 N·m | −1.70 N·m | 1.7 N·m | 1.08 N·m |
+| Joint5 | 2.87 N·m | 1.70 N·m | 1.7 N·m | 0.29 N·m |
+
+With 4000 N·m/rad standing in for the D1's servo loop, J3's 0.011 rad residual alone demands 44.9 N·m
+before damping, against a 1.7 N·m limit. So the commanded torque saturates on four of six arm joints
+with the robot doing nothing at all. An "effort saturation" metric built on `applied_torque` would
+report 100% saturation for a motionless robot and tell a reader nothing about a policy. The evaluator
+now reports `arm_commanded_effort_at_limit_frac` (named as commanded, with the caveat in the JSON)
+beside `peak_arm_joint_torque_nm` from PhysX's reaction torques. The legs use an explicit actuator, so
+their figures are the model's own clipped output and need no such caveat.
+
+What it shows:
+
+- **The measurement G1a needs exists**, with its rules tested and the zero-action reference measured
+  on all three manifests.
+- **The comparison is protected**: manifests are hashed, conditions are checked, and a wrong
+  configuration is caught rather than silently reported.
+
+What it does not show:
+
+- **No policy has been evaluated.** Every number here is zero actions. The evaluator has never been
+  run against a trained checkpoint, so its behaviour on a moving robot is untested — in particular
+  the truncation and fall paths have not been exercised by a real failure, only by unit tests.
+- **One simulator seed.** Per-seed spread across training seeds 42/43/44 is a G3 item, not done.
+- **The arm's gains are a modelling choice**, not an identified servo loop (F-002, F-007). The
+  saturation result describes this model, not D1 hardware.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
-6 playback runs and 1 viewer replay on 2026-09-15. Figures: [smoke posture](figures/smoke_posture.png),
+6 playback runs and 1 viewer replay on 2026-09-15; 5 smoke, 3 verify and 6 evaluation runs on 2026-09-16.
+Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [smoke posture](figures/smoke_posture.png),
 [D1 workspace](figures/d1_workspace.png) and the replay captures. External evidence: [Rescue flat ablation](external/rescue_flat_ablation/README.md).
 
 ## Findings this week
@@ -639,6 +767,8 @@ Runs recorded this week appear under **Runs** below these notes, with their curv
 - [F-014](../findings.md): the backward slide at reset is the zero-action posture settling, not the drop; it is repeatable between environments to 0.005 cm (confirmed).
 - [F-015](../findings.md): the CPU workspace model puts the resting pincer tip 1.6 cm from where the simulator rests it, missing the arm's sag and the base's 1° tilt (confirmed).
 - [F-016](../findings.md): moving the target box below the resting tip removes the free successes — zero actions score 0 of 256, and the spawn drop is gone (confirmed).
+- [F-017](../findings.md): the arm's commanded torque saturates while the robot stands still; `applied_torque` on an implicit actuator is an estimate, not a PhysX measurement (confirmed).
+- [F-018](../findings.md): the frozen-manifest evaluator measures 0 of 300 zero-action episodes reaching, across three balanced manifests (confirmed).
 
 ## Issues and risks
 
@@ -683,12 +813,7 @@ Runs recorded this week appear under **Runs** below these notes, with their curv
 
 ## Next week
 
-The box and reset are done (F-016), so the simulation track's remaining Week 1 items carry forward: workspace
-validation against an IK reference, a frozen-manifest evaluator reporting a zero-action baseline (now 0%) and
-G1b's gait metrics, and the first PPO pilots against the new box with reward-term inspection. The three Week 1
-pilots predate the box, the spawn and the pincer tip, so P0 training starts from scratch.
-
-The 16 September replan adds a second track that has not begun: RealSense and AprilTag bring-up, D1 telemetry,
-arm response and box-load measurements, and the access and fixture needs that Week 2's frame calibration and
-G4 deployment contract depend on. Week 2 also has to freeze the task, interface and tolerance manifests and
-select the implementation from bounded reproductions.
+Follow the revised [Week 2 plan](../week_02/notes.md): finish bounded method reproductions,
+validate the P0 candidate, freeze the box/task and deployment interfaces, calibrate
+camera/tag/tool frames, and begin recorded-state inference replay. Outstanding Week 1
+checks remain open until their evidence is recorded.
