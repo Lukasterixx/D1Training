@@ -1437,6 +1437,88 @@ zeros it is now measuring.
 **Arm state:** parked folded and released, [−0.30, −90.80, +92.50, −0.30, +1.00, −0.10]°. Console restarted with
 the level gripper on by default.
 
+### 2026-09-16 · What the hardware session changes for training (sixth session)
+
+The D1 bring-up (F-020 to F-037, commit `e239a51`) replaced two values the simulated arm had been
+using on faith. This entry is what that does to the task and to the policy trained an hour earlier.
+
+#### The task still passes, with different numbers underneath
+
+`verify --headless --num_envs 8` passes **23/23**
+([run](#/week/1/run/20260916T093504_798069Z_verify_seed42)). PhysX now carries the measured joint
+speed limits and the feedback period has moved:
+
+| | before | after | source |
+| --- | --- | --- | --- |
+| Joint1–3 velocity limit | 1.05 rad/s | 1.25 / 1.29 / 1.23 | measured (F-033) |
+| Joint4–6 velocity limit | 1.73 rad/s | 1.21 / 1.25 / 1.25 | measured (F-033) |
+| `D1_FEEDBACK_HZ` | 10.0 (SDK headers) | 9.0 | measured (F-020) |
+| `arm_feedback_period_steps` | 5 | 6 | derived at 50 Hz |
+
+#### The squat policy does not care, which is the point
+
+`model_1499` (F-019) trained under the old values, re-run on the same development manifest
+([run](#/week/1/run/20260916T093536_565075Z_eval_seed42)):
+
+| | trained-under | measured | change |
+| --- | --- | --- | --- |
+| Success | 100/100 | 100/100 | none |
+| Falls | 0 | 0 | none |
+| Final-2 s error | 0.52 cm | 1.33 cm | **2.6× worse** |
+| 95th percentile | 1.37 cm | 2.66 cm | **1.9× worse** |
+| Lowest base height | 0.1590 m | 0.1588 m | none |
+| Peak tilt | 17.38° | 17.63° | none |
+| Legs at effort limit | 9.8% | 14.0% | worse |
+
+Taking 40% off the wrist's simulated speed changed the success rate by nothing at all. That is not
+reassurance about the policy, it is confirmation of what the policy is doing: a reaching controller
+indifferent to a 40% wrist slowdown is not reaching with its wrist. The cost lands precisely where
+the arm does the work — steady-state tracking — and nowhere else (F-038).
+
+The zero-action baseline is unchanged to four decimals
+([run](#/week/1/run/20260916T093636_038122Z_eval_seed42)): 0/100, RMS 21.74 cm, lowest base 0.2602 m.
+Zero actions hold the default joint targets and never reach the speed ceiling, so F-018 stands.
+
+#### The guard did not notice
+
+Both evaluations ran against manifest `e2e0d3e6a566…` and both reported `condition_mismatches: []`.
+The manifest records `latency: "estimated"` as a *label*; the numbers behind that label changed
+underneath it, and the arm's velocity limits were never in the conditions at all. The same guard
+that caught a deliberate spawn-height and arm-drive mismatch cannot catch the robot model changing
+(F-039). The plan requires the same robot dynamics across P0–P4, so the model is part of the frozen
+comparison whether the manifest says so or not.
+
+#### Still not simulated
+
+The two corrections that landed are the ones that were easy to apply. The measurements that are not
+yet in the simulator are arguably larger:
+
+- **~127 ms command-to-motion delay** (F-021). `motor_model.py` now says so explicitly:
+  `arm_command_hold_steps` is a command *hold*, not a *delay*. At 50 Hz that is about six policy
+  steps of dead time the task does not represent.
+- **Two feedback cycles to reach cruise** (F-035). The arm runs a trapezoid — 0 → 28 → 67.5 → 69.3
+  °/s over ~0.55 s for a 30° step — so roughly 220 ms of it is acceleration. The simulation models a
+  velocity ceiling with no acceleration limit, so a policy can command step changes the arm cannot
+  follow.
+- **Two inverted servo signs**, J0 and J3 (F-030, F-034). A deployment concern rather than a training
+  one, but `params/deploy.yaml` maps joints to motor ids by index with no sign convention, so a
+  policy deployed through it would reach to the wrong side and twist the tool the wrong way. G4
+  cannot freeze the contract until this is decided.
+
+What it shows:
+
+- **The corrected arm model is in and the task is intact** (23/23), with the values labelled measured
+  rather than estimated.
+- **F-019's mechanism is confirmed from a second direction.** The insensitivity to the wrist
+  correction is evidence the body is doing the reaching.
+
+What it does not show:
+
+- **Not a retrained policy.** This is one checkpoint evaluated off its training distribution. How
+  much retraining recovers is unmeasured.
+- **The arm model is still optimistic**: no command latency, no acceleration limit, and the measured
+  speeds are lower bounds (F-033).
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -1465,6 +1547,8 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-017](../findings.md): the arm's commanded torque saturates while the robot stands still; `applied_torque` on an implicit actuator is an estimate, not a PhysX measurement (confirmed).
 - [F-018](../findings.md): the frozen-manifest evaluator measures 0 of 300 zero-action episodes reaching, across three balanced manifests (confirmed).
 - [F-019](../findings.md): the first policy trained against the revised box reaches by squatting to within 9 mm of the fall termination; it meets G1a's arithmetic and cannot be the P0 baseline (confirmed, one seed, development manifest).
+- [F-038](../findings.md): the measured arm model doubles the squat policy's tracking error and leaves its success rate untouched, confirming the reach is body-driven (confirmed, one checkpoint off its training distribution).
+- [F-039](../findings.md): the frozen manifest records condition labels, not the values behind them, so a changed robot model passes the guard unflagged (confirmed, one observed instance).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -1489,6 +1573,18 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - **The target box never needs the base to move.** The free successes are gone (F-016: 0 of 256), but the box is a
   small fixed volume in front of a standing robot, so P0 is still a stance-and-reach task. Base-motion targets are
   plan stage 6 and are not designed yet.
+- **The manifest freezes labels, not the robot model** (F-039). `latency: "estimated"` stayed `estimated`
+  while the numbers behind it changed, and the arm's velocity limits were never in the conditions at all, so
+  two evaluations across a changed arm both reported no mismatch. Resolve the values into the conditions before
+  any policy of record exists; it costs three new manifest hashes and ~15 s per zero-action re-measurement now,
+  and a great deal more later.
+- **The arm model is still optimistic where it was not corrected.** The ~127 ms command-to-motion delay
+  (F-021) and the two-feedback-cycle acceleration ramp (F-035) are measured and not simulated; the task models
+  a velocity ceiling with no acceleration limit and a command *hold* rather than a *delay*. The measured speeds
+  are lower bounds (F-033).
+- **Two servo signs are inverted and `params/deploy.yaml` has no sign convention** (F-030, F-034). A policy
+  deployed through the current manifest would reach to the wrong side and twist the tool the wrong way. G4
+  cannot freeze the deployment contract until that is decided.
 - **Nothing prices the squat.** The reward set has no base-height term, so a policy can lower the tool
   point by crouching instead of moving the arm, and the first one trained against the revised box does
   exactly that: every episode below 0.20 m, 9 mm from the `low_base` termination at worst, legs

@@ -1,0 +1,36 @@
+{
+  "id": "20260916T093504_798069Z_verify_seed42",
+  "title": "verify 23/23 under the measured D1 arm model",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-16T19:37:15+10:00",
+  "started_utc": "2026-09-16T09:35:04+00:00",
+  "source_dir": "logs/position_only/20260916T093504_798069Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_passed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "e239a5146d35ef1c848322f95a3907a65f8514fd",
+  "git_dirty": false,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": true,
+    "passed": 23,
+    "total": 23,
+    "failed": [],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

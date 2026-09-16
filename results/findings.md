@@ -983,3 +983,71 @@ result that changes a conclusion gets a new entry, and the old one is marked
   arm's ~0.5°-per-joint landing floor (F-031) compounded through the wrist. It should **not** be tuned out by
   biasing the target: that would bake a calibration error into the controller. Measuring the joint zeros (G4)
   is what resolves it, and this gives that measurement a concrete, repeatable observable.
+
+### F-038 — The measured arm model doubles the squat policy's tracking error and leaves its success rate untouched, because the reach is body-driven
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). The hardware session replaced two simulated arm
+  values: joint speed limits went from the URDF's unverified 1.05/1.05/1.05/1.73/1.73/1.73 rad/s to the
+  measured 1.25/1.29/1.23/1.21/1.25/1.25 (F-033), and `D1_FEEDBACK_HZ` from 10.0 to the measured 9.0, moving
+  `arm_feedback_period_steps` from 5 to 6 (F-020). `verify` passes **23/23** under the new values
+  (run `20260916T093504_798069Z`), with PhysX carrying the measured limits. `model_1499` from the seed-42
+  candidate (F-019), trained under the *old* values, re-evaluated on the same development manifest
+  (run `20260916T093536_565075Z`):
+
+  | | trained-under model | measured model |
+  | --- | --- | --- |
+  | Success | 100/100 | **100/100** |
+  | Falls | 0 | 0 |
+  | Final-2 s mean error | 0.52 cm | **1.33 cm** |
+  | 95th percentile | 1.37 cm | **2.66 cm** |
+  | RMS | 2.11 cm | 2.50 cm |
+  | Mean dwell | 9.85 s | 9.76 s |
+  | Lowest base height | 0.1590 m | 0.1588 m |
+  | Peak tilt | 17.38° | 17.63° |
+  | Legs at effort limit | 9.8% of steps | **14.0% of steps** |
+
+  The zero-action baseline on the same manifest is unchanged to four decimals (0/100, RMS 21.74 cm, lowest base
+  0.2602 m; run `20260916T093636_038122Z`), as expected — zero actions hold the default joint targets and never
+  approach the speed ceiling or read arm feedback, so F-018's baselines stand.
+- **Scope:** one checkpoint, one seed, one manifest, `--robustness none`. This is a policy evaluated *off* its
+  training distribution, not a policy trained under the measured model; how much of the degradation retraining
+  would recover is not measured. The measured speed limits are lower bounds (F-033), and the ~127 ms
+  command-to-motion delay (F-021) and the two-cycle acceleration ramp (F-035) are still not simulated at all,
+  so the arm model remains optimistic in ways this comparison does not capture.
+- **Implication:** the correction that mattered most on paper — Joint4–Joint6 losing 40% of their simulated
+  speed — cost the policy **nothing in success rate**, and that is the diagnosis, not the reassurance. A
+  position-only reaching policy whose success is indifferent to a 40% wrist slowdown is not reaching with its
+  wrist. It shows up exactly where the arm does the work: the steady-state final-2 s error rises 2.6× and the
+  95th percentile 1.9×, while the posture, the dwell and the success rate barely move. This is independent
+  confirmation of [F-019](#f-019)'s mechanism from a direction that experiment could not supply. Practically:
+  the F-019 checkpoint is stale and should not be retrained until the base-height term lands, so that the reward
+  fix and the measured arm model are both in the run that becomes the P0 candidate of record.
+
+### F-039 — The frozen manifest records condition labels, not the values behind them, so a changed robot model passes the guard unflagged
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). The manifest's `conditions` block records
+  `latency: "estimated"`, `leg_actuator`, `arm_actuator`, `self_collisions`, the spawn height, target box, tool
+  point, episode length, success radius and dwell. The arm's joint speed limits and the feedback rate are not
+  among them; they reach the simulation from `motor_model.py` through `flat_env_cfg.py:398`
+  (`velocity_limit_sim`) and `position_only/env_cfg.py:231` (`period_steps`). When both changed on 2026-09-16
+  (F-020, F-033), two evaluations run against the same `development` manifest `e2e0d3e6a566…` — one before, one
+  after — both reported **`condition_mismatches: []`**, while the policy's final-2 s error moved from 0.52 cm
+  to 1.33 cm (F-038). The label `estimated` was still `estimated`; the numbers behind it were not.
+- **Scope:** one observed instance, on the timing and velocity values. Whether other unrecorded values can move
+  the same way has not been audited; the effort limits, gains, masses, physics rate and solver counts are all
+  candidates and none of them is in the manifest either. The hash guard works as designed — it protects the
+  *episode set*, and this is a gap in what the *conditions* cover, not a defect in the hashing.
+- **Implication:** the guard that caught a deliberate spawn-height and arm-drive mismatch (F-018) cannot catch a
+  change to the robot model itself, and the plan requires "the same robot dynamics ... for all policies" across
+  P0–P4, so the robot model is part of the frozen comparison whether or not the manifest says so. Two policies
+  trained months apart could be compared on the same manifest hash across a silently different arm. The fix is
+  to resolve the values into the conditions — feedback Hz, command hold, leg delay range, per-joint velocity and
+  effort limits — rather than the labels that select them, which makes a model change a loud mismatch instead of
+  a silent one. Doing so changes all three manifest hashes and requires re-measuring the zero-action baselines,
+  which is about 15 s each and is cheap **now**, before any policy of record exists. It will not be cheap later.
