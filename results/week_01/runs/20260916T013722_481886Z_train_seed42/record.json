@@ -1,0 +1,112 @@
+{
+  "id": "20260916T013722_481886Z_train_seed42",
+  "title": "Throughput probe: 2048 envs x 20 iterations",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-16T11:38:03+10:00",
+  "started_utc": "2026-09-16T01:37:22+00:00",
+  "source_dir": "logs/position_only/20260916T013722_481886Z_train_seed42",
+  "mode": "train",
+  "seed": 42,
+  "status": "training_finished",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 20,
+  "steps": 600,
+  "git_commit": "78b865022a54e5c62854eeecaad25cf7367af95e",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": 19,
+  "final_checkpoint": {
+    "file": "model_19.pt",
+    "sha256": "66a7a1bbf875096d8e887111265c1b0c916276292b4774804ea44fa10d7c191f"
+  },
+  "scalar_summary": {
+    "Metrics/ee_position/position_error_m": {
+      "last": 0.47127267718315125,
+      "last_step": 19,
+      "mean_last_10": 0.48666890561580656,
+      "min": 0.0,
+      "max": 0.575176477432251,
+      "points": 20
+    },
+    "Train/mean_reward": {
+      "last": 10.64659595489502,
+      "last_step": 19,
+      "mean_last_10": 7.819003486633301,
+      "min": 3.08632755279541,
+      "max": 10.64659595489502,
+      "points": 13
+    },
+    "Train/mean_episode_length": {
+      "last": 452.7099914550781,
+      "last_step": 19,
+      "mean_last_10": 344.8092895507813,
+      "min": 186.0,
+      "max": 452.7099914550781,
+      "points": 13
+    },
+    "Episode_Termination/time_out": {
+      "last": 0.0,
+      "last_step": 19,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 20
+    },
+    "Episode_Termination/bad_orientation": {
+      "last": 0.1923624724149704,
+      "last_step": 19,
+      "mean_last_10": 0.0922241230495274,
+      "min": 0.0,
+      "max": 0.1923624724149704,
+      "points": 20
+    },
+    "Episode_Termination/low_base": {
+      "last": 0.0,
+      "last_step": 19,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 20
+    },
+    "Episode_Termination/base_contact": {
+      "last": 0.0,
+      "last_step": 19,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 20
+    },
+    "Episode_Termination/outside_workspace": {
+      "last": 0.0,
+      "last_step": 19,
+      "mean_last_10": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "points": 20
+    },
+    "Policy/mean_std": {
+      "last": 0.5381245613098145,
+      "last_step": 19,
+      "mean_last_10": 0.530811858177185,
+      "min": 0.5001956820487976,
+      "max": 0.5381245613098145,
+      "points": 20
+    },
+    "Perf/total_fps": {
+      "last": 86331.0,
+      "last_step": 19,
+      "mean_last_10": 83746.7,
+      "min": 60870.0,
+      "max": 95866.0,
+      "points": 20
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "params_deploy.yaml"
+  ]
+}

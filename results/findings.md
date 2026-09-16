@@ -367,3 +367,40 @@ result that changes a conclusion gets a new entry, and the old one is marked
   `test` figure. Any future reach claim reports success rate with failed episodes in the denominator, the
   zero-action baseline beside it, and the manifest hash it was measured on.
 
+
+### F-019 — The first policy trained against the revised box reaches by squatting to within 9 mm of the fall termination
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). Training
+  (`train --headless --num_envs 2048 --iterations 1500 --seed 42`, run `20260916T013817_908786Z`):
+  73,728,000 transitions, 13 min 27 s, 88,020 steps/s, peak GPU 4,673 MiB; episode-end reach error
+  0.60 cm at iteration 1500, every episode reaching its time limit from iteration 300. Frozen-manifest
+  evaluation of `model_1499` on `development` (`e2e0d3e6a566…`, run `20260916T015224_579606Z`, no
+  condition mismatches): **100/100 successes** (5 cm, 1 s continuous dwell, surviving to the end;
+  Wilson 95% 96.3–100%), 0 falls, 0 truncated, RMS 2.11 cm, 95th percentile 1.37 cm, final-2 s mean
+  0.52 cm, mean time to reach 0.135 s, mean max dwell 9.85 s. Against the same manifest zero actions
+  score 0/100 at RMS 21.7 cm (F-018). Posture: **every one of the 100 episodes** drops the base below
+  0.20 m, median 0.172 m, minimum 0.159 m, against the `low_base` termination at 0.15 m — a 9 mm worst
+  margin and 22 mm median. Correlation of lowest base height with target height **+0.50** and with
+  target distance **−0.50**; lowest-half targets average 0.169 m of base height against 0.175 m for
+  the highest half. Peak tilt 17.4° (limit 45.8°). Legs at their effort limit for 9.8% of steps on
+  average and up to 30.1% in one episode, peak 23.4 N·m, the Unitree envelope's Y2 value (F-005).
+  The reward set has no base-height term: `upright` (`flat_orientation_l2`, −1.0) penalises tilt,
+  `base_motion` (−0.2) penalises velocity, `alive` is +0.5 and `failure` −2.0.
+- **Scope:** one seed, one manifest, `--robustness none`, default configuration, deterministic policy
+  actions. `development` is the manifest that may be inspected, so this is a development number and
+  not a reported result. Three seeds (G1a) and matched budgets (G3) are not done. Arm joint speed
+  limits (1.05/1.73 rad/s) and the 10 Hz arm command hold are the unverified estimates of F-007, so
+  the claim that the body does the early work rests on those limits being roughly right. No hardware.
+- **Implication:** the revised box of F-016 is learnable, and the evaluator now works against a
+  checkpoint rather than only zero actions. But the numeric G1a criterion is met by a posture that
+  cannot serve as the P0 baseline: a robot holding 9–22 mm above its fall threshold with legs
+  saturated for up to a third of an episode will not meet G5's "no falls or limit violations" on
+  hardware, and it makes P0's reaching substantially leg work, confounding the P0–P4 comparisons that
+  are supposed to isolate force awareness and tool use. Squatting is not itself disallowed — the plan
+  permits stance and posture changes — so the fix is to price it, not to forbid it: add a base-height
+  reward term or nominal-height penalty, and re-measure. Until then G1a stays "not started" and no
+  reach number from this policy is quoted as a baseline. Report the zero-action reference (0/100)
+  beside any figure taken from it.

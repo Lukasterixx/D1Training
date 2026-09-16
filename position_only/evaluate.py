@@ -23,7 +23,9 @@ the class calls them "approximate torques ... since PhysX does not expose this q
 arm's 4000 N·m/rad standing in for the D1's servo loop against 1.7-3.3 N·m limits, that estimate
 saturates on four of six arm joints while the robot is merely standing still, whereas PhysX's own
 joint reaction torques are about 1.1 N·m (Week 1, 2026-09-16). So the commanded figure is reported as
-a commanded figure, and the arm's measured reaction torque is reported beside it.
+a commanded figure, and the arm's measured reaction torque is reported beside it. That reaction torque
+is the whole load carried through the joint, gravity and inertia included, so it is not the drive's
+torque either and must not be read against the effort limit.
 
 `Metrics/ee_position/position_error_m` from training is sampled at reset and is not this.
 """
@@ -301,7 +303,10 @@ def summarise(records, manifest, controller, conditions=None):
                                        if r["peak_leg_torque_nm"] is not None), default=None),
             "note": "arm_commanded_* is Isaac Lab's PD estimate clipped to the effort limit, not a PhysX "
                     "measurement, and it saturates even standing still because the arm's 4000 N·m/rad gains "
-                    "far exceed its 1.7-3.3 N·m limits. peak_arm_joint_torque_nm is PhysX's reaction torque. "
+                    "far exceed its 1.7-3.3 N·m limits. peak_arm_joint_torque_nm is PhysX's reaction torque: "
+                    "the total load carried through the joint, including gravity and inertia from the links "
+                    "beyond it, not the drive's own torque. It is not comparable to the 1.7-3.3 N·m effort "
+                    "limits and may exceed them without any limit being violated. "
                     "The legs use an explicit actuator, so their figures are the model's own clipped output.",
         },
         "g1a": gate,

@@ -47,16 +47,17 @@ be tested on this PC today. That track is the larger half of the revised Week 1 
 - [x] Rescue flat ablation recorded as external evidence (F-008)
 - [x] Frozen-manifest evaluator written, with development/validation/test manifests and the zero-action baseline measured on all three (2026-09-16, F-018)
 - [ ] Gait-quality metrics (foot vs neutral point, front–rear spacing, backward after request, turn tracking at 0.2/0.5/1.0 rad/s, pitch wobble) added to the P0 evaluator design for G1b
-- [ ] Run the evaluator against a trained checkpoint: its truncation and fall paths are tested only by unit tests
+- [x] Run the evaluator against a trained checkpoint (2026-09-16, F-019): `model_1499` scores 100/100 on the development manifest against 0/100 for zero actions. The truncation and fall paths are still untested by a real failure, because this policy never fell
 - [ ] Hardware and camera half of the revised Week 1: RealSense/tags, D1 telemetry, arm response, box loads, access and fixture needs (not started; no hardware on this machine)
 - [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
+- [ ] Price the squat: add a base-height term to the reward and retrain, so reaching is not done by crouching to 9 mm above the fall termination (F-019)
 - [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
 - [ ] Explain the 0.010 rad residual at J3 with force drives (F-010)
 - [ ] Decide whether playback (`run_sim.sh`) should also get force arm drives; it would change the F-012 reference
 
 ### Added by the 16 September plan revision
 
-- [ ] Frozen-manifest evaluator started, including zero-action reference and terminal metrics
+- [x] Frozen-manifest evaluator started, including zero-action reference and terminal metrics (F-018, F-019)
 - [ ] UniFP and one position-only reference reproduction attempts started with a setup time budget
 - [ ] RealSense stream and AprilTag detections recorded
 - [ ] D1 feedback/command timing and basic joint response measured on hardware
@@ -742,10 +743,104 @@ What it does not show:
 - **The arm's gains are a modelling choice**, not an identified servo loop (F-002, F-007). The
   saturation result describes this model, not D1 hardware.
 
+### 2026-09-16 · First policy trained against the revised box: it reaches by squatting (fifth session, continued)
+
+The revised box (F-016) had never been trained against, so its difficulty was unvalidated. It is
+learnable, and the way the policy learns it is the result worth keeping.
+
+#### Throughput first
+
+The pilots measured 3,787 steps/s at 64 environments, but the box, the spawn and the controlled point
+have all changed since. A [probe](#/week/1/run/20260916T013722_481886Z_train_seed42) of
+`train --headless --num_envs 2048 --iterations 20 --seed 42` gave **86,331 steps/s**, 0.57 s per
+iteration, so 1500 iterations costs about 15 minutes rather than the pilots' 153,600 transitions.
+
+#### The candidate run
+
+`python run_position_only.py train --headless --num_envs 2048 --iterations 1500 --seed 42`
+([run](#/week/1/run/20260916T013817_908786Z_train_seed42)): 73,728,000 transitions, 13 min 27 s,
+88,020 steps/s, peak GPU 4,673 MiB of 16,376. Tilt failures behaved as the pilots did — 19.2% of
+episodes terminating on `bad_orientation` at iteration 20, 0% by iteration 300 — and from iteration
+300 every episode ran to its time limit.
+
+| Iteration | Mean reward | Episode-end reach error | Mean episode length | `bad_orientation` |
+| --- | --- | --- | --- | --- |
+| 20 | 10.65 | 0.471 m | 452.7 | 19.2% |
+| 300 | 32.33 | 0.0107 m | 500.0 | 0.0% |
+| 600 | 33.66 | 0.0079 m | 500.0 | 0.0% |
+| 900 | 33.88 | 0.0059 m | 500.0 | 0.0% |
+| 1500 | 34.00 | 0.0060 m | 500.0 | 0.0% |
+
+Those are training-time diagnostics sampled at reset, which the plan says do not pass G1.
+
+#### The frozen-manifest measurement
+
+`eval --headless --num_envs 50 --manifest results/manifests/development.json --checkpoint
+…/model_1499.pt` ([run](#/week/1/run/20260916T015224_579606Z_eval_seed42)), development manifest
+`e2e0d3e6a566…`, no condition mismatches:
+
+| | Zero actions | model_1499 |
+| --- | --- | --- |
+| Success (5 cm, 1 s dwell, survived) | 0/100 | **100/100** (Wilson 96.3–100%) |
+| Falls | 0 | 0 |
+| Truncated | 0 | 0 |
+| RMS error | 21.7 cm | 2.11 cm |
+| 95th percentile | 23.1 cm | 1.37 cm |
+| Final 2 s mean | 21.7 cm | 0.52 cm |
+| Mean time to reach | — | 0.135 s |
+| Mean max dwell | 0.0 s | 9.85 s |
+| Lowest base height | 0.260 m | **0.159 m** |
+| Peak tilt | 5.11° | 17.38° |
+| Legs at effort limit | 0.0% of steps | 9.8% of steps |
+
+RMS (2.11 cm) exceeds the 95th percentile (1.37 cm) because RMS is dominated by the first 0.135 s,
+before the tool point arrives; the final-2 s figure is the steady-state one.
+
+#### It passes the criterion, and it should not be the P0 baseline
+
+G1a's arithmetic is met on this manifest. The posture is not a stance-and-reach:
+
+- **All 100 episodes drop the base below 0.20 m**, median 0.172 m, against the `low_base`
+  termination at 0.15 m. The margin is **9 mm at worst, 22 mm at the median**.
+- **The squat tracks the target.** Correlation between target height and lowest base height is
+  **+0.50**, and between target *distance* and lowest base height **−0.50**: lower and further
+  targets are met by squatting further. Lowest-half targets average 0.169 m of base height,
+  highest-half 0.175 m.
+- **It reaches in 0.10–0.18 s.** Arm joints are limited to 1.05–1.73 rad/s and arm commands are held
+  for 5 policy steps at 10 Hz, so one or two arm commands have issued by then. The body is doing the
+  early work, not the arm.
+- **The legs pay for it**: saturated for up to 30.1% of an episode's steps, peak 23.4 N·m, exactly
+  the Unitree envelope's Y2 limit (F-005).
+
+The mechanism is available because the reward has no base-height term at all: `upright`
+(`flat_orientation_l2`, −1.0) penalises tilt and `base_motion` (−0.2) penalises velocity, but nothing
+opposes a slow, level squat. F-016 moved the box forward and *down* to remove the free successes, and
+lowering the whole arm by crouching is the cheapest way to follow it. `alive` (+0.5) against
+`failure` (−2.0) then teaches the policy to hover just above the termination rather than on it.
+
+What it shows:
+
+- **The revised box is learnable**, and the evaluator works against a trained checkpoint, not only
+  zero actions. This clears the Week 1 worry that the box's difficulty was unvalidated.
+- **The zero-action baseline separates cleanly**: 0/100 against 100/100 on the same frozen episodes.
+
+What it does not show:
+
+- **Not a G1a pass.** One seed, one manifest, `--robustness none`. G1a wants three seeds, and G3 wants
+  matched budgets; neither is done. The `development` manifest is the one that may be looked at, so a
+  number measured on it cannot be the reported result.
+- **Not a usable P0 baseline as configured.** A policy living 9 mm above its fall threshold with legs
+  at their torque limit for a third of an episode will not survive G5's "no falls or limit violations"
+  on hardware, and it makes P0's reaching largely leg work, which would confound the P0–P4 comparisons
+  those policies exist to make.
+- **The truncation and fall paths are still untested by a real failure.** This policy never fell.
+- **Squatting is not itself cheating.** The plan allows stance and posture changes for whole-body
+  coordination. The objection is the 9 mm margin, the leg saturation and the confound, not the crouch.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
-6 playback runs and 1 viewer replay on 2026-09-15; 5 smoke, 3 verify and 6 evaluation runs on 2026-09-16.
+6 playback runs and 1 viewer replay on 2026-09-15; 5 smoke, 3 verify, 7 evaluation runs and 2 training runs (a throughput probe and the first P0 candidate) on 2026-09-16.
 Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [smoke posture](figures/smoke_posture.png),
 [D1 workspace](figures/d1_workspace.png) and the replay captures. External evidence: [Rescue flat ablation](external/rescue_flat_ablation/README.md).
 
@@ -769,15 +864,24 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-016](../findings.md): moving the target box below the resting tip removes the free successes — zero actions score 0 of 256, and the spawn drop is gone (confirmed).
 - [F-017](../findings.md): the arm's commanded torque saturates while the robot stands still; `applied_torque` on an implicit actuator is an estimate, not a PhysX measurement (confirmed).
 - [F-018](../findings.md): the frozen-manifest evaluator measures 0 of 300 zero-action episodes reaching, across three balanced manifests (confirmed).
+- [F-019](../findings.md): the first policy trained against the revised box reaches by squatting to within 9 mm of the fall termination; it meets G1a's arithmetic and cannot be the P0 baseline (confirmed, one seed, development manifest).
 
 ## Issues and risks
 
 - **The target box never needs the base to move.** The free successes are gone (F-016: 0 of 256), but the box is a
   small fixed volume in front of a standing robot, so P0 is still a stance-and-reach task. Base-motion targets are
   plan stage 6 and are not designed yet.
+- **Nothing prices the squat.** The reward set has no base-height term, so a policy can lower the tool
+  point by crouching instead of moving the arm, and the first one trained against the revised box does
+  exactly that: every episode below 0.20 m, 9 mm from the `low_base` termination at worst, legs
+  saturated up to 30% of an episode (F-019). The plan permits stance changes, so the fix is to price
+  the squat rather than forbid it, and to re-measure. Until then no reach number from that policy is a
+  baseline, and G1a stays not started.
 - **The box's difficulty is not validated.** It is the nearest placement that removes free successes while staying
   reachable (F-016), chosen from a CPU search, not from any evidence about what a policy can learn. If PPO cannot
   make 13.5–28.7 cm reaches, the box, the ±1 rad action clip and the reward scales all become suspects at once.
+  **Answered on 2026-09-16 (F-019):** PPO makes the reaches, reaching 100/100 on the development manifest.
+  The open question is no longer whether it can be learned but how it is being learned.
 - **The pincer tip is CAD geometry.** It has not been measured on the arm. Grasping tasks would need the point between
   the pincers instead.
 - **Two arm models are now in use.** Playback (`run_sim.sh`, F-001/F-012) and Rescue's training keep the import's
