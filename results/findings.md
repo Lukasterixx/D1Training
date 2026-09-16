@@ -1183,3 +1183,77 @@ result that changes a conclusion gets a new entry, and the old one is marked
   contaminated for this comparison. The gate needs a **fresh validation draw** (a new RNG stream, versioned
   alongside the existing one rather than replacing it), which costs about 15 s to build and 20 s per seed to
   measure. `test` remains untouched and must stay so.
+
+### F-043 — Every policy reaches partly by walking: the base ends 20–25 cm forward, and no metric was watching
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). A viewer replay of the best episode we have
+  (seed 43, development episode 94, run `20260916T130843_655086Z_view_seed42`) reported the base 20.1–21.2 cm
+  **forward** of its spawn point across 17 consecutive episodes. The sign was checked against the Week 1
+  zero-action viewer run, which recorded `mean_base_x_from_spawn_m: -0.075` and printed it as "7.5 cm behind",
+  matching F-014's backward settle. Base translation was then added to the evaluator and all three v3 policies
+  re-measured on the development manifest, 100 episodes each:
+
+  | Policy | Mean final base x | Max final base x | Max horizontal travel |
+  | --- | --- | --- | --- |
+  | zero actions | **−5.6 cm** | −5.5 cm | 9.2 cm |
+  | seed 42 | **+24.1 cm** | **+48.1 cm** | 51.8 cm |
+  | seed 43 | **+20.5 cm** | +29.8 cm | 30.6 cm |
+  | seed 44 | **+25.3 cm** | +34.5 cm | 35.5 cm |
+
+  The zero-action figure reproduces F-014's −5.55 cm settle exactly, which validates the measurement. Seed 42's
+  distribution: minimum 16.7 cm, median 23.5 cm, maximum 48.1 cm, with 6 of 100 episodes past 30 cm. That policy
+  scores 99/100 with 1 fall and nothing in its reported result showed the walking.
+- **Scope:** three policies, one manifest, deterministic actions. Displacement is measured from the spawn point
+  in the environment frame; it does not separate walking from sliding or from a single lunge, and no gait
+  quality is assessed (that is G1b). Whether the same happens under `--robustness unitree` is untested.
+- **Implication:** the task is described as free-space stance-and-reach and F-016 recorded that the box "never
+  requires the base to move", but every policy moves it 20–25 cm and one episode moves it half a metre. The
+  workspace analysis says 99.1% of the box is reachable from the settled stance (F-016), so this is not
+  necessary — it is the fourth instance of one pattern. `base_motion_l2` prices base **velocity**, so a slow
+  creep is nearly free, exactly as a slow squat was free before F-040 and rotation was unpriced before F-042.
+  The evaluator recorded base height and tilt — which is why the squat and the tilt failures were visible — and
+  never recorded translation, so every G1a number produced today was blind to it. Base displacement is now in
+  the per-episode record and the `eval.json` summary. For P0–P4 this is a confound before it is a bug: a reach
+  metric that includes a fifth of a metre of locomotion does not isolate arm or tool control, which is what
+  those comparisons exist to measure. It was found by watching, not by measuring, which is the argument for the
+  G0 visual-inspection item rather than against it.
+
+### F-044 — The policies oscillate at 5–8 Hz while holding, above what the D1 can execute, with the arm at 60–90% of its speed limit
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). Lukas, watching the replay, reported the body and
+  arm "oscillating back and forth / up and down" while the tool point tracked accurately. Amplitude and
+  frequency were added to the evaluator over the final two seconds of each episode, by which the tool point is
+  parked, so what remains is a limit cycle rather than progress. Frequency is taken from mean crossings, two
+  per cycle. Development manifest, 100 episodes each:
+
+  | Policy | Base z p-p | z | Base x p-p | x | Tip error p-p | err | Arm joint vel RMS | Leg |
+  | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+  | zero actions | 0.5 mm | 0.5 Hz | 2.2 mm | 0.5 Hz | 1.2 mm | 0.5 Hz | **0.020 rad/s** | 0.012 |
+  | seed 42 | 8.0 mm | 3.6 Hz | 7.8 mm | 2.2 Hz | 9.8 mm | **5.1 Hz** | **0.731 rad/s** | 0.204 |
+  | seed 43 | 7.6 mm | 4.8 Hz | 10.5 mm | 3.1 Hz | 6.9 mm | **7.8 Hz** | **1.129 rad/s** | 0.306 |
+  | seed 44 | 5.3 mm | 4.8 Hz | 1.9 mm | 3.8 Hz | 5.4 mm | **5.5 Hz** | **0.839 rad/s** | 0.213 |
+
+  Zero actions sit at the measurement floor, so these are the policies' own motion. While nominally holding
+  station the arm joints run at 0.73–1.13 rad/s RMS against a **measured** ceiling of 1.20–1.29 rad/s (F-033):
+  60–90% of full speed, continuously, to stay still. `Episode_Reward/action_rate` is −0.0206 at weight −0.01,
+  so mean `action_rate_l2` ≈ 2.06 across 18 actions — an RMS action change of 0.34 every 20 ms.
+- **Scope:** simulation only, one manifest, `--robustness none`, deterministic actions. Mean crossings give a
+  dominant frequency, not a spectrum, and a 2 s window at 50 Hz resolves roughly 0.5–12 Hz. No hardware was
+  involved and nothing here measures a real D1's response.
+- **Implication:** the tip oscillates at 5.1–7.8 Hz. The D1 accepts commands at 10 Hz and publishes angles at
+  9 Hz (F-020), so this sits at or above half the loop rate — and the arm needs about 220 ms to reach cruise
+  (F-035), roughly 4.5 Hz, so it **physically cannot execute this motion**. The behaviour is a simulation
+  artefact, and specifically an artefact of what the timing model leaves out: `--latency estimated` models the
+  command *hold* and the feedback *period* but not the ~127 ms command-to-motion delay (F-021) or the
+  acceleration ramp, so the simulated arm has less dead time than the hardware and can chatter in a band the
+  real one cannot even be commanded in. Two consequences. Any transfer claim from these policies is void until
+  the arm model carries its measured latency and ramp, which raises that task above further G1a tuning. And
+  `action_rate` at −0.01 prices chatter at roughly a hundredth of what reaching pays, the same structural gap as
+  the free squat (F-019), unpriced rotation (F-042) and velocity-priced translation (F-043) — but the term
+  should not be retuned until the timing model is right, or it will be tuned against an artefact.

@@ -53,6 +53,27 @@ def wilson(successes, total, z=1.96):
     return (float(max(0.0, centre - half)), float(min(1.0, centre + half)))
 
 
+def oscillation(values, step_dt):
+    """Peak-to-peak amplitude and frequency of a signal about its own mean.
+
+    Lukas watching a replay described the body and arm "oscillating back and forth / up and down"
+    while the tool point tracked accurately (Week 1, 2026-09-16). That is a limit cycle, and RMS
+    magnitude does not describe one: a slow large sway and a fast small shake can share an RMS. The
+    frequency comes from mean crossings -- two crossings per cycle -- which needs no windowing choice
+    and is robust on the ~100 samples a 2 s window holds at 50 Hz.
+
+    Returns (peak-to-peak, Hz). Frequency is None when the signal does not cross its mean at all.
+    """
+    values = np.asarray(values, dtype=float)
+    if len(values) < 2:
+        return (0.0, None)
+    centred = values - values.mean()
+    crossings = int(np.count_nonzero(np.diff(np.signbit(centred))))
+    duration = len(values) * step_dt
+    return (float(values.max() - values.min()),
+            float(crossings / (2.0 * duration)) if crossings else None)
+
+
 def longest_run(flags):
     """Longest run of consecutive True values."""
     best = run = 0
@@ -159,6 +180,20 @@ def run_episodes(env, manifest, policy=None, device="cuda:0", progress=None):
                 leg_saturated.float(),
                 leg_torque.abs().amax(dim=-1),
                 arm_reaction,
+                # Base translation from the spawn point. Recorded because it was not: the evaluator
+                # measured base *height* and *tilt* but never how far the robot walked, so a policy
+                # that meets its target by stepping 20 cm forward scored identically to one that
+                # stood and reached (Week 1, 2026-09-16). Height caught the squat and tilt caught the
+                # rotation; nothing was watching translation.
+                offset[:, 0],
+                offset[:, 1],
+                # Vibration. Lukas watching a replay saw the body and arm shaking while the tool
+                # point tracked accurately (Week 1, 2026-09-16), which no recorded metric showed.
+                # Reported separately for arm and legs because they shake for different reasons: the
+                # arm is torque-limited rather than PD-tracked (F-017) and its commands are held at
+                # 10 Hz, while the legs run every policy step.
+                torch.sqrt(torch.mean(torch.square(data.joint_vel[:, arm_ids]), dim=-1)),
+                torch.sqrt(torch.mean(torch.square(data.joint_vel[:, leg_ids]), dim=-1)),
             ], dim=-1).cpu())
 
             done = terminated | truncated
@@ -187,10 +222,23 @@ def run_episodes(env, manifest, policy=None, device="cuda:0", progress=None):
     return records
 
 
+def _hold_oscillation(height, base_x, error, steps, final_steps, step_dt):
+    """Amplitude and frequency of base height, base travel and tool error over the parked tail."""
+    if steps < final_steps:
+        return {k: None for k in ("hold_base_z_p2p_m", "hold_base_z_hz", "hold_base_x_p2p_m",
+                                  "hold_base_x_hz", "hold_error_p2p_m", "hold_error_hz")}
+    z_p2p, z_hz = oscillation(height[-final_steps:], step_dt)
+    x_p2p, x_hz = oscillation(base_x[-final_steps:], step_dt)
+    e_p2p, e_hz = oscillation(error[-final_steps:], step_dt)
+    return {"hold_base_z_p2p_m": z_p2p, "hold_base_z_hz": z_hz,
+            "hold_base_x_p2p_m": x_p2p, "hold_base_x_hz": x_hz,
+            "hold_error_p2p_m": e_p2p, "hold_error_hz": e_hz}
+
+
 def _episode_record(index, target, trace, ended_step, total_steps, step_dt, fell, timed_out,
                     radius, dwell_steps, final_steps):
-    error, height, tilt, at_limit, arm_at_limit, leg_sat, leg_torque, arm_reaction = (
-        trace[:, i] for i in range(8))
+    (error, height, tilt, at_limit, arm_at_limit, leg_sat, leg_torque, arm_reaction,
+     base_x, base_y, arm_vel_rms, leg_vel_rms) = (trace[:, i] for i in range(12))
     steps = len(error)
     within = error <= radius
     dwell = longest_run(within)
@@ -225,6 +273,22 @@ def _episode_record(index, target, trace, ended_step, total_steps, step_dt, fell
         "transient_error": stats(transient),
         "final_2s_error": stats(final),
         "min_base_height_m": float(height.min()) if steps else None,
+        # Signed, so the sign carries meaning: negative is the backward settle every episode starts
+        # with (F-014, about -5.6 cm under zero actions), positive is the robot walking forward.
+        "final_base_x_from_spawn_m": float(base_x[-1]) if steps else None,
+        "final_base_y_from_spawn_m": float(base_y[-1]) if steps else None,
+        "max_base_x_from_spawn_m": float(base_x.max()) if steps else None,
+        "max_base_horizontal_travel_m": float(np.max(np.hypot(base_x, base_y))) if steps else None,
+        # Over the final two seconds the tool point is parked, so anything left here is vibration
+        # rather than travel. Reported beside the whole-episode figure it is measured against.
+        "arm_joint_vel_rms_rad_s": float(arm_vel_rms.mean()) if steps else None,
+        "leg_joint_vel_rms_rad_s": float(leg_vel_rms.mean()) if steps else None,
+        "arm_joint_vel_rms_holding_rad_s": float(arm_vel_rms[-final_steps:].mean()) if steps >= final_steps else None,
+        "leg_joint_vel_rms_holding_rad_s": float(leg_vel_rms[-final_steps:].mean()) if steps >= final_steps else None,
+        # The final two seconds, by which the tool point is parked: whatever moves here is a limit
+        # cycle, not progress toward the target. Amplitude and frequency, because the two together
+        # are what distinguishes a slow sway from a fast shake.
+        **_hold_oscillation(height, base_x, error, steps, final_steps, step_dt),
         "max_tilt_deg": float(tilt.max()) if steps else None,
         "joint_limit_steps_frac": float(at_limit.mean()) if steps else None,
         "arm_commanded_effort_at_limit_frac": float(arm_at_limit.mean()) if steps else None,
@@ -296,6 +360,37 @@ def summarise(records, manifest, controller, conditions=None):
                                               if r["min_base_height_m"] is not None), default=None),
                     "max_tilt_deg": max((r["max_tilt_deg"] for r in records
                                          if r["max_tilt_deg"] is not None), default=None)},
+        "base_travel": {
+            "mean_final_x_from_spawn_m": pooled("final_base_x_from_spawn_m", records),
+            "max_final_x_from_spawn_m": max((r["final_base_x_from_spawn_m"] for r in records
+                                             if r["final_base_x_from_spawn_m"] is not None), default=None),
+            "max_horizontal_travel_m": max((r["max_base_horizontal_travel_m"] for r in records
+                                            if r["max_base_horizontal_travel_m"] is not None), default=None),
+        },
+        "vibration": {
+            "arm_joint_vel_rms_rad_s": pooled("arm_joint_vel_rms_rad_s", records),
+            "leg_joint_vel_rms_rad_s": pooled("leg_joint_vel_rms_rad_s", records),
+            "arm_joint_vel_rms_holding_rad_s": pooled("arm_joint_vel_rms_holding_rad_s", records),
+            "leg_joint_vel_rms_holding_rad_s": pooled("leg_joint_vel_rms_holding_rad_s", records),
+            "hold_base_z_p2p_m": pooled("hold_base_z_p2p_m", records),
+            "hold_base_z_hz": pooled("hold_base_z_hz", records),
+            "hold_base_x_p2p_m": pooled("hold_base_x_p2p_m", records),
+            "hold_base_x_hz": pooled("hold_base_x_hz", records),
+            "hold_error_p2p_m": pooled("hold_error_p2p_m", records),
+            "hold_error_hz": pooled("hold_error_hz", records),
+            "note": "RMS joint velocity. The *_holding figures cover the final two seconds, by which "
+                    "the tool point is parked, so they measure shaking rather than motion. The D1 "
+                    "publishes at 9 Hz, answers a step in ~127 ms and needs ~220 ms to reach cruise "
+                    "(F-020, F-021, F-035), so arm chatter above a few rad/s is commanding motion the "
+                    "hardware cannot execute.",
+        },
+        "_base_travel_note": {
+            "note": "Displacement from the spawn point, signed in x: negative is the backward settle "
+                    "every episode starts with (about -5.6 cm under zero actions, F-014), positive is "
+                    "the robot walking forward. The task is a stance-and-reach and the workspace "
+                    "analysis says the box is reachable from the settled stance (F-016), so large "
+                    "positive travel means the reach is partly locomotion.",
+        },
         "saturation": {
             "joint_limit_steps_frac": pooled("joint_limit_steps_frac", records),
             "arm_commanded_effort_at_limit_frac": pooled("arm_commanded_effort_at_limit_frac", records),

@@ -1,0 +1,263 @@
+{
+  "status": "eval_finished",
+  "mode": "eval",
+  "seed": 42,
+  "preflight": {
+    "python": "3.11.15",
+    "executable": "/home/lukas/miniconda3/envs/env_isaaclab/bin/python",
+    "packages": {
+      "torch": "2.7.0+cu128",
+      "isaacsim": "5.1.0.0",
+      "isaaclab": "0.54.3",
+      "isaaclab-rl": "0.5.0",
+      "rsl-rl-lib": "5.0.1"
+    },
+    "cuda_available": true,
+    "gpu_count": 1,
+    "d1_urdf_exists": true,
+    "rsl_rl_5_api": true,
+    "ready_for_gpu_smoke": true
+  },
+  "arguments": {
+    "mode": "eval",
+    "headless": true,
+    "device": "cuda:0",
+    "num_envs": 50,
+    "seed": 42,
+    "iterations": 100,
+    "steps": 600,
+    "tip_body": "Link7_1",
+    "tip_offset": [
+      0.0547,
+      0.006,
+      0.017
+    ],
+    "leg_actuator": "unitree",
+    "arm_actuator": "d1_servo",
+    "latency": "estimated",
+    "robustness": "none",
+    "self_collisions": true,
+    "checkpoint": "logs/position_only/20260916T113837_593527Z_train_seed42/model_1499.pt",
+    "manifest": "results/manifests/development.json",
+    "role": "development",
+    "episodes": 100,
+    "episode": null,
+    "spawn_height": null,
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/position_only"
+  },
+  "git_commit": "fd8aeccf254c4b36765330b5f94f07fa7ac180ff",
+  "git_status": "M position_only/evaluate.py\n M run_position_only.py\n M tests/test_evaluate.py\n?? results/week_01/runs/20260916T130843_655086Z_view_seed42/",
+  "source_sha256": {
+    "position_only/core.py": "90d0d8a5da3f9fb839fe3548d4ff6ab6b03f9a3446f41c1cd325d9eb2ecd9b6a",
+    "position_only/deploy.py": "6a310550f618ac8a4d944913abc807e64d1e0636c1e37abf9b76b65604b9d9ab",
+    "position_only/mdp.py": "973e00b14937b85b55a4e12cdb2b93e6f8c71a07d3f79c7a99c41fb21cfdc3dc",
+    "position_only/agent.py": "3e9529e425b09c27319e9017cd13ec324e5d6e8c8f6ac714943b212b8a978a83",
+    "position_only/__init__.py": "f2df2f9826b104a62c7a2d31714ac279115fafa23f02d4ec38f2e710e297a14f",
+    "position_only/env_cfg.py": "6975fe5340617254a121da8b6c8ab51d655f3a1214d306dca496a1343e0236b0",
+    "position_only/workspace.py": "c82a051bc59d17a54685b2f8910419d11b804efb38f9f5580e7691009428388b",
+    "position_only/manifest.py": "bab75bc76a8f138a8dd72e4bb2742645e6a3fcc94d79d9aed09c1f92e1119e92",
+    "position_only/verify.py": "39e3e807f8fe836d2edecdccd0e6180ff79867856891e113d80f46c33d6ca321",
+    "position_only/evaluate.py": "e892d0909448c18363a81a2dc52deb8a536f1aae07d47699c0b9d4128993e2d1",
+    "position_only/task_space.py": "feefb7da4653e04ac66502aff3af1241176e36a2e24b84e58598049660db9a76",
+    "position_only/tool_point.py": "24648983774d4a9eab3f4e053c731456b1a13d631f3d52fa7e505b07a6c932a5",
+    "run_position_only.py": "2982108b9238e963b4dc266389ecf4898de2e383fc757faa08464641ffb83590",
+    "flat_env_cfg.py": "4607798cdec5f5e6c07248e507abd8429617c81db2dc2b2f010fcce195b2b9c2",
+    "weld.py": "46da9fd616960d0b0f62cf7912d8fb2ae3bb7bb522d1f63da4b3a88df1cc34fb",
+    "d1_arm/d1.urdf": "594dd48a8c29153de49e4a81a838037cb252770f8457b8a36b329ac69b88a720",
+    "motor_model.py": "a8849f1e4e7f580fba30c46c0e4208107b95f2434f7da204961a3b9d82c78a3c",
+    "unitree_actuators.py": "011cf29c8cb423b524e01ae4b84d1a2c19835cdec3c15d72bb7e667b4626df88",
+    "d1_meshes": {
+      "Link1.STL": "ba7d1b961a13e337856ab4ba61f74863308eb74a5f2b8c0fc71caa13db281761",
+      "Link2.STL": "9d0f3d7c0f913a77ff062f260cb147f4c730299d01976ecc8e83c09e50197ea6",
+      "Link3.STL": "361230e534d0d2c2fd9bac6e4678244cdd1e05a56c69efd01fcf108786f58bd6",
+      "Link4.STL": "ee1375f71a4b2f9fc055c757449f3cfb75534698e25c4a021676086b056e9908",
+      "Link5.STL": "2140aec6553d416983b327a4e019a2cacfccdb7b853823adc7af4786076b91bc",
+      "Link6.STL": "b91528de41de588cea826d243cbb0ed089a964e43de87ea46b5aa717ad008576",
+      "Link7_1.STL": "f7943516943532b581617808ee5d909d9a9e5235448f446f6f5e38ca973ab3b5",
+      "Link7_2.STL": "3ce22190b7aa7e4c99aa8b3c44a447b0f411059686c34ef4ec50c0131db623c4",
+      "base_link.STL": "903dc2ee5547086e5740f7a575e1e6a7d1bc09c5fd47efa425464dfcf04f7f15"
+    }
+  },
+  "action_joint_order": [
+    "FL_hip_joint",
+    "FR_hip_joint",
+    "RL_hip_joint",
+    "RR_hip_joint",
+    "FL_thigh_joint",
+    "FR_thigh_joint",
+    "RL_thigh_joint",
+    "RR_thigh_joint",
+    "FL_calf_joint",
+    "FR_calf_joint",
+    "RL_calf_joint",
+    "RR_calf_joint",
+    "Joint1",
+    "Joint2",
+    "Joint3",
+    "Joint4",
+    "Joint5",
+    "Joint6"
+  ],
+  "task": "free_space_stance_reach",
+  "force_inputs": false,
+  "controlled_point": {
+    "body": "Link7_1",
+    "offset_m": [
+      0.0547,
+      0.006,
+      0.017
+    ]
+  },
+  "policy_hz": 50,
+  "physics_hz": 200,
+  "sim2real": {
+    "leg_actuator": "unitree",
+    "arm_actuator": "d1_servo",
+    "latency": "estimated",
+    "robustness": "none",
+    "self_collisions": true,
+    "solver_iterations": [
+      8,
+      4
+    ],
+    "actor_observations": "no base linear velocity",
+    "critic_observations": "privileged",
+    "timing": {
+      "leg_delay_physics_steps": [
+        0,
+        2
+      ],
+      "arm_command_hold_steps": 5,
+      "arm_feedback_period_steps": 6
+    },
+    "arm_limits_in_physx": {
+      "effort_nm": [
+        3.299999952316284,
+        3.299999952316284,
+        1.7000000476837158,
+        1.7000000476837158,
+        1.7000000476837158,
+        1.7000000476837158
+      ],
+      "velocity_rad_s": [
+        1.25,
+        1.2899999618530273,
+        1.2300000190734863,
+        1.2100000381469727,
+        1.25,
+        1.25
+      ]
+    },
+    "leg_limits_in_physx": {
+      "effort_nm": [
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0,
+        1000000000.0
+      ],
+      "velocity_rad_s": [
+        30.100000381469727,
+        30.100000381469727,
+        30.100000381469727,
+        30.100000381469727,
+        30.100000381469727,
+        30.100000381469727,
+        30.100000381469727,
+        30.100000381469727,
+        15.69999885559082,
+        15.69999885559082,
+        15.69999885559082,
+        15.69999885559082
+      ]
+    },
+    "drive_type_in_usd": {
+      "FL_hip_joint": "force",
+      "Joint1": "force",
+      "Joint2": "force",
+      "Joint3": "force",
+      "Joint4": "force",
+      "Joint5": "force",
+      "Joint6": "force"
+    }
+  },
+  "robot_usd": "/home/lukas/D1Training/logs/position_only/20260916T131856_994022Z_eval_seed42/assets/go2_d1.usd",
+  "robot_usd_sha256": "25f90b648848d06329700790969e3a54fb44685e7444712509ec9255b5a73086",
+  "reset": {
+    "spawn_height_m": 0.3
+  },
+  "target_box_env_frame_m": [
+    [
+      0.36,
+      0.48
+    ],
+    [
+      -0.08,
+      0.08
+    ],
+    [
+      0.5,
+      0.62
+    ]
+  ],
+  "observed_joint_names": [
+    "FL_hip_joint",
+    "FR_hip_joint",
+    "RL_hip_joint",
+    "RR_hip_joint",
+    "FL_thigh_joint",
+    "FR_thigh_joint",
+    "RL_thigh_joint",
+    "RR_thigh_joint",
+    "Joint1",
+    "FL_calf_joint",
+    "FR_calf_joint",
+    "RL_calf_joint",
+    "RR_calf_joint",
+    "Joint2",
+    "Joint3",
+    "Joint4",
+    "Joint5",
+    "Joint6",
+    "Joint7_1",
+    "Joint7_2"
+  ],
+  "arm_sensor_bodies": [
+    "Link1",
+    "Link2",
+    "Link3",
+    "Link4",
+    "Link5",
+    "Link6",
+    "Link7_1",
+    "Link7_2"
+  ],
+  "articulation_mass_kg": 18.17099952697754,
+  "observation_width": {
+    "policy": 66,
+    "critic": 87
+  },
+  "deploy_manifest": {
+    "path": "params/deploy.yaml",
+    "format": "d1training-deploy/1"
+  },
+  "checkpoint": "/home/lukas/D1Training/logs/position_only/20260916T113837_593527Z_train_seed42/model_1499.pt",
+  "checkpoint_sha256": "160748d4be34f24984c8ca369d43ec473b34d1b327cc5b6d5df53250aa8c35c2",
+  "eval": {
+    "manifest_role": "development",
+    "episodes": 100,
+    "success_rate": 0.99,
+    "fall_rate": 0.01,
+    "g1a_passed": true,
+    "controller": "checkpoint",
+    "condition_mismatches": []
+  }
+}

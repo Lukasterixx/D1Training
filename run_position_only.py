@@ -134,6 +134,7 @@ def write_posture(run_dir, samples):
 EPISODE_CSV_FIELDS = (
     "index", "success", "survived", "fell", "truncated", "recorded_s", "max_dwell_s", "time_to_reach_s",
     "final_error_m", "rms_error_m", "p95_error_m", "min_base_height_m", "max_tilt_deg",
+    "final_base_x_from_spawn_m", "final_base_y_from_spawn_m", "max_base_horizontal_travel_m",
     "joint_limit_steps_frac", "arm_commanded_effort_at_limit_frac", "peak_arm_joint_torque_nm",
     "leg_effort_saturated_frac", "peak_leg_torque_nm",
 )
@@ -162,6 +163,25 @@ def view(args, app, env, runner, obs, metadata, run_dir):
     command = unwrapped.command_manager.get_term("ee_position")
     robot = unwrapped.scene["robot"]
     policy = runner.get_inference_policy(device=args.device) if runner else None
+
+    # Replaying one recorded episode rather than watching fresh samples. The command term resamples
+    # its target on every reset, so the manifest's target is re-pinned each step rather than once.
+    pinned = None
+    if args.manifest and args.episode is not None:
+        from position_only.manifest import load as load_manifest
+
+        replay = load_manifest(args.manifest)
+        if not 0 <= args.episode < len(replay["episodes"]):
+            raise SystemExit(f"--episode {args.episode} is outside the manifest's 0..{len(replay['episodes']) - 1}")
+        target = replay["episodes"][args.episode]["target_env_frame_m"]
+        pinned = torch.tensor(target, dtype=torch.float32, device=args.device)
+        metadata["view_replay"] = {"manifest": str(Path(args.manifest).resolve()),
+                                   "manifest_sha256": replay["content_sha256"],
+                                   "role": replay["role"], "episode": args.episode,
+                                   "target_env_frame_m": list(target)}
+        print(f"\n[view] Replaying {replay['role']} episode {args.episode}, target "
+              f"({target[0]:.3f}, {target[1]:+.3f}, {target[2]:.3f}) m from the environment origin. "
+              f"Every episode below uses this one target.", flush=True)
     snapshot_step = int(round(9.0 / unwrapped.step_dt))  # 9 s: settled, before the 10 s time limit
     episodes = []
     metadata["status"] = "viewing"
@@ -173,6 +193,8 @@ def view(args, app, env, runner, obs, metadata, run_dir):
         while app.is_running():
             started = time.perf_counter()
             with torch.inference_mode():
+                if pinned is not None:
+                    command.target_w[:] = unwrapped.scene.env_origins + pinned
                 action = policy(obs) if policy else torch.zeros(args.num_envs, 18, device=args.device)
                 obs, _, _, _ = env.step(action)
                 if int(unwrapped.episode_length_buf[0]) == snapshot_step:
@@ -462,6 +484,8 @@ def main():
     parser.add_argument("--role", choices=("development", "validation", "test"), default="development",
                         help="Manifest role to build (manifest mode).")
     parser.add_argument("--episodes", type=int, default=100, help="Episodes in a new manifest (manifest mode).")
+    parser.add_argument("--episode", type=int, default=None,
+                        help="View mode: replay this episode index from --manifest instead of fresh targets.")
     parser.add_argument("--spawn_height", type=float, default=None,
                         help="Base height at reset (m). Default: the task's standing spawn, env_cfg.SPAWN_HEIGHT_M.")
     parser.add_argument("--robot_usd", help="Existing local welded USD; otherwise rebuild inside the new run directory.")
@@ -473,6 +497,13 @@ def main():
         parser.error("view needs the viewer; drop --headless.")
     if args.mode == "verify" and (args.num_envs < 6 or args.checkpoint):
         parser.error("verify needs --num_envs 6 or more (one per induced termination plus a control) and no checkpoint.")
+    if args.episode is not None:
+        if args.mode != "view":
+            parser.error("--episode replays one manifest episode in view mode; it does nothing elsewhere.")
+        if not args.manifest:
+            parser.error("--episode needs --manifest to take the episode from.")
+    if args.mode == "view" and args.manifest and not Path(args.manifest).is_file():
+        parser.error(f"--manifest must point to an existing file: {args.manifest}")
     if args.mode == "eval":
         if not args.manifest:
             parser.error("eval needs --manifest pointing at a frozen manifest.")

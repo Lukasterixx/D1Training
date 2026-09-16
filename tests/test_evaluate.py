@@ -22,21 +22,82 @@ RADIUS = 0.05
 
 
 def trace(errors, height=0.27, tilt=2.0, at_limit=0.0, arm_at_limit=1.0, leg_sat=0.0,
-          leg_torque=5.0, arm_reaction=1.1):
-    """A (steps, 8) trace with the given error series and constant everything else."""
+          leg_torque=5.0, arm_reaction=1.1, base_x=-0.056, base_y=0.0,
+          arm_vel=0.0, leg_vel=0.0):
+    """A (steps, 10) trace with the given error series and constant everything else.
+
+    `base_x` defaults to the backward settle a zero-action episode ends at (F-014).
+    """
     errors = np.asarray(errors, dtype=float)
     columns = [errors, np.full_like(errors, height), np.full_like(errors, tilt),
                np.full_like(errors, at_limit), np.full_like(errors, arm_at_limit),
                np.full_like(errors, leg_sat), np.full_like(errors, leg_torque),
-               np.full_like(errors, arm_reaction)]
+               np.full_like(errors, arm_reaction),
+               np.full_like(errors, base_x), np.full_like(errors, base_y),
+               np.full_like(errors, arm_vel), np.full_like(errors, leg_vel)]
     return np.stack(columns, axis=-1)
 
 
-def record(errors, ended_step=-1, fell=False, timed_out=True, index=0):
-    return _episode_record(index=index, target=(0.4, 0.0, 0.55), trace=trace(errors),
+def record(errors, ended_step=-1, fell=False, timed_out=True, index=0, base_x=-0.056):
+    return _episode_record(index=index, target=(0.4, 0.0, 0.55), trace=trace(errors, base_x=base_x),
                            ended_step=ended_step, total_steps=TOTAL_STEPS, step_dt=STEP_DT,
                            fell=fell, timed_out=timed_out, radius=RADIUS,
                            dwell_steps=DWELL_STEPS, final_steps=FINAL_STEPS)
+
+
+class Oscillation(unittest.TestCase):
+    """A limit cycle needs amplitude *and* frequency: RMS alone cannot tell a sway from a shake."""
+
+    def test_a_slow_sway_and_a_fast_shake_differ_in_frequency_not_amplitude(self):
+        from position_only.evaluate import oscillation
+
+        steps = np.arange(200)
+        slow = 0.01 * np.sin(2 * np.pi * 1.0 * steps * STEP_DT)   # 1 Hz
+        fast = 0.01 * np.sin(2 * np.pi * 10.0 * steps * STEP_DT)  # 10 Hz
+        slow_p2p, slow_hz = oscillation(slow, STEP_DT)
+        fast_p2p, fast_hz = oscillation(fast, STEP_DT)
+        # Both are 0.02 peak-to-peak by construction; sampling misses the exact peaks, more so at
+        # the higher frequency, so this is "the same amplitude" to within the sampling error.
+        self.assertAlmostEqual(slow_p2p, 0.02, delta=0.001)
+        self.assertAlmostEqual(fast_p2p, 0.02, delta=0.002)
+        self.assertAlmostEqual(slow_hz, 1.0, delta=0.15)
+        self.assertAlmostEqual(fast_hz, 10.0, delta=0.6)
+
+    def test_a_still_signal_has_no_frequency(self):
+        from position_only.evaluate import oscillation
+
+        p2p, hz = oscillation(np.full(200, 0.27), STEP_DT)
+        self.assertEqual(p2p, 0.0)
+        self.assertIsNone(hz)
+
+    def test_holding_window_is_what_gets_characterised(self):
+        # Error settles, so the parked tail is flat even though the episode as a whole is not.
+        errors = np.concatenate([np.linspace(0.20, 0.01, TOTAL_STEPS - FINAL_STEPS),
+                                 np.full(FINAL_STEPS, 0.01)])
+        r = record(errors)
+        self.assertAlmostEqual(r["hold_error_p2p_m"], 0.0, places=6)
+        self.assertIsNone(r["hold_error_hz"])
+
+
+class BaseTravel(unittest.TestCase):
+    """Base translation is recorded because it was not, and a walking policy scored as a reaching one."""
+
+    def test_backward_settle_and_forward_walk_are_distinguished_by_sign(self):
+        settled = record(np.full(TOTAL_STEPS, 0.01))
+        self.assertAlmostEqual(settled["final_base_x_from_spawn_m"], -0.056)
+        walked = record(np.full(TOTAL_STEPS, 0.01), base_x=0.204)
+        self.assertAlmostEqual(walked["final_base_x_from_spawn_m"], 0.204)
+        # Both reach identically; only the travel figure tells them apart.
+        self.assertEqual(settled["success"], walked["success"])
+        self.assertAlmostEqual(settled["final_error_m"], walked["final_error_m"])
+
+    def test_horizontal_travel_is_a_distance_and_summary_reports_the_worst(self):
+        walked = record(np.full(TOTAL_STEPS, 0.01), base_x=0.204)
+        self.assertAlmostEqual(walked["max_base_horizontal_travel_m"], 0.204)
+        result = summarise([record(np.full(TOTAL_STEPS, 0.01)), walked],
+                           mf.build("development", episodes=2), controller="test")
+        self.assertAlmostEqual(result["base_travel"]["max_final_x_from_spawn_m"], 0.204)
+        self.assertAlmostEqual(result["base_travel"]["max_horizontal_travel_m"], 0.204)
 
 
 class LongestRun(unittest.TestCase):

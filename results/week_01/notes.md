@@ -39,7 +39,9 @@ Week 2's G4 still depends on them.
 - [x] Held arm targets visible in a trace: arm target changes only every 5 policy steps (`verify`, 8 envs, F-009)
 - [x] Smoke run with `--latency none --leg_actuator dc_motor --arm_actuator implicit` (pre-port configuration) for comparison
 - [x] Headless smoke run, 4 environments
-- [ ] Visible 1-environment run inspected: posture, target marker location (screenshot)
+- [x] Visible 1-environment run inspected (2026-09-16): `view --episode` replays a pinned manifest episode; seed 43 on development ep94. It found two things 300 evaluated episodes had not — the robot walks 20 cm to its target (F-043) and oscillates at 5–8 Hz while holding (F-044)
+- [ ] Model the arm's measured command latency (~127 ms, F-021) and acceleration ramp (~220 ms, F-035). Ranked above further G1a tuning: the 5–8 Hz oscillation sits in exactly the band these omissions govern (F-044)
+- [ ] Price base translation, once the timing model is right (F-043)
 - [x] Self-collision check: no resting contact from overlapping weld shapes (measured headless, with a positive control; a screenshot is optional)
 - [x] Deliberate reset tests: time limit, low base, tilt, base contact, workspace exit, partial reset (`verify`, F-009)
 - [x] Controlled point chosen: the Link7_1 pincer tip (CAD end-face centre; `--tip_body`, `--tip_offset`), matched in simulation to 0.9 µm (F-013). Not measured on the physical arm
@@ -1779,6 +1781,87 @@ What it does not show:
   draw on a new RNG stream, versioned beside the existing one rather than replacing it: about 15 s to
   build, 20 s per seed to measure. `test` stays untouched.
 
+### 2026-09-16 · A visual replay finds two things the metrics were blind to (sixth session, continued)
+
+Lukas asked for a replay of the best episode we have. `view` could only sample fresh targets, so it
+gained `--episode` to pin one from a manifest, recording the manifest hash and episode index into
+`run.json` so a replay is traceable to the evaluation it came from. Seed 43, development episode 94
+(dwell 9.88 s, final error 1.19 mm, 5.8° peak tilt), one environment
+([run](#/week/1/run/20260916T130843_655086Z_view_seed42)).
+
+Watching it produced two findings that 300 evaluated episodes had not.
+
+#### The robot walks to its target
+
+The viewer printed the base 20.1–21.2 cm **forward** of its spawn point, 17 episodes running. The
+sign was checked against the Week 1 zero-action viewer run, which recorded −0.075 m and printed it
+as "7.5 cm behind", matching F-014's backward settle.
+
+Base translation was then added to the evaluator and all three v3 policies re-measured:
+
+| Policy | Mean final base x | Max final base x | Max horizontal travel |
+| --- | --- | --- | --- |
+| zero actions | **−5.6 cm** | −5.5 cm | 9.2 cm |
+| seed 42 | **+24.1 cm** | **+48.1 cm** | 51.8 cm |
+| seed 43 | **+20.5 cm** | +29.8 cm | 30.6 cm |
+| seed 44 | **+25.3 cm** | +34.5 cm | 35.5 cm |
+
+Zero actions reproduce F-014's −5.55 cm exactly, which validates the measurement. Seed 42's median
+episode walks 23.5 cm and six go past 30 cm; it still scores 99/100 and nothing in that result showed
+it (F-043).
+
+The fourth instance of one pattern. `base_motion_l2` prices base **velocity**, so a slow creep is
+nearly free — as a slow squat was free before F-040, and rotation unpriced before F-042. The
+evaluator recorded base height and tilt, which is exactly why the squat and the tilt failures were
+visible, and never recorded translation.
+
+#### It oscillates at a frequency the hardware cannot produce
+
+Lukas described the body and arm "oscillating back and forth / up and down" while the tool point
+tracked accurately. RMS cannot describe a limit cycle — a slow sway and a fast shake can share one —
+so the evaluator gained peak-to-peak amplitude and a mean-crossing frequency over the final two
+seconds, by which the tool point is parked:
+
+| Policy | Base z p-p | z | Base x p-p | x | Tip error p-p | err | Arm joint vel RMS | Leg |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| zero actions | 0.5 mm | 0.5 Hz | 2.2 mm | 0.5 Hz | 1.2 mm | 0.5 Hz | **0.020 rad/s** | 0.012 |
+| seed 42 | 8.0 mm | 3.6 Hz | 7.8 mm | 2.2 Hz | 9.8 mm | **5.1 Hz** | **0.731 rad/s** | 0.204 |
+| seed 43 | 7.6 mm | 4.8 Hz | 10.5 mm | 3.1 Hz | 6.9 mm | **7.8 Hz** | **1.129 rad/s** | 0.306 |
+| seed 44 | 5.3 mm | 4.8 Hz | 1.9 mm | 3.8 Hz | 5.4 mm | **5.5 Hz** | **0.839 rad/s** | 0.213 |
+
+Zero actions sit at the measurement floor, so this is the policies' own motion. **While holding
+station the arm runs at 0.73–1.13 rad/s RMS against a measured ceiling of 1.20–1.29 rad/s** (F-033) —
+60–90% of full speed, continuously, to stay still.
+
+#### Is the motor latency in these trials?
+
+Partly, and the missing part is what governs this. `--latency estimated` models the arm command
+*hold* (5 policy steps, 10 Hz) and the feedback *period* (6 steps, 9 Hz measured, F-020), plus a
+0–10 ms leg command delay. It does **not** model the ~127 ms arm command-to-motion delay (F-021) or
+the ~220 ms acceleration ramp (F-035); `motor_model.py` says so explicitly — the hold is a hold, not
+a delay, so the simulated arm has zero dead time.
+
+The tip oscillates at 5.1–7.8 Hz. The arm is commanded at 10 Hz and reports at 9 Hz, so this is at
+or above half the loop rate, and a 220 ms ramp is about 4.5 Hz, so **the real arm cannot execute this
+motion at all**. The oscillation lives precisely in the band the unmodelled terms govern, and the
+simulation is currently *easier* than the hardware: less dead time, instant acceleration (F-044).
+
+What it shows:
+
+- **Every policy walks 20–25 cm to reach** (F-043), and the reported results were blind to it.
+- **The policies oscillate at 5–8 Hz** (F-044) with the arm near its speed limit while stationary.
+- **Visual inspection earned its place on the G0 checklist.** Neither finding came from 300 evaluated
+  episodes; both came from watching one.
+
+What it does not show:
+
+- **Neither is diagnosed.** Whether the walking is a gait, a slide or a lunge is unmeasured (that is
+  G1b), and the oscillation's cause is inferred from the timing model rather than isolated.
+- **Nothing here is a hardware measurement.** It is a claim about what the model permits.
+- **Do not retune `action_rate` yet.** At −0.01 it prices chatter at about a hundredth of what
+  reaching pays, but tuning it against a 5–8 Hz artefact would be tuning against the missing latency.
+  The arm timing model comes first.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -1812,6 +1895,8 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-040](../findings.md): pricing the base height removes the squat outright and improves tracking 30%, at one fall in a hundred on a far corner target (confirmed, one seed, development manifest).
 - [F-041](../findings.md): three seeds fail G1a on falls — 3%/0%/3% against ≤1% — and the failures are governed by reach distance, not the corner a single seed suggested (confirmed, three seeds, validation).
 - [F-042](../findings.md): pricing base rotation — a term that was simply missing — cuts falls from 4 to 1 across 300 development episodes and changes the last failure from a tip-while-reaching to a tip-while-holding (confirmed, three seeds, development only).
+- [F-043](../findings.md): every policy reaches partly by walking — base ends 20–25 cm forward, up to 48 cm — and the evaluator was not recording translation (confirmed, three policies, development).
+- [F-044](../findings.md): the policies oscillate at 5–8 Hz while holding, above what the D1 can execute, with the arm at 60–90% of its measured speed limit while stationary (confirmed, simulation only).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -1845,6 +1930,17 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
   *Superseded reading, kept for the record:* from seed 42's single development failure this looked like the far
   **top** corner specifically. With six failures it is reach distance; the corner was a coincidence of one
   data point.
+- **Reaching includes 20–25 cm of walking, and the reported results never showed it** (F-043). Every
+  v3 policy ends its episodes 20–25 cm forward of spawn, one episode at 48 cm, on a task whose box is
+  reachable from the settled stance. `base_motion_l2` prices velocity, so a slow creep is nearly free.
+  Translation is now measured; it is not yet priced, and for P0–P4 it is a confound before it is a bug —
+  a reach metric containing a fifth of a metre of locomotion does not isolate arm or tool control.
+- **The policies oscillate at 5–8 Hz, which the hardware cannot execute** (F-044). Tip error swings
+  5–10 mm peak-to-peak at 5.1–7.8 Hz while the arm holds station at 60–90% of its measured speed limit.
+  The D1 is commanded at 10 Hz, reports at 9 Hz and needs ~220 ms to reach cruise, so this is an artefact
+  of the timing model omitting the ~127 ms command delay (F-021) and the acceleration ramp (F-035). Any
+  transfer claim from these policies is void until the arm model carries both. Do not retune `action_rate`
+  first — that would tune against the artefact.
 - **The manifest freezes labels, not the robot model** (F-039). `latency: "estimated"` stayed `estimated`
   while the numbers behind it changed, and the arm's velocity limits were never in the conditions at all, so
   two evaluations across a changed arm both reported no mismatch. Resolve the values into the conditions before
