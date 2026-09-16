@@ -1142,3 +1142,44 @@ result that changes a conclusion gets a new entry, and the old one is marked
   the box. Adding a tilt-rate or angular-momentum cost, or curriculum over reach distance, is the obvious next
   step; do not tune it against `validation`, which is now spent for these three policies, and do not touch
   `test`.
+
+### F-042 — Pricing base rotation cuts falls from four in three hundred to one, and changes what the last failure is
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). `base_motion_l2` priced only linear base velocity;
+  rotation was unpriced, and every G1a failure was rotational (F-041). A `base_angular_motion_l2` term on
+  `root_ang_vel_b` was added at weight −0.2, matching the linear term. Seeds 42/43/44 retrained at the identical
+  budget (73,728,000 transitions each, 12 min 29 s to 12 min 31 s, 93,864–95,324 steps/s, peak GPU 4,691 MiB;
+  runs `20260916T113837_593527Z`, `…115122_647918Z`, `…120408_316600Z`) and evaluated on the **development**
+  manifest `3c5270d9b2cb`, no condition mismatches:
+
+  | Seed | Success | Falls | Final-2 s | 95th pct tilt | Max tilt | Legs at limit |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | 42 | 99 → **99** | 1 → **1** | 0.93 → **0.47 cm** | 13.2° → **7.4°** | 42.8° → 44.3° | 6.9% → **0.4%** |
+  | 43 | 100 → **100** | 0 → **0** | 0.52 → **0.45 cm** | 11.6° → **8.1°** | 12.2° → **9.0°** | 0.1% → **0.0%** |
+  | 44 | 97 → **100** | 3 → **0** | 0.74 → 0.80 cm | 17.7° → **5.8°** | 45.7° → **8.0°** | 3.0% → **0.4%** |
+
+  Falls across the 300 development episodes go **4 → 1**. Seed 44's failures are eliminated outright and its
+  worst tilt falls from 45.7° to 8.0°. Leg saturation is effectively gone. Training-time `bad_orientation` for
+  seed 42 fell 0.83% → 0.19%. The one remaining failure has changed character: seed 42 episode 62, target
+  (0.477, −0.065, 0.509) at depth 0.98 and height 0.07 of the box — the far bottom corner — **dwelled 4.92 s**
+  and then tipped at 5.64 s. The earlier failures died at 1.68–2.50 s *during* the reach; this one reached,
+  held the target for nearly five seconds, and then lost balance. Seed 42's distribution is otherwise extremely
+  tight: p50 5.8°, p99 8.9°, exactly one episode above 20°.
+- **Scope:** three seeds, one budget, **development only**. The `validation` result is deliberately not
+  measured here, for the reason in the implication. This is not a G1a attempt. The arm model still lacks the
+  measured command latency (F-021) and acceleration ramp (F-035), both of which bear on a failure that happens
+  during a hold.
+- **Implication:** the missing term was real, not a tuning knob: rotation had never been priced while translation
+  was, and the seed-to-seed variance in F-041 was largely variance in how much the trunk was used. All three
+  seeds now converge to a similar calm solution, with median arm reaction torques within 4.74–5.48 N·m of each
+  other where they previously spanned 6.59–10.38. **This still cannot be called a G1a pass.** Seed 42's 1 fall
+  in 100 is 1.0% against a ≤1% criterion — the boundary again — and development understated seed 42 before
+  (1 fall there, 3 on validation). More importantly, the diagnosis that motivated this term — the far-target
+  concentration and the arm-versus-leg effort split — was read off the **validation** episodes in F-041, so
+  re-measuring these policies on validation would report a number tuned against that set. Validation is
+  contaminated for this comparison. The gate needs a **fresh validation draw** (a new RNG stream, versioned
+  alongside the existing one rather than replacing it), which costs about 15 s to build and 20 s per seed to
+  measure. `test` remains untouched and must stay so.

@@ -55,7 +55,9 @@ Week 2's G4 still depends on them.
 - [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
 - [x] Price the squat: `base_height_l2` at weight −50 against the measured stance; retrained seed 42 and re-evaluated (2026-09-16, F-040). Squat gone (0 of 100 episodes below 0.20 m), tracking 30% better, 1 fall in 100 at a corner target
 - [x] Three seeds (42/43/44) at the frozen budget, evaluated on development and validation (2026-09-16, F-041). **G1a fails on falls**: 3% / 0% / 3% against ≤1%. Failures are far-reach tilt terminations; seed 43 is clean
-- [ ] Reduce the tilt failures at far reach: try a tilt-rate or angular-momentum cost, or a reach-distance curriculum. Tune on `development` only — `validation` is spent for the current three policies, `test` untouched (F-041)
+- [x] Reduce the tilt failures at far reach (2026-09-16, F-042): `base_angular_motion_l2` at −0.2 — rotation had never been priced while translation was. Falls 4 → 1 across 300 development episodes, seed 44 fixed outright, leg saturation effectively gone
+- [ ] Draw a **fresh validation manifest** on a new RNG stream, versioned beside the existing one, and measure G1a on it. The current validation set is contaminated: F-041's diagnosis was read off its episodes and F-042's reward term followed from that diagnosis (F-042)
+- [ ] Diagnose the remaining tip-while-holding failure (seed 42 ep62, far bottom corner, 4.92 s dwell then tipped). The arm's missing command latency (F-021) and acceleration ramp (F-035) bear on holding behaviour (F-042)
 - [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
 - [x] D1 joint speed limits measured on hardware and `motor_model.py` updated: 1.20–1.29 rad/s on every joint, no 1.05/1.73 split (2026-09-16, F-033)
 - [x] Validate the servo signs on hardware with an observer (2026-09-16, F-034): J0 and J3 inverted, J4/J5 correct, J1/J2 indirect. `SERVO_SIGN = [-1,1,1,-1,1,1]`
@@ -1699,6 +1701,84 @@ the evaluator regardless of which checkpoint it loads. The checkpoint path and S
 inside `eval.json` and `run.json`, so nothing is ambiguous in the data, but the directory names are
 misleading to read. Worth renaming to carry the checkpoint's training seed.
 
+### 2026-09-16 · Rotation was never priced; pricing it cuts falls four-to-one (sixth session, continued)
+
+F-041 left three seeds failing G1a on falls, every failure rotational. The diagnosis pointed at a
+term that was simply absent rather than at a weight to turn up.
+
+#### Why not a tilt penalty
+
+`upright` already prices tilt magnitude, and magnitude does not separate the seeds: seed 42 had the
+**lowest** median tilt (8.3°) and fell three times, while seed 43 at 9.3° never fell. The tails were
+bimodal — across seeds 42 and 44 no episode landed between 18° and 30° — so these were discrete
+balance losses, not a distribution creeping over a threshold.
+
+What did separate them was how much each used its body. Median arm reaction torque and leg load:
+
+| Seed | Arm reaction | Peak leg | Legs at limit | Falls |
+| --- | --- | --- | --- | --- |
+| 42 | 6.59 N·m | 21.34 N·m | 5.7% | 3 |
+| 43 | **9.85 N·m** | **18.92 N·m** | **0.1%** | **0** |
+| 44 | 10.38 N·m | 21.11 N·m | 2.6% | 3 |
+
+`base_motion_l2` costs linear base velocity. Nothing costed rotation. The same body-versus-arm axis
+as the squat (F-019), no longer able to express itself as a crouch because the base-height term
+blocks that, so expressing itself as trunk rotation instead.
+
+#### The term
+
+`base_angular_motion_l2` on `root_ang_vel_b` at weight −0.2, matching the linear term: price turning
+the trunk as dearly as moving it. Squared rate keeps ordinary posture adjustment cheap — 0.3 rad/s
+costs 0.02 per step — while a 2 rad/s topple costs 0.8 against reaching's ~3.0.
+
+Three seeds retrained at the identical budget
+([42](#/week/1/run/20260916T113837_593527Z_train_seed42),
+[43](#/week/1/run/20260916T115122_647918Z_train_seed43),
+[44](#/week/1/run/20260916T120408_316600Z_train_seed44)): 73,728,000 transitions each, 12 min 29 s to
+12 min 31 s, 93,864–95,324 steps/s, peak GPU 4,691 MiB.
+
+#### Development manifest, before → after
+
+| Seed | Success | Falls | Final-2 s | 95th pct tilt | Max tilt | Legs at limit |
+| --- | --- | --- | --- | --- | --- | --- |
+| 42 | 99 → 99 | 1 → 1 | 0.93 → **0.47 cm** | 13.2° → **7.4°** | 42.8° → 44.3° | 6.9% → **0.4%** |
+| 43 | 100 → 100 | 0 → 0 | 0.52 → **0.45 cm** | 11.6° → **8.1°** | 12.2° → **9.0°** | 0.1% → **0.0%** |
+| 44 | 97 → **100** | 3 → **0** | 0.74 → 0.80 cm | 17.7° → **5.8°** | 45.7° → **8.0°** | 3.0% → **0.4%** |
+
+Falls across 300 development episodes: **4 → 1**. Seed 44 is fixed outright, its worst tilt falling
+from 45.7° to 8.0°. Leg saturation is effectively gone everywhere. The three seeds now converge on
+one solution: median arm reaction torques within 4.74–5.48 N·m of each other, where they previously
+spanned 6.59–10.38.
+
+#### The last failure is a different failure
+
+Seed 42, episode 62, target (0.477, −0.065, 0.509) — depth 0.98 and height 0.07 of the box, the far
+bottom corner. It **dwelled 4.92 s** and then tipped at 5.64 s. The earlier failures died at
+1.68–2.50 s *during* the reach; this one reached, held for nearly five seconds, and then lost
+balance. Seed 42's distribution is otherwise very tight: p50 5.8°, p99 8.9°, exactly one episode
+above 20°.
+
+A failure that happens during a *hold* rather than during a reach points somewhere different — at
+drift in an extreme static pose — and the arm model's missing command latency (F-021) and
+acceleration ramp (F-035) bear directly on holding behaviour.
+
+What it shows:
+
+- **The missing term was real, not a knob** (F-042). Rotation was unpriced while translation was
+  priced, and the seed-to-seed variance in F-041 was largely variance in how much trunk the policy
+  used. Reaching got *better* for two of three seeds while falls dropped.
+
+What it does not show:
+
+- **Not a G1a pass, and not measurable as one on `validation`.** Seed 42's 1 fall in 100 is 1.0%
+  against a ≤1% criterion, on the boundary again, and development understated seed 42 before (1 fall
+  there, 3 on validation).
+- **Validation is contaminated for this comparison.** The diagnosis above — far-target concentration,
+  arm-versus-leg effort split — was read off the validation episodes in F-041. Re-measuring these
+  policies there would report a number tuned against that set. The gate needs a fresh validation
+  draw on a new RNG stream, versioned beside the existing one rather than replacing it: about 15 s to
+  build, 20 s per seed to measure. `test` stays untouched.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -1731,6 +1811,7 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-039](../findings.md): the frozen manifest records condition labels, not the values behind them, so a changed robot model passes the guard unflagged (confirmed, one observed instance).
 - [F-040](../findings.md): pricing the base height removes the squat outright and improves tracking 30%, at one fall in a hundred on a far corner target (confirmed, one seed, development manifest).
 - [F-041](../findings.md): three seeds fail G1a on falls — 3%/0%/3% against ≤1% — and the failures are governed by reach distance, not the corner a single seed suggested (confirmed, three seeds, validation).
+- [F-042](../findings.md): pricing base rotation — a term that was simply missing — cuts falls from 4 to 1 across 300 development episodes and changes the last failure from a tip-while-reaching to a tip-while-holding (confirmed, three seeds, development only).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).

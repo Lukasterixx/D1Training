@@ -140,6 +140,9 @@ class RewardsCfg:
     failure = RewardTermCfg(func=mdp.is_terminated, weight=-2.0)
     upright = RewardTermCfg(func=mdp.flat_orientation_l2, weight=-1.0)
     base_motion = RewardTermCfg(func=task_mdp.base_motion_l2, weight=-0.2)
+    # Rotation was free while translation was priced, and every G1a failure was rotational (F-041).
+    # Same weight as the linear term: price turning the trunk as dearly as moving it.
+    base_angular_motion = RewardTermCfg(func=task_mdp.base_angular_motion_l2, weight=-0.2)
     # Prices the squat that F-019 found: without it nothing in the reward opposes crouching toward a
     # box that sits below the resting tool point. Target is the measured settled stance, not a nominal.
     base_height = RewardTermCfg(func=task_mdp.base_height_l2, weight=-50.0,

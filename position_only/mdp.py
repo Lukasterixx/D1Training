@@ -224,6 +224,27 @@ def base_motion_l2(env):
     return torch.sum(torch.square(env.scene["robot"].data.root_lin_vel_b), dim=-1)
 
 
+def base_angular_motion_l2(env):
+    """Squared base angular velocity: the rotation `base_motion_l2` never priced.
+
+    `base_motion_l2` costs linear velocity only, so rotating the trunk has been free. Three seeds at
+    the frozen budget fail G1a on falls (F-041) and every failure is rotational -- a tilt termination
+    at 42-46 deg against the 45.84 deg limit, reached from a distribution whose 95th percentile is
+    11-18 deg. The failures are not a tail of gradually worsening tilt but a discrete loss of balance:
+    across seeds 42 and 44 no episode lands between 18 and 30 deg.
+
+    Tilt *magnitude* is therefore the wrong quantity to price harder -- `upright` already does it, and
+    the seed with the lowest median tilt (42, 8.3 deg) falls three times while the seed with a higher
+    median (43, 9.3 deg) never does. What separates them is rotational *rate*, and the effort split
+    behind it: seed 43 reaches with the arm (9.85 N*m median reaction, legs at their limit 0.1% of
+    steps) where seed 42 reaches with the body (6.59 N*m, 5.7%).
+
+    Squared rate keeps ordinary posture adjustment cheap -- 0.3 rad/s costs 0.02 per step at the -0.2
+    weight the task uses -- while a 2 rad/s topple costs 0.8, against reaching's ~3.0.
+    """
+    return torch.sum(torch.square(env.scene["robot"].data.root_ang_vel_b), dim=-1)
+
+
 def outside_workspace(env, distance: float):
     delta = env.scene["robot"].data.root_pos_w - env.scene.env_origins
     return torch.linalg.vector_norm(delta[:, :2], dim=-1) > distance

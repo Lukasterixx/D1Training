@@ -1,0 +1,79 @@
+{
+  "controller": "checkpoint",
+  "manifest": {
+    "role": "development",
+    "episode_count": 100,
+    "seed": 20260916,
+    "content_sha256": "3c5270d9b2cbcd8c7a10946cd73b677e64c198a22dfe1c995526ed31c3f419c4"
+  },
+  "condition_mismatches": [],
+  "episodes": 100,
+  "success": {
+    "count": 99,
+    "rate": 0.99,
+    "wilson95": [
+      0.9455124752390653,
+      0.9982326134344526
+    ]
+  },
+  "falls": {
+    "count": 1,
+    "rate": 0.01,
+    "wilson95": [
+      0.0017673865655472645,
+      0.0544875247609346
+    ]
+  },
+  "survived": {
+    "count": 99,
+    "rate": 0.99
+  },
+  "truncated": {
+    "count": 1,
+    "note": "ended before the time limit; their traces stop at the last pre-reset sample and the missing tail is not filled"
+  },
+  "error_all_episodes": {
+    "rms_m": 0.02273282779380679,
+    "p95_m": 0.015734061581082634,
+    "final_m": 0.007413400967488997,
+    "transient_mean_m": 0.008581392262130975,
+    "final_2s_mean_m": 0.004745688065886497
+  },
+  "error_surviving_episodes_only": {
+    "note": "for diagnosis only; the reported result is error_all_episodes",
+    "count": 99,
+    "rms_m": 0.022197688525222768,
+    "final_2s_mean_m": 0.004193925195270115
+  },
+  "time_to_reach_s": {
+    "count": 100,
+    "mean": 0.1504,
+    "of_episodes": 100
+  },
+  "max_dwell_s": {
+    "mean": 9.767400000000002
+  },
+  "posture": {
+    "min_base_height_m": 0.18850119411945343,
+    "max_tilt_deg": 44.251773834228516
+  },
+  "saturation": {
+    "joint_limit_steps_frac": 0.0003546099364757538,
+    "arm_commanded_effort_at_limit_frac": 0.999899799823761,
+    "peak_arm_joint_torque_nm": 9.947946548461914,
+    "leg_effort_saturated_frac": 0.00416577827418223,
+    "peak_leg_torque_nm": 23.399999618530273,
+    "note": "arm_commanded_* is Isaac Lab's PD estimate clipped to the effort limit, not a PhysX measurement, and it saturates even standing still because the arm's 4000 N\u00b7m/rad gains far exceed its 1.7-3.3 N\u00b7m limits. peak_arm_joint_torque_nm is PhysX's reaction torque: the total load carried through the joint, including gravity and inertia from the links beyond it, not the drive's own torque. It is not comparable to the 1.7-3.3 N\u00b7m effort limits and may exceed them without any limit being violated. The legs use an explicit actuator, so their figures are the model's own clipped output."
+  },
+  "g1a": {
+    "criterion": "\u226590% reach within 5 cm for \u22651 s continuous, surviving to episode end, with \u22641% falls",
+    "success_rate_ok": true,
+    "fall_rate_ok": true,
+    "passed": true
+  },
+  "interpretation": "One controller on one frozen manifest, one simulator seed. A zero-action run of the same manifest is the baseline this must be read against.",
+  "wall_time_s": 13.81,
+  "checkpoint": "/home/lukas/D1Training/logs/position_only/20260916T113837_593527Z_train_seed42/model_1499.pt",
+  "checkpoint_sha256": "160748d4be34f24984c8ca369d43ec473b34d1b327cc5b6d5df53250aa8c35c2",
+  "manifest_path": "/home/lukas/D1Training/results/manifests/development.json"
+}
