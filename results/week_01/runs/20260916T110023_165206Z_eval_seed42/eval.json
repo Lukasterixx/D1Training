@@ -1,0 +1,79 @@
+{
+  "controller": "checkpoint",
+  "manifest": {
+    "role": "development",
+    "episode_count": 100,
+    "seed": 20260916,
+    "content_sha256": "3c5270d9b2cbcd8c7a10946cd73b677e64c198a22dfe1c995526ed31c3f419c4"
+  },
+  "condition_mismatches": [],
+  "episodes": 100,
+  "success": {
+    "count": 100,
+    "rate": 1.0,
+    "wilson95": [
+      0.9630051925239981,
+      0.9999999999999999
+    ]
+  },
+  "falls": {
+    "count": 0,
+    "rate": 0.0,
+    "wilson95": [
+      0.0,
+      0.03699480747600191
+    ]
+  },
+  "survived": {
+    "count": 100,
+    "rate": 1.0
+  },
+  "truncated": {
+    "count": 0,
+    "note": "ended before the time limit; their traces stop at the last pre-reset sample and the missing tail is not filled"
+  },
+  "error_all_episodes": {
+    "rms_m": 0.022085799919441342,
+    "p95_m": 0.01409654200170188,
+    "final_m": 0.0054010346972791015,
+    "transient_mean_m": 0.008850595112890006,
+    "final_2s_mean_m": 0.005204529054462909
+  },
+  "error_surviving_episodes_only": {
+    "note": "for diagnosis only; the reported result is error_all_episodes",
+    "count": 100,
+    "rms_m": 0.022085799919441342,
+    "final_2s_mean_m": 0.005204529054462909
+  },
+  "time_to_reach_s": {
+    "count": 100,
+    "mean": 0.1504,
+    "of_episodes": 100
+  },
+  "max_dwell_s": {
+    "mean": 9.829600000000001
+  },
+  "posture": {
+    "min_base_height_m": 0.23945440351963043,
+    "max_tilt_deg": 12.249701499938965
+  },
+  "saturation": {
+    "joint_limit_steps_frac": 0.0,
+    "arm_commanded_effort_at_limit_frac": 1.0,
+    "peak_arm_joint_torque_nm": 12.874411582946777,
+    "leg_effort_saturated_frac": 0.0006212424812838435,
+    "peak_leg_torque_nm": 22.384374618530273,
+    "note": "arm_commanded_* is Isaac Lab's PD estimate clipped to the effort limit, not a PhysX measurement, and it saturates even standing still because the arm's 4000 N\u00b7m/rad gains far exceed its 1.7-3.3 N\u00b7m limits. peak_arm_joint_torque_nm is PhysX's reaction torque: the total load carried through the joint, including gravity and inertia from the links beyond it, not the drive's own torque. It is not comparable to the 1.7-3.3 N\u00b7m effort limits and may exceed them without any limit being violated. The legs use an explicit actuator, so their figures are the model's own clipped output."
+  },
+  "g1a": {
+    "criterion": "\u226590% reach within 5 cm for \u22651 s continuous, surviving to episode end, with \u22641% falls",
+    "success_rate_ok": true,
+    "fall_rate_ok": true,
+    "passed": true
+  },
+  "interpretation": "One controller on one frozen manifest, one simulator seed. A zero-action run of the same manifest is the baseline this must be read against.",
+  "wall_time_s": 13.82,
+  "checkpoint": "/home/lukas/D1Training/logs/position_only/20260916T103409_463915Z_train_seed43/model_1499.pt",
+  "checkpoint_sha256": "bb2eccc4b299b438e83aa2a7fdd75cb06485251445f27e5246383a9c63dfc80a",
+  "manifest_path": "/home/lukas/D1Training/results/manifests/development.json"
+}

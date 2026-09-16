@@ -54,7 +54,8 @@ Week 2's G4 still depends on them.
 - [~] Hardware and camera half of the revised Week 1: D1 telemetry and arm response **done** on the real arm via the Go2 (F-020, F-021, F-022, F-023, 2026-09-16); RealSense/tags, box loads and fixture needs still not started
 - [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
 - [x] Price the squat: `base_height_l2` at weight −50 against the measured stance; retrained seed 42 and re-evaluated (2026-09-16, F-040). Squat gone (0 of 100 episodes below 0.20 m), tracking 30% better, 1 fall in 100 at a corner target
-- [ ] Three seeds (42/43/44) at the frozen budget, then a candidate G1a on `validation`; diagnose the far-top-corner tilt failure (F-040)
+- [x] Three seeds (42/43/44) at the frozen budget, evaluated on development and validation (2026-09-16, F-041). **G1a fails on falls**: 3% / 0% / 3% against ≤1%. Failures are far-reach tilt terminations; seed 43 is clean
+- [ ] Reduce the tilt failures at far reach: try a tilt-rate or angular-momentum cost, or a reach-distance curriculum. Tune on `development` only — `validation` is spent for the current three policies, `test` untouched (F-041)
 - [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
 - [x] D1 joint speed limits measured on hardware and `motor_model.py` updated: 1.20–1.29 rad/s on every joint, no 1.05/1.73 split (2026-09-16, F-033)
 - [x] Validate the servo signs on hardware with an observer (2026-09-16, F-034): J0 and J3 inverted, J4/J5 correct, J1/J2 indirect. `SERVO_SIGN = [-1,1,1,-1,1,1]`
@@ -1619,6 +1620,85 @@ What it does not show:
   box the robot can hold at its corners is unknown; one failure is one data point.
 - **The arm model is still optimistic**: no command latency (F-021), no acceleration limit (F-035).
 
+### 2026-09-16 · Three seeds: G1a fails on falls, and the failure is reach distance (sixth session, continued)
+
+Seeds 43 and 44 at the identical budget and configuration as seed 42
+([43](#/week/1/run/20260916T103409_463915Z_train_seed43), 12 min 36 s at 94,182 steps/s;
+[44](#/week/1/run/20260916T104701_429356Z_train_seed44), 12 min 25 s at 93,842 steps/s; peak GPU
+4,700 MiB). No checkpoint selection: `model_1499` from each. `test` untouched.
+
+#### Per-seed, on both inspectable sets
+
+| Seed | Set | Success | Falls | Final-2 s | 95th pct | Lowest base | Peak tilt | Legs at limit |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 42 | development | 99/100 | 1 | 0.93 cm | 2.39 cm | 0.2182 m | 42.8° | 6.9% |
+| 42 | validation | 97/100 | **3** | 0.89 cm | 2.82 cm | 0.1872 m | 44.9° | 5.7% |
+| 43 | development | 100/100 | **0** | 0.52 cm | 1.41 cm | 0.2395 m | 12.2° | 0.1% |
+| 43 | validation | 100/100 | **0** | 0.49 cm | 1.39 cm | 0.2383 m | 11.8° | 0.1% |
+| 44 | development | 97/100 | **3** | 0.74 cm | 2.69 cm | 0.1824 m | 45.7° | 3.0% |
+| 44 | validation | 97/100 | **3** | 0.72 cm | 2.56 cm | 0.1837 m | 45.7° | 2.6% |
+
+**G1a is not passed.** It wants ≤1% falls per seed; validation gives 3% / 0% / 3%. Reach is not the
+problem — every seed clears the ≥90% success criterion comfortably — falls are.
+
+#### The failures are about how far, not how high
+
+All six are tilt terminations against the 45.84° limit, at 42.0–45.7°, dying 1.68–4.66 s in:
+
+| Seed | Ep | Target (m) | Depth into box | Tilt | Died |
+| --- | --- | --- | --- | --- | --- |
+| 42 | 39 | (0.448, +0.038, 0.580) | 0.73 | 44.2° | 1.80 s |
+| 42 | 58 | (0.476, +0.039, 0.543) | 0.97 | 44.9° | 1.68 s |
+| 42 | 60 | (0.431, +0.005, 0.510) | 0.60 | 42.0° | 2.42 s |
+| 44 | 5 | (0.460, +0.060, 0.566) | 0.83 | 45.7° | 2.38 s |
+| 44 | 15 | (0.473, −0.066, 0.605) | 0.94 | 45.6° | 4.66 s |
+| 44 | 41 | (0.477, +0.044, 0.532) | 0.97 | 44.6° | 2.50 s |
+
+Depth into the box averages 0.84 against 0.49 for all episodes; five of six sit in the far 40%,
+which has a chance probability of 0.4⁶ = 0.004. Height does not predict them at all — they span
+0.08 to 0.87 of the z range.
+
+This **corrects** what the previous entry inferred from seed 42's single development failure. That
+one episode was the far *top* corner, and the top looked like it mattered. With six failures it is
+clearly reach distance, and the corner was a coincidence of one data point. It is the reason for not
+tuning against it then.
+
+#### Seed 43 shows the task is fine
+
+Seed 43 reaches **39 of 39** of the same far targets, at a median tilt of 10.3° and 0.1% leg
+saturation across the whole run. Median tilt on far targets by seed: 8.4° (42), 10.3° (43),
+15.5° (44) — seed 44 learned a generally tippier policy, not merely a worse tail. So a stable
+solution to this exact task exists and PPO finds it about one time in three at this budget.
+
+#### Development understated it
+
+Seed 42 fell once on development and three times on validation. Same policy, same budget, two frozen
+100-episode sets that agree to 0.6 cm of RMS under zero actions (F-018). That is ordinary sampling
+variation on a 3% event, and it is exactly why a development number cannot be the reported result.
+Had the three-seed decision rested on seed 42's development run alone, G1a would have looked like a
+boundary pass instead of a clear failure.
+
+What it shows:
+
+- **G1a fails on falls at this configuration** (F-041), on the criterion rather than on reach.
+- **The squat fix held**: no seed goes below 0.18 m, and seed 43 runs at 0.1% leg saturation.
+- **Training variance, not infeasibility.** Seed 43 is an existence proof.
+
+What it does not show:
+
+- **Why seed 43 is stable.** Its tilt distribution is lower throughout, not just in the tail, but the
+  mechanism is not established.
+- **That a tilt cost would fix it.** That is the obvious next step, not a measured one.
+- `validation` is now spent for these three policies. Further tuning goes on `development`, and
+  `test` stays untouched.
+
+#### Minor: eval run directories are named for the simulator seed
+
+Every evaluation above is in a directory ending `_eval_seed42`, because `--seed` defaults to 42 for
+the evaluator regardless of which checkpoint it loads. The checkpoint path and SHA are recorded
+inside `eval.json` and `run.json`, so nothing is ambiguous in the data, but the directory names are
+misleading to read. Worth renaming to carry the checkpoint's training seed.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -1650,6 +1730,7 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-038](../findings.md): the measured arm model doubles the squat policy's tracking error and leaves its success rate untouched, confirming the reach is body-driven (confirmed, one checkpoint off its training distribution).
 - [F-039](../findings.md): the frozen manifest records condition labels, not the values behind them, so a changed robot model passes the guard unflagged (confirmed, one observed instance).
 - [F-040](../findings.md): pricing the base height removes the squat outright and improves tracking 30%, at one fall in a hundred on a far corner target (confirmed, one seed, development manifest).
+- [F-041](../findings.md): three seeds fail G1a on falls — 3%/0%/3% against ≤1% — and the failures are governed by reach distance, not the corner a single seed suggested (confirmed, three seeds, validation).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -1674,11 +1755,15 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - **The target box never needs the base to move.** The free successes are gone (F-016: 0 of 256), but the box is a
   small fixed volume in front of a standing robot, so P0 is still a stance-and-reach task. Base-motion targets are
   plan stage 6 and are not designed yet.
-- **The far top corner of the target box is near the tilt limit.** Standing rather than squatting, the
-  policy reaches (0.471, 0.080, 0.598) — the edge of two ranges — by pitching to 42.8° against the
-  45.84° `bad_orientation` termination, and one episode in a hundred tips there (F-040). Every other
-  episode stays under 13.2°. One failure is one data point: whether this needs a posture term, a
-  curriculum, or a box whose corners the robot can hold is not diagnosed, and three seeds come first.
+- **Far targets tip the robot, in two seeds of three** (F-041, superseding the single-seed reading below).
+  Three seeds fall 3% / 0% / 3% on validation against G1a's ≤1%, all six failures tilt terminations at
+  42.0–45.7° against the 45.84° limit. Depth into the box averages 0.84 of the range against 0.49 for all
+  episodes; height does not predict them. Seed 43 reaches 39 of 39 of the same far targets at 10.3° median
+  tilt, so the task is feasible and this is training variance. A tilt-rate or angular-momentum cost, or a
+  curriculum over reach distance, is the obvious next step and is not yet tested.
+  *Superseded reading, kept for the record:* from seed 42's single development failure this looked like the far
+  **top** corner specifically. With six failures it is reach distance; the corner was a coincidence of one
+  data point.
 - **The manifest freezes labels, not the robot model** (F-039). `latency: "estimated"` stayed `estimated`
   while the numbers behind it changed, and the arm's velocity limits were never in the conditions at all, so
   two evaluations across a changed arm both reported no mismatch. Resolve the values into the conditions before

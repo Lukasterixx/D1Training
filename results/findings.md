@@ -1098,3 +1098,47 @@ result that changes a conclusion gets a new entry, and the old one is marked
   rather than present in every episode, but it is not yet a G1a pass and must not be reported as one. Next:
   three seeds, then decide whether the corner needs a posture term, a curriculum, or a box whose corners the
   robot can hold. Do not tune against `validation` or `test`.
+
+### F-041 — Three seeds fail G1a on falls: two of three tip at far targets, and the development set understated it
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). Seeds 43 and 44 trained at the identical budget and
+  configuration as seed 42 (2048 envs × 1500 iterations = 73,728,000 transitions each; 12 min 36 s at
+  94,182 steps/s and 12 min 25 s at 93,842 steps/s; peak GPU 4,700 MiB; runs `20260916T103409_463915Z_train_seed43`,
+  `20260916T104701_429356Z_train_seed44`). Each seed's `model_1499` evaluated on the development and validation
+  manifests, no condition mismatches on any run:
+
+  | Seed | Set | Success | Falls | Final-2 s | 95th pct | Lowest base | Peak tilt | Legs at limit |
+  | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+  | 42 | development | 99/100 | 1 | 0.93 cm | 2.39 cm | 0.2182 m | 42.8° | 6.9% |
+  | 42 | validation | 97/100 | **3** | 0.89 cm | 2.82 cm | 0.1872 m | 44.9° | 5.7% |
+  | 43 | development | 100/100 | **0** | 0.52 cm | 1.41 cm | 0.2395 m | 12.2° | 0.1% |
+  | 43 | validation | 100/100 | **0** | 0.49 cm | 1.39 cm | 0.2383 m | 11.8° | 0.1% |
+  | 44 | development | 97/100 | **3** | 0.74 cm | 2.69 cm | 0.1824 m | 45.7° | 3.0% |
+  | 44 | validation | 97/100 | **3** | 0.72 cm | 2.56 cm | 0.1837 m | 45.7° | 2.6% |
+
+  G1a wants ≤1% falls per seed. On validation that is 3% / 0% / 3%: **two of three seeds fail**. All six
+  failures are tilt terminations against the 45.84° `bad_orientation` limit, at 42.0–45.7°, dying 1.68–4.66 s
+  into the episode. Their targets sit at x-fraction 0.60–0.97 of the box's 0.36–0.48 m depth (mean 0.84, against
+  0.49 for all episodes); by height they are spread across 0.08–0.87 of the range. Five of six lie in the far
+  40% of the box, for which the chance probability is 0.4⁶ = 0.004. Seed 43 reaches **39 of 39** of those same
+  far targets successfully, at a median tilt of 10.3°. Median tilt per seed on far targets is 8.4° (42),
+  10.3° (43) and 15.5° (44).
+- **Scope:** three seeds, one budget, one configuration, `--robustness none`, deterministic actions,
+  `model_1499` from each run with no checkpoint selection. The `test` manifest is untouched. The per-seed fall
+  counts are 3 of 100, so each carries a Wilson 95% interval of roughly 1.0–8.5%; the claim that seeds 42 and 44
+  exceed 1% is firmer than any particular rate. Why seed 43's solution is stable and the others' are not is not
+  established — only that its tilt distribution is lower throughout, not merely in the tail.
+- **Implication:** **G1a is not passed.** The squat fix (F-040) held — no seed goes below 0.18 m and the stance
+  term is doing its work — but removing the crouch moved the failure to tilt, and at the frozen budget PPO finds
+  a stable solution roughly one time in three. Two corrections to what F-040 recorded from a single seed: the
+  failures are governed by reach **distance**, not by the far top corner as that one data point suggested, and
+  height does not predict them; and seed 42's development result (1 fall) understated its validation result
+  (3 falls), which is exactly why a development number cannot be reported. Seed 43 proves the task is not the
+  problem — a policy exists that reaches every far target at 12° of tilt with 0.1% leg saturation — so this is
+  training variance, not infeasibility, and the fix belongs in the objective or the curriculum rather than in
+  the box. Adding a tilt-rate or angular-momentum cost, or curriculum over reach distance, is the obvious next
+  step; do not tune it against `validation`, which is now spent for these three policies, and do not touch
+  `test`.
