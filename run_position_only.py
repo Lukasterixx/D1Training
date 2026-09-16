@@ -217,10 +217,13 @@ def run(args, report):
                 ).usd_path
             metadata["robot_usd"] = robot_path
             metadata["robot_usd_sha256"] = hashlib.sha256(Path(robot_path).read_bytes()).hexdigest()
+            spawn_kwargs = {} if args.spawn_height is None else {"spawn_height": args.spawn_height}
             cfg = make_cfg(robot_path, args.num_envs, args.seed, args.device, args.tip_offset, args.tip_body,
                            leg_actuator=args.leg_actuator, robustness=args.robustness,
                            self_collisions=args.self_collisions, latency=args.latency,
-                           arm_actuator=args.arm_actuator)
+                           arm_actuator=args.arm_actuator, **spawn_kwargs)
+            metadata["reset"] = {"spawn_height_m": cfg.scene.robot.init_state.pos[2]}
+            metadata["target_box_env_frame_m"] = [list(axis) for axis in cfg.commands.ee_position.ranges]
             timing = interface_timing(args.latency, 1.0 / (cfg.sim.dt * cfg.decimation), args.leg_actuator)
             metadata["sim2real"]["timing"] = timing
             cfg.commands.ee_position.debug_vis = not args.headless
@@ -370,6 +373,8 @@ def main():
     parser.add_argument("--self_collisions", action=argparse.BooleanOptionalAction, default=True,
                         help="Let the arm collide with the Go2 body (default). Off, the arm passes through the trunk.")
     parser.add_argument("--checkpoint", help="Explicit checkpoint from this task, for resuming training or smoke playback.")
+    parser.add_argument("--spawn_height", type=float, default=None,
+                        help="Base height at reset (m). Default: the task's standing spawn, env_cfg.SPAWN_HEIGHT_M.")
     parser.add_argument("--robot_usd", help="Existing local welded USD; otherwise rebuild inside the new run directory.")
     parser.add_argument("--output", default=str(ROOT / "logs/position_only"))
     args = parser.parse_args()

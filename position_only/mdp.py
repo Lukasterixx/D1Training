@@ -11,6 +11,7 @@ from isaaclab.sim import CuboidCfg, PreviewSurfaceCfg, SphereCfg
 from isaaclab.utils import configclass
 
 from .core import SampleAndHold, box_edges, point_in_world, tracking_reward, world_to_body
+from .task_space import TARGET_RANGES
 from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 
 
@@ -203,7 +204,7 @@ class WorldPositionCommandCfg(CommandTermCfg):
     # the Link6 origin; --tip_body Link6 --tip_offset 0 0 0 restores that.
     body_name: str = TOOL_BODY
     tip_offset: tuple[float, float, float] = TOOL_OFFSET_M
-    ranges: tuple = ((0.24, 0.36), (-0.08, 0.08), (0.66, 0.78))
+    ranges: tuple = TARGET_RANGES
     # Longer than the 10 s episode: one fixed target, resampled on reset only.
     resampling_time_range: tuple[float, float] = (1000.0, 1000.0)
     debug_vis: bool = False

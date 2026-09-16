@@ -1,0 +1,96 @@
+{
+  "id": "20260915T233839_655054Z_smoke_seed42",
+  "title": "Spawn-height sweep: 0.32 m, 8 envs, zero actions",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-16T09:59:12+10:00",
+  "started_utc": "2026-09-15T23:38:39+00:00",
+  "source_dir": "/tmp/claude-1000/-home-lukas-D1Training/260ab998-7f0a-4a59-9bca-90ab529ec0e7/scratchpad/sweep/20260915T233839_655054Z_smoke_seed42",
+  "mode": "smoke",
+  "seed": 42,
+  "status": "smoke_finished",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 250,
+  "git_commit": "ab74fa2d1a9249f75bbf2d7b219a09303e02faa6",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "smoke.json",
+    "smoke_trace.csv",
+    "params_deploy.yaml"
+  ],
+  "smoke_summary": {
+    "steps": 250,
+    "transitions": 2000,
+    "failure_resets": 0,
+    "time_limit_resets": 0,
+    "posture_after_settling.base_height_m": {
+      "min": 0.2676296532154083,
+      "mean": 0.27330344915390015,
+      "max": 0.2792043387889862
+    },
+    "posture_after_settling.tilt_deg": {
+      "min": 0.0,
+      "mean": 1.452783465385437,
+      "max": 3.752854824066162
+    },
+    "posture_after_settling.base_drift_m": {
+      "min": 0.03096546046435833,
+      "mean": 0.05527624115347862,
+      "max": 0.08522594720125198
+    },
+    "posture_after_settling.leg_joint_dev_rad": {
+      "min": 0.29000425338745117,
+      "mean": 0.32861679792404175,
+      "max": 0.3933523893356323
+    },
+    "posture_after_settling.arm_joint_dev_rad": {
+      "min": 0.009891202673316002,
+      "mean": 0.011167068034410477,
+      "max": 0.011985713616013527
+    },
+    "posture_after_settling.leg_torque_nm": {
+      "min": 7.25626277923584,
+      "mean": 8.224703788757324,
+      "max": 9.881155014038086
+    },
+    "posture_after_settling.arm_contact_n": {
+      "min": 0.0,
+      "mean": 0.0,
+      "max": 0.0
+    },
+    "posture_after_settling.base_x_m": {
+      "min": -0.08522593975067139,
+      "mean": -0.05527622997760773,
+      "max": -0.030965447425842285
+    },
+    "posture_after_settling.base_y_m": {
+      "min": -6.103515625e-05,
+      "mean": -2.2985712348599918e-05,
+      "max": 2.467632293701172e-05
+    },
+    "posture_after_settling.base_yaw_deg": {
+      "min": -0.010924325324594975,
+      "mean": -0.0058399951085448265,
+      "max": -0.0011058684904128313
+    },
+    "settle_steps": 50,
+    "controller": "zero_actions_default_joint_targets",
+    "final_position_error_m": {
+      "count": 8,
+      "mean": 0.10605769418179989,
+      "min": 0.06714015454053879,
+      "median": 0.10396554321050644,
+      "max": 0.15790429711341858
+    },
+    "interpretation": "Interface smoke diagnostics only; not a baseline evaluation or success rate."
+  }
+}

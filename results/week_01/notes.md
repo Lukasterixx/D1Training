@@ -13,6 +13,17 @@ From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appen
 - **Gantt activities:** codebases, *testing*; position-only baseline, *check*; contact tasks, *build tasks + fixtures*.
 - **Gate focus:** G0.
 
+**Revised 16 September.** The [plan was rewritten](../../docs/thesis_b_plan.md) that day, outside this record,
+making a physical AprilTag-guided combiner-box demonstration the Thesis B deliverable and adding gates G4–G7.
+Its Week 1 row asks for two tracks:
+
+- **Simulation and learning:** close remaining G0 checks; resolve and reset-test the target workspace; start the
+  frozen evaluator; trace UniFP and the position-only reference. The workspace item is done (F-016); the frozen
+  evaluator and the reference traces are not started.
+- **Hardware, camera and deliverable:** bring up RealSense/tags and D1 telemetry; measure basic arm response and
+  box loads; record access and fixture needs. **None of this has been started in this repository**, and no camera,
+  tag or D1 telemetry code exists here. It is the larger half of the revised Week 1.
+
 ## Checklist
 
 - [x] Thesis A timeline and experimental matrix reviewed into the plan
@@ -39,8 +50,8 @@ From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appen
 - [x] Short PPO pilot: 64 envs × 24 steps × 100 iterations (153,600 transitions); throughput and memory recorded (three pilots)
 - [x] Rescue flat ablation recorded as external evidence (F-008)
 - [ ] Gait-quality metrics (foot vs neutral point, front–rear spacing, backward after request, turn tracking at 0.2/0.5/1.0 rad/s, pitch wobble) added to the P0 evaluator design for G1b
-- [ ] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013)
-- [ ] Choose the next target range: size, a start-pose exclusion, base-motion targets and a growth schedule (options to draft with `workspace.py`)
+- [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
+- [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
 - [ ] Explain the 0.010 rad residual at J3 with force drives (F-010)
 - [ ] Decide whether playback (`run_sim.sh`) should also get force arm drives; it would change the F-012 reference
 
@@ -55,8 +66,8 @@ From the [Thesis B plan](../../docs/thesis_b_plan.md#schedule-aligned-with-appen
 | Python / PyTorch | 3.11.15 / 2.7.0+cu128 (`env_isaaclab`) | same |
 | Task physics / policy rate | 200 Hz / 50 Hz (decimation 4) | `position_only/env_cfg.py` |
 | CPU / RAM | AMD Ryzen 9 9950X3D, 16 cores; 31 GB | Isaac Sim startup report, 2026-09-15 |
-| Root disk | 3.6 GB free (99% used) after today's runs; `logs/` holds 181 MB | `df -h`, 2026-09-15 |
-| GPU during Week 1 runs | No other compute job: every launch checked `nvidia-smi --query-compute-apps` first | 2026-09-15 |
+| Root disk | 34 GB free (85% used); `logs/` holds 292 MB. Was 3.6 GB free on 2026-09-15; freed outside this record | `df -h`, 2026-09-16 |
+| GPU during Week 1 runs | No other compute job: every launch checked `nvidia-smi --query-compute-apps` first | 2026-09-15, 2026-09-16 |
 
 ## Log
 
@@ -497,6 +508,113 @@ Questions raised while watching:
   (F-013). Its replacement, a start-pose exclusion and a growth schedule are open design choices. The ±1 rad arm
   action clip may need widening for a larger range.
 
+### 2026-09-16 · Target box moved off the resting tip; the reset drop replaced by a standing spawn (fourth session)
+
+The Week 1 blocker from F-013: the target box surrounded the pincer tip's resting position, so 12.9% of
+targets were met with no arm motion at all and the reach metric could not be told apart from doing nothing.
+Lukas chose a forward-and-down box and asked for the reset drop to be fixed in the same change.
+
+#### The backward slide is the posture, not the drop
+
+A spawn-height sweep (8 envs, 250 steps, zero actions; the five runs below) separated the two. Lowering the
+spawn cuts the tilt transient sharply but leaves the slide almost untouched:
+
+| Spawn | Peak tilt | Lowest base | Settled base x | Run |
+| --- | --- | --- | --- | --- |
+| 0.42 m | 18.6° | 0.197 m | −7.5 cm | [sweep 0.42](#/week/1/run/20260915T233821_522424Z_smoke_seed42) |
+| 0.34 m | 8.4° | — | −4.9 cm | [sweep 0.34](#/week/1/run/20260915T233830_692754Z_smoke_seed42) |
+| 0.32 m | 6.7° | — | −5.5 cm | [sweep 0.32](#/week/1/run/20260915T233839_655054Z_smoke_seed42) |
+| 0.30 m | 4.3° | 0.260 m | −5.5 cm | [sweep 0.30](#/week/1/run/20260915T233847_549394Z_smoke_seed42) |
+| 0.28 m | 4.3° | — | −5.4 cm | [sweep 0.28](#/week/1/run/20260915T233855_377869Z_smoke_seed42) |
+
+Even spawning at 0.28 m, essentially the settled height, the robot still slides ~5 cm back and overshoots to
+−8.8 cm before recovering. So the slide is the zero-action posture settling under its own leg PD, not the
+drop. F-013 attributed it to the drop; that attribution was wrong (F-014).
+
+Two scratchpad probes (16 envs, 12 s, no time limit, one process per height; not run folders) measured the
+converged stance and separated its spread:
+
+| Spawn | Converged base x | Base height | Tilt | Pincer tip (env frame) | Settled by | Peak tilt | Lowest base |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.42 m | −7.461 cm | 0.2667 m | 1.30° | (0.3435, −0.0142, 0.7514) m | 2.6 s | 18.83° | 0.197 m |
+| 0.30 m | −5.551 cm | 0.2737 m | 1.03° | (0.3601, −0.0141, 0.7604) m | 3.6 s | 5.11° | 0.260 m |
+
+The spread of the settled base x **across environments** is 0.22 cm (sd) at 0.42 m and 0.005 cm at 0.30 m.
+F-013 reported a 2.9 cm spread; that range was the settling transient over time, not variation between
+environments, which is small (F-014).
+
+The deciding number is the lowest base height. Dropping from 0.42 m takes the base to 0.197 m, only 4.7 cm
+above the `low_base` termination at 0.15 m, before it recovers. Spawning at 0.30 m keeps it at 0.260 m.
+With randomisation on (`--robustness unitree`: pushes, mass and CoM changes) the drop is close enough to the
+limit to terminate episodes at reset for reasons that have nothing to do with the task. `SPAWN_HEIGHT_M = 0.30`
+is now the task default; `--spawn_height` overrides it, and `run.json` records it. Playback (`run_sim.sh`)
+keeps `flat_env_cfg.ROBOT_START_POS`, so F-012's reference is unchanged.
+
+#### The CPU model puts the resting tip 1.6 cm out
+
+The workspace model predicted the resting tip at (0.3502, −0.0139, 0.7732) m; the simulator measures
+(0.3601, −0.0141, 0.7604) m, 1.6 cm away. The model has neither the arm's residual sag (F-010) nor the base's
+1.0° resting tilt. The box is placed against the **measured** point, and `task_space.ZERO_ACTION_TIP_M` records
+it (F-015).
+
+#### The new box
+
+`TARGET_RANGES = ((0.36, 0.48), (−0.08, 0.08), (0.50, 0.62))` m from the environment origin: same
+12 × 16 × 12 cm as before, moved forward and down so it sits below the resting tip rather than around it.
+Chosen from a CPU search over box centres that scored 0% free successes and ≥99% reachable, then re-scored
+against the measured stance.
+
+| | Old box | New box |
+| --- | --- | --- |
+| Start distance, model (min/mean/max) | 0.4 / 9.8 / 18.3 cm | 14.0 / 21.9 / 30.2 cm |
+| Within 5 cm of the resting tip | 8.6% | **0.0%** |
+| Reachable, clear and holdable | 100% | 99.1% |
+| Simulator zero-action baseline | 12.9% (33/256) | **0.0% (0/256)** |
+
+- [verify, 8 envs](#/week/1/run/20260915T235632_928071Z_verify_seed42): **23/23**, up from 21. Two new checks
+  measure the resting tip in the simulator and require every point of the box, not just the drawn targets, to
+  be further than 5 cm from it: minimum distance to the box 14.3 cm, 0 of 8 sampled targets within 5 cm, and
+  the resting tip within 3.1 mm of the recorded stance.
+- [Zero-action baseline, 256 envs](#/week/1/run/20260915T235714_363411Z_smoke_seed42): final error at 9 s
+  13.5–28.7 cm, mean 21.5 cm, **0 of 256 within 5 cm**, 0 failure resets. The base settles at 0.2737 m and
+  −0.0550 m, matching the probe.
+
+![Pincer tip workspace against the new target box](figures/d1_workspace.png)
+
+A second `verify` run from the committed configuration ([23/23](#/week/1/run/20260916T000418_054709Z_verify_seed42))
+reproduces the first. CPU tests: 40 pass in `env_isaaclab`, 16 in `tests/test_evidence.py` on the system Python.
+
+What it shows:
+
+- **Reaching is no longer free.** Zero actions score 0/256 where they scored 33/256. Every target needs at
+  least 13.5 cm of tool-point motion, so a reach metric now measures reaching.
+- **Episodes start standing.** Peak tilt at reset falls from 18.6° to 4.3°, and the lowest base height rises
+  from 0.197 m to 0.260 m, well clear of the 0.15 m termination.
+- **The box is still a small, fixed-target workspace**, as plan stage 5 asks: 12 × 16 × 12 cm, one target per
+  episode, and 99.1% of it reachable, clear of the body proxy and statically holdable.
+
+What it does not show:
+
+- **No policy has been trained against this box.** The three PPO pilots used the old box, the old spawn and
+  the Link6 control point, so their numbers do not carry over. Reaching ability is still unmeasured.
+- **The slide remains.** The base still settles 5.6 cm behind where it spawns and takes 3.6 s to get there,
+  inside a 10 s episode. This moves the robot relative to a world-fixed target for the first third of every
+  episode. It is measured and repeatable, not removed.
+- **Still not the G1a evaluation.** This is a zero-action snapshot at 9 s, not the frozen-manifest evaluator
+  with a 1 s dwell.
+- **The box never requires the base to move**, and it is not a validated choice of difficulty — it is the
+  nearest placement that removes free successes while staying reachable.
+
+#### Code changes
+
+| Change | Detail |
+| --- | --- |
+| `position_only/task_space.py` (new) | `SPAWN_HEIGHT_M`, `ZERO_ACTION_BASE_OFFSET_M`, `ZERO_ACTION_TIP_M`, `TARGET_RANGES`, with no imports, so the task and the CPU tools read one copy. `mdp.py` and `workspace.py` each held their own copy of the box before |
+| `env_cfg.make_cfg` | `spawn_height` and `target_ranges` arguments; the spawn height overrides the init state after `make_robot_cfg`, leaving playback's `ROBOT_START_POS` alone |
+| `run_position_only.py` | `--spawn_height`; `run.json` records `reset.spawn_height_m` and `target_box_env_frame_m` |
+| `verify.py` | `target_box_needs_arm_motion` and `resting_tip_matches_recorded_stance` (23 checks) |
+| `workspace.py` | Reports and plots the measured resting tip beside the model's, with the model error; histogram bins follow the data instead of stopping at 22 cm |
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -517,13 +635,19 @@ Runs recorded this week appear under **Runs** below these notes, with their curv
 - [F-010](../findings.md): the URDF import made the D1's joints acceleration drives, so the arm sagged 0.11 rad inside its limits; now force drives (confirmed).
 - [F-011](../findings.md): superseded by F-013 (its start distances assumed the base at the environment origin).
 - [F-012](../findings.md): playback reference; the arm leaves forward and lateral walking intact but doubles tilt when turning at 1 rad/s (provisional).
-- [F-013](../findings.md): with the pincer tip as the controlled point, zero actions still meet 5 cm for 12.9% of targets, because each reset slides the robot 7.4 cm back (confirmed).
+- [F-013](../findings.md): with the pincer tip as the controlled point, zero actions still meet 5 cm for 12.9% of targets (confirmed; its mechanism corrected by F-014, and the box it describes replaced by F-016).
+- [F-014](../findings.md): the backward slide at reset is the zero-action posture settling, not the drop; it is repeatable between environments to 0.005 cm (confirmed).
+- [F-015](../findings.md): the CPU workspace model puts the resting pincer tip 1.6 cm from where the simulator rests it, missing the arm's sag and the base's 1° tilt (confirmed).
+- [F-016](../findings.md): moving the target box below the resting tip removes the free successes — zero actions score 0 of 256, and the spawn drop is gone (confirmed).
 
 ## Issues and risks
 
-- **The target box does not test reaching yet** (F-013). Zero actions meet the 5 cm criterion for 12.9% of targets, and
-  the box never needs the base to move. Move the box, or stop the reset slide, before any P0 training that is meant
-  to count.
+- **The target box never needs the base to move.** The free successes are gone (F-016: 0 of 256), but the box is a
+  small fixed volume in front of a standing robot, so P0 is still a stance-and-reach task. Base-motion targets are
+  plan stage 6 and are not designed yet.
+- **The box's difficulty is not validated.** It is the nearest placement that removes free successes while staying
+  reachable (F-016), chosen from a CPU search, not from any evidence about what a policy can learn. If PPO cannot
+  make 13.5–28.7 cm reaches, the box, the ±1 rad action clip and the reward scales all become suspects at once.
 - **The pincer tip is CAD geometry.** It has not been measured on the arm. Grasping tasks would need the point between
   the pincers instead.
 - **Two arm models are now in use.** Playback (`run_sim.sh`, F-001/F-012) and Rescue's training keep the import's
@@ -532,8 +656,16 @@ Runs recorded this week appear under **Runs** below these notes, with their curv
 - **Unexplained J3 residual.** With force drives J3 still sits 0.010 rad off at rest, about 4 mm at Link6.
 - **Arm-to-body contact is not penalised.** Self-collisions now stop the arm, but the touch does not terminate the
   episode or cost reward, so a policy could learn to lean the arm on the body.
-- **Every episode starts with a drop.** Resets place the base at 0.42 m; it lands at 0.266 m with an 18.9° tilt peak
-  and slides 7.4 cm back, which moves every target relative to the arm.
+- **The base still slides back at reset, and the slide is the posture, not the drop** (F-014). The drop is gone:
+  the spawn is 0.30 m, peak tilt 4.3° and the lowest base height 0.260 m against the 0.15 m termination. But the base
+  still settles 5.6 cm behind where it spawns and takes 3.6 s of a 10 s episode to get there, moving the robot
+  relative to a world-fixed target for the first third of the episode. It is repeatable between environments to
+  0.005 cm, so it is a fixed offset rather than noise, and the target box is placed against the settled stance.
+  Lowering the spawn further does not help: at 0.28 m the slide is unchanged.
+- **Geometry must be measured, not modelled** (F-015). The CPU workspace model puts the resting tool point 1.6 cm
+  from where the simulator rests it, missing the arm's sag and the base's 1° tilt. `verify` fails if the simulator
+  drifts more than 2 cm from the recorded stance, but the recorded stance is one configuration; changing the arm
+  gains, the leg model or the mass would move it and the box would need re-placing.
 - **Unverified estimates.** The D1 speed limits and the leg delay range are unmeasured, and the 10 Hz arm hold means
   arm targets update five times less often. Any reaching result under `--latency estimated` depends on those
   assumptions until they are measured.
@@ -542,13 +674,21 @@ Runs recorded this week appear under **Runs** below these notes, with their curv
   in playback (F-012).
 - **Training metrics are diagnostics.** `Metrics/ee_position/position_error_m` is sampled at episode end during
   training. The G1a evaluation needs the frozen-manifest evaluator, with a zero-action baseline beside every result.
-- **Disk.** The root disk has 3.6 GB free, and each run rebuilds its ~10 MB USD. Long training runs need log
-  housekeeping first.
+- **Disk.** 34 GB free as of 2026-09-16, up from 3.6 GB; the space was freed outside this record. Each run still
+  rebuilds its ~10 MB USD, so long training runs need log housekeeping.
 - Resolved on 2026-09-15: the GPU queue (the GPU was free all session), and "configuration changed before its first
   simulator run" (it has now run; see the log).
+- Resolved on 2026-09-16: "the target box does not test reaching" (F-016: zero actions now score 0 of 256) and
+  "every episode starts with a drop" (the spawn is now the standing height). Both left residues, listed above.
 
 ## Next week
 
-Move the target box or fix the reset slide (F-013), then workspace validation against an IK reference. Next come the
-first PPO pilots with reward-term inspection, a frozen-manifest evaluator that reports a zero-action baseline and
-G1b's gait metrics, a pressing-fixture prototype, and selection of the primary implementation.
+The box and reset are done (F-016), so the simulation track's remaining Week 1 items carry forward: workspace
+validation against an IK reference, a frozen-manifest evaluator reporting a zero-action baseline (now 0%) and
+G1b's gait metrics, and the first PPO pilots against the new box with reward-term inspection. The three Week 1
+pilots predate the box, the spawn and the pincer tip, so P0 training starts from scratch.
+
+The 16 September replan adds a second track that has not begun: RealSense and AprilTag bring-up, D1 telemetry,
+arm response and box-load measurements, and the access and fixture needs that Week 2's frame calibration and
+G4 deployment contract depend on. Week 2 also has to freeze the task, interface and tolerance manifests and
+select the implementation from bounded reproductions.

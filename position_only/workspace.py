@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
+from .task_space import TARGET_RANGES, ZERO_ACTION_BASE_OFFSET_M, ZERO_ACTION_TIP_M
 from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,16 +32,11 @@ SERVO_MASS_BY_LINK = {"Link1": 0.060, "Link2": 0.060, "Link3": 0.045, "Link4": 0
 EFFORT_LIMIT_NM = np.array([3.3, 3.3, 1.7, 1.7, 1.7, 1.7])  # motor_model.D1_EFFORT_LIMIT_NM
 SOFT_LIMIT_FACTOR = 0.9  # UNITREE_GO2_CFG soft_joint_pos_limit_factor; actions are clamped to it
 GRAVITY = np.array([0.0, 0.0, -9.81])
-# Target box relative to the environment origin (position_only/mdp.py WorldPositionCommandCfg.ranges).
-TARGET_RANGES = ((0.24, 0.36), (-0.08, 0.08), (0.66, 0.78))
 # Collision proxy in the Go2 base frame: the trunk and hips, and the ground below the base.
 BODY_BOX_B = ((-0.30, 0.30), (-0.13, 0.13), (-0.20, 0.06))
 LINK_RADIUS_M = 0.03
 SUCCESS_RADIUS_M = 0.05  # G1a reach criterion
-ZERO_ACTION_BASE_HEIGHT_M = 0.266  # Week 1 smoke runs, settled mean
-# Where the base actually settles under zero actions: every reset drops it from 0.42 m and it slides back
-# 7.4 cm (Week 1 smoke 20260915T104159_671108Z, 8 envs: x -0.065 to -0.094 m, y 0.000 m, yaw 0.0 deg).
-ZERO_ACTION_BASE_OFFSET_M = (-0.0745, 0.0, 0.2666)
+ZERO_ACTION_BASE_HEIGHT_M = ZERO_ACTION_BASE_OFFSET_M[2]
 
 
 def _vec(text):
@@ -268,6 +264,20 @@ def analyse(count=400_000, seed=0, base_heights=(0.22, 0.24, ZERO_ACTION_BASE_HE
                          "box_fraction_within_5cm_of_zero_pose": float((distance <= SUCCESS_RADIUS_M).mean()),
                          "zero_pose_in_env_frame_m": (zero[name] + np.array(ZERO_ACTION_BASE_OFFSET_M)).round(4).tolist()}
 
+    # The simulator's own resting tip, which the box is placed against. The model has neither the
+    # arm's residual sag nor the base's resting tilt, so the two differ by about 1.6 cm.
+    measured = np.array(ZERO_ACTION_TIP_M)
+    measured_distance = np.linalg.norm(targets_world - measured, axis=1)
+    settled_distances["pincer_tip_measured"] = measured_distance
+    settled["pincer_tip_measured"] = {
+        "tip_in_env_frame_m": measured.round(4).tolist(),
+        "source": "simulator, zero actions, settled (task_space.ZERO_ACTION_TIP_M)",
+        "model_error_m": float(np.linalg.norm(measured - (zero["pincer_tip"] + np.array(ZERO_ACTION_BASE_OFFSET_M)))),
+        "zero_pose_to_box_m": {"min": float(measured_distance.min()), "mean": float(measured_distance.mean()),
+                               "max": float(measured_distance.max())},
+        "box_fraction_within_5cm_of_zero_pose": float((measured_distance <= SUCCESS_RADIUS_M).mean()),
+    }
+
     masses = simulated_masses(links)
     return {
         "method": "URDF forward kinematics (CPU); uniform joint samples inside the 0.9 soft limits; a box point "
@@ -312,6 +322,8 @@ def draw(result, path, baseline=None):
     side.add_patch(plt.Rectangle((xl - base_x, zl - base_z), xh - xl, zh - zl, fill=False, lw=2, ec="#eb6834"))
     zero_tip, zero_link6 = result["zero_pose"]["pincer_tip_in_base_frame_m"], result["zero_pose"]["link6_in_base_frame_m"]
     side.plot(zero_tip[0], zero_tip[2], marker="*", ms=13, color="#1a1a1a", ls="none")
+    measured_b = np.array(ZERO_ACTION_TIP_M) - np.array(ZERO_ACTION_BASE_OFFSET_M)
+    side.plot(measured_b[0], measured_b[2], marker="*", ms=13, color="#eb6834", ls="none")
     side.plot(zero_link6[0], zero_link6[2], marker="o", ms=7, mfc="none", mec="#1a1a1a", ls="none")
     side.add_patch(plt.Rectangle((BODY_BOX_B[0][0], BODY_BOX_B[2][0]), BODY_BOX_B[0][1] - BODY_BOX_B[0][0],
                                  BODY_BOX_B[2][1] - BODY_BOX_B[2][0], color="#8a8f98", alpha=0.3))
@@ -323,15 +335,19 @@ def draw(result, path, baseline=None):
         Line2D([], [], marker="o", ls="none", color="#2a78d6", label="clear of body proxy and holdable"),
         Line2D([], [], marker="o", ls="none", color="#c9ccd1", label="collides with body proxy or ground"),
         Patch(fill=False, ec="#eb6834", lw=2, label="target box, from the measured zero-action stance"),
-        Line2D([], [], marker="*", ms=11, ls="none", color="#1a1a1a", label="pincer tip at the zero pose (episode start)"),
+        Line2D([], [], marker="*", ms=11, ls="none", color="#1a1a1a", label="pincer tip at the zero pose (model)"),
+        Line2D([], [], marker="*", ms=11, ls="none", color="#eb6834", label="pincer tip where it rests (measured)"),
         Line2D([], [], marker="o", ms=7, mfc="none", mec="#1a1a1a", ls="none", label="Link6 origin at the zero pose"),
         Patch(color="#8a8f98", alpha=0.3, label="Go2 body proxy"),
     ], loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=2, fontsize=8, frameon=False)
 
     distances = result["_settled_distances"]
-    bins = np.arange(0.0, 22.0, 1.0)
-    for name, color, style, label in (("pincer_tip", "#2a78d6", "-", "pincer tip, model"),
-                                      ("link6", "#8a8f98", "--", "Link6 origin, model (before)")):
+    widest = max(float(np.max(d)) for d in distances.values())
+    if baseline is not None:
+        widest = max(widest, float(np.max(baseline)))
+    bins = np.arange(0.0, 100 * widest + 2.0, 1.0)
+    for name, color, style, label in (("pincer_tip_measured", "#2a78d6", "-", "pincer tip, measured stance"),
+                                      ("pincer_tip", "#8a8f98", "--", "pincer tip, model stance")):
         d = 100 * distances[name]
         share = 100 * float((d <= 100 * SUCCESS_RADIUS_M).mean())
         curve.hist(d, bins=bins, density=True, histtype="step", lw=2, color=color, ls=style,

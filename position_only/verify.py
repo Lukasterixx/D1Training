@@ -10,6 +10,8 @@ mechanism only; none of it says anything about standing, stepping or reaching ab
   new target, while control environments carry on.
 - Arm model: the simulator's arm link masses, Link6 and controlled-point kinematics and rest posture
   against the CPU model in `workspace.py`.
+- Target box: measured against where the controlled point actually rests, so no target can be met
+  without moving the arm.
 """
 from __future__ import annotations
 
@@ -18,6 +20,8 @@ import math
 import torch
 
 from .env_cfg import ARM_NAMES
+from .mdp import SUCCESS_RADIUS_M
+from .task_space import ZERO_ACTION_TIP_M
 
 ROLES = ("control", "time_limit", "low_base", "tilt", "base_contact", "workspace_exit")
 EXPECTED_TERMS = {
@@ -409,11 +413,56 @@ def self_collision_control(env, settle_steps=60, steps=150):
     return [_result("self_collision_positive_control", passed, expected, observed)]
 
 
+def target_box_needs_arm_motion(env, settle_steps=250):
+    """Where the controlled point rests with zero actions, against the target box.
+
+    F-013: the old box surrounded the resting pincer tip, so 13% of targets were met without the arm
+    moving at all and the reach metric could not be told apart from doing nothing. This measures the
+    resting tip in the simulator (the CPU model puts it 1.6 cm out, having neither the arm's residual
+    sag nor the base's resting tilt) and requires every point of the box, not just the sampled
+    targets, to be further than G1a's success radius from it.
+    """
+    command = env.command_manager.get_term("ee_position")
+    action = torch.zeros(env.num_envs, env.action_manager.total_action_dim, device=env.device)
+    env.reset()
+    for _ in range(settle_steps):
+        env.step(action)
+    tip = (command.tip_w - env.scene.env_origins)
+    ranges = torch.tensor([list(axis) for axis in command.cfg.ranges], device=env.device)  # (3, 2)
+    # Nearest point of the axis-aligned box to each resting tip, so this covers the whole box
+    # rather than only the targets this seed happened to draw.
+    nearest = tip.clamp(min=ranges[:, 0], max=ranges[:, 1])
+    box_distance = torch.linalg.vector_norm(tip - nearest, dim=-1)
+    target_distance = command.error_m
+    reference = torch.tensor(ZERO_ACTION_TIP_M, device=env.device)
+    drift = torch.linalg.vector_norm(tip - reference, dim=-1)
+    observed = {
+        "settle_steps": settle_steps,
+        "resting_tip_env_frame_m": tip.mean(dim=0).cpu().round(decimals=4).tolist(),
+        "resting_tip_spread_m": (tip.amax(dim=0) - tip.amin(dim=0)).cpu().round(decimals=4).tolist(),
+        "target_box_env_frame_m": [list(axis) for axis in command.cfg.ranges],
+        "min_distance_to_box_m": float(box_distance.min()),
+        "distance_to_sampled_target_m": {"min": float(target_distance.min()), "max": float(target_distance.max())},
+        "sampled_targets_within_success_radius": int((target_distance <= SUCCESS_RADIUS_M).sum()),
+        "drift_from_recorded_resting_tip_m": float(drift.max()),
+        "recorded_resting_tip_m": list(ZERO_ACTION_TIP_M),
+    }
+    passed = bool((box_distance > SUCCESS_RADIUS_M).all() and (target_distance > SUCCESS_RADIUS_M).all())
+    return [_result("target_box_needs_arm_motion", passed,
+                    f"with zero actions the controlled point settles further than G1a's "
+                    f"{SUCCESS_RADIUS_M * 100:.0f} cm from every point of the target box, so no target "
+                    f"can be met without moving the arm", observed),
+            _result("resting_tip_matches_recorded_stance", float(drift.max()) < 0.02,
+                    "the resting controlled point is within 2 cm of the stance the target box was placed "
+                    "against (task_space.ZERO_ACTION_TIP_M)", observed)]
+
+
 def run_checks(env):
     timing_checks, timing = interface_timing(env)
     reset_checks, resets = terminations_and_resets(env)
     model_checks, model = arm_model(env)
-    checks = timing_checks + reset_checks + model_checks + self_collision_control(env)
+    checks = (timing_checks + reset_checks + model_checks + self_collision_control(env)
+              + target_box_needs_arm_motion(env))
     return {
         "all_passed": all(check["passed"] for check in checks),
         "failed": [check["name"] for check in checks if not check["passed"]],

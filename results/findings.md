@@ -224,7 +224,10 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-013 — With the pincer tip as the controlled point, zero actions still meet the 5 cm criterion for 13% of targets, because every reset slides the robot 7.4 cm back
 
-- **Status:** confirmed
+- **Status:** confirmed, with its mechanism corrected by [F-014](#f-014) (2026-09-16: the slide is the
+  zero-action posture settling, not the drop, and the 2.9 cm figure was the settling transient over time
+  rather than variation between environments). The 12.9% measurement stands, and the box it describes was
+  replaced the same week ([F-016](#f-016))
 - **Week:** 1
 - **Date:** 2026-09-15
 - **Evidence:** [Week 1 log, 2026-09-15](week_01/notes.md). The controlled point is now the tip of the Link7_1 pincer:
@@ -245,4 +248,74 @@ result that changes a conclusion gets a new entry, and the old one is marked
 - **Implication:** switching to the pincer tip did not remove the free successes, because the reset slide carries the
   tip into the box. Before G1a, move the box or change the reset height, and report the zero-action baseline (12.9%
   here) next to every reach metric. Workspace estimates must use the measured stance, not the environment origin.
+
+### F-014 — The robot's backward slide at reset is the zero-action posture settling, not the drop from 0.42 m
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). A spawn-height sweep (8 envs, 250 steps, zero
+  actions) at 0.42 / 0.34 / 0.32 / 0.30 / 0.28 m: peak tilt 18.6 / 8.4 / 6.7 / 4.3 / 4.3 deg, settled base x
+  −7.5 / −4.9 / −5.5 / −5.5 / −5.4 cm. Spawning at 0.28 m, essentially the settled height of 0.274 m, the
+  base still overshoots to −8.8 cm before recovering to −5.4 cm. Two 16-env, 12 s probes with the time limit
+  disabled (scratchpad, not run folders) give the converged stance: at 0.42 m, base x −7.461 cm, height
+  0.2667 m, tilt 1.30 deg, settled by 2.6 s; at 0.30 m, −5.551 cm, 0.2737 m, 1.03 deg, settled by 3.6 s. The
+  spread of settled base x **across environments** is 0.22 cm (sd) at 0.42 m and 0.005 cm at 0.30 m; across
+  time in the last 2 s it is 0.005 cm and 0.020 cm.
+- **Scope:** zero actions, flat ground, `--robustness none`, one seed, the default leg model. Why the posture
+  is not a static equilibrium in x is not established; the default Go2 joint angles are front thigh 0.8 and
+  rear thigh 1.0 rad, so the stance is not front-to-back symmetric. No policy was acting.
+- **Implication:** lowering the spawn does not remove the slide, so F-013's explanation of the free successes
+  was wrong in mechanism while right in effect. The slide has to be designed around rather than removed: the
+  base settles 5.6 cm behind where it spawns and takes 3.6 s of a 10 s episode to get there, moving the robot
+  relative to a world-fixed target. It is repeatable between environments to 0.005 cm, so it is a fixed offset
+  rather than a source of variance. F-013's 2.9 cm "spread" was the settling transient over time.
+
+### F-015 — The CPU workspace model puts the resting pincer tip 1.6 cm from where the simulator rests it
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). At the measured zero-action stance the workspace
+  model (URDF forward kinematics at the arm's zero pose, base treated as level) predicts the pincer tip at
+  (0.3502, −0.0139, 0.7732) m from the environment origin. A 16-env, 12 s settle measures
+  (0.3601, −0.0141, 0.7604) m: 1.62 cm away, +0.99 cm in x and −1.28 cm in z. The model has neither the arm's
+  residual sag under force drives (F-010, 0.010 rad at J3) nor the base's 1.03 deg resting tilt, which over
+  the tip's ~0.49 m lever accounts for about 1 cm of the z error. `verify`'s in-simulator measurement agrees
+  with the 12 s probe to 3.1 mm.
+- **Scope:** the zero pose on a standing robot under zero actions, one configuration. The model's *kinematics*
+  are not in question: F-013 matched the command term's tip to URDF forward kinematics to 0.9 µm at the
+  simulator's own joint angles. This is the gap between the commanded pose and the pose the robot holds.
+- **Implication:** task geometry that has to be right, such as where the target box sits relative to the
+  resting tool point, must be set from a simulator measurement, not from the model. `task_space.py` records
+  the measured stance and `verify` fails if the simulator drifts more than 2 cm from it. The model stays
+  useful for reachability, where 1.6 cm does not change the answer.
+
+### F-016 — Moving the target box below the resting tip removes the free successes: zero actions score 0 of 256
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-16
+- **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). The box moved from
+  ((0.24, 0.36), (−0.08, 0.08), (0.66, 0.78)) to ((0.36, 0.48), (−0.08, 0.08), (0.50, 0.62)) m from the
+  environment origin, the same 12 × 16 × 12 cm moved forward and down, chosen from a CPU search over box
+  centres scoring 0% free successes and ≥99% reachable, then re-scored against the measured stance (F-015).
+  Distance from the resting tip to the box: 14.0 / 21.9 / 30.2 cm (min/mean/max) against 0.4 / 9.8 / 18.3 cm
+  before; 0.0% within 5 cm against 8.6%; 99.1% of the box reachable, clear of the body proxy and statically
+  holdable. Simulator zero-action baseline (run `20260915T235714_363411Z_smoke_seed42`, 256 envs, measured at
+  9 s, no resets): final error 13.5–28.7 cm, mean 21.5 cm, **0 of 256 within 5 cm**, 0 failure resets.
+  `verify` passes 23/23 (run `20260915T235632_928071Z_verify_seed42`) including two new checks: the minimum
+  distance from the measured resting tip to any point of the box is 14.3 cm, and 0 of 8 drawn targets are
+  within 5 cm. The spawn height also moved to 0.30 m, which cuts the reset tilt peak from 18.6 to 4.3 deg and
+  raises the lowest base height from 0.197 m to 0.260 m, against the `low_base` termination at 0.15 m.
+- **Scope:** zero actions only, one snapshot at 9 s, one seed, default configuration. This says what the task
+  no longer gives away, not what a policy can do: no policy has been trained against this box, and the three
+  Week 1 PPO pilots used the old box, the old spawn and the Link6 control point, so their numbers do not
+  carry over. Not the G1a evaluation, which needs the frozen-manifest evaluator and a 1 s dwell. The box is
+  the nearest placement that removes free successes while staying reachable, not a validated choice of
+  difficulty, and it still never requires the base to move.
+- **Implication:** a reach metric measured on this task now measures reaching; every target needs at least
+  13.5 cm of tool-point motion. This clears the Week 1 blocker in F-013 and unblocks P0 training that is
+  meant to count. The zero-action baseline must still be reported beside every reach metric, and it is now
+  0%. Playback (`run_sim.sh`) keeps its 0.42 m spawn, so F-012 is unchanged.
 

@@ -115,8 +115,11 @@ dimensions, action order, arm sensor bodies, finite observations/rewards and
 stepping with automatic resets. It reports failure/time-limit counts and final
 position errors as diagnostics, and writes `smoke_trace.csv`: base height, tilt,
 drift, base x/y/yaw, leg and arm joint deviation, leg torque and arm contact force per step.
-Reaching success is not expected from zero actions. Under zero actions the robot
-drops from 0.42 m and settles at 0.266 m (Week 1).
+Reaching success is not expected from zero actions, and since 2026-09-16 no target
+can be met without moving the arm (F-016). Under zero actions the robot spawns
+standing at `task_space.SPAWN_HEIGHT_M` (0.30 m), settles at 0.274 m and slides
+5.6 cm back over 3.6 s; the slide is the posture settling, not the spawn, and
+lowering the spawn further does not remove it (F-014).
 
 `verify` needs at least 6 environments and writes `verify.json`. It checks the arm
 command hold and feedback sampling, and the leg delays. It induces time limit, low base,
@@ -154,8 +157,9 @@ pinned for a final reproducible archive; the root USD hash alone is insufficient
 | Choice | Current value | Required validation |
 | --- | --- | --- |
 | Interaction point | Link7_1 pincer tip: end-face centre `(0.0547, 0.0060, 0.0170)` m in Link7_1 coordinates (`tool_point.py`); `--tip_body`, `--tip_offset` | CAD-derived, not measured on the arm; matches the model to 0.9 µm in simulation. Grasping would need the point between the pincers. `--tip_body Link6 --tip_offset 0 0 0` is the pre-15-September point |
-| Target box | x 0.24–0.36, y −0.08–0.08, z 0.66–0.78 m above each world environment origin | **Move before P0 counts** (F-013). At least 99.8% reachable for the pincer tip, but every reset slides the robot 7.4 cm back, carrying the tip into the box: zero actions meet 5 cm for 12.9% of targets (256 environments). Report a zero-action baseline with every reach metric |
-| Arm action range | Default angles ±1 rad, also clamped to soft limits | Validate reachable workspace and extend through a documented curriculum |
+| Target box | x 0.36–0.48, y −0.08–0.08, z 0.50–0.62 m above each world environment origin (`task_space.TARGET_RANGES`) | Moved forward and down on 2026-09-16 (F-016), from x 0.24–0.36, z 0.66–0.78, which surrounded the resting tool point. 99.1% reachable, clear of the body proxy and statically holdable; the nearest point of the box is 14.0 cm from where the pincer tip rests, and zero actions now score 0 of 256 within 5 cm. Its difficulty is unvalidated: no policy has been trained against it, and it never requires the base to move (plan stage 6). Report a zero-action baseline with every reach metric |
+| Arm action range | Default angles ±1 rad, also clamped to soft limits | Validate reachable workspace and extend through a documented curriculum. Untested against the 2026-09-16 box, whose targets are 13.5–28.7 cm from the start |
+| Reset spawn height | 0.30 m (`task_space.SPAWN_HEIGHT_M`); playback keeps `flat_env_cfg.ROBOT_START_POS` at 0.42 m | Chosen on 2026-09-16 to stop episodes starting with a fall: peak tilt 4.3° against 18.6°, lowest base height 0.260 m against 0.197 m, with the `low_base` termination at 0.15 m (F-014). Not tuned; 0.28 and 0.32 m behave much the same |
 | Physics/policy rate | 200/50 Hz | Timestep/solver convergence and actual D1 command-rate/latency model |
 | Arm mass and PD gains | Existing 3.152 kg mass model (matches PhysX exactly); 4000/400 force-drive gains | Step/load response and sensitivity; J3 still rests 0.010 rad off (unexplained); no identified hardware equivalence claimed |
 | Leg motor model | unitree_rl_lab Go2 envelope, explicit 25/0.5 PD | Standing matches `dc_motor` to 0.1 mm (Week 1), so the comparison needs motion. Both inherit the USD's unlabelled joint speed limits (30.1 / 15.7 rad/s) |

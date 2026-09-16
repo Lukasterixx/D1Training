@@ -17,6 +17,7 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from flat_env_cfg import FlatSceneCfg, EventCfg, make_robot_cfg
 from motor_model import interface_timing
 from . import mdp as task_mdp
+from .task_space import SPAWN_HEIGHT_M
 from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 
 # An explicit common order for observations, actions and saved run manifests.
@@ -210,13 +211,14 @@ class PositionOnlyEnvCfg(ManagerBasedRLEnvCfg):
 
 def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=TOOL_OFFSET_M, tip_body=TOOL_BODY,
              leg_actuator="unitree", robustness="none", self_collisions=True, latency="estimated",
-             arm_actuator="d1_servo"):
+             arm_actuator="d1_servo", spawn_height=SPAWN_HEIGHT_M, target_ranges=None):
     """`leg_actuator`: "unitree" (measured Go2 envelope) or "dc_motor" (Isaac Lab stock).
     `arm_actuator`: "d1_servo" (explicit published torque and URDF speed limits) or "implicit".
     `latency`: "estimated" (leg command delay; D1 commands and feedback at 10 Hz) or "none".
     `robustness`: "none" (deterministic, for bring-up) or "unitree" (observation noise and
     unitree_rl_lab randomisation). `self_collisions` lets the arm collide with the Go2 body: on by
-    default, as in unitree_rl_lab, once Week 1 measured no resting contact from the weld."""
+    default, as in unitree_rl_lab, once Week 1 measured no resting contact from the weld.
+    `spawn_height`: base height at reset. `target_ranges`: override the command's target box."""
     if robustness not in ("none", "unitree"):
         raise ValueError(f"Unknown robustness profile: {robustness!r}")
     cfg = PositionOnlyEnvCfg()
@@ -240,4 +242,9 @@ def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=T
     cfg.sim.device = device
     cfg.commands.ee_position.body_name = tip_body
     cfg.commands.ee_position.tip_offset = tuple(tip_offset)
+    if target_ranges is not None:
+        cfg.commands.ee_position.ranges = tuple(tuple(axis) for axis in target_ranges)
+    # Reset pose: the task stands up rather than taking playback's drop (see SPAWN_HEIGHT_M).
+    x, y, _ = cfg.scene.robot.init_state.pos
+    cfg.scene.robot.init_state.pos = (x, y, spawn_height)
     return cfg
