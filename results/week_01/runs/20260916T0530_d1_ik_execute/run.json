@@ -1,0 +1,31 @@
+{
+  "mode": "hardware_ik_execute",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2, arm IP 192.168.123.100",
+    "robot_posture": "sitting; arm-only; motion approved by Lukas",
+    "arm_state_after": "returned to rest within 1.1 mm at the tool; released (enable=0); power_status=1"
+  },
+  "arguments": {"target_base_frame_m": [0.20, 0.0, 0.30], "max_joint_step_deg": 3, "execute": true},
+  "measured": {
+    "tool_start_m": [0.1366, -0.0097, 0.2069],
+    "tool_end_m": [0.1984, -0.0013, 0.2943],
+    "tool_target_m": [0.20, 0.0, 0.30],
+    "commanded_displacement_mm": 113.0,
+    "achieved_displacement_mm": 107.4,
+    "final_cartesian_error_mm": 6.03,
+    "worst_joint_tracking_error_deg": 0.7,
+    "ik_from_measured_error_mm": 0.025,
+    "park_worst_joint_error_deg": 0.40,
+    "settling_with_constant_command_deg": [3.00, 2.20, 1.20, 0.40],
+    "return_to_rest_error_mm": 1.1,
+    "released_rest_pose_deg": [2.50, -90.80, 91.60, -3.20, 4.50, 2.80]
+  },
+  "defects_found_and_fixed": {
+    "wire_clamp_used_soft_limits": "first command from the -90.9 deg rest pose would have jumped 9.9 deg, defeating the step cap; the wire now clamps to hard limits",
+    "no_stall_detection": "the approach ran 186 cycles with no progress; run() now stops on stalled/reached/max_cycles"
+  },
+  "notes": "Full per-step console trace was not teed to file; trace_summary.txt records the endpoints, the diagnosis and the settling numbers."
+}

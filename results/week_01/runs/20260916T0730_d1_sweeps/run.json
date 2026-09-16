@@ -1,0 +1,29 @@
+{
+  "mode": "hardware_characterisation",
+  "status": "completed_with_incident",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only",
+    "incident": "arm stopped responding to motion commands while reporting power=1 enable=1 error=0 with live 9 Hz feedback (F-032)",
+    "arm_state_after": "holding an extended pose [-38.70,-29.70,46.40,-0.30,-2.60,0.20] deg; NOT released (release would drop it); awaiting a physical power cycle by Lukas"
+  },
+  "measured": {
+    "j0_30deg_funcode2_mode1": {"peak_deg_s": 13.5, "latency_ms": 202, "settle": null, "steady_state_err_deg": -5.09, "hold_band_deg": 13.1},
+    "j0_30deg_funcode2_mode0": {"peak_deg_s": 69.3, "latency_ms": 93, "settle_ms": 538, "steady_state_err_deg": -0.20, "hold_band_deg": 0.00},
+    "j0_30deg_funcode1":       {"peak_deg_s": 70.5, "latency_ms": 61, "settle_ms": 505, "steady_state_err_deg": -0.20, "hold_band_deg": 0.10},
+    "cartesian_steps_mode1": 110,
+    "cartesian_steps_mode0": 13,
+    "cartesian_stall_mode0_mm": 4.95,
+    "j0_peak_rad_s": [1.209, 1.231, 1.249]
+  },
+  "not_measured": "J1-J5 speed limits on mode 0; wrist (J3-J5) sign validation; the small-increment deadband hypothesis. The arm became unresponsive before these were taken.",
+  "changes": [
+    "set_all_joint_angles defaults to funcode 2 mode 0",
+    "motion commands rate-limited to 10 Hz (release deliberately exempt)",
+    "analyse_sweep window bounded at the next command (bug: the outbound leg swallowed the return)",
+    "test helper centralised for bare D1Client construction"
+  ],
+  "findings": ["F-031", "F-032"]
+}

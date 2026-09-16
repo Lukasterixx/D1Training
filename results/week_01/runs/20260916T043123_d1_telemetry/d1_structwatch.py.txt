@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Read-only: watch the struct-based arm topics for internal traffic.
+
+If the arm's own controller streams setpoints on set_servo_angle_control, its
+rate here is the arm's true internal control rate -- which the 111 ms telemetry
+cycle would otherwise hide. Publishes nothing.
+"""
+import os, time, statistics
+from dataclasses import dataclass
+os.environ["CYCLONEDDS_URI"] = ("<CycloneDDS><Domain><General><Interfaces>"
+                                "<NetworkInterface name='enP8p1s0'/>"
+                                "</Interfaces></General></Domain></CycloneDDS>")
+from cyclonedds.core import ReadCondition, InstanceState, SampleState, ViewState, WaitSet
+from cyclonedds.domain import DomainParticipant
+from cyclonedds.idl import IdlStruct
+from cyclonedds.idl.types import float32, int16, int32, uint8, uint16
+from cyclonedds.sub import DataReader
+from cyclonedds.topic import Topic
+from cyclonedds.util import duration
+
+
+@dataclass
+class SetServoAngle(IdlStruct, typename="unitree_arm::msg::dds_::SetServoAngle_"):
+    seq_: int32 = 0
+    id_: uint8 = 0
+    angle_: float32 = 0.0
+    delay_ms_: int16 = 0
+
+
+@dataclass
+class SetServoDumping(IdlStruct, typename="unitree_arm::msg::dds_::SetServoDumping_"):
+    seq_: int32 = 0
+    id_: uint8 = 0
+    power_: uint16 = 0
+
+
+@dataclass
+class ArmString(IdlStruct, typename="unitree_arm::msg::dds_::ArmString_"):
+    data_: str = ""
+
+
+dp = DomainParticipant(0)
+readers = {
+    "set_servo_angle": DataReader(dp, Topic(dp, "set_servo_angle", SetServoAngle)),
+    "set_servo_angle_control": DataReader(dp, Topic(dp, "set_servo_angle_control", SetServoAngle)),
+    "set_servo_dumping": DataReader(dp, Topic(dp, "set_servo_dumping", SetServoDumping)),
+    "arm_zero": DataReader(dp, Topic(dp, "arm_zero", ArmString)),
+}
+ws = WaitSet(dp)
+for r in readers.values():
+    ws.attach(ReadCondition(r, SampleState.Any | ViewState.Any | InstanceState.Any))
+
+hits = {k: [] for k in readers}
+samples = {k: [] for k in readers}
+t0 = time.monotonic()
+DUR = 20.0
+while time.monotonic() - t0 < DUR:
+    try:
+        ws.wait(duration(milliseconds=300))
+    except Exception:
+        pass
+    now = time.monotonic() - t0
+    for name, r in readers.items():
+        for s in r.take(N=200):
+            hits[name].append(now)
+            if len(samples[name]) < 5:
+                samples[name].append(str(s))
+
+print(f"watched {DUR:.0f} s with the arm idle\n")
+for name in readers:
+    ts = hits[name]
+    if not ts:
+        print(f"  {name:<26} SILENT (0 samples)")
+        continue
+    gaps = [b - a for a, b in zip(ts, ts[1:])]
+    med = 1e3 * statistics.median(gaps) if gaps else float("nan")
+    print(f"  {name:<26} {len(ts):5d} samples, {len(ts)/DUR:8.3f} Hz, median gap {med:7.2f} ms")
+    for ex in samples[name]:
+        print(f"      {ex}")

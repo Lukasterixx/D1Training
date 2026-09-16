@@ -1,0 +1,33 @@
+D1 IK controller, first execution on hardware. 2026-09-16.
+Go2 sitting, arm-only. Target chosen up-and-forward so clearance did not depend
+on the sitting posture, which the clear_of_body proxy cannot model.
+
+--- move --target 0.20 0.0 0.30 --max-joint-step-deg 3 --execute
+start  joints [ +2.10, -90.90, +91.70,  -3.10,  +4.10,  +3.10] tool [0.1366,-0.0097,0.2069]
+plan   converged, 0.03 mm, 6 iterations
+       goal   [ +3.26, -49.78, +69.88,  -3.90, -10.37,  +3.95]
+end    joints [ +3.30, -49.90, +68.90,  -2.90,  -6.80,  +3.20] tool [0.1984,-0.0013,0.2943]
+target                                                          tool [0.2000, 0.0000,0.3000]
+commanded tool displacement  (+0.0634, +0.0097, +0.0931) m   |d| = 113.0 mm
+achieved  tool displacement  (+0.0618, +0.0084, +0.0874) m   |d| = 107.4 mm
+final Cartesian error 6.03 mm; ran all 200 cycles without reaching the 5 mm tolerance.
+
+Diagnosis (IK re-solved from the measured pose):
+  converged True, 0.025 mm; asked for delta [+0.31, +0.26, -0.72, -0.06, -0.42, +0.03] deg
+  last commanded [ +3.6, -49.6, +68.2,  -3.0,  -7.2,  +3.2]
+  measured after [ +3.30,-49.90, +68.90, -2.90, -6.80, +3.20]
+  per-joint tracking error [-0.3,-0.3,+0.7,+0.1,+0.4,0.0] deg, worst 0.7 deg
+So the solver is correct and the residual is the arm, not the IK.
+
+--- park --joints 2.1 -89.9 89.9 -3.1 4.1 3.1 --max-joint-step-deg 3 --execute
+53 steps, reached, worst joint error 0.40 deg.
+With the command held CONSTANT over the last four cycles the worst error fell
+3.00 -> 2.20 -> 1.20 -> 0.40 deg: the arm was still settling, so the residual in
+the move above is substantially settling lag, not only a fixed deadband. The
+Cartesian loop re-solves every 111 ms, which re-commands before the arm settles.
+
+--- final state, after release
+joints [ +2.50, -90.80, +91.60,  -3.20,  +4.50,  +2.80] tool [0.1365,-0.0089,0.2058]
+original                                                      tool [0.1366,-0.0097,0.2069]
+Returned to within 1.1 mm at the tool. Released, the arm settled PAST the
+commanded -89.9/+89.9 to -90.8/+91.6: its mechanical rest, outside the limit table.

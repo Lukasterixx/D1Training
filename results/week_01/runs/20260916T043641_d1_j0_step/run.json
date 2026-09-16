@@ -1,0 +1,32 @@
+{
+  "mode": "hardware_step_response",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "git_status": "?? logs/hardware/",
+  "hardware": {
+    "arm": "Unitree D1-550, welded to Go2, arm IP 192.168.123.100",
+    "host": "unitree-jetson-payload, iface enP8p1s0",
+    "robot_posture": "sitting; arm folded; J0 (base rotation) only, per Lukas's approval",
+    "joint_tested": "J0 base rotation, limits +/-135 deg, resting 2.0 deg"
+  },
+  "arguments": {"steps_deg": [5, 10, 20], "settle_s": 4.0, "max_step_deg": 20},
+  "measured": {
+    "command_to_motion_latency_ms": {"min": 126.3, "max": 138.2, "n": 6,
+      "caveat": "quantised to the 111 ms feedback cycle; true value is this minus up to one sample"},
+    "peak_rate_deg_s": {"step_5deg": 46.7, "step_10deg": 51.3, "step_20deg": 65.9},
+    "peak_rate_rad_s": {"step_5deg": 0.815, "step_10deg": 0.895, "step_20deg": 1.151},
+    "settle_ms": {"min": 132.9, "max": 352.5},
+    "steady_state_error_deg_abs_max": 0.10,
+    "hold_dither_deg": 0.1,
+    "power_on_ack_ms": 79.3,
+    "release_ack_ms": 99.6
+  },
+  "protocol_findings": {
+    "enable_is_implicit": "funcode 5 mode=1 never set enable_status; enable_status went 0->1 100 ms after the first funcode 1 motion command",
+    "release_works": "funcode 5 mode=0 cleared enable_status in 99.6 ms",
+    "power_on_works": "funcode 6 power=1 set power_status in 79.3 ms",
+    "power_off_ignored": "funcode 6 power=0 ignored: 14208 repeated commands left power_status=1"
+  },
+  "notes": "J0 returned to its 2.0 deg start and motors released. Arm left with power_status=1 because power-off is not honoured."
+}

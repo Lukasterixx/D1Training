@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""Enumerate every DDS topic the arm advertises, via the builtin discovery readers.
+
+Read-only: publishes nothing to the arm. Lists publications (what the arm sends)
+and subscriptions (what it listens for), so a low-level/high-rate control topic
+would show up here if one exists.
+"""
+import os, time
+os.environ["CYCLONEDDS_URI"] = ("<CycloneDDS><Domain><General><Interfaces>"
+                                "<NetworkInterface name='enP8p1s0'/>"
+                                "</Interfaces></General></Domain></CycloneDDS>")
+from cyclonedds.domain import DomainParticipant
+from cyclonedds.builtin import (BuiltinDataReader, BuiltinTopicDcpsPublication,
+                                BuiltinTopicDcpsSubscription, BuiltinTopicDcpsParticipant)
+
+dp = DomainParticipant(0)
+rp = BuiltinDataReader(dp, BuiltinTopicDcpsPublication)
+rs = BuiltinDataReader(dp, BuiltinTopicDcpsSubscription)
+rpart = BuiltinDataReader(dp, BuiltinTopicDcpsParticipant)
+
+pubs, subs, parts = {}, {}, set()
+t0 = time.monotonic()
+while time.monotonic() - t0 < 15.0:
+    for s in rp.take(N=200):
+        pubs[(s.topic_name, s.type_name)] = s
+    for s in rs.take(N=200):
+        subs[(s.topic_name, s.type_name)] = s
+    for s in rpart.take(N=200):
+        parts.add(str(s.key))
+    time.sleep(0.2)
+
+print("participants discovered: %d" % len(parts))
+print("\n=== PUBLICATIONS (topics something is writing) ===")
+for (topic, typ) in sorted(pubs):
+    print("  %-34s  %s" % (topic, typ))
+print("\n=== SUBSCRIPTIONS (topics something is listening on) ===")
+for (topic, typ) in sorted(subs):
+    print("  %-34s  %s" % (topic, typ))

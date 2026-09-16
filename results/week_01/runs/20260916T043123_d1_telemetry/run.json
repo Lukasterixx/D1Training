@@ -1,0 +1,28 @@
+{
+  "mode": "hardware_telemetry",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "git_status": "?? logs/hardware/",
+  "hardware": {
+    "arm": "Unitree D1-550, welded to Go2, arm IP 192.168.123.100",
+    "host": "unitree-jetson-payload (Go2 Jetson payload), iface enP8p1s0 192.168.123.222",
+    "robot_posture": "sitting; arm folded at rest; arm-only testing",
+    "transport": "CycloneDDS 0.10.2, domain 0, topics current_servo_angle + rt/arm_Feedback",
+    "arm_state_during_capture": "power_status=0, enable_status=0 (motors released)"
+  },
+  "arguments": {"seconds": 120, "width": "f32", "iface": "enP8p1s0"},
+  "measured": {
+    "joint_angle_feedback_hz": 8.9986,
+    "joint_angle_period_ms_median": 111.016,
+    "joint_angle_period_ms_stdev": 0.516,
+    "status_feedback_hz": 9.9614,
+    "status_period_ms_median": 100.455,
+    "status_period_ms_stdev": 0.170,
+    "angle_quantisation_deg": 0.1,
+    "resting_noise_stdev_deg_max": 0.0466,
+    "resting_pose_deg": [2.1, -90.9, 91.7, -3.1, 4.1, 3.1, 40.8],
+    "servo_wire_type": "float32"
+  },
+  "notes": "Read-only. Nothing was published to rt/arm_Command during this capture."
+}

@@ -1,0 +1,94 @@
+test_approach_joints_honours_cancel (tests.test_d1_hardware.CancelTests.test_approach_joints_honours_cancel) ... ok
+test_run_stops_when_asked_and_leaves_the_arm_holding (tests.test_d1_hardware.CancelTests.test_run_stops_when_asked_and_leaves_the_arm_holding) ... ok
+test_all_joint_command_defaults_to_mode_0 (tests.test_d1_hardware.CommandModeTests.test_all_joint_command_defaults_to_mode_0) ... ok
+test_mode_1_is_still_reachable_for_comparison (tests.test_d1_hardware.CommandModeTests.test_mode_1_is_still_reachable_for_comparison) ... ok
+test_burst_of_commands_is_paced (tests.test_d1_hardware.CommandPacingTests.test_burst_of_commands_is_paced) ... ok
+test_release_is_never_delayed (tests.test_d1_hardware.CommandPacingTests.test_release_is_never_delayed)
+Release is the abort: pacing must not sit in front of it. ... ok
+test_a_perfectly_still_arm_reports_no_jitter (tests.test_d1_hardware.HoldMeasurementTests.test_a_perfectly_still_arm_reports_no_jitter) ... ok
+test_tool_ptp_is_in_millimetres (tests.test_d1_hardware.HoldMeasurementTests.test_tool_ptp_is_in_millimetres) ... ok
+test_large_cap_reads_as_continuous (tests.test_d1_hardware.MotionProfileTests.test_large_cap_reads_as_continuous) ... ok
+test_short_trace_is_reported_not_guessed (tests.test_d1_hardware.MotionProfileTests.test_short_trace_is_reported_not_guessed) ... ok
+test_small_cap_reads_as_stepping (tests.test_d1_hardware.MotionProfileTests.test_small_cap_reads_as_stepping) ... ok
+test_clearance_proxy_refuses_to_move (tests.test_d1_hardware.MoverTests.test_clearance_proxy_refuses_to_move)
+A target under the robot must raise rather than command anything. ... ok
+test_dry_run_converges_on_a_reachable_target (tests.test_d1_hardware.MoverTests.test_dry_run_converges_on_a_reachable_target) ... ok
+test_dry_run_publishes_nothing (tests.test_d1_hardware.MoverTests.test_dry_run_publishes_nothing) ... ok
+test_every_commanded_step_respects_the_cap (tests.test_d1_hardware.MoverTests.test_every_commanded_step_respects_the_cap) ... ok
+test_execute_commands_the_arm_and_reaches_the_target (tests.test_d1_hardware.MoverTests.test_execute_commands_the_arm_and_reaches_the_target) ... ok
+test_step_towards_caps_the_largest_joint_move (tests.test_d1_hardware.MoverTests.test_step_towards_caps_the_largest_joint_move) ... ok
+test_step_towards_does_not_overshoot_a_near_goal (tests.test_d1_hardware.MoverTests.test_step_towards_does_not_overshoot_a_near_goal) ... ok
+test_step_towards_works_in_servo_space_not_urdf_space (tests.test_d1_hardware.MoverTests.test_step_towards_works_in_servo_space_not_urdf_space)
+The unit bug SERVO_SIGN would otherwise have introduced. ... ok
+test_a_perfect_arm_needs_only_one_waypoint (tests.test_d1_hardware.OneShotTests.test_a_perfect_arm_needs_only_one_waypoint)
+A sub-floor correction is skipped: commanding it moves nothing (F-031). ... ok
+test_cancel_holds_where_it_is_and_does_not_release (tests.test_d1_hardware.OneShotTests.test_cancel_holds_where_it_is_and_does_not_release) ... ok
+test_dry_run_sends_nothing (tests.test_d1_hardware.OneShotTests.test_dry_run_sends_nothing) ... ok
+test_extra_passes_correct_a_tracking_offset (tests.test_d1_hardware.OneShotTests.test_extra_passes_correct_a_tracking_offset)
+A plant that lands short should be closer after the second pass. ... ok
+test_refuses_an_excursion_beyond_the_limit (tests.test_d1_hardware.OneShotTests.test_refuses_an_excursion_beyond_the_limit) ... ok
+test_sends_one_command_per_pass_not_one_per_cycle (tests.test_d1_hardware.OneShotTests.test_sends_one_command_per_pass_not_one_per_cycle)
+An arm that lands short needs a second waypoint -- but only one more. ... ok
+test_stale_reads_are_not_mistaken_for_arrival (tests.test_d1_hardware.OneShotTests.test_stale_reads_are_not_mistaken_for_arrival)
+The regression: repeats of a cached sample must not end the wait. ... ok
+test_waits_through_the_command_latency_before_declaring_arrival (tests.test_d1_hardware.OneShotTests.test_waits_through_the_command_latency_before_declaring_arrival)
+The regression: three stationary polls after a command are latency, not arrival. ... ok
+test_dry_run_parks_nothing (tests.test_d1_hardware.ParkTests.test_dry_run_parks_nothing) ... ok
+test_reaches_a_joint_target_under_the_step_cap (tests.test_d1_hardware.ParkTests.test_reaches_a_joint_target_under_the_step_cap) ... ok
+test_measured_protocol_constants (tests.test_d1_hardware.ProtocolTests.test_measured_protocol_constants)
+These encode hardware measurements (F-020); drift here is a real change. ... ok
+test_extended_pose_is_not_safe_to_release (tests.test_d1_hardware.ReleaseSafetyTests.test_extended_pose_is_not_safe_to_release) ... ok
+test_folded_pose_is_safe_to_release (tests.test_d1_hardware.ReleaseSafetyTests.test_folded_pose_is_safe_to_release) ... ok
+test_partially_folded_pose_is_not_safe (tests.test_d1_hardware.ReleaseSafetyTests.test_partially_folded_pose_is_not_safe) ... ok
+test_settle_publishes_nothing (tests.test_d1_hardware.SettleTests.test_settle_publishes_nothing) ... ok
+test_settle_reports_the_error_at_the_measured_pose (tests.test_d1_hardware.SettleTests.test_settle_reports_the_error_at_the_measured_pose) ... ok
+test_a_perfect_arm_still_reaches (tests.test_d1_hardware.StallTests.test_a_perfect_arm_still_reaches) ... ok
+test_stall_does_not_fire_while_progress_continues (tests.test_d1_hardware.StallTests.test_stall_does_not_fire_while_progress_continues)
+A slow approach must not be mistaken for a stall. ... ok
+test_stalls_instead_of_running_to_max_cycles (tests.test_d1_hardware.StallTests.test_stalls_instead_of_running_to_max_cycles) ... ok
+test_empty_trace_does_not_raise (tests.test_d1_hardware.SweepAnalysisTests.test_empty_trace_does_not_raise) ... ok
+test_out_window_stops_at_the_return_command (tests.test_d1_hardware.SweepAnalysisTests.test_out_window_stops_at_the_return_command)
+The bug this fixes: an unbounded window reads the return as the result. ... ok
+test_perfect_tracking_has_no_steady_state_error (tests.test_d1_hardware.SweepAnalysisTests.test_perfect_tracking_has_no_steady_state_error) ... ok
+test_recovers_latency_rate_and_offset (tests.test_d1_hardware.SweepAnalysisTests.test_recovers_latency_rate_and_offset) ... ok
+test_reports_no_motion_when_the_joint_never_moves (tests.test_d1_hardware.SweepAnalysisTests.test_reports_no_motion_when_the_joint_never_moves) ... ok
+test_clamps_to_hard_limits_not_soft (tests.test_d1_hardware.WireClampTests.test_clamps_to_hard_limits_not_soft) ... ok
+test_resting_pose_is_commandable_without_a_jump (tests.test_d1_hardware.WireClampTests.test_resting_pose_is_commandable_without_a_jump)
+From the measured rest pose, a 3 deg step must survive the clamp. ... ok
+test_still_clamps_beyond_the_hard_limit (tests.test_d1_hardware.WireClampTests.test_still_clamps_beyond_the_hard_limit) ... ok
+test_a_left_target_commands_a_negative_j0 (tests.test_d1_ik.KinematicsTests.test_a_left_target_commands_a_negative_j0)
+The regression this fixes: a +y (left) target must not swing the arm right. ... ok
+test_angular_jacobian_matches_finite_differences (tests.test_d1_ik.KinematicsTests.test_angular_jacobian_matches_finite_differences) ... ok
+test_j3_and_j5_roll_the_same_way_on_the_wire (tests.test_d1_ik.KinematicsTests.test_j3_and_j5_roll_the_same_way_on_the_wire)
+The observation that caught J3: the model had them counter-rotating. ... ok
+test_linear_jacobian_matches_finite_differences (tests.test_d1_ik.KinematicsTests.test_linear_jacobian_matches_finite_differences)
+The geometric Jacobian is analytic; a numerical derivative must agree. ... ok
+test_rotation_error_is_zero_for_identical_frames (tests.test_d1_ik.KinematicsTests.test_rotation_error_is_zero_for_identical_frames) ... ok
+test_rotation_error_recovers_a_known_rotation (tests.test_d1_ik.KinematicsTests.test_rotation_error_recovers_a_known_rotation) ... ok
+test_servo_conversion_applies_the_measured_sign_flips (tests.test_d1_ik.KinematicsTests.test_servo_conversion_applies_the_measured_sign_flips)
+J0 and J3 are inverted on the wire: each measured on hardware (F-030, F-034). ... ok
+test_servo_conversion_round_trips (tests.test_d1_ik.KinematicsTests.test_servo_conversion_round_trips) ... ok
+test_servo_limits_are_ordered_after_the_sign_flip (tests.test_d1_ik.KinematicsTests.test_servo_limits_are_ordered_after_the_sign_flip) ... ok
+test_collision_proxy_flags_a_pose_folded_into_the_body (tests.test_d1_ik.SolverTests.test_collision_proxy_flags_a_pose_folded_into_the_body)
+base_height engages the trunk/ground proxy; a target under the robot is not clear. ... ok
+test_full_pose_solve_recovers_position_and_orientation (tests.test_d1_ik.SolverTests.test_full_pose_solve_recovers_position_and_orientation) ... ok
+test_position_only_solve_reaches_a_reachable_point (tests.test_d1_ik.SolverTests.test_position_only_solve_reaches_a_reachable_point)
+Every target is the FK of a known configuration, so all are reachable. ... ok
+test_seeding_at_the_goal_converges_immediately (tests.test_d1_ik.SolverTests.test_seeding_at_the_goal_converges_immediately) ... ok
+test_solution_always_respects_joint_limits (tests.test_d1_ik.SolverTests.test_solution_always_respects_joint_limits) ... ok
+test_unreachable_target_reports_failure_without_nan (tests.test_d1_ik.SolverTests.test_unreachable_target_reports_failure_without_nan) ... ok
+test_d1_chain_is_complete_and_mounted (tests.test_d1_ui.ModelJsonTests.test_d1_chain_is_complete_and_mounted) ... ok
+test_go2_chain_excludes_the_arm_and_covers_twelve_motors (tests.test_d1_ui.ModelJsonTests.test_go2_chain_excludes_the_arm_and_covers_twelve_motors) ... ok
+test_page_scene_graph_matches_solver_fk (tests.test_d1_ui.ModelJsonTests.test_page_scene_graph_matches_solver_fk)
+The decisive check: the page's transform composition equals workspace.forward. ... ok
+test_servo_signs_and_limits_are_the_measured_ones (tests.test_d1_ui.ModelJsonTests.test_servo_signs_and_limits_are_the_measured_ones) ... ok
+test_sphere_sits_above_the_mount (tests.test_d1_ui.ModelJsonTests.test_sphere_sits_above_the_mount) ... ok
+test_accepts_a_point_on_the_upper_sphere (tests.test_d1_ui.TargetValidationTests.test_accepts_a_point_on_the_upper_sphere) ... ok
+test_rejects_below_the_mount_plane (tests.test_d1_ui.TargetValidationTests.test_rejects_below_the_mount_plane) ... ok
+test_rejects_garbage (tests.test_d1_ui.TargetValidationTests.test_rejects_garbage) ... ok
+test_rejects_outside_the_sphere (tests.test_d1_ui.TargetValidationTests.test_rejects_outside_the_sphere) ... ok
+
+----------------------------------------------------------------------
+Ran 70 tests in 53.921s
+
+OK

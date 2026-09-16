@@ -1,0 +1,31 @@
+Smooth motion investigation, 2026-09-16. Go2 sitting, arm-only.
+Lukas: "not smoothly moving to its targets, but rather stepping which causes wobble."
+
+--- why a per-cycle loop steps
+A single funcode 2 mode 0 waypoint is smooth. J0, 30 deg, per-sample speed (deg/s):
+    0, 28, 67.5, 69.3, 69.3, 34.3, 1.8, 0        (~0.55 s, one trapezoid)
+Two of the 111 ms cycles go on acceleration alone. A waypoint issued every cycle
+restarts that profile, so the arm never leaves the accelerating phase and every
+cycle is an accel/decel pair -- the stepping, and the wobble.
+
+--- step cap sweep, same move [0.20, 0.18, 0.30], measured on hardware
+  cap  travelled/cycle  speed     duty   verdict
+   5     2.5 deg        21 deg/s  0.30   STEPPING
+   8     4.4 deg        37 deg/s  0.54   STEPPING
+  12     4.9 deg        42 deg/s  0.60   STEPPING
+  16     5.3 deg        46 deg/s  0.64   STEPPING   <- plateau
+Speed-limited displacement would be 7.8-8.3 deg/cycle. Lukas, watching: "the steps
+were smaller just then but still there."
+
+--- single shot (one waypoint per pass)
+  outbound 45.0 deg excursion -> 4.87 mm, 7.8 deg/cycle at 70 deg/s, duty 1.00 CONTINUOUS
+  return   44.6 deg excursion -> 4.18 mm, 7.9 deg/cycle at 71 deg/s, duty 1.00 CONTINUOUS
+  second pass skipped both times: the 0.49/0.51 deg correction is below the arm's floor.
+
+--- two bugs found and regression-tested while building it
+1. _await_still counted the 60-130 ms command latency as arrival, so it returned
+   before the arm began moving (reported 129 mm and 93 mm errors).
+2. It then counted REPEATS of a cached feedback sample as stillness: the loop can
+   spin faster than the 111 ms feedback, so stale reads look like a stationary arm.
+   This made a completed move report 199.73 mm; the arm had in fact arrived.
+   Stillness is now judged only on fresh samples (client.poll() returning True).

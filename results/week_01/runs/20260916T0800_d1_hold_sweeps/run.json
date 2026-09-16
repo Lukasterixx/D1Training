@@ -1,0 +1,27 @@
+{
+  "mode": "hardware_characterisation",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only",
+    "note": "after the F-032 power cycle; arm responsive throughout",
+    "arm_state_after": "parked folded, released at the folded pose, settled at [-0.20,-90.90,92.40,-0.20,1.70,-0.20] deg"
+  },
+  "measured": {
+    "peak_rad_s_by_servo": {"0": [1.209, 1.249], "1": [1.292, 1.293], "2": [1.213, 1.231],
+                            "3": [1.197, 1.210], "4": [1.213, 1.247], "5": [1.211, 1.245]},
+    "latency_ms_range": [20, 132],
+    "settle_ms_range": [505, 574],
+    "hold_silent_max_excursion_mm": 0.991,
+    "hold_stream_fixed_max_excursion_mm": 1.295,
+    "hold_resolving_max_excursion_mm": 2.686
+  },
+  "changes": [
+    "motor_model.D1_VELOCITY_LIMIT_RAD_S replaced with measured values (1.25,1.29,1.23,1.21,1.25,1.25)",
+    "measure_hold added with three regimes; tool_ptp_mm unit bug fixed (was metres labelled mm) with a regression test"
+  ],
+  "findings": ["F-033"],
+  "open": "Wrist SIGNS (J3-J5) still unvalidated: the sweeps moved cleanly and give speed, but direction needs an observer."
+}

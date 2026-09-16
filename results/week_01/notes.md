@@ -15,10 +15,12 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 
 **Where the two tracks stand, 16 September.** Simulation: the workspace and reset were resolved (F-016) and the
 frozen evaluator is written and measured (F-018); the UniFP and Go2+D1 reference traces have not been started,
-and neither repository is cloned here. Hardware and camera: **not started**. This machine has no RealSense
-(no Intel USB device, no `pyrealsense2`), no serial device and no wired link to the robot, and no camera, tag
-or D1 telemetry code exists in this repository. Lukas confirmed on 16 September that the physical device cannot
-be tested on this PC today. That track is the larger half of the revised Week 1 and Week 2's G4 depends on it.
+and neither repository is cloned here. Hardware and camera: **the D1 half is started, the camera half is not**.
+This PC has no RealSense (no Intel USB device, no `pyrealsense2`), no serial device and no wired link to the
+robot. The arm, however, is reachable through the Go2: later on 16 September the dog was up on Tailscale with
+the D1 welded and powered, and its interface was measured from the Jetson payload (F-020 to F-023, sixth-session
+log below). RealSense, AprilTags, the box mechanism and any camera/tag/tool frame work remain not started, and
+Week 2's G4 still depends on them.
 
 ## Checklist
 
@@ -48,10 +50,15 @@ be tested on this PC today. That track is the larger half of the revised Week 1 
 - [x] Frozen-manifest evaluator written, with development/validation/test manifests and the zero-action baseline measured on all three (2026-09-16, F-018)
 - [ ] Gait-quality metrics (foot vs neutral point, front–rear spacing, backward after request, turn tracking at 0.2/0.5/1.0 rad/s, pitch wobble) added to the P0 evaluator design for G1b
 - [x] Run the evaluator against a trained checkpoint (2026-09-16, F-019): `model_1499` scores 100/100 on the development manifest against 0/100 for zero actions. The truncation and fall paths are still untested by a real failure, because this policy never fell
-- [ ] Hardware and camera half of the revised Week 1: RealSense/tags, D1 telemetry, arm response, box loads, access and fixture needs (not started; no hardware on this machine)
+- [x] Cartesian (IK) controller for the arm: `d1_ik.py` solver and `d1_hardware.py` client (2026-09-16, F-025). **Executed on hardware**: an 11.3 cm Cartesian move tracked to a 6.0 mm residual, which is the arm settling rather than the solver (F-026). Absolute Cartesian accuracy still unvalidated pending the J1/J2 zero
+- [~] Hardware and camera half of the revised Week 1: D1 telemetry and arm response **done** on the real arm via the Go2 (F-020, F-021, F-022, F-023, 2026-09-16); RealSense/tags, box loads and fixture needs still not started
 - [x] Move the target box (or change the reset height) so zero actions do not meet the 5 cm criterion, before P0 training (F-013): box moved forward and down, spawn lowered to 0.30 m; zero actions now score 0/256 (2026-09-16, F-014, F-015, F-016)
 - [ ] Price the squat: add a base-height term to the reward and retrain, so reaching is not done by crouching to 9 mm above the fall termination (F-019)
 - [ ] Grow the target range beyond the first box: base-motion targets and a growth schedule for plan stage 6 (the 12 × 16 × 12 cm stage-5 box is set; `workspace.py` scores candidates against the measured stance)
+- [x] D1 joint speed limits measured on hardware and `motor_model.py` updated: 1.20–1.29 rad/s on every joint, no 1.05/1.73 split (2026-09-16, F-033)
+- [x] Validate the servo signs on hardware with an observer (2026-09-16, F-034): J0 and J3 inverted, J4/J5 correct, J1/J2 indirect. `SERVO_SIGN = [-1,1,1,-1,1,1]`
+- [ ] Give `params/deploy.yaml` a per-joint sign before G4 freezes the deployment contract — it would currently mirror two joints (F-034)
+- [ ] Measure the joint **zero offsets** (signs are done; zeros are not — F-023, F-025)
 - [ ] Explain the 0.010 rad residual at J3 with force drives (F-010)
 - [ ] Decide whether playback (`run_sim.sh`) should also get force arm drives; it would change the F-012 reference
 
@@ -60,9 +67,9 @@ be tested on this PC today. That track is the larger half of the revised Week 1 
 - [x] Frozen-manifest evaluator started, including zero-action reference and terminal metrics (F-018, F-019)
 - [ ] UniFP and one position-only reference reproduction attempts started with a setup time budget
 - [ ] RealSense stream and AprilTag detections recorded
-- [ ] D1 feedback/command timing and basic joint response measured on hardware
+- [x] D1 feedback/command timing and basic joint response measured on hardware (2026-09-16): angle feedback 111.0 ms / 9.00 Hz and status 100.5 ms / 9.96 Hz (F-020); J0 step latency 126–138 ms, peak 1.15 rad/s, steady-state error ≤0.1° (F-021). One joint, unloaded
 - [ ] Box latch/lever loads, travel, geometry and tool engagement measured
-- [ ] Robot access, fixture availability, GPU sessions and recording storage budget recorded
+- [~] Robot access recorded (2026-09-16): `sshuni` → `unitree@100.99.23.36` over Tailscale, arm at 192.168.123.100 on `enP8p1s0`, dog's host `python3` carries `cyclonedds` 0.10.2. Fixture availability and recording storage budget still open
 
 ## Environment
 
@@ -837,6 +844,599 @@ What it does not show:
 - **Squatting is not itself cheating.** The plan allows stance and posture changes for whole-body
   coordination. The objection is the 9 mm margin, the leg saturation and the confound, not the crouch.
 
+### 2026-09-16 · First hardware session: D1 arm telemetry, J0 step response and the protocol's real behaviour (sixth session)
+
+The Go2 was reachable over Tailscale (`sshuni` → `unitree@100.99.23.36`) with the D1 welded and powered, so the
+hardware half of Week 1 started. The dog was **sitting** throughout and nothing on the legs was touched: arm only.
+
+**Route in.** The arm answers at `192.168.123.100` on the Jetson payload's `enP8p1s0` (0.65 ms, 0% loss). There is
+no serial link and no RealSense on this route; the arm speaks CycloneDDS on domain 0. Two paths exist to it — the
+C++ samples in `~/d1Arm` on the dog, and the VIP-Rescue driver `unitree-d1-control` (pinned at `b9d3b8a`, the same
+commit `VIP-Rescue/Docker/unitree-d1-control` points to, mounted into the `vip-arm` container). The `vip-arm`
+container was **not running**; `vip-livox`, `vip-realsense`, two zenoh bridges and the `p2v-*` services were. The
+dog's host `python3` already has `cyclonedds` 0.10.2 — the same version the arm's message headers were generated
+with — so the measurements were taken with small standalone scripts against the driver's protocol, without
+starting the container or disturbing the running stack. Commands are **JSON strings** on `rt/arm_Command`
+(`ArmString_`), not the `SetServoAngle_` struct, and angles are **degrees**.
+
+**Telemetry, read-only** ([run](#/week/1/run/20260916T043123_d1_telemetry)). Nothing was published during this
+capture. Over 120 s, `current_servo_angle` delivered 1080 samples at **8.9986 Hz, median period 111.016 ms,
+stdev 0.516 ms**. A 45 s capture split `rt/arm_Feedback` into two streams: `funcode 1`, the seven joint angles,
+at **8.9852 Hz / 111.009 ms**, and `funcode 3`, the enable/power/error status, at **9.9614 Hz / 100.455 ms**.
+So the angle cycle is 111 ms and the 10 Hz cycle carries status only (F-020). The servo floats are **float32**
+on the wire: the shipped driver's dataclass uses Python's bare `float` (float64), and its "primary" angle path
+would fall back to JSON parsing rather than decode them. Angles quantise to 0.1° with a resting noise stdev of
+≤0.047°, which sets the resolution floor for everything below. Resting pose
+**[2.1, −90.9, 91.7, −3.1, 4.1, 3.1, 40.8]°** — J1 and J2 sit outside the driver's own limit table (F-023).
+
+**J0 step response** ([run](#/week/1/run/20260916T043641_d1_j0_step)). Lukas approved powering the arm and
+moving **J0 only** (base rotation, ±135°, resting 2.0°), confirming that enabling holds the current pose. Steps
+of ±5°, ±10° and ±20° about rest, each held 4 s, then J0 returned to 2.0° and the motors released. Measured on
+both angle topics with agreeing results:
+
+| Step | Command → motion | Peak rate | Settle | Steady-state error |
+| --- | --- | --- | --- | --- |
+| ±5° | 132.9–138.2 ms | 46.0–46.7 °/s (0.80–0.82 rad/s) | 133–138 ms | ≤0.10° |
+| ±10° | 126.3–129.4 ms | 50.6–51.3 °/s (0.88–0.90 rad/s) | 238–353 ms | ≤0.08° |
+| ±20° | 126.4–127.9 ms | 64.5–65.9 °/s (1.13–1.15 rad/s) | 349–350 ms | ≤0.10° |
+
+Latency clustered at 126–138 ms across all six excursions. Peak rate was **still climbing at the largest step**,
+so J0 never saturated and 1.15 rad/s is a lower bound — already above the 1.05 rad/s `d1_arm/d1.urdf` carries
+with no recorded source (F-021). The joint holds within 0.1° and dithers ±0.1°, one quantisation step.
+
+**What it does not show.** One joint, one posture, unloaded, with the arm folded so J0 turns the lightest inertia
+it ever sees. Nothing here transfers to J1/J2 working against gravity or to a loaded gripper. Both numbers are
+bounded by the 111 ms feedback cycle: a 20° move spans about three samples, so the peak rate is a lower bound and
+the 127 ms latency an upper bound (true latency is that minus up to one sample period). This is interface
+characterisation, **not** reaching ability and not a sim-to-real comparison.
+
+**The protocol does not behave as its driver documents** (F-022). `funcode 5 {"mode": 1}` ("enable all") never set
+`enable_status`, alone or as the per-joint `funcode 4`; the flag went 0→1 100 ms after the first *motion* command,
+so the arm **enables itself implicitly** when a `funcode 1` arrives. Release (`funcode 5 {"mode": 0}`) works,
+in 99.6 ms. `funcode 6 {"power": 1}` works, in 79.3 ms. `funcode 6 {"power": 0}` **does not**: three attempts, the
+last sending 14,208 power-off commands over 5 s, left `power_status` at 1. `arm_control.py` documents that call as
+an emergency stop and the GUI exposes it as an emergency power-off button, so **there is currently no software
+stop for this arm** — the working abort is release, which drops torque but leaves the arm powered and
+backdrivable. This matters beyond Thesis B: the driver is shared with VIP-Rescue. Raised with Lukas.
+
+**State left behind.** J0 is back at its 2.0° resting angle, the motors are released (`enable_status=0`) and the
+whole arm is within 0.1° of the pose it started in. `power_status` is **1** and could not be cleared in software;
+it was 0 before this session. Mechanically that is the same released, backdrivable state as before — no joint is
+holding torque — but the arm is energised until it is power-cycled.
+
+**Model updated.** `motor_model.py` `D1_FEEDBACK_HZ` 10.0 → **9.0**, now labelled measured, which moves
+`arm_feedback_period_steps` from 5 to 6 at the 50 Hz policy rate: simulated arm feedback had been refreshing one
+policy step sooner than hardware allows. `tests/test_sim2real.py` updated to match; all 69 tests pass in
+`env_isaaclab`. **Runs recorded before this change, including the F-019 policy, were trained and evaluated at
+5 steps** and are not directly comparable to runs made after it. `D1_COMMAND_HZ` is unchanged at 10.0 and still
+carries an unmeasured label — the arm's maximum accepted command rate was not tested, only that single commands
+are honoured. The velocity limits are unchanged, with the hardware disagreement recorded against them.
+
+**`verify` has not been re-run against this change.** `nvidia-smi` could not reach the driver in this session, as
+in the first session of 2026-09-14, so no simulator could be launched. The 23/23 G0 pass of 2026-09-16 was measured
+with `arm_feedback_period_steps = 5`, and one of those checks reads the arm feedback period directly. Run
+`python run_position_only.py verify --headless --num_envs 8` before the next training run and record the result.
+
+### 2026-09-16 · Is there a higher-rate mode? Full DDS surface enumerated (sixth session, continued)
+
+Lukas asked whether the D1 has a higher-Hz mode that can be unlocked. Answered read-only, publishing nothing.
+
+**The arm's complete DDS surface**, from the builtin `DCPSPublication`/`DCPSSubscription` readers across 36
+participants ([`dds_topics.txt`](#/week/1/run/20260916T043123_d1_telemetry)): `rt/arm_Command`, `rt/arm_Feedback`,
+`current_servo_angle`, `arm_zero`, plus three struct topics the JSON samples never use — `set_servo_angle` and
+`set_servo_angle_control` (`SetServoAngle_` = `{seq, id, angle, delay_ms}`) and `set_servo_dumping`
+(`SetServoDumping_` = `{seq, id, power}`, i.e. per-servo damping). **There is no `rt/arm_sdk` and no
+`arm_LowCmd`**, so the per-joint kp/kd topic that `unitree-d1-control/haptic_control.md` hoped for is not on this
+firmware, and the gravity-compensated teach mode that doc plans cannot be built the way it assumes. Watched for
+20 s with the arm idle, all four struct topics were silent — no hidden internal high-rate stream.
+
+**No published source describes a faster mode.** The community D1 SDK extension lists both feedback topics at
+10 Hz, and Unitree told the Caltech group that 10 Hz is the arm's control cycle. That group tried what this
+question is asking: 100 Hz commands "appeared to move more smoothly", and mode-0 `execution_time` was edited from
+0.04 s to 0.1 s and 0.01 s without curing the shaking. Within minutes their arm stopped reaching commanded
+positions and then stopped responding entirely, with servos "burning hot" on the Go2's own supply; they concluded
+it was defective. Unitree support told them the D1 R&D team had been lost and its data deleted. The D1 is
+discontinued. That is one arm they judged defective, so it is not proof that high-rate commanding kills a healthy
+D1 — but it is the only public account of trying, and there is no replacement path for ours (F-024).
+
+**What is actually adjustable** is per-command, not per-rate: `delay_ms` (funcode 1), and `execution_time` and
+`mode` 0/1 (funcode 2, "small smoothing of 10 Hz data" versus "large smoothing of trajectory-use").
+`set_servo_dumping` is undocumented and untested. Port 22 is open on the arm itself (192.168.123.100) and the
+Caltech author describes SSHing in to edit execution time, so an on-device configuration surface probably exists;
+it was **not** explored here.
+
+**What this means for the task.** The command side is not rate-limited — 14,208 commands in 5 s were accepted
+(F-022) — but feedback stays at 111 ms whatever the command rate, so closed-loop arm control is capped by the
+observation rate regardless. Design for 9 Hz observation. No high-rate command test was run, and none should be
+without deciding the risk is worth it.
+
+### 2026-09-16 · Cartesian (IK) controller for the arm, validated read-only against hardware (sixth session, continued)
+
+Lukas asked for an IK controller for hardware testing. `d1_ik_controller.py` already does this in simulation, but
+it is Isaac- and torch-bound and `isaaclab` is not on the dog, so the solver could not follow the arm. It does,
+though, keep a deliberate `KinematicsBackend` seam "if this ever needs to talk to a real arm again", and
+`DirectD1` defines the client seam. Both are now filled for hardware.
+
+**Two new modules.** [`d1_ik.py`](../../d1_ik.py) is a damped least-squares solver in plain numpy, built on the
+FK already in `position_only/workspace.py` rather than a second copy of the kinematics — `forward()` returns each
+arm joint's axis and origin in the base frame, so the geometric Jacobian is analytic. It defaults to the task's
+controlled point (the Link7_1 pincer tip, F-013), handles position-only and full-pose targets, clamps every
+iterate to the URDF soft limits, and optionally checks `clear_of_body`. [`d1_hardware.py`](../../d1_hardware.py)
+speaks the measured protocol (F-020, F-022) and mirrors `DirectD1`'s method names, so simulator and hardware
+differ only in transport. Neither needs Isaac; `d1_hardware` imports CycloneDDS lazily, so the solver and its
+tests run on the system Python.
+
+**Tests:** 19 new, 88 in the full suite in `env_isaaclab`, all passing. The analytic Jacobian matches central
+differences to 1e-6 (linear) and 1e-5 (angular); position-only IK converges on 20+/25 random reachable targets
+and full-pose on 12+/15; every solution lies inside the soft limits even for targets 1.5 m outside the workspace;
+unreachable targets fail without NaN; the collision proxy refuses to command; and each commanded step respects
+the step cap. `tests/test_d1_ik.py` and `tests/test_d1_hardware.py` need only numpy, so they run without Isaac.
+
+**Against the arm, read-only** ([run](#/week/1/run/20260916T0500_d1_ik_bringup)). Deployed to the dog and run
+there, since DDS needs the arm's subnet. FK of the measured resting pose puts the tool point at
+**[0.1366, −0.0097, 0.2069] m** in the Go2 base frame, and the CLI correctly flags J1/J2 as outside the soft
+limits (F-023). A dry-run approach to [0.30, 0.0, 0.30] planned in 8 iterations to 0.10 mm and rehearsed as **15
+bounded 5° steps** to 0.05 mm, with the error falling monotonically. As a cross-check, the solver's zero-pose tool
+point sits 1.6 cm from the simulated resting tip — the same gap F-015 attributes to sag and base tilt, so the new
+FK agrees with the existing CPU model.
+
+**Not done, deliberately.** **The arm was not moved.** Lukas approved J0-only motion earlier in the session;
+unfolding the arm from its rest pose to a Cartesian target is a much larger motion with the robot sitting, and
+that is a separate decision. Everything above is a software test or FK of a measured joint vector.
+
+**The honest limit** (F-025): the solver is only as accurate as the URDF, and it assumes servo *i* reports
+`Joint{i+1}` with the same zero and sign. The arm rests outside the limits both the URDF and the driver give
+(F-023), so the zero point is not established, and a constant joint offset would shift every Cartesian number
+without failing a single test here. There is no external measurement of the tool point — that is the camera and
+tag work G4 needs and Week 1 has not started. So treat the output as joint-space commands that are safe to send,
+not as calibrated Cartesian positions. One gotcha recorded in the module: `from __future__ import annotations`
+must not be added to `d1_hardware.py`, because CycloneDDS resolves an `IdlStruct`'s field types by name at
+runtime and PEP 563 breaks it.
+
+### 2026-09-16 · The IK controller on the real arm: an 11 cm Cartesian move, and two defects it exposed (sixth session, continued)
+
+Lukas gave permission to run a safe target. **Target [0.20, 0.00, 0.30] m** in the base frame, 11.3 cm up and
+forward of the folded rest pose. Up was chosen deliberately: it is the one direction clear of both the trunk
+(top at z = 0.06) and the ground whatever the dog's sitting posture, which is exactly what `clear_of_body` cannot
+vouch for, since it models the standing trunk box.
+
+**A defect found before moving anything.** The dry run exposed that `set_all_joint_angles` clamped to the
+solver's **soft** limits (±81°). The arm rests at J1 = −90.9°, outside them, so the first command of any approach
+would have been clamped to −81° — a 9.9° jump that silently defeats the step cap the whole safety argument rests
+on. The wire now clamps to the **hard** URDF limits, which is the clamp's actual job (reject what the arm will
+refuse), with the soft band left to the solver. Three tests pin it.
+
+**The move** ([run](#/week/1/run/20260916T0530_d1_ik_execute)). The arm tracked it, in bounded 3° steps with the
+error falling monotonically: tool **[0.1366, −0.0097, 0.2069] → [0.1984, −0.0013, 0.2943] m**, an achieved
+displacement of **107.4 mm against 113.0 mm commanded**. Then it stopped improving at **6.03 mm** and ran all 200
+cycles.
+
+**Second defect: no stall detection.** 186 of those 200 cycles made no progress and kept commanding. `run()` now
+stops on `reached` / `stalled` / `max_cycles` and says which.
+
+**What the 6 mm actually is.** Not the solver: re-solving from the measured pose converges to **0.025 mm** and
+asks for [+0.31, +0.26, −0.72, −0.06, −0.42, +0.03]°. The arm had simply landed up to **0.7°** from the last
+command. The return leg explained it — parking to a fixed joint vector with the command held **constant**, the
+worst joint error fell **3.00 → 2.20 → 1.20 → 0.40°** over four consecutive cycles. The arm was still settling.
+A loop that re-solves every 111 ms re-commands before the arm arrives, so the residual is substantially settling
+lag rather than a fixed deadband (F-026). The fix for accuracy is to hold and let it settle, not to tighten the
+tolerance; below about 1 cm a continuously re-solving loop at this rate is not meaningful. 6 mm is well inside
+G1a's 5 cm, so this does not threaten the position-only gate.
+
+**A new primitive.** `approach_joints` (CLI `park`): a bounded joint-space move. Needed because the rest pose is
+outside the joint limits, so IK cannot express it — solving for its tool point returns a different, less folded
+configuration (J1 −74° against −91°).
+
+**The arm is back as found.** Parked to the limit, then released; tool within **1.1 mm** of where it started.
+Released, it settled *past* the commanded −89.9°/+89.9° to **−90.8°/+91.6°** — its mechanical rest. That makes an
+encoder zero-point error less likely than a limit table 1–2° tighter than the mechanism (F-027), which is mildly
+good news for F-025's caveat, though it is not proof and G4 still needs the zero measured externally.
+
+27 tests now cover the solver, the client and the mover (11 + 16); 96 in the full suite in `env_isaaclab`, all passing.
+
+### 2026-09-16 · Second target, faster — and the arm dropped (sixth session, continued)
+
+A larger, faster move: **[0.25, 0.08, 0.32] m**, 183.8 mm of travel with a lateral component (J0 2.5° → 19.6°),
+at 6°/step ≈ 54°/s against 3°/step ≈ 27°/s before, under the 65°/s of F-021. Before running it, a
+settle-and-measure step was added to `run()`, specifically to test what F-026 had predicted: that holding the
+command would shrink the residual.
+
+**It reached, and the prediction was wrong** ([run](#/week/1/run/20260916T0600_d1_ik_faster)). The approach hit
+its 5 mm tolerance at 4.78 mm, in 99 steps rather than the 10 the dry run predicted. Then, with **no commands
+published for 3 s**, the error did not decay: it oscillated **5.93–6.68 mm** across 17 samples and finished at
+**6.27 mm — worse than the loop end**. The settled joints sit up to **0.7°** from the last command, the same
+joints and magnitude as the first move. So the residual is a persistent per-joint offset with a ±0.1° dither,
+not settling lag (F-029, superseding F-026). What F-026 had read as settling was real but different: on the park
+leg the arm was closing on its folded **mechanical stop**, where it does keep creeping in; in free space it does
+not. Speed did not degrade accuracy — the faster move landed in the same 6 mm band. Treat ~6 mm as the practical
+floor for open-loop joint commands to this arm; closing it needs a measured tool position (G4) or per-joint
+calibration, not a tighter tolerance.
+
+**Then the arm dropped, and it was this code that dropped it** (F-028). After the settle the CLI published
+release (`funcode 5 {"mode": 0}`) as its normal end-of-move action, with the arm extended and holding at
+J1 = −30.1°, J2 = +57.7°. The next reading, with nothing commanding it, was J1 = −90.9°, J2 = +92.8°: **J1 fell
+60.8° and J2 35.1°**, an uncommanded drop to the folded mechanical stop. Lukas saw it and said so. The arm
+reports `error_status = 0` and is back at the session-start rest pose within 0.4° per joint and ~1 mm at the
+tool, so no damage is evident — but nothing has been inspected mechanically, and what it passed through on the
+way down is not known.
+
+**Why it happened.** The D1 has **no holding brake**. Release is a torque-off, so on an extended arm the only
+working software stop *is* a fall. That refines F-022, which called release "the working stop" — it works, but
+it does not hold. The first execution made it look safer than it is: release at J1 = −49.9° left the arm in
+place, so holding on release is **pose-dependent**, not a property of the arm. The direct cause was mine:
+`d1_hardware.py` released at the end of every `--execute` path, which is exactly backwards — releasing is an
+emergency action, not a way to finish a move.
+
+**Fixed.** The CLI now leaves the arm energised and holding and says so; `release` warns and refuses on an
+unfolded arm without `--force`; `is_safe_to_release()` gates on J1 ≤ −80° and J2 ≥ +80°, a conservative folded
+test bounded by the two observations (fell from −30°, held at −50°) rather than a measured threshold. Three
+tests pin it against both real poses. 32 tests on the solver, client and mover.
+
+**For the gates.** G5 requires "abort/hold behaviour demonstrated". Between this and F-022, **the D1 has no
+software stop that holds position at all**: power-off is ignored and release is a fall. An abort must either
+leave the arm energised and holding, or be planned from a pose where a fall is acceptable. That has to be
+designed for, not discovered on the day.
+
+### 2026-09-16 · Up-and-left: the arm went right, and the servo sign was wrong (sixth session, continued)
+
+A third target, **[0.22, +0.16, 0.36] m** — 242 mm, up 15 cm with J0 swinging to 37.6°, nearly double the
+previous move's lateral component. Before running it I stated the prediction out loud, because the servo-to-URDF
+sign mapping is exactly what F-025 flags as unvalidated and Lukas was watching: **+y should be the dog's left**.
+
+**It moved right** ([run](#/week/1/run/20260916T0630_d1_ik_left)). Lukas reported it immediately.
+
+**Diagnosis.** Two explanations fitted: an inverted J0 sign, or the arm being physically mounted 180° about
+vertical from what the model assumes. They differ in a single observation — a mount rotation flips **+x** as well,
+so the arm would reach over the *tail* rather than the head. Lukas confirmed it reached **forward over the head**,
+which leaves only the sign. `weld.py` mounts with identity rotation (`Quatf(1,0,0,0)`) and `workspace.forward`
+does the same, and the two agree with each other to the 1.6 cm of F-015 — so the model is self-consistent and it
+is the hardware mapping that is wrong (F-030).
+
+**Fixed at the one place the mapping lives.** `d1_ik.SERVO_SIGN = [-1, 1, 1, 1, 1, 1]`, applied in
+`to_servo_deg`/`from_servo_deg`. Applying it exposed a **latent unit bug**: `step_towards` compared a solver
+result in URDF radians against a measured pose in servo degrees — harmless only while every sign is +1, and a
+mirrored joint the moment one is not. It is now servo-space throughout, and clamping moved to
+`servo_limits_deg`, because a sign flip swaps a joint's low and high. Four tests pin it, including the exact
+regression: a +y target must command a **negative** J0.
+
+**Re-run** ([run](#/week/1/run/20260916T0700_d1_sign_fix)). Same target, servo 0 now commanded **−37.30°**
+against +37.63° before. Settled at 6.26 mm — a fourth point in the same 6–7 mm band (F-029), across two
+directions and two speeds. **The corrected direction has not yet been visually confirmed.**
+
+**What is still wrong, and it is bigger than the arm.** `position_only/deploy.py` maps `Joint1..Joint6` to motor
+ids 0–5 **by index with no sign convention at all**, so `params/deploy.yaml` — the deployment contract G4 is meant
+to freeze — carries the same error. A policy trained in simulation and deployed through it would mirror its J0.
+The manifest needs a per-joint sign and every joint's sign needs measuring first. Left as a deliberate decision
+rather than changed here, since it alters the contract. **J3–J5 signs remain unvalidated**: no motion so far
+isolates a wrist joint, so orientation targets cannot be trusted yet.
+
+**Process note.** This was found because the prediction was stated before the move and someone was watching. The
+same check should be run for each remaining joint before G4 freezes anything.
+
+**Arm state:** parked folded, released at the folded pose per the F-028 rule, settled and stable at
+[+2.8, −90.8, +91.2, −2.9, +5.1, +2.5]°, `error_status = 0`. Full traces captured for every run this time.
+
+### 2026-09-16 · Per-joint sweeps: the command path was the story, then the arm stopped responding (sixth session, continued)
+
+Lukas asked for the remaining hardware checks, including the wrist signs. The autonomous half — per-joint speed
+limits, latency and tracking — needs no observer, so it went first, with a `sweep` subcommand added to
+`d1_hardware.py` (a pure `analyse_sweep` so the timing maths is unit-tested against synthetic traces, plus a
+Jacobian-derived prediction of what each sweep should do to the tool, for a watcher to check).
+
+**The first results were nonsense**, and two things were wrong. One was mine: the outbound analysis window had no
+end, so it swallowed the return leg and read the steady-state error as the full amplitude. The other was the
+finding ([run](#/week/1/run/20260916T0730_d1_sweeps)): peak rate came out at **14.5°/s, identical across joints
+and directions**, when F-021 had measured J0 at 65°/s. The difference was the command path. F-021 used funcode 1;
+the sweep and the whole Cartesian controller used **funcode 2 mode 1**. Same joint, same 30°, same pose:
+
+| path | peak rate | latency | settle | steady-state error | hold band |
+| --- | --- | --- | --- | --- | --- |
+| funcode 2, mode 1 | 13.5 °/s | 202 ms | not reached in 3 s | **−5.09°** | 13.1° |
+| funcode 2, mode 0 | **69.3 °/s** | 93 ms | **538 ms** | **−0.20°** | **0.00°** |
+| funcode 1 | **70.5 °/s** | 61 ms | **505 ms** | **−0.20°** | 0.10° |
+
+Unitree documents mode 0 as "small smoothing of 10 Hz data" and mode 1 as "large smoothing of trajectory-use".
+Mode 1 is a slow interpolator, so commanding it once per feedback cycle re-commands a waypoint the arm is still
+slewing toward, and it never arrives. **Everything this session had attributed to the hardware was this**: the
+99–117 step approaches against a predicted 10–14, the stalls, and the "0.5–0.7° tracking offset". Mode 0 is now
+the default and the same Cartesian move takes **13 steps** (F-031, superseding F-029). Lukas, watching, confirmed
+the fast path was much better and asked to keep it.
+
+A residual did survive: the loop still stalls around **4.95 mm**, the arm sitting 0.3–0.7° from the last command,
+and neither silence nor streaming the final command for 3 s closes it — while a single 30° command lands within
+0.20°. That points to a small-increment deadband. It was being measured when the arm stopped.
+
+**Then the arm stopped responding** (F-032). Sweeps of 0.5, 1, 2, 5 and 10° on J0 all returned peak **0.0 °/s**
+with the joint never leaving its start angle, on **both** command paths. Throughout it reported
+`power_status = 1`, `enable_status = 1`, `error_status = 0`, with unbroken 9 Hz feedback — healthy in telemetry,
+inert in fact. This is the failure the Caltech report describes (F-024) and it is the first time this project has
+seen it. The trigger is not established. A plausible contributor is ours: the `settle --hold-stream` loop re-sent
+commands on every poll rather than pacing to 10 Hz, which is the over-commanding that preceded the Caltech
+failures — but their arm also failed at 10 Hz, so rate may not be the variable.
+
+**Changes made in response.** Motion commands (funcode 1 and 2) are now rate-limited to 10 Hz in the client,
+deliberately **not** applied to release so the abort path is never delayed. The sweep window bug is fixed with a
+regression test. Bare-client construction in the tests is centralised, so a new client attribute fails once
+rather than a dozen times. 31 tests on the hardware module, 45 across the two new files.
+
+**Not done, because the arm stopped:** J1–J5 speed limits on the fast path, the wrist sign checks Lukas asked
+for, and the deadband measurement. The URDF's 1.05/1.73 rad/s are therefore **still unreplaced** — J0's measured
+1.21–1.25 rad/s exceeds its 1.05, but changing one entry on one joint's evidence would be worse than leaving the
+table consistent.
+
+**Arm state:** holding an extended pose, **not released**, because release drops it (F-028) and an unresponsive
+arm cannot be brought down first. Lukas is power-cycling it physically; it will drop when power is cut.
+
+**The lesson worth keeping**, since it cost most of this session: **characterise the interface before attributing
+a number to the mechanism.** Three findings — F-026, F-029 and the "6 mm floor" — were explanations of a
+configuration choice, written up as properties of the arm.
+
+### 2026-09-16 · After the power cycle: per-joint speed limits, and why the arm was steadier when it was broken (sixth session, continued)
+
+Lukas power-cycled the arm and it came back healthy — fresh boot, `power=False`, fallen to folded as expected,
+and responsive again (a park reached its pose in 15 steps on the fast path). He also made an observation worth
+more than the recovery: **while unresponsive, the held pose was not jittering the way it had been during the
+tests** — and since a camera is going on the end effector, that steadiness is what he wants.
+
+**Per-joint speed limits, finally measured** ([run](#/week/1/run/20260916T0800_d1_hold_sweeps)). A 30° step on
+each joint in turn on the fast path:
+
+| servo | URDF joint | previous URDF limit | measured peak (rad/s) |
+| --- | --- | --- | --- |
+| 0 | Joint1 | 1.05 | 1.209–1.249 |
+| 1 | Joint2 | 1.05 | **1.292–1.293** |
+| 2 | Joint3 | 1.05 | 1.213–1.231 |
+| 3 | Joint4 | 1.73 | **1.197–1.210** |
+| 4 | Joint5 | 1.73 | 1.213–1.247 |
+| 5 | Joint6 | 1.73 | 1.211–1.245 |
+
+There is **no 1.05/1.73 split**: every joint tops out in a narrow 1.20–1.29 rad/s band, which reads as one
+controller-wide ceiling rather than six mechanical limits. `motor_model.py` now carries the measured numbers in
+place of the URDF's, which were never Unitree data. The old values were wrong in both directions, and the
+dangerous one is Joint4–Joint6, where simulation was allowing the arm **40% more speed than the hardware
+delivers** (F-033). Latency 20–132 ms and settling 505–574 ms across all six.
+
+**The steadiness question, answered with numbers.** Holding the same pose for 20 s in three regimes, as
+tool-point excursion from the mean:
+
+| regime | worst joint p-p | max tool excursion |
+| --- | --- | --- |
+| silent (no commands) | 0.20° | **0.991 mm** |
+| streaming one fixed pose | 0.10° | **1.295 mm** |
+| re-solving IK every cycle | 0.30° | **2.686 mm** |
+
+The first guess — that streaming itself caused the jitter — was wrong: a fixed streamed pose is as steady as
+silence, both at the 0.1° encoder quantisation floor. The culprit is **re-solving**. A Cartesian loop sitting on
+its target re-solves IK from a measured pose that dithers by one quantisation step, so the command dithers, so
+the arm moves: a feedback loop amplifying encoder noise, roughly doubling tool motion. That is exactly what
+Lukas saw — the unresponsive arm was steadier because nothing was commanding it. **Rule for the camera: once on
+target, stop re-solving.** The controller already stops commanding when an approach ends; the thing to avoid is
+leaving a re-solving loop running under a camera.
+
+**A unit bug of mine, caught by disbelieving the output.** `measure_hold` first reported a tool peak-to-peak of
+0.001 mm alongside a 0.789 mm max excursion, which cannot both be true. `tool_ptp_mm` was missing its
+metres-to-millimetres conversion. Fixed, with a regression test that asserts peak-to-peak is never smaller than
+the max excursion — the check that would have caught it immediately.
+
+**Wrist sweeps ran cleanly** (J3, J4, J5 all at ~69–71 °/s, settling ~555 ms, hold band 0.00°), so their
+*speeds* are measured. Their **signs are still unvalidated**: the sweeps give magnitude, and direction needs an
+observer. Each sweep prints the model's Jacobian-derived prediction of the tool motion, so the check is a
+two-minute job whenever someone is watching the arm.
+
+**Arm state:** parked folded, released at the folded pose, settled at [−0.20, −90.90, +92.40, −0.20, +1.70,
+−0.20]°, `error_status = 0`. 116 tests in the full suite, all passing.
+
+### 2026-09-16 · Wrist sign validation with an observer: two of six signs were wrong (sixth session, continued)
+
+Lukas offered to watch and report while the sweeps ran. Each joint was stepped +30° alone from a raised pose,
+with the model's Jacobian-derived prediction **stated before the move**
+([run](#/week/1/run/20260916T0830_d1_wrist_signs)):
+
+| sweep | model predicted | observed | verdict |
+| --- | --- | --- | --- |
+| J0 | swings ~113 mm to the dog's right | swivelled **right** | matches — confirms the F-030 fix |
+| J3 | rolls forearm **left side up**, ~7 mm travel | rolled **left side down** | **inverted** |
+| J4 | pitches wrist down, tip drops ~106 mm | **wrist down**, tip dropped | matches |
+| J5 | rolls wrist **left side down**, ~7 mm travel | rolled **left side down** | matches |
+
+The decisive detail was in Lukas's own phrasing — "tilted arm left, then wrist down, then wrist tilt left" —
+**J3 and J5 rolled the same way**, while the model had them counter-rotating. That is a harder error to spot than
+a single reversed joint, and it would have quietly corrupted every orientation target.
+
+`SERVO_SIGN` is now `[-1, 1, 1, -1, 1, 1]`, every entry measured rather than assumed, and the corrected model
+reproduces all four observations including both rolls coming out left-side-down (F-034). A test pins the J3/J5
+relationship specifically, since that was the subtle one. Every sweep also moved cleanly at 68.7–69.7 °/s,
+settling in 516–578 ms with a hold band ≤0.10° — consistent with F-033.
+
+**What this does to G4.** `position_only/deploy.py` maps `Joint1..Joint6` to motor ids 0–5 by index with **no
+sign convention**, so `params/deploy.yaml` would mirror **two** joints, not one: the base rotation and a wrist
+roll. A policy deployed through it would reach to the wrong side *and* twist the tool the wrong way. The manifest
+needs a per-joint sign carrying these measured values before the deployment contract can be frozen.
+
+**The method is the reusable part.** State the model's prediction, move one joint, have someone watch. It found
+two errors in four sweeps, and **neither was visible in telemetry** — the arm faithfully reports the angle it was
+commanded no matter which way the joint physically turns. Any remaining convention question (the joint zeros, the
+pincer side, J1/J2 in isolation) should be settled the same way.
+
+**Still open:** J1 and J2 are confirmed only indirectly, by the arm rising and reaching forward as predicted; no
+sweep isolated them. Joint **zero offsets** remain unmeasured — signs are not zeros (F-023, F-025). The pincer
+side is still the CAD claim.
+
+**Arm state:** parked folded and released, [+0.10, −90.90, +92.40, −0.20, +1.70, −0.30]°, `error_status = 0`.
+
+### 2026-09-16 · A browser console for the arm: click a point on a sphere, the real arm goes there (sixth session, continued)
+
+Lukas asked for a 3D UI: the D1 and the Go2 drawn as a model, joints updating live, and a hologram sphere around
+the arm where clicking a point sends the real tool there. It lives in [`d1_ui/`](../../d1_ui/) and runs **on the
+Jetson** (`python3 d1_ui/server.py --port 8090`), because CycloneDDS needs the arm's subnet; it is not a hosted
+page. Stdlib only on the wire — `ThreadingHTTPServer`, Server-Sent Events for the ~9 Hz state, JSON POSTs — and
+the same `d1_ik`/`d1_hardware` the CLI uses, so a click does exactly what `move` does.
+
+**What it draws.** Both robots are built straight from their URDFs: the server turns each into a JSON chain
+(`/model.json`) and the page composes, per joint, translate(xyz)·R(rpy)·Rot(axis, q) — the same composition
+`workspace.forward` uses. A browser cannot run in the test suite, so `tests/test_d1_ui.py` does that composition
+in numpy from the same JSON and checks it against `d1_ik.tool_pose` on random configurations: **agreement to
+1e-9**. On the page, a red marker shows the server's FK of the tool point; if it sits on the pincer tip, the
+picture and the solver agree live. The Go2's legs come from `rt/lowstate` (the dog's own DDS, same NIC), so
+the sitting posture is real rather than nominal. D1 meshes are the binary STLs; the Go2 is its Collada set
+(metres, Z-up).
+
+**Safety is in the server, not the page.** It starts in **dry run** and stays there until the LIVE switch is
+turned on (a confirm dialog, and the state lives in the process, so a reloaded page cannot arm it silently). A
+click never moves the arm — it requests an IK preview, and SEND is a separate action. Targets are refused below
+the mount plane, outside the sphere, when IK fails, or when the trunk/ground proxy says the solution folds into
+the dog (the proxy is the standing trunk box with a conservative 0.15 m ground, a coarse guard for a sitting
+robot, not a clearance model). STOP cancels the approach and **leaves the arm holding** — the mover gained a
+`should_stop` hook for it, with tests — because release is a fall (F-028). RELEASE is its own button, refused
+unless the arm is folded, forced only through a second confirm. One command at a time, paced at 10 Hz by the
+client (F-032), and the loop stops re-solving when it arrives (F-033). Every executed command is appended to a
+JSONL on the dog.
+
+**Verified from here, dry run**, with the arm folded and released: live feedback at ~15 frames/s over SSE, all
+meshes served, IK preview accepted [0.25, 0.15, 0.40] (0.04 mm, 8 iterations) and refused a point below the
+mount, a rehearsed move ran **13 steps to 2.2 mm without publishing**, and release was withheld. The arm's
+reported pose did not change. **Not verified: the rendering itself.** No browser runs on this machine, so the
+mesh orientations, the sphere placement and the leg animation are checked by the FK test and by reading the
+loader conventions, not by eye — the red tool marker is the on-page check for the arm, and the Go2 is
+best-effort until someone looks at it.
+
+### 2026-09-16 · Why the arm stepped, and the fix: one waypoint instead of one per cycle (sixth session, continued)
+
+Lukas reported the arm stepping to its targets rather than gliding, with wobble, and said speed was an acceptable
+price for smoothness ([run](#/week/1/run/20260916T0900_d1_smooth_motion)).
+
+**The cause was the control architecture, not the arm.** A single mode-0 waypoint is already smooth — a proper
+trapezoid, per-sample speed **0 → 28 → 67.5 → 69.3 → 69.3 → 34 → 0 °/s** for a 30° step — but roughly **two of
+the 111 ms feedback cycles go on acceleration alone**. The Cartesian loop issued a new waypoint every cycle,
+restarting that profile before cruise was reached, so every cycle became an accelerate/decelerate pair. That is
+the stepping, and each decel→accel is the jerk that wobbles the arm.
+
+**Raising the step cap does not fix it**, which was worth measuring rather than assuming. Same move, four caps,
+as displacement per cycle against the 7.8–8.3° a speed-limited arm would cover:
+
+| step cap | travelled/cycle | speed | duty |
+| --- | --- | --- | --- |
+| 5° | 2.5° | 21 °/s | 0.30 |
+| 8° | 4.4° | 37 °/s | 0.54 |
+| 12° | 4.9° | 42 °/s | 0.60 |
+| 16° | 5.3° | 46 °/s | 0.64 |
+
+Duty plateaus at 0.64. Lukas confirmed it from the other side: *"the steps were smaller just then but still
+there."*
+
+**Single-shot works.** Sending the whole solution as one waypoint and letting the arm run its own trajectory
+gives **7.8–7.9°/cycle at 70–71 °/s, duty 1.00 — continuous**, covering a 45° excursion in one sweep and arriving
+at **4.2–4.9 mm**. `run_oneshot` is the new primitive and the browser console now uses it. The per-cycle `run()`
+is kept deliberately: with a small cap it is bounded and interruptible, a fresh decision every cycle, which is
+the safer primitive near obstacles. Single-shot gives that up, so it carries its own guard — a
+`max_excursion_deg` limit (70°) refuses a far solution rather than flying it, and STOP now commands the arm to
+its measured pose (`hold_here`) so it decelerates in place instead of releasing (F-028).
+
+The residual is unchanged at ~4 mm and is the small-increment floor, not the motion mode: the correction pass
+asks for 0.4–0.5°, below what the arm executes, so it is now skipped rather than waited out.
+
+**Three bugs found building this, all regression-tested.** `analyse_motion` first derived its saturation
+reference *from the trace*, which is itself capped — it would have called every approach continuous; the
+reference now comes from the independently measured peak rate (F-033). Then the settle detector counted the arm's
+60–130 ms command latency as arrival, returning before motion began. Then it counted **repeats of a cached
+feedback sample** as stillness — the loop can spin faster than the 111 ms feedback, so stale reads look exactly
+like a stationary arm. That one made a completed move report **199.73 mm** when the arm had in fact arrived
+correctly; stillness is now judged only on fresh samples.
+
+**Arm state:** parked folded and released, [0.00, −90.80, +92.30, −0.30, +1.30, −0.10]°, `error_status = 0`. The
+console is restarted on the new code, in dry run. 70 tests across the arm modules; 133 in the full suite.
+
+### 2026-09-16 · "Why is the 70 degree limit there?" — a good question with an uncomfortable answer (sixth session, continued)
+
+Lukas asked why `run_oneshot` refuses excursions above 70°. The honest answer was that **I picked it**: a round
+number that let the 44.6–45.0° moves we had been flying pass with headroom. Checking what it was actually
+protecting turned up something worse than an arbitrary constant.
+
+**`solve` only ever reports clearance for the configuration it converged to.** Nothing tested the way there. Of
+600 pairs of randomly drawn configurations that are each clear of the trunk/ground proxy, **29 have a colliding
+path** — the worst spending 58% of the traversal inside the body, first entering it a quarter of the way along
+(F-036). Their largest joint moves are 87–191°, so the 70° limit did catch all of them — while refusing **96% of
+ordinary moves**. It was working by being over-broad, not by testing the hazard.
+
+**And on the CLI the clearance proxy was off entirely**: `--base-height` defaulted to `None`, which skips the
+check, so the excursion limit was the *only* guard there. That is now a conservative 0.15 m by default, with `0`
+to disable.
+
+**The real guard now exists.** `d1_ik.path_clearance` samples the traversal and refuses a move whose path enters
+the proxy even when both endpoints are clear, reporting where along the path it fails. Both movers enforce it and
+the browser console refuses such targets at preview time, before SEND is offered. The traversal is modelled
+rather than assumed straight: every joint slews at the same ~1.2 rad/s ceiling (F-033), so joints with less to do
+finish early and stop while the rest continue, and the path bends — modelling that finds 29 colliding pairs where
+a straight line finds 20.
+
+**So can the limit go?** For collisions, it is now redundant. It should stay for a different reason: it bounds how
+long the arm flies **uncorrected** in a single-shot move — 70° is about 1.0 s, a full J0 span about 3.5 s — and
+STOP acts through the same 111 ms feedback and ~100 ms command path, with overtravel that is **still unmeasured**.
+Measuring the stop distance is what should set that number, and until then 70° remains a guess, just a guess
+about the right quantity now.
+
+**What the proxy still is not:** a capsule chain against the Go2's *standing* trunk box and a flat ground, with
+the dog sitting. It knows nothing about the environment, cabling, the payload, or the camera being mounted, and
+it has never been checked against a real collision.
+
+### 2026-09-16 · A launcher for the console, so it is not something only this session can start (sixth session, continued)
+
+The console only worked because files had been scp'd to `/tmp/d1train` on the dog by hand, which no one else could
+reproduce and which a reboot erases. [`run_ui.sh`](../../run_ui.sh) replaces that:
+`./run_ui.sh` deploys and starts it, plus `status`, `stop`, `restart`, `logs` and `deploy`. It re-deploys on every
+start, so editing a file here and re-running is the workflow. Arguments pass through to `server.py`. The remote
+path stays under `/tmp` deliberately — nothing about this is committed to the dog — and the script says so, since
+"it worked yesterday" after a reboot is the obvious trap. [`d1_ui/README.md`](../../d1_ui/README.md) documents
+both the script and the by-hand `ssh` route.
+
+Tested by wiping `/tmp/d1train` entirely and rebuilding from nothing: `status` correctly reported not running,
+`start` deployed and came up, `--sphere-radius 0.45` reached the server (`model.json` confirmed the change),
+`stop` and `restart` behaved, and `stop` leaves the arm untouched. The `pkill` trap is now handled properly —
+every remote action goes through a script file written on the dog, because `pkill -f` inside an inline
+`ssh '...'` matches the ssh shell running it and kills the connection instead. That is visible in the transcript:
+the wipe command's own `echo` never printed.
+
+### 2026-09-16 · Holding the gripper level at each goal (sixth session, continued)
+
+Lukas asked for the gripper to finish level at every target, for the camera going on the end effector.
+
+**"Level" is defined from the URDF, not guessed.** `tip_offsets` gives the approach direction in the Link6 frame,
+and the two finger joints sit at ∓y there, which fixes an orthonormal tool triad: approach ≈ +x, jaw-separation
+≈ +z, up ≈ −y in `Link7_1`. Level means the approach axis lies in the horizontal plane with no roll about it,
+**leaving the heading free** — two rotational constraints instead of three. The levelled attitude is re-derived
+from the current one on every solver iteration, which is what keeps the heading unconstrained; a fully specified
+orientation would make most of the workspace unreachable. Without the constraint, the gripper points **10–27°
+downward** at typical poses, so it was doing real work.
+
+**On hardware** ([F-037](../findings.md)), commanded level (0.00°) at three targets:
+
+| target (m) | measured elevation | measured roll | position error |
+| --- | --- | --- | --- |
+| [0.25, 0.10, 0.35] | −1.30° | −0.18° | 5.73 mm |
+| [0.20, 0.18, 0.30] | −1.48° | −0.14° | 6.78 mm |
+| [0.30, 0.00, 0.28] | −1.49° | +0.13° | 6.38 mm |
+
+**The cost is workspace**, and it is not small: over 300 sphere points, **89% reachable position-only against 51%
+with the gripper level**. Solving it in one stage managed only **24%** — reaching the point first and levelling
+from that configuration recovers more than half the apparent loss, so most of it was the solver rather than the
+geometry. Staged solving is now what `level=True` does internally. The console defaults to level, shows the pitch
+and roll of every preview, and **refuses a target it can only reach tilted** instead of silently solving it that
+way; `--no-level` trades back for the larger workspace.
+
+**The residual is the interesting part.** −1.3° to −1.5° of pitch, *consistent across all three targets*, against
+a commanded 0.00°. A systematic bias of that size is exactly what an uncorrected joint zero offset looks like,
+and it is the same order as the arm's ~0.5°-per-joint landing floor compounded through the wrist. It should
+**not** be tuned out by biasing the target — that would bake a calibration error into the controller. Measuring
+the joint zeros (G4, F-023) is what resolves it, and this gives that measurement a concrete repeatable
+observable: command level, measure the pitch.
+
+Also worth stating plainly: the camera is **not mounted**, so "level gripper" has not been shown to mean "level
+image". The attitude is computed from reported joint angles through the URDF, so it inherits the same unmeasured
+zeros it is now measuring.
+
+**Arm state:** parked folded and released, [−0.30, −90.80, +92.50, −0.30, +1.00, −0.10]°. Console restarted with
+the level gripper on by default.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -865,6 +1465,24 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-017](../findings.md): the arm's commanded torque saturates while the robot stands still; `applied_torque` on an implicit actuator is an estimate, not a PhysX measurement (confirmed).
 - [F-018](../findings.md): the frozen-manifest evaluator measures 0 of 300 zero-action episodes reaching, across three balanced manifests (confirmed).
 - [F-019](../findings.md): the first policy trained against the revised box reaches by squatting to within 9 mm of the fall termination; it meets G1a's arithmetic and cannot be the P0 baseline (confirmed, one seed, development manifest).
+- [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
+- [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
+- [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
+- [F-023](../findings.md): the arm's resting pose (J1 −90.9°, J2 91.7°) lies outside the joint limits its own driver enforces (confirmed).
+- [F-024](../findings.md): there is no higher-rate mode to unlock — the arm's full DDS surface has no low-level PD topic, and the one public attempt at 100 Hz commanding ended with a dead arm (confirmed for the interface; the failure history is reported, not reproduced).
+- [F-025](../findings.md): a numpy DLS IK controller and a hardware client now exist and plan against the real arm, but Cartesian accuracy is unvalidated until the J1/J2 zero is measured (provisional; nothing executed on the arm).
+- [F-026](../findings.md): the IK controller moves the real arm — 107 mm of commanded 113 mm tracked — and the 6.0 mm residual is the arm still settling, not the solver (confirmed, one target).
+- [F-027](../findings.md): the folded rest pose is a mechanical stop 1–2° outside the commandable range, which makes an encoder zero-point error less likely (provisional).
+- [F-028](../findings.md): releasing the D1 drops it — no holding brake, so the abort path is a fall; the CLI's release-at-end-of-move dropped the arm 60.8° and has been removed (confirmed).
+- [F-029](../findings.md): the ~6 mm Cartesian residual is a persistent 0.5–0.7° per-joint offset with dither, not settling lag; it supersedes F-026 (confirmed, two targets).
+- [F-030](../findings.md): servo 0's sign is inverted relative to the URDF — the model's "left" is the arm's right; `deploy.yaml` carries the same error and G4 must fix it (confirmed; correction pending a visual check).
+- [F-031](../findings.md): the command path set the accuracy and speed, not the arm — funcode 2 mode 1 runs at 13.5°/s with 5° of error, mode 0 at 69.3°/s with 0.20°; supersedes F-029 (confirmed, J0).
+- [F-032](../findings.md): the arm stopped responding to motion commands while reporting `power=1 enable=1 error=0` with live feedback — telemetry does not indicate arm health (confirmed, one occurrence, unrecovered).
+- [F-033](../findings.md): every joint slews at 1.20–1.29 rad/s (no 1.05/1.73 split; `motor_model.py` now carries measured values), and holding still is twice as steady when the controller stops re-solving (confirmed).
+- [F-034](../findings.md): two of six servo signs are inverted (J0 and J3) — the model had J3 and J5 counter-rotating when they roll together; `deploy.yaml` would mirror two joints (confirmed).
+- [F-035](../findings.md): the arm needs ~2 feedback cycles to reach cruise, so a per-cycle IK loop can never move smoothly; single-shot waypoints give continuous motion (confirmed).
+- [F-036](../findings.md): endpoint clearance is not path clearance — 29 of 600 clear-to-clear moves sweep through the dog in the proxy; the CLI also had the proxy disabled by default (confirmed, in the proxy).
+- [F-037](../findings.md): the gripper can be held level at a target, costing about a third of the reachable sphere; it lands with a consistent −1.4° pitch bias that looks like the unmeasured joint zero (confirmed, three targets).
 
 ## Issues and risks
 
@@ -900,9 +1518,23 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
   from where the simulator rests it, missing the arm's sag and the base's 1° tilt. `verify` fails if the simulator
   drifts more than 2 cm from the recorded stance, but the recorded stance is one configuration; changing the arm
   gains, the leg model or the mass would move it and the box would need re-placing.
-- **Unverified estimates.** The D1 speed limits and the leg delay range are unmeasured, and the 10 Hz arm hold means
-  arm targets update five times less often. Any reaching result under `--latency estimated` depends on those
-  assumptions until they are measured.
+- **Unverified estimates**, now partly measured. The arm feedback rate is no longer an estimate: it is 9.00 Hz
+  (F-020), and `arm_feedback_period_steps` moved 5 → 6 on 2026-09-16, so runs recorded before that date — the
+  F-019 policy included — used the old value. Still unmeasured: the D1 **speed limits** (J0 already exceeds the
+  URDF's 1.05 rad/s without saturating, F-021, and J1–J5 are untouched), the **command rate** the arm will accept,
+  and the **leg delay range**. The ~127 ms command→motion lag that F-021 measured is not modelled at all —
+  `arm_command_hold_steps` is a hold, not a delay. Any reaching result under `--latency estimated` still depends
+  on those assumptions.
+- **There is no software stop for the D1** (F-022). `funcode 6 {"power": 0}` is ignored by the arm — 14,208
+  consecutive commands did not clear `power_status` — so the emergency power-off that `arm_control.py` documents
+  and the VIP-Rescue GUI exposes is inert. The only working abort is release (`funcode 5 {"mode": 0}`), which
+  drops torque but leaves the arm powered and backdrivable; beyond that it is a physical power cut. The arm also
+  **enables itself on any `funcode 1` motion command**, with no arming step, on a DDS domain shared with the
+  Rescue stack. Before any Thesis B hardware run (G4 onward), the abort path has to be release plus a reachable
+  physical cut, and a person must be able to reach the latter. Raised with Lukas; it affects VIP-Rescue too.
+- **The arm was left energised.** `power_status` was 0 at the start of 2026-09-16 and is 1 now, because
+  power-off cannot be commanded. The arm is released and holding no torque, but it stays energised until
+  power-cycled.
 - **Arm-on training degrades gaits** in Rescue's locomotion task (F-008). P0's moving stage can hit the same failure
   while still tracking velocity well, so tracking metrics alone will not catch it. Yaw is where the arm shows first
   in playback (F-012).

@@ -48,8 +48,10 @@ class UnitreeEnvelopeTests(unittest.TestCase):
 class InterfaceTimingTests(unittest.TestCase):
     def test_estimated_profile_matches_d1_rates_under_a_50_hz_policy(self):
         timing = interface_timing("estimated", 50.0, "unitree")
+        # Feedback is 6 steps, not 5, because the arm's measured angle cycle is 111 ms (9.0 Hz), while
+        # commands are still modelled at the driver's 10 Hz streaming rate. See F-020.
         self.assertEqual(timing, {"leg_delay_physics_steps": (0, 2), "arm_command_hold_steps": 5,
-                                  "arm_feedback_period_steps": 5})
+                                  "arm_feedback_period_steps": 6})
         # The stock DCMotor legs have no delay buffer, so the profile must not promise one.
         self.assertEqual(interface_timing("estimated", 50.0, "dc_motor")["leg_delay_physics_steps"], (0, 0))
         self.assertEqual(set(interface_timing("none", 50.0, "unitree").values()), {(0, 0), 1})

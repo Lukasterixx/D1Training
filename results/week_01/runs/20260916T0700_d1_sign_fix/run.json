@@ -1,0 +1,25 @@
+{
+  "mode": "hardware_ik_execute",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only",
+    "arm_state_after": "parked folded, released at the folded pose, settled and stable; error_status=0"
+  },
+  "arguments": {"target_base_frame_m": [0.22, 0.16, 0.36], "max_joint_step_deg": 5, "settle_s": 2, "execute": true},
+  "measured": {
+    "j0_goal_before_fix_deg": 37.63,
+    "j0_goal_after_fix_deg": -37.75,
+    "settled_joints_deg": [-37.30, -29.90, 52.60, -7.00, -14.00, 2.50],
+    "steps_executed": 110,
+    "stop_reason": "stalled",
+    "loop_end_error_mm": 6.26,
+    "settled_error_mm": 6.26,
+    "settle_band_mm": [6.26, 6.63]
+  },
+  "change": "d1_ik.SERVO_SIGN = [-1,1,1,1,1,1] applied in to_servo_deg/from_servo_deg; step_towards made servo-space; clamping moved to servo_limits_deg",
+  "open": "Direction of the corrected move not yet visually confirmed. J3-J5 signs unvalidated. deploy.py carries no sign convention (G4).",
+  "findings": ["F-030", "F-029 (fourth data point: 6.26 mm)"]
+}

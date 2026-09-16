@@ -1,0 +1,24 @@
+{
+  "mode": "hardware_ik_bringup",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2, arm IP 192.168.123.100",
+    "robot_posture": "sitting; arm folded at rest",
+    "arm_state": "power_status=1, enable_status=0 (released); NOT moved by this run"
+  },
+  "arguments": {"target_base_frame_m": [0.30, 0.0, 0.30], "max_joint_step_deg": 5, "execute": false},
+  "measured": {
+    "measured_pose_deg": [2.10, -90.90, 91.70, -3.10, 4.10, 3.10],
+    "fk_tool_point_base_frame_m": [0.1366, -0.0097, 0.2069],
+    "plan_converged": true,
+    "plan_position_error_mm": 0.10,
+    "plan_iterations": 8,
+    "rehearsal_steps": 15,
+    "rehearsal_final_error_mm": 0.05,
+    "joints_outside_soft_limits": [1, 2]
+  },
+  "tests": {"d1_ik": 11, "d1_hardware": 8, "full_suite_isaac_env": 88},
+  "notes": "Solver and client written and validated. Read-only against hardware: FK of the measured pose and a dry-run approach. No DDS writes, arm did not move."
+}

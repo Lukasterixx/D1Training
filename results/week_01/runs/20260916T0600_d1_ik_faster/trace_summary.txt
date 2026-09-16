@@ -1,0 +1,34 @@
+D1 IK controller, second target, faster. 2026-09-16. Go2 sitting, arm-only.
+
+--- move --target 0.25 0.08 0.32 --max-joint-step-deg 6 --settle-s 3 --execute
+start  joints [ +2.50, -90.90, +91.60, -3.20,  +4.50, +2.80]  tool [0.1365,-0.0089,0.2061]
+plan   converged, 0.10 mm, 7 iterations; goal [+19.64,-29.99,+59.08,-4.94,-16.97,+4.09]
+       travel 183.8 mm, max joint delta 60.9 deg, 6 deg/step ~= 54 deg/s
+dry run predicted 10 steps; execution took 99 steps and reached 4.78 mm.
+
+SETTLE (3 s, no commands published) -- the test F-026 predicted would shrink the error:
+  err/mm over 17 samples: 6.68 6.61 6.63 6.27 6.25 5.93 6.27 6.61 6.63 6.27
+                          6.63 6.61 6.27 5.93 6.27 6.63 6.27
+  settled 6.27 mm, vs 4.78 mm at loop end. It did NOT decay -> F-029 supersedes F-026.
+  settled joints [+19.60,-30.10,+57.70,-4.30,-12.60,+2.80]
+  last commanded [+20.1, -30.1, +57.0, -4.2, -12.9, +2.8]
+  tracking error [ -0.5,   0.0,  +0.7, -0.1,  +0.3,   0.0] deg, worst 0.7 -- same as move 1.
+
+--- THE DROP (F-028)
+The CLI then published release (funcode 5 mode 0) as its normal end-of-move action.
+Arm was extended at J1=-30.1, J2=+57.7 and holding. With nothing commanding it:
+  before release  [+19.60, -30.10, +57.70, -4.30, -12.60, +2.80]
+  next reading    [+19.60, -90.90, +92.80, -1.20,  +0.30, +3.30]
+  J1 fell 60.8 deg, J2 fell 35.1 deg -- an uncommanded drop to the folded stop.
+Lukas saw it and reported it. error_status = 0 afterwards.
+Cause: d1_hardware.py released at the end of every --execute path. Fixed: the CLI now
+leaves the arm holding; release warns and refuses on an unfolded arm without --force.
+
+--- park --joints 2.5 -89.9 89.9 -3.2 4.5 2.8 --max-joint-step-deg 5 --execute
+Ran from the post-drop folded pose; 200 cycles, worst joint error 0.50 deg (max_cycles).
+Full per-step trace in park_trace.txt.
+
+--- final state
+joints [+2.60, -90.90, +91.30, -3.10, +4.70, +2.60]  tool [0.1363,-0.0087,0.2074]
+session start [+2.10, -90.90, +91.70, -3.10, +4.10, +3.10]  tool [0.1366,-0.0097,0.2069]
+Back to the session-start rest pose within 0.4 deg per joint and ~1 mm at the tool.

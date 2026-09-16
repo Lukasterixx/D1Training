@@ -1,0 +1,32 @@
+{
+  "mode": "hardware_ik_execute",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only",
+    "arm_state_after": "parked folded, then released at the folded pose; settled to rest, error_status=0"
+  },
+  "arguments": {"target_base_frame_m": [0.22, 0.16, 0.36], "max_joint_step_deg": 5, "settle_s": 3, "execute": true},
+  "measured": {
+    "travel_mm": 242.4,
+    "steps_executed": 117,
+    "stop_reason": "stalled",
+    "loop_end_error_mm": 6.71,
+    "settled_error_mm": 6.71,
+    "settle_band_mm": [6.37, 7.74],
+    "goal_joints_deg": [37.63, -29.53, 54.02, -5.39, -18.86, 4.04],
+    "settled_joints_deg": [37.50, -29.90, 52.60, -5.90, -13.90, 2.60],
+    "j0_commanded_deg": 37.5,
+    "observed_direction": "RIGHT (Lukas, watching). The model predicts +y = the dog's LEFT.",
+    "release_at_folded_pose_settle_deg": 1.0
+  },
+  "validated": {
+    "arm_left_holding_after_move": "the F-028 fix worked: no release, no drop",
+    "stall_detection_fired": "117 steps, not the 200 max",
+    "full_traces_captured": true
+  },
+  "open": "Sign/frame mismatch between model and hardware: commanding the joint vector the FK says reaches +y (left) moved the arm right. See F-030.",
+  "findings": ["F-029 (third data point)", "F-030"]
+}

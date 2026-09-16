@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D1 Reach Console</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="view"></div>
+
+<aside id="panel">
+  <header>
+    <h1>D1 reach console</h1>
+    <div id="conn" class="pill">connecting…</div>
+  </header>
+
+  <section class="arm-switch" id="armbox">
+    <label><input type="checkbox" id="live"> <b>LIVE</b> — publish to the arm</label>
+    <div class="hint" id="livehint">dry run: clicks and buttons rehearse only</div>
+  </section>
+
+  <section>
+    <h2>Arm</h2>
+    <div class="row"><span>power</span><b id="power">–</b></div>
+    <div class="row"><span>enable</span><b id="enable">–</b></div>
+    <div class="row"><span>error</span><b id="error">–</b></div>
+    <div class="row"><span>feedback age</span><b id="age">–</b></div>
+    <div class="row"><span>Go2 legs</span><b id="legs">nominal</b></div>
+    <div class="row"><span>state</span><b id="busy">idle</b></div>
+  </section>
+
+  <section>
+    <h2>Joints <small>servo ° · URDF °</small></h2>
+    <table id="joints"></table>
+    <div class="row"><span>gripper</span><b id="grip">–</b></div>
+    <div class="row"><span>tool (base frame)</span><b id="tool">–</b></div>
+  </section>
+
+  <section>
+    <h2>Target</h2>
+    <div class="hint">Click the sphere to choose a point. Drag to orbit, wheel to zoom.</div>
+    <div class="row"><span>candidate</span><b id="cand">none</b></div>
+    <div id="preview" class="preview"></div>
+    <div class="buttons">
+      <button id="send" disabled>SEND</button>
+      <button id="stop" class="warn">STOP</button>
+      <button id="park">PARK</button>
+      <button id="release" class="danger">RELEASE</button>
+    </div>
+    <div class="hint">STOP leaves the arm holding. RELEASE drops it unless it is folded.</div>
+    <div id="result" class="result"></div>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </section>
+</aside>
+
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/vendor/OrbitControls.js"></script>
+<script src="/static/vendor/ColladaLoader.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

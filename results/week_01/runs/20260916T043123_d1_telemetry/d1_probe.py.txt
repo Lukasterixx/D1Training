@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""Read-only D1 arm telemetry probe.
+
+Subscribes to the two feedback topics the D1 publishes and records the arrival
+time of every sample, so the real publish rate can be compared with the 10 Hz
+that motor_model.py assumes (D1_FEEDBACK_HZ, labelled from SDK headers, never
+measured). Publishes nothing: the arm cannot move because of this script.
+
+  current_servo_angle  PubServoInfo_  7 floats, degrees
+  rt/arm_Feedback      ArmString_     JSON string
+"""
+import argparse
+import json
+import os
+import statistics
+import time
+from dataclasses import dataclass
+
+
+def _stats(xs: list[float]) -> dict:
+    if not xs:
+        return {"n": 0}
+    s = sorted(xs)
+    return {
+        "n": len(xs),
+        "mean_ms": 1e3 * statistics.fmean(s),
+        "median_ms": 1e3 * statistics.median(s),
+        "min_ms": 1e3 * s[0],
+        "max_ms": 1e3 * s[-1],
+        "p95_ms": 1e3 * s[min(len(s) - 1, int(0.95 * len(s)))],
+        "stdev_ms": 1e3 * (statistics.stdev(s) if len(s) > 1 else 0.0),
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--iface", default="enP8p1s0")
+    ap.add_argument("--seconds", type=float, default=60.0)
+    ap.add_argument("--out", default="/tmp/d1_probe.json")
+    ap.add_argument("--width", choices=("f32", "f64"), default="f32")
+    args = ap.parse_args()
+
+    # Bind CycloneDDS to the arm-facing NIC and drop whatever the ROS/Go2 stack
+    # left in the environment, so this participant never joins the dog's config.
+    os.environ["CYCLONEDDS_URI"] = (
+        "<CycloneDDS><Domain><General><Interfaces>"
+        f"<NetworkInterface name='{args.iface}'/>"
+        "</Interfaces></General></Domain></CycloneDDS>"
+    )
+
+    from cyclonedds.core import ReadCondition, InstanceState, SampleState, ViewState, WaitSet
+    from cyclonedds.domain import DomainParticipant
+    from cyclonedds.idl import IdlStruct
+    from cyclonedds.sub import DataReader
+    from cyclonedds.topic import Topic
+    from cyclonedds.util import duration
+
+    @dataclass
+    class ArmString(IdlStruct, typename="unitree_arm::msg::dds_::ArmString_"):
+        data_: str = ""
+
+    from cyclonedds.idl.types import float32
+
+    if args.width == "f32":
+        @dataclass
+        class PubServoInfo(IdlStruct, typename="unitree_arm::msg::dds_::PubServoInfo_"):
+            servo0_data_: float32 = 0.0
+            servo1_data_: float32 = 0.0
+            servo2_data_: float32 = 0.0
+            servo3_data_: float32 = 0.0
+            servo4_data_: float32 = 0.0
+            servo5_data_: float32 = 0.0
+            servo6_data_: float32 = 0.0
+    else:
+        @dataclass
+        class PubServoInfo(IdlStruct, typename="unitree_arm::msg::dds_::PubServoInfo_"):
+            servo0_data_: float = 0.0
+            servo1_data_: float = 0.0
+            servo2_data_: float = 0.0
+            servo3_data_: float = 0.0
+            servo4_data_: float = 0.0
+            servo5_data_: float = 0.0
+            servo6_data_: float = 0.0
+
+    dp = DomainParticipant(0)
+    servo_reader = DataReader(dp, Topic(dp, "current_servo_angle", PubServoInfo))
+    fb_reader = DataReader(dp, Topic(dp, "rt/arm_Feedback", ArmString))
+
+    any_state = (SampleState.Any | ViewState.Any | InstanceState.Any)
+    ws = WaitSet(dp)
+    c_servo = ReadCondition(servo_reader, any_state)
+    c_fb = ReadCondition(fb_reader, any_state)
+    ws.attach(c_servo)
+    ws.attach(c_fb)
+
+    servo_t: list[float] = []
+    servo_vals: list[list[float]] = []
+    fb_t: list[float] = []
+    fb_vals: list[str] = []
+
+    t0 = time.monotonic()
+    wall0 = time.time()
+    deadline = t0 + args.seconds
+    while time.monotonic() < deadline:
+        try:
+            ws.wait(duration(milliseconds=500))
+        except Exception:
+            pass
+        now = time.monotonic()
+        for s in servo_reader.take(N=100):
+            servo_t.append(now)
+            servo_vals.append([
+                s.servo0_data_, s.servo1_data_, s.servo2_data_, s.servo3_data_,
+                s.servo4_data_, s.servo5_data_, s.servo6_data_,
+            ])
+        for s in fb_reader.take(N=100):
+            fb_t.append(now)
+            fb_vals.append(s.data_)
+
+    elapsed = time.monotonic() - t0
+    servo_gaps = [b - a for a, b in zip(servo_t, servo_t[1:])]
+    fb_gaps = [b - a for a, b in zip(fb_t, fb_t[1:])]
+
+    # Per-joint spread over the whole capture: a static arm should show only
+    # sensor noise, and that noise is the resolution floor of any measurement.
+    spread = []
+    if servo_vals:
+        for j in range(7):
+            col = [v[j] for v in servo_vals]
+            spread.append({
+                "joint": j,
+                "min_deg": min(col),
+                "max_deg": max(col),
+                "mean_deg": statistics.fmean(col),
+                "stdev_deg": statistics.stdev(col) if len(col) > 1 else 0.0,
+            })
+
+    report = {
+        "wall_start": wall0,
+        "iface": args.iface,
+        "servo_float_width": args.width,
+        "elapsed_s": elapsed,
+        "current_servo_angle": {
+            "samples": len(servo_t),
+            "rate_hz": len(servo_t) / elapsed if elapsed else 0.0,
+            "interarrival": _stats(servo_gaps),
+        },
+        "rt/arm_Feedback": {
+            "samples": len(fb_t),
+            "rate_hz": len(fb_t) / elapsed if elapsed else 0.0,
+            "interarrival": _stats(fb_gaps),
+            "example": fb_vals[0] if fb_vals else None,
+        },
+        "resting_pose_deg": servo_vals[-1] if servo_vals else None,
+        "per_joint_spread": spread,
+    }
+    with open(args.out, "w") as fh:
+        json.dump({"report": report,
+                   "servo_t": servo_t, "servo_vals": servo_vals,
+                   "fb_t": fb_t}, fh)
+    print(json.dumps(report, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

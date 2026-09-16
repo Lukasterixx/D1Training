@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+"""D1 J0 step-response measurement.
+
+Measures what motor_model.py currently assumes without evidence: the command
+cycle (D1_COMMAND_HZ) and the joint speed limit (D1_VELOCITY_LIMIT_RAD_S, which
+d1.urdf carries with "no recorded source"). Moves J0 (base rotation) only, in
+small steps about its resting angle, and returns it to where it started before
+dropping enable and power.
+
+Feedback is 111 ms, so any latency here is quantised to +/-111 ms. Both angle
+topics are captured; if their phases differ the merged series resolves finer.
+"""
+import argparse, json, math, os, statistics, threading, time
+from dataclasses import dataclass
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--iface", default="enP8p1s0")
+ap.add_argument("--steps", default="5,10,20", help="J0 step sizes in degrees")
+ap.add_argument("--settle", type=float, default=4.0, help="seconds to hold after each command")
+ap.add_argument("--out", default="/tmp/d1_step.json")
+ap.add_argument("--max-step", type=float, default=20.0)
+ap.add_argument("--dry-run", action="store_true", help="capture and print, publish nothing")
+args = ap.parse_args()
+
+os.environ["CYCLONEDDS_URI"] = (
+    "<CycloneDDS><Domain><General><Interfaces>"
+    f"<NetworkInterface name='{args.iface}'/>"
+    "</Interfaces></General></Domain></CycloneDDS>"
+)
+
+from cyclonedds.core import ReadCondition, InstanceState, SampleState, ViewState, WaitSet
+from cyclonedds.domain import DomainParticipant
+from cyclonedds.idl import IdlStruct
+from cyclonedds.idl.types import float32
+from cyclonedds.pub import DataWriter
+from cyclonedds.sub import DataReader
+from cyclonedds.topic import Topic
+from cyclonedds.util import duration
+
+J0_LIMITS = (-135.0, 135.0)
+
+
+@dataclass
+class ArmString(IdlStruct, typename="unitree_arm::msg::dds_::ArmString_"):
+    data_: str = ""
+
+
+@dataclass
+class PubServoInfo(IdlStruct, typename="unitree_arm::msg::dds_::PubServoInfo_"):
+    servo0_data_: float32 = 0.0
+    servo1_data_: float32 = 0.0
+    servo2_data_: float32 = 0.0
+    servo3_data_: float32 = 0.0
+    servo4_data_: float32 = 0.0
+    servo5_data_: float32 = 0.0
+    servo6_data_: float32 = 0.0
+
+
+dp = DomainParticipant(0)
+writer = DataWriter(dp, Topic(dp, "rt/arm_Command", ArmString))
+servo_reader = DataReader(dp, Topic(dp, "current_servo_angle", PubServoInfo))
+fb_reader = DataReader(dp, Topic(dp, "rt/arm_Feedback", ArmString))
+
+T0 = time.monotonic()
+servo_trace = []   # (t, [7 angles])
+angle_trace = []   # (t, [7 angles])  from rt/arm_Feedback funcode 1
+status_trace = []  # (t, {enable,power,error})
+events = []        # (t, label, payload)
+_stop = threading.Event()
+_lock = threading.Lock()
+
+
+def _reader_loop():
+    any_state = SampleState.Any | ViewState.Any | InstanceState.Any
+    ws = WaitSet(dp)
+    ws.attach(ReadCondition(servo_reader, any_state))
+    ws.attach(ReadCondition(fb_reader, any_state))
+    while not _stop.is_set():
+        try:
+            ws.wait(duration(milliseconds=200))
+        except Exception:
+            pass
+        now = time.monotonic() - T0
+        with _lock:
+            for s in servo_reader.take(N=100):
+                servo_trace.append((now, [s.servo0_data_, s.servo1_data_, s.servo2_data_,
+                                         s.servo3_data_, s.servo4_data_, s.servo5_data_,
+                                         s.servo6_data_]))
+            for s in fb_reader.take(N=100):
+                try:
+                    m = json.loads(s.data_)
+                except Exception:
+                    continue
+                d = m.get("data") or {}
+                if m.get("funcode") == 1 and "angle0" in d:
+                    angle_trace.append((now, [float(d[f"angle{i}"]) for i in range(7)]))
+                elif m.get("funcode") == 3:
+                    status_trace.append((now, {k: d.get(k) for k in
+                                               ("enable_status", "power_status", "error_status")}))
+
+
+th = threading.Thread(target=_reader_loop, daemon=True)
+th.start()
+
+_seq = 0
+
+
+def send(funcode, data=None, label=""):
+    """Publish one command and timestamp the write as precisely as possible."""
+    global _seq
+    _seq = (_seq % 9999) + 1
+    msg = {"seq": _seq, "address": 1, "funcode": funcode}
+    if data is not None:
+        msg["data"] = data
+    payload = json.dumps(msg)
+    if args.dry_run:
+        events.append((time.monotonic() - T0, f"DRYRUN {label}", payload))
+        print(f"[dry-run] would send: {payload}")
+        return
+    t = time.monotonic() - T0
+    writer.write(ArmString(data_=payload))
+    t_after = time.monotonic() - T0
+    events.append((t, label, payload))
+    print(f"[{t:7.3f}] TX {label}: {payload}  (write took {1e3*(t_after-t):.2f} ms)")
+
+
+def latest_j0(timeout=3.0):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        with _lock:
+            if servo_trace:
+                return servo_trace[-1][1][0]
+        time.sleep(0.02)
+    raise TimeoutError("no servo feedback")
+
+
+def wait(seconds, label=""):
+    if label:
+        print(f"    ... holding {seconds:.1f}s ({label})")
+    time.sleep(seconds)
+
+
+print("== baseline ==")
+wait(3.0, "baseline idle")
+a0 = latest_j0()
+with _lock:
+    pose0 = servo_trace[-1][1][:]
+    st0 = status_trace[-1][1] if status_trace else None
+print(f"    J0 resting = {a0:.2f} deg; pose = {[round(x,2) for x in pose0]}; status = {st0}")
+
+step_list = [float(x) for x in args.steps.split(",") if x.strip()]
+if max(step_list) > args.max_step:
+    raise SystemExit(f"step larger than --max-step {args.max_step}")
+for s in step_list:
+    for tgt in (a0 + s, a0 - 0.0):
+        if not (J0_LIMITS[0] + 5 <= tgt <= J0_LIMITS[1] - 5):
+            raise SystemExit(f"target {tgt} too close to J0 limits {J0_LIMITS}")
+
+try:
+    print("== power on ==")
+    send(6, {"power": 1}, "power_on")
+    wait(2.5, "after power on")
+    print("== enable ==")
+    send(5, {"mode": 1}, "enable_all")
+    wait(2.5, "after enable")
+    with _lock:
+        st1 = status_trace[-1][1] if status_trace else None
+        pose1 = servo_trace[-1][1][:]
+    print(f"    status now {st1}; pose {[round(x,2) for x in pose1]}")
+    print(f"    pose shift on enable: {[round(b-a,2) for a,b in zip(pose0,pose1)]}")
+
+    for s in step_list:
+        print(f"== J0 step +{s} deg ==")
+        send(1, {"id": 0, "angle": round(a0 + s, 2), "delay_ms": 0}, f"j0_step_+{s}")
+        wait(args.settle, f"settle at +{s}")
+        print(f"== J0 return to {a0:.2f} deg ==")
+        send(1, {"id": 0, "angle": round(a0, 2), "delay_ms": 0}, f"j0_return_{s}")
+        wait(args.settle, f"settle back from +{s}")
+finally:
+    print("== restore ==")
+    try:
+        send(1, {"id": 0, "angle": round(a0, 2), "delay_ms": 0}, "restore_j0")
+        wait(3.0, "restore")
+        send(5, {"mode": 0}, "disable_all")
+        wait(1.0, "after disable")
+        send(6, {"power": 0}, "power_off")
+        wait(2.0, "after power off")
+    except Exception as exc:
+        print(f"    restore failed: {exc}")
+    with _lock:
+        st2 = status_trace[-1][1] if status_trace else None
+        pose2 = servo_trace[-1][1][:] if servo_trace else None
+    print(f"    final status {st2}; pose {[round(x,2) for x in pose2] if pose2 else None}")
+    if pose2:
+        print(f"    net pose change vs baseline: {[round(b-a,2) for a,b in zip(pose0,pose2)]}")
+    _stop.set()
+    th.join(timeout=2.0)
+    json.dump({
+        "a0": a0, "pose0": pose0, "steps": step_list, "settle_s": args.settle,
+        "servo_trace": servo_trace, "angle_trace": angle_trace,
+        "status_trace": status_trace, "events": events,
+    }, open(args.out, "w"))
+    print(f"    wrote {args.out}: {len(servo_trace)} servo, {len(angle_trace)} angle, "
+          f"{len(status_trace)} status samples, {len(events)} events")

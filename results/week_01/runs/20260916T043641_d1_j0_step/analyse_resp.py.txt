@@ -1,0 +1,68 @@
+import json, sys, statistics
+
+path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/d1_step_run1.json"
+d = json.load(open(path))
+st = [(t, p[0]) for t, p in d["servo_trace"]]          # current_servo_angle
+at = [(t, p[0]) for t, p in d.get("angle_trace", [])]   # rt/arm_Feedback funcode 1
+
+MOVE_EPS = 0.3   # deg; resting noise is <=0.05 deg and quantisation is 0.1 deg
+
+
+def analyse(series, name):
+    print(f"\n########## {name} ({len(series)} samples) ##########")
+    for t_cmd, label, payload in d["events"]:
+        if "j0_" not in label and "restore" not in label:
+            continue
+        try:
+            target = json.loads(payload)["data"]["angle"]
+        except Exception:
+            continue
+        pre = [v for t, v in series if t_cmd - 1.0 <= t < t_cmd]
+        post = [(t, v) for t, v in series if t_cmd <= t <= t_cmd + 3.5]
+        if not pre or not post:
+            continue
+        start = statistics.median(pre)
+        if abs(target - start) < 0.5:
+            continue  # no commanded excursion
+        # command -> first detected motion
+        t_move = next((t for t, v in post if abs(v - start) > MOVE_EPS), None)
+        latency = (t_move - t_cmd) if t_move else None
+        # peak speed from consecutive feedback samples
+        vels = [abs(b[1] - a[1]) / (b[0] - a[0]) for a, b in zip(post, post[1:]) if b[0] > a[0]]
+        peak = max(vels) if vels else 0.0
+        # settle: first time within 0.3 deg of target and staying there
+        t_settle = None
+        for i, (t, v) in enumerate(post):
+            if all(abs(w - target) <= 0.3 for _, w in post[i:i + 5]):
+                t_settle = t - t_cmd
+                break
+        tail = [v for t, v in post if t - t_cmd > 2.0]
+        print(f"  {label:<18} start={start:7.2f} -> target={target:7.2f} "
+              f"({target-start:+6.2f} deg)")
+        print(f"      latency   = {1e3*latency:7.1f} ms (quantised to the 111 ms feedback cycle)"
+              if latency is not None else "      latency   = not detected")
+        print(f"      peak rate = {peak:7.1f} deg/s = {peak*3.14159265/180:5.3f} rad/s")
+        print(f"      settle    = {1e3*t_settle:7.1f} ms" if t_settle else "      settle    = not reached")
+        if tail:
+            print(f"      hold      = mean {statistics.fmean(tail):7.2f}, "
+                  f"min {min(tail):.2f}, max {max(tail):.2f}, err {statistics.fmean(tail)-target:+.2f} deg")
+
+
+analyse(st, "current_servo_angle")
+if at:
+    analyse(at, "rt/arm_Feedback funcode 1")
+
+# Command-acknowledge latency from the status stream.
+print("\n########## status transitions vs commands ##########")
+for t_cmd, label, payload in d["events"]:
+    fc = json.loads(payload).get("funcode")
+    if fc not in (5, 6):
+        continue
+    prev = None
+    for t, s in d["status_trace"]:
+        cur = (s.get("enable_status"), s.get("power_status"))
+        if prev is not None and cur != prev and t >= t_cmd:
+            print(f"  {label:<14} sent {t_cmd:7.3f} -> status {prev} to {cur} at {t:7.3f} "
+                  f"({1e3*(t-t_cmd):6.1f} ms)")
+            break
+        prev = cur

@@ -1,0 +1,16 @@
+{
+  "mode": "hardware_level_gripper", "status": "completed", "seed": null, "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {"arm": "Unitree D1-550 welded to Go2", "robot_posture": "sitting; arm-only",
+               "arm_state_after": "parked folded and released; [-0.30,-90.80,92.50,-0.30,1.00,-0.10] deg"},
+  "measured": {
+    "tool_triad_link7_1": {"approach": [1.0, 0.0051, 0.0], "jaw": [0.0, -0.0006, 1.0], "up": [0.0051, -1.0, -0.0006]},
+    "unconstrained_elevation_deg_range": [-10.3, -27.2],
+    "targets": [
+      {"target_m": [0.25, 0.10, 0.35], "elevation_deg": -1.30, "roll_deg": -0.18, "error_mm": 5.73},
+      {"target_m": [0.20, 0.18, 0.30], "elevation_deg": -1.48, "roll_deg": -0.14, "error_mm": 6.78},
+      {"target_m": [0.30, 0.00, 0.28], "elevation_deg": -1.49, "roll_deg": 0.13, "error_mm": 6.38}],
+    "sphere_reachability": {"position_only_pct": 89, "level_staged_pct": 51, "level_single_stage_pct": 24}
+  },
+  "findings": ["F-037"],
+  "open": "Consistent -1.4 deg pitch bias, likely the unmeasured joint zero offset (F-023/G4). Camera not mounted, so level gripper is not yet shown to mean level image."
+}

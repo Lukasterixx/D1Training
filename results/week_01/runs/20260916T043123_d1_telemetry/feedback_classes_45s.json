@@ -1,0 +1,26 @@
+{
+  "elapsed_s": 45.0740499110002,
+  "total": 854,
+  "groups": {
+    "address=2 funcode=1 keys=angle0,angle1,angle2,angle3,angle4,angle5,angle6": {
+      "count": 405,
+      "rate_hz": 8.985214348381879,
+      "median_gap_ms": 111.00949449996733,
+      "stdev_gap_ms": 0.42045359851395875,
+      "min_gap_ms": 110.24720799991883,
+      "max_gap_ms": 116.0992879999867
+    },
+    "address=2 funcode=3 keys=enable_status,error_status,power_status": {
+      "count": 449,
+      "rate_hz": 9.961385783761639,
+      "median_gap_ms": 100.45478999995794,
+      "stdev_gap_ms": 0.17012022344129063,
+      "min_gap_ms": 100.03468000013527,
+      "max_gap_ms": 102.71927500002676
+    }
+  },
+  "examples": {
+    "address=2 funcode=1 keys=angle0,angle1,angle2,angle3,angle4,angle5,angle6": "{\"seq\":10,\"address\":2,\"funcode\":1,\"data\":{\"angle0\":2.0,\"angle1\":-90.9000015258789,\"angle2\":91.69999694824219,\"angle3\":-3.0999999046325684,\"angle4\":4.199999809265137,\"angle5\":3.0999999046325684,\"angle6\":40.79999923706055}}",
+    "address=2 funcode=3 keys=enable_status,error_status,power_status": "{\"seq\":10,\"address\":2,\"funcode\":3,\"data\":{\"enable_status\":0,\"power_status\":0,\"error_status\":0}}"
+  }
+}

@@ -1,0 +1,29 @@
+test_angular_jacobian_matches_finite_differences (tests.test_d1_ik.KinematicsTests.test_angular_jacobian_matches_finite_differences) ... ok
+test_linear_jacobian_matches_finite_differences (tests.test_d1_ik.KinematicsTests.test_linear_jacobian_matches_finite_differences)
+The geometric Jacobian is analytic; a numerical derivative must agree. ... ok
+test_rotation_error_is_zero_for_identical_frames (tests.test_d1_ik.KinematicsTests.test_rotation_error_is_zero_for_identical_frames) ... ok
+test_rotation_error_recovers_a_known_rotation (tests.test_d1_ik.KinematicsTests.test_rotation_error_recovers_a_known_rotation) ... ok
+test_servo_conversion_round_trips (tests.test_d1_ik.KinematicsTests.test_servo_conversion_round_trips) ... ok
+test_collision_proxy_flags_a_pose_folded_into_the_body (tests.test_d1_ik.SolverTests.test_collision_proxy_flags_a_pose_folded_into_the_body)
+base_height engages the trunk/ground proxy; a target under the robot is not clear. ... ok
+test_full_pose_solve_recovers_position_and_orientation (tests.test_d1_ik.SolverTests.test_full_pose_solve_recovers_position_and_orientation) ... ok
+test_position_only_solve_reaches_a_reachable_point (tests.test_d1_ik.SolverTests.test_position_only_solve_reaches_a_reachable_point)
+Every target is the FK of a known configuration, so all are reachable. ... ok
+test_seeding_at_the_goal_converges_immediately (tests.test_d1_ik.SolverTests.test_seeding_at_the_goal_converges_immediately) ... ok
+test_solution_always_respects_joint_limits (tests.test_d1_ik.SolverTests.test_solution_always_respects_joint_limits) ... ok
+test_unreachable_target_reports_failure_without_nan (tests.test_d1_ik.SolverTests.test_unreachable_target_reports_failure_without_nan) ... ok
+test_clearance_proxy_refuses_to_move (tests.test_d1_hardware.MoverTests.test_clearance_proxy_refuses_to_move)
+A target under the robot must raise rather than command anything. ... ok
+test_dry_run_converges_on_a_reachable_target (tests.test_d1_hardware.MoverTests.test_dry_run_converges_on_a_reachable_target) ... ok
+test_dry_run_publishes_nothing (tests.test_d1_hardware.MoverTests.test_dry_run_publishes_nothing) ... ok
+test_every_commanded_step_respects_the_cap (tests.test_d1_hardware.MoverTests.test_every_commanded_step_respects_the_cap) ... ok
+test_execute_commands_the_arm_and_reaches_the_target (tests.test_d1_hardware.MoverTests.test_execute_commands_the_arm_and_reaches_the_target) ... ok
+test_step_towards_caps_the_largest_joint_move (tests.test_d1_hardware.MoverTests.test_step_towards_caps_the_largest_joint_move) ... ok
+test_step_towards_does_not_overshoot_a_near_goal (tests.test_d1_hardware.MoverTests.test_step_towards_does_not_overshoot_a_near_goal) ... ok
+test_measured_protocol_constants (tests.test_d1_hardware.ProtocolTests.test_measured_protocol_constants)
+These encode hardware measurements (F-020); drift here is a real change. ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.488s
+
+OK

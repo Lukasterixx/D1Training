@@ -1,0 +1,42 @@
+connected. servos [-38.70, -29.70, +46.30, -0.30, -2.60, +0.20, +40.90] deg  power=True enable=True error=0
+tool now     [+0.2190, +0.1577, +0.3557] m
+target       [+0.2200, +0.1600, +0.3600] m
+plan         converged=True err=0.01 mm iters=3 clear=True
+goal joints  [-38.95, -29.35, +45.65, -0.33, -2.99, +0.22] deg
+joint delta  [-0.25, +0.35, -0.65, -0.03, -0.39, +0.02] deg
+    0 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    1 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    2 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    3 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    4 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    5 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    6 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+    7 cmd [-39.0, -29.4, +45.7, -0.3, -3.0, +0.2] tool [+0.2189, +0.1576, +0.3550] err    5.62 mm
+    8 cmd [-39.0, -29.4, +45.7, -0.3, -3.0, +0.2] tool [+0.2189, +0.1576, +0.3550] err    5.62 mm
+    9 cmd [-39.0, -29.4, +45.7, -0.3, -3.0, +0.2] tool [+0.2189, +0.1576, +0.3550] err    5.62 mm
+   10 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+   11 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+   12 cmd [-39.0, -29.4, +45.6, -0.3, -3.0, +0.2] tool [+0.2190, +0.1577, +0.3557] err    4.95 mm
+
+13 steps, final error 4.95 mm (stalled)
+  stalled: the arm stopped closing the gap. On this arm that is the ~0.7 deg joint tracking offset (F-029), not a solver failure. Holding longer does not close it.
+
+settling for 2.0s with no further commands:
+   t= 0.00s  err    4.95 mm
+   t= 0.15s  err    5.62 mm
+   t= 0.26s  err    4.95 mm
+   t= 0.37s  err    5.62 mm
+   t= 0.49s  err    4.95 mm
+   t= 0.60s  err    4.98 mm
+   t= 0.71s  err    4.95 mm
+   t= 0.82s  err    5.62 mm
+   t= 0.93s  err    4.95 mm
+   t= 1.04s  err    5.62 mm
+   t= 1.15s  err    4.95 mm
+   t= 1.49s  err    5.62 mm
+   t= 1.60s  err    4.95 mm
+   t= 1.71s  err    5.62 mm
+   t= 1.93s  err    4.95 mm
+settled error 4.95 mm (loop ended at 4.95 mm)
+settled joints [-38.70, -29.70, +46.30, -0.30, -2.60, +0.20] deg
+arm left holding position (not released). `release` drops torque and an extended arm will fall.

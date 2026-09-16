@@ -1,0 +1,25 @@
+{
+  "mode": "hardware_sign_validation",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only; raised pose [0,-45,55,0,0,0] deg",
+    "observer": "Lukas, watching, predictions stated before each move",
+    "arm_state_after": "parked folded and released; [+0.10,-90.90,92.40,-0.20,1.70,-0.30] deg, error_status=0"
+  },
+  "arguments": {"joints": [0, 3, 4, 5], "amplitude_deg": 30, "hold_s": 3},
+  "measured": {
+    "j0": {"predicted": "right", "observed": "right", "sign": -1},
+    "j3": {"predicted": "left side up", "observed": "left side down", "sign": -1},
+    "j4": {"predicted": "pitch down", "observed": "pitch down", "sign": 1},
+    "j5": {"predicted": "left side down", "observed": "left side down", "sign": 1},
+    "peak_deg_s_range": [68.7, 69.7],
+    "settle_ms_range": [516, 578],
+    "hold_band_deg_max": 0.10
+  },
+  "result": "SERVO_SIGN = [-1, 1, 1, -1, 1, 1]; two of six inverted. Model now reproduces all four observations.",
+  "findings": ["F-034"],
+  "open": "J1/J2 confirmed only indirectly; joint zero offsets still unmeasured; deploy.yaml still carries no sign convention (G4)."
+}

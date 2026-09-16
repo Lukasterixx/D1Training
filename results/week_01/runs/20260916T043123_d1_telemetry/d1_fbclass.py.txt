@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Read-only: classify the messages on rt/arm_Feedback and time each class."""
+import argparse, json, os, statistics, time
+from dataclasses import dataclass
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--iface", default="enP8p1s0")
+ap.add_argument("--seconds", type=float, default=20.0)
+ap.add_argument("--out", default="/tmp/d1_fbclass.json")
+args = ap.parse_args()
+
+os.environ["CYCLONEDDS_URI"] = (
+    "<CycloneDDS><Domain><General><Interfaces>"
+    f"<NetworkInterface name='{args.iface}'/>"
+    "</Interfaces></General></Domain></CycloneDDS>"
+)
+
+from cyclonedds.core import ReadCondition, InstanceState, SampleState, ViewState, WaitSet
+from cyclonedds.domain import DomainParticipant
+from cyclonedds.idl import IdlStruct
+from cyclonedds.sub import DataReader
+from cyclonedds.topic import Topic
+from cyclonedds.util import duration
+
+
+@dataclass
+class ArmString(IdlStruct, typename="unitree_arm::msg::dds_::ArmString_"):
+    data_: str = ""
+
+
+dp = DomainParticipant(0)
+r = DataReader(dp, Topic(dp, "rt/arm_Feedback", ArmString))
+ws = WaitSet(dp)
+ws.attach(ReadCondition(r, SampleState.Any | ViewState.Any | InstanceState.Any))
+
+rows = []
+t0 = time.monotonic()
+while time.monotonic() - t0 < args.seconds:
+    try:
+        ws.wait(duration(milliseconds=500))
+    except Exception:
+        pass
+    now = time.monotonic()
+    for s in r.take(N=100):
+        rows.append((now - t0, s.data_))
+
+# Group by (address, funcode) and by the set of data keys.
+groups = {}
+for t, raw in rows:
+    try:
+        m = json.loads(raw)
+        key = f"address={m.get('address')} funcode={m.get('funcode')} keys={','.join(sorted((m.get('data') or {}).keys()))}"
+    except Exception:
+        key = "UNPARSEABLE"
+    groups.setdefault(key, []).append(t)
+
+elapsed = time.monotonic() - t0
+out = {"elapsed_s": elapsed, "total": len(rows), "groups": {}}
+for k, ts in sorted(groups.items()):
+    gaps = [b - a for a, b in zip(ts, ts[1:])]
+    out["groups"][k] = {
+        "count": len(ts),
+        "rate_hz": len(ts) / elapsed,
+        "median_gap_ms": 1e3 * statistics.median(gaps) if gaps else None,
+        "stdev_gap_ms": 1e3 * statistics.stdev(gaps) if len(gaps) > 1 else 0.0,
+        "min_gap_ms": 1e3 * min(gaps) if gaps else None,
+        "max_gap_ms": 1e3 * max(gaps) if gaps else None,
+    }
+out["examples"] = {k: next(raw for t, raw in rows if k in (
+    (lambda m: f"address={m.get('address')} funcode={m.get('funcode')} keys={','.join(sorted((m.get('data') or {}).keys()))}")(json.loads(raw))
+    if raw.strip().startswith("{") else "UNPARSEABLE",)) for k in out["groups"]}
+json.dump(out, open(args.out, "w"), indent=2)
+print(json.dumps(out, indent=2)[:3000])

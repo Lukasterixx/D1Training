@@ -1,0 +1,32 @@
+{
+  "mode": "hardware_motion_tuning",
+  "status": "completed",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only",
+    "observer": "Lukas, watching, reported stepping and confirmed the cap sweep",
+    "arm_state_after": "parked folded, released; [0.00,-90.80,92.30,-0.30,1.30,-0.10] deg, error_status=0"
+  },
+  "measured": {
+    "single_waypoint_profile_deg_s": [0, 28, 67.5, 69.3, 69.3, 34.3, 1.8, 0],
+    "cap_sweep": {"5": {"per_cycle_deg": 2.5, "duty": 0.30}, "8": {"per_cycle_deg": 4.4, "duty": 0.54},
+                  "12": {"per_cycle_deg": 4.9, "duty": 0.60}, "16": {"per_cycle_deg": 5.3, "duty": 0.64}},
+    "oneshot_outbound": {"excursion_deg": 45.0, "error_mm": 4.87, "per_cycle_deg": 7.8, "duty": 1.00},
+    "oneshot_return": {"excursion_deg": 44.6, "error_mm": 4.18, "per_cycle_deg": 7.9, "duty": 1.00}
+  },
+  "changes": [
+    "run_oneshot(): one waypoint per pass, max_excursion_deg guard, STOP via hold_here()",
+    "client.hold_here(): controlled stop that keeps torque, unlike release",
+    "analyse_motion(): duty cycle against an independently measured peak rate",
+    "sub-floor correction passes skipped",
+    "d1_ui move now uses run_oneshot"
+  ],
+  "bugs_fixed": [
+    "_await_still counted command latency as arrival",
+    "_await_still counted stale cached samples as stillness (reported 199.73 mm for a completed move)",
+    "analyse_motion originally derived its saturation reference from the trace itself, so it could never detect stepping"
+  ],
+  "findings": ["F-035"]
+}

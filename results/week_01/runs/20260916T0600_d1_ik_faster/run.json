@@ -1,0 +1,28 @@
+{
+  "mode": "hardware_ik_execute",
+  "status": "completed_with_incident",
+  "seed": null,
+  "git_commit": "313318e8360ef7cc6ae03c3f80c48c226d3d08c9",
+  "hardware": {
+    "arm": "Unitree D1-550 welded to Go2",
+    "robot_posture": "sitting; arm-only",
+    "incident": "uncommanded drop of 60.8 deg (J1) and 35.1 deg (J2) when the CLI released an extended arm",
+    "arm_state_after": "folded rest pose, within 0.4 deg of session start; error_status=0; left holding, not released"
+  },
+  "arguments": {"target_base_frame_m": [0.25, 0.08, 0.32], "max_joint_step_deg": 6, "settle_s": 3, "execute": true},
+  "measured": {
+    "travel_mm": 183.8,
+    "commanded_rate_deg_s": 54,
+    "steps_predicted_dry_run": 10,
+    "steps_executed": 99,
+    "loop_end_error_mm": 4.78,
+    "settled_error_mm": 6.27,
+    "settle_band_mm": [5.93, 6.68],
+    "worst_joint_tracking_error_deg": 0.7,
+    "drop_j1_deg": 60.8,
+    "drop_j2_deg": 35.1,
+    "return_to_session_start_mm": 1.0
+  },
+  "findings": ["F-028", "F-029"],
+  "notes": "Second target, roughly twice the speed. Settle-and-measure disproved F-026's settling-lag explanation. The release-at-end-of-move behaviour dropped the arm and has been removed."
+}
