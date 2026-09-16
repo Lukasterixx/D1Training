@@ -104,14 +104,56 @@ D1_FEEDBACK_HZ = 9.0  # measured: 8.9986 Hz over 120 s
 
 # NOT measured. The d1_sdk samples and the VIP-Rescue driver both stream setpoints at 10 Hz, and that
 # is what this models, but the arm's maximum accepted command rate was never tested -- only that single
-# commands are honoured. A J0 step is answered in about 127 ms (F-021), which is a transport-and-controller
-# delay this profile does not represent: `arm_command_hold_steps` is a command *hold*, not a *delay*.
+# commands are honoured.
 D1_COMMAND_HZ = 10.0
+
+# The D1 firmware's commanded motion: what happens between a setpoint arriving and the joint getting
+# there. FITTED to recorded hardware, 2026-09-17 (F-045), by `position_only/arm_response.py`, which
+# simulates `core.TrapezoidTracker` -- the implementation the task uses -- against the raw 9 Hz samples
+# of the six 30 deg single-joint steps (F-033 sweeps, 12 legs, 234 samples, 0.34 deg RMS) and the F-035
+# streaming cap sweep.
+#
+# These replace two figures that were artefacts of the 111 ms feedback cycle, not properties of the arm:
+# F-021's "~127 ms command-to-motion delay" is mostly the wait for the next sample (a 127 ms dead time
+# fits the steps 7x worse), and F-035's "two cycles to reach cruise" is how a ~80 ms ramp looks when it
+# is sampled every 111 ms.
+#
+# Dead time and acceleration trade off on single steps -- every dead time from 0 to 40 ms fits within
+# 0.02 deg RMS -- so the streaming sweep decides: 0-10 ms reproduce it best, and 10 ms is taken as the
+# best streaming fit among the step ties. Treat 0-10 ms as the supported range, not 10 ms as a
+# measurement. The feedback transport age is folded into it, so the loop's dominant real latency remains
+# the 111 ms feedback period, which `D1_FEEDBACK_HZ` already models.
+D1_COMMAND_DEAD_TIME_S = 0.010        # fitted range 0-10 ms
+D1_PLAN_ACCEL_RAD_S2 = 15.5           # fitted at that dead time (12.5 at 0 ms)
+D1_PLAN_DECEL_RAD_S2 = 17.4           # fitted
+# Fraction of planned speed a new setpoint keeps. FITTED to the F-035 cap sweep: streaming a waypoint
+# per cycle covered 4.9-5.3 deg per 111 ms where a speed-preserving planner (1.0) gives 7.8; restarting
+# from rest (0.0) gives 5.0. Provisional: that sweep ran a Cartesian loop that re-solved IK from each
+# fresh sample, and at a 5 deg cap the model covers 4.3 deg/cycle against 2.5 measured.
+D1_REPLAN_VELOCITY_RETENTION = 0.0
 
 # Go2 legs: unitree_rl_lab's controller publishes LowCmd from a 1 kHz thread that picks up the 50 Hz
 # policy's latest action. Isaac Lab counts actuator delay in physics steps (5 ms here); 0-2 steps
 # covers pickup, state age, inference and transport. An estimate from the loop structure, not a measurement.
 GO2_LEG_DELAY_PHYSICS_STEPS = (0, 2)
+
+
+def arm_trajectory(profile: str) -> dict | None:
+    """The D1 firmware's motion planner for a profile: "measured" (F-045) or "none" (setpoints act at once).
+
+    Joint speed ceilings are not repeated here; they are `D1_VELOCITY_LIMIT_RAD_S`, which the planner
+    and PhysX share.
+    """
+    if profile == "none":
+        return None
+    if profile != "measured":
+        raise ValueError(f"Unknown arm trajectory profile: {profile!r}")
+    return {
+        "dead_time_s": D1_COMMAND_DEAD_TIME_S,
+        "accel_rad_s2": D1_PLAN_ACCEL_RAD_S2,
+        "decel_rad_s2": D1_PLAN_DECEL_RAD_S2,
+        "replan_velocity_retention": D1_REPLAN_VELOCITY_RETENTION,
+    }
 
 
 def interface_timing(latency: str, policy_hz: float, leg_actuator: str) -> dict:

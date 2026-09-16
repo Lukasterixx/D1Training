@@ -3,8 +3,8 @@
   "role": "test",
   "episode_count": 100,
   "seed": 20260918,
-  "created_utc": "2026-09-16T09:50:20Z",
-  "content_sha256": "3a39f0b95baf848181bb10c93425a3a6841a1c147fd34de5c125b532bcce4deb",
+  "created_utc": "2026-09-16T23:50:34Z",
+  "content_sha256": "a7069027f9eeb405a2bcd77fa91e0834dc3660d9a9b9985c39e6f3065944d60c",
   "note": "Frozen evaluation cases. Rebuilding with the same arguments reproduces this file; a different content_sha256 means the comparison changed.",
   "conditions": {
     "spawn_height_m": 0.3,
@@ -58,7 +58,21 @@
       2
     ],
     "arm_command_hold_steps": 5,
-    "arm_feedback_period_steps": 6
+    "arm_feedback_period_steps": 6,
+    "arm_trajectory": {
+      "dead_time_s": 0.01,
+      "accel_rad_s2": 15.5,
+      "decel_rad_s2": 17.4,
+      "replan_velocity_retention": 0.0,
+      "velocity_limits_rad_s": [
+        1.25,
+        1.29,
+        1.23,
+        1.21,
+        1.25,
+        1.25
+      ]
+    }
   },
   "episodes": [
     {

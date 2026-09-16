@@ -1,0 +1,1666 @@
+{
+  "all_passed": false,
+  "failed": [
+    "arm_planner_bounded"
+  ],
+  "checks": [
+    {
+      "name": "arm_command_hold",
+      "passed": true,
+      "expected": "arm targets change exactly every 5 policy step(s)",
+      "observed": {
+        "change_steps_per_env": {
+          "0": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "1": [
+            2,
+            7,
+            12,
+            17,
+            22,
+            27
+          ],
+          "2": [
+            1,
+            6,
+            11,
+            16,
+            21,
+            26
+          ],
+          "3": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "4": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ],
+          "5": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            30
+          ],
+          "6": [
+            2,
+            7,
+            12,
+            17,
+            22,
+            27
+          ],
+          "7": [
+            3,
+            8,
+            13,
+            18,
+            23,
+            28
+          ]
+        }
+      }
+    },
+    {
+      "name": "arm_feedback_sampling",
+      "passed": true,
+      "expected": "arm angle feedback changes exactly every 6 policy step(s)",
+      "observed": {
+        "change_steps_per_env": {
+          "0": [
+            3,
+            9,
+            15,
+            21,
+            27
+          ],
+          "1": [
+            6,
+            12,
+            18,
+            24,
+            30
+          ],
+          "2": [
+            1,
+            7,
+            13,
+            19,
+            25
+          ],
+          "3": [
+            4,
+            10,
+            16,
+            22,
+            28
+          ],
+          "4": [
+            2,
+            8,
+            14,
+            20,
+            26
+          ],
+          "5": [
+            4,
+            10,
+            16,
+            22,
+            28
+          ],
+          "6": [
+            4,
+            10,
+            16,
+            22,
+            28
+          ],
+          "7": [
+            2,
+            8,
+            14,
+            20,
+            26
+          ]
+        }
+      }
+    },
+    {
+      "name": "arm_feedback_is_current_at_sample",
+      "passed": true,
+      "expected": "a fresh arm sample equals the simulator's joint angle at that step (< 1e-5 rad)",
+      "observed": {
+        "max_abs_error_rad": 0.0
+      }
+    },
+    {
+      "name": "arm_velocity_from_samples",
+      "passed": true,
+      "expected": "arm velocity = (sample - previous sample) / sample interval, held between samples (< 1e-3 rad/s)",
+      "observed": {
+        "max_abs_error_rad_s": 1.1920928955078125e-07,
+        "held_between_samples": true
+      }
+    },
+    {
+      "name": "leg_feedback_every_step",
+      "passed": true,
+      "expected": "leg joint angles change every policy step",
+      "observed": {
+        "envs_checked": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "name": "timing_trace_uninterrupted",
+      "passed": true,
+      "expected": "no environment resets during the timing trace",
+      "observed": {
+        "envs_without_reset": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "name": "leg_delay_in_range",
+      "passed": true,
+      "expected": "per-env leg command delay within [0, 2] physics steps",
+      "observed": {
+        "lags": [
+          2,
+          0,
+          1,
+          0,
+          1,
+          0,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "name": "termination_control_env0",
+      "passed": true,
+      "expected": "no term fires, no reset, episode length continues, same target, base moves < 0.02 m",
+      "observed": {
+        "env": 0,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.002090930938720703
+      }
+    },
+    {
+      "name": "termination_time_limit_env1",
+      "passed": true,
+      "expected": "exactly ['time_out'] fire; the env resets to the default root pose and the soft-limit-clamped default joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 1,
+        "role": "time_limit",
+        "induced": "episode_length_buf set to 499",
+        "terms_fired": [
+          "time_out"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_low_base_env2",
+      "passed": true,
+      "expected": "exactly ['low_base'] fire; the env resets to the default root pose and the soft-limit-clamped default joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 2,
+        "role": "low_base",
+        "induced": "base placed at 0.10 m, level, at rest",
+        "terms_fired": [
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_tilt_env3",
+      "passed": true,
+      "expected": "exactly ['bad_orientation'] fire; the env resets to the default root pose and the soft-limit-clamped default joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 3,
+        "role": "tilt",
+        "induced": "base rolled 60 deg at the settled height 0.269 m",
+        "terms_fired": [
+          "bad_orientation"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_base_contact_env4",
+      "passed": true,
+      "expected": "exactly ['base_contact', 'low_base'] fire; the env resets to the default root pose and the soft-limit-clamped default joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 4,
+        "role": "base_contact",
+        "induced": "base centre placed at ground level, level, so the base is half in the ground",
+        "terms_fired": [
+          "base_contact",
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_workspace_exit_env5",
+      "passed": true,
+      "expected": "exactly ['outside_workspace'] fire; the env resets to the default root pose and the soft-limit-clamped default joints (< 1e-4), episode length 0, a new target inside the box, arm command hold at default",
+      "observed": {
+        "env": 5,
+        "role": "workspace_exit",
+        "induced": "base moved 0.80 m along x at the settled height 0.269 m",
+        "terms_fired": [
+          "outside_workspace"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      }
+    },
+    {
+      "name": "termination_control_env6",
+      "passed": true,
+      "expected": "no term fires, no reset, episode length continues, same target, base moves < 0.02 m",
+      "observed": {
+        "env": 6,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.0020885467529296875
+      }
+    },
+    {
+      "name": "termination_control_env7",
+      "passed": true,
+      "expected": "no term fires, no reset, episode length continues, same target, base moves < 0.02 m",
+      "observed": {
+        "env": 7,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.0020880699157714844
+      }
+    },
+    {
+      "name": "no_termination_right_after_reset",
+      "passed": true,
+      "expected": "no environment terminates in the 5 steps after the induced resets",
+      "observed": {
+        "envs_terminated": []
+      }
+    },
+    {
+      "name": "arm_holds_zero_pose_at_rest",
+      "passed": true,
+      "expected": "standing with zero actions, the arm holds its zero pose: Link6 within 5 mm of where the target angles put it (model gravity torque is below each effort limit)",
+      "observed": {
+        "settle_trace_step_then_mean_deviation_rad": [
+          [
+            0,
+            0.0,
+            9.999999747378752e-05,
+            0.0,
+            0.0,
+            9.999999747378752e-05,
+            0.0
+          ],
+          [
+            10,
+            0.0,
+            0.003800000064074993,
+            0.011800000444054604,
+            0.0007999999797903001,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            20,
+            0.0,
+            0.00279999990016222,
+            0.01080000028014183,
+            0.000699999975040555,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            30,
+            0.0,
+            0.0017999999690800905,
+            0.010499999858438969,
+            0.0006000000284984708,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            40,
+            0.0,
+            0.0020000000949949026,
+            0.012299999594688416,
+            0.0007999999797903001,
+            0.0010000000474974513,
+            0.0
+          ],
+          [
+            50,
+            0.0,
+            0.0013000000035390258,
+            0.010900000110268593,
+            0.000699999975040555,
+            0.0010000000474974513,
+            0.0
+          ],
+          [
+            60,
+            0.0,
+            0.0020000000949949026,
+            0.011699999682605267,
+            0.000699999975040555,
+            0.0010000000474974513,
+            0.0
+          ],
+          [
+            70,
+            0.0,
+            0.002300000051036477,
+            0.011099999770522118,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            80,
+            0.0,
+            0.0027000000700354576,
+            0.011099999770522118,
+            0.000699999975040555,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            90,
+            0.0,
+            0.002899999963119626,
+            0.01119999960064888,
+            0.000699999975040555,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            100,
+            0.0,
+            0.0027000000700354576,
+            0.010999999940395355,
+            0.000699999975040555,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            110,
+            0.0,
+            0.0024999999441206455,
+            0.01119999960064888,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            120,
+            0.0,
+            0.002099999925121665,
+            0.011300000362098217,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            130,
+            0.0,
+            0.0020000000949949026,
+            0.01140000019222498,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            140,
+            0.0,
+            0.0020000000949949026,
+            0.01140000019222498,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ]
+        ],
+        "joint_friction_coeff": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "joint_dynamic_friction_coeff": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "joint_viscous_friction_coeff": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "joint_armature": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "joint_damping": [
+          400.0,
+          400.0,
+          400.0,
+          400.0,
+          400.0,
+          400.0
+        ],
+        "joint_stiffness": [
+          4000.0,
+          4000.0,
+          4000.0,
+          4000.0,
+          4000.0,
+          4000.0
+        ],
+        "arm_joint_deviation_rad_mean_over_envs": [
+          0.0,
+          0.002199999988079071,
+          0.011300000362098217,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        "arm_joint_deviation_rad_max_over_envs": [
+          0.0,
+          0.002199999988079071,
+          0.011300000362098217,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        "model_gravity_torque_at_rest_nm": [
+          0.0,
+          -1.079,
+          -1.074,
+          0.0,
+          -0.292,
+          -0.0
+        ],
+        "computed_torque_nm_env0": [
+          -0.14499999582767487,
+          -4.382999897003174,
+          -25.850000381469727,
+          2.115999937057495,
+          2.933000087738037,
+          0.11500000208616257
+        ],
+        "applied_torque_nm_env0": [
+          -0.14499999582767487,
+          -3.299999952316284,
+          -1.7000000476837158,
+          1.7000000476837158,
+          1.7000000476837158,
+          0.11500000208616257
+        ],
+        "effort_limit_nm": [
+          3.299999952316284,
+          3.299999952316284,
+          1.7000000476837158,
+          1.7000000476837158,
+          1.7000000476837158,
+          1.7000000476837158
+        ],
+        "physx_projected_joint_force_env0": [
+          0.0,
+          -1.090999960899353,
+          -1.0750000476837158,
+          0.0,
+          -0.29100000858306885,
+          0.0
+        ],
+        "reseated_on_target_then_held_trace": [
+          [
+            0,
+            0.0,
+            0.00039999998989515007,
+            0.0019000000320374966,
+            9.999999747378752e-05,
+            0.00019999999494757503,
+            0.0
+          ],
+          [
+            10,
+            0.0,
+            0.002199999988079071,
+            0.010099999606609344,
+            0.0006000000284984708,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            20,
+            0.0,
+            0.0024999999441206455,
+            0.010999999940395355,
+            0.000699999975040555,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            30,
+            0.0,
+            0.0026000000070780516,
+            0.011099999770522118,
+            0.000699999975040555,
+            0.0007999999797903001,
+            0.0
+          ],
+          [
+            40,
+            0.0,
+            0.0024999999441206455,
+            0.01119999960064888,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            50,
+            0.0,
+            0.002400000113993883,
+            0.01119999960064888,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            60,
+            0.0,
+            0.002199999988079071,
+            0.011300000362098217,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            70,
+            0.0,
+            0.002199999988079071,
+            0.011300000362098217,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            80,
+            0.0,
+            0.002199999988079071,
+            0.011300000362098217,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            90,
+            0.0,
+            0.002300000051036477,
+            0.01119999960064888,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ],
+          [
+            99,
+            0.0,
+            0.002400000113993883,
+            0.01119999960064888,
+            0.000699999975040555,
+            0.0008999999845400453,
+            0.0
+          ]
+        ],
+        "reseated_max_deviation_after_100_steps_rad": 0.011222625151276588,
+        "link6_droop_m_max_over_envs": 0.003865895115159944
+      }
+    },
+    {
+      "name": "arm_link_masses_match_weld_model",
+      "passed": true,
+      "expected": "each arm link's PhysX mass and centre of mass match the weld mass model and URDF (< 1 g, < 1 mm)",
+      "observed": {
+        "max_mass_error_kg": 0.0,
+        "max_com_error_m": 3.2305717406755363e-09,
+        "links": {
+          "base_link": {
+            "sim_kg": 2.1651,
+            "model_kg": 2.1651,
+            "sim_com_m": [
+              -0.0005000000237487257,
+              -0.0,
+              0.017100000753998756
+            ],
+            "urdf_com_m": [
+              -0.0005,
+              -0.0,
+              0.0171
+            ]
+          },
+          "Link1": {
+            "sim_kg": 0.1917,
+            "model_kg": 0.1917,
+            "sim_com_m": [
+              0.0024999999441206455,
+              9.999999747378752e-05,
+              0.03269999846816063
+            ],
+            "urdf_com_m": [
+              0.0025,
+              0.0001,
+              0.0327
+            ]
+          },
+          "Link2": {
+            "sim_kg": 0.2621,
+            "model_kg": 0.2621,
+            "sim_com_m": [
+              0.00019999999494757503,
+              0.19200000166893005,
+              -0.027000000700354576
+            ],
+            "urdf_com_m": [
+              0.0002,
+              0.192,
+              -0.027
+            ]
+          },
+          "Link3": {
+            "sim_kg": 0.1079,
+            "model_kg": 0.1079,
+            "sim_com_m": [
+              0.015200000256299973,
+              0.04450000077486038,
+              -0.027499999850988388
+            ],
+            "urdf_com_m": [
+              0.0152,
+              0.0445,
+              -0.0275
+            ]
+          },
+          "Link4": {
+            "sim_kg": 0.1283,
+            "model_kg": 0.1283,
+            "sim_com_m": [
+              -0.0003000000142492354,
+              -0.00019999999494757503,
+              0.09130000323057175
+            ],
+            "urdf_com_m": [
+              -0.0003,
+              -0.0002,
+              0.0913
+            ]
+          },
+          "Link5": {
+            "sim_kg": 0.0988,
+            "model_kg": 0.0988,
+            "sim_com_m": [
+              0.0406000018119812,
+              0.006300000008195639,
+              -0.023800000548362732
+            ],
+            "urdf_com_m": [
+              0.0406,
+              0.0063,
+              -0.0238
+            ]
+          },
+          "Link6": {
+            "sim_kg": 0.1679,
+            "model_kg": 0.1679,
+            "sim_com_m": [
+              -0.006899999920278788,
+              -0.0,
+              0.03970000147819519
+            ],
+            "urdf_com_m": [
+              -0.0069,
+              -0.0,
+              0.0397
+            ]
+          },
+          "Link7_1": {
+            "sim_kg": 0.015,
+            "model_kg": 0.015,
+            "sim_com_m": [
+              0.01889999955892563,
+              0.006000000052154064,
+              0.01209999993443489
+            ],
+            "urdf_com_m": [
+              0.0189,
+              0.006,
+              0.0121
+            ]
+          },
+          "Link7_2": {
+            "sim_kg": 0.015,
+            "model_kg": 0.015,
+            "sim_com_m": [
+              0.01889999955892563,
+              -0.006000000052154064,
+              0.01209999993443489
+            ],
+            "urdf_com_m": [
+              0.0189,
+              -0.006,
+              0.0121
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "link6_matches_urdf_kinematics",
+      "passed": true,
+      "expected": "Link6's position in the base frame equals URDF forward kinematics at the simulator's joint angles (< 1 mm)",
+      "observed": {
+        "max_error_m": 5.426508347218206e-07,
+        "configs": 8
+      }
+    },
+    {
+      "name": "tool_point_matches_urdf_kinematics",
+      "passed": true,
+      "expected": "the command term's controlled point equals URDF forward kinematics of its body and offset, at the simulator's arm and jaw positions (< 1 mm)",
+      "observed": {
+        "max_error_m": 8.596265268683858e-07,
+        "body": "Link7_1",
+        "offset_m": [
+          0.0547,
+          0.006,
+          0.017
+        ],
+        "error_m_per_env": [
+          1e-06,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1e-06
+        ],
+        "jaw_m_per_env": [
+          [
+            9.999999747378752e-06,
+            -0.0
+          ],
+          [
+            0.0,
+            -9.999999747378752e-06
+          ],
+          [
+            0.0,
+            -0.0
+          ],
+          [
+            0.0,
+            -0.0
+          ],
+          [
+            0.0,
+            -0.0
+          ],
+          [
+            1.9999999494757503e-05,
+            0.0
+          ],
+          [
+            0.0,
+            -0.0
+          ],
+          [
+            0.0,
+            -0.0
+          ]
+        ],
+        "arm_angles_rad_per_env": [
+          [
+            0.5740000009536743,
+            -0.6489999890327454,
+            -1.2970000505447388,
+            -2.0380001068115234,
+            0.8840000033378601,
+            1.7389999628067017
+          ],
+          [
+            0.4490000009536743,
+            0.6470000147819519,
+            0.12200000137090683,
+            1.8339999914169312,
+            0.8880000114440918,
+            -2.0969998836517334
+          ],
+          [
+            1.5069999694824219,
+            -1.315000057220459,
+            0.6470000147819519,
+            -1.3669999837875366,
+            1.0199999809265137,
+            0.16899999976158142
+          ],
+          [
+            -0.8410000205039978,
+            -0.21799999475479126,
+            -1.3329999446868896,
+            -1.5850000381469727,
+            0.47699999809265137,
+            0.6159999966621399
+          ],
+          [
+            0.48500001430511475,
+            -0.3240000009536743,
+            1.4019999504089355,
+            2.0280001163482666,
+            0.5210000276565552,
+            0.6299999952316284
+          ],
+          [
+            0.7910000085830688,
+            -0.31299999356269836,
+            -1.027999997138977,
+            0.9350000023841858,
+            0.06800000369548798,
+            -0.7960000038146973
+          ],
+          [
+            0.3919999897480011,
+            -0.4569999873638153,
+            -0.3019999861717224,
+            1.6449999809265137,
+            -0.7649999856948853,
+            0.5149999856948853
+          ],
+          [
+            -0.6869999766349792,
+            -0.9879999756813049,
+            -0.1379999965429306,
+            1.2489999532699585,
+            -0.7580000162124634,
+            -1.8890000581741333
+          ]
+        ],
+        "arm_contact_n_per_env": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "self_collision_positive_control",
+      "passed": true,
+      "expected": "every env: the body stops the arm (arm contact > 1 N or a base-contact termination)",
+      "observed": {
+        "self_collisions_enabled": true,
+        "commanded_arm_angles_rad": [
+          0.0,
+          1.0,
+          0.88,
+          0.0,
+          -0.16,
+          0.0
+        ],
+        "peak_arm_contact_n_per_env": [
+          32.369998931884766,
+          32.5099983215332,
+          32.29999923706055,
+          32.470001220703125,
+          32.58000183105469,
+          32.52000045776367,
+          32.54999923706055,
+          32.40999984741211
+        ],
+        "base_contact_termination_per_env": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "any_reset_per_env": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "final_arm_joint_error_rad_per_env": [
+          0.34299999475479126,
+          0.34299999475479126,
+          0.34299999475479126,
+          0.34299999475479126,
+          0.34299999475479126,
+          0.34299999475479126,
+          0.34299999475479126,
+          0.34299999475479126
+        ]
+      }
+    },
+    {
+      "name": "target_box_needs_arm_motion",
+      "passed": true,
+      "expected": "with zero actions the controlled point settles further than G1a's 5 cm from every point of the target box, so no target can be met without moving the arm",
+      "observed": {
+        "settle_steps": 250,
+        "resting_tip_env_frame_m": [
+          0.362199991941452,
+          -0.014100000262260437,
+          0.7627000212669373
+        ],
+        "resting_tip_spread_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "target_box_env_frame_m": [
+          [
+            0.36,
+            0.48
+          ],
+          [
+            -0.08,
+            0.08
+          ],
+          [
+            0.5,
+            0.62
+          ]
+        ],
+        "min_distance_to_box_m": 0.14268022775650024,
+        "distance_to_sampled_target_m": {
+          "min": 0.157154381275177,
+          "max": 0.26517313718795776
+        },
+        "sampled_targets_within_success_radius": 0,
+        "drift_from_recorded_resting_tip_m": 0.0031143813394010067,
+        "recorded_resting_tip_m": [
+          0.3601,
+          -0.0141,
+          0.7604
+        ]
+      }
+    },
+    {
+      "name": "resting_tip_matches_recorded_stance",
+      "passed": true,
+      "expected": "the resting controlled point is within 2 cm of the stance the target box was placed against (task_space.ZERO_ACTION_TIP_M)",
+      "observed": {
+        "settle_steps": 250,
+        "resting_tip_env_frame_m": [
+          0.362199991941452,
+          -0.014100000262260437,
+          0.7627000212669373
+        ],
+        "resting_tip_spread_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "target_box_env_frame_m": [
+          [
+            0.36,
+            0.48
+          ],
+          [
+            -0.08,
+            0.08
+          ],
+          [
+            0.5,
+            0.62
+          ]
+        ],
+        "min_distance_to_box_m": 0.14268022775650024,
+        "distance_to_sampled_target_m": {
+          "min": 0.157154381275177,
+          "max": 0.26517313718795776
+        },
+        "sampled_targets_within_success_radius": 0,
+        "drift_from_recorded_resting_tip_m": 0.0031143813394010067,
+        "recorded_resting_tip_m": [
+          0.3601,
+          -0.0141,
+          0.7604
+        ]
+      }
+    },
+    {
+      "name": "arm_planner_bounded",
+      "passed": false,
+      "expected": "planned drive targets stay within each joint's speed ceiling and the fitted accel/decel (20 ms averages)",
+      "observed": {
+        "max_speed_over_ceiling_rad_s": 1.0728836059570312e-06,
+        "max_accel_over_limit_rad_s2": 24.537508010864258,
+        "accel_limit_rad_s2": 17.4
+      }
+    },
+    {
+      "name": "arm_planner_arrives_and_is_followed",
+      "passed": true,
+      "expected": "the plan reaches the setpoint and the joint follows it (RMS < 1 deg)",
+      "observed": {
+        "final_plan_to_setpoint_rad": 0.0,
+        "joint_vs_plan_rms_deg": 0.5776903563670969,
+        "step_rad": 0.3,
+        "steps": 60
+      }
+    }
+  ],
+  "timing": {
+    "hold_steps": 5,
+    "feedback_period_steps": 6,
+    "phases": {
+      "command": [
+        0,
+        2,
+        1,
+        0,
+        3,
+        0,
+        2,
+        3
+      ],
+      "feedback": [
+        3,
+        0,
+        1,
+        4,
+        2,
+        4,
+        4,
+        2
+      ]
+    }
+  },
+  "resets": {
+    "settle_steps": 60,
+    "settled_base_height_m": [
+      0.2685222029685974,
+      0.26851901412010193,
+      0.2685188353061676,
+      0.2685190737247467,
+      0.26851916313171387,
+      0.26851919293403625,
+      0.26851850748062134,
+      0.26851892471313477
+    ],
+    "table": [
+      {
+        "env": 0,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.002090930938720703
+      },
+      {
+        "env": 1,
+        "role": "time_limit",
+        "induced": "episode_length_buf set to 499",
+        "terms_fired": [
+          "time_out"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 2,
+        "role": "low_base",
+        "induced": "base placed at 0.10 m, level, at rest",
+        "terms_fired": [
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 3,
+        "role": "tilt",
+        "induced": "base rolled 60 deg at the settled height 0.269 m",
+        "terms_fired": [
+          "bad_orientation"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 4,
+        "role": "base_contact",
+        "induced": "base centre placed at ground level, level, so the base is half in the ground",
+        "terms_fired": [
+          "base_contact",
+          "low_base"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 5,
+        "role": "workspace_exit",
+        "induced": "base moved 0.80 m along x at the settled height 0.269 m",
+        "terms_fired": [
+          "outside_workspace"
+        ],
+        "reset": true,
+        "episode_length_after": 0,
+        "target_resampled": true,
+        "target_in_box": true,
+        "root_pose_error_vs_default": 0.0,
+        "joint_error_vs_soft_clamped_default": 0.0,
+        "arm_hold_at_default": true
+      },
+      {
+        "env": 6,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.0020885467529296875
+      },
+      {
+        "env": 7,
+        "role": "control",
+        "induced": "nothing",
+        "terms_fired": [],
+        "reset": false,
+        "episode_length_after": 61,
+        "target_resampled": false,
+        "target_in_box": true,
+        "base_drift_during_check_m": 0.0020880699157714844
+      }
+    ]
+  },
+  "arm_model": {
+    "rest": {
+      "settle_trace_step_then_mean_deviation_rad": [
+        [
+          0,
+          0.0,
+          9.999999747378752e-05,
+          0.0,
+          0.0,
+          9.999999747378752e-05,
+          0.0
+        ],
+        [
+          10,
+          0.0,
+          0.003800000064074993,
+          0.011800000444054604,
+          0.0007999999797903001,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          20,
+          0.0,
+          0.00279999990016222,
+          0.01080000028014183,
+          0.000699999975040555,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          30,
+          0.0,
+          0.0017999999690800905,
+          0.010499999858438969,
+          0.0006000000284984708,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          40,
+          0.0,
+          0.0020000000949949026,
+          0.012299999594688416,
+          0.0007999999797903001,
+          0.0010000000474974513,
+          0.0
+        ],
+        [
+          50,
+          0.0,
+          0.0013000000035390258,
+          0.010900000110268593,
+          0.000699999975040555,
+          0.0010000000474974513,
+          0.0
+        ],
+        [
+          60,
+          0.0,
+          0.0020000000949949026,
+          0.011699999682605267,
+          0.000699999975040555,
+          0.0010000000474974513,
+          0.0
+        ],
+        [
+          70,
+          0.0,
+          0.002300000051036477,
+          0.011099999770522118,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          80,
+          0.0,
+          0.0027000000700354576,
+          0.011099999770522118,
+          0.000699999975040555,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          90,
+          0.0,
+          0.002899999963119626,
+          0.01119999960064888,
+          0.000699999975040555,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          100,
+          0.0,
+          0.0027000000700354576,
+          0.010999999940395355,
+          0.000699999975040555,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          110,
+          0.0,
+          0.0024999999441206455,
+          0.01119999960064888,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          120,
+          0.0,
+          0.002099999925121665,
+          0.011300000362098217,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          130,
+          0.0,
+          0.0020000000949949026,
+          0.01140000019222498,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          140,
+          0.0,
+          0.0020000000949949026,
+          0.01140000019222498,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ]
+      ],
+      "joint_friction_coeff": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint_dynamic_friction_coeff": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint_viscous_friction_coeff": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint_armature": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint_damping": [
+        400.0,
+        400.0,
+        400.0,
+        400.0,
+        400.0,
+        400.0
+      ],
+      "joint_stiffness": [
+        4000.0,
+        4000.0,
+        4000.0,
+        4000.0,
+        4000.0,
+        4000.0
+      ],
+      "arm_joint_deviation_rad_mean_over_envs": [
+        0.0,
+        0.002199999988079071,
+        0.011300000362098217,
+        0.000699999975040555,
+        0.0008999999845400453,
+        0.0
+      ],
+      "arm_joint_deviation_rad_max_over_envs": [
+        0.0,
+        0.002199999988079071,
+        0.011300000362098217,
+        0.000699999975040555,
+        0.0008999999845400453,
+        0.0
+      ],
+      "model_gravity_torque_at_rest_nm": [
+        0.0,
+        -1.079,
+        -1.074,
+        0.0,
+        -0.292,
+        -0.0
+      ],
+      "computed_torque_nm_env0": [
+        -0.14499999582767487,
+        -4.382999897003174,
+        -25.850000381469727,
+        2.115999937057495,
+        2.933000087738037,
+        0.11500000208616257
+      ],
+      "applied_torque_nm_env0": [
+        -0.14499999582767487,
+        -3.299999952316284,
+        -1.7000000476837158,
+        1.7000000476837158,
+        1.7000000476837158,
+        0.11500000208616257
+      ],
+      "effort_limit_nm": [
+        3.299999952316284,
+        3.299999952316284,
+        1.7000000476837158,
+        1.7000000476837158,
+        1.7000000476837158,
+        1.7000000476837158
+      ],
+      "physx_projected_joint_force_env0": [
+        0.0,
+        -1.090999960899353,
+        -1.0750000476837158,
+        0.0,
+        -0.29100000858306885,
+        0.0
+      ],
+      "reseated_on_target_then_held_trace": [
+        [
+          0,
+          0.0,
+          0.00039999998989515007,
+          0.0019000000320374966,
+          9.999999747378752e-05,
+          0.00019999999494757503,
+          0.0
+        ],
+        [
+          10,
+          0.0,
+          0.002199999988079071,
+          0.010099999606609344,
+          0.0006000000284984708,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          20,
+          0.0,
+          0.0024999999441206455,
+          0.010999999940395355,
+          0.000699999975040555,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          30,
+          0.0,
+          0.0026000000070780516,
+          0.011099999770522118,
+          0.000699999975040555,
+          0.0007999999797903001,
+          0.0
+        ],
+        [
+          40,
+          0.0,
+          0.0024999999441206455,
+          0.01119999960064888,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          50,
+          0.0,
+          0.002400000113993883,
+          0.01119999960064888,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          60,
+          0.0,
+          0.002199999988079071,
+          0.011300000362098217,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          70,
+          0.0,
+          0.002199999988079071,
+          0.011300000362098217,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          80,
+          0.0,
+          0.002199999988079071,
+          0.011300000362098217,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          90,
+          0.0,
+          0.002300000051036477,
+          0.01119999960064888,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ],
+        [
+          99,
+          0.0,
+          0.002400000113993883,
+          0.01119999960064888,
+          0.000699999975040555,
+          0.0008999999845400453,
+          0.0
+        ]
+      ],
+      "reseated_max_deviation_after_100_steps_rad": 0.011222625151276588,
+      "link6_droop_m_max_over_envs": 0.003865895115159944
+    }
+  },
+  "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+}

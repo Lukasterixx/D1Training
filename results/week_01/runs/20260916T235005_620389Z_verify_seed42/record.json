@@ -1,0 +1,36 @@
+{
+  "id": "20260916T235005_620389Z_verify_seed42",
+  "title": "verify 25/25 with the fitted arm planner",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-17T09:53:31+10:00",
+  "started_utc": "2026-09-16T23:50:05+00:00",
+  "source_dir": "logs/position_only/20260916T235005_620389Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_passed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "9db885a189d0cd05930b6c377ff14100fec9e925",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": true,
+    "passed": 25,
+    "total": 25,
+    "failed": [],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

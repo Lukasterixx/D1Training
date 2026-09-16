@@ -50,7 +50,7 @@ def _digest(payload):
 
 def build(role, episodes=100, ranges=TARGET_RANGES, spawn_height=SPAWN_HEIGHT_M,
           robustness="none", latency="estimated", leg_actuator="unitree", arm_actuator="d1_servo",
-          self_collisions=True, policy_hz=POLICY_HZ, seed=None):
+          self_collisions=True, policy_hz=POLICY_HZ, arm_trajectory="measured", seed=None):
     """A manifest as a plain dict. Deterministic in its arguments."""
     if role not in ROLES:
         raise ValueError(f"Unknown manifest role: {role!r}; expected one of {ROLES}")
@@ -64,9 +64,11 @@ def build(role, episodes=100, ranges=TARGET_RANGES, spawn_height=SPAWN_HEIGHT_M,
 
     # Imported here rather than at module scope: motor_model pulls in torch, and load(), targets()
     # and mismatches() must stay importable without it so a manifest can be inspected anywhere.
-    from motor_model import D1_EFFORT_LIMIT_NM, D1_VELOCITY_LIMIT_RAD_S, interface_timing
+    from motor_model import D1_EFFORT_LIMIT_NM, D1_VELOCITY_LIMIT_RAD_S, arm_trajectory as firmware_trajectory
+    from motor_model import interface_timing
 
     timing = interface_timing(latency, policy_hz, leg_actuator)
+    plan = firmware_trajectory(arm_trajectory)
     conditions = {
         # Everything that must match across policies for the comparison to mean anything.
         "spawn_height_m": float(spawn_height),
@@ -93,6 +95,13 @@ def build(role, episodes=100, ranges=TARGET_RANGES, spawn_height=SPAWN_HEIGHT_M,
         "leg_delay_physics_steps": list(timing["leg_delay_physics_steps"]),
         "arm_command_hold_steps": int(timing["arm_command_hold_steps"]),
         "arm_feedback_period_steps": int(timing["arm_feedback_period_steps"]),
+        # The D1 firmware's motion planner between setpoint and drive (F-045), or None. A policy trained
+        # with it and one trained without it see different arms, so it belongs to the comparison.
+        "arm_trajectory": None if plan is None else {
+            "dead_time_s": float(plan["dead_time_s"]), "accel_rad_s2": float(plan["accel_rad_s2"]),
+            "decel_rad_s2": float(plan["decel_rad_s2"]),
+            "replan_velocity_retention": float(plan["replan_velocity_retention"]),
+            "velocity_limits_rad_s": [float(D1_VELOCITY_LIMIT_RAD_S[j]) for j in ARM_JOINT_ORDER]},
     }
     content = {
         "conditions": conditions,
@@ -156,6 +165,8 @@ def _same(expected, actual, tol=1e-6):
         return abs(float(expected) - float(actual)) <= tol
     if isinstance(expected, (list, tuple)) and isinstance(actual, (list, tuple)):
         return len(expected) == len(actual) and all(_same(e, a, tol) for e, a in zip(expected, actual))
+    if isinstance(expected, dict) and isinstance(actual, dict):
+        return expected.keys() == actual.keys() and all(_same(expected[k], actual[k], tol) for k in expected)
     return json.loads(json.dumps(expected)) == json.loads(json.dumps(actual))
 
 

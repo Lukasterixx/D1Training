@@ -457,12 +457,69 @@ def target_box_needs_arm_motion(env, settle_steps=250):
                     "against (task_space.ZERO_ACTION_TIP_M)", observed)]
 
 
+def arm_planner(env, settle_steps=60, move_steps=60, step_rad=0.3):
+    """The D1 firmware planner (F-045), when configured: bounded plan, a drive that follows it.
+
+    Every arm joint is commanded `step_rad` from default at once. The planned drive target must respect
+    each joint's speed ceiling and the fitted acceleration and deceleration, arrive at the setpoint, and
+    the simulated joint must follow the plan rather than trail it -- without velocity feedforward the
+    drive's damping put it 97 ms behind (Week 1, 2026-09-17). Sampled at the policy rate, so speed and
+    acceleration are 20 ms averages, which a correct plan cannot exceed.
+    """
+    arm = env.action_manager.get_term("arm")
+    plan = arm.cfg.trajectory
+    if plan is None:
+        return [_result("arm_planner", True, "arm setpoints go straight to the drive (--arm_trajectory none)",
+                        {"configured": False})]
+    from .env_cfg import ARM_NAMES
+
+    robot = env.scene["robot"]
+    arm_ids = [robot.joint_names.index(name) for name in ARM_NAMES]
+    env.reset()
+    action = torch.zeros(env.num_envs, env.action_manager.total_action_dim, device=env.device)
+    for _ in range(settle_steps):
+        env.step(action)
+    action[:, 12:] = step_rad
+    planned, joint, setpoint = [], [], []
+    for _ in range(move_steps):
+        env.step(action)
+        default = robot.data.default_joint_pos[:, arm_ids]
+        planned.append((arm.planned_targets - default).clone())
+        joint.append((robot.data.joint_pos[:, arm_ids] - default).clone())
+        setpoint.append((arm.processed_actions - default).clone())
+    planned, joint, setpoint = (torch.stack(x).cpu() for x in (planned, joint, setpoint))
+    dt = env.step_dt
+    speed = (planned[1:] - planned[:-1]).abs() / dt
+    change = (speed[1:] - speed[:-1]) / dt
+    ceilings = torch.tensor(plan["velocity_limits_rad_s"])
+    speed_excess = float((speed - ceilings).max())
+    # Only speeding up is bounded. Each command re-send restarts the plan from rest by design (retention
+    # 0, fitted to F-035), so speed can fall faster than the deceleration at those instants.
+    accel_excess = float((change - plan["accel_rad_s2"]).max())
+    largest_drop = float(-change.min())
+    arrival_error = float((planned[-1] - setpoint[-1]).abs().max())
+    tracking_rms = math.degrees(float(torch.sqrt(torch.mean((joint - planned) ** 2))))
+    return [
+        _result("arm_planner_bounded", speed_excess <= 1e-3 and accel_excess <= 0.5,
+                "planned drive targets stay within each joint's speed ceiling and never speed up faster than "
+                "the fitted acceleration (20 ms averages)",
+                {"max_speed_over_ceiling_rad_s": speed_excess, "max_speedup_over_accel_rad_s2": accel_excess,
+                 "accel_rad_s2": plan["accel_rad_s2"], "replan_retention": plan["replan_velocity_retention"],
+                 "largest_slowdown_rad_s2": largest_drop,
+                 "note": "slowdowns beyond the deceleration are the per-message restarts the model fits (F-045)"}),
+        _result("arm_planner_arrives_and_is_followed", arrival_error < 1e-4 and tracking_rms < 1.0,
+                f"the plan reaches the setpoint and the joint follows it (RMS < 1 deg)",
+                {"final_plan_to_setpoint_rad": arrival_error, "joint_vs_plan_rms_deg": tracking_rms,
+                 "step_rad": step_rad, "steps": move_steps}),
+    ]
+
+
 def run_checks(env):
     timing_checks, timing = interface_timing(env)
     reset_checks, resets = terminations_and_resets(env)
     model_checks, model = arm_model(env)
     checks = (timing_checks + reset_checks + model_checks + self_collision_control(env)
-              + target_box_needs_arm_motion(env))
+              + target_box_needs_arm_motion(env) + arm_planner(env))
     return {
         "all_passed": all(check["passed"] for check in checks),
         "failed": [check["name"] for check in checks if not check["passed"]],

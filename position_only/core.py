@@ -68,6 +68,105 @@ class SampleAndHold:
         return due
 
 
+class TrapezoidTracker:
+    """The D1 firmware's motion planner: rest-to-rest trapezoids toward each commanded angle.
+
+    The D1 does not snap to a setpoint. Given a joint angle it plans a trapezoid -- accelerate, cruise
+    at its speed ceiling, decelerate -- and its servo loop follows the plan. Fitted to the six recorded
+    30 deg single-joint steps (F-033 sweeps, 12 legs, 234 samples; `arm_response.py`), that plan
+    reaches cruise in about a tenth of a second and stops a little harder than it starts.
+
+    Two behaviours the simulation otherwise lacks:
+
+    - **Finite acceleration.** PhysX's stiff position drive is limited only by torque, so the simulated
+      arm reaches its speed ceiling almost instantly. The plan here limits the *target* instead, and
+      the drive follows it.
+    - **Lossy replanning.** A new setpoint mid-motion does not continue the old plan at its current
+      speed. Streaming a waypoint every feedback cycle (F-035) covered 4.9-5.3 deg per 111 ms where a
+      velocity-preserving planner gives 7.8; restarting from rest reproduces the hardware.
+      `retention` is the fraction of planned velocity a new setpoint keeps (0 = restart from rest).
+
+    `dead_time` delays each setpoint before it replaces the goal; the latest pending setpoint wins, as
+    a firmware with one setpoint register would behave. Everything is per environment and per joint;
+    `accel`, `decel` and `vmax` broadcast over the last dimension.
+
+    Braking is exact in discrete time: each step's speed is capped at the largest from which the joint
+    can still stop on its goal, so the plan lands on the goal at the physics rate without creeping up
+    to it, passing it, or chattering about it.
+    """
+
+    def __init__(self, num_envs: int, dim: int, accel, decel, vmax, dead_time: float = 0.0,
+                 retention: float = 0.0, device="cpu"):
+        if not 0.0 <= retention <= 1.0:
+            raise ValueError(f"Velocity retention must be in [0, 1], got {retention}")
+        if dead_time < 0.0:
+            raise ValueError(f"Dead time cannot be negative, got {dead_time}")
+        as_row = lambda v: torch.as_tensor(v, dtype=torch.float32, device=device).expand(dim).clone()
+        self.accel, self.decel, self.vmax = as_row(accel), as_row(decel), as_row(vmax)
+        if (self.accel <= 0).any() or (self.decel <= 0).any() or (self.vmax <= 0).any():
+            raise ValueError("Acceleration, deceleration and speed limits must be positive.")
+        self.dead_time, self.retention = float(dead_time), float(retention)
+        self.position = torch.zeros(num_envs, dim, device=device)
+        self.velocity = torch.zeros(num_envs, dim, device=device)
+        self.goal = torch.zeros(num_envs, dim, device=device)
+        self.pending = torch.zeros(num_envs, dim, device=device)
+        self.timer = torch.full((num_envs,), -1.0, device=device)
+
+    def reset(self, env_ids, position: torch.Tensor):
+        """Park at `position` (rows for `env_ids`) at rest, with no pending setpoint."""
+        ids = slice(None) if env_ids is None else env_ids
+        self.position[ids] = position
+        self.goal[ids] = position
+        self.pending[ids] = position
+        self.velocity[ids] = 0.0
+        self.timer[ids] = -1.0
+
+    def command(self, mask: torch.Tensor, target: torch.Tensor):
+        """Send `target` to the environments in `mask`; it takes effect after the dead time."""
+        if not mask.any():
+            return
+        self.pending[mask] = target[mask]
+        self.timer[mask] = self.dead_time
+        if self.dead_time == 0.0:
+            self._activate(mask)
+
+    def _activate(self, mask):
+        self.goal[mask] = self.pending[mask]
+        self.velocity[mask] *= self.retention
+        self.timer[mask] = -1.0
+
+    def step(self, dt: float) -> torch.Tensor:
+        """Advance the plan by `dt` and return the planned position."""
+        waiting = self.timer >= 0.0
+        if waiting.any():
+            self.timer[waiting] -= dt
+            due = waiting & (self.timer <= 1e-9)
+            if due.any():
+                self._activate(due)
+
+        error = self.goal - self.position
+        direction = torch.sign(error)
+        distance = error.abs()
+        heading = self.velocity * direction          # speed toward the goal; negative = moving away
+
+        # Toward the goal (or at rest): the largest speed this step from which the joint can still
+        # stop on the goal, u*dt + u^2/(2*decel) <= distance, solved for u. Accelerating is capped by
+        # it, so braking begins exactly when it must and the plan lands on the goal without creeping
+        # up to it or passing it.
+        reachable = self.decel * (torch.sqrt(dt * dt + 2.0 * distance / self.decel) - dt)
+        toward = torch.minimum(torch.minimum(heading.clamp(min=0.0) + self.accel * dt, self.vmax), reachable)
+        # Away from the goal (a replan that kept speed and reversed): brake back through zero.
+        away = heading + self.decel * dt
+        speed = torch.where(heading < 0.0, torch.minimum(away, torch.zeros_like(away)), toward)
+        self.velocity = direction * speed
+
+        step = self.velocity * dt
+        arrive = (direction != 0) & (heading >= 0.0) & (step.abs() >= distance - 1e-9)
+        self.position = torch.where(arrive, self.goal, self.position + step)
+        self.velocity = torch.where(arrive | (direction == 0), torch.zeros_like(self.velocity), self.velocity)
+        return self.position
+
+
 def box_edges(ranges, thickness: float = 0.004) -> tuple[torch.Tensor, torch.Tensor]:
     """The 12 edges of an axis-aligned box as thin cuboids: centres (12, 3) and sizes (12, 3).
 

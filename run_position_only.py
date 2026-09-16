@@ -155,6 +155,16 @@ def _write_episode_csv(path, records):
             writer.writerow("" if value is None else value for value in row)
 
 
+def _planner_condition(arm_term):
+    """The firmware planner a running arm action uses, in the manifest's form (F-039: values, not labels)."""
+    plan = arm_term.cfg.trajectory
+    if plan is None or arm_term.planned_targets is None:
+        return None
+    return {key: [round(float(v), 6) for v in plan[key]] if key == "velocity_limits_rad_s" else round(float(plan[key]), 6)
+            for key in ("dead_time_s", "accel_rad_s2", "decel_rad_s2", "replan_velocity_retention",
+                        "velocity_limits_rad_s")}
+
+
 def view(args, app, env, runner, obs, metadata, run_dir):
     """Run episodes in real time in the viewer until the window closes, printing each episode's reach state."""
     import torch
@@ -273,11 +283,14 @@ def run(args, report):
             cfg = make_cfg(robot_path, args.num_envs, args.seed, args.device, args.tip_offset, args.tip_body,
                            leg_actuator=args.leg_actuator, robustness=args.robustness,
                            self_collisions=args.self_collisions, latency=args.latency,
-                           arm_actuator=args.arm_actuator, **spawn_kwargs)
+                           arm_actuator=args.arm_actuator, arm_trajectory=args.arm_trajectory, **spawn_kwargs)
             metadata["reset"] = {"spawn_height_m": cfg.scene.robot.init_state.pos[2]}
             metadata["target_box_env_frame_m"] = [list(axis) for axis in cfg.commands.ee_position.ranges]
             timing = interface_timing(args.latency, 1.0 / (cfg.sim.dt * cfg.decimation), args.leg_actuator)
             metadata["sim2real"]["timing"] = timing
+            # The firmware planner as the action term was actually configured, not as the flag names it.
+            metadata["sim2real"]["arm_trajectory"] = {"profile": args.arm_trajectory,
+                                                      "resolved": cfg.actions.arm.trajectory}
             cfg.commands.ee_position.debug_vis = not args.headless
             if args.mode == "view":
                 # Side-on to environment 0, from the robot's right: base, arm and target box in one frame.
@@ -348,6 +361,15 @@ def run(args, report):
                 write_json(run_dir / "verify.json", result)
                 metadata["status"] = "verify_passed" if result["all_passed"] else "verify_failed"
                 metadata["verify_failed"] = result["failed"]
+            elif args.mode == "arm_steps":
+                from position_only.arm_steps import run_arm_steps
+
+                result = run_arm_steps(env.unwrapped)
+                write_json(run_dir / "arm_steps.json", result)
+                metadata["status"] = "arm_steps_finished"
+                metadata["arm_steps"] = {"planner_active": result["planner_active"],
+                                         "legs_with_two_commands": sum(len(l["command_steps"]) == 2 for l in result["legs"]),
+                                         "resets": sum(l["reset_during_trace"] for l in result["legs"])}
             elif args.mode == "eval":
                 from position_only.evaluate import run_episodes, summarise
                 from position_only.manifest import load as load_manifest
@@ -374,6 +396,8 @@ def run(args, report):
                     "leg_delay_physics_steps": list(metadata["sim2real"]["timing"]["leg_delay_physics_steps"]),
                     "arm_command_hold_steps": metadata["sim2real"]["timing"]["arm_command_hold_steps"],
                     "arm_feedback_period_steps": metadata["sim2real"]["timing"]["arm_feedback_period_steps"],
+                    # From the live action term: the planner the arm is actually running, or None.
+                    "arm_trajectory": _planner_condition(env.unwrapped.action_manager.get_term("arm")),
                 }
                 started = time.monotonic()
                 records = run_episodes(
@@ -456,7 +480,7 @@ def run(args, report):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("check", "smoke", "verify", "view", "train", "eval", "manifest"),
+    parser.add_argument("mode", choices=("check", "smoke", "verify", "view", "train", "eval", "manifest", "arm_steps"),
                         help="verify: deliberate interface-timing, termination and partial-reset checks (>= 6 envs). "
                              "view: real-time episodes in the viewer with target, tip and box markers, until closed.")
     parser.add_argument("--headless", action="store_true")
@@ -473,6 +497,9 @@ def main():
                         help="Go2 leg motor model: unitree_rl_lab's measured envelope, or Isaac Lab's stock DCMotor.")
     parser.add_argument("--arm_actuator", choices=("d1_servo", "implicit"), default="d1_servo",
                         help="'d1_servo': force drives with the D1's published torque and URDF speed limits; 'implicit': the URDF import's acceleration drives.")
+    parser.add_argument("--arm_trajectory", choices=("measured", "none"), default="measured",
+                        help="'measured': setpoints pass through the D1 firmware's fitted motion planner "
+                             "(10 ms dead time, trapezoid, replan from rest; F-045). 'none': straight to the drive.")
     parser.add_argument("--latency", choices=("estimated", "none"), default="estimated",
                         help="'estimated': 0-10 ms leg command delay; D1 commands and feedback at 10 Hz.")
     parser.add_argument("--robustness", choices=("none", "unitree"), default="none",
@@ -495,6 +522,8 @@ def main():
         parser.error("Environment count, iterations and steps must be positive.")
     if args.mode == "view" and args.headless:
         parser.error("view needs the viewer; drop --headless.")
+    if args.mode == "arm_steps" and (args.num_envs != 6 or args.checkpoint):
+        parser.error("arm_steps steps one joint per environment: --num_envs 6 and no checkpoint.")
     if args.mode == "verify" and (args.num_envs < 6 or args.checkpoint):
         parser.error("verify needs --num_envs 6 or more (one per induced termination plus a control) and no checkpoint.")
     if args.episode is not None:

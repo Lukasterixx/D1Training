@@ -1,0 +1,100 @@
+{
+  "controller": "checkpoint",
+  "manifest": {
+    "role": "development",
+    "episode_count": 100,
+    "seed": 20260916,
+    "content_sha256": "930d188d26b916601bce25e839200aa6b3fb1fbd8ae182b84d9e01670b74c6ef"
+  },
+  "condition_mismatches": [],
+  "episodes": 100,
+  "success": {
+    "count": 96,
+    "rate": 0.96,
+    "wilson95": [
+      0.9016278276739262,
+      0.984336949448152
+    ]
+  },
+  "falls": {
+    "count": 0,
+    "rate": 0.0,
+    "wilson95": [
+      0.0,
+      0.03699480747600191
+    ]
+  },
+  "survived": {
+    "count": 100,
+    "rate": 1.0
+  },
+  "truncated": {
+    "count": 0,
+    "note": "ended before the time limit; their traces stop at the last pre-reset sample and the missing tail is not filled"
+  },
+  "error_all_episodes": {
+    "rms_m": 0.039596101455390456,
+    "p95_m": 0.047194005526602245,
+    "final_m": 0.02282677661103662,
+    "transient_mean_m": 0.025435717212967574,
+    "final_2s_mean_m": 0.023201482880394905
+  },
+  "error_surviving_episodes_only": {
+    "note": "for diagnosis only; the reported result is error_all_episodes",
+    "count": 100,
+    "rms_m": 0.039596101455390456,
+    "final_2s_mean_m": 0.023201482880394905
+  },
+  "time_to_reach_s": {
+    "count": 100,
+    "mean": 0.17459999999999998,
+    "of_episodes": 100
+  },
+  "max_dwell_s": {
+    "mean": 8.796
+  },
+  "posture": {
+    "min_base_height_m": 0.184076189994812,
+    "max_tilt_deg": 28.116497039794922
+  },
+  "base_travel": {
+    "mean_final_x_from_spawn_m": 0.22169655442237854,
+    "max_final_x_from_spawn_m": 0.3314065933227539,
+    "max_horizontal_travel_m": 0.34456151723861694
+  },
+  "vibration": {
+    "arm_joint_vel_rms_rad_s": 0.5866252022981644,
+    "leg_joint_vel_rms_rad_s": 0.3522810772061348,
+    "arm_joint_vel_rms_holding_rad_s": 0.5512794137001038,
+    "leg_joint_vel_rms_holding_rad_s": 0.2516515272855759,
+    "hold_base_z_p2p_m": 0.005641579180955886,
+    "hold_base_z_hz": 4.5325,
+    "hold_base_x_p2p_m": 0.0023800325393676758,
+    "hold_base_x_hz": 4.165,
+    "hold_error_p2p_m": 0.007786973575275624,
+    "hold_error_hz": 6.53,
+    "note": "RMS joint velocity. The *_holding figures cover the final two seconds, by which the tool point is parked, so they measure shaking rather than motion. The D1 publishes at 9 Hz, answers a step in ~127 ms and needs ~220 ms to reach cruise (F-020, F-021, F-035), so arm chatter above a few rad/s is commanding motion the hardware cannot execute."
+  },
+  "_base_travel_note": {
+    "note": "Displacement from the spawn point, signed in x: negative is the backward settle every episode starts with (about -5.6 cm under zero actions, F-014), positive is the robot walking forward. The task is a stance-and-reach and the workspace analysis says the box is reachable from the settled stance (F-016), so large positive travel means the reach is partly locomotion."
+  },
+  "saturation": {
+    "joint_limit_steps_frac": 0.07663326621055604,
+    "arm_commanded_effort_at_limit_frac": 1.0,
+    "peak_arm_joint_torque_nm": 9.805442810058594,
+    "leg_effort_saturated_frac": 0.09408817616524175,
+    "peak_leg_torque_nm": 23.399999618530273,
+    "note": "arm_commanded_* is Isaac Lab's PD estimate clipped to the effort limit, not a PhysX measurement, and it saturates even standing still because the arm's 4000 N\u00b7m/rad gains far exceed its 1.7-3.3 N\u00b7m limits. peak_arm_joint_torque_nm is PhysX's reaction torque: the total load carried through the joint, including gravity and inertia from the links beyond it, not the drive's own torque. It is not comparable to the 1.7-3.3 N\u00b7m effort limits and may exceed them without any limit being violated. The legs use an explicit actuator, so their figures are the model's own clipped output."
+  },
+  "g1a": {
+    "criterion": "\u226590% reach within 5 cm for \u22651 s continuous, surviving to episode end, with \u22641% falls",
+    "success_rate_ok": true,
+    "fall_rate_ok": true,
+    "passed": true
+  },
+  "interpretation": "One controller on one frozen manifest, one simulator seed. A zero-action run of the same manifest is the baseline this must be read against.",
+  "wall_time_s": 15.33,
+  "checkpoint": "/home/lukas/D1Training/logs/position_only/20260916T113837_593527Z_train_seed42/model_1499.pt",
+  "checkpoint_sha256": "160748d4be34f24984c8ca369d43ec473b34d1b327cc5b6d5df53250aa8c35c2",
+  "manifest_path": "/home/lukas/D1Training/results/manifests/development.json"
+}

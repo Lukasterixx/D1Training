@@ -40,7 +40,10 @@ Week 2's G4 still depends on them.
 - [x] Smoke run with `--latency none --leg_actuator dc_motor --arm_actuator implicit` (pre-port configuration) for comparison
 - [x] Headless smoke run, 4 environments
 - [x] Visible 1-environment run inspected (2026-09-16): `view --episode` replays a pinned manifest episode; seed 43 on development ep94. It found two things 300 evaluated episodes had not — the robot walks 20 cm to its target (F-043) and oscillates at 5–8 Hz while holding (F-044)
-- [ ] Model the arm's measured command latency (~127 ms, F-021) and acceleration ramp (~220 ms, F-035). Ranked above further G1a tuning: the 5–8 Hz oscillation sits in exactly the band these omissions govern (F-044)
+- [x] Model the arm's measured command latency and ramp (2026-09-17, F-045, F-046). Fitted from the raw samples, the ~127 ms and ~220 ms figures were feedback-sampling artefacts: 10 ms dead time, 15.5/17.4 rad/s², restart from rest on each setpoint. `--arm_trajectory measured` is the default; `verify` 25/25; manifests re-frozen
+- [ ] Retrain the three seeds under `--arm_trajectory measured` and re-measure falls, precision, oscillation and base travel (F-046)
+- [ ] Hardware: re-send an identical setpoint at 10 Hz through one 30° step to settle whether the D1 restarts its plan on an unchanged setpoint (F-045, F-046)
+- [ ] G4 contract: decide whether the deploy stack streams the policy's arm output at 10 Hz, given streaming costs the arm a third of its speed (F-046)
 - [ ] Price base translation, once the timing model is right (F-043)
 - [x] Self-collision check: no resting contact from overlapping weld shapes (measured headless, with a positive control; a screenshot is optional)
 - [x] Deliberate reset tests: time limit, low base, tilt, base contact, workspace exit, partial reset (`verify`, F-009)
@@ -1862,6 +1865,117 @@ What it does not show:
   reaching pays, but tuning it against a 5–8 Hz artefact would be tuning against the missing latency.
   The arm timing model comes first.
 
+### 2026-09-17 · The D1's latency and ramp, fitted from raw samples and added to the simulator (seventh session)
+
+Lukas asked to add the arm's measured latency and ramp to the simulation. The figures on record were
+~127 ms of command-to-motion delay (F-021) and ~220 ms to reach cruise (F-035), both read off 9 Hz
+feedback. Fitting the raw samples first showed both were mostly the 111 ms feedback period.
+
+#### Fitting the hardware
+
+`python -m position_only.arm_response` fits the recorded samples at their actual timestamps, using
+`core.TrapezoidTracker` — the implementation the task now runs — so the values are values for that code
+([figure](figures/d1_arm_response.png), [json](figures/d1_arm_response.json)).
+
+- **Steps**: the six 30° single-joint sweeps (run `20260916T0800_d1_hold_sweeps`, 12 legs, 234 samples).
+  A 127 ms dead time fits at 2.39° RMS against 0.34° for the best, and 60 ms at 0.52°; everything from
+  0 to 40 ms fits within 0.02°, because dead time trades against acceleration on a single step.
+- **Streaming**: the F-035 cap sweep. A speed-preserving planner covers 6.8/7.8/7.8 °/cycle at caps
+  8/12/16; restarting from rest covers 5.0; the arm covered 4.4/4.9/5.3. Dead times of 0–10 ms fit best
+  (0.93–0.94 °/cycle RMS), 40 ms at 1.90.
+
+Chosen by a rule written before reading its output (best streaming fit among the step ties): **10 ms
+dead time, 15.5 rad/s² acceleration, 17.4 rad/s² deceleration, restart from rest.** Two reconstruction
+errors had to be fixed before any number meant anything — the holds were 2 s, not 3 s, and the J1/J2
+return-leg latencies in the recording are dither crossing the 0.3° threshold, not motion (F-045).
+
+#### Into the simulator
+
+- `core.TrapezoidTracker`: vectorised trapezoid planner with dead time and replan retention. Exact
+  discrete braking — a first version crept up to its goal (15 ms late on a 505 ms move) and overshot short
+  moves by 1 mrad. 16 unit tests (`tests/test_arm_trajectory.py`), including one that fails if
+  `motor_model.py` drifts from the committed fit.
+- `motor_model.arm_trajectory("measured" | "none")` with labelled constants; `interface_timing` and the
+  deploy manifest untouched.
+- The held arm action sends each 10 Hz setpoint to the planner and writes the plan to the drive every
+  physics step. `processed_actions` stays the setpoint, so `verify`'s 10 Hz command check still measures
+  the interface.
+- `--arm_trajectory measured|none` (default measured), recorded in `run.json`, reported from the live
+  action term in eval conditions, and frozen into the manifests.
+
+#### Validating it in simulation
+
+`run_position_only.py arm_steps` repeats the hardware protocol, each joint 30° out and back
+([figure](figures/d1_arm_sim_vs_hardware.png)):
+
+| | Fastest speed per command cycle | Drive vs plan |
+| --- | --- | --- |
+| D1, one message per step | 1.27 rad/s | — |
+| D1, a new waypoint every cycle | **0.83 rad/s** | — |
+| [sim, no planner](#/week/1/run/20260916T234613_766543Z_arm_steps_seed42) | 1.27 rad/s | — |
+| [sim, planner, no feedforward](#/week/1/run/20260916T234602_388647Z_arm_steps_seed42) | 0.77 rad/s | 2.26° RMS, **97 ms lag** |
+| [sim, planner + feedforward](#/week/1/run/20260916T234806_566293Z_arm_steps_seed42) | **0.81 rad/s** | 0.31° RMS, 0 ms |
+
+The first planner run trailed its own plan by 97 ms: with a zero velocity target the drive's damping
+needs 7.2° of error to sustain 1.25 rad/s, counting the servo's lag twice. The planned velocity is now
+the drive's velocity target (F-046).
+
+The old model was right about the arm's *capability* — it matches a single-message D1 exactly — and
+wrong about what a policy streaming at 10 Hz gets from it.
+
+#### Checks, manifests, baselines
+
+- `verify` **25/25** with the planner ([run](#/week/1/run/20260916T235005_620389Z_verify_seed42)): two new
+  checks, planned targets bounded by the ceilings and the fitted acceleration, and the joint following
+  the plan at 0.58° RMS. A first attempt also bounded deceleration and failed at 41.9 rad/s² — the
+  per-message restart the model exists to have ([run](#/week/1/run/20260916T234904_615402Z_verify_seed42)).
+  `verify` passes with `--arm_trajectory none` too ([run](#/week/1/run/20260916T235123_684069Z_verify_seed42)).
+- Manifests re-frozen with the planner in their conditions: development `930d188d26b9`, validation
+  `c0eb26cd7611`, test `a7069027f9ee` (previous files in git), episodes byte-identical.
+- Zero-action baseline unchanged: 0/100, RMS 21.74 cm, lowest base 0.2602 m
+  ([run](#/week/1/run/20260916T235043_764291Z_eval_seed42)). A deliberate `--arm_trajectory none` run
+  against the new manifest is flagged ([run](#/week/1/run/20260916T235104_189156Z_eval_seed42)).
+
+#### The current policies on the corrected arm
+
+The v3 policies were trained without the planner. Development manifest, old arm → realistic arm
+([42](#/week/1/run/20260916T235151_095359Z_eval_seed42), [43](#/week/1/run/20260916T235212_429925Z_eval_seed42),
+[44](#/week/1/run/20260916T235233_194735Z_eval_seed42)):
+
+| Seed | Success | Falls | Final-2 s error | Tip p-p holding | Arm vel holding | Base travel | Max tilt |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 42 | 99 → 96 | 1 → 0 | 4.7 → **23.2 mm** | 9.8 → 7.8 mm | 0.73 → 0.55 rad/s | 24.1 → 22.2 cm | 44.3° → 28.1° |
+| 43 | 100 → 98 | 0 → 0 | 4.5 → **23.7 mm** | 6.9 → 6.6 mm | 1.13 → 0.79 rad/s | 20.5 → 11.8 cm | 9.0° → 10.2° |
+| 44 | 100 → 100 | 0 → 0 | 8.0 → 7.2 mm | 5.4 → 2.8 mm | 0.84 → 0.57 rad/s | 25.3 → 25.6 cm | 8.0° → 8.4° |
+
+Two of three lose 5× their steady-state precision; the oscillation shrinks but persists; the walking
+does not change.
+
+#### Corrections to the record
+
+- **F-021**: latency figure superseded by F-045.
+- **F-035**: mechanism refined — "two cycles to reach cruise" is an ~80 ms ramp sampled at 9 Hz; the
+  per-waypoint restart is confirmed and quantified.
+- **F-044**: implication corrected — "the D1 physically cannot execute this motion" is withdrawn; 5–10 mm
+  of tip oscillation is about a degree at the joints. The measurements stand.
+- `docs/thesis_b_plan.md` and `docs/position_only_environment.md` still described 10 Hz feedback and the
+  URDF's unverified 1.05/1.73 rad/s speed limits — the latter stale since the 2026-09-16 hardware session.
+  Both corrected.
+
+What it shows:
+
+- **The D1's command dead time is 0–10 ms, and its motion is a trapezoid that restarts on every new
+  setpoint** (F-045).
+- **The simulated arm now matches a streamed D1** (0.81 vs 0.83 rad/s) where it previously had
+  single-command speed (F-046), with `verify` and the manifests carrying the change.
+
+What it does not show:
+
+- **Anything about loaded or posture-dependent response.** One unloaded arm, one posture per joint.
+- **Whether an identical re-sent setpoint restarts the plan.** Untested on hardware; the simulator assumes it
+  does, the conservative choice.
+- **Retrained behaviour.** The policies above ran off their training distribution.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -1897,6 +2011,8 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-042](../findings.md): pricing base rotation — a term that was simply missing — cuts falls from 4 to 1 across 300 development episodes and changes the last failure from a tip-while-reaching to a tip-while-holding (confirmed, three seeds, development only).
 - [F-043](../findings.md): every policy reaches partly by walking — base ends 20–25 cm forward, up to 48 cm — and the evaluator was not recording translation (confirmed, three policies, development).
 - [F-044](../findings.md): the policies oscillate at 5–8 Hz while holding, above what the D1 can execute, with the arm at 60–90% of its measured speed limit while stationary (confirmed, simulation only).
+- [F-045](../findings.md): fitted to raw samples, the D1 has ~10 ms of command dead time, not ~127 ms, and a ~80 ms-ramp trapezoid that restarts from rest on every new setpoint; corrects F-021, F-035 and F-044 (confirmed).
+- [F-046](../findings.md): with the fitted planner the simulated arm moves as a streamed D1 does (0.81 vs 0.83 rad/s) instead of at single-command speed; current policies lose 5× their steady-state precision on it (confirmed, simulation).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -1941,6 +2057,14 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
   of the timing model omitting the ~127 ms command delay (F-021) and the acceleration ramp (F-035). Any
   transfer claim from these policies is void until the arm model carries both. Do not retune `action_rate`
   first — that would tune against the artefact.
+  *Corrected 2026-09-17 (F-045):* those figures were feedback-sampling artefacts, and the D1 can execute
+  oscillations this small. The arm model now carries the fitted planner (F-046); under it the oscillation
+  shrinks but persists, and retraining is the next measurement.
+- **Streaming the arm at 10 Hz costs it a third of its speed** (F-046). The D1 restarts its motion plan on
+  every new setpoint, so a controller streaming at 10 Hz gets ~0.8 rad/s rather than the arm's 1.27. The
+  simulator now models this, and the current policies lose 5× their steady-state precision under it. Whether
+  an identical re-sent setpoint also restarts the plan is untested; the simulator assumes it does. Deployment
+  design (G4) has to decide how the policy's arm output reaches the D1.
 - **The manifest freezes labels, not the robot model** (F-039). `latency: "estimated"` stayed `estimated`
   while the numbers behind it changed, and the arm's velocity limits were never in the conditions at all, so
   two evaluations across a changed arm both reported no mismatch. Resolve the values into the conditions before

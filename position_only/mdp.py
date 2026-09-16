@@ -10,7 +10,7 @@ from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
 from isaaclab.sim import CuboidCfg, PreviewSurfaceCfg, SphereCfg
 from isaaclab.utils import configclass
 
-from .core import SampleAndHold, box_edges, point_in_world, tracking_reward, world_to_body
+from .core import SampleAndHold, TrapezoidTracker, box_edges, point_in_world, tracking_reward, world_to_body
 from .task_space import TARGET_RANGES
 from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 
@@ -38,23 +38,62 @@ class HeldJointPositionAction(LimitedJointPositionAction):
     sees every `hold_steps`-th output. Between updates the last target is held. The phase is random
     per environment, so the policy cannot rely on updates landing on particular steps. After a
     reset the arm holds its default pose until its first update.
+
+    With `trajectory` set, each setpoint goes to the D1 firmware's motion planner
+    (`core.TrapezoidTracker`, fitted in F-045) instead of straight to PhysX: after a short dead time the
+    planner moves the drive target along a trapezoid at the arm's measured acceleration, speed ceiling
+    and deceleration, and a new setpoint restarts the plan from rest. `processed_actions` stays the
+    setpoint the firmware *receives*, at the command rate; only what reaches the drive, every physics
+    step, is the planned trajectory.
     """
 
     def __init__(self, cfg, env):
         super().__init__(cfg, env)
         self._hold = SampleAndHold(self.num_envs, self.action_dim, cfg.hold_steps, env.step_dt, self.device)
         self._hold.reset(None, self._offset)
+        self._planner = None
+        if cfg.trajectory is not None:
+            plan = cfg.trajectory
+            self._planner = TrapezoidTracker(
+                self.num_envs, self.action_dim, plan["accel_rad_s2"], plan["decel_rad_s2"],
+                plan["velocity_limits_rad_s"], dead_time=plan["dead_time_s"],
+                retention=plan["replan_velocity_retention"], device=self.device)
+            self._planner.reset(None, self._offset)
+            self._physics_dt = env.physics_dt
+
+    @property
+    def planned_targets(self):
+        """The drive targets the planner is producing, or None when setpoints go straight to PhysX."""
+        return None if self._planner is None else self._planner.position
 
     def process_actions(self, actions):
         super().process_actions(actions)
         if self.cfg.hold_steps > 1:
-            self._hold.update(self._env.episode_length_buf, self._processed_actions)
+            sent = self._hold.update(self._env.episode_length_buf, self._processed_actions)
             self._processed_actions[:] = self._hold.value
+        else:
+            sent = torch.ones(self.num_envs, dtype=torch.bool, device=self.device)
+        if self._planner is not None:
+            # Every message is a new waypoint to the firmware, even when its value barely changed.
+            self._planner.command(sent, self._processed_actions)
+
+    def apply_actions(self):
+        if self._planner is None:
+            super().apply_actions()
+            return
+        self._asset.set_joint_position_target(self._planner.step(self._physics_dt), joint_ids=self._joint_ids)
+        # Velocity feedforward. The fitted trapezoid is the joint's *measured* motion, servo lag included,
+        # so the drive must follow it rather than lag it. Against a zero velocity target the 400 N*m*s/rad
+        # drive damping needs 7.2 deg of position error to sustain 1.25 rad/s, which trailed the plan by
+        # 97 ms (Week 1, 2026-09-17) and counted the servo's lag twice.
+        self._asset.set_joint_velocity_target(self._planner.velocity, joint_ids=self._joint_ids)
 
     def reset(self, env_ids=None):
         super().reset(env_ids)
         ids = slice(None) if env_ids is None else env_ids
         self._hold.reset(env_ids, self._offset[ids])
+        if self._planner is not None:
+            self._planner.reset(env_ids, self._offset[ids])
 
 
 @configclass
@@ -62,6 +101,9 @@ class HeldJointPositionActionCfg(LimitedJointPositionActionCfg):
     class_type: type = HeldJointPositionAction
     hold_steps: int = 1
     """Policy steps per command update (1 = every step)."""
+    trajectory: dict | None = None
+    """The D1 firmware planner: dead_time_s, accel_rad_s2, decel_rad_s2, replan_velocity_retention and
+    velocity_limits_rad_s (per joint, in action order). None sends setpoints straight to the drive."""
 
 
 class SampledJointFeedback(ManagerTermBase):

@@ -1,0 +1,28 @@
+{
+  "runs": {
+    "no planner": "20260916T234613_766543Z_arm_steps_seed42",
+    "planner, no feedforward": "20260916T234602_388647Z_arm_steps_seed42",
+    "planner + feedforward": "20260916T234806_566293Z_arm_steps_seed42"
+  },
+  "sim": {
+    "no planner": {
+      "rad_s_per_command_cycle": 1.2697168781111636,
+      "drive_vs_plan_rms_deg": null,
+      "drive_lag_s": null
+    },
+    "planner, no feedforward": {
+      "rad_s_per_command_cycle": 0.774103303750356,
+      "drive_vs_plan_rms_deg": 2.259817560935099,
+      "drive_lag_s": 0.09666666666666666
+    },
+    "planner + feedforward": {
+      "rad_s_per_command_cycle": 0.8099977710905174,
+      "drive_vs_plan_rms_deg": 0.3145406341553036,
+      "drive_lag_s": 0.0
+    }
+  },
+  "hardware_rad_s_per_cycle": {
+    "D1, one message per step": 1.2657567998697614,
+    "D1, a waypoint every cycle (cap 16)": 0.8333554086099051
+  }
+}

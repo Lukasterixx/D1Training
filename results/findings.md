@@ -431,7 +431,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-021 — J0 answers a step command in ~127 ms and reaches 1.15 rad/s, above the URDF's unverified 1.05 rad/s
 
-- **Status:** provisional
+- **Status:** superseded in its latency figure by [F-045](#f-045) (2026-09-17: the ~127 ms is mostly the wait for the next 111 ms feedback sample; fitted to the raw samples the command dead time is 0–10 ms, and a 127 ms dead time fits 7× worse). Its speed observation was already replaced by F-033
 - **Week:** 1
 - **Date:** 2026-09-16
 - **Evidence:** [D1 J0 step response on hardware](#/week/1/run/20260916T043641_d1_j0_step). With the Go2 sitting
@@ -878,7 +878,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-035 — The arm needs two feedback cycles to reach cruise, so a per-cycle IK loop can never move it smoothly
 
-- **Status:** confirmed
+- **Status:** confirmed, with its mechanism refined by [F-045](#f-045) (2026-09-17: "two feedback cycles to reach cruise" is how a ~80 ms ramp looks when sampled every 111 ms; the per-waypoint restart it describes is confirmed and quantified — a speed-preserving planner would cover 7.8°/cycle, restarting from rest covers 5.0, the arm covered 4.9–5.3)
 - **Week:** 1
 - **Date:** 2026-09-16
 - **Evidence:** [smooth-motion investigation](#/week/1/run/20260916T0900_d1_smooth_motion). Lukas reported the arm
@@ -1223,7 +1223,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-044 — The policies oscillate at 5–8 Hz while holding, above what the D1 can execute, with the arm at 60–90% of its speed limit
 
-- **Status:** confirmed
+- **Status:** confirmed in its measurements; its implication corrected by [F-045](#f-045) (2026-09-17: the ~127 ms delay and ~220 ms ramp it cites were feedback-sampling artefacts, so "the D1 physically cannot execute this motion" is withdrawn — 5–10 mm of tip oscillation is about a degree at the joints, well within reach. The oscillation itself and the arm running near its speed ceiling while holding stand)
 - **Week:** 1
 - **Date:** 2026-09-16
 - **Evidence:** [Week 1 log, 2026-09-16](week_01/notes.md). Lukas, watching the replay, reported the body and
@@ -1257,3 +1257,100 @@ result that changes a conclusion gets a new entry, and the old one is marked
   `action_rate` at −0.01 prices chatter at roughly a hundredth of what reaching pays, the same structural gap as
   the free squat (F-019), unpriced rotation (F-042) and velocity-priced translation (F-043) — but the term
   should not be retuned until the timing model is right, or it will be tuned against an artefact.
+
+### F-045 — Fitted to its raw samples, the D1 has ~10 ms of command dead time, not ~127 ms: an ~80 ms-ramp trapezoid that restarts from rest on every new setpoint
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [fit figure](week_01/figures/d1_arm_response.png) and
+  [d1_arm_response.json](week_01/figures/d1_arm_response.json) from `python -m position_only.arm_response`, which
+  simulates `core.TrapezoidTracker` — the implementation the task now uses — against the recorded hardware.
+  **Steps:** the six 30° single-joint sweeps on funcode 2 mode 0 (run `20260916T0800_d1_hold_sweeps`, 12 legs,
+  234 deduplicated samples at their actual timestamps). Dead time was profiled with acceleration and
+  deceleration refitted at each value:
+
+  | Dead time | Accel (rad/s²) | Decel (rad/s²) | Step RMS | Streaming RMS, restart from rest |
+  | --- | --- | --- | --- | --- |
+  | 0 ms | 12.5 | 17.4 | 0.339° | 0.94 °/cycle |
+  | **10 ms** | **15.5** | **17.4** | **0.342°** | **0.93 °/cycle** |
+  | 20 ms | 21.0 | 17.3 | 0.348° | 1.18 |
+  | 40 ms | 67.0 | 17.1 | 0.359° | 1.90 |
+  | 60 ms | 400 (bound) | 46.3 | 0.518° | — |
+  | 127 ms | 400 (bound) | 400 (bound) | **2.387°** | — |
+
+  **Streaming:** the F-035 cap sweep, a waypoint every 111 ms at the measured angle plus the cap. At caps 8/12/16
+  a planner that keeps its speed on a new setpoint covers 6.8/7.8/7.8 °/cycle; restarting from rest covers
+  5.0/5.0/5.0; the arm covered 4.4/4.9/5.3. Restarting from rest is the best replanning rule at every dead time.
+  The chosen model — 10 ms, 15.5 and 17.4 rad/s², restart from rest — is the best streaming fit among dead
+  times within 0.01° of the best step fit, a rule fixed in code before its output was read. Two corrections to
+  the reconstruction were needed before the fit meant anything: the holds were 2 s, not the 3 s first assumed,
+  and the recorded return-leg latencies for J1 and J2 are artefacts — the settled joint dithers ±0.1° around a
+  point 0.3° from the commanded target, which trips the 0.3° detection threshold with no motion, so return
+  commands are placed one hold after the outbound command instead.
+- **Scope:** one arm, unloaded, sitting robot, one posture per joint, 30° steps, one command path. The feedback
+  transport age is folded into the dead time. On single steps dead time and acceleration trade off, so 0–10 ms
+  is the supported range, not 10 ms a measurement. At a 5° streaming cap the model covers 4.3 °/cycle against
+  2.5 measured, where the loop's IK re-solve and the arm's ~0.7° landing deadband (F-026) come in. Whether
+  re-sending an *identical* setpoint restarts the plan was never tested; every streamed waypoint in F-035 was
+  new.
+- **Implication:** the ~127 ms command-to-motion "latency" (F-021) and the ~220 ms "ramp" (F-035) were both
+  mostly the 111 ms feedback period, so the loop's dominant real latency is that period — which the simulation
+  already modelled — and F-044's claim that the D1 cannot execute the policies' oscillation is withdrawn. What the
+  simulation did lack is the restart: every new setpoint costs the arm its speed, so a controller streaming at
+  10 Hz gets roughly two-thirds of the arm's single-command speed. The fitted values are in `motor_model.py`
+  with their labels, and `tests/test_arm_trajectory.py` fails if they drift from this fit's output. F-044 cited both
+  earlier figures; its measurements stand and its implication is corrected above.
+
+### F-046 — Under the task's 10 Hz stream the simulated arm now moves as a streamed D1 does, where the old model gave it single-command speed; current policies lose 5× their steady-state precision on it
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [comparison figure](week_01/figures/d1_arm_sim_vs_hardware.png) and
+  [d1_arm_sim_vs_hardware.json](week_01/figures/d1_arm_sim_vs_hardware.json). `--arm_trajectory measured` (now the
+  default) runs F-045's planner in the arm action at the physics rate; `processed_actions` stays the 10 Hz setpoint
+  the firmware receives. `run_position_only.py arm_steps` repeats the hardware protocol in simulation, each joint
+  30° out and back with the robot standing:
+
+  | | Fastest speed per command cycle | Drive vs plan |
+  | --- | --- | --- |
+  | D1, one message per step (F-033) | 1.27 rad/s | — |
+  | D1, a new waypoint every cycle (F-035) | **0.83 rad/s** | — |
+  | sim, no planner (the model until today) | 1.27 rad/s | — |
+  | sim, planner without feedforward | 0.77 rad/s | RMS 2.26°, **lag 97 ms** |
+  | sim, planner with velocity feedforward | **0.81 rad/s** | RMS 0.31°, lag 0 ms |
+
+  The first planner run trailed its own plan by 97 ms: against a zero velocity target the drive's 400 N·m·s/rad
+  damping needs 7.2° of position error to sustain 1.25 rad/s, which counts the servo's lag twice, since the fitted
+  trapezoid already is the joint's measured motion. The planned velocity is now the drive's velocity target.
+  `verify` passes **25/25** with the planner (run `20260916T235005_620389Z`), adding two checks: planned targets
+  stay under each joint's ceiling and never speed up faster than the fitted acceleration, and the joint follows
+  the plan (0.58° RMS). A first attempt bounded deceleration too and failed at 41.9 rad/s² — the per-message
+  restarts the model is built to have — so only speeding up is bounded (run `…234904_615402Z`). `verify` also
+  passes with `--arm_trajectory none` (run `…235123_684069Z`). The manifests now carry the planner's resolved
+  values; rebuilt as development `930d188d26b9`, validation `c0eb26cd7611`, test `a7069027f9ee` with byte-identical
+  episodes, the zero-action baseline is unchanged (0/100, RMS 21.74 cm, lowest base 0.2602 m), and a deliberate
+  `--arm_trajectory none` run against them is flagged. The three v3 policies, trained without the planner, on the
+  development manifest under it:
+
+  | Seed | Success | Falls | Final-2 s error | Tip p-p while holding | Arm joint vel holding | Base travel | Max tilt |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | 42 | 99 → 96 | 1 → 0 | 4.7 → **23.2 mm** | 9.8 → 7.8 mm, 6.5 Hz | 0.73 → 0.55 rad/s | 24.1 → 22.2 cm | 44.3° → 28.1° |
+  | 43 | 100 → 98 | 0 → 0 | 4.5 → **23.7 mm** | 6.9 → 6.6 mm, 4.7 Hz | 1.13 → 0.79 rad/s | 20.5 → 11.8 cm | 9.0° → 10.2° |
+  | 44 | 100 → 100 | 0 → 0 | 8.0 → 7.2 mm | 5.4 → 2.8 mm, 5.3 Hz | 0.84 → 0.57 rad/s | 25.3 → 25.6 cm | 8.0° → 8.4° |
+- **Scope:** simulation. The sim steps start from the arm's default pose on a standing robot, the hardware from
+  varied poses on a sitting one, so gravity loading differs. The planner restarts on *every* 10 Hz message,
+  including an identical re-send — the conservative reading, since a simulated arm that ignored identical re-sends
+  would reward a policy for saturating its actions to hold full speed, and that may not exist on the hardware. The
+  policies are evaluated off their training distribution, one manifest, one simulator seed. At the end of a move
+  the joint overshoots its plan by up to 1.5°.
+- **Implication:** the old arm model was right about the D1's *capability* and wrong about what a streaming
+  controller gets from it: it gave a policy streaming at 10 Hz the speed of a single command, half again what the
+  hardware delivers. Two of three current policies lose 5× their steady-state precision on the corrected arm — their
+  fine tracking depended on corrections the streamed D1 cannot make — while their oscillation shrinks but persists
+  and their walking is unchanged. They need retraining under the planner before any further G1a reading. Two
+  hardware questions follow, both cheap: whether an identical re-sent setpoint restarts the D1's plan (a single
+  30° step with the setpoint re-sent at 10 Hz answers it), and, for the G4 deployment contract, whether the deploy
+  stack should stream the policy's arm output at 10 Hz at all, given that streaming costs the arm a third of its
+  speed.

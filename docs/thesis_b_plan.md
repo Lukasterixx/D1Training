@@ -211,16 +211,23 @@ retain the tagged system for the core control evaluation and report the limit.
 
 The current task uses 200 Hz physics and 50 Hz policy steps. Its default
 `--latency estimated` profile holds D1 arm targets for 5 policy steps (the SDK's
-10 Hz streaming rate), samples arm joint angles at 10 Hz with velocities
-differenced from them, and delays Go2 leg commands by 0–10 ms. These are
-estimates from interface code (the D1 SDK's rates and unitree_rl_lab's 1 kHz
-command loop), not hardware measurements. Keep one latency profile across P0–P4.
-Run `--latency none` as a declared sensitivity experiment, not an undocumented
-change between ablations. Measure D1 command-to-motion latency, firmware
-smoothing and joint speed before calling a policy transfer-ready.
-Schedule those hardware measurements in B Weeks 1–2; validate the resulting
-model in Weeks 3–4. The existing 4000/400 simulated D1 gains are not hardware
-commands. Measure actual response rather than copying gains from the Z1.
+10 Hz streaming rate), samples arm joint angles at the **measured** 9 Hz (F-020)
+with velocities differenced from them, and delays Go2 leg commands by 0–10 ms.
+The 10 Hz command rate and the leg delay are still estimates from interface code.
+Joint speed ceilings are measured (1.21–1.29 rad/s, F-033). The default
+`--arm_trajectory measured` passes each setpoint through the D1 firmware's
+motion planner, fitted to the raw hardware samples (F-045): about 10 ms of dead
+time, a trapezoid at 15.5/17.4 rad/s² acceleration/deceleration, and a restart
+from rest on every new setpoint, so a 10 Hz stream moves the arm at ~0.8 rad/s
+rather than its single-command 1.27 (F-046). The ~127 ms "latency" first
+reported (F-021) was mostly the wait for the next 111 ms feedback sample; the
+loop's dominant real latency is that feedback period. Keep one latency and arm
+trajectory profile across P0–P4. Run `--latency none` or `--arm_trajectory none`
+as declared sensitivity experiments, not undocumented changes between ablations.
+Before calling a policy transfer-ready, still measure Go2 command latency, the
+D1 under load and in more postures, and whether re-sending an identical setpoint
+restarts the D1's plan (untested). The existing 4000/400 simulated D1 gains are
+not hardware commands.
 
 ## Gates and measurement definitions
 

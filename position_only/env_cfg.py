@@ -15,7 +15,7 @@ from isaaclab.utils import configclass
 from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 from flat_env_cfg import FlatSceneCfg, EventCfg, make_robot_cfg
-from motor_model import interface_timing
+from motor_model import D1_VELOCITY_LIMIT_RAD_S, arm_trajectory as firmware_trajectory, interface_timing
 from . import mdp as task_mdp
 from .task_space import SPAWN_HEIGHT_M, ZERO_ACTION_BASE_OFFSET_M
 from .tool_point import TOOL_BODY, TOOL_OFFSET_M
@@ -218,14 +218,16 @@ class PositionOnlyEnvCfg(ManagerBasedRLEnvCfg):
 
 def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=TOOL_OFFSET_M, tip_body=TOOL_BODY,
              leg_actuator="unitree", robustness="none", self_collisions=True, latency="estimated",
-             arm_actuator="d1_servo", spawn_height=SPAWN_HEIGHT_M, target_ranges=None):
+             arm_actuator="d1_servo", spawn_height=SPAWN_HEIGHT_M, target_ranges=None, arm_trajectory="measured"):
     """`leg_actuator`: "unitree" (measured Go2 envelope) or "dc_motor" (Isaac Lab stock).
     `arm_actuator`: "d1_servo" (explicit published torque and URDF speed limits) or "implicit".
     `latency`: "estimated" (leg command delay; D1 commands and feedback at 10 Hz) or "none".
     `robustness`: "none" (deterministic, for bring-up) or "unitree" (observation noise and
     unitree_rl_lab randomisation). `self_collisions` lets the arm collide with the Go2 body: on by
     default, as in unitree_rl_lab, once Week 1 measured no resting contact from the weld.
-    `spawn_height`: base height at reset. `target_ranges`: override the command's target box."""
+    `spawn_height`: base height at reset. `target_ranges`: override the command's target box.
+    `arm_trajectory`: "measured" (the D1 firmware's fitted motion planner between setpoint and drive,
+    F-045) or "none" (setpoints reach the drive at once, as before 2026-09-17)."""
     if robustness not in ("none", "unitree"):
         raise ValueError(f"Unknown robustness profile: {robustness!r}")
     cfg = PositionOnlyEnvCfg()
@@ -234,6 +236,9 @@ def make_cfg(robot_usd_path, num_envs=64, seed=42, device="cuda:0", tip_offset=T
                                      arm_actuator=arm_actuator,
                                      leg_delay_steps=tuple(timing["leg_delay_physics_steps"]))
     cfg.actions.arm.hold_steps = timing["arm_command_hold_steps"]
+    plan = firmware_trajectory(arm_trajectory)
+    if plan is not None:
+        cfg.actions.arm.trajectory = dict(plan, velocity_limits_rad_s=[D1_VELOCITY_LIMIT_RAD_S[j] for j in ARM_NAMES])
     for term in (cfg.observations.policy.arm_joint_pos, cfg.observations.policy.arm_joint_vel):
         term.params["period_steps"] = timing["arm_feedback_period_steps"]
     # unitree_rl_lab's articulation solver settings (stock Go2: 4 position, 0 velocity iterations).
