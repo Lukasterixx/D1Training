@@ -1,0 +1,287 @@
+{
+  "status": "pick_failed",
+  "mode": "pick",
+  "seed": 42,
+  "arguments": {
+    "headless": false,
+    "device": "cuda:0",
+    "seed": 42,
+    "camera": "d435",
+    "mount_pos": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "mount_pitch_deg": 20.0,
+    "mount": null,
+    "calibration": null,
+    "camera_body": false,
+    "mount_calibration": "none",
+    "depth_noise": true,
+    "cup_usdz": "/home/lukas/D1Training/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "cup_diameter": 0.09,
+    "cup_height": 0.1,
+    "cup_mass": 0.12,
+    "cup_wall": 0.005,
+    "wall_grasp": "auto",
+    "pinch_closed_gap": 0.002,
+    "cup_xy": [
+      0.42,
+      0.03
+    ],
+    "cup_yaw_deg": 0.0,
+    "weights": "/home/lukas/D1Training/generated/yolo/yolo11s-seg.pt",
+    "settle": 3.0,
+    "max_time": 90.0,
+    "video_every": 3,
+    "episodes": 1,
+    "no_video": false,
+    "linger": false,
+    "realtime": true,
+    "ui_feed_port": 8765,
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/pick_demo"
+  },
+  "git_commit": "867d4a9c29848eaba60a3805dd3a5b288e8d0256",
+  "git_status": "M README.md\n M d1_hardware.py\n M d1_ui/README.md\n M d1_ui/camera_feed.py\n M d1_ui/server.py\n M d1_ui/static/app.js\n M d1_ui/static/index.html\n M d1_ui/static/style.css\n M pick_demo/camera.py\n M pick_demo/cup_asset.py\n M pick_demo/grasp.py\n M pick_demo/perception.py\n M pick_demo/scene.py\n M pick_demo/sequence.py\n M results/findings.md\n M results/week_01/notes.md\n M run_pick_demo.py\n M run_pick_demo.sh\n M run_ui.sh\n M tests/test_d1_hardware.py\n M tests/test_d1_ui.py\n M tests/test_pick_demo.py\n M third_party/three.js/NOTICE.md\n?? d1_ui/static/vendor/TransformControls.js\n?? logs/camera_body/\n?? logs/gripper_probe/\n?? logs/pick_hardware/\n?? pick_demo/assets/bench.json\n?? pick_demo/assets/calibration/\n?? pick_demo/assets/mounts/\n?? pick_demo/assets/realsense/\n?? pick_demo/camera_asset.py\n?? pick_demo/camera_body.py\n?? pick_demo/hardware.py\n?? pick_demo/realsense.py\n?? results/week_01/figures/camera_body_above.png\n?? results/week_01/figures/camera_body_cad_above.png\n?? results/week_01/figures/camera_body_cad_front.png\n?? results/week_01/figures/camera_body_cad_side.png\n?? results/week_01/figures/camera_body_cad_three_quarter.png\n?? results/week_01/figures/camera_body_front.png\n?? results/week_01/figures/camera_body_side.png\n?? results/week_01/figures/camera_body_three_quarter.png\n?? results/week_01/runs/20260917T064251_915378Z_pick_seed42/\n?? results/week_01/runs/20260917T070343_357515Z_pick_seed42/\n?? results/week_01/runs/20260917T070553_982317Z_pick_seed42/\n?? results/week_01/runs/20260917T070804_174822Z_pick_seed42/\n?? results/week_01/runs/20260917T070917_995149Z_pick_seed42/\n?? results/week_01/runs/20260917T071150_783318Z/\n?? results/week_01/runs/20260917T071238_076387Z/\n?? results/week_01/runs/20260917T071420_080024Z_pick_seed42/\n?? results/week_01/runs/20260917T073416_082125Z_pick_hw/\n?? results/week_01/runs/20260917T075204_004370Z_pick_hw/\n?? results/week_01/runs/20260917T075242_436661Z_pick_hw/\n?? results/week_01/runs/20260917T075300_152735Z_pick_hw/\n?? results/week_01/runs/20260917T075744_469116Z/\n?? results/week_01/runs/20260917T075946_132477Z/\n?? results/week_01/runs/20260917T091408_329082Z_pick_seed42/\n?? results/week_01/runs/20260917T100010_537902Z_pick_seed42/\n?? results/week_01/runs/20260917T100229_264853Z_pick_seed42/\n?? run_camera_body_view.py\n?? run_camera_body_view.sh\n?? tests/test_pick_hardware.py\n?? third_party/realsense2_description/",
+  "source_sha256": {
+    "pick_demo/__init__.py": "0b2a80bb766958bf706b452afb7c7f051fcf60b2f0c5e9b4d54f95a19a3a6e1e",
+    "pick_demo/camera.py": "de67bb5750461adc6709a0652eed25a4db24158e0bde3763492aa2fb58f0c9ff",
+    "pick_demo/camera_asset.py": "5f01fcb7e80c30f86735e9fbefecb475a756516cb7641f6f5a1150bd291dee5d",
+    "pick_demo/camera_body.py": "6a8513c40701fb706358c0417ab595ca239fcbaa6368e2d7f57899e48246726e",
+    "pick_demo/cup_asset.py": "0d8a7d1e209fb4d468dc24234aff9dc73d4ce25f5fe88e23ed051118e133e643",
+    "pick_demo/grasp.py": "4a41a6f208df2ca477395125296344d1ae817446bb127e3d720c5316e5e9ff40",
+    "pick_demo/hardware.py": "b26cb140bb7d09a0623f505bb7cc18a8e48c7346001355ddb139ba3d0d2b48f4",
+    "pick_demo/perception.py": "9b4c80512153a224fca38bab608e3899d2f1d92647a9b997583b29ed26b1b7fa",
+    "pick_demo/realsense.py": "fcbdc2402ae68b187ba9d7288429b17bd0f8fc7204702941e2ed722f224b77f7",
+    "pick_demo/scene.py": "409131a7bad5f0b92abf789b7bc0f4b0889c3ed1ab839bc322aa3008e6b7741a",
+    "pick_demo/sequence.py": "01ade1cb486486c2fea61e09eb8ccd8805059f6bb36729a7311418e450eb67eb",
+    "position_only/__init__.py": "f2df2f9826b104a62c7a2d31714ac279115fafa23f02d4ec38f2e710e297a14f",
+    "position_only/agent.py": "3e9529e425b09c27319e9017cd13ec324e5d6e8c8f6ac714943b212b8a978a83",
+    "position_only/arm_response.py": "7535b2d8787c15fdeb424e868d6f3a6bd4d1344b524c5ebc45dbb0be8870e7f6",
+    "position_only/arm_steps.py": "a8597213266b915b761e45bba487c344c1f5021fe2c249275afc152433b9e8e2",
+    "position_only/core.py": "b3ccdd1761a57cb77b47377e034d5d28a1b8e54bc1534b2c74542f420ffd56c1",
+    "position_only/deploy.py": "6a310550f618ac8a4d944913abc807e64d1e0636c1e37abf9b76b65604b9d9ab",
+    "position_only/env_cfg.py": "74b43ab7131210d1611683e2561e10cd8007970facd080c828f6c3d769ac4c55",
+    "position_only/evaluate.py": "e892d0909448c18363a81a2dc52deb8a536f1aae07d47699c0b9d4128993e2d1",
+    "position_only/manifest.py": "08d0746bcbf0b8ef12f61b65674fe918b2c148251bd49f5bb1a667a008288a50",
+    "position_only/mdp.py": "07402bbd91af18e62451606a33fff10659fa6b2b4a1bf4ad6d900384d8cd72e8",
+    "position_only/task_space.py": "feefb7da4653e04ac66502aff3af1241176e36a2e24b84e58598049660db9a76",
+    "position_only/tool_point.py": "24648983774d4a9eab3f4e053c731456b1a13d631f3d52fa7e505b07a6c932a5",
+    "position_only/verify.py": "2c7446dbd5995ebaa706874f9e3b57663a2c8c0d15e5aef951ab9e675708dab7",
+    "position_only/workspace.py": "c82a051bc59d17a54685b2f8910419d11b804efb38f9f5580e7691009428388b",
+    "run_pick_demo.py": "01ef4fa89bff0e99ffe80e9e7744f6183e2e71bc4191ded10621e1c0f9442574",
+    "d1_ik.py": "e9ad37e2c4f5a75d47e0726f18132a46abdf6bbbed6c7e10fee3985b8bd45065",
+    "d1_ui/sim_feed.py": "ef9dfc5fea8a0d2ca150314f6a9de3447dffba1d055f83de2740794b6bf0dfc7",
+    "flat_env_cfg.py": "4607798cdec5f5e6c07248e507abd8429617c81db2dc2b2f010fcce195b2b9c2",
+    "weld.py": "46da9fd616960d0b0f62cf7912d8fb2ae3bb7bb522d1f63da4b3a88df1cc34fb",
+    "motor_model.py": "6451d3cf0e92354671204a1ac53aabe4979d76013ff950169bbb04e72c2aa944",
+    "unitree_actuators.py": "011cf29c8cb423b524e01ae4b84d1a2c19835cdec3c15d72bb7e667b4626df88",
+    "d1_arm/d1.urdf": "594dd48a8c29153de49e4a81a838037cb252770f8457b8a36b329ac69b88a720"
+  },
+  "packages": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "torch": "2.7.0+cu128",
+    "ultralytics": "8.3.228",
+    "numpy": "1.26.0",
+    "opencv-python-headless": "4.11.0.86"
+  },
+  "task": "scripted_top_down_cup_pick",
+  "learning": null,
+  "camera": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration",
+    "mount": {
+      "schema": "d1training.wrist_mount/1",
+      "created_utc": "2026-09-17T10:12:41+00:00",
+      "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+      "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+      "xyz_m": [
+        -0.061,
+        0.034,
+        0.067
+      ],
+      "rpy_deg": [
+        0.0,
+        0.0,
+        -90.0
+      ],
+      "pose_link6": [
+        [
+          0.0,
+          1.0,
+          0.0,
+          -0.061
+        ],
+        [
+          -1.0,
+          0.0,
+          -0.0,
+          0.034
+        ],
+        [
+          -0.0,
+          0.0,
+          1.0,
+          0.067
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measured": false,
+      "method": "unstated",
+      "source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+      "camera": ""
+    },
+    "mount_source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+    "mount_file": "/home/lukas/D1Training/pick_demo/assets/mounts/wrist_mount.json",
+    "model_source": "preset d435 (datasheet-derived, not a calibration)",
+    "body_drawn": false,
+    "depth_noise": true
+  },
+  "posture": {
+    "legs": {
+      "FR_hip_joint": 0.0,
+      "FL_hip_joint": 0.0,
+      "RR_hip_joint": -0.2,
+      "RL_hip_joint": 0.2,
+      ".*_thigh_joint": 1.36,
+      ".*_calf_joint": -2.65
+    },
+    "source": "unitree_ros2 go2_stand_example.cpp target_pos_1"
+  },
+  "detector": {
+    "weights": "/home/lukas/D1Training/generated/yolo/yolo11s-seg.pt",
+    "weights_sha256": "1caa81c0195412efa411b632bcfb8c184939dddb6ae41f6a80c41b211ff257c3",
+    "classes": "COCO, no fine-tuning"
+  },
+  "robot_usd": "/home/lukas/D1Training/logs/pick_demo/20260917T101241_612167Z_pick_seed42/assets/go2_d1.usd",
+  "robot_usd_sha256": "96530681f3583962290c702699f1205658f15e85c81d0dbb47c1028d64926ac7",
+  "cup": {
+    "usd_path": "/home/lukas/D1Training/generated/pick_demo/cup_d52e35eef071.usd",
+    "source": "/home/lukas/D1Training/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "source_sha256": "da2194b0a27c46a0b3aefef011c45911c53027f38586c0822011098b6c5dc677",
+    "diameter_m": 0.09,
+    "height_m": 0.1,
+    "mass_kg": 0.12,
+    "colour": [
+      0.92,
+      0.92,
+      0.9
+    ],
+    "roughness": 0.35,
+    "static_friction": 0.9,
+    "dynamic_friction": 0.7,
+    "wall_m": 0.005,
+    "wall_segments": 24,
+    "builder": 2,
+    "source_points": 626087,
+    "source_diameter_units": 198.71906075403803,
+    "source_height_units": 197.18265719683802,
+    "scale_diameter": 0.00045290069135036997,
+    "scale_height": 0.0005071439923855717,
+    "handle_box_m": {
+      "min": [
+        0.0452,
+        -0.0097,
+        0.0078
+      ],
+      "max": [
+        0.0817,
+        0.0097,
+        0.093
+      ]
+    },
+    "collision": "hollow: 24 boxes of 5.0 mm in a ring on a disc of the same thickness (inside diameter 80.0 mm), + box (handle); the visual mesh has no collider",
+    "spawn_xy_env_m": [
+      0.42,
+      0.03
+    ],
+    "yaw_deg": 0.0
+  },
+  "grasp": {
+    "wall_grasp": "auto",
+    "pinch_closed_gap_m": 0.002,
+    "wall_thickness_m": 0.005,
+    "why": "a cup too wide for the 77.2 mm jaws is grasped by its wall: pinched if the jaws shut below the wall, else from inside the mouth"
+  },
+  "sim2real": {
+    "leg_actuator": "unitree",
+    "arm_actuator": "d1_servo",
+    "latency": "estimated",
+    "arm_trajectory": {
+      "dead_time_s": 0.01,
+      "accel_rad_s2": 15.5,
+      "decel_rad_s2": 17.4,
+      "replan_velocity_retention": 0.0,
+      "velocity_limits_rad_s": [
+        1.25,
+        1.29,
+        1.23,
+        1.21,
+        1.25,
+        1.25
+      ]
+    },
+    "arm_command_hold_steps": 5,
+    "arm_feedback_period_steps": 6,
+    "arm_action_scale_rad": 3.141592653589793,
+    "policy_hz": 50,
+    "physics_hz": 200,
+    "gripper": "implicit drive, URDF 15 N effort and 0.02 m/s limits; finger limits widened by 7.6 mm past the URDF's stop so the pads shut to 2.0 mm (F-063), which is not the imported model; gripper timing not measured on the D1",
+    "gripper_shut_travel_m": -0.0076
+  },
+  "ui_feed": "http://127.0.0.1:8765",
+  "settled": {
+    "base_height_m": 0.0851,
+    "base_xy_env_m": [
+      -0.0173,
+      0.0
+    ],
+    "cup_start_env_m": [
+      0.42,
+      0.03,
+      -0.0
+    ],
+    "cup_yaw_deg": 0.0,
+    "settle_s": 3.0
+  },
+  "pick": {
+    "success": false,
+    "final_state": "done",
+    "failure": null,
+    "cup_lift_m": 0.119,
+    "cup_axis_to_jaw_centre_m": 0.0406,
+    "sim_time_s": 12.96
+  },
+  "episodes": {
+    "count": 1,
+    "completed": 1,
+    "succeeded": 0,
+    "random_cup_x_env_m": [
+      0.36,
+      0.44
+    ],
+    "random_cup_y_env_m": [
+      -0.1,
+      0.1
+    ],
+    "random_handle_band_deg": 45.0
+  }
+}

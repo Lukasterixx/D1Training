@@ -12,8 +12,13 @@ are closer together than that tolerance, so in practice they stream at about the
 per-cycle mode F-035 found slower and less smooth on the hardware. In simulation the jaw stayed within
 4.9 mm of the planned descent line (Week 1 log, 2026-09-17).
 
-    settle -> observe (move, detect; scan other floor points if nothing) -> plan grasp -> pregrasp
+    settle -> survey (one angled look over the floor ahead; the close scan only if it finds nothing)
+    -> plan grasp -> pregrasp
     -> refine (look again from above, re-plan if the cup is elsewhere) -> descend -> close -> lift -> hold
+
+The gripper is the plan's to choose, not the sequence's: an outside grasp descends open and closes on the
+cup, a wall grasp on a cup too wide for the jaws descends shut and opens against the wall from inside
+(`grasp.GraspParams.wall_grasp`). Both reach the arm the same way, in simulation and on the bench.
 """
 from __future__ import annotations
 
@@ -22,8 +27,8 @@ import math
 
 import numpy as np
 
-from .grasp import (CLOSED_GAP_M, GRIPPER_CLOSED_M, GRIPPER_OPEN_M, GraspParams, PlanningError, floor_point,
-                    grip_travel_m, plan_observation, plan_top_down_grasp)
+from .grasp import (CLOSED_GAP_M, CLOSED_SPAN_M, GRIPPER_CLOSED_M, GraspParams, PlanningError, floor_point,
+                    heading_to, plan_observation, plan_survey, plan_top_down_grasp)
 from .perception import CupEstimate
 
 # Floor points to look at, (x, y) in the base frame: straight ahead first, then either side and further.
@@ -49,6 +54,12 @@ class Timing:
     arrive_tolerance_rad: float = 0.03
     stationary_window_s: float = 0.35
     stationary_rad: float = 0.004
+    # How long a final waypoint may simply *stay* within tolerance instead of going still. A real arm
+    # holding a pose against gravity trembles: on the bench, 2026-09-17, the arm reached its pregrasp
+    # correct to 0.008 rad and then timed out for 5 s because its hold jittered by more than
+    # `stationary_rad`, audibly. Being at the target and staying there is the condition that matters;
+    # the spread test is only a quick way of recognising it.
+    settled_s: float = 0.8
     joint_speed_rad_s: float = 1.2     # F-033, for timeouts only
 
 
@@ -58,12 +69,25 @@ class Motion:
     def __init__(self, waypoints, name: str, t: float, timing: Timing, q_now):
         self.waypoints = [np.asarray(q, dtype=float) for q in waypoints]
         self.name, self.timing, self.index = name, timing, 0
-        self._start(t, q_now)
+        # The clock starts when the arm is first *told* where to go, not when the move is created. The
+        # two are not the same instant: planning the move that follows happens in between, and a grasp
+        # plan is 18 waypoints of inverse kinematics. Charging that to the arm's deadline is what made
+        # the bench arm look stalled -- one command sent, "covered 0% of the move", and a timeout
+        # declared before it had been asked to move at all (2026-09-17).
+        self.started = self.deadline = None
+        self.travel, self.within_since = 0.0, None
+
+    def progress(self, q_fb) -> float:
+        """How much of this waypoint's move the arm has covered, 0 to 1."""
+        remaining = float(np.max(np.abs(np.asarray(q_fb) - self.target)))
+        return 1.0 if self.travel < 1e-6 else float(np.clip(1.0 - remaining / self.travel, 0.0, 1.0))
 
     def _start(self, t, q_now):
         self.started = t
-        travel = float(np.max(np.abs(self.target - np.asarray(q_now))))
-        self.deadline = t + 3.0 + 2.0 * travel / self.timing.joint_speed_rad_s
+        self.within_since = None
+        self.travel = float(np.max(np.abs(self.target - np.asarray(q_now))))
+        self.deadline = (t + 3.0 + self.timing.settled_s
+                         + 2.0 * self.travel / self.timing.joint_speed_rad_s)
 
     @property
     def target(self) -> np.ndarray:
@@ -71,9 +95,17 @@ class Motion:
 
     def update(self, t, q_fb, stationary: bool) -> str:
         """'moving', 'done', or 'timeout'."""
+        if self.started is None:
+            self._start(t, q_fb)
         error = float(np.max(np.abs(q_fb - self.target)))
         last = self.index == len(self.waypoints) - 1
-        if error < self.timing.arrive_tolerance_rad and (not last or stationary):
+        within = error < self.timing.arrive_tolerance_rad
+        self.within_since = t if not within else (self.within_since if self.within_since is not None else t)
+        # A trembling hold is an arrival. `stationary` is the quick way to know the arm has stopped;
+        # holding inside tolerance for `settled_s` is the slow way, and it is the one a real arm under
+        # load passes (bench, 2026-09-17).
+        held = within and t - self.within_since >= self.timing.settled_s
+        if within and (not last or stationary or held):
             if last:
                 return "done"
             self.index += 1
@@ -85,13 +117,15 @@ class Motion:
 class PickSequence:
     def __init__(self, joints, links, camera_model, mount, perception, *, base_height_m: float,
                  look_points_xy=LOOK_POINTS_XY, grasp_params: GraspParams | None = None,
-                 timing: Timing | None = None, refine_passes: int = 2, refine_min_shift_m: float = 0.004):
+                 timing: Timing | None = None, refine_passes: int = 2, refine_min_shift_m: float = 0.004,
+                 survey: bool = True):
         self.joints, self.links, self.model, self.mount, self.perception = joints, links, camera_model, mount, perception
         self.base_height = base_height_m
         self.look_points = list(look_points_xy)
         self.params = grasp_params or GraspParams()
         self.timing = timing or Timing()
         self.refine_passes, self.refine_min_shift = refine_passes, refine_min_shift_m
+        self.survey = survey
 
         self.state, self.state_since = "settle", 0.0
         self.q_target: np.ndarray | None = None
@@ -100,6 +134,7 @@ class PickSequence:
         self.history: list[tuple[float, np.ndarray]] = []
         self.events: list[dict] = []
         self.look_index = 0
+        self.surveyed = False
         self.observations: list = []
         self.cup: CupEstimate | None = None
         self.first_cup: CupEstimate | None = None
@@ -168,8 +203,17 @@ class PickSequence:
                          error_rad=round(float(np.max(np.abs(q_fb - self.motion.target))), 4))
                 self._enter(t, self.after_motion)
             elif outcome == "timeout":
+                # Say *how* it failed to arrive, not just that it did. A pose held short of the target and
+                # one still crawling towards it look identical in a single worst-joint number, and the
+                # bench has produced both (2026-09-17): 0.008 rad while trembling, and 0.555 rad while
+                # still moving. The per-joint errors and what the arm covered separate them.
+                errors = np.abs(q_fb - self.motion.target)
+                covered = self.motion.progress(q_fb)
                 self._fail(t, f"{self.motion.name}: no arrival by {self.motion.deadline - self.motion.started:.1f} s "
-                              f"(worst joint error {float(np.max(np.abs(q_fb - self.motion.target))):.3f} rad)")
+                              f"(worst joint error {float(errors.max()):.3f} rad; per joint "
+                              f"{[round(float(e), 3) for e in errors]}; covered {100 * covered:.0f}% of the "
+                              f"move, {'still moving' if not self._stationary(t) else 'stopped'}; "
+                              f"gripper {1000 * self.gripper:.1f} mm)")
 
         elif state == "detect":
             if self._frame_due(t):
@@ -182,6 +226,11 @@ class PickSequence:
                     self.observations.append(observation)
                     self.log(t, "cup seen", confidence=round(observation.detection.confidence, 3),
                              valid_depth=round(observation.valid_depth_fraction, 3), **observation.estimate.as_dict())
+                elif getattr(self.perception, "last_rejection", None):
+                    # A look that found a cup but not enough of its rim. Worth a line: otherwise a run
+                    # that moves through every viewpoint looks like the detector failing, when in fact it
+                    # saw the cup each time and declined to measure it from there.
+                    self.log(t, "look rejected", why=self.perception.last_rejection)
                 if len(self.observations) >= self.timing.detections_needed:
                     self.cup = self.first_cup = consensus([o.estimate for o in self.observations])
                     self.log(t, "cup located", **self.cup.as_dict())
@@ -217,12 +266,17 @@ class PickSequence:
                     self._descend(t, q_fb)
 
         elif state == "close":
-            if self.gripper == GRIPPER_OPEN_M:
-                self.gripper = grip_travel_m(2.0 * self.cup.radius_m, self.params.squeeze_m)
-                self.log(t, "closing", finger_travel_m=round(self.gripper, 4),
-                         jaw_gap_m=round(2.0 * self.gripper + CLOSED_GAP_M, 4))
+            # "close" is the state's name, not always the motion: an inside-out wall grasp *opens* here,
+            # pressing the fingers outwards on the inside of the cup. The plan decides; the sequence only
+            # knows that the gripper goes from what it held on the way down to what it holds the cup with.
+            if self.gripper != self.plan.gripper_grasp_m:
+                self.gripper = self.plan.gripper_grasp_m
+                self.log(t, "closing" if self.plan.mode != "inside_out" else "opening onto the wall",
+                         mode=self.plan.mode, finger_travel_m=round(self.gripper, 4),
+                         jaw_gap_m=round(2.0 * self.gripper + CLOSED_GAP_M, 4),
+                         finger_span_m=round(2.0 * self.gripper + CLOSED_SPAN_M, 4))
             if t - self.state_since >= self.timing.close_s:
-                self.log(t, "closed")
+                self.log(t, "closed" if self.plan.mode != "inside_out" else "pressing on the wall")
                 self._move(t, self.plan.lift, "lift", q_fb, "hold")
 
         elif state == "hold":
@@ -233,6 +287,23 @@ class PickSequence:
         return ArmCommand(None if self.q_target is None else self.q_target.copy(), self.gripper, self.state)
 
     def _plan_observation(self, t, q_fb, up_b):
+        # The first look is a survey: the arm stands the camera up over the robot and tips it down at an
+        # angle, holding most of a metre of floor in one frame, rather than hovering over one named point
+        # at close range. Only if that finds nothing does it fall back to the close scan below, which
+        # visits the floor points one at a time.
+        if self.survey and not self.surveyed:
+            self.surveyed = True
+            heading = heading_to(floor_point(0.5, 0.0, up_b, self.base_height), up_b)
+            try:
+                plan = plan_survey(self.joints, self.links, self.model, self.mount, up_b, q_fb,
+                                   self.base_height, heading)
+            except PlanningError as exc:
+                self.log(t, "no survey pose", reason=str(exc))
+            else:
+                self.observations, self.frames_tried = [], 0
+                self.log(t, "survey", **plan.as_dict())
+                self._move(t, [plan.q], "survey", q_fb, "detect")
+                return
         while self.look_index < len(self.look_points):
             x, y = self.look_points[self.look_index]
             look = floor_point(x, y, up_b, self.base_height)
@@ -255,7 +326,7 @@ class PickSequence:
         except PlanningError as exc:
             self._fail(t, f"grasp planning: {exc}")
             return
-        self.gripper = GRIPPER_OPEN_M
+        self.gripper = self.plan.gripper_descend_m
         self.frames_tried = 0
         self.log(t, "grasp planned", **self.plan.as_dict())
         self._move(t, self.plan.approach, "pregrasp", q_fb, "refine")

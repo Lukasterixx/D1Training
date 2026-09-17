@@ -1,0 +1,82 @@
+{
+  "started_utc": "2026-09-17T09:43:53Z",
+  "direction": "open",
+  "step": 5.0,
+  "limit": 40.0,
+  "advertised_range": [
+    0.0,
+    65.0
+  ],
+  "stopped_because": "no movement over two steps; the window ends near -19.7 units",
+  "readings": [
+    {
+      "commanded": null,
+      "units": 0.2,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.0
+    },
+    {
+      "commanded": -4.8,
+      "moved": -4.8,
+      "units": -4.6,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.0
+    },
+    {
+      "commanded": -9.8,
+      "moved": -5.0,
+      "units": -9.6,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.068
+    },
+    {
+      "commanded": -14.8,
+      "moved": -4.9,
+      "units": -14.5,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.018
+    },
+    {
+      "commanded": -19.8,
+      "moved": -5.0,
+      "units": -19.5,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.081
+    },
+    {
+      "commanded": -24.8,
+      "moved": -0.3,
+      "units": -19.8,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.033
+    },
+    {
+      "commanded": -29.8,
+      "moved": 0.1,
+      "units": -19.7,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.094
+    },
+    {
+      "commanded": -34.8,
+      "moved": 0.0,
+      "units": -19.7,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.046
+    }
+  ],
+  "final": {
+    "units": -19.7,
+    "error": 0,
+    "enable": true,
+    "feedback_age_s": 0.104
+  }
+}

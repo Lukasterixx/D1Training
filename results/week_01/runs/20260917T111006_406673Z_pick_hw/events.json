@@ -1,0 +1,54 @@
+[
+  {
+    "t": 3.011,
+    "state": "settle",
+    "event": "settled",
+    "base_height_m": -0.09,
+    "tilt_deg": 0.0
+  },
+  {
+    "t": 3.011,
+    "state": "settle",
+    "event": "survey",
+    "q": [
+      -0.3156,
+      -0.3442,
+      0.7527,
+      0.5215,
+      0.4561,
+      0.7031
+    ],
+    "look_at_b": [
+      0.5,
+      0.0,
+      0.09
+    ],
+    "camera_pos_b": [
+      0.25,
+      0.0,
+      0.34
+    ],
+    "distance_m": 0.35355339059327373,
+    "elevation_deg": 45.0,
+    "roll_deg": 0.0,
+    "pitch_deg": 45.0,
+    "camera_height_m": 0.25,
+    "floor_in_frame_m": [
+      0.36,
+      0.86
+    ]
+  },
+  {
+    "t": 3.011,
+    "state": "moving",
+    "event": "move",
+    "to": "survey",
+    "waypoints": 1
+  },
+  {
+    "t": 10.089,
+    "state": "moving",
+    "event": "failed",
+    "reason": "survey: no arrival by 5.9 s (worst joint error 1.232 rad; per joint [0.316, 1.232, 0.825, 0.522, 0.442, 0.705]; covered 0% of the move, still moving; gripper 0.0 mm)"
+  }
+]

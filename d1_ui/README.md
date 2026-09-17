@@ -48,6 +48,128 @@ leave it is remembered in this browser). It shows the wrist camera with YOLO's b
 opened a camera. Whether pyrealsense2, ultralytics and torch are installed on the Jetson is unknown.
 `run_ui.sh` deploys `pick_demo/` and the weights (21 MB, copied once) for it.
 
+## Bench mode: the arm on this PC
+
+The arm and the RealSense can be plugged into the workstation instead of the Go2. `./run_ui.sh bench`
+runs the hardware console here, finding the arm's interface itself (anything on 192.168.123.0/24, or
+`D1_ARM_IFACE`). There is no `rt/lowstate` without the dog, so the legs are not drawn.
+
+```bash
+./run_ui.sh bench --pick-depth --pick-base-height 0.02 \
+    --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
+```
+
+Needs `cyclonedds` and `pyrealsense2` in the Isaac env (`pip install --no-deps`, so numpy 1.26 is left
+alone).
+
+## The scripted pick
+
+The PICK button runs `pick_demo.hardware`, which drives the same `PickSequence`, grasp planner and
+perception the simulated pick runs — YOLO finds a cup, depth and forward kinematics place it, `d1_ik`
+plans a top-down grasp, and the arm is driven through it. What it is not:
+
+- **The gripper closes on an unverified scale.** Servo 6 is commanded, carried as `angle6` on the same
+  message as the arm pose. The URDF's 0–30 mm of finger travel maps onto the span the arm actually
+  reaches — 0 to 50.2, measured (F-060), not the 65 the protocol advertises — with linearity between
+  the endpoints assumed. Nobody has measured what a unit is in *millimetres of jaw gap*, and nobody has
+  yet watched which end is open, so a run records the units it asked for and claims no width.
+  `--pick-no-gripper` goes back to reach-descend-lift with the jaw untouched.
+- **Not calibrated.** The wrist mount is assumed until the bracket is measured, so the cup's position
+  carries whatever error the mount does. The page says so under the button.
+- **Not accurate in any measured sense.** There is no ground truth on a bench, so a run reports what it
+  did and saw, never how close it got.
+
+`--pick-base-height` is required and the button stays off without it: it is the height of the arm's
+mount plane above the surface the cup stands on, and a bench-mounted arm has no IMU to work it out.
+`--pick-up` is world up in the base frame, `[0, 0, 1]` for an arm standing upright.
+
+**Dry run first.** With LIVE off, PICK runs the whole pipeline — real camera, real depth, real YOLO,
+real planning — against a *virtual* arm pose that slews toward each waypoint, so the sequence runs to
+the end instead of stalling on a stationary arm. Nothing is sent. The result says `feedback: virtual
+(dry run)` so it can never be mistaken for evidence the arm followed the plan. With LIVE on, the same
+code drives the real arm; STOP interrupts it and leaves the arm **holding**, never released (F-028).
+
+Every pick writes `logs/pick_hardware/<stamp>_pick_hw/` with `run.json` and `events.json`, so
+`./dashboard.py record` takes it like any other run.
+
+## Measuring the gripper
+
+The console has a **gripper jog**: a slider over servo 6's range and SET GRIPPER, LIVE-gated like every
+other command. It exists because nothing in this repository knows what a unit of servo 6 is. Command a
+value, put a ruler across the fingers, write down both — that pair of numbers is the calibration the arm
+has never had, and it settles two open questions at once: what width the pick is really asking for, and
+whether the real pads close further than the CAD's 17.26 mm (which decides whether any rim or wall grasp
+is possible at all).
+
+The fingers close under the drive's own effort. Keep hands out of the jaws.
+
+### What it needs, and what it remembers
+
+Nothing on the command line. A console started with no flags finds the one calibration stored in
+`pick_demo/assets/calibration/`, loads the saved wrist mount, and streams depth (hardware mode;
+`--no-pick-depth` if the USB bandwidth is wanted elsewhere). The one number nothing can measure — how
+far the arm's mount plane sits above the surface the cup stands on — is a field in the PICK panel; set
+it once and it is remembered in `pick_demo/assets/bench.json`.
+
+The button still refuses what cannot be worked around: sim mode has no arm to command, and a camera
+without depth cannot place a cup. Those say so in the panel.
+
+## The wrist mount editor
+
+Where the camera sits on the wrist is a guess until someone measures the bracket, and that guess is
+what turns a pixel into a point in the base frame. The **Wrist mount** panel moves it.
+
+The RealSense's CAD (Intel's own D435 case, `third_party/realsense2_description`) hangs off the Link6
+node in the 3D view, so it follows the arm as the real camera does. The small axes at its origin are the
+**colour optical frame** — red x right, green y down, blue z forward — which is the frame depth is
+deprojected in, not the case's centre.
+
+**MOVE IN 3D** puts a gizmo on it: three arrows to slide it and three rings to turn it, both along the
+**wrist's own axes** (Link6, not the world), with a label at the end of each axis reading how far along
+it the camera sits, in cm, and the angle of the saved triple that belongs to it. Only the named axes are
+offered — three.js's free-rotation handles are removed — so every drag is about one axis of the wrist.
+While a ring is being dragged its label reads the turn that drag has applied, which *is* about that one
+axis; at rest it reads `roll`, `pitch` or `yaw`, named because those are a ZYX sequence rather than three
+independent turns, and one ring can move more than one of them.
+
+The panel keeps the same six numbers for an exact value: `move` in **cm** across x y z, `turn` in
+**degrees** as roll · pitch · yaw about the same three axes, the Link6 frame in the URDFs' `ZYX`
+convention. The saved file is still metres and degrees. Changed numbers turn amber until saved.
+
+Every change is sent to the server immediately, so when a pick is configured here the next frame is
+deprojected through the new mount and you can watch the estimate move. Nothing is written until SAVE,
+which asks for a name and writes `pick_demo/assets/mounts/<name>.json`. REVERT goes back to whatever
+the console started with. A mount cannot move while a pick is running.
+
+`pick_demo/assets/mounts/wrist_mount.json` is **the default everywhere**: save under that name and the
+console, the pick and the body renders all load it on the next launch with nothing to pass, so the 3D
+scene, the perception and the simulator agree. Any other name is kept but has to be named explicitly.
+Every launch prints which mount it resolved, and `--pick-mount none` forces the four-number placeholder
+back for a run that means to use it.
+
+The file is six degrees of freedom with its provenance attached, and both ends take an explicit one:
+
+```
+./run_ui.sh bench --pick-mount pick_demo/assets/mounts/wrist_mount.json
+python run_pick_demo.py --mount pick_demo/assets/mounts/wrist_mount.json
+python run_camera_body_view.py --mount pick_demo/assets/mounts/wrist_mount.json
+```
+
+**What it is not.** Dragging a model until it looks right is an *alignment*, not a calibration. The
+file records `"measured": false` and says in `method` exactly how it was arrived at, and
+`pick_demo.camera.load_mount` carries that into the mount's own `source` string, so a run log that
+cites it says "aligned by eye, not measured". A real extrinsic needs a hand-eye procedure against a
+target; nothing here sets `measured` true. Treat the saved numbers as the bracket you *intended*,
+good enough to stop the simulator and the controller disagreeing, and not as evidence about the
+camera's true pose.
+
+On the dog the panel works too — `run_ui.sh deploy` carries the case mesh — but the live clearance
+warning needs `trimesh` to read it, which the Jetson has no reason to carry, so there it is simply not
+offered rather than wrongly reported as clear.
+
+The editor works without an arm or a camera — on a workstation it simply edits and saves a file, and
+says so — because that is where the simulator runs.
+
 ## Launching it on the dog
 
 ```bash
@@ -90,6 +212,34 @@ Ctrl-C stops it. Killing it from another ssh session needs care: `pkill -f
 d1_ui/server.py` typed inside an inline `ssh '...'` matches the ssh shell running
 it and kills the connection instead. Put it in a script file, or use
 `./run_ui.sh stop`.
+
+## Just starting it
+
+`./run_ui.sh` with no arguments works out where it is and starts the console, and opens the page:
+
+| what it finds | what it runs |
+| --- | --- |
+| this machine is the dog (Jetson, or it owns the deploy address) | hardware mode here, legs drawn |
+| a simulator publishing on this PC | sim mode, following it |
+| an arm on this PC's own 192.168.123.x NIC | bench mode |
+| none of those, but the dog answers over ssh | deploy and start it there |
+
+The arm being on a local NIC is the signal that it is *not* on the dog, and it is checked before the
+ssh probe so a double-click starts at once instead of waiting out a timeout. Every path starts in DRY
+RUN. `sim`, `bench` and `robot` force one when the guess is wrong.
+
+## Stopping it
+
+`sim` and `bench` run in the foreground here, and Ctrl-C stops them. A console whose terminal was
+closed keeps the port, though, and the next start then cannot bind — the server now says which process
+is holding it rather than raising. To clear it:
+
+```
+./run_ui.sh stop-local      # a console on THIS PC (sim or bench)
+./run_ui.sh stop            # the console on the dog
+```
+
+Neither touches the arm: it holds whatever pose it was in.
 
 ## Using it
 

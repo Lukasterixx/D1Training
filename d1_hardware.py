@@ -39,6 +39,7 @@ Nothing here moves the arm unless you pass `--execute`.
 # `_message_types()` depend on real annotation objects.
 import argparse
 import json
+from pathlib import Path
 import math
 import os
 import threading
@@ -55,6 +56,83 @@ MAX_COMMAND_HZ = 10.0       # hard ceiling on motion commands; see D1Client._pac
 PEAK_RATE_DEG_S = 70.0      # measured on every joint, 68.6-74.1 deg/s (F-033)
 ARM_IFACE = "enP8p1s0"      # the Go2 payload's arm-facing NIC
 ARM_SERVOS = 6              # servos 0-5 are the IK chain; 6 is the gripper
+GRIPPER_SERVO = 6
+
+# What this module will put on the wire for servo 6. **Not** the vendor's advertised 0-65: probing found
+# the arm's own window runs from about -19.8 to +50.2, and the useful half of it is negative (F-063).
+# A little margin past each measured clamp, so a jog can still find the stop without being stopped here.
+GRIPPER_UNITS_RANGE = (-25.0, 65.0)
+
+# What the arm actually reaches, measured on this arm (F-060, 2026-09-17). Commanded 65 it settles at
+# 50.2 every time; commanded 0 it settles at 0.1-0.2; between those it tracks with a steady +0.2 offset
+# (40 -> 40.2, 4 -> 4.2). So the usable span is 0 to 50.2, not the advertised 65.
+#
+# **The scale runs open to closed, not closed to open** (F-062). At 0.1 units the fingers stand at the
+# far end of their rails, and commanding 65 from there closed them by about a centimetre -- watched, not
+# inferred. The simulator's client has the opposite convention (zero travel is a shut jaw), so anything
+# converting between the two has to turn it round, and the first version of this module did not: it
+# would have opened the jaw at the moment the sequence meant to close it.
+# The two ends of the jaw, in servo 6 units, from a ladder swept across the whole window with the
+# fingers watched (F-063). The scale is **monotonic**: more units, wider jaw.
+#
+#   -19.8  the pads touching. The arm follows commands down to here and clamps.
+#   +50.2  the widest a command opens it -- about a centimetre short of the physical rail end, which
+#          can still be reached by pushing the powered-down fingers by hand.
+#
+# The half that matters is the **negative** one, and it is why closing had never worked: the vendor
+# driver advertises 0-65 and this module clamped to it, so every command that would have shut the
+# fingers was floored at 0, which is two thirds of the way open.
+GRIPPER_UNITS_CLOSED = -19.8
+GRIPPER_UNITS_OPEN = 50.2
+GRIPPER_UNITS_SPAN = (GRIPPER_UNITS_CLOSED, GRIPPER_UNITS_OPEN)
+
+# Per-finger travel at the *open* end, from the URDF (`grasp.GRIPPER_OPEN_M`). Kept here as a number
+# rather than imported so this module stays free of pick_demo.
+GRIPPER_FULL_TRAVEL_M = 0.03
+
+
+def finger_travel_to_gripper_units(finger_m: float) -> float:
+    """Per-finger travel (m) -> servo 6 units.
+
+    Travel counts *opening* from a shut jaw, as `grasp.GRIPPER_OPEN_M` and the simulator's client do;
+    servo 6 counts the other way. So full travel maps to `GRIPPER_UNITS_OPEN` and zero travel to
+    `GRIPPER_UNITS_CLOSED`, and the sense of the conversion is the whole point of it.
+
+    Travel below zero asks for a jaw shut *past* the URDF's stop, where the CAD pads are still 17.2 mm
+    apart and the real ones are not (`grasp.closed_travel_m`, F-063). It is what a wall pinch commands,
+    and it means the closed end of the scale. It emphatically does not mean the mirrored finger's
+    opening: taking `abs` here, as this did, sent a pinch's -7.6 mm to -2.07 units -- a quarter open --
+    so the arm would have opened its jaws on the cup wall it was told to close on.
+
+    Two things this does **not** know. Linearity between the endpoints is assumed: five commands have
+    been observed, none with a ruler across the fingers. And the travel-to-gap relation is the CAD's,
+    where zero travel is a 17.2 mm gap, while zero travel here commands the arm's own shut jaw -- so an
+    intermediate travel means a different opening on the arm than it does in the model, and no pick
+    should rely on one until the jaw gap is measured against servo 6 (F-063).
+    """
+    fraction = np.clip(float(finger_m) / GRIPPER_FULL_TRAVEL_M, 0.0, 1.0)
+    return float(GRIPPER_UNITS_CLOSED + fraction * (GRIPPER_UNITS_OPEN - GRIPPER_UNITS_CLOSED))
+
+
+def gripper_units_to_finger_travel(units: float) -> float:
+    """Inverse of `finger_travel_to_gripper_units`, with the same caveats."""
+    low, high = sorted(GRIPPER_UNITS_SPAN)
+    value = float(np.clip(float(units), low, high))
+    fraction = (GRIPPER_UNITS_CLOSED - value) / (GRIPPER_UNITS_CLOSED - GRIPPER_UNITS_OPEN)
+    return float(fraction * GRIPPER_FULL_TRAVEL_M)
+
+
+def _has_data(sample, field: str) -> bool:
+    """True when a DDS sample actually carries data rather than an instance-state notification.
+
+    Checked two ways because the two say different things and either can be the one available: the
+    sample info's `valid_data` flag is the protocol's own answer, and the attribute's presence is what
+    the code is about to depend on.
+    """
+    info = getattr(sample, "sample_info", None)
+    if info is not None and getattr(info, "valid_data", True) is False:
+        return False
+    return hasattr(sample, field)
 
 
 def _message_types():
@@ -132,6 +210,29 @@ class D1Client:
         self._last_tx = 0.0
         self._lock = threading.Lock()
 
+    def wait_for_writer(self, timeout_s: float = 3.0) -> bool:
+        """Block until the arm's reader has discovered this writer. True if it did.
+
+        **A command sent before this is simply lost**, with no error anywhere: the write succeeds
+        locally and reaches nobody. Receiving feedback is not evidence that it will not happen --
+        discovery is per-endpoint, so the arm's *writer* can be matched to our reader (feedback flowing,
+        `connected` true) while our *writer* is not yet matched to the arm's reader. On 2026-09-17 two
+        of eight single-shot gripper commands vanished that way, each from a fresh process that had
+        already printed live joint angles.
+
+        Every short-lived process -- the CLI's `move`, `park`, `gripper` -- is exposed to this; a
+        long-running one like the console only ever risks its first command.
+        """
+        end = time.monotonic() + timeout_s
+        while time.monotonic() < end:
+            try:
+                if self._writer.get_matched_subscriptions():
+                    return True
+            except Exception:
+                return True      # no way to ask on this build; do not block the caller over it
+            time.sleep(0.02)
+        return False
+
     @property
     def participant(self):
         """The DDS participant, for readers on other topics of the same domain
@@ -141,7 +242,17 @@ class D1Client:
     # ---------------------------------------------------------------- reading
 
     def poll(self, timeout_s: float = 0.0) -> bool:
-        """Drain pending feedback into the cache. True if anything arrived."""
+        """Drain pending feedback into the cache. True if anything arrived.
+
+        **Invalid samples are skipped.** A DDS reader does not only return data: when an instance's
+        state changes -- a writer disposing of it, or dropping off -- it returns a sample carrying only
+        that notification, with no fields. cyclonedds-python surfaces those as `InvalidSample`. Reading
+        `servo0_data_` off one raises `AttributeError`, and because this runs on the console's state
+        thread, that killed the thread: the page then showed the arm's last known joints for six minutes
+        while still calling itself connected (2026-09-17). Whether it happens appears to be a matter of
+        cyclonedds version -- the dog's 0.10.2 never did it, the workstation's 11.0.1 does -- so the
+        guard is on the sample rather than on the version.
+        """
         got = False
         if timeout_s > 0:
             try:
@@ -149,6 +260,8 @@ class D1Client:
             except Exception:
                 pass
         for s in self._servo.take(N=50):
+            if not _has_data(s, "servo0_data_"):
+                continue
             with self._lock:
                 self._angles_deg = [s.servo0_data_, s.servo1_data_, s.servo2_data_,
                                     s.servo3_data_, s.servo4_data_, s.servo5_data_,
@@ -156,6 +269,8 @@ class D1Client:
                 self._last_rx = time.monotonic()
             got = True
         for s in self._fb.take(N=50):
+            if not _has_data(s, "data_"):
+                continue
             try:
                 msg = json.loads(s.data_)
             except Exception:
@@ -241,8 +356,14 @@ class D1Client:
         self._last_tx = time.monotonic()
         return payload
 
-    def set_all_joint_angles(self, angles_deg, mode: int = 0) -> str:
-        """funcode 2. Six arm angles in degrees; the gripper is held where it is.
+    def set_all_joint_angles(self, angles_deg, mode: int = 0, gripper=None) -> str:
+        """funcode 2. Six arm angles in degrees; the gripper is held where it is unless `gripper` is given.
+
+        `gripper` is servo 6 in the protocol's own units (`GRIPPER_UNITS_RANGE`), carried in the same
+        message as the arm angles. That is deliberate: a separate funcode 1 for the gripper would spend
+        one of the ten command slots a second the arm allows (F-032), and would let the jaw and the arm
+        pose arrive a cycle apart. `None` keeps the previous behaviour of holding whatever the gripper
+        reports, so nothing that does not ask for a gripper command sends one.
 
         **mode 0, not 1.** Unitree documents 0 as "small smoothing of 10 Hz data"
         and 1 as "large smoothing of trajectory-use". Measured on J0, 30 deg, from
@@ -271,10 +392,13 @@ class D1Client:
         # Clamp in servo space: a sign flip swaps a joint's low and high (F-030).
         lows, highs = d1_ik.servo_limits_deg(_JOINTS, soft=1.0)
         clamped = [float(v) for v in np.clip(angles, lows, highs)]
-        try:
-            gripper = self.get_gripper_units()
-        except RuntimeError:
-            gripper = 0.0
+        if gripper is None:
+            try:
+                gripper = self.get_gripper_units()
+            except RuntimeError:
+                gripper = 0.0
+        else:
+            gripper = float(np.clip(float(gripper), *GRIPPER_UNITS_RANGE))
         data = {"mode": mode}
         data.update({f"angle{i}": round(a, 3) for i, a in enumerate(clamped)})
         data["angle6"] = round(gripper, 3)
@@ -288,6 +412,17 @@ class D1Client:
         self._pace()
         return self._send(1, {"id": int(servo_id), "angle": round(float(angle_deg), 3),
                               "delay_ms": int(delay_ms)})
+
+    def set_gripper_units(self, units: float, delay_ms: int = 0) -> str:
+        """Move servo 6 alone (funcode 1), clamped to `GRIPPER_UNITS_RANGE`.
+
+        For jogging the gripper by hand -- which is how the units get measured in the first place. A pick
+        does not use this: it carries the gripper in `set_all_joint_angles` alongside the arm pose.
+
+        The fingers close under the drive's own effort. Keep hands out of the jaws.
+        """
+        value = float(np.clip(float(units), *GRIPPER_UNITS_RANGE))
+        return self.set_joint_angle(GRIPPER_SERVO, value, delay_ms)
 
     # Folded-enough for a release to be a short settle rather than a fall. J1 and
     # J2 carry the arm's weight; near their stops the links are already down.
@@ -981,6 +1116,24 @@ def main() -> int:
                    help="Re-solve IK to this target every cycle, as a Cartesian loop does.")
     h.add_argument("--out")
 
+    g = sub.add_parser("gripper", help="Command servo 6, or probe where its commandable window ends.")
+    g.add_argument("--units", type=float, default=None, help="Command one value and report where it settles.")
+    g.add_argument("--probe", action="store_true",
+                   help="Step past the protocol's advertised range to find where the arm stops "
+                        "following. Aborts on any error status, stale feedback, or two steps with no "
+                        "movement. Nothing is sent without --execute.")
+    g.add_argument("--probe-to", type=float, default=110.0, help="Highest value the probe will try.")
+    g.add_argument("--probe-step", type=float, default=5.0, help="Increment between probe values.")
+    g.add_argument("--probe-open", action="store_true",
+                   help="Probe downward (towards open) instead of upward (towards closed).")
+    g.add_argument("--ladder", default=None,
+                   help="Comma-separated values to command in turn, in one process. One participant and "
+                        "one discovery, so a step cannot be lost to DDS discovery the way a fresh "
+                        "process's first write can be -- which is how a step went missing on 2026-09-17.")
+    g.add_argument("--settle", type=float, default=1.5, help="Seconds to wait after each command.")
+    g.add_argument("--out", default=None, help="Write the probe's readings to this JSON.")
+    g.add_argument("--execute", action="store_true")
+
     r = sub.add_parser("release", help="Release the motors (funcode 5 mode 0). DROPS AN EXTENDED ARM.")
     r.add_argument("--execute", action="store_true")
     r.add_argument("--force", action="store_true",
@@ -1002,8 +1155,12 @@ def main() -> int:
 
     client = D1Client(iface=args.iface)
     angles = client.wait_for_feedback()
+    # Feedback flowing does not mean this process can be heard; see `wait_for_writer`. Every command
+    # below is a short-lived process's first write, which is exactly the one that goes missing.
+    matched = client.wait_for_writer()
     print(f"connected. servos {_fmt(angles, 2)} deg  "
-          f"power={client.is_powered()} enable={client.is_enabled()} error={client.error_status()}")
+          f"power={client.is_powered()} enable={client.is_enabled()} error={client.error_status()}"
+          + ("" if matched else "  [WARNING: the arm has not discovered this writer; a command may be lost]"))
 
     if args.command == "watch":
         end = time.monotonic() + args.seconds
@@ -1113,6 +1270,118 @@ def main() -> int:
         print(f"  tool max excursion from mean {r['tool_max_excursion_mm']:.3f} mm")
         if args.out:
             json.dump(r, open(args.out, "w"), indent=2)
+            print(f"  wrote {args.out}")
+        return 0
+
+    if args.command == "gripper":
+        def read_gripper(settle_s):
+            """Wait, then report where servo 6 sits and whether the arm is still talking."""
+            end = time.monotonic() + settle_s
+            while time.monotonic() < end:
+                client.poll(timeout_s=0.1)
+            return {"units": round(client.get_gripper_units(), 2),
+                    "error": client.error_status(),
+                    "enable": client.is_enabled(),
+                    "feedback_age_s": round(client.feedback_age_s, 3)}
+
+        start = read_gripper(0.3)
+        print(f"servo 6 now at {start['units']} units (error {start['error']}, "
+              f"feedback {start['feedback_age_s']} s old)")
+
+        if args.ladder:
+            steps = [float(v) for v in args.ladder.split(",") if v.strip()]
+            if not args.execute:
+                print(f"dry run: would command {steps} in turn. Pass --execute.")
+                return 0
+            # One process, one participant, one discovery. Run as separate invocations, a step can be
+            # lost: each new process publishes before the arm's reader is necessarily discovered, and a
+            # commanded 0 went missing that way on 2026-09-17, which made a sweep look non-monotonic.
+            rows = []
+            for value in steps:
+                client.set_joint_angle(GRIPPER_SERVO, value)
+                after = read_gripper(args.settle)
+                rows.append({"commanded": value, **after})
+                print(f"  commanded {value:7.1f} -> {after['units']:7.2f} units (error {after['error']})")
+            if args.out:
+                Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+                Path(args.out).write_text(json.dumps(
+                    {"started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                     "ladder": steps, "readings": rows}, indent=2) + "\n")
+                print(f"  wrote {args.out}")
+            return 0
+
+        if not args.probe:
+            if args.units is None:
+                return 0
+            if not args.execute:
+                print(f"dry run: would command servo 6 to {args.units}. Pass --execute.")
+                return 0
+            client.set_joint_angle(GRIPPER_SERVO, args.units)
+            after = read_gripper(args.settle)
+            print(f"commanded {args.units} -> settled {after['units']} (error {after['error']})")
+            return 0
+
+        # The probe. Servo 6's commandable window is inset inside the finger rails at both ends
+        # (F-062), and it is not known whether that clamp lives in the arm or in this module's own
+        # GRIPPER_UNITS_RANGE -- nothing has ever been sent outside it. This walks past the advertised
+        # range in small steps and watches.
+        #
+        # It stops itself rather than pressing on, because an out-of-spec command has cost this arm
+        # before: F-032 is the arm going unresponsive while still reporting power=1 enable=1 error=0.
+        # So "no error" is not evidence of health here, and the abort conditions include simply not
+        # moving any more -- which is both the answer being looked for and the point past which
+        # continuing only risks stalling a servo against a stop.
+        direction = -1.0 if args.probe_open else 1.0
+        values, readings = [], []
+        value = start["units"]
+        while True:
+            value = value + direction * args.probe_step
+            if direction > 0 and value > args.probe_to:
+                break
+            if direction < 0 and value < -abs(args.probe_to):
+                break
+            values.append(round(value, 2))
+        print(f"probe: {len(values)} steps, {values[0]} -> {values[-1]}, "
+              f"{'opening' if direction < 0 else 'closing'}")
+        if not args.execute:
+            print("dry run: nothing sent. Pass --execute.")
+            return 0
+
+        previous = start["units"]
+        still = 0
+        stopped = None
+        readings.append({"commanded": None, **start})
+        for value in values:
+            client.set_joint_angle(GRIPPER_SERVO, value)
+            after = read_gripper(args.settle)
+            moved = after["units"] - previous
+            readings.append({"commanded": value, "moved": round(moved, 2), **after})
+            print(f"  commanded {value:7.1f} -> {after['units']:7.2f} units "
+                  f"(moved {moved:+.2f}, error {after['error']}, age {after['feedback_age_s']} s)")
+            if after["feedback_age_s"] > 1.0:
+                stopped = "the arm stopped reporting"
+                break
+            if after["error"]:
+                stopped = f"error status {after['error']}"
+                break
+            still = still + 1 if abs(moved) < 0.15 else 0
+            if still >= 2:
+                stopped = f"no movement over two steps; the window ends near {after['units']:.1f} units"
+                break
+            previous = after["units"]
+
+        final = read_gripper(0.5)
+        print(f"probe ended: {stopped or 'reached the end of the requested range'}")
+        print(f"  servo 6 rests at {final['units']} units, error {final['error']}, "
+              f"enable {final['enable']}, feedback {final['feedback_age_s']} s old")
+        if args.out:
+            payload = {"started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                       "direction": "open" if direction < 0 else "closed",
+                       "step": args.probe_step, "limit": args.probe_to,
+                       "advertised_range": list(GRIPPER_UNITS_RANGE),
+                       "stopped_because": stopped, "readings": readings, "final": final}
+            Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.out).write_text(json.dumps(payload, indent=2) + "\n")
             print(f"  wrote {args.out}")
         return 0
 

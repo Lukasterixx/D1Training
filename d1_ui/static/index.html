@@ -70,6 +70,70 @@
     <div id="result" class="result"></div>
   </section>
 
+  <section id="picksec">
+    <h2>Scripted pick</h2>
+    <div class="hint">
+      Finds a cup with YOLO, places it with depth and forward kinematics, and drives the arm through
+      the same sequence the simulated pick runs. The gripper is <b>not</b> commanded: this is a reach,
+      a descent and a lift, not a grasp. STOP interrupts it and leaves the arm holding.
+    </div>
+    <div class="row">
+      <span>base height</span>
+      <span><input type="number" id="pickbase" step="0.005" min="-0.5" max="1.5" placeholder="set me"> m</span>
+    </div>
+    <div class="hint" id="pickbasehint">
+      How far the arm's mount plane sits above the surface the cup stands on. Nothing on a bench arm can
+      measure this, and the pick cannot run without it. Remembered for next launch.
+    </div>
+    <div class="row"><span>camera model</span><b id="pickcam">–</b></div>
+    <div class="row"><span>wrist mount</span><b id="pickmount">–</b></div>
+    <div class="buttons">
+      <button id="pick">PICK</button>
+    </div>
+    <div id="pickmsg" class="hint"></div>
+    <div id="pickresult" class="result"></div>
+
+    <h2>Gripper</h2>
+    <div class="hint">
+      Servo 6 on the protocol's own scale, which runs <b>−19.8 (pads touching) to +50.2 (widest)</b>
+      (F-063). More units is a wider jaw. The closing half is negative, which is why the vendor's
+      advertised 0–65 could never shut it — it floored every closing command two thirds of the way open.
+      What a unit is in <i>millimetres</i> is still unmeasured: command a value, put a ruler across the
+      fingers, and that pair of numbers is the calibration this arm is missing.
+    </div>
+    <div class="row"><span>reported</span><b id="gripnow">–</b></div>
+    <div class="row">
+      <input id="gripval" type="range" min="-25" max="65" step="0.5" value="50">
+      <b id="griplabel">0</b>
+    </div>
+    <div class="hint">−19.8 = pads touching · +50.2 = widest a command reaches · the rails go about a centimetre wider still, by hand only</div>
+    <div class="buttons">
+      <button id="gripset">SET GRIPPER</button>
+    </div>
+    <div class="hint">The fingers close under the drive's own effort. Keep hands out of the jaws.</div>
+  </section>
+
+  <section id="mountsec" hidden>
+    <h2>Wrist mount <small>where the camera sits</small></h2>
+    <div class="hint">
+      Move the RealSense against the wrist until it sits where the bracket holds it, then SAVE. The
+      simulator and this controller can both be started with the saved file, so they agree on the
+      extrinsics. <b>This is an alignment by eye, not a hand-eye calibration</b> — the file it writes
+      says so, and so should anything that cites it.
+    </div>
+    <div class="row"><span>source</span><b id="mountsrc">–</b></div>
+    <div class="buttons mount-move"><button id="mountmove">MOVE IN 3D</button></div>
+    <div class="hint" id="mountmovehint">Arrows slide it, rings turn it — both along the wrist's own axes.</div>
+    <table id="mountgrid"></table>
+    <div class="hint">turn is the file's roll · pitch · yaw about x · y · z, a ZYX sequence, so one ring
+      can move more than one of them.</div>
+    <div class="buttons">
+      <button id="mountsave">SAVE</button>
+      <button id="mountrevert">REVERT</button>
+    </div>
+    <div id="mountmsg" class="hint"></div>
+  </section>
+
   <section>
     <h2>Log</h2>
     <pre id="log"></pre>
@@ -78,6 +142,7 @@
 
 <script src="/static/vendor/three.min.js"></script>
 <script src="/static/vendor/OrbitControls.js"></script>
+<script src="/static/vendor/TransformControls.js"></script>
 <script src="/static/vendor/ColladaLoader.js"></script>
 <script src="/static/app.js"></script>
 </body>

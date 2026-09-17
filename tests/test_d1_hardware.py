@@ -638,3 +638,73 @@ class OneShotTests(unittest.TestCase):
         self.assertEqual(mover.last_stop_reason, "cancelled")
         # The last command is a hold at the measured pose, not a release.
         self.assertEqual(client.commanded[-1], client.get_joint_angles())
+
+
+class GripperCommandTests(unittest.TestCase):
+    """Servo 6 on the wire. The scale is unmeasured, so what is tested is the plumbing, not millimetres."""
+
+    def setUp(self):
+        self.sent = []
+        # Feedback with the gripper at 41, which is where this arm sits at rest.
+        self.client = bare_client([0.0, -90.0, 90.0, 0.0, 0.0, 0.0], record=self.sent)
+        self.client._angles_deg = [0.0, -90.0, 90.0, 0.0, 0.0, 0.0, 41.0]
+
+    def _last(self):
+        return self.sent[-1]
+
+    def test_without_a_gripper_argument_the_jaw_is_held_where_it_is(self):
+        """The old behaviour, and what anything not asking for the gripper must still get."""
+        self.client.set_all_joint_angles([0.0] * 6)
+        funcode, data = self._last()
+        self.assertEqual(funcode, 2)
+        self.assertEqual(data["angle6"], 41.0)
+
+    def test_a_gripper_argument_reaches_the_wire_as_angle6(self):
+        self.client.set_all_joint_angles([0.0] * 6, gripper=12.5)
+        _, data = self._last()
+        self.assertEqual(data["angle6"], 12.5)
+
+    def test_the_gripper_rides_the_same_message_as_the_arm(self):
+        """Not a second command: the arm allows ten a second (F-032) and they must not arrive apart."""
+        self.client.set_all_joint_angles([1.0, -89.0, 89.0, 0.0, 0.0, 0.0], gripper=60.0)
+        self.assertEqual(len(self.sent), 1)
+        funcode, data = self._last()
+        self.assertEqual(funcode, 2)
+        self.assertEqual(data["angle6"], 60.0)
+        self.assertEqual(data["angle0"], 1.0)
+
+    def test_out_of_range_units_are_clamped_on_the_way_out(self):
+        low, high = d1_hardware.GRIPPER_UNITS_RANGE
+        self.client.set_all_joint_angles([0.0] * 6, gripper=500.0)
+        self.assertEqual(self._last()[1]["angle6"], high)
+        self.client.set_all_joint_angles([0.0] * 6, gripper=low - 100.0)
+        self.assertEqual(self._last()[1]["angle6"], low)
+
+    def test_the_closing_half_of_the_scale_is_negative_and_passes_through(self):
+        """The range has to admit negative units or the jaw cannot be closed at all (F-063).
+
+        This is what the old 0-65 clamp silently prevented: every command that would have shut the
+        fingers was floored at zero, which is the *open* end.
+        """
+        low, _ = d1_hardware.GRIPPER_UNITS_RANGE
+        self.assertLess(low, 0.0)
+        self.assertLessEqual(low, d1_hardware.GRIPPER_UNITS_CLOSED)
+        self.client.set_all_joint_angles([0.0] * 6, gripper=d1_hardware.GRIPPER_UNITS_CLOSED)
+        self.assertEqual(self._last()[1]["angle6"], d1_hardware.GRIPPER_UNITS_CLOSED)
+
+    def test_jogging_the_gripper_alone_is_a_single_servo_command(self):
+        self.client.set_gripper_units(30.0)
+        funcode, data = self._last()
+        self.assertEqual(funcode, 1)
+        self.assertEqual(data["id"], d1_hardware.GRIPPER_SERVO)
+        self.assertEqual(data["angle"], 30.0)
+
+    def test_jogging_clamps_too(self):
+        self.client.set_gripper_units(1000.0)
+        self.assertEqual(self._last()[1]["angle"], d1_hardware.GRIPPER_UNITS_RANGE[1])
+
+    def test_the_arm_angles_are_unaffected_by_a_gripper_command(self):
+        """A gripper value must not disturb the six angles the clamp already computed."""
+        self.client.set_all_joint_angles([2.0, -88.0, 88.0, -3.0, 4.0, 3.0], gripper=0.0)
+        _, data = self._last()
+        self.assertEqual([data[f"angle{i}"] for i in range(6)], [2.0, -88.0, 88.0, -3.0, 4.0, 3.0])

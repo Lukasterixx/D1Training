@@ -1,0 +1,139 @@
+[
+  {
+    "t": 3.007,
+    "state": "settle",
+    "event": "settled",
+    "base_height_m": -0.09,
+    "tilt_deg": 0.0
+  },
+  {
+    "t": 3.007,
+    "state": "settle",
+    "event": "survey",
+    "q": [
+      -1.4976,
+      -0.6701,
+      0.8709,
+      0.8017,
+      1.3779,
+      1.663
+    ],
+    "look_at_b": [
+      0.4,
+      0.0,
+      0.09
+    ],
+    "camera_pos_b": [
+      0.15,
+      0.0,
+      0.34
+    ],
+    "distance_m": 0.35355339059327373,
+    "elevation_deg": 45.0,
+    "roll_deg": 0.0,
+    "pitch_deg": 45.0,
+    "camera_height_m": 0.25,
+    "floor_in_frame_m": [
+      0.26,
+      0.76
+    ]
+  },
+  {
+    "t": 3.007,
+    "state": "moving",
+    "event": "move",
+    "to": "survey",
+    "waypoints": 1
+  },
+  {
+    "t": 8.007,
+    "state": "moving",
+    "event": "arrived",
+    "at": "survey",
+    "error_rad": 0.011
+  },
+  {
+    "t": 8.309,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.429,
+    "valid_depth": 0.785,
+    "top_centre_b": [
+      0.2727,
+      -0.06481,
+      0.14194
+    ],
+    "radius_m": 0.04173,
+    "top_height_m": 0.14194,
+    "bottom_height_m": 0.0548,
+    "height_m": 0.08714,
+    "points": 7359,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00113,
+    "rim_coverage_deg": 284.1
+  },
+  {
+    "t": 8.551,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.536,
+    "valid_depth": 0.775,
+    "top_centre_b": [
+      0.27296,
+      -0.06415,
+      0.14203
+    ],
+    "radius_m": 0.04171,
+    "top_height_m": 0.14203,
+    "bottom_height_m": 0.05503,
+    "height_m": 0.087,
+    "points": 7257,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00112,
+    "rim_coverage_deg": 293.1
+  },
+  {
+    "t": 8.985,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.429,
+    "valid_depth": 0.789,
+    "top_centre_b": [
+      0.27307,
+      -0.06343,
+      0.14253
+    ],
+    "radius_m": 0.04191,
+    "top_height_m": 0.14253,
+    "bottom_height_m": 0.05475,
+    "height_m": 0.08778,
+    "points": 7447,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00115,
+    "rim_coverage_deg": 282.3
+  },
+  {
+    "t": 8.985,
+    "state": "detect",
+    "event": "cup located",
+    "top_centre_b": [
+      0.27296,
+      -0.06415,
+      0.14203
+    ],
+    "radius_m": 0.04173,
+    "top_height_m": 0.14203,
+    "bottom_height_m": 0.0548,
+    "height_m": 0.08723,
+    "points": 22063,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 284.1
+  },
+  {
+    "t": 8.985,
+    "state": "detect",
+    "event": "failed",
+    "reason": "grasp planning: outside tilt 0/10/20/30: cup is 8.3 cm wide; the open jaws are 7.7 cm, leaving -3.1 mm a side -- no descent keeps the fingers off it; pinch tilt 0/0: pregrasp unreachable; pinch tilt 10: no IK solution 100% along the line to [0.279, -0.025, 0.132]; pinch tilt 10: no IK solution 100% along the line to [0.261, -0.102, 0.132]; pinch tilt 20: no IK solution 100% along the line to [0.275, -0.024, 0.136]; pinch tilt 20: no IK solution 100% along the line to [0.257, -0.101, 0.136]; pinch tilt 30/30: a straight-line segment enters the trunk/ground proxy; inside_out tilt 0: pregrasp unreachable; inside_out tilt 10: no IK solution 100% along the line to [0.27, -0.063, 0.132]; inside_out tilt 20: no IK solution 100% along the line to [0.266, -0.063, 0.136]; inside_out tilt 30: no IK solution 100% along the line to [0.263, -0.062, 0.141]"
+  }
+]

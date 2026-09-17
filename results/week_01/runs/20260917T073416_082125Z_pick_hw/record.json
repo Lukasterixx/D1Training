@@ -1,0 +1,26 @@
+{
+  "id": "20260917T073416_082125Z_pick_hw",
+  "title": "First scripted pick run against the physical arm: dry run, whole pipeline, nothing sent",
+  "notes": "Console in bench mode on the PC (arm on enx00e04c3c6376, RealSense on USB). 48 real depth frames through real YOLO, all six viewpoints, 0 commands sent, arm never energised. No cup in front of the camera, so it ended at 'no cup found from any viewpoint' \u2014 which is the correct outcome, not a failure of the path.",
+  "week": 1,
+  "recorded_at": "2026-09-17T17:04:52+09:30",
+  "started_utc": "2026-09-17T07:34:16+00:00",
+  "source_dir": "logs/pick_hardware/20260917T073416_082125Z_pick_hw",
+  "mode": "pick_hardware",
+  "seed": null,
+  "status": "pick_failed",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": null,
+  "git_dirty": false,
+  "articulation_mass_kg": null,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "events.json",
+    "run.json"
+  ]
+}

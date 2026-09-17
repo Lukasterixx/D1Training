@@ -1,0 +1,517 @@
+{
+  "events": [
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "settled",
+      "base_height_m": 0.0851,
+      "tilt_deg": 7.28
+    },
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "viewpoint",
+      "q": [
+        -0.1095,
+        0.4296,
+        0.1553,
+        -0.0026,
+        1.0055,
+        0.1081
+      ],
+      "look_at_b": [
+        0.4025,
+        -0.0,
+        -0.1372
+      ],
+      "camera_pos_b": [
+        0.3554,
+        0.0,
+        0.2096
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 75.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 0.5,
+      "state": "moving",
+      "event": "move",
+      "to": "view 0",
+      "waypoints": 1
+    },
+    {
+      "t": 2.28,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 0",
+      "error_rad": 0.0055
+    },
+    {
+      "t": 2.58,
+      "state": "detect",
+      "event": "cup seen",
+      "confidence": 0.933,
+      "valid_depth": 1.0,
+      "top_centre_b": [
+        0.43435,
+        0.0305,
+        -0.05011
+      ],
+      "radius_m": 0.04195,
+      "top_height_m": 0.00503,
+      "bottom_height_m": -0.09546,
+      "height_m": 0.10049,
+      "points": 7996,
+      "method": "rim_circle",
+      "residual_rms_m": 0.0012,
+      "rim_coverage_deg": 230.2
+    },
+    {
+      "t": 2.74,
+      "state": "detect",
+      "event": "cup seen",
+      "confidence": 0.932,
+      "valid_depth": 1.0,
+      "top_centre_b": [
+        0.43433,
+        0.0305,
+        -0.05015
+      ],
+      "radius_m": 0.04193,
+      "top_height_m": 0.00499,
+      "bottom_height_m": -0.09534,
+      "height_m": 0.10034,
+      "points": 7995,
+      "method": "rim_circle",
+      "residual_rms_m": 0.00121,
+      "rim_coverage_deg": 229.3
+    },
+    {
+      "t": 2.9,
+      "state": "detect",
+      "event": "cup seen",
+      "confidence": 0.933,
+      "valid_depth": 1.0,
+      "top_centre_b": [
+        0.43435,
+        0.03049,
+        -0.0502
+      ],
+      "radius_m": 0.04194,
+      "top_height_m": 0.00494,
+      "bottom_height_m": -0.09541,
+      "height_m": 0.10035,
+      "points": 7996,
+      "method": "rim_circle",
+      "residual_rms_m": 0.00121,
+      "rim_coverage_deg": 230.0
+    },
+    {
+      "t": 2.9,
+      "state": "detect",
+      "event": "cup located",
+      "top_centre_b": [
+        0.43435,
+        0.0305,
+        -0.05015
+      ],
+      "radius_m": 0.04194,
+      "top_height_m": 0.00499,
+      "bottom_height_m": -0.09541,
+      "height_m": 0.1004,
+      "points": 23987,
+      "method": "median of 3",
+      "residual_rms_m": null,
+      "rim_coverage_deg": 230.0
+    },
+    {
+      "t": 2.9,
+      "state": "detect",
+      "event": "grasp planned",
+      "mode": "pinch",
+      "heading_b": [
+        0.9897,
+        0.0681,
+        -0.1257
+      ],
+      "tilt_deg": 10.0,
+      "jaw_pregrasp_b": [
+        0.4183,
+        0.0676,
+        0.1202
+      ],
+      "jaw_grasp_b": [
+        0.4269,
+        0.0696,
+        -0.0596
+      ],
+      "jaw_lift_b": [
+        0.4421,
+        0.0697,
+        0.0594
+      ],
+      "q_pregrasp": [
+        0.1618,
+        0.9398,
+        -0.5266,
+        0.0036,
+        1.1085,
+        -0.0927
+      ],
+      "approach_waypoints": 1,
+      "descend_waypoints": 18,
+      "lift_waypoints": 6,
+      "gripper_descend_m": 0.0009,
+      "gripper_grasp_m": -0.0076,
+      "notes": [
+        "pinching the wall a quarter turn round the rim: one finger 30 mm inside, one outside, 7.0 mm either side of the wall going down, then shut to 2.0 mm on a 5 mm wall",
+        "descent held to 6.0 mm over 18 waypoints"
+      ]
+    },
+    {
+      "t": 2.9,
+      "state": "moving",
+      "event": "move",
+      "to": "pregrasp",
+      "waypoints": 1
+    },
+    {
+      "t": 4.32,
+      "state": "moving",
+      "event": "arrived",
+      "at": "pregrasp",
+      "error_rad": 0.007
+    },
+    {
+      "t": 5.12,
+      "state": "refine",
+      "event": "not seen from above; descending on the first estimate"
+    },
+    {
+      "t": 5.12,
+      "state": "moving",
+      "event": "move",
+      "to": "descend",
+      "waypoints": 18
+    },
+    {
+      "t": 7.44,
+      "state": "moving",
+      "event": "arrived",
+      "at": "descend",
+      "error_rad": 0.0065
+    },
+    {
+      "t": 7.46,
+      "state": "close",
+      "event": "closing",
+      "mode": "pinch",
+      "finger_travel_m": -0.0076,
+      "jaw_gap_m": 0.002,
+      "finger_span_m": 0.024
+    },
+    {
+      "t": 8.96,
+      "state": "close",
+      "event": "closed"
+    },
+    {
+      "t": 8.96,
+      "state": "moving",
+      "event": "move",
+      "to": "lift",
+      "waypoints": 6
+    },
+    {
+      "t": 10.8,
+      "state": "moving",
+      "event": "arrived",
+      "at": "lift",
+      "error_rad": 0.0086
+    },
+    {
+      "t": 12.82,
+      "state": "hold",
+      "event": "done"
+    }
+  ],
+  "looks": [
+    {
+      "t": 2.58,
+      "state": "detect",
+      "image": "frames/000_002.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.34,
+          0.91,
+          -9.1
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [
+        {
+          "label": "cup",
+          "confidence": 0.933
+        }
+      ],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0298,
+        -0.0405
+      ],
+      "estimate": {
+        "top_centre_b": [
+          0.43435,
+          0.0305,
+          -0.05011
+        ],
+        "radius_m": 0.04195,
+        "top_height_m": 0.00503,
+        "bottom_height_m": -0.09546,
+        "height_m": 0.10049,
+        "points": 7996,
+        "method": "rim_circle",
+        "residual_rms_m": 0.0012,
+        "rim_coverage_deg": 230.2
+      },
+      "horizontal_error_mm": 1.44,
+      "height_error_mm": -9.63
+    },
+    {
+      "t": 2.74,
+      "state": "detect",
+      "image": "frames/001_002.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.34,
+          0.91,
+          -9.1
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [
+        {
+          "label": "cup",
+          "confidence": 0.932
+        }
+      ],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0298,
+        -0.0405
+      ],
+      "estimate": {
+        "top_centre_b": [
+          0.43433,
+          0.0305,
+          -0.05015
+        ],
+        "radius_m": 0.04193,
+        "top_height_m": 0.00499,
+        "bottom_height_m": -0.09534,
+        "height_m": 0.10034,
+        "points": 7995,
+        "method": "rim_circle",
+        "residual_rms_m": 0.00121,
+        "rim_coverage_deg": 229.3
+      },
+      "horizontal_error_mm": 1.45,
+      "height_error_mm": -9.67
+    },
+    {
+      "t": 2.9,
+      "state": "detect",
+      "image": "frames/002_002.9s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.34,
+          0.91,
+          -9.1
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [
+        {
+          "label": "cup",
+          "confidence": 0.933
+        }
+      ],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0298,
+        -0.0405
+      ],
+      "estimate": {
+        "top_centre_b": [
+          0.43435,
+          0.03049,
+          -0.0502
+        ],
+        "radius_m": 0.04194,
+        "top_height_m": 0.00494,
+        "bottom_height_m": -0.09541,
+        "height_m": 0.10035,
+        "points": 7996,
+        "method": "rim_circle",
+        "residual_rms_m": 0.00121,
+        "rim_coverage_deg": 230.0
+      },
+      "horizontal_error_mm": 1.43,
+      "height_error_mm": -9.73
+    },
+    {
+      "t": 4.64,
+      "state": "refine",
+      "image": "frames/003_004.6s_refine.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.86,
+          1.38,
+          -8.71
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0301,
+        -0.0403
+      ]
+    },
+    {
+      "t": 4.8,
+      "state": "refine",
+      "image": "frames/004_004.8s_refine.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.86,
+          1.38,
+          -8.71
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0301,
+        -0.0403
+      ]
+    },
+    {
+      "t": 4.96,
+      "state": "refine",
+      "image": "frames/005_005.0s_refine.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.86,
+          1.38,
+          -8.71
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0301,
+        -0.0403
+      ]
+    },
+    {
+      "t": 5.12,
+      "state": "refine",
+      "image": "frames/006_005.1s_refine.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.86,
+          1.38,
+          -8.71
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0301,
+        -0.0403
+      ]
+    }
+  ]
+}

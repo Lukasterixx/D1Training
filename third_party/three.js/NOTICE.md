@@ -11,8 +11,9 @@ unmodified.
 | --- | --- |
 | `d1_ui/static/vendor/three.min.js` | `build/three.min.js` |
 | `d1_ui/static/vendor/OrbitControls.js` | `examples/js/controls/OrbitControls.js` |
+| `d1_ui/static/vendor/TransformControls.js` | `examples/js/controls/TransformControls.js` |
 | `d1_ui/static/vendor/ColladaLoader.js` | `examples/js/loaders/ColladaLoader.js` |
 
-r128 is pinned deliberately: it is the last series in which `OrbitControls` and `ColladaLoader` ship as
-plain scripts defining `THREE.*` globals. Later releases publish them as ES modules only, which would
+r128 is pinned deliberately: it is the last series in which `OrbitControls`, `TransformControls` and
+`ColladaLoader` ship as plain scripts defining `THREE.*` globals. Later releases publish them as ES modules only, which would
 require a bundler or an import map on a machine with no network access.

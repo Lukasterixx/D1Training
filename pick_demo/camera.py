@@ -11,7 +11,9 @@ stereo baselines; on the real camera, replace the intrinsics with the ones libre
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import math
+from pathlib import Path
 
 import numpy as np
 
@@ -158,6 +160,15 @@ class MeasuredMount:
     def pos_link6(self) -> tuple[float, float, float]:
         return tuple(float(v) for v in self.pose[:3, 3])
 
+    def quat_wxyz(self) -> tuple[float, float, float, float]:
+        """The optical frame's rotation in Link6, as the scene's camera offset wants it.
+
+        `WristMount` has always had this and `MeasuredMount` did not, so anything that spawned a camera
+        from a *saved* mount raised `AttributeError` before the simulator started. The two are used
+        interchangeably everywhere else, so they have to agree here too.
+        """
+        return matrix_to_quat_wxyz(self.rotation)
+
 
 def matrix_to_quat_wxyz(rot) -> tuple[float, float, float, float]:
     rot = np.asarray(rot, dtype=float)
@@ -230,3 +241,144 @@ def realsense_depth(model: CameraModel, depth_true, rng: np.random.Generator | N
         noise = rng.standard_normal(depth.shape).astype(np.float32)
         depth = np.where(valid, depth + noise * model.depth_noise_std_m(np.where(valid, depth, 0.0)), 0.0)
     return np.where(valid, depth, 0.0).astype(np.float32)
+
+
+# --------------------------------------------------------------------------- the mount as a file
+#
+# `WristMount` is four numbers (a position and a pitch) because it was a placeholder for a bracket that
+# did not exist. A real bracket is six: the camera can be rotated about any axis when it is bolted on,
+# and a hand-eye result is a full rigid transform. These write and read that transform as a file, so the
+# simulator and the hardware controller can be given the same mount instead of each carrying its own
+# default.
+#
+# **A file written by the console's mount editor is an alignment, not a measurement.** It says where an
+# operator judged the camera to sit by matching the CAD against the bracket in a 3D view. `measured`
+# says which kind it is, and nothing here sets it true: only a calibration procedure should.
+
+MOUNT_SCHEMA = "d1training.wrist_mount/1"
+
+
+def rpy_matrix_zyx(roll: float, pitch: float, yaw: float) -> np.ndarray:
+    """R = Rz(yaw) Ry(pitch) Rx(roll), in radians: the URDF convention, as `workspace.rpy_matrix` uses.
+
+    The same composition the console's 3D view applies (`THREE.Euler(..., 'ZYX')`), so a number typed
+    into the editor, stored in the file and used by the solver all mean one thing.
+    """
+    cr, sr, cp, sp, cy, sy = (math.cos(roll), math.sin(roll), math.cos(pitch),
+                              math.sin(pitch), math.cos(yaw), math.sin(yaw))
+    return np.array([
+        [cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr],
+        [sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr],
+        [-sp, cp * sr, cp * cr],
+    ])
+
+
+def matrix_to_rpy_zyx(rot) -> tuple[float, float, float]:
+    """Inverse of `rpy_matrix_zyx`, in radians. At a pitch of +-90 deg roll and yaw are not separable;
+    the roll is put at zero there, which is the usual choice and is flagged by the caller's round trip."""
+    rot = np.asarray(rot, dtype=float)
+    sp = -rot[2, 0]
+    if abs(sp) > 1.0 - 1e-9:
+        pitch = math.copysign(math.pi / 2.0, sp)
+        return 0.0, pitch, math.atan2(-rot[0, 1], rot[1, 1])
+    return math.atan2(rot[2, 1], rot[2, 2]), math.asin(sp), math.atan2(rot[1, 0], rot[0, 0])
+
+
+def mount_from_xyz_rpy(xyz_m, rpy_deg, source: str = "xyz/rpy") -> MeasuredMount:
+    """A mount from the six numbers the console edits: metres in Link6, degrees in the ZYX convention."""
+    rot = rpy_matrix_zyx(*(math.radians(float(v)) for v in rpy_deg))
+    return MeasuredMount.from_pose(transform(rot, [float(v) for v in xyz_m]), source)
+
+
+def mount_as_xyz_rpy(mount) -> tuple:
+    """(xyz metres, rpy degrees) for any mount, for display and for seeding the editor."""
+    pose = np.asarray(mount.pose, dtype=float)
+    rpy = matrix_to_rpy_zyx(pose[:3, :3])
+    return ([float(v) for v in pose[:3, 3]], [math.degrees(v) for v in rpy])
+
+
+def mount_to_dict(mount, source: str, measured: bool = False, method: str = "", camera: str = "") -> dict:
+    """The file's contents. Both parameterisations are stored: the six numbers a person edits and the
+    4x4 the solver uses, so neither has to be re-derived and a disagreement is visible."""
+    from datetime import datetime, timezone
+
+    xyz, rpy = mount_as_xyz_rpy(mount)
+    return {
+        "schema": MOUNT_SCHEMA,
+        "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+        "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+        "xyz_m": [round(float(v), 6) for v in xyz],
+        "rpy_deg": [round(float(v), 4) for v in rpy],
+        "pose_link6": [[round(float(v), 9) for v in row] for row in np.asarray(mount.pose, dtype=float)],
+        "measured": bool(measured),
+        "method": method or "unstated",
+        "source": source,
+        "camera": camera,
+    }
+
+
+def save_mount(path, mount, source: str, measured: bool = False, method: str = "", camera: str = "") -> dict:
+    """Write a mount file, creating the directory. Returns what was written."""
+    data = mount_to_dict(mount, source, measured, method, camera)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    return data
+
+
+def load_mount(path) -> MeasuredMount:
+    """Read a mount file into a `MeasuredMount`.
+
+    The 4x4 is the authority; `xyz_m`/`rpy_deg` are checked against it and a disagreement is an error
+    rather than a silent preference, because the two coming apart would mean the file was hand-edited
+    in one place only.
+    """
+    data = json.loads(Path(path).read_text())
+    schema = data.get("schema")
+    if schema != MOUNT_SCHEMA:
+        raise ValueError(f"{path}: schema is {schema!r}, expected {MOUNT_SCHEMA!r}")
+    pose = np.asarray(data["pose_link6"], dtype=float)
+    if pose.shape != (4, 4):
+        raise ValueError(f"{path}: pose_link6 is {pose.shape}, expected 4x4")
+    rebuilt = mount_from_xyz_rpy(data["xyz_m"], data["rpy_deg"]).pose
+    if not np.allclose(rebuilt, pose, atol=1e-6):
+        raise ValueError(f"{path}: xyz_m/rpy_deg and pose_link6 disagree; the file was edited in one place only")
+    detail = data.get("method") or "unstated"
+    kind = "measured" if data.get("measured") else "aligned by eye, not measured"
+    return MeasuredMount.from_pose(pose, f"{data.get('source', path)} ({kind}: {detail})")
+
+
+# The mount everything loads unless told otherwise. One saved file, one name, so that saving it in the
+# console is the whole of "make the simulator and the controller use this": there is nothing further to
+# pass. `resolve_mount` is the single place that decides, so the console, the pick and the body renders
+# cannot drift apart on which mount they mean.
+MOUNTS_DIR = Path(__file__).resolve().parent / "assets" / "mounts"
+DEFAULT_MOUNT_PATH = MOUNTS_DIR / "wrist_mount.json"
+
+
+def resolve_mount(explicit=None, fallback=None):
+    """(mount, source, path) for a run: an explicit file, else the saved default, else the placeholder.
+
+    `path` is the file it came from, or None for the placeholder, so a caller can show or record which
+    file is in force without working out the precedence a second time and getting it wrong.
+
+    `explicit` is a path, or the string "none" to insist on `fallback` even when a saved mount exists --
+    which is how a run deliberately reproduces the assumed geometry rather than the bracket.
+    `fallback` defaults to `WristMount()`, the four-number placeholder.
+
+    The source string is meant to be printed and recorded verbatim. A file's own provenance travels in
+    it, so a run that used a mount aligned by eye says so in its log without the caller having to know.
+    """
+    fallback = fallback if fallback is not None else WristMount()
+    if isinstance(explicit, str) and explicit.lower() == "none":
+        return fallback, "placeholder (--mount none): assumed, no bracket measured", None
+    if explicit:
+        path = Path(explicit).resolve()
+        mount = load_mount(path)
+        return mount, f"{path.name}: {mount.source}", str(path)
+    if DEFAULT_MOUNT_PATH.is_file():
+        mount = load_mount(DEFAULT_MOUNT_PATH)
+        return (mount, f"{DEFAULT_MOUNT_PATH.name} (the saved default): {mount.source}",
+                str(DEFAULT_MOUNT_PATH.resolve()))
+    return fallback, "assumed; no bracket measured, and no saved mount to load", None

@@ -177,9 +177,10 @@ def run(args):
         from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
         from isaaclab.utils.io import dump_yaml
 
-        from pick_demo.camera import CAMERAS, MeasuredMount, WristMount, camera_pose, invert, link6_pose, realsense_depth, transform
+        from pick_demo.camera import (CAMERAS, MeasuredMount, WristMount, camera_pose, invert, link6_pose,
+                                      mount_to_dict, realsense_depth, transform)
         from pick_demo.cup_asset import build_cup_usd
-        from pick_demo.grasp import JAW_CENTRE_LINK6, GraspParams
+        from pick_demo.grasp import CLOSED_GAP_M, JAW_CENTRE_LINK6, GraspParams
         from pick_demo.perception import CupPerception, Frame, YoloDetector
         from pick_demo.scene import LYING_LEG_POSE, OVERVIEW_EYE, OVERVIEW_TARGET, make_pick_cfg
         from pick_demo.sequence import PickSequence, Timing
@@ -190,8 +191,25 @@ def run(args):
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
         run_dir = Path(args.output).resolve() / f"{stamp}_pick_seed{args.seed}"
         (run_dir / "frames").mkdir(parents=True, exist_ok=False)
-        model = CAMERAS[args.camera]
-        mount = WristMount(tuple(args.mount_pos), args.mount_pitch_deg)
+        # A calibration file describes the camera actually on the bench; the presets are the datasheet's
+        # idea of one. Measured on D435I 238222076237 the two differ enough to matter (F-053), so say in
+        # the record which was used rather than leaving "d435" to mean either.
+        if args.calibration:
+            from pick_demo.realsense import load_camera_model
+
+            model = load_camera_model(args.calibration)
+            camera_source = f"calibration file {Path(args.calibration).resolve()}"
+        else:
+            model = CAMERAS[args.camera]
+            camera_source = f"preset {args.camera} (datasheet-derived, not a calibration)"
+        # A saved mount file (the console's editor, or pick_demo.camera.save_mount) is six degrees of
+        # freedom and carries its own provenance; --mount_pos/--mount_pitch_deg are the four-number
+        # placeholder for a bracket nobody has measured. The file wins when given.
+        from pick_demo.camera import resolve_mount
+
+        mount, mount_source, mount_file = resolve_mount(
+            args.mount, fallback=WristMount(tuple(args.mount_pos), args.mount_pitch_deg))
+        print(f"[pick] wrist mount: {mount_source}", flush=True)
         packages = {}
         for name in ("isaacsim", "isaaclab", "torch", "ultralytics", "numpy", "opencv-python-headless"):
             try:
@@ -203,8 +221,10 @@ def run(args):
             "git_commit": git_output("rev-parse", "HEAD"), "git_status": git_output("status", "--short"),
             "source_sha256": snapshot_sources(run_dir), "packages": packages,
             "task": "scripted_top_down_cup_pick", "learning": None,
-            "camera": {**{k: v for k, v in model.__dict__.items()}, "mount_pos_link6": list(mount.pos_link6),
-                       "mount_pitch_deg": mount.pitch_deg, "mount_source": "assumed; no bracket measured",
+            "camera": {**{k: v for k, v in model.__dict__.items()},
+                       "mount": mount_to_dict(mount, mount_source), "mount_source": mount_source,
+                       "mount_file": mount_file,
+                       "model_source": camera_source, "body_drawn": bool(args.camera_body),
                        "depth_noise": args.depth_noise},
             "posture": {"legs": LYING_LEG_POSE, "source": "unitree_ros2 go2_stand_example.cpp target_pos_1"},
             "detector": {"weights": str(Path(args.weights).resolve()), "weights_sha256": sha256(args.weights),
@@ -218,11 +238,46 @@ def run(args):
                 mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
             metadata["robot_usd"], metadata["robot_usd_sha256"] = robot_usd, sha256(robot_usd)
             cup_info = build_cup_usd(args.cup_usdz, ROOT / "generated/pick_demo", diameter_m=args.cup_diameter,
-                                     height_m=args.cup_height, mass_kg=args.cup_mass)
+                                     height_m=args.cup_height, mass_kg=args.cup_mass, wall_m=args.cup_wall)
             metadata["cup"] = {**cup_info, "spawn_xy_env_m": list(args.cup_xy), "yaw_deg": args.cup_yaw_deg}
 
+            camera_usd = None
+            if args.camera_body:
+                from pick_demo import camera_body as camera_body_geom
+                from pick_demo.camera_asset import build_camera_usd, carve_lens
+                from pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
+
+                body_info = build_camera_usd(ROOT / "generated/pick_demo")
+                camera_usd = body_info["usd_path"]
+                metadata["camera"]["body_asset"] = body_info
+                for line in camera_body_geom.describe(mount):
+                    print(f"[pick] {line}", flush=True)
+                clearance = camera_body_geom.clearance_report(mount, PALM_Z_M, PALM_X_RANGE_M)
+                metadata["camera"]["body_clearance"] = clearance
+                if clearance["intersects_shell"]:
+                    print("[pick] WARNING: the camera housing overlaps the Link6 shell at this mount", flush=True)
+                # The guard, asked twice: where the model puts the eye, and where F-052 says the
+                # renderer puts it. The second is what the wrist images will actually show.
+                _points, _faces = camera_body_geom.mesh_optical()
+                _spawned = _points[carve_lens(_points, _faces)[0]]
+                obstruction = {
+                    "model_eye": camera_body_geom.view_obstruction(model, points=_spawned),
+                    "rendered_eye_f052": camera_body_geom.view_obstruction(
+                        model, camera_body_geom.RENDERED_EYE_OFFSET_M, points=_spawned)}
+                metadata["camera"]["view_obstruction"] = obstruction
+                if obstruction["rendered_eye_f052"]:
+                    print("[pick] WARNING: at the F-052 rendered eye the case is in shot; the wrist "
+                          "view is obstructed. Use --no_camera_body for a pick that needs it.", flush=True)
+
             cfg = make_pick_cfg(robot_usd, cup_info["usd_path"], model, mount, tuple(args.cup_xy), args.cup_yaw_deg,
-                                args.seed, args.device, episode_s=args.max_time + (3600.0 if args.linger else 30.0))
+                                args.seed, args.device, episode_s=args.max_time + (3600.0 if args.linger else 30.0),
+                                show_camera_body=args.camera_body, camera_usd=camera_usd)
+            grasp_params = GraspParams(wall_grasp=args.wall_grasp, pinch_closed_gap_m=args.pinch_closed_gap)
+            metadata["grasp"] = {"wall_grasp": grasp_params.wall_grasp,
+                                 "pinch_closed_gap_m": grasp_params.pinch_closed_gap_m,
+                                 "wall_thickness_m": grasp_params.wall_thickness_m,
+                                 "why": ("a cup too wide for the 77.2 mm jaws is grasped by its wall: pinched "
+                                         "if the jaws shut below the wall, else from inside the mouth")}
             metadata["sim2real"] = {
                 "leg_actuator": "unitree", "arm_actuator": "d1_servo", "latency": "estimated",
                 "arm_trajectory": cfg.actions.arm.trajectory, "arm_command_hold_steps": cfg.actions.arm.hold_steps,
@@ -239,6 +294,40 @@ def run(args):
                                                torch.tensor([OVERVIEW_TARGET], device=env.device) + origin)
             arm_ids = [robot.joint_names.index(n) for n in ARM_NAMES]
             grip_ids = [robot.joint_names.index(n) for n in ("Joint7_1", "Joint7_2")]
+            # Let the modelled fingers shut as far as the real ones do. The URDF stops each at zero
+            # travel, where the CAD pads are still 17.2 mm apart; the arm on the bench closes until they
+            # touch (F-063), and a pinch of a cup wall lives entirely in the travel between the two. So a
+            # run told the jaws shut to less than the CAD's gap widens the joint limits to match, and
+            # says so -- this is the one place where the simulated robot is deliberately not the URDF's.
+            shut_travel = grasp_params.pinch_closed_gap_m
+            shut_travel = min(0.0, (shut_travel - CLOSED_GAP_M) / 2.0)
+            metadata["sim2real"]["gripper_shut_travel_m"] = round(float(shut_travel), 5)
+            if shut_travel < 0.0:
+                limits = robot.data.joint_pos_limits[:, grip_ids].clone()
+                # Targets are clamped to the *soft* limits, which sit a factor inside the hard ones, so
+                # the hard limit has to be opened further than the travel actually wanted or the pinch
+                # would stop short of the wall by exactly the margin nobody could see.
+                factor = float(robot.cfg.soft_joint_pos_limit_factor)
+                span = float(limits[0, 0, 1] - limits[0, 0, 0])
+                reach = (2 * (shut_travel - 0.0005) - span * (1 - factor)) / (1 + factor)
+                limits[..., 0] = torch.minimum(limits[..., 0], torch.full_like(limits[..., 0], reach))
+                limits[..., 1] = torch.maximum(limits[..., 1], torch.full_like(limits[..., 1], -reach))
+                robot.write_joint_position_limit_to_sim(limits, joint_ids=grip_ids)
+                soft = robot.data.soft_joint_pos_limits[0, grip_ids].cpu().numpy()
+                print(f"[pick] gripper: fingers allowed {1000 * -shut_travel:.1f} mm of travel past the "
+                      f"URDF's stop, so the pads can shut to "
+                      f"{1000 * grasp_params.pinch_closed_gap_m:.1f} mm as the real arm does (F-063); "
+                      f"soft limits now {1000 * soft[0, 0]:.1f} to {1000 * soft[0, 1]:.1f} mm",
+                      flush=True)
+                if soft[0, 0] > shut_travel:
+                    print(f"[pick] WARNING: the soft limit stops the fingers at {1000 * soft[0, 0]:.1f} mm, "
+                          f"short of the {1000 * shut_travel:.1f} mm a shut jaw needs; a pinch will not "
+                          f"close on the wall.", flush=True)
+                metadata["sim2real"]["gripper"] = (
+                    f"implicit drive, URDF 15 N effort and 0.02 m/s limits; finger limits widened by "
+                    f"{1000 * -shut_travel:.1f} mm past the URDF's stop so the pads shut to "
+                    f"{1000 * grasp_params.pinch_closed_gap_m:.1f} mm (F-063), which is not the imported "
+                    f"model; gripper timing not measured on the D1")
             link6 = robot.body_names.index("Link6")
             default_arm = robot.data.default_joint_pos[0, arm_ids].cpu().numpy()
             terms = env.observation_manager.active_terms["policy"]
@@ -339,7 +428,7 @@ def run(args):
                 write_json(run_dir / "run.json", metadata)
 
                 sequence = PickSequence(joints, links, model, mount, perception, base_height_m=base_height,
-                                        grasp_params=GraspParams(), timing=Timing(settle_s=0.5))
+                                        grasp_params=grasp_params, timing=Timing(settle_s=0.5))
                 captured = {}
 
                 def frame_source():
@@ -459,17 +548,30 @@ def run(args):
                 jaw_b = jaw_truth_b()
                 lift = float(cup_end_w[2] - cup_start_w[2])
                 axis_gap = float(np.hypot(*(cup_top_b[:2] - jaw_b[:2])))
-                success = sequence.state == "done" and lift >= 0.05 and axis_gap <= 0.03
+                # How far the jaw centre was *meant* to sit from the cup's axis. Zero for the grasps that
+                # straddle the cup or go inside it, and a radius for a wall pinch, which holds the cup by
+                # one wall on purpose. Scoring the pinch against a zero offset failed a run that lifted
+                # the cup 11.9 cm (Week 1 log, 2026-09-17), so what is checked is the departure from the
+                # plan, not the distance from the axis.
+                planned_offset = 0.0
+                if sequence.plan is not None and sequence.cup is not None:
+                    planned_offset = float(np.hypot(*(sequence.plan.jaw_grasp_b[:2] - sequence.cup.top_centre_b[:2])))
+                axis_error = abs(axis_gap - planned_offset)
+                success = sequence.state == "done" and lift >= 0.05 and axis_error <= 0.03
                 first = [l for l in looks if "estimate" in l and l["state"] == "detect"]
                 refine = [l for l in looks if "estimate" in l and l["state"] == "refine"]
                 result = {
                     "success": success,
-                    "criterion": "sequence finished, cup base raised >= 5 cm, cup axis within 3 cm of the jaw centre",
+                    "criterion": ("sequence finished, cup base raised >= 5 cm, and the cup axis within 3 cm "
+                                  "of where the plan put the jaw centre relative to it (on the axis for an "
+                                  "outside or inside-out grasp, a wall's radius away for a pinch)"),
                     "episode": episode, "settled": settled,
                     "final_state": "aborted" if aborted else sequence.state,
                     "failure": "restarted with R before the pick finished" if aborted else sequence.failure,
                     "sim_time_s": round(t, 2), "wall_time_s": round(time.perf_counter() - wall_start, 1),
                     "cup_lift_m": round(lift, 4), "cup_axis_to_jaw_centre_m": round(axis_gap, 4),
+                    "planned_jaw_offset_from_axis_m": round(planned_offset, 4),
+                    "axis_error_m": round(axis_error, 4),
                     "cup_tilt_deg_end": round(tilt, 2), "base_height_m": round(base_height, 4),
                     "first_look_errors_mm": [{"horizontal": l["horizontal_error_mm"], "height": l["height_error_mm"],
                                               "method": l["estimate"]["method"]} for l in first],
@@ -482,15 +584,22 @@ def run(args):
                     "first_cup_estimate": sequence.first_cup.as_dict() if sequence.first_cup is not None else None,
                     "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo "
                                       "noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence "
-                                      "about the real arm.",
+                                      "about the real arm."
+                                      + ("" if sequence.plan is None or sequence.plan.mode == "outside" else
+                                         f" The grasp was a {sequence.plan.mode} wall grasp against "
+                                         f"{cup_info['collision']}, and the CAD gripper's travel limits: what "
+                                         f"the real jaws do at the same command is unmeasured (F-059)."),
                 }
                 write_json(out_dir / "pick.json", result)
                 write_json(out_dir / "events.json", {"events": sequence.events, "looks": looks})
                 episodes.append({"episode": episode, "dir": "." if episode == 0 else out_dir.name,
                                  "cup_x_env_m": round(cup_xy[0], 4), "cup_y_env_m": round(cup_xy[1], 4),
-                                 "cup_yaw_deg": round(cup_yaw, 1), "final_state": result["final_state"],
+                                 "cup_yaw_deg": round(cup_yaw, 1),
+                                 "grasp_mode": sequence.plan.mode if sequence.plan is not None else "",
+                                 "final_state": result["final_state"],
                                  "success": success, "cup_lift_m": result["cup_lift_m"],
-                                 "cup_axis_to_jaw_centre_mm": round(1000 * axis_gap, 1), "sim_time_s": result["sim_time_s"],
+                                 "cup_axis_to_jaw_centre_mm": round(1000 * axis_gap, 1),
+                                 "axis_error_mm": round(1000 * axis_error, 1), "sim_time_s": result["sim_time_s"],
                                  "failure": result["failure"] or ""})
                 with (run_dir / "episodes.csv").open("w", newline="") as handle:
                     writer = csv.DictWriter(handle, fieldnames=list(episodes[0]))
@@ -509,8 +618,9 @@ def run(args):
                                         "random_handle_band_deg": RANDOM_HANDLE_BAND_DEG}
                 write_json(run_dir / "run.json", metadata)
                 outcome = "aborted" if aborted else ("succeeded" if success else "failed")
-                print(f"[pick] episode {episode} {outcome}: lift {100 * lift:.1f} cm, axis gap {1000 * axis_gap:.0f} mm, "
-                      f"{t:.1f} s simulated -> {out_dir}", flush=True)
+                print(f"[pick] episode {episode} {outcome}: {sequence.plan.mode if sequence.plan else 'no'} grasp, "
+                      f"lift {100 * lift:.1f} cm, axis gap {1000 * axis_gap:.0f} mm "
+                      f"({1000 * axis_error:.0f} mm off the plan), {t:.1f} s simulated -> {out_dir}", flush=True)
 
                 if not aborted and episode + 1 >= args.episodes:
                     if not (args.linger and app.is_running()):
@@ -556,6 +666,8 @@ def run(args):
 
 
 def main():
+    from pick_demo.grasp import GraspParams
+
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--device", default="cuda:0")
@@ -565,6 +677,22 @@ def main():
     parser.add_argument("--mount_pos", type=float, nargs=3, default=(-0.055, 0.0, 0.035), metavar=("X", "Y", "Z"),
                         help="Camera position in the Link6 frame (m). Assumed, not measured.")
     parser.add_argument("--mount_pitch_deg", type=float, default=20.0, help="Camera tilt towards the approach axis.")
+    parser.add_argument("--mount", default=None, metavar="FILE",
+                        help="A saved wrist-mount file (six degrees of freedom, with provenance). "
+                             "Default: pick_demo/assets/mounts/wrist_mount.json when it exists. "
+                             "'none' forces --mount_pos/--mount_pitch_deg instead.")
+    parser.add_argument("--calibration", default=None,
+                        help="A calibration from pick_demo.realsense, used instead of --camera's datasheet preset. "
+                             "This is the camera on the bench rather than the datasheet's idea of one.")
+    parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=True,
+                        help="Draw the RealSense housing at the mount, to check it against the real bracket. "
+                             "Visual only: no collider and no mass, but it does obstruct the wrist camera "
+                             "while F-052 stands, so a pick that needs the wrist view wants it off.")
+    # `BooleanOptionalAction` spells the negative `--no-camera_body`, while run_camera_body_view.py takes
+    # `--no_camera_body`, and F-057 and scene.py both name the underscore form. Rather than leave a flag
+    # that errors out for anyone following the findings, accept both spellings here.
+    parser.add_argument("--no_camera_body", dest="camera_body", action="store_false",
+                        help=argparse.SUPPRESS)
     parser.add_argument("--mount_calibration", choices=("none", "sim"), default="none",
                         help="'sim': estimate with the camera pose the renderer actually used (a perfect hand-eye "
                              "calibration). 'none': with the requested mount.")
@@ -574,6 +702,21 @@ def main():
     parser.add_argument("--cup_diameter", type=float, default=0.055)
     parser.add_argument("--cup_height", type=float, default=0.10)
     parser.add_argument("--cup_mass", type=float, default=0.12)
+    parser.add_argument("--cup_wall", type=float, default=0.0, metavar="M",
+                        help="Wall thickness of a hollow cup collider, in metres. 0 (the default) keeps the "
+                             "solid cylinder every recorded pick used; a wall grasp reaches inside the cup "
+                             "and needs an inside to reach into.")
+    parser.add_argument("--wall_grasp", choices=("auto", "off", "outside", "wall", "inside_out", "pinch"),
+                        default="auto",
+                        help="What to do with a cup too wide for the jaws (grasp.GraspParams.wall_grasp): "
+                             "auto falls back to an inside-out wall grasp, off refuses as before.")
+    parser.add_argument("--pinch_closed_gap", type=float, default=GraspParams().pinch_closed_gap_m,
+                        metavar="M",
+                        help="What the jaws shut to, in metres. It decides both whether a wall pinch is "
+                             "planned and how far the simulated fingers may travel: the default is the real "
+                             "arm's (F-063), so the modelled pads close past the URDF's stop to match it. "
+                             "Pass 0.0172 to hold the simulator to the URDF's own limit, where no pinch is "
+                             "possible and a wide cup is taken from inside instead.")
     parser.add_argument("--cup_xy", type=float, nargs=2, default=(0.42, 0.03), metavar=("X", "Y"),
                         help="Cup position on the floor relative to the robot's spawn point (m).")
     parser.add_argument("--cup_yaw_deg", type=float, default=0.0,

@@ -7,11 +7,13 @@ FK -- if these agree, the rendered arm and the IK share one model.
 """
 import json
 import math
+import shutil
 import socket
 import sys
 import tempfile
 import threading
 import time
+import types
 import unittest
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -434,6 +436,315 @@ class SimModeServerTests(unittest.TestCase):
             httpd.server_close()
             camera.stop()
             server.Handler.arm = previous
+
+
+class MountFileTests(unittest.TestCase):
+    """The wrist mount as six numbers and as a file. No arm, no browser, no Isaac."""
+
+    def setUp(self):
+        from pick_demo import camera
+
+        self.camera = camera
+        self.dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_the_placeholder_mount_reads_as_six_interpretable_numbers(self):
+        """The editor seeds itself from whatever mount is loaded, so that had better be legible."""
+        xyz, rpy = self.camera.mount_as_xyz_rpy(self.camera.WristMount())
+        np.testing.assert_allclose(xyz, (-0.055, 0.0, 0.035), atol=1e-9)
+        np.testing.assert_allclose(rpy, (-20.0, 0.0, -90.0), atol=1e-9)
+
+    def test_xyz_rpy_round_trips_through_the_matrix(self):
+        """A number typed in the console, stored, and used by the solver must mean one thing."""
+        for rpy in ((-20.0, 0.0, -90.0), (12.5, -7.25, 143.0), (0.0, 0.0, 0.0), (179.0, 31.0, -6.0)):
+            with self.subTest(rpy=rpy):
+                mount = self.camera.mount_from_xyz_rpy((0.01, -0.02, 0.03), rpy)
+                back_xyz, back_rpy = self.camera.mount_as_xyz_rpy(mount)
+                np.testing.assert_allclose(back_xyz, (0.01, -0.02, 0.03), atol=1e-12)
+                np.testing.assert_allclose(back_rpy, rpy, atol=1e-9)
+
+    def test_the_rpy_convention_is_the_one_the_urdf_and_the_page_use(self):
+        """`rpy_matrix_zyx` has to agree with the solver's, or the console and the arm disagree."""
+        for rpy in ((0.3, -0.2, 1.1), (0.0, 0.0, 0.0), (-1.4, 0.9, 0.2)):
+            with self.subTest(rpy=rpy):
+                np.testing.assert_allclose(self.camera.rpy_matrix_zyx(*rpy), rpy_matrix(*rpy), atol=1e-12)
+
+    def test_a_saved_mount_loads_back_as_the_same_transform(self):
+        path = Path(self.dir) / "m.json"
+        mount = self.camera.mount_from_xyz_rpy((-0.05, 0.004, 0.036), (-18.0, 2.0, -88.0))
+        self.camera.save_mount(path, mount, source="unit test", method="typed in")
+        loaded = self.camera.load_mount(path)
+        np.testing.assert_allclose(loaded.pose, mount.pose, atol=1e-9)
+
+    def test_a_saved_mount_says_it_was_not_measured(self):
+        """The console can only align by eye. A file that does not say so would be read as a calibration."""
+        path = Path(self.dir) / "m.json"
+        self.camera.save_mount(path, self.camera.WristMount(), source="console", method="aligned by eye")
+        data = json.loads(path.read_text())
+        self.assertFalse(data["measured"])
+        self.assertIn("aligned by eye", data["method"])
+        self.assertIn("not measured", self.camera.load_mount(path).source)
+
+    def test_a_file_edited_in_one_place_only_is_refused(self):
+        """Both parameterisations are stored; if they come apart the file is wrong, not merely stale."""
+        path = Path(self.dir) / "m.json"
+        self.camera.save_mount(path, self.camera.WristMount(), source="test")
+        data = json.loads(path.read_text())
+        data["xyz_m"] = [0.5, 0.5, 0.5]                 # moved here but not in pose_link6
+        path.write_text(json.dumps(data))
+        with self.assertRaises(ValueError) as bad:
+            self.camera.load_mount(path)
+        self.assertIn("disagree", str(bad.exception))
+
+    def test_a_foreign_file_is_refused_by_schema(self):
+        path = Path(self.dir) / "m.json"
+        path.write_text(json.dumps({"schema": "something/else", "pose_link6": np.eye(4).tolist()}))
+        with self.assertRaises(ValueError):
+            self.camera.load_mount(path)
+
+
+class MountEditorTests(unittest.TestCase):
+    """The server side of the console's mount editor: what it accepts, refuses and writes."""
+
+    def setUp(self):
+        from pick_demo import camera
+
+        self.camera = camera
+        # A client that answers nothing: the mount editor touches only pick_cfg, and building a real
+        # D1Client here would open a DDS participant for no reason.
+        self.arm = server.ArmServer(iface="none", legs=True, sphere_radius_m=0.40, step_deg=5.0, log_path=None,
+                                    mode="sim", mode_reason="test",
+                                    client=sim_feed.SimFeedClient("http://127.0.0.1:1"))
+        self.arm._log = QUIET
+        # Pinned to the placeholder rather than whatever mount happens to be saved in the repo, so these
+        # tests say the same thing on a machine that has one and on a machine that does not.
+        mount = camera.WristMount()
+        self.perception = types.SimpleNamespace(mount=mount)
+        self.arm.pick_cfg = {"mount": mount, "perception": self.perception,
+                             "mount_source": "assumed", "camera_source": "test", "base_height_m": 0.02}
+        self.arm.mount, self.arm.mount_source, self.arm.mount_file = mount, "assumed", None
+
+    def test_without_a_pick_the_editor_still_works_but_drives_nothing(self):
+        """A workstation has no arm and no camera, and is exactly where the simulator's mount is set."""
+        self.arm.pick_cfg = None
+        status = self.arm.mount_status()
+        self.assertTrue(status["available"])
+        self.assertFalse(status["drives_perception"])
+        self.assertIn("edits a file only", status["note"])
+        ok, why = self.arm.set_mount([-0.05, 0.0, 0.04], [-18.0, 0.0, -90.0])
+        self.assertTrue(ok, why)
+        np.testing.assert_allclose(self.arm.mount_status()["xyz_m"], (-0.05, 0.0, 0.04), atol=1e-6)
+
+    def test_the_status_seeds_the_editor_from_the_loaded_mount(self):
+        status = self.arm.mount_status()
+        self.assertTrue(status["available"])
+        np.testing.assert_allclose(status["xyz_m"], (-0.055, 0.0, 0.035), atol=1e-6)
+        np.testing.assert_allclose(status["rpy_deg"], (-20.0, 0.0, -90.0), atol=1e-4)
+        self.assertEqual(len(status["mesh_to_optical"]), 4)
+        self.assertIn("not a hand-eye calibration", status["note"])
+
+    def test_setting_the_mount_moves_the_frame_perception_uses(self):
+        """The editor is only useful if the next frame is deprojected through the new mount."""
+        ok, why = self.arm.set_mount([-0.05, 0.002, 0.04], [-18.0, 1.0, -88.0])
+        self.assertTrue(ok, why)
+        expected = self.camera.mount_from_xyz_rpy([-0.05, 0.002, 0.04], [-18.0, 1.0, -88.0])
+        np.testing.assert_allclose(self.perception.mount.pose, expected.pose, atol=1e-9)
+        self.assertIs(self.perception.mount, self.arm.pick_cfg["mount"])
+        self.assertIs(self.perception.mount, self.arm.mount)
+        self.assertTrue(self.arm.mount_status()["drives_perception"])
+
+    def test_a_mount_that_buries_the_camera_in_the_wrist_is_reported(self):
+        """The editor has to say when the case is inside Link6, or it is a way to draw a bad bracket."""
+        self.assertFalse(self.arm.mount_status()["clearance"]["intersects_shell"])
+        ok, why = self.arm.set_mount([-0.048, 0.006, 0.042], [-16.0, 2.0, -87.0])
+        self.assertTrue(ok, why)
+        clearance = self.arm.mount_status()["clearance"]
+        self.assertTrue(clearance["intersects_shell"], clearance)
+        self.assertGreater(max(clearance["overlap_m"]), 0.0)
+
+    def test_nonsense_is_refused_rather_than_stored(self):
+        before = self.arm.pick_cfg["mount"].pose.copy()
+        for xyz, rpy in (([0.0, 0.0], [0, 0, 0]),                 # too few
+                         (["a", 0.0, 0.0], [0, 0, 0]),            # not numbers
+                         ([float("nan"), 0.0, 0.0], [0, 0, 0]),   # not finite
+                         ([5.0, 0.0, 0.0], [0, 0, 0])):           # metres confused for millimetres
+            with self.subTest(xyz=xyz):
+                ok, why = self.arm.set_mount(xyz, rpy)
+                self.assertFalse(ok)
+                self.assertTrue(why)
+        np.testing.assert_allclose(self.arm.pick_cfg["mount"].pose, before)
+
+    def test_the_mount_cannot_move_under_a_running_pick(self):
+        self.arm.pick_state["running"] = True
+        ok, why = self.arm.set_mount([-0.05, 0.0, 0.04], [-18.0, 0.0, -90.0])
+        self.assertFalse(ok)
+        self.assertIn("pick is running", why)
+        self.assertFalse(self.arm.mount_status()["editable"])
+
+    def test_saving_writes_a_loadable_file_that_admits_what_it_is(self):
+        root = Path(server.ROOT) / "pick_demo" / "assets" / "mounts"
+        name = "unittest_tmp_mount"
+        path = root / f"{name}.json"
+        try:
+            self.arm.set_mount([-0.05, 0.002, 0.04], [-18.0, 1.0, -88.0])
+            ok, where = self.arm.save_mount(name)
+            self.assertTrue(ok, where)
+            self.assertEqual(Path(where), path)
+            loaded = self.camera.load_mount(path)
+            np.testing.assert_allclose(loaded.pose, self.arm.pick_cfg["mount"].pose, atol=1e-9)
+            self.assertFalse(json.loads(path.read_text())["measured"])
+            self.assertIn(name, self.arm.mount_status()["saved_to"])
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_a_save_name_cannot_escape_the_mounts_directory(self):
+        root = Path(server.ROOT) / "pick_demo" / "assets" / "mounts"
+        ok, where = self.arm.save_mount("../../etc/passwd")
+        try:
+            self.assertTrue(ok, where)
+            self.assertEqual(Path(where).parent, root)
+        finally:
+            Path(where).unlink(missing_ok=True)
+
+
+
+class MountDefaultTests(unittest.TestCase):
+    """Which mount a launch uses. One saved file is meant to be enough, with nothing to pass."""
+
+    def setUp(self):
+        from pick_demo import camera
+
+        self.camera = camera
+        self.dir = Path(tempfile.mkdtemp())
+        self.saved = self.dir / "wrist_mount.json"
+        self.previous = camera.DEFAULT_MOUNT_PATH
+        camera.DEFAULT_MOUNT_PATH = self.saved
+
+    def tearDown(self):
+        self.camera.DEFAULT_MOUNT_PATH = self.previous
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def _save(self):
+        mount = self.camera.mount_from_xyz_rpy((-0.061, 0.034, 0.067), (0.0, 0.0, -90.0))
+        self.camera.save_mount(self.saved, mount, source="console", method="aligned by eye")
+        return mount
+
+    def test_with_nothing_saved_a_launch_uses_the_placeholder_and_says_so(self):
+        mount, source, _ = self.camera.resolve_mount(None)
+        np.testing.assert_allclose(mount.pose, self.camera.WristMount().pose, atol=1e-12)
+        self.assertIn("no saved mount", source)
+
+    def test_a_saved_mount_is_used_with_nothing_passed(self):
+        """The whole point: save it in the console once, and every launch after that is accurate."""
+        saved = self._save()
+        mount, source, _ = self.camera.resolve_mount(None)
+        np.testing.assert_allclose(mount.pose, saved.pose, atol=1e-9)
+        self.assertIn("saved default", source)
+
+    def test_the_source_carries_the_files_own_provenance(self):
+        """A run log has to be able to say the mount was aligned by eye without knowing where it came from."""
+        self._save()
+        _, source, _ = self.camera.resolve_mount(None)
+        self.assertIn("aligned by eye, not measured", source)
+
+    def test_an_explicit_file_beats_the_saved_default(self):
+        self._save()
+        other = self.dir / "other.json"
+        elsewhere = self.camera.mount_from_xyz_rpy((0.01, 0.02, 0.03), (1.0, 2.0, 3.0))
+        self.camera.save_mount(other, elsewhere, source="explicit")
+        mount, source, _ = self.camera.resolve_mount(str(other))
+        np.testing.assert_allclose(mount.pose, elsewhere.pose, atol=1e-9)
+        self.assertIn("other.json", source)
+
+    def test_none_forces_the_placeholder_even_when_one_is_saved(self):
+        """A run has to be able to reproduce the assumed geometry deliberately."""
+        self._save()
+        mount, source, _ = self.camera.resolve_mount("none")
+        np.testing.assert_allclose(mount.pose, self.camera.WristMount().pose, atol=1e-12)
+        self.assertIn("--mount none", source)
+
+    def test_a_caller_may_supply_its_own_fallback(self):
+        other = self.camera.WristMount(pos_link6=(0.0, 0.0, 0.1), pitch_deg=5.0)
+        mount, _, _ = self.camera.resolve_mount("none", fallback=other)
+        np.testing.assert_allclose(mount.pose, other.pose, atol=1e-12)
+
+
+class PickAvailabilityTests(unittest.TestCase):
+    """Why the PICK button is on or off, and what turns it on without relaunching the console."""
+
+    def setUp(self):
+        from pick_demo import camera
+
+        self.camera = camera
+        self.arm = server.ArmServer(iface="none", legs=True, sphere_radius_m=0.40, step_deg=5.0, log_path=None,
+                                    mode="hardware", mode_reason="test",
+                                    client=sim_feed.SimFeedClient("http://127.0.0.1:1"))
+        self.arm._log = QUIET
+        self.camera_stub = types.SimpleNamespace(has_depth=lambda: True, status=lambda: {"source": "test"})
+        self.arm.camera = self.camera_stub
+        mount = camera.WristMount()
+        self.arm.pick_cfg = {"mount": mount, "perception": types.SimpleNamespace(mount=mount),
+                             "mount_source": "assumed", "camera_source": "test", "base_height_m": None}
+        self.arm.mount = mount
+        self.settings = Path(server.BENCH_SETTINGS)
+        self.had_settings = self.settings.read_bytes() if self.settings.is_file() else None
+
+    def tearDown(self):
+        if self.had_settings is None:
+            self.settings.unlink(missing_ok=True)
+        else:
+            self.settings.write_bytes(self.had_settings)
+
+    def test_an_unset_base_height_refuses_but_the_pick_is_still_configured(self):
+        """The old behaviour was no pick at all without a launch flag; now it is one refusal to clear."""
+        status = self.arm.pick_status()
+        self.assertTrue(status["configured"])
+        self.assertFalse(status["available"])
+        self.assertIn("set the base height", status["refusal"])
+
+    def test_setting_the_base_height_makes_the_pick_available(self):
+        ok, why = self.arm.set_base_height(0.02)
+        self.assertTrue(ok, why)
+        status = self.arm.pick_status()
+        self.assertEqual(status["base_height_m"], 0.02)
+        self.assertTrue(status["available"], status["refusal"])
+
+    def test_the_base_height_is_remembered_for_the_next_launch(self):
+        """Typed once, at the bench. Nobody should have to pass it on the command line again."""
+        self.arm.set_base_height(0.037)
+        self.assertEqual(server.load_bench_settings()["base_height_m"], 0.037)
+
+    def test_nonsense_and_millimetres_are_refused(self):
+        for bad in ("high", None, float("nan"), 20.0, -3.0):
+            with self.subTest(bad=bad):
+                ok, why = self.arm.set_base_height(bad)
+                self.assertFalse(ok)
+                self.assertTrue(why)
+        self.assertIsNone(self.arm.pick_cfg["base_height_m"])
+
+    def test_the_base_height_cannot_move_under_a_running_pick(self):
+        self.arm.set_base_height(0.02)
+        self.arm.pick_state["running"] = True
+        ok, why = self.arm.set_base_height(0.05)
+        self.assertFalse(ok)
+        self.assertIn("pick is running", why)
+
+    def test_the_pick_uses_the_mount_the_editor_holds(self):
+        """'Use the extrinsics that were loaded': one object, so the two cannot drift apart."""
+        self.arm.set_base_height(0.02)
+        self.arm.set_mount([-0.061, 0.034, 0.067], [0.0, 0.0, -90.0])
+        expected = self.camera.mount_from_xyz_rpy([-0.061, 0.034, 0.067], [0.0, 0.0, -90.0])
+        np.testing.assert_allclose(self.arm.pick_cfg["mount"].pose, expected.pose, atol=1e-9)
+        np.testing.assert_allclose(self.arm.pick_cfg["perception"].mount.pose, expected.pose, atol=1e-9)
+        self.assertIs(self.arm.pick_cfg["mount"], self.arm.mount)
+
+    def test_without_depth_it_still_refuses_because_the_pick_needs_it(self):
+        """Not every refusal is a configuration slip; this one is physics and must survive."""
+        self.arm.set_base_height(0.02)
+        self.camera_stub.has_depth = lambda: False
+        self.assertIn("no depth", self.arm.pick_status()["refusal"])
 
 
 if __name__ == "__main__":

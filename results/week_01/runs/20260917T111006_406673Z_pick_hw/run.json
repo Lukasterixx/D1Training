@@ -1,0 +1,83 @@
+{
+  "started_utc": "2026-09-17T11:10:06+00:00",
+  "status": "pick_failed",
+  "mode": "pick_hardware",
+  "learning": null,
+  "task": "scripted_top_down_cup_pick_on_hardware",
+  "executed": true,
+  "camera": {
+    "name": "RealSense D435I #238222076237",
+    "width": 640,
+    "height": 480,
+    "fx": 607.1100463867188,
+    "fy": 607.3660278320312,
+    "cx": 323.001220703125,
+    "cy": 254.2924346923828,
+    "min_depth_m": 0.154,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05004734918475151,
+    "depth_fx": 387.7474670410156,
+    "subpixel_rms": 0.08,
+    "source": "measured: librealsense on RealSense D435I #238222076237 at 640x480, captured 2026-09-17T06:58:58+00:00; min_depth is the 126-disparity limit and max_depth the datasheet's"
+  },
+  "mount": {
+    "pos_link6_m": [
+      -0.061,
+      0.034,
+      0.067
+    ],
+    "pitch_deg": null,
+    "source": "d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)"
+  },
+  "frame": {
+    "base_height_m": -0.09,
+    "up_b": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "source": "stated by the operator; there is no IMU on a bench-mounted arm"
+  },
+  "gripper": {
+    "commanded": true,
+    "units_range": [
+      -25.0,
+      65.0
+    ],
+    "conversion": "finger travel (m) * 2000 -> servo 6 units, as the simulator's client does",
+    "why": "servo 6's scale is unverified on this arm: no finding measures what one unit is in millimetres of jaw gap, so the units are recorded and no length is claimed"
+  },
+  "grasp": {
+    "wall_grasp": "auto",
+    "wall_thickness_m": 0.005,
+    "why": "a cup too wide for the 77.2 mm jaws is grasped by its wall instead: the fingers go inside the mouth shut and open against the wall. The wall thickness is assumed, not seen, and the pinch variant stays refused until the real closed jaw gap is measured (F-059)"
+  },
+  "scope": "A success here is a reach, a descent, a close and a lift against a real cup, with perception through an uncalibrated wrist mount and a jaw commanded on an unmeasured scale. It is not a calibration of either.",
+  "camera_source": "calibration d435i_238222076237_640x480.json",
+  "arm": {
+    "iface": "enx00e04c3c6376",
+    "mode": "hardware"
+  },
+  "result": {
+    "ok": false,
+    "state": "failed",
+    "failure": "survey: no arrival by 5.9 s (worst joint error 1.232 rad; per joint [0.316, 1.232, 0.825, 0.522, 0.442, 0.705]; covered 0% of the move, still moving; gripper 0.0 mm)",
+    "reason": "survey: no arrival by 5.9 s (worst joint error 1.232 rad; per joint [0.316, 1.232, 0.825, 0.522, 0.442, 0.705]; covered 0% of the move, still moving; gripper 0.0 mm)",
+    "executed": true,
+    "elapsed_s": 10.09,
+    "frames_looked_at": 0,
+    "frames_with_cup": 0,
+    "cup": null,
+    "commands_sent": 1,
+    "gripper_intent": {
+      "finger_travel_m": 0.0,
+      "commanded": true,
+      "units_asked": -19.8,
+      "units_reported_before": 49.8,
+      "why": "servo 6's scale is unverified; the units asked for are recorded, the millimetres they produce are not known"
+    },
+    "grasp": null,
+    "feedback": "arm",
+    "interpretation": "Physical arm. No ground truth, so nothing here says how accurate the estimate was. The gripper was commanded, on a scale nobody has measured: the units asked for are recorded, what the jaw did in millimetres is not known."
+  }
+}

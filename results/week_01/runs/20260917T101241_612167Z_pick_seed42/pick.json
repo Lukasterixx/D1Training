@@ -1,0 +1,119 @@
+{
+  "success": false,
+  "criterion": "sequence finished, cup base raised >= 5 cm, cup axis within 3 cm of the jaw centre",
+  "episode": 0,
+  "settled": {
+    "base_height_m": 0.0851,
+    "base_xy_env_m": [
+      -0.0173,
+      0.0
+    ],
+    "cup_start_env_m": [
+      0.42,
+      0.03,
+      -0.0
+    ],
+    "cup_yaw_deg": 0.0,
+    "settle_s": 3.0
+  },
+  "final_state": "done",
+  "failure": null,
+  "sim_time_s": 12.96,
+  "wall_time_s": 44.1,
+  "cup_lift_m": 0.119,
+  "cup_axis_to_jaw_centre_m": 0.0406,
+  "cup_tilt_deg_end": 0.36,
+  "base_height_m": 0.0851,
+  "first_look_errors_mm": [
+    {
+      "horizontal": 1.44,
+      "height": -9.63,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 1.45,
+      "height": -9.67,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 1.43,
+      "height": -9.73,
+      "method": "rim_circle"
+    }
+  ],
+  "refine_errors_mm": [],
+  "frames_looked_at": 7,
+  "frames_with_cup_detection": 3,
+  "grasp_plan": {
+    "mode": "pinch",
+    "heading_b": [
+      0.9897,
+      0.0681,
+      -0.1257
+    ],
+    "tilt_deg": 10.0,
+    "jaw_pregrasp_b": [
+      0.4183,
+      0.0676,
+      0.1202
+    ],
+    "jaw_grasp_b": [
+      0.4269,
+      0.0696,
+      -0.0596
+    ],
+    "jaw_lift_b": [
+      0.4421,
+      0.0697,
+      0.0594
+    ],
+    "q_pregrasp": [
+      0.1618,
+      0.9398,
+      -0.5266,
+      0.0036,
+      1.1085,
+      -0.0927
+    ],
+    "approach_waypoints": 1,
+    "descend_waypoints": 18,
+    "lift_waypoints": 6,
+    "gripper_descend_m": 0.0009,
+    "gripper_grasp_m": -0.0076,
+    "notes": [
+      "pinching the wall a quarter turn round the rim: one finger 30 mm inside, one outside, 7.0 mm either side of the wall going down, then shut to 2.0 mm on a 5 mm wall",
+      "descent held to 6.0 mm over 18 waypoints"
+    ]
+  },
+  "cup_estimate_used": {
+    "top_centre_b": [
+      0.43435,
+      0.0305,
+      -0.05015
+    ],
+    "radius_m": 0.04194,
+    "top_height_m": 0.00499,
+    "bottom_height_m": -0.09538,
+    "height_m": 0.10038,
+    "points": 23984,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 230.0
+  },
+  "first_cup_estimate": {
+    "top_centre_b": [
+      0.43435,
+      0.0305,
+      -0.05015
+    ],
+    "radius_m": 0.04194,
+    "top_height_m": 0.00499,
+    "bottom_height_m": -0.09538,
+    "height_m": 0.10038,
+    "points": 23984,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 230.0
+  },
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm. The grasp was a pinch wall grasp against hollow: 24 boxes of 5.0 mm in a ring on a disc of the same thickness (inside diameter 80.0 mm), + box (handle); the visual mesh has no collider, and the CAD gripper's travel limits: what the real jaws do at the same command is unmeasured (F-059)."
+}

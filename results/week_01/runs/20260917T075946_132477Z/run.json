@@ -1,0 +1,265 @@
+{
+  "status": "complete",
+  "mode": "camera_body_view",
+  "seed": 42,
+  "arguments": {
+    "device": "cuda:0",
+    "seed": 42,
+    "camera": "d435",
+    "calibration": "pick_demo/assets/calibration/d435i_238222076237_640x480.json",
+    "mount_pos": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "mount_pitch_deg": 20.0,
+    "no_camera_body": false,
+    "pose": "observe",
+    "settle_steps": 120,
+    "frames_per_view": 4,
+    "width": 900,
+    "height": 700,
+    "cup_usdz": "/home/lukas/D1Training/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/camera_body"
+  },
+  "git_commit": "867d4a9c29848eaba60a3805dd3a5b288e8d0256",
+  "git_status": "M README.md\n M d1_ui/README.md\n M d1_ui/camera_feed.py\n M d1_ui/server.py\n M d1_ui/static/app.js\n M d1_ui/static/index.html\n M d1_ui/static/style.css\n M pick_demo/scene.py\n M results/findings.md\n M results/week_01/notes.md\n M run_pick_demo.py\n M run_pick_demo.sh\n M run_ui.sh\n M tests/test_pick_demo.py\n?? logs/camera_body/\n?? logs/pick_hardware/\n?? pick_demo/assets/calibration/\n?? pick_demo/assets/realsense/\n?? pick_demo/camera_asset.py\n?? pick_demo/camera_body.py\n?? pick_demo/hardware.py\n?? pick_demo/realsense.py\n?? results/week_01/figures/camera_body_above.png\n?? results/week_01/figures/camera_body_front.png\n?? results/week_01/figures/camera_body_side.png\n?? results/week_01/figures/camera_body_three_quarter.png\n?? results/week_01/runs/20260917T064251_915378Z_pick_seed42/\n?? results/week_01/runs/20260917T070343_357515Z_pick_seed42/\n?? results/week_01/runs/20260917T070553_982317Z_pick_seed42/\n?? results/week_01/runs/20260917T070804_174822Z_pick_seed42/\n?? results/week_01/runs/20260917T070917_995149Z_pick_seed42/\n?? results/week_01/runs/20260917T071150_783318Z/\n?? results/week_01/runs/20260917T071238_076387Z/\n?? results/week_01/runs/20260917T071420_080024Z_pick_seed42/\n?? results/week_01/runs/20260917T073416_082125Z_pick_hw/\n?? run_camera_body_view.py\n?? run_camera_body_view.sh\n?? tests/test_pick_hardware.py\n?? third_party/realsense2_description/",
+  "task": "wrist camera body render",
+  "learning": null,
+  "captured_utc": "2026-09-17T07:59:57+00:00",
+  "mount": {
+    "pos_link6_m": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "pitch_deg": 20.0,
+    "source": "assumed; bracket not yet measured"
+  },
+  "camera_model": {
+    "name": "RealSense D435I #238222076237",
+    "width": 640,
+    "height": 480,
+    "fx": 607.1100463867188,
+    "fy": 607.3660278320312,
+    "cx": 323.001220703125,
+    "cy": 254.2924346923828,
+    "min_depth_m": 0.154,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05004734918475151,
+    "depth_fx": 387.7474670410156,
+    "subpixel_rms": 0.08,
+    "source": "measured: librealsense on RealSense D435I #238222076237 at 640x480, captured 2026-09-17T06:58:58+00:00; min_depth is the 126-disparity limit and max_depth the datasheet's"
+  },
+  "arm_pose_rad": [
+    0.0,
+    0.10444,
+    0.83088,
+    -0.00014,
+    0.16051,
+    -3e-05
+  ],
+  "pose": "observe",
+  "link6_origin_base_m": [
+    0.21618,
+    -0.00128,
+    0.24931
+  ],
+  "optical_origin_base_m": [
+    0.2811,
+    -0.00128,
+    0.24334
+  ],
+  "body_clearance": {
+    "housing_x_link6_m": [
+      -0.0738,
+      -0.0418
+    ],
+    "housing_y_link6_m": [
+      -0.0774,
+      0.0125
+    ],
+    "housing_z_link6_m": [
+      0.0112,
+      0.0433
+    ],
+    "y_checked": false,
+    "shell_x_link6_m": [
+      -0.038,
+      0.019
+    ],
+    "shell_z_link6_m": [
+      0.0,
+      0.076
+    ],
+    "intersects_shell": false,
+    "overlap_m": [
+      0.0,
+      0.0321
+    ]
+  },
+  "view_obstruction": {
+    "model_eye": [],
+    "rendered_eye_f052": [
+      {
+        "part": "housing",
+        "triangles": 1573,
+        "of": 229148,
+        "eye_offset_mm": [
+          0.9,
+          8.85,
+          -6.23
+        ],
+        "depth_range_m": [
+          0.0034,
+          0.01053
+        ],
+        "x_range_m": [
+          -0.00761,
+          0.0641
+        ],
+        "y_range_m": [
+          -0.00512,
+          0.00219
+        ]
+      }
+    ]
+  },
+  "body": {
+    "asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "source": "/home/lukas/D1Training/pick_demo/assets/realsense/d435_housing.ply",
+      "source_sha256": "a1a4abe241d5d55ebdb55ac544944da4b8fa76942c24b50c2e94da6785251641",
+      "colour": [
+        0.62,
+        0.63,
+        0.65
+      ],
+      "roughness": 0.35,
+      "clearance_tan": 0.9,
+      "transform": [
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.0325
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0043
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "builder": 1,
+      "triangles": 229148,
+      "triangles_removed": 2038,
+      "vertices": 154149,
+      "bounds_optical_m": [
+        [
+          -0.0125,
+          -0.0125,
+          -0.020755
+        ],
+        [
+          0.077414,
+          0.0125,
+          0.0043
+        ]
+      ],
+      "frame": "colour optical: x right, y down, z forward, origin at the colour sensor",
+      "note": "Intel's d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro's offsets, with the colour lens element removed so a pinhole camera at the sensor plane has a clear aperture. Visual only."
+    },
+    "size_m": [
+      0.089914,
+      0.025,
+      0.025055
+    ],
+    "bounds_optical_m": [
+      [
+        -0.0125,
+        -0.0125,
+        -0.020755
+      ],
+      [
+        0.077414,
+        0.0125,
+        0.0043
+      ]
+    ],
+    "imagers_optical_m": {
+      "left_ir": [
+        0.014857,
+        0.0,
+        0.0042
+      ],
+      "colour": [
+        0.0,
+        0.0,
+        0.0042
+      ],
+      "right_ir": [
+        0.064904,
+        0.0,
+        0.0042
+      ]
+    },
+    "tripod_optical_m": [
+      0.0325,
+      0.0125,
+      -0.0106
+    ],
+    "source": "Intel d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro"
+  },
+  "views": [
+    {
+      "view": "front",
+      "eye_offset_m": [
+        0.16,
+        0.0,
+        0.05
+      ],
+      "file": "front.png"
+    },
+    {
+      "view": "side",
+      "eye_offset_m": [
+        0.0,
+        -0.18,
+        0.04
+      ],
+      "file": "side.png"
+    },
+    {
+      "view": "above",
+      "eye_offset_m": [
+        0.02,
+        0.0,
+        0.2
+      ],
+      "file": "above.png"
+    },
+    {
+      "view": "three_quarter",
+      "eye_offset_m": [
+        0.13,
+        -0.13,
+        0.1
+      ],
+      "file": "three_quarter.png"
+    }
+  ]
+}

@@ -72,3 +72,28 @@ body.sim .arm-switch { opacity: .55; }
 .camwin-foot .hit { color: var(--ok); }
 .camwin.collapsed .camwin-body, .camwin.collapsed .camwin-foot { display: none; }
 .camwin.collapsed { resize: none; }
+
+/* The scripted pick. Its section dims in sim mode, where every command is refused anyway, and the
+   caveat line goes amber when the pick is unavailable so "PICK is greyed out" always has a reason. */
+#picksec.off { opacity: .45; pointer-events: none; }
+#picksec .buttons { grid-template-columns: 1fr; }
+.hint.warn { color: var(--warn); }
+
+/* ---------------------------------------------------------------- wrist mount editor
+   One button turns the 3D gizmo on; the panel keeps the six numbers, two rows of three, in the
+   units the labels on the gizmo's axes use. */
+.mount-move { grid-template-columns: 1fr; }
+button#mountmove.on { background: #0e3a4a; border-color: var(--accent); color: var(--accent); }
+#mountgrid { width: 100%; border-collapse: collapse; margin: 6px 0 2px; font-size: 12px; }
+#mountgrid td { padding: 1px 2px; vertical-align: middle; text-align: center; }
+#mountgrid td.mg-name { width: 3.2em; color: #93a2b5; text-align: left; font-weight: 600; }
+#mountgrid td.mg-unit { width: 1.6em; color: #6b7a8d; text-align: left; padding-left: 4px; }
+#mountgrid td.mg-ax { font-family: var(--mono); font-weight: 700; }
+#mountgrid .ax-x { color: #ff6b6b; }
+#mountgrid .ax-y { color: #7ee787; }
+#mountgrid .ax-z { color: #6bb6ff; }
+#mountgrid input[type=number] {
+  width: 100%; box-sizing: border-box; background: #121821; color: #dbe4f0; border: 1px solid #2a3644;
+  border-radius: 3px; padding: 2px 3px; font: inherit; font-family: var(--mono); text-align: right;
+}
+#mountgrid input.mg-dirty { color: #ffcf5c; border-color: #6a5622; }

@@ -1,0 +1,26 @@
+{
+  "id": "20260917T071150_783318Z",
+  "title": "Wrist close-ups, first attempt: the arm stayed at zero",
+  "notes": "Camera body rendered, but set_joint_position_target is overwritten by the arm action term each step, so the wrist is at the zero pose rather than the pick's observation pose.",
+  "week": 1,
+  "recorded_at": "2026-09-17T16:44:05+09:30",
+  "started_utc": "2026-09-17T07:11:50+00:00",
+  "source_dir": "logs/camera_body/20260917T071150_783318Z",
+  "mode": "camera_body_view",
+  "seed": 42,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "867d4a9c29848eaba60a3805dd3a5b288e8d0256",
+  "git_dirty": false,
+  "articulation_mass_kg": null,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "run.json",
+    "view.json"
+  ]
+}

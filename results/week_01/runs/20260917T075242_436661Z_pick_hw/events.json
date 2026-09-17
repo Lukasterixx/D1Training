@@ -1,0 +1,133 @@
+[
+  {
+    "t": 3.007,
+    "state": "settle",
+    "event": "settled",
+    "base_height_m": 0.02,
+    "tilt_deg": 0.0
+  },
+  {
+    "t": 3.007,
+    "state": "settle",
+    "event": "viewpoint",
+    "q": [
+      0.0079,
+      -0.0655,
+      0.7652,
+      -0.0172,
+      0.2654,
+      -0.0231
+    ],
+    "look_at_b": [
+      0.42,
+      0.0,
+      -0.02
+    ],
+    "camera_pos_b": [
+      0.2721,
+      0.0,
+      0.2972
+    ],
+    "distance_m": 0.35,
+    "elevation_deg": 65.0,
+    "roll_deg": 0.0
+  },
+  {
+    "t": 3.007,
+    "state": "moving",
+    "event": "move",
+    "to": "view 0",
+    "waypoints": 1
+  },
+  {
+    "t": 3.113,
+    "state": "moving",
+    "event": "arrived",
+    "at": "view 0",
+    "error_rad": 0.0096
+  },
+  {
+    "t": 3.415,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.958,
+    "valid_depth": 0.734,
+    "top_centre_b": [
+      0.43221,
+      -0.0297,
+      0.12814
+    ],
+    "radius_m": 0.04215,
+    "top_height_m": 0.12814,
+    "bottom_height_m": 0.03239,
+    "height_m": 0.09574,
+    "points": 6637,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00056,
+    "rim_coverage_deg": 63.4
+  },
+  {
+    "t": 3.592,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.955,
+    "valid_depth": 0.745,
+    "top_centre_b": [
+      0.43149,
+      -0.02992,
+      0.12828
+    ],
+    "radius_m": 0.04149,
+    "top_height_m": 0.12828,
+    "bottom_height_m": 0.03279,
+    "height_m": 0.09549,
+    "points": 6731,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00059,
+    "rim_coverage_deg": 62.8
+  },
+  {
+    "t": 3.815,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.958,
+    "valid_depth": 0.74,
+    "top_centre_b": [
+      0.43084,
+      -0.02995,
+      0.12814
+    ],
+    "radius_m": 0.0408,
+    "top_height_m": 0.12814,
+    "bottom_height_m": 0.03303,
+    "height_m": 0.0951,
+    "points": 6688,
+    "method": "rim_circle",
+    "residual_rms_m": 0.0006,
+    "rim_coverage_deg": 62.2
+  },
+  {
+    "t": 3.815,
+    "state": "detect",
+    "event": "cup located",
+    "top_centre_b": [
+      0.43149,
+      -0.02992,
+      0.12814
+    ],
+    "radius_m": 0.04149,
+    "top_height_m": 0.12814,
+    "bottom_height_m": 0.03279,
+    "height_m": 0.09535,
+    "points": 20056,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 62.8
+  },
+  {
+    "t": 3.815,
+    "state": "detect",
+    "event": "failed",
+    "reason": "grasp planning: cup is 8.3 cm wide; the open jaws are 7.7 cm"
+  }
+]

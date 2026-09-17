@@ -81,8 +81,90 @@
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     return g;
   }
+  // Intel's D435 case is a binary PLY (pick_demo/assets/realsense). Parsed here for the same reason
+  // parseBinarySTL exists: r128 ships PLYLoader as a separate example script, and vendoring one more
+  // file to read one mesh is more than this needs. Only the layout that file actually has is handled --
+  // binary little-endian, float x/y/z then any other per-vertex properties, uchar+int face lists -- and
+  // anything else throws rather than being guessed at.
+  function parseBinaryPLY(buf) {
+    const bytes = new Uint8Array(buf);
+    const headEnd = (() => {
+      const needle = 'end_header\n';
+      const text = new TextDecoder('ascii').decode(bytes.subarray(0, Math.min(bytes.length, 4096)));
+      const at = text.indexOf(needle);
+      if (at < 0) throw new Error('PLY: no end_header in the first 4 kB');
+      return at + needle.length;
+    })();
+    const header = new TextDecoder('ascii').decode(bytes.subarray(0, headEnd)).split('\n');
+    if (!header.some((l) => l.trim() === 'format binary_little_endian 1.0')) {
+      throw new Error('PLY: only binary_little_endian 1.0 is handled');
+    }
+    const SIZES = { char: 1, uchar: 1, int8: 1, uint8: 1, short: 2, ushort: 2, int16: 2, uint16: 2,
+                    int: 4, uint: 4, int32: 4, uint32: 4, float: 4, float32: 4, double: 8, float64: 8 };
+    const elements = [];
+    for (const line of header) {
+      const t = line.trim().split(/\s+/);
+      if (t[0] === 'element') elements.push({ name: t[1], count: parseInt(t[2], 10), props: [] });
+      else if (t[0] === 'property' && elements.length) {
+        const e = elements[elements.length - 1];
+        if (t[1] === 'list') e.props.push({ list: true, countType: t[2], type: t[3], name: t[4] });
+        else e.props.push({ list: false, type: t[1], name: t[2] });
+      }
+    }
+    const dv = new DataView(buf);
+    const read = (type, at) => {
+      switch (type) {
+        case 'float': case 'float32': return dv.getFloat32(at, true);
+        case 'double': case 'float64': return dv.getFloat64(at, true);
+        case 'int': case 'int32': return dv.getInt32(at, true);
+        case 'uint': case 'uint32': return dv.getUint32(at, true);
+        case 'short': case 'int16': return dv.getInt16(at, true);
+        case 'ushort': case 'uint16': return dv.getUint16(at, true);
+        case 'char': case 'int8': return dv.getInt8(at);
+        default: return dv.getUint8(at);
+      }
+    };
+    let at = headEnd, verts = null, faces = [];
+    for (const e of elements) {
+      if (e.name === 'vertex') {
+        const stride = e.props.reduce((n, pr) => n + (SIZES[pr.type] || 0), 0);
+        const offs = {}; let o = 0;
+        for (const pr of e.props) { offs[pr.name] = { at: o, type: pr.type }; o += SIZES[pr.type] || 0; }
+        if (!offs.x || !offs.y || !offs.z) throw new Error('PLY: vertex has no x/y/z');
+        verts = new Float32Array(e.count * 3);
+        for (let i = 0; i < e.count; i++) {
+          const b = at + i * stride;
+          verts[i * 3] = read(offs.x.type, b + offs.x.at);
+          verts[i * 3 + 1] = read(offs.y.type, b + offs.y.at);
+          verts[i * 3 + 2] = read(offs.z.type, b + offs.z.at);
+        }
+        at += e.count * stride;
+      } else {
+        for (let i = 0; i < e.count; i++) {
+          for (const pr of e.props) {
+            if (!pr.list) { at += SIZES[pr.type] || 0; continue; }
+            const n = read(pr.countType, at); at += SIZES[pr.countType] || 1;
+            const idx = [];
+            for (let k = 0; k < n; k++) { idx.push(read(pr.type, at)); at += SIZES[pr.type] || 4; }
+            if (e.name === 'face') for (let k = 2; k < n; k++) faces.push(idx[0], idx[k - 1], idx[k]);
+          }
+        }
+      }
+    }
+    if (!verts) throw new Error('PLY: no vertex element');
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+    g.setIndex(faces);
+    g.computeVertexNormals();
+    return g;
+  }
+
   const collada = new THREE.ColladaLoader();
   async function loadMesh(url, material) {
+    if (url.toLowerCase().endsWith('.ply')) {
+      const buf = await (await fetch(url)).arrayBuffer();
+      return new THREE.Mesh(parseBinaryPLY(buf), material);
+    }
     if (url.toLowerCase().endsWith('.stl')) {
       const buf = await (await fetch(url)).arrayBuffer();
       return new THREE.Mesh(parseBinarySTL(buf), material);
@@ -184,6 +266,7 @@
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     down = null;
     if (moved > 4) return;   // an orbit, not a pick
+    if (mountGrabbed()) return;   // a click on the mount gizmo is not a click on the sphere
     const rect = renderer.domElement.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
@@ -243,6 +326,27 @@
     }
     toast(r.ok ? 'released' : `refused: ${r.reason}`);
   };
+  $('pick').onclick = async () => {
+    const live = $('live').checked;
+    const warning = live
+      ? 'LIVE is on: the scripted pick WILL MOVE THE REAL ARM through a reach, a descent and a lift.\n\n'
+        + 'Make sure the arm is clear and you can reach STOP.\n\nRun it?'
+      : 'Dry run: the pick will look, plan and log, but send nothing to the arm.\n\nRun it?';
+    if (!confirm(warning)) return;
+    const r = await post('/pick');
+    toast(r.ok ? (live ? 'pick running — LIVE' : 'pick running — dry run') : `refused: ${r.reason}`);
+  };
+
+  $('gripval').oninput = (e) => { $('griplabel').textContent = e.target.value; };
+  $('gripset').onclick = async () => {
+    const units = Number($('gripval').value);
+    if ($('live').checked && !confirm(
+      `Move the gripper to ${units} units?\n\nThe fingers close under the drive's own effort. `
+      + 'Keep hands out of the jaws.')) return;
+    const r = await post('/gripper', { units });
+    toast(r.ok ? (r.reason === 'dry run' ? 'dry run — not sent' : `gripper -> ${units}`) : `refused: ${r.reason}`);
+  };
+
   $('live').onchange = async (e) => {
     if (e.target.checked && !confirm('Arm the console? Every SEND, PARK and RELEASE will move the real arm.')) {
       e.target.checked = false; return;
@@ -262,7 +366,46 @@
     $('mode').title = s.mode_reason || '';
     $('live').disabled = sim;
     for (const id of ['stop', 'park', 'release']) $(id).disabled = sim;
+    $('picksec').classList.toggle('off', sim);
     if (sim) $('send').disabled = true;
+  }
+
+  // ------------------------------------------------------------ the scripted pick
+  function applyPick(s) {
+    const p = s.pick;
+    if (!p) return;
+    const busy = s.busy === 'pick';
+    $('pick').disabled = !p.available || !!s.busy;
+    $('pick').textContent = busy ? 'PICKING…' : 'PICK';
+    $('pick').className = (p.available && s.live) ? 'danger' : '';
+    // The field is editable, so state must not fight the operator's typing: fill it only while it is
+    // not focused, and leave it alone once they are in it.
+    const baseInput = $('pickbase');
+    if (document.activeElement !== baseInput) {
+      baseInput.value = (p.base_height_m === null || p.base_height_m === undefined)
+        ? '' : Number(p.base_height_m).toFixed(3);
+    }
+    baseInput.disabled = !p.configured || !!s.busy;
+    $('pickcam').textContent = p.camera_source || '–';
+    $('pickmount').textContent = p.mount_source || '–';
+    // An uncalibrated camera or mount is the difference between a demo and a measurement: say so.
+    const caveats = [];
+    if ((p.camera_source || '').includes('NOT this camera')) caveats.push('camera model is the datasheet preset');
+    if ((p.mount_source || '').includes('assumed')) caveats.push('wrist mount is assumed, not measured');
+    $('pickmsg').textContent = p.refusal
+      ? `unavailable: ${p.refusal}`
+      : (caveats.length ? `runs, but: ${caveats.join('; ')}` : '');
+    $('pickmsg').className = 'hint' + (p.refusal ? ' warn' : '');
+    const last = p.last;
+    $('gripnow').textContent = s.gripper_units === null || s.gripper_units === undefined
+      ? '–' : `${s.gripper_units} units`;
+    $('gripset').disabled = s.mode === 'sim' || !!s.busy;
+    $('gripset').className = s.live ? 'danger' : '';
+    $('pickresult').textContent = last
+      ? `${last.ok ? 'finished' : 'ended'}: ${last.reason} · ${last.elapsed_s}s · `
+        + `${last.frames_looked_at} frames, ${last.frames_with_cup} with a cup · `
+        + `${last.live ? `${last.commands_sent} commands sent` : 'dry run, nothing sent'}`
+      : '';
   }
 
   // ------------------------------------------------------------ camera window
@@ -337,6 +480,7 @@
       : (sim ? (s.servo_deg ? 'sim not updating' : 'waiting for sim') : 'no feedback');
     $('conn').className = 'pill ' + (s.connected ? 'ok' : 'bad');
     $('power').textContent = s.power === null ? '–' : (s.power ? 'on' : 'off');
+    applyPick(s);
     $('enable').textContent = s.enable === null ? '–' : (s.enable ? 'holding' : 'released');
     $('error').textContent = s.error === null ? '–' : String(s.error);
     $('age').textContent = s.feedback_age_s === null ? '–' : fmt(s.feedback_age_s, 2) + ' s';
@@ -389,13 +533,429 @@
     };
   }
 
+
+  // The one number nothing on a bench arm can measure. Sent on change, remembered by the server, and
+  // the only thing standing between a fresh console and a working PICK button.
+  $('pickbase').addEventListener('change', async () => {
+    const raw = $('pickbase').value.trim();
+    if (raw === '') return;
+    try {
+      const r = await fetch('/pick/base_height', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ m: Number(raw) }),
+      });
+      const j = await r.json();
+      toast(j.ok ? (j.reason || 'base height set — remembered for next launch') : `refused: ${j.reason}`);
+    } catch (e) { toast('could not reach the server'); }
+  });
+
+  // ------------------------------------------------------------ wrist mount editor
+  //
+  // The camera's optical frame on Link6, as six numbers an operator can move. The RealSense CAD is
+  // parented to the Link6 node, so it follows the arm exactly as the real camera would, and the axes
+  // helper at its origin is the optical frame itself -- red x right, green y down, blue z forward,
+  // the frame `deproject` works in.
+  //
+  // Moving it is a gizmo in the 3D view rather than a bank of sliders: MOVE IN 3D puts arrows and
+  // rings on the camera and a label at the end of each axis reading that axis in cm and degrees. The
+  // panel keeps the same six numbers, in cm and degrees, editable for an exact value.
+  //
+  // Editing is local first and posted after: the picture must not wait on a round trip, but the
+  // server holds the mount the perception actually uses, so every change is sent. Only SAVE writes a
+  // file. The page never invents a starting pose; it asks the server what the mount currently is.
+  const mountEd = {
+    node: null, group: null, live: null, start: null, inputs: {}, ready: false,
+    pivot: null, gizmos: [], labels: [], dragging: false, dragFrom: null, on: false,
+    active: null, turn: null,
+    // name, limit, step -- limits in the units the panel shows, inside the server's own (it refuses
+    // anything over half a metre from the wrist, which is what a metres/centimetres slip looks like).
+    AXES: [['x', 20, 0.1], ['y', 20, 0.1], ['z', 20, 0.1],
+           ['roll', 180, 0.5], ['pitch', 180, 0.5], ['yaw', 180, 0.5]],
+    // live[] is metres and degrees, as the server takes them; the panel is cm and degrees.
+    toPanel: (v, i) => (i < 3 ? v * 100 : v),
+    fromPanel: (v, i) => (i < 3 ? v / 100 : v),
+  };
+
+  function mountApplyToScene() {
+    if (!mountEd.group || !mountEd.live) return;
+    const v = mountEd.live;
+    mountEd.group.position.set(v[0], v[1], v[2]);
+    mountEd.group.rotation.copy(eulerZYX([v[3], v[4], v[5]].map((d) => d * Math.PI / 180)));
+    if (mountEd.pivot) {
+      // The gizmo rides a pivot with no rotation of its own, so its arrows and rings are Link6's
+      // axes -- the frame the six numbers are in. A drag turns the pivot; the turn is taken off it
+      // again when the drag ends (mountGizmoDrop), so the rings never drift away from those axes.
+      mountEd.pivot.position.copy(mountEd.group.position);
+      if (!mountEd.dragging) mountEd.pivot.quaternion.identity();
+    }
+  }
+
+  function mountRefreshInputs() {
+    mountEd.AXES.forEach(([name], i) => {
+      const row = mountEd.inputs[name];
+      if (!row) return;
+      const value = mountEd.toPanel(mountEd.live[i], i);
+      if (document.activeElement !== row.num) row.num.value = value.toFixed(2);
+      row.num.classList.toggle('mg-dirty', mountEd.start !== null
+        && Math.abs(mountEd.live[i] - mountEd.start[i]) > (i < 3 ? 5e-5 : 0.01));
+    });
+    mountLabelsRefresh();
+  }
+
+  let mountPostTimer = null;
+  function mountPost() {
+    if (mountPostTimer) return;                    // at most one in flight per frame budget
+    mountPostTimer = setTimeout(async () => {
+      mountPostTimer = null;
+      const v = mountEd.live.slice();
+      try {
+        const r = await fetch('/mount', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ xyz_m: v.slice(0, 3), rpy_deg: v.slice(3) }),
+        });
+        const j = await r.json();
+        if (!j.ok) { $('mountmsg').textContent = j.reason || 'refused'; return; }
+        $('mountmsg').textContent = 'unsaved — the controller is using this now';
+        if (j.mount) mountShow(j.mount);
+      } catch (e) { $('mountmsg').textContent = 'could not reach the server'; }
+    }, 120);
+  }
+
+  // The server checks the case against Link6's CAD shell on every change, so putting the camera
+  // inside the wrist shows up here rather than later in a render.
+  function mountShow(status) {
+    $('mountsrc').textContent = status.source || '–';
+    // No clearance where the case mesh cannot be read (the dog): the editor still works, the
+    // warning simply is not offered, and saying nothing is better than implying "clear".
+    const hit = status.clearance && status.clearance.intersects_shell;
+    const msg = $('mountmsg');
+    if (hit) {
+      const [ox, oz] = status.clearance.overlap_m;
+      msg.textContent = `the case is inside the Link6 shell by ${(ox * 1000).toFixed(0)} x ${(oz * 1000).toFixed(0)} mm`;
+      msg.style.color = '#ff8a8a';
+    } else {
+      const clear = status.clearance ? ' — clear of the wrist' : '';
+      msg.textContent = status.saved_to ? `saved: ${status.saved_to}` : `unsaved${clear}`;
+      msg.style.color = '';
+    }
+  }
+
+  // Six numbers in two rows -- cm across x y z, then degrees about the same three axes -- with the
+  // headings coloured like the gizmo's arrows, so a number and the handle that moves it match.
+  function mountBuildControls() {
+    const grid = $('mountgrid');
+    grid.textContent = '';
+    const head = document.createElement('tr');
+    head.innerHTML = '<td></td><td class="mg-ax ax-x">x</td><td class="mg-ax ax-y">y</td>'
+                   + '<td class="mg-ax ax-z">z</td><td></td>';
+    grid.appendChild(head);
+    [[0, 'move'], [3, 'turn']].forEach(([base, label]) => {
+      const tr = document.createElement('tr');
+      const name = document.createElement('td');
+      name.className = 'mg-name'; name.textContent = label;
+      tr.appendChild(name);
+      for (let k = 0; k < 3; k++) {
+        const i = base + k;
+        const [axis, limit, step] = mountEd.AXES[i];
+        const td = document.createElement('td');
+        const num = document.createElement('input');
+        num.type = 'number'; num.min = -limit; num.max = limit; num.step = step;
+        num.title = axis;
+        td.appendChild(num); tr.appendChild(td);
+        num.addEventListener('change', () => {
+          const value = Math.max(-limit, Math.min(limit, Number(num.value)));
+          if (!Number.isFinite(value)) { mountRefreshInputs(); return; }
+          mountEd.live[i] = mountEd.fromPanel(value, i);
+          num.value = value.toFixed(2);            // a typed 400 is refused: show the 180 that was taken
+          mountApplyToScene(); mountRefreshInputs(); mountPost();
+        });
+        mountEd.inputs[axis] = { num };
+      }
+      const unit = document.createElement('td');
+      unit.className = 'mg-unit'; unit.textContent = base === 0 ? 'cm' : '°';
+      tr.appendChild(unit);
+      grid.appendChild(tr);
+    });
+  }
+
+  // ---- the gizmo: arrows to slide it, rings to turn it, a label per axis
+  //
+  // Two TransformControls on one pivot, translate and rotate at once, so there is no mode to switch:
+  // the single button is on or off. They are sized apart (arrows inside the rings) to keep the two
+  // sets of handles from overlapping, and whichever takes a drag switches the other off for its
+  // duration, so a click can never grab both.
+  const MOUNT_ARROW_SIZE = 0.55, MOUNT_RING_SIZE = 0.75;   // arrows inside the rings
+  const MOUNT_AXES_3D = [
+    { key: 'x', angle: 'roll', dir: new THREE.Vector3(1, 0, 0), colour: '#ff6b6b' },
+    { key: 'y', angle: 'pitch', dir: new THREE.Vector3(0, 1, 0), colour: '#7ee787' },
+    { key: 'z', angle: 'yaw', dir: new THREE.Vector3(0, 0, 1), colour: '#6bb6ff' },
+  ];
+
+  const MOUNT_LABEL_W = 1024, MOUNT_LABEL_H = 96, MOUNT_LABEL_PX = 13;   // canvas, and text height on screen
+
+  function mountMakeLabel() {
+    const canvas = document.createElement('canvas');
+    canvas.width = MOUNT_LABEL_W; canvas.height = MOUNT_LABEL_H;
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texture, depthTest: false, depthWrite: false, sizeAttenuation: false, transparent: true,
+    }));
+    sprite.center.set(0, 0.5);         // the text starts at the end of the axis, not across it
+    sprite.renderOrder = 10;
+    sprite.visible = false;
+    scene.add(sprite);
+    return { sprite, canvas, texture, text: null, plate: 1 };
+  }
+
+  function mountDrawLabel(label, text, colour) {
+    if (label.text === text) return;
+    label.text = text;
+    const ctx = label.canvas.getContext('2d');
+    ctx.clearRect(0, 0, MOUNT_LABEL_W, MOUNT_LABEL_H);
+    ctx.font = `bold ${Math.round(MOUNT_LABEL_H * 0.5)}px ui-monospace, Menlo, Consolas, monospace`;
+    ctx.textBaseline = 'middle';
+    // A plate only as wide as the text: the rest of the canvas stays clear of the picture behind it.
+    const width = Math.min(MOUNT_LABEL_W, ctx.measureText(text).width + 28);
+    label.plate = width / MOUNT_LABEL_W;           // the share of the canvas the text actually uses
+    ctx.fillStyle = 'rgba(11, 15, 20, 0.82)';
+    ctx.fillRect(0, MOUNT_LABEL_H * 0.2, width, MOUNT_LABEL_H * 0.6);
+    ctx.fillStyle = colour;
+    ctx.fillText(text, 14, MOUNT_LABEL_H * 0.5);
+    label.texture.needsUpdate = true;
+  }
+
+  // Each axis reads "x -6.10 cm  roll 0.0°": how far along it the camera sits, and the angle of the
+  // saved triple that belongs to it. The angle is *named*, because roll/pitch/yaw are a ZYX sequence
+  // and not three independent turns -- a drag on one ring can move more than one of them, and a label
+  // reading a bare "25.2°" next to the ring you just dragged would imply otherwise. While a ring is
+  // being dragged that axis reads the turn the drag itself has applied, which is about that axis only.
+  function mountLabelsRefresh() {
+    if (!mountEd.labels.length || !mountEd.live) return;
+    MOUNT_AXES_3D.forEach((axis, i) => {
+      const cm = (mountEd.live[i] * 100).toFixed(2);
+      const turn = mountEd.turn && mountEd.turn.axis === i
+        ? `turned ${mountEd.turn.deg >= 0 ? '+' : ''}${mountEd.turn.deg.toFixed(1)}°`
+        : `${axis.angle} ${mountEd.live[i + 3].toFixed(1)}°`;
+      mountDrawLabel(mountEd.labels[i], `${axis.key} ${cm} cm  ${turn}`, axis.colour);
+    });
+  }
+
+  // The handles scale with distance so they stay the same size on screen (TransformControls does
+  // `factor * size / 7`); the labels sit at the end of each axis, so they follow the same scale.
+  function mountLabelsPlace() {
+    if (!mountEd.on || !mountEd.pivot || !mountEd.labels.length) return;
+    const origin = mountEd.pivot.getWorldPosition(new THREE.Vector3());
+    const factor = origin.distanceTo(camera.position)
+                 * Math.min(1.9 * Math.tan(Math.PI * camera.fov / 360) / camera.zoom, 7);
+    const reach = factor * MOUNT_RING_SIZE / 7 * 1.15;   // just past the rotate rings
+    const basis = new THREE.Quaternion();
+    mountEd.pivot.getWorldQuaternion(basis);
+    // A sprite with sizeAttenuation off is scaled in viewport fractions, so the canvas's own aspect
+    // has to be put back by hand or the text comes out stretched, differently on every window size.
+    const wpx = renderer.domElement.clientWidth || 1, hpx = renderer.domElement.clientHeight || 1;
+    const sy = (MOUNT_LABEL_PX / (MOUNT_LABEL_H * 0.5)) * MOUNT_LABEL_H / hpx;
+    const sx = sy * hpx * (MOUNT_LABEL_W / MOUNT_LABEL_H) / wpx;
+    // Behind the camera there is nothing sensible to draw: a projection there lands anywhere.
+    const ahead = origin.clone().applyMatrix4(camera.matrixWorldInverse).z < -camera.near;
+    MOUNT_AXES_3D.forEach((axis, i) => {
+      const label = mountEd.labels[i];
+      label.sprite.visible = ahead;
+      label.sprite.scale.set(sx, sy, 1);
+      if (!ahead) return;
+      const dir = axis.dir.clone().applyQuaternion(basis).multiplyScalar(reach);
+      // Kept inside the viewport: the panel covers the right of the window, and a label that runs
+      // under it is a measurement nobody can read. Clamped in NDC, where the sprite's own size is
+      // known -- its scale is a fraction of the viewport, so it spans 2*scale in NDC.
+      const ndc = origin.clone().add(dir).project(camera);
+      ndc.x = Math.max(-1, Math.min(ndc.x, 1 - 2 * sx * label.plate));
+      ndc.y = Math.max(-1 + sy, Math.min(ndc.y, 1 - sy));
+      label.sprite.position.copy(ndc.unproject(camera));
+    });
+  }
+
+  // True while the pointer is on the gizmo: mid-drag, or hovering a handle it is about to take.
+  // The sphere's click handler asks, so nudging the camera never also picks a target behind it.
+  function mountGrabbed() {
+    return mountEd.dragging || (mountEd.on && mountEd.gizmos.some((g) => g.axis));
+  }
+
+  function mountGizmoGrab(control) {
+    mountEd.dragging = true;
+    mountEd.active = control;
+    mountEd.turn = null;
+    controls.enabled = false;
+    mountEd.gizmos.forEach((g) => { if (g !== control) g.enabled = false; });
+    // Rotation is read as a change since the drag began: the pivot starts each drag square with
+    // Link6, and what the ring adds to it is applied to the camera's own orientation.
+    mountEd.dragFrom = {
+      pivot: mountEd.pivot.quaternion.clone(),
+      group: mountEd.group.quaternion.clone(),
+    };
+  }
+
+  function mountGizmoDrop() {
+    mountEd.dragging = false;
+    mountEd.active = null;
+    mountEd.turn = null;
+    controls.enabled = true;
+    mountEd.gizmos.forEach((g) => { g.enabled = mountEd.on; });
+    mountEd.dragFrom = null;
+    mountApplyToScene();                           // squares the pivot with Link6 again
+    mountRefreshInputs();
+  }
+
+  // The pivot moved: read the six numbers back out of it and off we go. Position is already in the
+  // Link6 frame because the pivot is a child of Link6; rotation is the drag's delta applied to the
+  // orientation the camera had when the drag started, read back as the URDF's ZYX roll/pitch/yaw.
+  function mountGizmoChanged() {
+    if (!mountEd.dragFrom || !mountEd.live) return;
+    const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
+    const p = mountEd.pivot.position;
+    mountEd.live[0] = clamp(p.x, 0.20);
+    mountEd.live[1] = clamp(p.y, 0.20);
+    mountEd.live[2] = clamp(p.z, 0.20);
+    const delta = mountEd.pivot.quaternion.clone().multiply(mountEd.dragFrom.pivot.clone().invert());
+    mountEd.turn = mountTurnOf(delta);
+    const q = delta.clone().multiply(mountEd.dragFrom.group);
+    const e = new THREE.Euler().setFromQuaternion(q, 'ZYX');
+    mountEd.live[3] = e.x * 180 / Math.PI;
+    mountEd.live[4] = e.y * 180 / Math.PI;
+    mountEd.live[5] = e.z * 180 / Math.PI;
+    // Keep the drawn camera and the numbers the same thing, then tell the server.
+    mountEd.group.position.set(mountEd.live[0], mountEd.live[1], mountEd.live[2]);
+    mountEd.group.quaternion.copy(q);
+    mountEd.pivot.position.copy(mountEd.group.position);
+    mountRefreshInputs();
+    mountPost();
+  }
+
+  // Remove handles by name from a TransformControls, picture and picker alike, so they can be
+  // neither seen nor grabbed.
+  function mountTrimGizmo(control, mode, names) {
+    const parts = control._gizmo;
+    if (!parts) return;                            // a future three.js: leave the gizmo as it comes
+    for (const set of [parts.gizmo, parts.picker, parts.helper]) {
+      const group = set && set[mode];
+      if (!group) continue;
+      group.children.filter((c) => names.includes(c.name)).forEach((c) => group.remove(c));
+    }
+  }
+
+  // The turn a rotation drag has applied so far, as an angle about the ring's own axis. Signed by
+  // which way the drag went; nothing to report for a translate drag, which leaves the pivot square.
+  function mountTurnOf(delta) {
+    const control = mountEd.active;
+    if (!control || control.getMode() !== 'rotate') return null;
+    const i = ['X', 'Y', 'Z'].indexOf(control.axis);
+    if (i < 0) return null;
+    const q = delta.clone().normalize();
+    const sin = Math.hypot(q.x, q.y, q.z);
+    if (sin < 1e-9) return { axis: i, deg: 0 };
+    const deg = 2 * Math.atan2(sin, q.w) * 180 / Math.PI;
+    const along = [q.x, q.y, q.z][i] / sin;        // +1 or -1: the ring's axis, one way or the other
+    return { axis: i, deg: deg * Math.sign(along) };
+  }
+
+  function mountGizmoBuild() {
+    mountEd.pivot = new THREE.Object3D();
+    mountEd.node.add(mountEd.pivot);
+    // Arrows inside the rings, both smaller than the default, so they read as one small handle on a
+    // camera the size of a matchbox rather than filling the view.
+    [['translate', MOUNT_ARROW_SIZE], ['rotate', MOUNT_RING_SIZE]].forEach(([mode, size]) => {
+      const control = new THREE.TransformControls(camera, renderer.domElement);
+      control.setMode(mode);
+      control.setSpace('local');                   // the pivot is square with Link6: so are the handles
+      control.setSize(size);
+      control.setTranslationSnap(null);
+      control.attach(mountEd.pivot);
+      control.enabled = false;
+      control.visible = false;
+      // Only the named axes. TransformControls also offers free rotation -- a screen-space ring and an
+      // invisible sphere filling the middle -- and a screen-plane translate blob, which would turn a
+      // drag into a rotation about no axis in particular and leave the labels describing a number
+      // nobody chose. Dropping those handles is what keeps "each axis reads that axis" true.
+      mountTrimGizmo(control, mode, mode === 'rotate' ? ['E', 'XYZE'] : ['XYZ']);
+      control.addEventListener('dragging-changed', (e) => (e.value ? mountGizmoGrab(control) : mountGizmoDrop()));
+      control.addEventListener('objectChange', mountGizmoChanged);
+      scene.add(control);
+      mountEd.gizmos.push(control);
+    });
+    mountEd.labels = MOUNT_AXES_3D.map(() => mountMakeLabel());
+  }
+
+  function mountGizmoToggle(on) {
+    mountEd.on = on;
+    mountEd.gizmos.forEach((g) => { g.enabled = on; g.visible = on; });
+    mountEd.labels.forEach((l) => { l.sprite.visible = on; });
+    const button = $('mountmove');
+    button.textContent = on ? 'DONE MOVING' : 'MOVE IN 3D';
+    button.classList.toggle('on', on);
+    $('mountmovehint').textContent = on
+      ? 'Arrows slide it, rings turn it — both along the wrist\'s own axes. Each label reads that axis.'
+      : 'Arrows slide it, rings turn it — both along the wrist\'s own axes.';
+    if (on) { mountApplyToScene(); mountLabelsRefresh(); mountLabelsPlace(); }
+    else if (mountEd.dragging) mountGizmoDrop();
+  }
+
+  async function mountInit(link6) {
+    let status;
+    try { status = await (await fetch('/mount')).json(); } catch (e) { return; }
+    if (!status || !status.available) return;      // no pick configured here: no mount to edit
+    mountEd.node = link6;
+    mountEd.live = status.xyz_m.concat(status.rpy_deg);
+    mountEd.start = mountEd.live.slice();
+
+    mountEd.group = new THREE.Object3D();
+    link6.add(mountEd.group);
+    mountEd.group.add(new THREE.AxesHelper(0.03));
+    try {
+      const material = new THREE.MeshStandardMaterial({ color: 0x8b93a0, metalness: 0.8, roughness: 0.35 });
+      const mesh = await loadMesh(status.mesh, material);
+      // The CAD is in its own frame; the server sends the 4x4 that takes it into the optical frame,
+      // which is the frame this group is. Row-major, as THREE.Matrix4.set wants.
+      const m = status.mesh_to_optical;
+      mesh.applyMatrix4(new THREE.Matrix4().set(...m[0], ...m[1], ...m[2], ...m[3]));
+      mountEd.group.add(mesh);
+    } catch (e) { console.warn('camera mesh failed', e); toast('camera mesh failed to load'); }
+
+    mountBuildControls();
+    mountGizmoBuild();
+    mountApplyToScene(); mountRefreshInputs();
+    mountShow(status);
+    $('mountsec').hidden = false;
+    mountEd.ready = true;
+
+    $('mountmove').addEventListener('click', () => mountGizmoToggle(!mountEd.on));
+    $('mountrevert').addEventListener('click', () => {
+      mountEd.live = mountEd.start.slice();
+      mountApplyToScene(); mountRefreshInputs(); mountPost();
+    });
+    $('mountsave').addEventListener('click', async () => {
+      const name = prompt('Save the mount as (letters, digits, - and _):', 'wrist_mount');
+      if (name === null) return;
+      $('mountmsg').textContent = 'saving…';
+      try {
+        const r = await fetch('/mount/save', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
+        });
+        const j = await r.json();
+        if (!j.ok) { $('mountmsg').textContent = j.reason || 'refused'; return; }
+        mountEd.start = mountEd.live.slice();
+        mountRefreshInputs();
+        if (j.mount) mountShow(j.mount);
+        $('mountmsg').textContent = `saved: ${j.path}`;
+        toast('mount saved');
+      } catch (e) { $('mountmsg').textContent = 'could not reach the server'; }
+    });
+  }
+
+
   // ------------------------------------------------------------ boot
   (async () => {
     model = await (await fetch('/model.json')).json();
     const go2Mat = new THREE.MeshStandardMaterial({ color: 0x3a4250, metalness: 0.2, roughness: 0.7 });
     const d1Mat = new THREE.MeshStandardMaterial({ color: 0xc8ced8, metalness: 0.3, roughness: 0.5 });
     await buildRobot(model.go2, scene, go2Mat, null);
-    await buildRobot(model.d1, scene, d1Mat, model.d1.mount);
+    const d1Links = await buildRobot(model.d1, scene, d1Mat, model.d1.mount);
     sphere = buildSphere(model.sphere);
     // Sitting-ish nominal legs until rt/lowstate arrives, so the picture is not a standing dog.
     for (const leg of ['FR', 'FL', 'RR', 'RL']) {
@@ -403,7 +963,15 @@
       setRevolute(`${leg}_calf_joint`, -2.4);
     }
     connectEvents();
+    // The camera hangs off Link6, so it needs the arm built first. A failure here must not take the
+    // console with it: the mount editor is a convenience, the arm controls are not.
+    mountInit(d1Links.Link6).catch((e) => console.warn('mount editor unavailable', e));
   })().catch((e) => { console.error(e); toast('failed to load model: ' + e); });
 
-  (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+  (function loop() {
+    requestAnimationFrame(loop);
+    controls.update();
+    mountLabelsPlace();   // the axis labels follow the gizmo, which is sized off the camera
+    renderer.render(scene, camera);
+  })();
 })();

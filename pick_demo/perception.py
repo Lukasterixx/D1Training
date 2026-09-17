@@ -258,14 +258,35 @@ class YoloDetector:
 class CupPerception:
     """Detector plus geometry: `observe` finds a cup anywhere, `reobserve` looks for it again near a prior."""
 
-    def __init__(self, detector, model: CameraModel, joints, mount: WristMount, min_confidence: float = 0.4):
+    #: Least of the rim a first look must see before its circle is trusted to set the grasp width.
+    #: A circle fitted to a short arc is ill-conditioned and reads *too wide*, and the width is what
+    #: decides whether the cup fits the jaws at all. Measured on one mug on the bench, three runs
+    #: minutes apart (Week 1 log, 2026-09-17): 63 deg of rim gave 83 mm, 66 deg gave 79 mm, and 126 deg
+    #: gave 70 mm. The first two refused the grasp as too wide for the 77 mm jaws; the third did not.
+    #: 100 deg accepts that look and rejects the slivers, leaving the sequence to try another viewpoint.
+    MIN_RIM_COVERAGE_DEG = 100.0
+
+    def __init__(self, detector, model: CameraModel, joints, mount: WristMount, min_confidence: float = 0.4,
+                 min_rim_coverage_deg: float | None = None):
         self.detector, self.model, self.joints, self.mount = detector, model, joints, mount
         self.min_confidence = min_confidence
+        self.min_rim_coverage_deg = (self.MIN_RIM_COVERAGE_DEG if min_rim_coverage_deg is None
+                                     else min_rim_coverage_deg)
         self.last_detections: list[Detection] = []
+        #: Why the most recent look was not accepted, for the run log.
+        self.last_rejection: str | None = None
 
     def observe(self, frame: Frame) -> CupObservation | None:
+        """A first look: a cup found anywhere, with enough of its rim seen to be worth measuring.
+
+        Unlike `reobserve`, this one sets the radius that decides whether the cup fits the jaws, so a
+        poorly conditioned circle here is not a small error -- it is the difference between attempting
+        the grasp and refusing it. Hence the coverage gate; a rejected look leaves `last_rejection` set
+        and the sequence moves on to another viewpoint rather than committing to a bad width.
+        """
         detections = self.detector.detect(frame.rgb, labels=(COCO_CUP,))
         self.last_detections = detections
+        self.last_rejection = None
         pose = camera_pose(self.joints, frame.q, self.mount)
         for detection in detections:
             if detection.confidence < self.min_confidence:
@@ -273,8 +294,14 @@ class CupPerception:
             points, valid = masked_points(self.model, detection, frame.depth)
             points_b = points @ pose[:3, :3].T + pose[:3, 3]
             estimate = estimate_cup(points_b, frame.up_b, pose[:3, 3])
-            if estimate is not None:
-                return CupObservation(detection, estimate, pose, valid)
+            if estimate is None:
+                continue
+            coverage = estimate.rim_coverage_deg
+            if coverage is not None and coverage < self.min_rim_coverage_deg:
+                self.last_rejection = (f"only {coverage:.0f} deg of rim seen (need "
+                                       f"{self.min_rim_coverage_deg:.0f}); a short arc reads too wide")
+                continue
+            return CupObservation(detection, estimate, pose, valid)
         return None
 
     def reobserve(self, frame: Frame, prior: CupEstimate, gate_m: float = 0.04) -> CupObservation | None:

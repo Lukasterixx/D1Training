@@ -1,0 +1,264 @@
+[
+  {
+    "t": 3.007,
+    "state": "settle",
+    "event": "settled",
+    "base_height_m": 0.0,
+    "tilt_deg": 0.0
+  },
+  {
+    "t": 3.007,
+    "state": "settle",
+    "event": "survey",
+    "q": [
+      0.3182,
+      -1.2355,
+      0.7137,
+      -0.2293,
+      1.339,
+      -0.2824
+    ],
+    "look_at_b": [
+      0.4,
+      0.0,
+      0.0
+    ],
+    "camera_pos_b": [
+      0.05,
+      0.0,
+      0.35
+    ],
+    "distance_m": 0.4949747468305833,
+    "elevation_deg": 45.0,
+    "roll_deg": 0.0,
+    "pitch_deg": 45.0,
+    "camera_height_m": 0.35,
+    "floor_in_frame_m": [
+      0.21,
+      0.9
+    ]
+  },
+  {
+    "t": 3.007,
+    "state": "moving",
+    "event": "move",
+    "to": "survey",
+    "waypoints": 1
+  },
+  {
+    "t": 5.687,
+    "state": "moving",
+    "event": "arrived",
+    "at": "survey",
+    "error_rad": 0.0058
+  },
+  {
+    "t": 5.988,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.922,
+    "valid_depth": 0.934,
+    "top_centre_b": [
+      0.3238,
+      0.06002,
+      0.187
+    ],
+    "radius_m": 0.04359,
+    "top_height_m": 0.187,
+    "bottom_height_m": 0.09483,
+    "height_m": 0.09217,
+    "points": 5852,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00113,
+    "rim_coverage_deg": 137.8
+  },
+  {
+    "t": 6.279,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.919,
+    "valid_depth": 0.929,
+    "top_centre_b": [
+      0.32299,
+      0.05987,
+      0.18628
+    ],
+    "radius_m": 0.04423,
+    "top_height_m": 0.18628,
+    "bottom_height_m": 0.09431,
+    "height_m": 0.09197,
+    "points": 5820,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00131,
+    "rim_coverage_deg": 138.5
+  },
+  {
+    "t": 6.501,
+    "state": "detect",
+    "event": "cup seen",
+    "confidence": 0.917,
+    "valid_depth": 0.929,
+    "top_centre_b": [
+      0.32458,
+      0.06004,
+      0.18703
+    ],
+    "radius_m": 0.04325,
+    "top_height_m": 0.18703,
+    "bottom_height_m": 0.09479,
+    "height_m": 0.09224,
+    "points": 5848,
+    "method": "rim_circle",
+    "residual_rms_m": 0.00117,
+    "rim_coverage_deg": 137.0
+  },
+  {
+    "t": 6.501,
+    "state": "detect",
+    "event": "cup located",
+    "top_centre_b": [
+      0.3238,
+      0.06002,
+      0.187
+    ],
+    "radius_m": 0.04359,
+    "top_height_m": 0.187,
+    "bottom_height_m": 0.09479,
+    "height_m": 0.09222,
+    "points": 17520,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 137.8
+  },
+  {
+    "t": 6.501,
+    "state": "detect",
+    "event": "grasp planned",
+    "mode": "pinch",
+    "heading_b": [
+      0.9833,
+      0.1823,
+      0.0
+    ],
+    "tilt_deg": 20.0,
+    "jaw_pregrasp_b": [
+      0.2491,
+      0.088,
+      0.3503
+    ],
+    "jaw_grasp_b": [
+      0.3096,
+      0.0992,
+      0.1812
+    ],
+    "jaw_lift_b": [
+      0.3096,
+      0.0992,
+      0.3012
+    ],
+    "q_pregrasp": [
+      0.3956,
+      0.0428,
+      -0.1774,
+      -0.0737,
+      1.364,
+      -0.215
+    ],
+    "approach_waypoints": 1,
+    "descend_waypoints": 18,
+    "lift_waypoints": 3,
+    "gripper_descend_m": 0.03,
+    "gripper_grasp_m": -0.0076,
+    "notes": [
+      "pinching the wall a quarter turn round the rim: one finger 25 mm inside, one outside, going down 77 mm apart (36 mm either side of the wall), then shut to 2.0 mm on a 5 mm wall",
+      "descent held to 6.0 mm over 18 waypoints"
+    ]
+  },
+  {
+    "t": 6.501,
+    "state": "moving",
+    "event": "move",
+    "to": "pregrasp",
+    "waypoints": 1
+  },
+  {
+    "t": 11.46,
+    "state": "moving",
+    "event": "arrived",
+    "at": "pregrasp",
+    "error_rad": 0.0098
+  },
+  {
+    "t": 11.761,
+    "state": "refine",
+    "event": "cup seen again",
+    "method": "ray_to_height",
+    "confidence": 0.294,
+    "label": "cup",
+    "shift_mm": [
+      3.5,
+      12.8,
+      0.0
+    ],
+    "notes": [
+      "depth rim height 0.152 disagrees with prior; using ray"
+    ]
+  },
+  {
+    "t": 11.761,
+    "state": "refine",
+    "event": "grasp planned",
+    "mode": "pinch",
+    "heading_b": [
+      0.9761,
+      0.2173,
+      0.0
+    ],
+    "tilt_deg": 20.0,
+    "jaw_pregrasp_b": [
+      0.2516,
+      0.0981,
+      0.3503
+    ],
+    "jaw_grasp_b": [
+      0.3117,
+      0.1115,
+      0.1812
+    ],
+    "jaw_lift_b": [
+      0.3117,
+      0.1115,
+      0.3012
+    ],
+    "q_pregrasp": [
+      0.4253,
+      0.0651,
+      -0.2014,
+      -0.0716,
+      1.3654,
+      -0.2087
+    ],
+    "approach_waypoints": 1,
+    "descend_waypoints": 18,
+    "lift_waypoints": 3,
+    "gripper_descend_m": 0.03,
+    "gripper_grasp_m": -0.0076,
+    "notes": [
+      "pinching the wall a quarter turn round the rim: one finger 25 mm inside, one outside, going down 77 mm apart (36 mm either side of the wall), then shut to 2.0 mm on a 5 mm wall",
+      "descent held to 6.0 mm over 18 waypoints"
+    ]
+  },
+  {
+    "t": 11.761,
+    "state": "moving",
+    "event": "move",
+    "to": "pregrasp",
+    "waypoints": 1
+  },
+  {
+    "t": 14.957,
+    "state": "moving",
+    "event": "failed",
+    "reason": "pregrasp: no arrival by 3.1 s (worst joint error 0.036 rad)"
+  }
+]

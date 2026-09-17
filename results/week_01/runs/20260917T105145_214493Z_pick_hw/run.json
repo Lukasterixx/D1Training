@@ -1,0 +1,137 @@
+{
+  "started_utc": "2026-09-17T10:51:45+00:00",
+  "status": "pick_failed",
+  "mode": "pick_hardware",
+  "learning": null,
+  "task": "scripted_top_down_cup_pick_on_hardware",
+  "executed": true,
+  "camera": {
+    "name": "RealSense D435I #238222076237",
+    "width": 640,
+    "height": 480,
+    "fx": 607.1100463867188,
+    "fy": 607.3660278320312,
+    "cx": 323.001220703125,
+    "cy": 254.2924346923828,
+    "min_depth_m": 0.154,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05004734918475151,
+    "depth_fx": 387.7474670410156,
+    "subpixel_rms": 0.08,
+    "source": "measured: librealsense on RealSense D435I #238222076237 at 640x480, captured 2026-09-17T06:58:58+00:00; min_depth is the 126-disparity limit and max_depth the datasheet's"
+  },
+  "mount": {
+    "pos_link6_m": [
+      -0.061,
+      0.034,
+      0.067
+    ],
+    "pitch_deg": null,
+    "source": "d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)"
+  },
+  "frame": {
+    "base_height_m": 0.0,
+    "up_b": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "source": "stated by the operator; there is no IMU on a bench-mounted arm"
+  },
+  "gripper": {
+    "commanded": true,
+    "units_range": [
+      -25.0,
+      65.0
+    ],
+    "conversion": "finger travel (m) * 2000 -> servo 6 units, as the simulator's client does",
+    "why": "servo 6's scale is unverified on this arm: no finding measures what one unit is in millimetres of jaw gap, so the units are recorded and no length is claimed"
+  },
+  "grasp": {
+    "wall_grasp": "auto",
+    "wall_thickness_m": 0.005,
+    "why": "a cup too wide for the 77.2 mm jaws is grasped by its wall instead: the fingers go inside the mouth shut and open against the wall. The wall thickness is assumed, not seen, and the pinch variant stays refused until the real closed jaw gap is measured (F-059)"
+  },
+  "scope": "A success here is a reach, a descent, a close and a lift against a real cup, with perception through an uncalibrated wrist mount and a jaw commanded on an unmeasured scale. It is not a calibration of either.",
+  "camera_source": "calibration d435i_238222076237_640x480.json",
+  "arm": {
+    "iface": "enx00e04c3c6376",
+    "mode": "hardware"
+  },
+  "result": {
+    "ok": false,
+    "state": "failed",
+    "failure": "pregrasp: no arrival by 5.0 s (worst joint error 0.555 rad)",
+    "reason": "pregrasp: no arrival by 5.0 s (worst joint error 0.555 rad)",
+    "executed": true,
+    "elapsed_s": 11.82,
+    "frames_looked_at": 3,
+    "frames_with_cup": 3,
+    "cup": {
+      "top_centre_b": [
+        0.28903,
+        0.08053,
+        0.18385
+      ],
+      "radius_m": 0.04387,
+      "top_height_m": 0.18385,
+      "bottom_height_m": 0.0903,
+      "height_m": 0.09355,
+      "points": 19488,
+      "method": "median of 3",
+      "residual_rms_m": null,
+      "rim_coverage_deg": 142.9
+    },
+    "commands_sent": 33,
+    "gripper_intent": {
+      "finger_travel_m": 0.03,
+      "commanded": true,
+      "units_asked": 50.2,
+      "units_reported_before": -19.5,
+      "why": "servo 6's scale is unverified; the units asked for are recorded, the millimetres they produce are not known"
+    },
+    "grasp": {
+      "mode": "pinch",
+      "heading_b": [
+        0.9633,
+        0.2684,
+        0.0
+      ],
+      "tilt_deg": 20.0,
+      "jaw_pregrasp_b": [
+        0.212,
+        0.102,
+        0.3471
+      ],
+      "jaw_grasp_b": [
+        0.2713,
+        0.1185,
+        0.178
+      ],
+      "jaw_lift_b": [
+        0.2713,
+        0.1185,
+        0.298
+      ],
+      "q_pregrasp": [
+        0.5214,
+        -0.0666,
+        -0.0532,
+        -0.0867,
+        1.3523,
+        -0.254
+      ],
+      "approach_waypoints": 1,
+      "descend_waypoints": 18,
+      "lift_waypoints": 6,
+      "gripper_descend_m": 0.03,
+      "gripper_grasp_m": -0.0076,
+      "notes": [
+        "pinching the wall a quarter turn round the rim: one finger 25 mm inside, one outside, going down 77 mm apart (36 mm either side of the wall), then shut to 2.0 mm on a 5 mm wall",
+        "descent held to 6.0 mm over 18 waypoints"
+      ]
+    },
+    "feedback": "arm",
+    "interpretation": "Physical arm. No ground truth, so nothing here says how accurate the estimate was. The gripper was commanded, on a scale nobody has measured: the units asked for are recorded, what the jaw did in millimetres is not known. The cup was too wide for the jaws, so this was a pinch grasp of its wall: the fingers went inside the cup and the gripper's travel decided whether they ever touched it, on that same unmeasured scale."
+  }
+}

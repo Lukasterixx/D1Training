@@ -1,0 +1,84 @@
+{
+  "started_utc": "2026-09-17T07:52:04+00:00",
+  "status": "pick_failed",
+  "mode": "pick_hardware",
+  "learning": null,
+  "task": "scripted_top_down_cup_pick_on_hardware",
+  "executed": true,
+  "camera": {
+    "name": "RealSense D435I #238222076237",
+    "width": 640,
+    "height": 480,
+    "fx": 607.1100463867188,
+    "fy": 607.3660278320312,
+    "cx": 323.001220703125,
+    "cy": 254.2924346923828,
+    "min_depth_m": 0.154,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05004734918475151,
+    "depth_fx": 387.7474670410156,
+    "subpixel_rms": 0.08,
+    "source": "measured: librealsense on RealSense D435I #238222076237 at 640x480, captured 2026-09-17T06:58:58+00:00; min_depth is the 126-disparity limit and max_depth the datasheet's"
+  },
+  "mount": {
+    "pos_link6_m": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "pitch_deg": 20.0,
+    "source": "assumed; bracket not measured"
+  },
+  "frame": {
+    "base_height_m": 0.02,
+    "up_b": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "source": "stated by the operator; there is no IMU on a bench-mounted arm"
+  },
+  "gripper": {
+    "commanded": false,
+    "why": "servo 6's stroke mapping is unverified on this arm (no finding measures it)"
+  },
+  "scope": "A success here is a reach, a descent and a lift against a real cup, with perception through an uncalibrated wrist mount. It is not a grasp and not a calibration.",
+  "camera_source": "calibration d435i_238222076237_640x480.json",
+  "arm": {
+    "iface": "enx00e04c3c6376",
+    "mode": "hardware"
+  },
+  "result": {
+    "ok": false,
+    "state": "failed",
+    "failure": "grasp planning: cup is 7.9 cm wide; the open jaws are 7.7 cm",
+    "reason": "grasp planning: cup is 7.9 cm wide; the open jaws are 7.7 cm",
+    "executed": true,
+    "elapsed_s": 5.33,
+    "frames_looked_at": 3,
+    "frames_with_cup": 3,
+    "cup": {
+      "top_centre_b": [
+        0.42952,
+        -0.02972,
+        0.12743
+      ],
+      "radius_m": 0.03972,
+      "top_height_m": 0.12743,
+      "bottom_height_m": 0.03243,
+      "height_m": 0.095,
+      "points": 20050,
+      "method": "median of 3",
+      "residual_rms_m": null,
+      "rim_coverage_deg": 66.0
+    },
+    "commands_sent": 22,
+    "gripper_intent": {
+      "finger_travel_m": 0.0,
+      "commanded": false,
+      "why": "servo 6's stroke mapping is unverified on this arm; nothing was sent"
+    },
+    "feedback": "arm",
+    "interpretation": "Physical arm. No ground truth, so nothing here says how accurate the estimate was. The gripper was not commanded, so this is a reach, a descent and a lift -- not a grasp."
+  }
+}

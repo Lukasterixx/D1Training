@@ -1,0 +1,42 @@
+{
+  "started_utc": "2026-09-17T09:43:20Z",
+  "direction": "closed",
+  "step": 5.0,
+  "limit": 110.0,
+  "advertised_range": [
+    0.0,
+    65.0
+  ],
+  "stopped_because": "no movement over two steps; the window ends near 50.2 units",
+  "readings": [
+    {
+      "commanded": null,
+      "units": 50.2,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.107
+    },
+    {
+      "commanded": 55.2,
+      "moved": 0.0,
+      "units": 50.2,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.058
+    },
+    {
+      "commanded": 60.2,
+      "moved": 0.0,
+      "units": 50.2,
+      "error": 0,
+      "enable": true,
+      "feedback_age_s": 0.01
+    }
+  ],
+  "final": {
+    "units": 50.2,
+    "error": 0,
+    "enable": true,
+    "feedback_age_s": 0.067
+  }
+}

@@ -2312,6 +2312,728 @@ default path is empty, they are fetched from Ultralytics' v8.3.0 release and mus
 `1caa81c0…ff257c3`, the sha256 recorded in every pick run's `run.json`. The release file matches byte for byte. The
 console's camera window does the same, and on the dog `run_ui.sh` copies them. 3 new tests; 214 pass.
 
+### 2026-09-17 · Bringing the pick demo up on a second PC (cup-pick session, continued)
+
+Lukas moved to a new machine and `./run_pick_demo.sh` would not start. Three things the repository does not
+carry were missing, and only the first is a real environment step: `ultralytics` was absent from
+`env_isaaclab`; the YOLO weights were absent; the cup model was absent. The launcher stopped at the cup with
+`--cup_usdz must point to an existing file`, so only one of the three was visible at a time.
+
+What the machine had: the `env_isaaclab` env itself (Python 3.11.15, isaacsim 5.1, isaaclab 0.54.3, torch
+2.7.0+cu128, numpy 1.26.0, cv2 4.11.0), and an RTX 4070 Laptop with 8 GB, idle apart from the desktop. Note the
+GPU is **not** the machine every run above was measured on; nothing here re-measures timing, and no run above is
+superseded.
+
+- `pip install --no-deps ultralytics==8.3.228 ultralytics-thop==2.0.18`, the versions and the flag the earlier
+  entry fixed. numpy stayed at 1.26.0 and the headless OpenCV build was untouched, checked after the install.
+- The weights and the cup came from `main` (867d4a9, pushed by Lukas during the session): the committed cup
+  hashes to `da2194b0…dc677`, the source sha256 in every recorded pick run, and the fetched weights to
+  `1caa81c0…ff257c3`, the sha256 in every `run.json`. Same assets, byte for byte, as the runs above.
+- Stack check before the pick, `./run_sim.sh --headless --selftest 5 --no_ros2`: 4.71 m travelled on a 1.0 m/s
+  command over 5 s (0.94 m/s, 94%), min base height 0.324 m, max tilt 7.3°, stayed up; arm EE error 3.9 cm at
+  [0.3, 0, 0.4]; gripper 60 mm commanded → 58.8 mm. No run directory (no `--selftest_out`), so this is not
+  recorded as evidence — it is a boot check, not a measurement.
+- The pick itself, `./run_pick_demo.sh --headless --episodes 1`:
+  [succeeded](#/week/1/run/20260917T064251_915378Z_pick_seed42) — cup at (0.420, 0.030) m, lift 11.9 cm, cup axis
+  4 mm from the jaw centre, 13.3 s simulated. The same numbers as the seed-42 runs above, on a different GPU.
+
+**Scope.** This shows the demo installs and runs from a clean checkout plus one pip command; it is one seeded
+episode, and it says nothing new about the pick itself or about hardware. The README's install section is
+already correct as written — nothing in the repository needed changing.
+
+### 2026-09-17 · The reach console comes up with the pick demo (cup-pick session, continued)
+
+Lukas asked for the console to launch beside the simulator instead of needing a second terminal.
+`run_pick_demo.sh` now starts `d1_ui/server.py --mode sim` itself, pointed at this run's feed port, and stops
+it when the script exits (`trap`, on a clean finish, a Ctrl-C, or a failed start). Only the launcher changed;
+`run_pick_demo.py`, the console and `run_ui.sh` are untouched, and `./run_ui.sh` still runs a console by hand.
+
+- **Started first, not last.** `--mode sim` waits for a feed rather than giving up when none answers, so the
+  console is up and waiting through Isaac's ~2 minute load and follows the simulator the moment it publishes.
+- **The browser tab waits for the feed**, not for the console: a tab opened at start-up would sit on "waiting
+  for a simulator" for two minutes. `xdg-open` fires when `/health` on the feed port answers `"sim": true`, and
+  only for a viewer run — `--headless` never opens one. It gives up after 10 minutes and leaves the console up.
+- **Not wanted, or already there.** `--no_console` (shell-only, not forwarded) or `D1_UI_CONSOLE=0` leaves it
+  out; `--help` and `--ui_feed_port 0` skip it; a console already answering on 8090 is left alone rather than
+  fought over. `D1_UI_ARGS` reaches `server.py` for its own options, e.g. `--yolo-device cpu`.
+- **Cost.** With both up on this 8 GB laptop card: Isaac 4807 MiB, console 348 MiB (YOLO on cuda), 6158 of
+  8188 MiB total in a headless run. A viewer run renders more, so `D1_UI_ARGS='--yolo-device cpu'` or
+  `--no_console` is the way out if it gets tight. Not yet measured in the viewer.
+
+Verified on a headless run: console up while Isaac loaded, then `mode sim`, `connected true`, live `servo_deg`,
+`legs_live true`, and `/camera.mjpg` serving the rendered wrist view; gone and port closed after the run, and
+also after a run that exited on an argument error.
+
+#### The camera body in the working tree hides the cup
+
+The first run with the console attached failed —
+[no cup found from any viewpoint](#/week/1/run/20260917T070553_982317Z_pick_seed42), 0 detections over 8 frames
+at each of 5 viewpoints. That is not the console: it is the **uncommitted** RealSense body in the working tree
+(`pick_demo/camera_body.py`, `scene.py`), whose docstring says its front face sits inside the render's near
+plane and so cannot occlude the wrist camera. On this machine it does. Same seed, same cup at (0.420, 0.030) m,
+same commit, `--no-camera_body` as the only difference:
+[cup seen at 0.947 confidence on the first viewpoint, pick succeeds](#/week/1/run/20260917T070804_174822Z_pick_seed42)
+— lift 11.9 cm, axis gap 4 mm, 13.3 s, the same numbers as every other seed-42 run.
+
+No finding is written: the code is mid-edit and not committed, so there is nothing stable to cite. Raised with
+Lukas. **Scope:** two headless runs, one seed, one cup position, and a near-plane interaction that may be
+specific to this GPU or renderer version.
+
+### 2026-09-17 — The bench RealSense measured, and the camera body given a front to see out of
+
+Lukas has the D1 and a RealSense on the PC, off the Go2, with a bracket built but not yet measured, and asked
+for the camera drawn in the simulator so the assumed mount can be checked against it. Two things came out of that.
+
+**The camera answers, and it is not the preset.** `python -m pick_demo.realsense calibrate` on D435I 238222076237
+(firmware 5.13.0.55, USB 2.1) gives colour fx 607.11, fy 607.37, principal point (323.00, 254.29) at 640×480 —
+55.6° × 43.1°. `CAMERAS["d435"]`, which every recorded pick has used, says fx 616.18 and (320, 240) from the
+datasheet's 69.4° at 1920×1080. The 640×480 colour mode is not a resized crop of the 16:9 stream, so the preset is
+14° too wide, and cy is 14.3 px off centre — about 9 mm of height error on a cup at 40 cm. Written up as F-053;
+`--calibration <file>` now selects the measured model, and `run.json` records which one produced a run.
+Depth measured too: fx 387.75, baseline 50.05 mm, scale 1.000 mm/unit, depth origin 14.857 mm from colour.
+
+**The body blinded the camera, then stopped.** Drawn as one solid 90 × 25 × 25 mm cuboid, the housing's front face
+covered the lens: [48 frames of flat housing grey, no cup from any
+viewpoint](#/week/1/run/20260917T070343_357515Z_pick_seed42). The optical centre sits 4.2 mm *behind* the front
+glass, so a closed front face is exactly a lens cap; the near plane (10 mm) did not clip it, and expecting it to
+was the mistake. The entry above reached the same conclusion independently by running `--no-camera_body`. Rebuilt
+as an open-fronted shell of five 2 mm panels with nothing on the optical axis, the same command
+[succeeds](#/week/1/run/20260917T070917_995149Z_pick_seed42): lift 11.9 cm, axis gap 4 mm, on the measured
+calibration. Now written up as F-054, and `camera_body.view_obstruction` is a standing guard — it reports any part
+reaching into the colour frustum, and the tests hold it at zero for every preset and for the measured model.
+
+**What the wrist looks like.** [Four close-ups](#/week/1/run/20260917T071238_076387Z) with the arm at the pick's
+observation pose, in `figures/camera_body_*.png`:
+
+    ./run_camera_body_view.sh --calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
+
+The geometry that the drawing makes obvious, and which numbers alone did not: at the assumed mount the optical x
+axis maps to Link6 **−y**, so the 90 mm housing lies *across* the jaw axis, and its nearest face clears the Link6
+shell by only 3.8 mm. The first render attempt had [the arm at
+zero](#/week/1/run/20260917T071150_783318Z) — `set_joint_position_target` is overwritten by the arm action term
+every step, so the pose has to be asked for through the action manager, as the pick does.
+
+**What this does not show.** The mount is still assumed: `WristMount(-0.055, 0, 0.035)` at 20° pitch stands in for
+a bracket nobody has measured. The renders are for *comparing* against the real bracket, not evidence that they
+agree. Nothing here has run against the physical arm — `cyclonedds` is not installed on this PC, so the console has
+never opened the arm from here, though the arm answers at 192.168.123.100 in 0.7–1.3 ms over `enx00e04c3c6376`.
+
+
+### 2026-09-17 — Intel's CAD replaces the hand-built camera body, and the yellow square in the wrist view is explained
+
+Lukas saw an olive square in the wrist camera stream and asked whether the hand-built RealSense body could be
+fixed, or better, replaced with real CAD. Both, and the diagnosis turned up two things the record did not have.
+
+**The square is the body, and the guard could not have caught it.** It appears only in runs launched with
+`--camera_body`: [07:09](#/week/1/run/20260917T070917_995149Z_pick_seed42) and
+[07:14](#/week/1/run/20260917T071420_080024Z_pick_seed42) have it in every saved frame, 146 × 146 px and
+pixel-identical as the arm moves; the otherwise identical [07:08](#/week/1/run/20260917T070804_174822Z_pick_seed42)
+with `--no_camera_body` has none. Solving its geometry from the two runs that used different intrinsics — the two
+shapes only agree under one camera model — gives a 2.7 mm cube at ~12.7 mm, which is a `lens_colour_*` marker seen
+from about 6 mm further back than `camera_body` places it. Converting the same run's `camera_model_vs_sim` error
+into the optical frame puts the rendered eye at (+0.9, +8.85, −6.23) mm: 8.9 mm below and 6.2 mm behind the optical
+origin, i.e. **inside the case**. `view_obstruction` was only ever asked about the model's eye, where it correctly
+reported `[]`. F-057. It now takes the eye offset as an argument and both runners report it at both eyes.
+
+**A second thing fell out of the same numbers.** The simulator's own reported intrinsics, asked for the measured
+calibration, are fx = fy = 607.24 at (320.00, 240.00) — not fy 607.37, not (323.00, 254.29).
+`from_intrinsic_matrix` computes and passes the aperture offsets; the rendered camera discards them. So every
+simulated pick since the calibration landed has deprojected with cy 14.3 px away from where the renderer put it,
+about 9 mm at 40 cm, in the same direction and of the same order as the −6.5 mm height error that run reports at
+every look. F-053 said the *preset* was 14.3 px out in cy; F-056 says passing the measurement does not fix it.
+It is also a candidate for part of F-052's unexplained render-vs-model gap.
+
+**The CAD, and the sign it exposed.** Intel ships the D435 case mesh in the ROS package
+`realsense2_description` (4.58.3, Apache-2.0), which is the right camera: `_d435i.urdf.xacro` builds the D435i by
+including `_d435.urdf.xacro` unchanged and adding IMU frames. Pulled without installing it
+(`apt-get download` + `dpkg-deb -x`), converted to PLY, committed as
+`pick_demo/assets/realsense/d435_housing.ply` with provenance in `third_party/realsense2_description/NOTICE.md`.
+The SolidWorks parts in `~/Downloads` are a dead end — `.SLDPRT` is a proprietary binary that nothing
+open-source reads — and NVIDIA's built-in RealSense asset is the only one it ships, `rsd455.usd`, which measures
+123.8 × 29.0 × 26.0 mm with a 95 mm baseline: a D455, not this camera.
+
+The registration is the package's own `_d435.urdf.xacro`, and it checks itself. Transformed into the colour optical
+frame, the mesh's three concentric colour-lens parts land at x = 0.00 mm, its left imager barrel at +15.25 mm and
+its right at +65.25 mm, against measured values of 0, +14.857 and +64.90 mm on D435I 238222076237. Case
+89.91 × 25.00 × 25.06 mm against the datasheet's nominal 90 × 25 × 25.
+
+That registration says the hand-built body was **mirrored**. `camera_body` had the depth origin at *minus*
+14.857 mm; librealsense's `depth.get_extrinsics_to(colour)` returns `p_colour = R p_depth + t`, so `t_x` is the
+depth origin's position *in the colour frame* and the left imager is to the **right**. The case runs from
+−12.5 mm to +77.4 mm about the colour lens where the old geometry ran −34.8 mm to +55.2 mm. F-055. Any bracket
+sizing done against [the four close-ups](#/week/1/run/20260917T071238_076387Z) should be redone.
+
+Rendering it corrected a claim made before the picture existed. The 22 mm moved along Link6 **y** — the case runs
+from y −77.4 mm to +12.5 mm where it ran −55.2 to +34.8 — and `clearance_report` checks x and z only, because
+those are the extents `grasp.py` carries. Its x numbers went from [−73.9, −41.8] mm to [−73.8, −41.8]: a 22 mm
+error moved the case along the one axis the clearance check does not look at. The report now returns
+`housing_y_link6_m` and `y_checked: false`, and nothing yet checks it.
+
+**What changed in the code.** `pick_demo/camera_asset.py` builds the visual USD from the mesh, baked into the
+optical frame, with the colour lens element removed — a real sensor looks out *through* its lens, a pinhole at the
+sensor plane would be looking *at* it — which costs under 2000 of 231186 triangles and leaves the barrel and the
+aperture intact. `pick_demo/scene.py` spawns one `rs_body` prim instead of eleven cuboids, so the markers that
+produced the square are gone by construction. `camera_body` keeps the geometry and the guards, now measured off the
+mesh. 247 tests pass, including new ones that hold the registration numbers above and that fail if the guard is
+asked at the rendered eye and answers "clear".
+
+**Rendered.** [Four close-ups](#/week/1/run/20260917T075946_132477Z) at the pick's observation pose, in
+`figures/camera_body_cad_*.png`: a recognisable D435 with its ribbed back and rounded ends, no marker geometry of
+any kind, and the case visibly on the other side of the wrist from the old grey box. The run reports the case
+89.91 × 25.00 × 25.05 mm, clear of the Link6 shell, the aperture **clear at the model's eye** and **blocked at
+F-052's rendered eye** — 1573 of 229148 triangles, 3.4 to 10.5 mm ahead — which is the guard doing what F-057 says
+it should. An [earlier render of the same geometry](#/week/1/run/20260917T075744_469116Z) reported the obstruction
+against the uncarved mesh and so showed the lens element as blocking at both eyes; that was a reporting bug in the
+runner, fixed, and the render itself is identical.
+
+**What this does not show.** Nothing has yet looked *through* the wrist camera with the CAD body in the scene —
+the four views are external, and F-057 predicts the case will be in shot from the wrist until F-052 is resolved.
+The mount is still assumed: `WristMount(-0.055, 0, 0.035)` at 20° pitch stands in for a bracket nobody has
+measured, and these renders are for comparing against it, not evidence they agree. The mesh is nominal CAD of the
+D435 case, not a measurement of the one on the bench.
+
+
+### 2026-09-17 — A wrist mount editor in the console, and the mount becomes a file both ends can read
+
+The mount has been four numbers and a placeholder since the pick was written: `WristMount(-0.055, 0,
+0.035)` at 20° pitch, one position and one pitch, standing in for a bracket nobody has measured. With the
+bracket now built and the camera's CAD in the scene, Lukas asked to be able to move the model against the
+wrist and save the result, so the simulator and the controller stop each carrying their own default.
+
+**Six numbers, not four.** A bracket can rotate the camera about any axis, and a hand-eye result is a
+full rigid transform, so `pick_demo/camera.py` gains `mount_from_xyz_rpy` / `mount_as_xyz_rpy` (metres in
+Link6, degrees in the URDF's ZYX convention) and `save_mount` / `load_mount`. The placeholder reads back
+as xyz (−0.055, 0, 0.035), rpy (−20°, 0°, −90°) — legible numbers to edit from. The file stores both
+parameterisations and the 4×4; `load_mount` refuses one where they disagree, because that means the file
+was hand-edited in one place only. A test checks `rpy_matrix_zyx` against `workspace.rpy_matrix`, so a
+number typed in the browser, stored in the file and used by the solver all mean one thing.
+
+**The editor.** A *Wrist mount* panel in the console: Intel's D435 case parented to the Link6 node, an
+axes helper at the colour optical origin, and six sliders. Every change POSTs to `/mount` and takes
+effect immediately — `CupPerception` holds the same object, so the next frame is deprojected through the
+new mount — while SAVE writes `pick_demo/assets/mounts/<name>.json`. It refuses a mount while a pick is
+running, refuses non-finite numbers, and refuses anything over half a metre from the wrist, which is
+what a metres/millimetres mix-up looks like. The editor works with no arm and no camera and says so,
+because a workstation is where the simulator runs.
+
+**One saved file, loaded everywhere, with nothing to pass.** `pick_demo/assets/mounts/wrist_mount.json`
+is the default for the console, the pick and the body renders alike: `camera.resolve_mount` is the one
+place that decides — an explicit `--mount`/`--pick-mount` first, then that file, then the placeholder —
+and `--mount none` forces the placeholder so a run can still reproduce the assumed geometry
+deliberately. The mount Lukas saved, xyz (−0.061, 0.034, 0.067) m and rpy (0, 0, −90)°, now loads on
+every launch; the console's panel opens on it and names the file it came from.
+
+This changes what a simulated run means, so it is recorded rather than silent: `resolve_mount` returns
+the file's own provenance in its source string, every launch prints it, and `run.json` carries both
+`mount_file` and a `mount_source` that reads "wrist_mount.json (the saved default): ... aligned by eye,
+not measured". A run that used the bracket geometry and a run that used the placeholder are told apart
+by their own records.
+
+Both ends also take an explicit file: `./run_ui.sh bench --pick-mount <file>`,
+`run_pick_demo.py --mount <file>`, `run_camera_body_view.py --mount <file>`. The runs' `run.json` now records the whole mount rather than a
+position and a pitch, so a `MeasuredMount` no longer has to pretend to have a `pitch_deg`.
+
+The browser reads the committed PLY directly through a ~60-line binary-PLY reader added beside the
+existing binary-STL one, rather than vendoring three.js's `PLYLoader` or committing a second copy of the
+mesh in another format. The CAD→optical registration is *not* repeated in JavaScript: the server sends
+`camera_body.MESH_TO_OPTICAL` with the mount status, so that transform stays written down in one place.
+
+The panel also runs `camera_body.clearance_report` on every change, so a mount that puts the case inside
+the Link6 shell says so in millimetres while it is being dragged rather than in a render afterwards —
+which the first arbitrary test edit promptly triggered.
+
+286 tests pass, 43 of them new, covering the file round trip, the refusals, the clearance warning, and
+that setting the mount moves the frame `CupPerception` actually uses. The endpoints were also exercised over real HTTP on a
+spare port — the 7.3 MB mesh serves, the mount round-trips, `[5.0, 0, 0]` is refused with a units
+message, and a saved file reloads to the same transform.
+
+**Starting the console failed confusingly, and that is fixed too.** A bench console left running from an
+earlier terminal kept port 8090, and the next `./run_ui.sh` bound *after* building the camera pipeline —
+which imports torch and loads the detector — so the terminal sat silent for half a minute and then died
+on an `Address already in use` traceback, or, launched from the desktop, just closed. The server now
+binds first, prints a line before anything slow, and on a clash names the process holding the port
+(`held by python (pid 177347)`) instead of raising. `./run_ui.sh stop-local` stops a console on this PC;
+`stop` still means the dog's. The script also now opens the page in a browser once the server is
+listening (`D1_UI_OPEN=0` to suppress) — it never did, which is what "it won't open" turned out to
+mean; `sim` and `bench` still hold the terminal afterwards as the server's log.
+A bare `./run_ui.sh` — which is what a double-click runs — used to go straight for the dog, wait out an
+8 s ssh timeout and die, taking the reason with the window. It now works out where it is: on the dog
+(a Jetson marker, or this machine owning the address the script deploys to) it serves locally with the
+legs; otherwise a simulator here wins, then the arm on this PC's own NIC — which is the signal that the
+arm is *not* on the dog, and is checked before the ssh probe so a click starts immediately — and only
+then the dog. Every path still starts in DRY RUN, and `sim`/`bench`/`robot` force one when the guess is
+wrong. `die` also holds the window open when stdin is not a terminal, so a failure launched from a file
+manager can be read. `deploy` also now carries `camera_body.py`, `grasp.py` and the case mesh,
+without which the editor would have quietly not existed on the robot — and where `trimesh` is missing
+the panel loses the clearance warning and nothing else.
+
+**The PICK button was off on a plain launch, and that was configuration rather than physics.** It
+needed `--pick-base-height` and `--pick-depth` at start-up, so a console started without thinking of
+them showed the pick as unavailable with no way back but a relaunch — and without `--pick-calibration`
+it also quietly used the datasheet preset F-053 measured as 14° too wide. Three changes, all of the
+same shape as the mount's: depth is on by default in hardware mode (`--no-pick-depth` turns it off);
+one calibration stored in `pick_demo/assets/calibration/` is found and used, and only with none stored
+does it fall back to the preset; and the base height is a field in the page, applied at once and
+remembered in `pick_demo/assets/bench.json`. What cannot be worked around stays a refusal: sim mode has
+no arm to command, and a camera without depth cannot place a cup.
+
+The pick uses the mount the editor holds — one object, so the 3D scene, the perception and the sequence
+cannot drift apart; a test asserts that identity rather than that the numbers happen to match. A bare
+`./run_ui.sh` on this PC now reports `camera model -- calibration d435i_238222076237_640x480.json`,
+`wrist mount -- wrist_mount.json (the saved default)`, `base height 0.02 m (remembered from bench.json)`,
+and the button is live, with no arguments passed on either of two consecutive launches.
+
+**What this does not show.** Dragging a model until it looks right is an alignment, not a calibration.
+The file records `"measured": false` and states in `method` exactly how it was arrived at, and
+`load_mount` folds that into the mount's `source` so a run log citing it reads "aligned by eye, not
+measured". Nothing here sets `measured` true and nothing should until there is a hand-eye procedure
+against a target. The saved numbers are the bracket as *intended* — enough to stop the simulator and the
+controller disagreeing, not evidence about where the camera really is. Nor has the panel been driven in
+a browser: the server side is tested, the page is not, for the reason `tests/test_d1_ui.py` already
+gives — a browser cannot run in the suite.
+
+### 2026-09-17 — The scripted pick ported to the physical arm, launchable from the console
+
+The pick has only ever existed inside Isaac. `pick_demo/hardware.py` is the other end of the seam
+`PickSequence` was already written against: the same state machine, grasp planner and perception,
+driven by `D1Client` and the real RealSense instead of PhysX and a rendered camera. The console runs it
+from a PICK button (`d1_ui/server.py`, `/pick`).
+
+**The PC can drive the arm.** `cyclonedds` 11.0.1 and `pyrealsense2` 2.58.4 installed into
+`env_isaaclab` with `--no-deps` (numpy stays at 1.26.0). The arm answers at 192.168.123.100 over
+`enx00e04c3c6376` in 0.7–1.3 ms, and a read-only `D1Client` sees feedback 29 ms old at the folded rest
+pose — J1 −90.9°, J2 92.9°, matching F-023 — with `power=0 enable=0`. `./run_ui.sh bench` runs the
+hardware console here rather than deploying to the dog; it finds the arm's NIC itself and drops the
+legs, since there is no `rt/lowstate` without the Go2.
+
+**First run against the real hardware** ([dry run](#/week/1/run/20260917T073416_082125Z_pick_hw)):
+48 real depth frames through real YOLO across all six viewpoints, **0 commands sent**, the arm never
+energised and its angles unchanged before and after. It ended at "no cup found from any viewpoint" —
+correct, because there was no cup in front of the camera. What this shows is that the pipeline closes
+on hardware: DDS, camera, depth, detector, planner, state machine, run record. It shows nothing about
+reaching or grasping.
+
+**Three deliberate limits**, each visible in the page and in every run record:
+
+- **The gripper is not commanded.** Servo 6's stroke mapping has never been measured on this arm and no
+  finding covers it, so the sequence's closing width is logged as an intention and nothing is sent. A
+  pick here is a reach, a descent and a lift.
+- **`base_height_m` and `up_b` are stated, not sensed.** A bench-mounted arm has no IMU. `--pick-base-height`
+  is required and the button stays off without it, because a wrong floor height does not fail loudly —
+  it tilts the plane the grasp is planned against. 0.02 m was used above and is a placeholder, not a
+  measurement.
+- **The mount is still assumed.** Until the bracket is measured the cup's position carries the mount's
+  error, so no accuracy figure from a hardware pick means anything yet.
+
+**A dry run follows a virtual arm.** The sequence waits for arrival before advancing, so a dry run
+against a stationary arm would stall on its first waypoint and prove nothing. With LIVE off the pick
+follows a pose that slews toward each target at the measured 70 °/s (F-033); the camera, perception and
+planner are all real. Every result carries `feedback: "virtual (dry run)"` so it cannot be read as
+evidence the arm tracked anything.
+
+**A correction to my own guard.** The first version refused any command more than 25° from the current
+pose. That contradicts F-035: the sequence deliberately sends one *distant* waypoint and lets the
+firmware plan its own trapezoid, so a 60° first move is by design. The cap is now a sanity bound at
+120° — it catches a nonsense target, not normal motion. Smoothness is the arm's planner's job and
+clearance is the grasp planner's.
+
+Stopping commands `hold_here()`, never `release()` (F-028), and the tests assert it: a fake arm counts
+zero releases across every abort path.
+
+
+### 2026-09-17 — Why the bench pick sees the cup and stops: the width gate, not the reach
+
+Lukas: "the arm sees the cup, but then it doesn't try and get in position to grab it." Three LIVE runs
+([1](#/week/1/run/20260917T075204_004370Z_pick_hw), [2](#/week/1/run/20260917T075242_436661Z_pick_hw),
+[3](#/week/1/run/20260917T075300_152735Z_pick_hw)) say it is not a reach failure. YOLO had the cup at
+0.93–0.96, the rim circle fitted to 0.6–0.8 mm RMS on 6,600–9,400 points, and the arm sent 7–34
+commands reaching viewpoints. All three stopped at `plan_top_down_grasp`'s width check before any
+pregrasp move (F-058).
+
+**The believed width followed the rim coverage:** 63° → 83 mm, 66° → 79 mm, 126° → 70 mm, on the same
+mug within minutes. Short arcs read too wide. The simulated picks that succeed see 192°. The 126° look
+also put the cup at 157 mm tall, which no mug is, so a sliver look is unreliable in more than one way.
+**Nobody has put a ruler on the mug**, so which reading is right is still open.
+
+**A wall grasp is not available.** Lukas asked, if the cup is too wide, to grab one side of it with one
+finger inside. Measured from the finger meshes rather than the comment that claimed it: the pads' inner
+faces meet at ±8.63 mm, so the **closed jaw gap is 17.26 mm** (F-059). A mug wall is 5–8 mm, so one
+finger inside and one outside would straddle it with ~5 mm of slack a side and never touch. Nothing
+thinner than 17.3 mm can be pinched by this gripper.
+
+**But the cup was already within the jaws.** 70 mm sits between the 17.26 mm closed gap and the 77.2 mm
+open one. The refusal came from a fixed `OPEN_GAP_M - 0.010` margin guarding the descent, since the jaw
+centre may wander `line_tolerance_m` = 6 mm and a 70 mm cup leaves 3.6 mm a side. That margin is now
+derived: `descent_tolerance_for` spends the clearance on a finer descent — 6.0 mm at 55 mm (identical
+planning to every earlier run), 2.6 mm at 70 mm — and refuses only a cup leaving no room (≥ 75.2 mm).
+Holding 2.6 mm over 18 cm needs 36 segments against the old cap of 32, so `line_max_segments` is a
+parameter at 64. A first look now also needs ≥ 100° of rim before its circle may set the width.
+
+**What is not shown.** Unit tests only: a 70 mm cup now plans, its descent stays inside its own
+clearance, and 79/83 mm are still refused. **No simulated pick has run with a 70 mm cup** — the GPU was
+running Lukas's own `run_pick_demo.py` (5.3 GB of 8) and a second simulator was not started. And even
+with the plan accepted, a hardware pick still cannot close: servo 6's units are unmeasured, so the arm
+would position and stop. The one experiment that unblocks both the gripper and any future rim grasp is
+the same: command servo 6 across its range and measure the jaw gap.
+
+
+### 2026-09-17 — The gripper is commanded during a hardware pick, on a scale still nobody has measured
+
+Lukas: "the gripper isn't being commanded during the pick test, it stays still." It was not — that was
+the deliberate choice from the first port, on the grounds that servo 6's units are unverified. It now is.
+
+**How it is sent.** `set_all_joint_angles` takes an optional `gripper` and carries it as `angle6` on the
+same funcode 2 message as the six arm angles. Not a separate funcode 1: that would spend one of the ten
+command slots a second the arm allows (F-032) and would let the jaw and the pose arrive a cycle apart.
+Values are clamped to `GRIPPER_UNITS_RANGE` (0–65) on the way out, and `gripper=None` keeps the old
+behaviour of holding whatever the arm reports, so nothing that does not ask for a gripper command sends
+one. Seven tests hold the wire payload: the value reaches `angle6`, it rides one message, it clamps, and
+the six arm angles are untouched by it.
+
+**The conversion is the simulator's own** — finger travel in metres × 2000, as `d1_direct` does — so a
+width the grasp planner chose means the same thing on both sides of the seam. **That is an assumption,
+not a measurement.** The protocol advertises a 65 mm jaw, the arm sits at 41.0 units at rest, and the CAD
+gripper disagrees with both: its pads cannot come closer than 17.26 mm (F-059), so "0" is not obviously a
+closed jaw. Every run records the units it asked for and claims no millimetres.
+
+**A jog control was added to the console** for exactly the missing measurement: a slider over 0–65 and
+SET GRIPPER, LIVE-gated like everything else. Command a value, put a ruler across the fingers, and that
+pair of numbers is the calibration this arm has never had. Verified from here: a jog with LIVE off logs
+"dry run, 55.0 units not sent" and the arm still reports 41.0; out of range is refused with a reason.
+**Not verified: that the jaw physically moves.** That needs LIVE, which is Lukas's switch to throw, not
+mine.
+
+**The 70 mm cup now picks in simulation** ([run](#/week/1/run/20260917T091408_329082Z_pick_seed42)),
+which was the validation left open this morning: 5.6 mm a side, descent held to 4.6 mm over 18
+waypoints, lift 11.9 cm, axis gap 6 mm. The old fixed gate would have refused it. Rim coverage was 167°,
+well over the new 100° floor.
+
+**Two bugs fixed on the way.** `MeasuredMount` had no `quat_wxyz`, so *any* run that loaded a saved wrist
+mount died with `AttributeError` before the simulator started — it is used interchangeably with
+`WristMount` everywhere else, and now agrees there too. And `run_pick_demo.py` spelled its flag
+`--no-camera_body` while `run_camera_body_view.py`, `scene.py` and F-057 all say `--no_camera_body`;
+following the findings literally produced "unrecognized arguments". Both spellings are now accepted.
+
+
+### 2026-09-17 — Correction: the real gripper closes to touching, so the CAD's 17 mm floor is not a real limit
+
+I told Lukas a wall grasp was ruled out because the jaws bottom out 17.26 mm apart. That number is real
+but it is the **URDF CAD's**, and I stated the conclusion far more flatly than that scope allowed.
+Lukas backdrove the powered-down gripper by hand: the pincers **can be pushed until they touch**, and
+pulled about 10 mm wider than any command leaves them, with no change in resistance at either end.
+
+What that changes, recorded as corrections on F-059 and a note on F-060 rather than edits to their
+measured claims:
+
+- **A rim or wall pinch is not ruled out on the real arm.** A jaw that closes to touching can pinch a
+  5–8 mm cup wall. Whether it is a *good* way to lift a mug is now a question about reach, control and
+  friction, not one geometry has already answered.
+- **Servo 6's 50.2 ceiling is the command path, not the mechanism.** The commandable span covers only
+  part of the physical rail.
+- **`grip_travel_m` is probably wrong for hardware.** It subtracts `CLOSED_GAP_M` = 17.2 mm because the
+  CAD jaws start that far apart. If the real jaws start at zero, the computed travel is about 8.6 mm per
+  finger too much — it would drive the fingers into the cup instead of onto it. Nothing should trust a
+  computed grip width on this arm until the jaw gap is measured against servo 6.
+
+**The measurement that settles all of it**, with the console's gripper jog and a ruler: command 0, 10,
+25, 40, 50 and write down the gap between the pads at each. Five numbers. They give the scale, the
+direction (which end is open), the real closed gap, and whether the relationship is linear — and they
+turn every "unverified" caveat now attached to the gripper into a measured constant.
+
+
+### 2026-09-17 — Servo 6 commanded and watched: the scale runs open-to-closed, and the console had been lying about the arm
+
+Lukas: "the gripper isn't being commanded during the pick test." It is now — carried as `angle6` on the
+same funcode 2 message as the arm angles, so the jaw and the pose cannot arrive a cycle apart and the
+gripper costs none of the ten command slots a second the arm allows (F-032). Then three things came out
+of actually commanding it, two of which were bugs of mine.
+
+**The console was showing a frozen arm and calling it connected (F-061).** One `InvalidSample` — a DDS
+sample carrying an instance-state notification and no data — raised `AttributeError` out of `poll` and
+killed the state thread at 18:52. Six minutes later `/state` still said `connected: true` with
+`feedback_age_s: 358.9`, and a gripper command that visibly moved the fingers a centimetre never changed
+the reported value. `connected` ignored the feedback age entirely in hardware mode, so a dead cache read
+as a live arm by construction. Fixed in both places: `poll` skips samples with no data, the state loop
+catches and carries on, and `connected` now requires feedback under a second old in every mode. The dog's
+cyclonedds 0.10.2 never did this; the workstation's 11.0.1, installed today, does.
+
+**The gripper scale is inverted from what I assumed (F-062).** At 0.1 units the pincers stand at the far
+end of their rails — open. Commanded 65 from there they closed by about a centimetre, watched by eye.
+So units count *closing*, while `grasp.GRIPPER_OPEN_M` and the simulator's client count *opening*, and
+my first mapping had them the same way round: a pick would have opened the jaw at the instant it meant
+to close on the cup. Corrected, with a test that states the direction as behaviour — closing on a cup
+must ask for more units than holding the jaws open — rather than as endpoints that can be flipped
+together.
+
+**The commandable window is a clamp inside the rails.** It reaches neither a shut jaw nor a fully open
+one. Pushed past either extreme by hand, the servo can pull the fingers back into the window, but no
+command takes them out of it — so this is a firmware or protocol limit on servo 6, not an end stop.
+Nothing has yet been commanded outside 0–65 to find out whether the clamp is in the arm or in
+`d1_hardware`'s own range.
+
+**What is still missing is two numbers.** The jaw gap in millimetres at 0 units and at 50 units. They
+decide whether a 70 mm mug even fits inside the commandable window, and `grip_travel_m` cannot be
+trusted on hardware until they exist: it subtracts the CAD's 17.2 mm closed gap, and the real jaws do
+not start there (F-059 correction).
+
+
+### 2026-09-17 — Probing past the advertised gripper range: the closing half is negative, and the jaw shuts
+
+Lukas asked to try getting the pincers to touch, so the probe went ahead as a `d1_hardware gripper
+--probe` subcommand rather than a one-off: it steps past the advertised range and aborts on any error
+status, stale feedback, or two steps without movement — three commands of exposure at most, because
+F-032 is this arm going unresponsive after an out-of-spec command.
+
+**Upward the arm clamps at 50.2** ([close probe](../../logs/gripper_probe/close_probe.json)): 55.2 and
+60.2 both moved it 0.00, error 0 throughout. So the limit is the arm's, not `d1_hardware`'s — which was
+the open question from F-062.
+
+**Downward it keeps going, and shuts the jaw** ([open probe](../../logs/gripper_probe/open_probe.json)):
+−4.8, −9.8, −14.8, −19.8 all tracked within 0.3, then it clamped near −19.8. At −19.7 Lukas reports the
+pads touching. Nothing had ever commanded below zero because the vendor driver advertises 0–65 and
+`d1_hardware` clamped to it, so **every command that would have shut the fingers was floored at the open
+end**. Written up as F-063; it supersedes the mapping F-062 set up, which had put "closed" at +50.2 —
+the wrong half of the scale, and a pick using it would have closed a centimetre onto the cup and stopped.
+
+`GRIPPER_UNITS_RANGE` now spans −25 to 65, the jaw span is 0 (widest) to −19.8 (touching), and the
+console's slider covers the negative half. This also settles F-059's correction: the real jaws **do**
+close to touching, so a rim or wall pinch is mechanically available on this arm despite the CAD's claim
+that the pads stop 17.26 mm apart.
+
+**A scare that was not one.** Partway through, the working tree came back without any of the day's
+changes — `git status` clean, findings down from 62 to 52. Something had run `git stash`. Everything was
+in `stash@{0}` (4,194 insertions across 23 files) and `git stash apply` brought it all back; `apply`
+rather than `pop`, so the stash stays as a backup in case whatever created it expects to find it. Worth
+knowing that another session shares this working tree.
+
+**Then a correction to my own correction.** I had recorded that 0 units was the jaws at their widest and
+that the positive half of the scale closed them again — a strange, two-sided model I should have
+distrusted on sight. Lukas pointed out that a sweep I ran "started closed and then got up to the old
+clamped extent". A six-point ladder run in one process confirms it: the scale is **monotonic**,
+−19.8 (pads touching) to +50.2 (widest a command reaches), more units meaning a wider jaw. F-062 and
+F-063 are corrected, with the withdrawn claims named rather than quietly edited out.
+
+Both wrong claims trace to the same root: they were inferred from watching the fingers while the
+console's feedback was dead (F-061), so every number I quoted alongside what Lukas was seeing was stale.
+One broken telemetry path produced three wrong inferences in a row, and none of them looked wrong at the
+time. The ladder now runs in a single process with one DDS participant, because separate invocations
+lost a command to discovery and made a sweep read as non-monotonic — which is what made the two-sided
+model look plausible in the first place.
+
+**And the dropped command had a cause.** Two of eight single-shot CLI commands vanished with no error,
+live feedback and error 0 throughout. DDS discovery is per-endpoint: the arm's writer can be matched to
+our reader — feedback flowing, joint angles printing — while our writer is not yet matched to the arm's
+reader, and a command sent in that window is lost locally. `D1Client.wait_for_writer` now polls
+`get_matched_subscriptions` before the first command and the CLI warns if the match never arrives; four
+of four landed after that (F-064). On this arm "the command had no effect" and "the command was never
+delivered" look identical, which is worth remembering the next time a measurement looks like physics.
+
+**Still not measured:** millimetres per unit, linearity, and whether the window is fixed in the servo's
+coordinates or re-derived at power-on. `grip_travel_m` still subtracts the CAD's 17.2 mm closed gap and
+so is still wrong for hardware.
+
+
+### 2026-09-17 — Grasping the wall of a cup too wide for the jaws: a pinch where the arm can shut, inside-out where it cannot
+
+Lukas asked for the pick to *attempt* a cup too wide to grab normally rather than refuse it, by taking it
+by the wall. F-058's bench mug measured 70–83 mm against 77.2 mm of open jaw, so this is the gate that
+stopped every hardware pick, and F-059 had left it as an open question about the gripper rather than the
+planner. `GraspParams.wall_grasp` now decides between three grasps, tried in that order:
+
+- **`outside`** — unchanged. Fingers straddle the cup's body. Everything already recorded plans identically;
+  a test asserts the 55 mm and 70 mm cups produce the same waypoints and the same grip as before.
+- **`pinch`** — one finger inside the cup, one outside, closing on the wall itself. The jaw centre goes over
+  the wall a quarter turn round the rim from the robot-to-cup line, which is where `top_down_rotation`
+  already puts the jaw axis radially, so nothing about the approach changes and a handle pointing at or
+  away from the robot stays as clear as it is for an outside grasp.
+- **`inside_out`** — both fingers into the mouth shut, then opened against the inside of the wall. Their
+  *outer* faces span 39.2 mm shut and 99.2 mm open (CAD, `workspace.gripper_points`), so a mouth of roughly
+  50–100 mm can be held this way. It is the fallback for a cup too wide to pinch, and the only wall grasp
+  the URDF's gripper can make.
+
+**Which one a cup gets is decided by the gripper, not by preference.** A pinch needs jaws that shut below
+the wall: the CAD pads stop 17.26 mm apart (F-059) and pinch nothing, while the real arm shuts until the
+pads touch (F-063). `pinch_closed_gap_m` carries that number — 2 mm, **stated, not measured** — and with the
+URDF's 17.2 mm the planner refuses the pinch on its first line and plans the inside-out grasp instead.
+
+**Travel below the URDF's stop is now expressible.** `jaw_gap_m(t) = 17.2 mm + 2t` extends below zero, and
+`closed_travel_m` is where a given gripper runs out: 0 for the CAD, −7.6 mm for the real arm. The pinch
+commands that, and in simulation `run_pick_demo.py` widens the finger joint limits to match, which is the
+one place the simulated robot is deliberately not the imported model — printed at startup and recorded in
+`sim2real`. The widening has to clear the **soft** limit factor (0.9), not just the hard one, or the close
+stops 2 mm short of the wall with nothing in the log to say why.
+
+**The simulated cup got an inside.** It collided as a solid cylinder, so no finger could enter it;
+`--cup_wall` builds the wall as 24 boxes in a ring on a disc of the same thickness. Default stays solid, so
+every earlier pick is unaffected.
+
+**The gripper is the plan's to choose.** `GraspPlan` carries `gripper_descend_m` and `gripper_grasp_m`, and
+`PickSequence` commands them — so the simulator and `pick_demo/hardware.py` get the same behaviour from the
+same object, and the "close" state opens the fingers when the plan says to.
+
+**In simulation, on a 90 mm cup with a 5 mm wall, the pinch lifts it.** Four runs, all in the viewer with
+Lukas watching:
+
+| run | what it did | outcome |
+|---|---|---|
+| [1](#/week/1/run/20260917T100010_537902Z_pick_seed42) | inside-out, camera body left on | no detection from any of six viewpoints; the D435 case was in shot (F-052), which the log warned about and I missed |
+| [2](#/week/1/run/20260917T100229_264853Z_pick_seed42) | inside-out, wrist view clear | cup found at 0.91 confidence and 170 deg of rim; fingers went 30 mm in and opened — and stopped **1.0 mm short** of the wall. Lift 0.0 cm |
+| [3](#/week/1/run/20260917T101241_612167Z_pick_seed42) | **pinch** | **lift 11.9 cm.** Scored `failed` by a criterion written for centred grasps |
+| [4](#/week/1/run/20260917T101442_504536Z_pick_seed42) | pinch, criterion fixed | **succeeded**: lift 11.9 cm, 1 mm off the planned pinch point, 12.8 s |
+
+**Run 2 is why the press rule changed.** The planner opened the fingers to the *near* edge of where the
+wall could be — rim fit (42.1 mm) minus a whole 5 mm wall — against a wall whose inside was really at
+40.0 mm. The fingers reached 39.0 mm and touched nothing, and the arm lifted away from a cup it had
+travelled 30 mm into. The rim circle is fitted to points anywhere between the lip's inner and outer edges,
+so the inside is somewhere in [fit − wall, fit]: the descent has to assume the near end and the press the
+far one. The costs are not symmetric — over-travel rests on the wall at the drives' 15 N limit, under-travel
+grips nothing at all.
+
+**Run 3 is the grasp Lukas asked for.** One finger 30 mm inside the cup and one outside, descending with
+7.0 mm either side of the wall, then shut to 2 mm on it, and the cup came up 11.9 cm. The `failed` label is
+the scoring, not the grasp: success required the cup's axis within 3 cm of the jaw centre, and a pinch puts
+the jaw centre on the wall 39.8 mm off the axis by design. The measured gap was 40.6 mm — **0.8 mm from
+where the plan put it**. The criterion now compares against the plan's own offset.
+
+**Two things the run shows that are not about the gripper.** The steeper first viewpoint (75 deg, camera at
+x = 0.36 m, past the nose instead of over the head) also improved the look: 0.93 confidence and **230 deg**
+of rim against 170 deg at 65 deg elevation, on the same cup from the same distance. And `refine` did not
+re-detect the cup from the pregrasp, so the pinch descended on the first estimate — the mode that most
+depends on the radius being right is the one that got no second look.
+
+**The first look is now a survey, and getting there took three wrong turns.** Watching the runs, Lukas's
+objection was never about the grasp: the arm kept looking *at* the dog rather than in front of it.
+
+1. **Steeper elevation (65 to 75 deg) did not fix it**, because moving the camera forward does not move
+   the gripper forward -- the camera is mounted behind the fingers. At 75 deg the camera stands at
+   x = 0.33 m while the jaws it is bolted to are at 0.27 m, over the body, pointing down at the head.
+2. **Requiring the jaws themselves past the trunk forced 85 deg**, and at 85 deg the cup was **not
+   detected at all**, from three viewpoints running: seen exactly end-on, a cup stops looking like one
+   to a COCO model, and a first look only accepts the `cup` label. That run recovered only by falling
+   through to a 75 deg look at a further floor point, where it succeeded (lift 11.9 cm, rim coverage
+   359 deg -- a full ring).
+3. **The framing was wrong.** `plan_observation` aims at a *named floor point from a fixed distance*,
+   a two-parameter family in which "angled" and "wrist forward" cannot both hold. `plan_survey` describes
+   the pose the way a person would: stand the camera at a height and tip it down by a pitch. Where the
+   wrist ends up stops mattering -- and Lukas's own point, that looking down *and* forwards makes a wrist
+   over the dog's back fine and even useful for height, is what the search now exploits. It picks
+   45 deg with the camera 0.40 m above the floor, holding the floor from **0.23 m to 0.96 m** in one
+   frame against the ~0.20 m patch a near-vertical look sees, with a cup at 0.42 m landing in the upper
+   middle of the image, clear of the fingers. The close scan stays as the fallback, unchanged.
+
+Scoring every candidate cost 46 s of inverse kinematics at one base height, with the robot waiting, so
+the search stops at the first pose that holds enough floor and in any case after 40 candidates.
+
+**Two hardware blockers found and fixed, without a ruler.** Asked whether this was ready for the bench:
+
+- **`finger_travel_to_gripper_units` took `abs` of its argument.** A wall pinch commands travel *below*
+  the CAD's stop (-7.6 mm, F-063), and `abs` sent that to -2.07 units -- about a quarter open. The arm
+  would have opened its jaws on the wall it was told to close on. Negative travel now means the closed
+  end. The test that asserted the old behaviour is updated in place, with why.
+- **An intermediate opening is a guess on this arm.** The plan's 19 mm descent gap is CAD travel
+  +0.9 mm, which the mapping sends to -17.7 units -- nearly shut -- because the travel-to-gap relation
+  there is not the CAD's and nobody has measured it. Rather than guess, the pinch now descends **as wide
+  as the cup allows** (Lukas: "as wide as possible on the descent, it shouldn't be a problem"), which for
+  a 90 mm cup is fully open. A pinch therefore asks for only the two commands that *are* calibrated:
+  +50.2 going down, -19.8 to shut. The planner still narrows the descent on a cup where the inner finger
+  would otherwise reach the far wall.
+
+**What this is not.** No wall grasp has run on the arm. The simulated pinch holds because the modelled pads
+were allowed to shut to a number Lukas stated rather than measured, against a ring of 24 boxes standing in
+for a cup, with a wall thickness the planner assumes and perception cannot see. The bench has a real mug
+whose wall nobody has put a gauge to, and `grip_travel_m` still subtracts the CAD's closed gap (F-063), so
+what the fingers do at a commanded travel on hardware remains the open question it was this morning.
+
+**Also recorded here because it cost a run:** the third launch died in Isaac's startup with `Failed to
+create simulation view backend`. A viewer run lingers for an hour by default and holds about 5 GB, so the
+new one had no room on an 8 GB card. Stop the previous viewer before launching another, or pass
+`--no-linger`. And earlier in the session a `git stash` of mine — taken to get a baseline test result —
+wiped the working tree from under the other session working in this repo; that is the stash the entry
+above this one describes. It was recovered in full. Do not use `git stash` in a shared tree.
+
+### 2026-09-17 — The first live bench picks with the wall grasp: the arm was never the problem
+
+Four executed picks on the bench arm, a 90 mm mug at 0.29 m
+([1](#/week/1/run/20260917T105029_482472Z_pick_hw), [2](#/week/1/run/20260917T105145_214493Z_pick_hw),
+[3](#/week/1/run/20260917T105326_457783Z_pick_hw), [4](#/week/1/run/20260917T111006_406673Z_pick_hw)).
+All four ended at an arrival test, none reached a descent, and Lukas could hear the arm working while it
+sat still. Written up as F-066; the short version is that both failures were in this repository.
+
+**The pick's own work was right, and that is worth stating first.** The survey pose found the mug on its
+*first* look — 0.93 confidence, 133 deg of rim, radius 45 mm — and the planner chose a **wall pinch** on
+the real mug: 25 mm inside it, jaws 77 mm apart going down, shut to 2 mm on the wall, commanding only the
+two calibrated ends of servo 6 (+50.2 and −19.8). The gripper obeyed: reported 49.8 units before the
+first command.
+
+**Failure one: the sequence charged its own planning time to the arm.** `Motion` started its deadline
+when the move was *constructed*, and the planning that produces the move — `plan_survey`, or a grasp plan
+of 18 inverse-kinematics waypoints — runs in the same `update`. Run 4 shows it plainly: **one command
+sent in 10.09 s**, `covered 0% of the move`, every joint 0.3–1.2 rad out. The clock now starts on the
+first update that actually commands the waypoint.
+
+**Failure two: a trembling hold was not an arrival.** Run 3 reached its pregrasp to **0.008 rad** and
+timed out for 5 s anyway, because a final waypoint had to go still — a spread under 0.004 rad across
+0.35 s — and an arm holding a pose against gravity does not. Holding inside tolerance for 0.8 s now
+counts; the spread test stays as the quick path.
+
+**And the diagnosis only became possible after the message changed.** Three runs had reported a single
+worst-joint number (0.036, 0.555 and 0.008 rad) which was read as the arm mistracking. A timeout now
+prints per-joint errors, the fraction of the move covered and whether the arm is still moving — and the
+first run with that message answered the question in one line.
+
+**Two things the bench taught about the survey pose.** Lukas corrected the bench frame to
+`base_height_m: -0.09` — the mug's measured base had said the table was 9 cm above where the planner
+thought the floor was — and at that height the survey chose a pose seeing 0.36 to 0.86 m, which cannot
+see a mug at 0.29 m. A pose whose near edge starts beyond 0.28 m is now refused. Separately, scoring the
+whole pose grid was costing seconds on some frames, which is exactly the planning time failure one was
+charging to the arm: the search now stops at the first pose that holds enough floor, and after 40
+candidates regardless.
+
+**Still open:** run 2 was 0.555 rad short with a full gripper stroke (−19.8 → +50.2) riding in the same
+message. Whether this firmware paces a coordinated move to its slowest axis is unmeasured, and it would
+change how the gripper should be sequenced around a move.
+
+### 2026-09-17 — Both wall grasps run on the real arm, and the one refusal is the workspace edge, not a fault
+
+With the arrival tests fixed (F-066), three more live picks at the bench, mug at 0.27-0.33 m:
+
+| run | cup x | cup y | grasp | outcome |
+|---|---|---|---|---|
+| [111513](#/week/1/run/20260917T111513_503072Z_pick_hw) | 0.333 | −0.031 | **pinch**, tilt 30 | ran to `done`, 178 commands |
+| [111731](#/week/1/run/20260917T111731_485032Z_pick_hw) | 0.273 | −0.047 | **inside-out**, tilt 30 | ran to `done`, 169 commands |
+| [111840](#/week/1/run/20260917T111840_702733Z_pick_hw) | 0.273 | −0.064 | none | refused at planning |
+
+**Both wall grasps have now executed on hardware, one each.** 111513 shut on the mug's wall at −19.8 units
+after putting one finger inside it; 111731 re-planned at the refine step, went inside-out instead, and
+opened to 19.3 mm of travel (77.7 mm of finger span) pressing outwards on the wall before lifting. Reach,
+descend, grip, lift and hold, in 33 s, with arrival errors of 0.010-0.015 rad. **There is no ground truth
+on a bench**: what the record shows is that the sequence completed, not that the mug came up. What Lukas
+saw is the evidence for that, and it belongs beside this entry.
+
+**The pinch lost to inside-out on the re-plan**, and the reason is reach: a pinch puts the jaw centre a
+radius off the cup's axis, and at 0.27 m that offset is in the direction the arm has least of. Expect the
+fallback near the inner edge of the workspace.
+
+**The refusal is 17 mm.** 111840 sat 17 mm further right than 111731, which worked, and every mode failed
+on reachability. The joints are not contorted — all six mid-range, none near a limit — but the proxy
+clearance is **21 mm against 67 mm** for the pose that worked. Lukas read it as "the arm is too close to
+the base", which is right in effect: reaching down to a cup this close and this low is the edge of what a
+top-down grasp can do here, and a small lateral shift crosses it.
+
+**A bench number to correct.** In all three runs the mug's base reads **+0.055**, while the operator's
+`base_height_m: -0.09` puts the table at **+0.090**. The lowest point a camera above the cup can see is
+*above* the true base, so the table is at most 5.5 cm above the arm's base plane. That 3.5 cm is what the
+refusal was made of: the fingertips would have reached 27 mm above the stated floor against a proxy that
+wants 30 mm. Two things follow. The bench height wants measuring (about −0.05). And the planner no longer
+lets a *told* floor veto a *measured* cup: `ground_under` lowers the floor to the cup's own base when the
+cup reads lower, by at most 5 cm, never upwards — a cup on a box says nothing about the ground beside it.
+Planned against the cup's base, that same refused estimate produces a pinch at tilt 10.
+
+Worth stating plainly, because it cuts the other way: if an estimate is *wrong* and reads low, this rule
+removes a veto that would have caught it. The veto was never the right protection — it fires on good
+estimates and bad ones alike — but nothing has replaced it, and the check that would (a rim seen twice
+from different viewpoints agreeing on its height) does not exist yet.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -2324,6 +3046,10 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-001](../findings.md): superseded by F-012 (forward walking with the arm reproduced; lateral and yaw added).
 - [F-002](../findings.md): superseded by F-010 (the droop figures came from acceleration drives).
 - [F-003](../findings.md): CPU frame maths and PPO configuration work (confirmed, interface only).
+- [F-066](../findings.md): four live bench picks stalled on the sequence's own arrival tests, not on the arm --
+  planning time was charged to the move deadline, and a trembling hold never counted as arrived (confirmed).
+- [F-065](../findings.md): a cup too wide for the jaws is picked up by its wall -- a simulated pinch of a
+  90 mm cup lifts it 11.9 cm, and only because the pads may shut past the URDF's stop (confirmed, simulation only).
 - [F-004](../findings.md): primary implementation choice (provisional until the end of Week 2).
 - [F-005](../findings.md): stock Isaac Lab Go2 motor model versus Unitree's measured envelope (confirmed, model comparison).
 - [F-006](../findings.md): what unitree_rl_lab/MaiRo offers for sim-to-real, and what it does not show (provisional).
@@ -2355,6 +3081,18 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-050](../findings.md): the trunk/ground proxy assumes a level base, so a 7° pitch puts its floor 5–6 cm off where a cup stands, and nose-down it would accept reaches into the floor (confirmed, in the proxy).
 - [F-051](../findings.md): the URDF gripper's independent finger drives do not centre a grasp; commanding a width 4 mm under the cup does (confirmed, simulation).
 - [F-052](../findings.md): the rendered wrist camera sits 11 mm / 1.1° from its authored mount, constant in Link6, biasing simulated cup estimates by ~3 mm across and ~7 mm in height; cause unexplained (confirmed, measured).
+- [F-053](../findings.md): the bench D435i's measured colour intrinsics are 55.6° horizontal, not the preset's 69.4°, with the principal point 14 px off centre — ~9 mm of cup-height error at 40 cm (confirmed, one camera, one resolution).
+- [F-054](../findings.md): a solid camera housing drawn at the wrist blinded the camera it represented — the optical centre sits 4.2 mm behind the front glass, so the front face must be open (confirmed; fixed, with a frustum guard in the tests).
+- [F-055](../findings.md): the hand-built camera body was mirrored; Intel's CAD moves the case 22 mm (confirmed, CAD cross-checked against the bench camera).
+- [F-056](../findings.md): the rendered wrist camera discards the principal point and fy it is given (confirmed, measured from the simulator's own intrinsics).
+- [F-057](../findings.md): the occlusion guard was asked about the model's eye while the renderer's sits 11 mm away inside the case (confirmed, measured).
+- [F-058](../findings.md): the bench pick stops at the grasp-width gate, not at perception — it sees the cup at 0.93–0.96 and the width it believes tracks rim coverage (63° → 83 mm, 126° → 70 mm on one mug) (confirmed, three runs).
+- [F-059](../findings.md): the gripper's pads bottom out 17.26 mm apart, so no cup wall can be pinched; the fixed 10 mm width margin, not the jaws, refused a 70 mm cup the jaws can hold (confirmed, from the CAD).
+- [F-060](../findings.md): servo 6 saturates at 50.2 of the advertised 65 and tracks with a steady +0.2 offset below that (confirmed, nine commands).
+- [F-061](../findings.md): one malformed DDS sample killed the console's state thread and the page showed six-minute-old joints while still reporting the arm connected (confirmed once; fixed in two places).
+- [F-062](../findings.md): servo 6 runs open-to-closed — 0 units is the fingers at the far end of their rails — and the first mapping had it backwards, which would have opened the jaw where the pick meant to close (confirmed, watched on the arm).
+- [F-063](../findings.md): the gripper's closing half is negative and outside the advertised 0–65 — the jaw runs monotonically from −19.8 (pads touching) to +50.2 (widest a command reaches), and the old clamp floored every closing command two thirds of the way open (confirmed, probed and watched).
+- [F-064](../findings.md): a command sent before the arm has discovered the writer is lost silently — two of eight vanished with live feedback and error 0, which made a swept measurement read as non-monotonic (confirmed; fixed by waiting for the publication match).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).

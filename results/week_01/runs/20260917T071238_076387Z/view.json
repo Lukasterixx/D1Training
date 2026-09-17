@@ -1,0 +1,264 @@
+{
+  "captured_utc": "2026-09-17T07:12:48+00:00",
+  "mount": {
+    "pos_link6_m": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "pitch_deg": 20.0,
+    "source": "assumed; bracket not yet measured"
+  },
+  "camera_model": {
+    "name": "RealSense D435I #238222076237",
+    "width": 640,
+    "height": 480,
+    "fx": 607.1100463867188,
+    "fy": 607.3660278320312,
+    "cx": 323.001220703125,
+    "cy": 254.2924346923828,
+    "min_depth_m": 0.154,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05004734918475151,
+    "depth_fx": 387.7474670410156,
+    "subpixel_rms": 0.08,
+    "source": "measured: librealsense on RealSense D435I #238222076237 at 640x480, captured 2026-09-17T06:58:58+00:00; min_depth is the 126-disparity limit and max_depth the datasheet's"
+  },
+  "arm_pose_rad": [
+    0.0,
+    0.10444,
+    0.83088,
+    -0.00014,
+    0.16051,
+    -3e-05
+  ],
+  "pose": "observe",
+  "link6_origin_base_m": [
+    0.21618,
+    -0.00128,
+    0.24931
+  ],
+  "optical_origin_base_m": [
+    0.2811,
+    -0.00128,
+    0.24334
+  ],
+  "body_clearance": {
+    "housing_x_link6_m": [
+      -0.0739,
+      -0.0418
+    ],
+    "housing_z_link6_m": [
+      0.0112,
+      0.0432
+    ],
+    "shell_x_link6_m": [
+      -0.038,
+      0.019
+    ],
+    "shell_z_link6_m": [
+      0.0,
+      0.076
+    ],
+    "intersects_shell": false,
+    "overlap_m": [
+      0.0,
+      0.032
+    ]
+  },
+  "view_obstruction": [],
+  "body_parts": [
+    {
+      "name": "housing",
+      "size_m": [
+        0.09,
+        0.025,
+        0.002
+      ],
+      "centre_optical_m": [
+        0.010167999999999998,
+        0.0,
+        -0.0198
+      ],
+      "source": "datasheet: Intel D400 series, 90 x 25 x 25 mm; drawn as a shell so the lens can see out"
+    },
+    {
+      "name": "housing_top",
+      "size_m": [
+        0.09,
+        0.002,
+        0.025
+      ],
+      "centre_optical_m": [
+        0.010167999999999998,
+        -0.0115,
+        -0.008300000000000002
+      ],
+      "source": "datasheet: Intel D400 series, 90 x 25 x 25 mm; drawn as a shell so the lens can see out"
+    },
+    {
+      "name": "housing_bottom",
+      "size_m": [
+        0.09,
+        0.002,
+        0.025
+      ],
+      "centre_optical_m": [
+        0.010167999999999998,
+        0.0115,
+        -0.008300000000000002
+      ],
+      "source": "datasheet: Intel D400 series, 90 x 25 x 25 mm; drawn as a shell so the lens can see out"
+    },
+    {
+      "name": "housing_left",
+      "size_m": [
+        0.002,
+        0.025,
+        0.025
+      ],
+      "centre_optical_m": [
+        -0.033832,
+        0.0,
+        -0.008300000000000002
+      ],
+      "source": "datasheet: Intel D400 series, 90 x 25 x 25 mm; drawn as a shell so the lens can see out"
+    },
+    {
+      "name": "housing_right",
+      "size_m": [
+        0.002,
+        0.025,
+        0.025
+      ],
+      "centre_optical_m": [
+        0.054167999999999994,
+        0.0,
+        -0.008300000000000002
+      ],
+      "source": "datasheet: Intel D400 series, 90 x 25 x 25 mm; drawn as a shell so the lens can see out"
+    },
+    {
+      "name": "lens_left_ir",
+      "size_m": [
+        0.0045,
+        0.0045,
+        0.0045
+      ],
+      "centre_optical_m": [
+        -0.014857,
+        0.0,
+        0.00745
+      ],
+      "source": "measured: depth origin, 14.857 mm left of colour on D435I 238222076237"
+    },
+    {
+      "name": "lens_right_ir",
+      "size_m": [
+        0.0045,
+        0.0045,
+        0.0045
+      ],
+      "centre_optical_m": [
+        0.035192999999999995,
+        0.0,
+        0.00745
+      ],
+      "source": "measured: 50.05 mm stereo baseline from the left imager"
+    },
+    {
+      "name": "lens_colour_r",
+      "size_m": [
+        0.0026999999999999997,
+        0.0026999999999999997,
+        0.0026999999999999997
+      ],
+      "centre_optical_m": [
+        0.008,
+        0.0,
+        0.006549999999999999
+      ],
+      "source": "the optical frame itself: CameraModel's intrinsics and WristMount's pose, marked off-axis"
+    },
+    {
+      "name": "lens_colour_l",
+      "size_m": [
+        0.0026999999999999997,
+        0.0026999999999999997,
+        0.0026999999999999997
+      ],
+      "centre_optical_m": [
+        -0.008,
+        0.0,
+        0.006549999999999999
+      ],
+      "source": "the optical frame itself: CameraModel's intrinsics and WristMount's pose, marked off-axis"
+    },
+    {
+      "name": "lens_colour_d",
+      "size_m": [
+        0.0026999999999999997,
+        0.0026999999999999997,
+        0.0026999999999999997
+      ],
+      "centre_optical_m": [
+        0.0,
+        0.008,
+        0.006549999999999999
+      ],
+      "source": "the optical frame itself: CameraModel's intrinsics and WristMount's pose, marked off-axis"
+    },
+    {
+      "name": "lens_colour_u",
+      "size_m": [
+        0.0026999999999999997,
+        0.0026999999999999997,
+        0.0026999999999999997
+      ],
+      "centre_optical_m": [
+        0.0,
+        -0.008,
+        0.006549999999999999
+      ],
+      "source": "the optical frame itself: CameraModel's intrinsics and WristMount's pose, marked off-axis"
+    }
+  ],
+  "views": [
+    {
+      "view": "front",
+      "eye_offset_m": [
+        0.16,
+        0.0,
+        0.05
+      ],
+      "file": "front.png"
+    },
+    {
+      "view": "side",
+      "eye_offset_m": [
+        0.0,
+        -0.18,
+        0.04
+      ],
+      "file": "side.png"
+    },
+    {
+      "view": "above",
+      "eye_offset_m": [
+        0.02,
+        0.0,
+        0.2
+      ],
+      "file": "above.png"
+    },
+    {
+      "view": "three_quarter",
+      "eye_offset_m": [
+        0.13,
+        -0.13,
+        0.1
+      ],
+      "file": "three_quarter.png"
+    }
+  ]
+}
