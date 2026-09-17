@@ -10,6 +10,15 @@ Runs **on the Jetson payload**, because CycloneDDS needs the arm's subnet:
 
 then open http://<dog>:8090 from anywhere that can reach it (Tailscale works).
 
+**Sim or hardware** is decided at start-up (`--mode auto`): if a simulator's feed answers on localhost
+(`d1_ui/sim_feed.py`, published by `run_pick_demo.py` and `main.py`), the page follows the simulator --
+its joints, legs and rendered wrist camera -- and every command that would move an arm is refused. Otherwise,
+if this machine has the arm's network interface, it is the dog, and the page drives the real arm as before.
+Neither means a workstation with no simulator up yet: sim mode, waiting for one.
+
+The camera window shows the wrist RealSense (the simulator's render in sim mode) with the pick's stock YOLO
+boxes drawn on, served as MJPEG from `/camera.mjpg` (`d1_ui/camera_feed.py`).
+
 Everything on the wire is the stdlib: `ThreadingHTTPServer` for the page and
 the meshes, Server-Sent Events for the live state (no websocket dependency),
 and JSON POSTs for commands. The solver and the arm client are the same
@@ -53,6 +62,7 @@ sys.path.insert(0, str(ROOT))
 
 import d1_ik  # noqa: E402
 import d1_hardware  # noqa: E402
+from d1_ui.sim_feed import DEFAULT_URL as SIM_FEED_URL, GO2_MOTOR_ORDER, SimFeedClient  # noqa: E402
 from position_only.workspace import BODY_BOX_B, MOUNT_B, clear_of_body  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -60,9 +70,6 @@ STATIC = HERE / "static"
 D1_URDF = ROOT / "d1_arm" / "d1.urdf"
 GO2_URDF = ROOT / "description" / "go2_d1.urdf"
 MESH_DIRS = {"d1": ROOT / "d1_arm" / "meshes", "go2": ROOT / "description" / "meshes" / "go2"}
-
-# unitree_sdk2 LowState motor order (position_only/deploy.py GO2_SDK_JOINT_ORDER).
-GO2_MOTOR_ORDER = [f"{leg}_{part}_joint" for leg in ("FR", "FL", "RR", "RL") for part in ("hip", "thigh", "calf")]
 
 FOLDED_PARK_DEG = [0.0, -89.9, 89.9, 0.0, 0.0, 0.0]   # servo degrees; the hard limits of J1/J2
 SPHERE_MIN_Z_ABOVE_MOUNT_M = 0.03
@@ -140,6 +147,27 @@ def build_model(sphere_radius_m: float = 0.40) -> dict:
     }
 
 
+# ------------------------------------------------------------------ sim or hardware
+
+
+def detect_mode(requested: str, sim_url: str, iface: str, net_dir: Path = Path("/sys/class/net")):
+    """("sim" | "hardware", why). A simulator feed wins; then the arm's NIC means this is the dog."""
+    if requested == "hardware":
+        return requested, "--mode hardware"
+    health = SimFeedClient(sim_url, timeout_s=0.5).health()
+    if requested == "sim":
+        return "sim", ("--mode sim; " + (f"simulator feed ({health.get('source')}) answered at {sim_url}" if health
+                                         else f"waiting for a simulator feed at {sim_url}"))
+    if health is not None:
+        return "sim", f"simulator feed ({health.get('source')}) answered at {sim_url}"
+    if (net_dir / iface).exists():
+        return "hardware", f"no simulator feed, and the arm's interface {iface} is here"
+    return "sim", f"no arm interface ({iface}) on this machine; waiting for a simulator feed at {sim_url}"
+
+
+SIM_REFUSAL = "sim mode: the page follows the simulator, and commands only ever go to the real arm"
+
+
 # ------------------------------------------------------------------ arm state
 
 
@@ -164,7 +192,10 @@ class _PollProxy:
 
 class ArmServer:
     def __init__(self, *, iface: str, legs: bool, sphere_radius_m: float, step_deg: float,
-                 log_path: Path | None, level_tool: bool = True):
+                 log_path: Path | None, level_tool: bool = True, mode: str = "hardware", mode_reason: str = "",
+                 client=None, camera=None):
+        self.mode, self.mode_reason = mode, mode_reason
+        self.camera = camera
         self.model = build_model(sphere_radius_m)
         self.joints, _ = d1_ik.load_urdf()
         self.step_deg = step_deg
@@ -179,14 +210,15 @@ class ArmServer:
         self.state: dict = {"connected": False, "busy": None, "progress": None, "last_result": None,
                             "legs_live": False, "live": False, "go2_q_rad": None}
 
-        self.client = d1_hardware.D1Client(iface=iface)
+        # The simulator's feed client mirrors D1Client's reads, so everything below is shared.
+        self.client = client if client is not None else d1_hardware.D1Client(iface=iface)
         # Level by default: the gripper carries a camera, and a level tool means a
         # level horizon. Targets that cannot be reached levelly are reported as such
         # rather than silently solved tilted (F-037).
         self.mover = d1_hardware.CartesianMover(_PollProxy(self.client), self.joints,
                                                 max_joint_step_deg=step_deg, level=level_tool)
         self.level_tool = level_tool
-        self.lowstate = self._open_lowstate() if legs else None
+        self.lowstate = self._open_lowstate() if legs and self.mode == "hardware" else None
         threading.Thread(target=self._state_loop, daemon=True, name="d1-ui-state").start()
 
     # ---- logging
@@ -222,22 +254,40 @@ class ArmServer:
     # ---- state broadcast
 
     def _snapshot(self) -> dict:
-        servo = self.client.get_joint_angles()
-        q = d1_ik.from_servo_deg(servo)[0]
-        tool, _ = d1_ik.tool_pose(self.joints, q)
+        try:
+            servo = self.client.get_joint_angles()
+        except RuntimeError:
+            servo = None    # nothing from the arm (or the simulator) yet; the page says so
+        age = self.client.feedback_age_s
         snap = {
             "t": time.time(),
-            "connected": True,
-            "servo_deg": [round(v, 2) for v in servo],
-            "q_rad": [round(float(v), 5) for v in q],
-            "gripper_units": round(self.client.get_gripper_units(), 1),
-            "tool_m": [round(float(v), 4) for v in tool],
+            "mode": self.mode, "mode_reason": self.mode_reason,
+            "connected": servo is not None and (self.mode == "hardware" or age < 1.0),
+            "servo_deg": None, "q_rad": None, "tool_m": None,
+            "gripper_units": None, "finger_m": None, "base_height_m": None, "sim": None,
             "power": self.client.is_powered(), "enable": self.client.is_enabled(),
             "error": self.client.error_status(),
-            "feedback_age_s": round(self.client.feedback_age_s, 3),
+            "feedback_age_s": round(age, 3) if age != float("inf") else None,
             "safe_to_release": self.client.is_safe_to_release(),
             "live": self.live.is_set(),
+            "camera": self.camera.status() if self.camera is not None else
+                      {"available": False, "message": "camera off (--camera none)", "detections": []},
         }
+        if servo is not None:
+            q = d1_ik.from_servo_deg(servo)[0]
+            tool, _ = d1_ik.tool_pose(self.joints, q)
+            snap.update(servo_deg=[round(v, 2) for v in servo], q_rad=[round(float(v), 5) for v in q],
+                        tool_m=[round(float(v), 4) for v in tool])
+        try:
+            units = self.client.get_gripper_units()
+        except RuntimeError:
+            units = None
+        if units is not None:
+            snap["gripper_units"] = round(units, 1)
+        if self.mode == "sim":
+            sim = self.client.state or {}
+            snap.update(finger_m=sim.get("finger_m"), base_height_m=sim.get("base_height_m"),
+                        sim={k: sim.get(k) for k in ("source", "sim_time_s", "status")})
         with self.lock:
             snap.update({k: self.state[k] for k in ("busy", "progress", "last_result", "legs_live", "go2_q_rad")})
             snap["log"] = self.log[-12:]
@@ -246,8 +296,14 @@ class ArmServer:
     def _state_loop(self) -> None:
         last_servo = None
         go2_q = None
+        last_sent = 0.0
         while True:
             got = self.client.poll(timeout_s=0.1)
+            if self.mode == "sim":
+                legs = (self.client.state or {}).get("legs_q_rad")
+                with self.lock:
+                    self.state["go2_q_rad"] = legs
+                    self.state["legs_live"] = legs is not None
             if self.lowstate is not None:
                 try:
                     for s in self.lowstate.take(N=20):
@@ -261,10 +317,12 @@ class ArmServer:
             try:
                 servo = self.client.get_joint_angles()
             except RuntimeError:
-                continue
-            if not got and servo == last_servo:
+                servo = None
+            # Unchanged: still send one a second, so feedback age and the camera's status keep moving.
+            if not got and servo == last_servo and time.monotonic() - last_sent < 1.0:
                 continue
             last_servo = servo
+            last_sent = time.monotonic()
             self._broadcast(self._snapshot())
 
     def _broadcast(self, snap: dict) -> None:
@@ -309,6 +367,10 @@ class ArmServer:
         ok, why = self.validate_target(target)
         if not ok:
             return {"ok": False, "reason": why}
+        try:
+            self.client.get_joint_angles()
+        except RuntimeError:
+            return {"ok": False, "reason": "no joint angles yet: nothing to plan from"}
         plan = self.mover.plan(target)
         clear = bool(clear_of_body(self.joints, plan.q[None, :], PROXY_BASE_HEIGHT_M)[0])
         # The endpoint being clear does not mean the way there is (F-036).
@@ -366,6 +428,8 @@ class ArmServer:
         return True, ""
 
     def move_to(self, target) -> tuple[bool, str]:
+        if self.mode == "sim":
+            return False, SIM_REFUSAL
         pre = self.preview(target)
         if not pre["ok"]:
             return False, pre["reason"]
@@ -398,6 +462,8 @@ class ArmServer:
         return self._start("move", job)
 
     def park(self) -> tuple[bool, str]:
+        if self.mode == "sim":
+            return False, SIM_REFUSAL
         live = self.live.is_set()
 
         def job():
@@ -421,6 +487,8 @@ class ArmServer:
         return True, ""
 
     def release(self, force: bool) -> tuple[bool, str]:
+        if self.mode == "sim":
+            return False, SIM_REFUSAL
         if not self.live.is_set():
             self._log("release: dry run, nothing sent")
             return True, "dry run"
@@ -431,7 +499,9 @@ class ArmServer:
         self._record({"action": "release", "forced": force})
         return True, ""
 
-    def set_live(self, live: bool) -> None:
+    def set_live(self, live: bool) -> tuple[bool, str]:
+        if self.mode == "sim" and live:
+            return False, SIM_REFUSAL
         if live:
             self.live.set()
         else:
@@ -440,6 +510,7 @@ class ArmServer:
             self.state["live"] = live
         self._log(f"arm is now {'LIVE' if live else 'in DRY RUN'}")
         self._broadcast(self._snapshot())
+        return True, ""
 
 
 # ------------------------------------------------------------------ HTTP
@@ -450,7 +521,7 @@ class Handler(BaseHTTPRequestHandler):
     arm: ArmServer = None   # set by main()
 
     def log_message(self, fmt, *args):   # quieter than the default per-request line
-        if "/events" in fmt % args or "/meshes/" in fmt % args or "/static/" in fmt % args:
+        if any(part in fmt % args for part in ("/events", "/meshes/", "/static/", "/camera")):
             return
         super().log_message(fmt, *args)
 
@@ -492,6 +563,19 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(self.arm._snapshot())
         if path == "/events":
             return self._events()
+        if path == "/camera.mjpg":
+            return self._mjpeg()
+        if path == "/camera.jpg":
+            jpeg = self.arm.camera.latest_jpeg() if self.arm.camera is not None else None
+            if jpeg is None:
+                return self._json({"ok": False, "reason": "no camera frame yet"}, HTTPStatus.SERVICE_UNAVAILABLE)
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(jpeg)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(jpeg)
+            return None
         if path.startswith("/static/"):
             name = Path(path).name
             sub = "vendor" if "/vendor/" in path else ""
@@ -526,6 +610,27 @@ class Handler(BaseHTTPRequestHandler):
         finally:
             self.arm.unsubscribe(q)
 
+    def _mjpeg(self):
+        camera = self.arm.camera
+        if camera is None:
+            return self.send_error(HTTPStatus.NOT_FOUND, "camera off")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        seq = 0
+        try:
+            while True:
+                got = camera.wait_jpeg(seq, timeout_s=5.0)
+                if got is None:
+                    continue
+                seq, jpeg = got
+                self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: "
+                                 + str(len(jpeg)).encode() + b"\r\n\r\n" + jpeg + b"\r\n")
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass
+
     # ---- POST
 
     def do_POST(self):
@@ -551,8 +656,9 @@ class Handler(BaseHTTPRequestHandler):
             ok, why = self.arm.release(bool(body.get("force")))
             return self._json({"ok": ok, "reason": why}, HTTPStatus.OK if ok else HTTPStatus.CONFLICT)
         if path == "/arm":
-            self.arm.set_live(bool(body.get("live")))
-            return self._json({"ok": True, "live": self.arm.live.is_set()})
+            ok, why = self.arm.set_live(bool(body.get("live")))
+            return self._json({"ok": ok, "reason": why, "live": self.arm.live.is_set()},
+                              HTTPStatus.OK if ok else HTTPStatus.CONFLICT)
         self.send_error(HTTPStatus.NOT_FOUND)
 
 
@@ -567,12 +673,44 @@ def main() -> int:
     ap.add_argument("--no-level", action="store_true",
                     help="Do not require the gripper to finish level (more of the sphere is reachable).")
     ap.add_argument("--log", default="/tmp/d1_ui_log.jsonl", help="JSONL record of executed commands.")
+    ap.add_argument("--mode", choices=("auto", "sim", "hardware"), default="auto",
+                    help="auto: a simulator feed answering means sim, the arm's NIC being here means hardware.")
+    ap.add_argument("--sim-url", default=SIM_FEED_URL, help="Where a simulator publishes (d1_ui/sim_feed.py).")
+    ap.add_argument("--camera", choices=("auto", "none"), default="auto",
+                    help="auto: the simulator's wrist camera in sim mode, the RealSense on hardware.")
+    ap.add_argument("--detect", default="cup",
+                    help="Comma-separated COCO labels to box, or 'all'. 'none' shows frames without YOLO.")
+    ap.add_argument("--yolo-weights", default=None, help="Ultralytics weights (default: the pick demo's).")
+    ap.add_argument("--yolo-device", default="auto", help="auto, cpu or cuda:N.")
+    ap.add_argument("--camera-fps", type=float, default=15.0, help="Cap on frames detected and streamed.")
     args = ap.parse_args()
+
+    mode, reason = detect_mode(args.mode, args.sim_url, args.iface)
+    print(f"mode: {mode.upper()} ({reason})", flush=True)
+    client = SimFeedClient(args.sim_url) if mode == "sim" else None
+    camera = None
+    if args.camera == "auto":
+        from d1_ui import camera_feed
+
+        source = (camera_feed.SimFrameSource(SimFeedClient(args.sim_url)) if mode == "sim"
+                  else camera_feed.RealSenseSource())
+        targets = tuple(label.strip() for label in args.detect.split(",") if label.strip())
+        weights = args.yolo_weights or camera_feed.DEFAULT_WEIGHTS
+        factory = None if targets == ("none",) else (
+            lambda: camera_feed.make_yolo(weights, device=args.yolo_device))
+        camera = camera_feed.CameraPipeline(source, factory, targets=targets, max_fps=args.camera_fps)
 
     Handler.arm = ArmServer(iface=args.iface, legs=not args.no_legs, sphere_radius_m=args.sphere_radius,
                             step_deg=args.max_joint_step_deg, log_path=Path(args.log) if args.log else None,
-                            level_tool=not args.no_level)
-    Handler.arm._log(f"serving on http://{args.bind}:{args.port}  (DRY RUN until the LIVE switch is on)")
+                            level_tool=not args.no_level, mode=mode, mode_reason=reason, client=client,
+                            camera=camera)
+    if camera is not None:
+        camera.log = Handler.arm._log
+        camera.start()
+    Handler.arm._log(f"{mode.upper()} mode: {reason}")
+    Handler.arm._log(f"serving on http://{args.bind}:{args.port}  " +
+                     ("(following the simulator; commands refused)" if mode == "sim"
+                      else "(DRY RUN until the LIVE switch is on)"))
     httpd = ThreadingHTTPServer((args.bind, args.port), Handler)
     httpd.daemon_threads = True
     try:

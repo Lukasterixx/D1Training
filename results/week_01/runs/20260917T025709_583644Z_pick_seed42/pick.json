@@ -1,0 +1,64 @@
+{
+  "success": false,
+  "criterion": "sequence finished, cup base raised >= 5 cm, cup axis within 3 cm of the jaw centre",
+  "final_state": "failed",
+  "failure": "grasp planning: tilt 0: pregrasp unreachable; tilt 10: pregrasp unreachable; tilt 20: no IK solution 100% along the line to [0.49, 0.102, -0.07]; tilt 30: no IK solution 100% along the line to [0.486, 0.101, -0.071]",
+  "sim_time_s": 5.34,
+  "wall_time_s": 14.4,
+  "cup_lift_m": -0.0,
+  "cup_axis_to_jaw_centre_m": 0.2068,
+  "cup_tilt_deg_end": 0.0,
+  "base_height_m": 0.0851,
+  "first_look_errors_mm": [
+    {
+      "horizontal": 3.34,
+      "height": -7.07,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 4.11,
+      "height": -6.43,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 4.1,
+      "height": -6.33,
+      "method": "rim_circle"
+    }
+  ],
+  "refine_errors_mm": [],
+  "frames_looked_at": 11,
+  "frames_with_cup_detection": 10,
+  "grasp_plan": null,
+  "cup_estimate_used": {
+    "top_centre_b": [
+      0.49824,
+      0.10282,
+      -0.05439
+    ],
+    "radius_m": 0.02595,
+    "top_height_m": 0.00885,
+    "bottom_height_m": -0.0932,
+    "height_m": 0.10205,
+    "points": 10975,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 356.5
+  },
+  "first_cup_estimate": {
+    "top_centre_b": [
+      0.49824,
+      0.10282,
+      -0.05439
+    ],
+    "radius_m": 0.02595,
+    "top_height_m": 0.00885,
+    "bottom_height_m": -0.0932,
+    "height_m": 0.10205,
+    "points": 10975,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 356.5
+  },
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm."
+}

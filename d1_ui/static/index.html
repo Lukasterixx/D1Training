@@ -9,10 +9,27 @@
 <body>
 <div id="view"></div>
 
+<div id="camwin" class="camwin">
+  <div class="camwin-bar" id="cambar">
+    <b>Wrist camera</b>
+    <span class="camwin-src" id="camsrc">–</span>
+    <span class="camwin-fps" id="camfps"></span>
+    <button id="camtoggle" class="camwin-btn" title="Hide or show the image">–</button>
+  </div>
+  <div class="camwin-body" id="cambody">
+    <img id="camimg" alt="wrist camera with YOLO boxes">
+    <div id="cammsg" class="camwin-msg">connecting…</div>
+  </div>
+  <div class="camwin-foot" id="camdet">–</div>
+</div>
+
 <aside id="panel">
   <header>
     <h1>D1 reach console</h1>
-    <div id="conn" class="pill">connecting…</div>
+    <div class="pills">
+      <div id="mode" class="pill" title="">–</div>
+      <div id="conn" class="pill">connecting…</div>
+    </div>
   </header>
 
   <section class="arm-switch" id="armbox">
@@ -26,6 +43,7 @@
     <div class="row"><span>enable</span><b id="enable">–</b></div>
     <div class="row"><span>error</span><b id="error">–</b></div>
     <div class="row"><span>feedback age</span><b id="age">–</b></div>
+    <div class="row sim-only"><span>simulator</span><b id="simstate">–</b></div>
     <div class="row"><span>Go2 legs</span><b id="legs">nominal</b></div>
     <div class="row"><span>state</span><b id="busy">idle</b></div>
   </section>

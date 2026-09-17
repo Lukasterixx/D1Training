@@ -1,0 +1,54 @@
+{
+  "id": "20260917T043529_517682Z_playback_arm_+1.0_+0.0_+0.0",
+  "title": "Teleop self-test 10 s with the console's sim feed",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-17T14:36:55+10:00",
+  "started_utc": "2026-09-17T04:35:29+00:00",
+  "source_dir": "logs/playback/20260917T043529_517682Z_playback_arm_+1.0_+0.0_+0.0",
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "error": null,
+  "num_envs": 1,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "78eb55da755df208991e3e063440a3e8385487c7",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "run.json",
+    "selftest.json"
+  ],
+  "smoke_summary": {
+    "command": {
+      "count": 3,
+      "mean": 0.3333333333333333,
+      "min": 0.0,
+      "median": 0.0,
+      "max": 1.0
+    },
+    "duration_s": 10.0,
+    "settle_s": 1.0,
+    "mean_base_velocity.vx_m_s": 0.9536524233352505,
+    "mean_base_velocity.vy_m_s": 0.049367817382419354,
+    "mean_base_velocity.wz_rad_s": 0.05050818610517215,
+    "tracking_pct.vx": 95.36524233352505,
+    "travelled_xy_m": {
+      "count": 2,
+      "mean": 5.867596983909607,
+      "min": 2.6944034099578857,
+      "median": 9.040790557861328,
+      "max": 9.040790557861328
+    },
+    "planar_speed_m_s": 0.9433753013610839,
+    "min_base_height_m": 0.33007270097732544,
+    "max_tilt_deg": 7.148937858402917,
+    "fell": false,
+    "arm_ee_error_m": 0.0360569130836648,
+    "gripper_measured_mm": 59.70919132232666
+  }
+}

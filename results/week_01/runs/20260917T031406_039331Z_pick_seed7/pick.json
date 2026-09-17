@@ -1,0 +1,106 @@
+{
+  "success": true,
+  "criterion": "sequence finished, cup base raised >= 5 cm, cup axis within 3 cm of the jaw centre",
+  "final_state": "done",
+  "failure": null,
+  "sim_time_s": 12.3,
+  "wall_time_s": 28.0,
+  "cup_lift_m": 0.1197,
+  "cup_axis_to_jaw_centre_m": 0.0107,
+  "cup_tilt_deg_end": 1.42,
+  "base_height_m": 0.0844,
+  "first_look_errors_mm": [
+    {
+      "horizontal": 2.99,
+      "height": -7.25,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 3.0,
+      "height": -7.22,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 3.03,
+      "height": -7.23,
+      "method": "rim_circle"
+    }
+  ],
+  "refine_errors_mm": [
+    {
+      "horizontal": 2.46,
+      "height": -7.43,
+      "method": "rim_circle"
+    }
+  ],
+  "frames_looked_at": 4,
+  "frames_with_cup_detection": 4,
+  "grasp_plan": {
+    "heading_b": [
+      0.9911,
+      0.0678,
+      -0.1143
+    ],
+    "tilt_deg": 10.0,
+    "jaw_pregrasp_b": [
+      0.4254,
+      0.0284,
+      0.1228
+    ],
+    "jaw_grasp_b": [
+      0.4361,
+      0.0305,
+      -0.0568
+    ],
+    "jaw_lift_b": [
+      0.4499,
+      0.0305,
+      0.0624
+    ],
+    "q_pregrasp": [
+      0.0661,
+      0.9402,
+      -0.5403,
+      0.0088,
+      1.1109,
+      0.0047
+    ],
+    "approach_waypoints": 2,
+    "descend_waypoints": 1,
+    "lift_waypoints": 4,
+    "notes": [
+      "direct move to the pregrasp crosses the proxy; backing 8 cm up out of the start pose"
+    ]
+  },
+  "cup_estimate_used": {
+    "top_centre_b": [
+      0.44131,
+      0.03074,
+      -0.04204
+    ],
+    "radius_m": 0.02581,
+    "top_height_m": 0.0088,
+    "bottom_height_m": -0.09252,
+    "height_m": 0.10132,
+    "points": 10044,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 228.4
+  },
+  "first_cup_estimate": {
+    "top_centre_b": [
+      0.44131,
+      0.03074,
+      -0.04204
+    ],
+    "radius_m": 0.02581,
+    "top_height_m": 0.0088,
+    "bottom_height_m": -0.09252,
+    "height_m": 0.10132,
+    "points": 10044,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 228.4
+  },
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm."
+}

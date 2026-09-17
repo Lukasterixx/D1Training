@@ -1,0 +1,30 @@
+{
+  "id": "20260917T035109_270640Z_pick_seed42",
+  "title": "Cup pick episodes: reset failed before episode 1 (inference-mode tensors)",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-17T13:59:48+10:00",
+  "started_utc": "2026-09-17T03:51:09+00:00",
+  "source_dir": "logs/pick_demo/20260917T035109_270640Z_pick_seed42",
+  "mode": "pick",
+  "seed": 42,
+  "status": "failed",
+  "error": "RuntimeError: Inplace update to inference tensor outside InferenceMode is not allowed.You can make a clone to get a normal tensor before doing inplace update.See https://github.com/pytorch/rfcs/pull/17 for more details.",
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "78eb55da755df208991e3e063440a3e8385487c7",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "env.yaml",
+    "episodes.csv",
+    "events.json",
+    "pick.json",
+    "run.json",
+    "trace.csv"
+  ]
+}

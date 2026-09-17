@@ -12,6 +12,14 @@
  * uses, and tests/test_d1_ui.py checks the two agree, since a browser cannot
  * run in the test suite. The small red sphere is the server's FK of the tool
  * point: if it sits on the pincer tip, the page and the solver agree live.
+ *
+ * Sim or hardware. The server decides at start-up and says which in every state
+ * message. In sim mode the joints, fingers and legs come from the simulator, and
+ * the arm controls are disabled here as well as refused by the server.
+ *
+ * Camera window. `/camera.mjpg` is the wrist camera with YOLO's boxes already
+ * drawn on by the server, so a box is always on the frame it was detected in.
+ * Whether to show it, and what was detected, comes with the state.
  */
 (() => {
   'use strict';
@@ -19,6 +27,12 @@
 
   const $ = (id) => document.getElementById(id);
   const fmt = (v, d = 3) => (v === null || v === undefined || Number.isNaN(v)) ? '–' : Number(v).toFixed(d);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // Per-viewer layout only (where the camera window sits); the page works without it.
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private window */ } },
+  };
 
   // ------------------------------------------------------------ renderer
   const view = $('view');
@@ -190,8 +204,9 @@
       pv.className = 'preview ok';
       const att = `pitch ${fmt(r.elevation_deg, 1)}° roll ${fmt(r.roll_deg, 1)}°` +
                   (r.level_requested ? (r.level_ok ? ' — level' : ' — NOT level') : '');
-      pv.textContent = `IK ok: ${r.position_error_mm} mm in ${r.iterations} it\njoints ${r.servo_deg.map((v) => fmt(v, 1)).join(', ')}\nlargest move ${fmt(Math.max(...r.delta_deg.map(Math.abs)), 1)}°\n${att}`;
-      $('send').disabled = false;
+      pv.textContent = `IK ok: ${r.position_error_mm} mm in ${r.iterations} it\njoints ${r.servo_deg.map((v) => fmt(v, 1)).join(', ')}\nlargest move ${fmt(Math.max(...r.delta_deg.map(Math.abs)), 1)}°\n${att}` +
+                       (mode === 'sim' ? '\n(sim mode: preview only)' : '');
+      $('send').disabled = mode === 'sim';
     } else {
       pv.className = 'preview bad';
       pv.textContent = `refused: ${r.reason}`;
@@ -235,36 +250,132 @@
     await post('/arm', { live: e.target.checked });
   };
 
+  // ------------------------------------------------------------ sim or hardware
+  let mode = null;
+  function applyMode(s) {
+    if (s.mode === mode) return;
+    mode = s.mode;
+    const sim = mode === 'sim';
+    document.body.classList.toggle('sim', sim);
+    $('mode').textContent = sim ? 'SIM' : 'HARDWARE';
+    $('mode').className = 'pill ' + (sim ? 'sim' : 'hw');
+    $('mode').title = s.mode_reason || '';
+    $('live').disabled = sim;
+    for (const id of ['stop', 'park', 'release']) $(id).disabled = sim;
+    if (sim) $('send').disabled = true;
+  }
+
+  // ------------------------------------------------------------ camera window
+  const cam = { win: $('camwin'), img: $('camimg'), msg: $('cammsg'), streaming: false };
+  (function restoreCamWin() {
+    const saved = store.get('d1ui.camwin');
+    if (!saved) return;
+    if (Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+      cam.win.style.left = Math.min(Math.max(0, saved.left), window.innerWidth - 80) + 'px';
+      cam.win.style.top = Math.min(Math.max(0, saved.top), window.innerHeight - 30) + 'px';
+    }
+    if (Number.isFinite(saved.width)) cam.win.style.width = saved.width + 'px';
+    cam.win.classList.toggle('collapsed', !!saved.collapsed);
+    $('camtoggle').textContent = saved.collapsed ? '+' : '–';
+  })();
+  function saveCamWin() {
+    const r = cam.win.getBoundingClientRect();
+    store.set('d1ui.camwin', { left: r.left, top: r.top, width: r.width, collapsed: cam.win.classList.contains('collapsed') });
+  }
+  (function dragByBar() {
+    const bar = $('cambar');
+    let start = null;
+    bar.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button')) return;
+      const r = cam.win.getBoundingClientRect();
+      start = { x: e.clientX, y: e.clientY, left: r.left, top: r.top };
+      bar.setPointerCapture(e.pointerId);
+    });
+    bar.addEventListener('pointermove', (e) => {
+      if (!start) return;
+      cam.win.style.left = Math.max(0, Math.min(window.innerWidth - 80, start.left + e.clientX - start.x)) + 'px';
+      cam.win.style.top = Math.max(0, Math.min(window.innerHeight - 30, start.top + e.clientY - start.y)) + 'px';
+    });
+    bar.addEventListener('pointerup', () => { if (start) { start = null; saveCamWin(); } });
+  })();
+  let resizeTimer = null;
+  new ResizeObserver(() => { clearTimeout(resizeTimer); resizeTimer = setTimeout(saveCamWin, 300); }).observe(cam.win);
+  $('camtoggle').onclick = () => {
+    const collapsed = cam.win.classList.toggle('collapsed');
+    $('camtoggle').textContent = collapsed ? '+' : '–';
+    saveCamWin();
+  };
+
+  function applyCamera(c, sim) {
+    if (!c) return;
+    const fresh = !!c.available && c.frame_age_s !== null && c.frame_age_s !== undefined && c.frame_age_s < 2.5;
+    if (fresh && !cam.streaming) { cam.streaming = true; cam.img.src = '/camera.mjpg?t=' + Date.now(); }
+    cam.img.classList.toggle('on', fresh);
+    cam.msg.style.display = fresh ? 'none' : 'flex';
+    if (!fresh) cam.msg.textContent = c.message || (sim ? 'waiting for the simulator\'s camera' : 'no camera');
+    $('camsrc').textContent = c.source || '–';
+    $('camsrc').title = c.source || '';
+    $('camfps').textContent = fresh && c.fps ? `${fmt(c.fps, 0)} fps` : '';
+    const foot = $('camdet');
+    foot.title = c.detector ? `detector: ${c.detector}` : '';
+    if (!c.detector_ready) {
+      foot.textContent = c.detector ? `YOLO ${c.detector}` : 'no detector';
+    } else {
+      const dets = c.detections || [];
+      foot.innerHTML = (dets.length
+        ? dets.map((d) => `<span class="hit">${esc(d.label)} ${fmt(d.confidence, 2)}</span>`).join(' · ')
+        : `YOLO: no ${esc((c.targets || ['objects']).join('/'))} detected`) +
+        (c.detect_ms !== null && c.detect_ms !== undefined ? ` · YOLO ${fmt(c.detect_ms, 0)} ms` : '');
+    }
+  }
+
   // ------------------------------------------------------------ live state
   function applyState(s) {
-    $('conn').textContent = s.connected ? 'live feedback' : 'no feedback';
+    applyMode(s);
+    const sim = s.mode === 'sim';
+    $('conn').textContent = s.connected ? (sim ? 'sim feed' : 'live feedback')
+      : (sim ? (s.servo_deg ? 'sim not updating' : 'waiting for sim') : 'no feedback');
     $('conn').className = 'pill ' + (s.connected ? 'ok' : 'bad');
     $('power').textContent = s.power === null ? '–' : (s.power ? 'on' : 'off');
     $('enable').textContent = s.enable === null ? '–' : (s.enable ? 'holding' : 'released');
     $('error').textContent = s.error === null ? '–' : String(s.error);
-    $('age').textContent = fmt(s.feedback_age_s, 2) + ' s';
-    $('legs').textContent = s.legs_live ? 'live' : 'nominal (no rt/lowstate)';
+    $('age').textContent = s.feedback_age_s === null ? '–' : fmt(s.feedback_age_s, 2) + ' s';
+    $('legs').textContent = s.legs_live ? (sim ? 'from the sim' : 'live')
+                                        : (sim ? 'nominal (the sim sends none)' : 'nominal (no rt/lowstate)');
+    if (sim) {
+      const m = s.sim || {};
+      $('simstate').textContent = m.source ? `${m.source} · ${fmt(m.sim_time_s, 1)} s${m.status ? ' · ' + m.status : ''}` : '–';
+    }
     $('busy').textContent = s.busy ? `${s.busy}${s.progress ? ` · step ${s.progress.step} · ${s.progress.error_mm} mm` : ''}` : 'idle';
-    $('grip').textContent = fmt(s.gripper_units, 1) + ' units';
-    $('tool').textContent = `[${s.tool_m.map((v) => fmt(v)).join(', ')}]`;
+    $('grip').textContent = s.finger_m ? `fingers ${fmt(1000 * s.finger_m[0], 1)} / ${fmt(1000 * s.finger_m[1], 1)} mm`
+                                       : (s.gripper_units === null ? '–' : fmt(s.gripper_units, 1) + ' units');
+    $('tool').textContent = s.tool_m ? `[${s.tool_m.map((v) => fmt(v)).join(', ')}]` : '–';
     $('live').checked = !!s.live;
     $('armbox').classList.toggle('live', !!s.live);
-    $('livehint').textContent = s.live ? 'LIVE: commands go to the arm' : 'dry run: clicks and buttons rehearse only';
+    $('livehint').textContent = sim ? 'SIM: the page follows the simulator; nothing is sent to any arm'
+      : (s.live ? 'LIVE: commands go to the arm' : 'dry run: clicks and buttons rehearse only');
     if (s.last_result) $('result').textContent = JSON.stringify(s.last_result);
     if (s.log) $('log').textContent = s.log.join('\n');
+    applyCamera(s.camera, sim);
 
     const tbl = $('joints');
-    tbl.innerHTML = s.servo_deg.map((v, i) =>
-      `<tr><td>J${i}</td><td>${fmt(v, 1)}</td><td>${fmt(s.q_rad[i] * 180 / Math.PI, 1)}</td></tr>`).join('');
+    tbl.innerHTML = [0, 1, 2, 3, 4, 5].map((i) =>
+      `<tr><td>J${i}</td><td>${fmt(s.servo_deg && s.servo_deg[i], 1)}</td><td>${fmt(s.q_rad && s.q_rad[i] * 180 / Math.PI, 1)}</td></tr>`).join('');
 
     if (model) {
-      model.d1.arm_joints.forEach((name, i) => setRevolute(name, s.q_rad[i]));
-      // Servo 6 is 0..~65 units, closed..open; the stroke-to-units mapping is unverified,
-      // so the fingers are a proportional guess for the picture only.
-      const d = Math.max(0, Math.min(1, s.gripper_units / 65)) * model.d1.gripper_stroke_m;
-      setPrismatic('Joint7_1', d); setPrismatic('Joint7_2', -d);
+      if (s.q_rad) model.d1.arm_joints.forEach((name, i) => setRevolute(name, s.q_rad[i]));
+      if (s.finger_m) {
+        // The simulator's finger joints, in metres along their URDF axes.
+        setPrismatic('Joint7_1', s.finger_m[0]); setPrismatic('Joint7_2', s.finger_m[1]);
+      } else if (s.gripper_units !== null) {
+        // Servo 6 is 0..~65 units, closed..open; the stroke-to-units mapping is unverified,
+        // so the fingers are a proportional guess for the picture only.
+        const d = Math.max(0, Math.min(1, s.gripper_units / 65)) * model.d1.gripper_stroke_m;
+        setPrismatic('Joint7_1', d); setPrismatic('Joint7_2', -d);
+      }
       if (s.go2_q_rad) model.go2.motor_order.forEach((name, i) => setRevolute(name, s.go2_q_rad[i]));
-      toolMarker.position.fromArray(s.tool_m);
+      if (s.base_height_m !== null && s.base_height_m !== undefined) grid.position.z = -s.base_height_m;
+      if (s.tool_m) toolMarker.position.fromArray(s.tool_m);
       if (candMarker.visible) candLine.geometry.setFromPoints([toolMarker.position.clone(), candMarker.position.clone()]);
     }
   }
@@ -272,7 +383,10 @@
   function connectEvents() {
     const es = new EventSource('/events');
     es.onmessage = (ev) => { try { applyState(JSON.parse(ev.data)); } catch (e) { console.warn(e); } };
-    es.onerror = () => { $('conn').textContent = 'reconnecting…'; $('conn').className = 'pill bad'; };
+    es.onerror = () => {
+      $('conn').textContent = 'reconnecting…'; $('conn').className = 'pill bad';
+      cam.streaming = false;   // the server may have restarted; reopen the stream with the next state
+    };
   }
 
   // ------------------------------------------------------------ boot

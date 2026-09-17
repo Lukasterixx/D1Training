@@ -4,10 +4,54 @@ A browser page that draws the Go2 and the D1 from their URDFs, moves the joints
 live from the arm's own feedback, and turns a click on a sphere around the arm
 into a Cartesian target for the real hardware.
 
-## Launching it
+## Sim or hardware
+
+The console works out which one it is looking at before anything else:
+
+1. **A simulator is publishing on this PC** (`./run_pick_demo.sh` or `./run_sim.sh`; both start the feed in
+   `d1_ui/sim_feed.py` on localhost:8765). This is **sim mode**: the page draws the simulator's arm, fingers
+   and legs, and the camera window shows the rendered wrist RealSense. SEND, PARK, RELEASE and LIVE are
+   disabled on the page and refused by the server; clicking the sphere still previews the IK.
+2. **Otherwise, on the dog** (the arm's NIC `enP8p1s0` exists): **hardware mode**, everything below.
+3. Neither: sim mode, waiting for a simulator to start.
+
+The header shows **SIM** or **HARDWARE**; hover over it to see why.
 
 ```bash
-./run_ui.sh              # deploy to the dog, start, print the URL
+./run_pick_demo.sh       # terminal 1: the simulator (its feed starts with it)
+./run_ui.sh              # terminal 2: sees the simulator, serves here in sim mode
+                         # open http://localhost:8090; Ctrl-C stops the console, not the simulator
+./run_ui.sh sim          # sim mode here even before a simulator is up (it waits)
+./run_ui.sh robot        # deploy to the dog even though a simulator is running here
+```
+
+Sim mode runs in `env_isaaclab` (numpy, torch, ultralytics, OpenCV) without starting Isaac. The simulator
+only copies joints and frames while a console is reading. Close the simulator and start another, and the
+console picks the new one up.
+
+## The camera window
+
+A floating window over the 3D view (drag its bar, resize from the corner, `–` hides the image; where you
+leave it is remembered in this browser). It shows the wrist camera with YOLO's boxes and mask outlines
+**drawn onto the frame they were detected in** by the server, streamed as MJPEG from `/camera.mjpg`
+(`/camera.jpg` is one frame). The footer lists the detections and YOLO's time per frame.
+
+- Source: the simulator's rendered wrist camera in sim mode; on the dog, the first RealSense pyrealsense2
+  finds (colour, 640x480 at 30 fps).
+- Detector: the pick demo's stock `generated/yolo/yolo11s-seg.pt`, on the GPU when there is one. Only
+  cups are boxed by default: `--detect cup,bottle`, `--detect all`, or `--detect none` for frames only.
+  `--camera none` turns the window off; `--camera-fps` caps the rate (15).
+- It degrades rather than fails, and says why in the window: no pyrealsense2 or no camera, no frames; no
+  ultralytics, frames without boxes.
+
+**Not yet run on the dog.** The RealSense source is written to librealsense's documented API and has never
+opened a camera. Whether pyrealsense2, ultralytics and torch are installed on the Jetson is unknown.
+`run_ui.sh` deploys `pick_demo/` and the weights (21 MB, copied once) for it.
+
+## Launching it on the dog
+
+```bash
+./run_ui.sh              # deploy to the dog, start, print the URL (if no simulator is running here)
 ./run_ui.sh status       # is it up, what does it see, is it LIVE
 ./run_ui.sh stop         # stop the server (the arm is not touched)
 ./run_ui.sh restart      # stop, re-deploy, start

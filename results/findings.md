@@ -1439,3 +1439,93 @@ result that changes a conclusion gets a new entry, and the old one is marked
   the body bobbing 2–3 cm at about 2 Hz, the body-versus-arm pattern of F-019, F-042 and F-043 once more, now
   vertical: a ±1.5 cm bob at 2 Hz costs roughly 0.01 per step between `base_height` and `base_motion`, against about
   3.0 for reaching. The faster tip ripple sits near the 10 Hz command rate.
+
+### F-049 — From a lying Go2 the D1 can pick a floor-standing cup only from above, and a scripted YOLO, depth and IK pick lifts one in simulation wherever that grasp is reachable
+
+- **Status:** provisional
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [Week 1 log, 2026-09-17](week_01/notes.md).
+  CPU model, 300,000 configurations inside the soft limits: no grasp with the approach within 15° of horizontal puts
+  the jaw centre within 8 cm of the floor at any base height from 0.12 to 0.27 m. Pointing down, IK finds grasp,
+  pregrasp and a clear path for a 10–12 cm cup 35–45 cm ahead of the base at base heights 0.10–0.14 m. In Isaac Sim
+  the robot lies at 8.5 cm, 7.3° nose-up, with Unitree's lie-down leg targets. The pick runs stock `yolo11s-seg`
+  (COCO, no fine-tuning) on a wrist camera with the D435 preset, a rim-circle fit through forward kinematics of the
+  9 Hz feedback angles, a top-down grasp from `d1_ik`, and the task's own arm interface (10 Hz setpoints, F-045
+  planner). On one code version it lifted a 55 × 100 mm mug 11.8–11.9 cm in **8 of 9** configurations: three cup
+  positions, 45° handle, seed 7, D405 preset, measured mount, and a marginal far position. The cup ended 3–8 mm from
+  the jaw centre. The failure was the handle turned 90°, lying across the jaw axis, which blocked the descent. From
+  a 40 cm look YOLO detected the cup in every frame (confidence 0.95); estimates were 2.8–4.2 mm off horizontally
+  and 6.4–7.5 mm low (F-052).
+- **Scope:** simulation only: ideal rendering, one untextured white mug on a plain floor, one lighting, best-case
+  depth noise, a solid collider, the URDF's CAD gripper with independent finger drives (F-051) and an assumed camera
+  mount. Nine runs, one per configuration. The lying posture is Unitree's example target, not the real robot's
+  measured StandDown.
+- **Implication:** a demonstration is geometrically plausible if the cup is about 55 mm wide (open jaws 77 mm in the
+  CAD) and about 10 cm tall, stands 35–45 cm ahead of the base centre, and has its handle turned away from or towards
+  the robot. The handle's direction is not perceived, so the operator must place it. The wrist camera must look from
+  at least 18 cm on a D435i, with its targets kept above the gripper in the image. Nothing here is evidence for the
+  hardware pick. It depends first on the unvalidated joint zero (F-023), a hand-eye calibration of the real bracket,
+  and the real gripper's coupling, force and timing.
+
+### F-050 — The trunk/ground clearance proxy assumes a level base: under the lying robot's 7° pitch it put the floor 5–6 cm too high where the cup stood, and a nose-down pitch would put it too low
+
+- **Status:** confirmed (in the proxy; the pitch is the simulated lying posture)
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [Week 1 log, 2026-09-17](week_01/notes.md). `workspace.clear_of_body`, and through it
+  `d1_ik.path_clearance`, test the ground as z > −base_height in the base frame. Lying at 8.5 cm with 7.3° nose-up
+  pitch, the first pick ([run](#/week/1/run/20260917T024745_428318Z_pick_seed42)) rejected every grasp of a cup
+  whose rim was 10 cm above the real floor: 44 cm ahead that plane sits about 5.6 cm above the floor. The same
+  chain tested against the floor plane along gravity (`pick_demo.grasp.arm_clear`) accepted the plan, and the next
+  run executed it without floor contact ([run](#/week/1/run/20260917T024959_791290Z_pick_seed42)).
+  `tests/test_pick_demo.py` holds a case the level proxy rejects and the gravity test accepts.
+- **Scope:** the tilt is simulated; the real robot's sitting or lying pitch has not been measured. The proxy itself
+  is unchanged.
+- **Implication:** with the base nose-up the proxy refuses reachable poses near the floor ahead. Nose-down it
+  **accepts poses that reach into the floor ahead**, which is the unsafe direction. The hardware mover and the
+  browser console use the level proxy with a fixed 0.15 m base height for a sitting robot. Before either trusts
+  ground clearance near the floor, measure the base attitude, or pass gravity the way `arm_clear` does.
+
+### F-051 — The URDF gripper's two independent finger drives do not centre what they grasp: closed fully, one finger pushed the cup 11 mm and drove the other to its open stop
+
+- **Status:** confirmed (simulation, one cup)
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [Week 1 log, 2026-09-17](week_01/notes.md). The fingers are two prismatic joints with separate
+  implicit drives (4000 N/m) capped at the URDF's 15 N.
+  - **Commanded fully closed** ([run](#/week/1/run/20260917T025256_661501Z_pick_seed42)): both fingers closed
+    together to about 21 mm of travel. Then finger 1 went on to 6.8 mm while finger 2 was driven back to its −30 mm
+    open stop, and the cup moved 11 mm along the jaw axis, ending 12 mm from the jaw centre. Two equal forces at
+    their cap hold an object but exert nothing to centre it.
+  - **Commanded to 4 mm under the measured diameter** ([run](#/week/1/run/20260917T025517_631413Z_pick_seed42)):
+    fingers settled at 16.7 and 20.9 mm and the cup ended 3.8 mm from the jaw centre. Every final-set success used
+    this.
+- **Scope:** one 55 mm cylinder collider, one friction pair; the grip force was not measured.
+- **Implication:** simulated grasps in this repo must command a width, not "close". The real D1 drives both fingers
+  from one servo, a coupling the model lacks; a PhysX mimic joint would add it. Grip force and closing speed on the
+  hardware are unmeasured, so no grip result transfers yet.
+
+### F-052 — The rendered wrist camera sits 11 mm and 1.1° from the pose its authored offset and forward kinematics give it, constant in the Link6 frame, which biased simulated cup estimates by about 3 mm across and 7 mm in height
+
+- **Status:** confirmed (measured); cause unexplained
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [Week 1 log, 2026-09-17](week_01/notes.md).
+  - **Everything upstream checks out.** The camera prim's local transform is authored as requested:
+    (−0.055, 0, 0.035) m, 20° pitch. Isaac Lab reports intrinsics identical to the D435 preset (fx 616.18,
+    principal point 320, 240). Forward kinematics of the simulator's joint angles match PhysX's Link6 pose to 0.0 mm.
+  - **The reported camera pose does not.** It sits at (−48.8, −0.9, 26.2) mm in the Link6 frame, rotated 1.1°, the
+    same at the look pose and the pregrasp pose ([run](#/week/1/run/20260917T030530_523746Z_pick_seed42)).
+  - **The image is rendered from that pose.** Using it as the mount
+    ([run](#/week/1/run/20260917T032602_826979Z_pick_seed42)) takes the first-look error from 2.9 / −7.3 mm to
+    1.4 / +0.3 mm, and the re-look from 2.3 / −7.5 mm to 0.05 / +0.2 mm.
+  - **Not the inertia frame.** A diagnostic with Link6's principal axes overridden to identity left the offset
+    unchanged to 0.01 mm.
+- **Scope:** Link6 of this welded asset only; other links and whether Link6's visual meshes share the offset were
+  not checked.
+- **Implication:** simulated perception from an arm-mounted camera here carries a fixed extrinsic error that the
+  authored offset does not reveal. The real camera needs a hand-eye calibration anyway; in simulation, measure the
+  mount from the render (`--mount_calibration sim`) before quoting camera accuracy. Any G4 camera-frame check done in
+  simulation must not assume the authored offset. Isolate the cause before simulated camera numbers are used as
+  evidence.

@@ -100,6 +100,16 @@ def _start_ros2(env, args_cli):
     return ros2.Ros2Bridge(env, args_cli.num_envs, lidar_debug=args_cli.lidar_debug)
 
 
+def _start_ui_feed(args_cli):
+    """Publish the joints for the reach console's sim mode (`./run_ui.sh`). A taken port only warns."""
+    if not args_cli.ui_feed_port:
+        return None
+    from d1_ui.sim_feed import SimFeed
+
+    feed = SimFeed("teleop", camera=False, port=args_cli.ui_feed_port)
+    return feed if feed.active else None
+
+
 # ===================== Keyboard Handling =====================
 # Identical to Rescue, minus T -- that resets Rescue's odom origin onto the
 # robot, and odom here is just the sim's world frame, with nothing to re-anchor:
@@ -535,6 +545,7 @@ def run(args_cli, simulation_app):
     obs = env.get_observations()
 
     bridge = None if args_cli.no_ros2 else _start_ros2(env, args_cli)
+    feed = _start_ui_feed(args_cli)
 
     controller = None
     kin = None
@@ -597,6 +608,11 @@ def run(args_cli, simulation_app):
 
             if bridge is not None:
                 bridge.publish()
+            if feed is not None and feed.wants_state():
+                feed.publish_joints(robot.joint_names, robot.data.joint_pos[0].cpu().numpy(),
+                                    sim_time_s=env.unwrapped.common_step_counter * sim_dt,
+                                    base_height_m=float(robot.data.root_pos_w[0, 2]
+                                                        - env.unwrapped.scene.env_origins[0, 2]))
 
             if selftest is not None and not selftest.step(robot, sim_dt):
                 break
@@ -608,4 +624,6 @@ def run(args_cli, simulation_app):
         _input.unsubscribe_to_keyboard_events(_keyboard, _sub_keyboard)
     if bridge is not None:
         bridge.shutdown()
+    if feed is not None:
+        feed.close()
     env.close()

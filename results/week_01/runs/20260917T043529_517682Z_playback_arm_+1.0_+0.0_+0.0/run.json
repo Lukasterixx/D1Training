@@ -1,0 +1,26 @@
+{
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "arguments": {
+    "num_envs": 1,
+    "selftest": 10.0,
+    "selftest_command": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "no_arm": false,
+    "arm_mass": 3.152
+  },
+  "git_commit": "78eb55da755df208991e3e063440a3e8385487c7",
+  "git_status": "M .gitignore\n M README.md\n M d1_ui/server.py\n M d1_ui/static/app.js\n M d1_ui/static/index.html\n M d1_ui/static/style.css\n M main.py\n M results/config.json\n M results/findings.md\n M results/week_01/notes.md\n M run_ui.sh\n M sim.py\n M tests/test_d1_ui.py\n?? d1_ui/camera_feed.py\n?? d1_ui/sim_feed.py\n?? logs/d1_ui/\n?? pick_demo/\n?? results/week_01/figures/pick_demo_sim.png\n?? results/week_01/runs/20260917T024745_428318Z_pick_seed42/\n?? results/week_01/runs/20260917T024959_791290Z_pick_seed42/\n?? results/week_01/runs/20260917T025256_661501Z_pick_seed42/\n?? results/week_01/runs/20260917T025517_631413Z_pick_seed42/\n?? results/week_01/runs/20260917T025620_184698Z_pick_seed42/\n?? results/week_01/runs/20260917T025709_583644Z_pick_seed42/\n?? results/week_01/runs/20260917T025738_577089Z_pick_seed42/\n?? results/week_01/runs/20260917T025813_331780Z_pick_seed42/\n?? results/week_01/runs/20260917T025853_553586Z_pick_seed7/\n?? results/week_01/runs/20260917T030037_588865Z_pick_seed42/\n?? results/week_01/runs/20260917T030116_775933Z_pick_seed42/\n?? results/week_01/runs/20260917T030139_530312Z_pick_seed42/\n?? results/week_01/runs/20260917T030202_259461Z_pick_seed42/\n?? results/week_01/runs/20260917T030313_712260Z_pick_seed42/\n?? results/week_01/runs/20260917T030351_634634Z_pick_seed42/\n?? results/week_01/runs/20260917T030530_523746Z_pick_seed42/\n?? results/week_01/runs/20260917T031040_040502Z_pick_seed42/\n?? results/week_01/runs/20260917T031321_560469Z_pick_seed42/\n?? results/week_01/runs/20260917T031406_039331Z_pick_seed7/\n?? results/week_01/runs/20260917T031449_858944Z_pick_seed42/\n?? results/week_01/runs/20260917T031532_871146Z_pick_seed42/\n?? results/week_01/runs/20260917T031614_580451Z_pick_seed42/\n?? results/week_01/runs/20260917T031953_563859Z_pick_seed42/\n?? results/week_01/runs/20260917T032038_913154Z_pick_seed42/\n?? results/week_01/runs/20260917T032122_471038Z_pick_seed42/\n?? results/week_01/runs/20260917T032205_838793Z_pick_seed42/\n?? results/week_01/runs/20260917T032252_138343Z_pick_seed7/\n?? results/week_01/runs/20260917T032337_691305Z_pick_seed42/\n?? results/week_01/runs/20260917T032422_853288Z_pick_seed42/\n?? results/week_01/runs/20260917T032502_338994Z_pick_seed42/\n?? results/week_01/runs/20260917T032602_826979Z_pick_seed42/\n?? results/week_01/runs/20260917T034542_706385Z_pick_seed42/\n?? results/week_01/runs/20260917T035109_270640Z_pick_seed42/\n?? results/week_01/runs/20260917T035240_481110Z_pick_seed42/\n?? results/week_01/runs/20260917T035921_596731Z_pick_seed42/\n?? results/week_01/runs/20260917T041222_229724Z_pick_seed42/\n?? run_pick_demo.py\n?? run_pick_demo.sh\n?? tests/test_pick_demo.py",
+  "articulation_mass_kg": 18.17099952697754,
+  "policy": {
+    "checkpoint": "/home/lukas/D1Training/logs/rsl_rl/unitree_go2_rough/2024-04-06_02-37-07/model_7850.pt",
+    "sha256": "7e684601ac6a0906954fcd5a84153a1bbc13f5a24ee9af7ef556eb3f4f5abef4",
+    "actions": "12 legs",
+    "legs": "DCMotor"
+  },
+  "arm_drives": "URDF import (acceleration)"
+}

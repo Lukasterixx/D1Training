@@ -1,0 +1,95 @@
+{
+  "success": true,
+  "criterion": "sequence finished, cup base raised >= 5 cm, cup axis within 3 cm of the jaw centre",
+  "final_state": "done",
+  "failure": null,
+  "sim_time_s": 12.6,
+  "wall_time_s": 24.3,
+  "cup_lift_m": 0.1189,
+  "cup_axis_to_jaw_centre_m": 0.0045,
+  "cup_tilt_deg_end": 0.81,
+  "base_height_m": 0.0851,
+  "first_look_errors_mm": [
+    {
+      "horizontal": 2.9,
+      "height": -7.31,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 2.89,
+      "height": -7.31,
+      "method": "rim_circle"
+    }
+  ],
+  "refine_errors_mm": [],
+  "frames_looked_at": 4,
+  "frames_with_cup_detection": 4,
+  "grasp_plan": {
+    "heading_b": [
+      0.9897,
+      0.0678,
+      -0.1263
+    ],
+    "tilt_deg": 10.0,
+    "jaw_pregrasp_b": [
+      0.4246,
+      0.0283,
+      0.1171
+    ],
+    "jaw_grasp_b": [
+      0.4331,
+      0.0304,
+      -0.0627
+    ],
+    "jaw_lift_b": [
+      0.4483,
+      0.0304,
+      0.0564
+    ],
+    "q_pregrasp": [
+      0.0657,
+      0.9528,
+      -0.5386,
+      0.0096,
+      1.1088,
+      0.0054
+    ],
+    "approach_waypoints": 2,
+    "descend_waypoints": 16,
+    "lift_waypoints": 4,
+    "notes": [
+      "direct move to the pregrasp crosses the proxy; backing 8 cm up out of the start pose"
+    ]
+  },
+  "cup_estimate_used": {
+    "top_centre_b": [
+      0.43845,
+      0.03065,
+      -0.04791
+    ],
+    "radius_m": 0.02577,
+    "top_height_m": 0.00799,
+    "bottom_height_m": -0.0933,
+    "height_m": 0.10129,
+    "points": 10259,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 235.6
+  },
+  "first_cup_estimate": {
+    "top_centre_b": [
+      0.43845,
+      0.03065,
+      -0.04791
+    ],
+    "radius_m": 0.02577,
+    "top_height_m": 0.00799,
+    "bottom_height_m": -0.0933,
+    "height_m": 0.10129,
+    "points": 10259,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 235.6
+  },
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm."
+}

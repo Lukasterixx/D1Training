@@ -1,0 +1,236 @@
+{
+  "events": [
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "settled",
+      "base_height_m": 0.0851,
+      "tilt_deg": 7.28
+    },
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "viewpoint",
+      "q": [
+        0.0071,
+        0.1259,
+        0.9415,
+        0.0279,
+        -0.155,
+        0.022
+      ],
+      "look_at_b": [
+        0.4025,
+        -0.0,
+        -0.1372
+      ],
+      "camera_pos_b": [
+        0.2807,
+        0.0,
+        0.2438
+      ],
+      "distance_m": 0.4,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 0.5,
+      "state": "moving",
+      "event": "move",
+      "to": "view 0",
+      "waypoints": 1
+    },
+    {
+      "t": 2.16,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 0",
+      "error_rad": 0.0043
+    },
+    {
+      "t": 2.46,
+      "state": "detect",
+      "event": "cup seen",
+      "confidence": 0.95,
+      "valid_depth": 1.0,
+      "top_centre_b": [
+        0.43921,
+        0.03058,
+        -0.04687
+      ],
+      "radius_m": 0.02593,
+      "top_height_m": 0.00902,
+      "bottom_height_m": -0.09261,
+      "height_m": 0.10162,
+      "points": 3666,
+      "method": "rim_circle",
+      "residual_rms_m": 0.00062,
+      "rim_coverage_deg": 357.1
+    },
+    {
+      "t": 2.62,
+      "state": "detect",
+      "event": "cup seen",
+      "confidence": 0.951,
+      "valid_depth": 1.0,
+      "top_centre_b": [
+        0.43923,
+        0.03058,
+        -0.04687
+      ],
+      "radius_m": 0.02593,
+      "top_height_m": 0.00903,
+      "bottom_height_m": -0.09273,
+      "height_m": 0.10175,
+      "points": 3663,
+      "method": "rim_circle",
+      "residual_rms_m": 0.00063,
+      "rim_coverage_deg": 356.6
+    },
+    {
+      "t": 2.78,
+      "state": "detect",
+      "event": "cup seen",
+      "confidence": 0.952,
+      "valid_depth": 1.0,
+      "top_centre_b": [
+        0.43921,
+        0.03056,
+        -0.04695
+      ],
+      "radius_m": 0.02592,
+      "top_height_m": 0.00895,
+      "bottom_height_m": -0.09241,
+      "height_m": 0.10136,
+      "points": 3664,
+      "method": "rim_circle",
+      "residual_rms_m": 0.00064,
+      "rim_coverage_deg": 357.4
+    },
+    {
+      "t": 2.78,
+      "state": "detect",
+      "event": "cup located",
+      "top_centre_b": [
+        0.43921,
+        0.03058,
+        -0.04687
+      ],
+      "radius_m": 0.02593,
+      "top_height_m": 0.00902,
+      "bottom_height_m": -0.09261,
+      "height_m": 0.10162,
+      "points": 10993,
+      "method": "median of 3",
+      "residual_rms_m": null,
+      "rim_coverage_deg": 357.1
+    },
+    {
+      "t": 2.78,
+      "state": "detect",
+      "event": "failed",
+      "reason": "grasp planning: tilt 0: pregrasp unreachable; tilt 10: no IK solution 100% along the line to [0.434, 0.03, -0.062]; tilt 20: no IK solution 100% along the line to [0.43, 0.03, -0.062]; tilt 30: pregrasp unreachable"
+    }
+  ],
+  "looks": [
+    {
+      "t": 2.46,
+      "state": "detect",
+      "image": "frames/000_002.5s_detect.png",
+      "detections": [
+        {
+          "label": "cup",
+          "confidence": 0.95
+        }
+      ],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0299,
+        -0.0405
+      ],
+      "estimate": {
+        "top_centre_b": [
+          0.43921,
+          0.03058,
+          -0.04687
+        ],
+        "radius_m": 0.02593,
+        "top_height_m": 0.00902,
+        "bottom_height_m": -0.09261,
+        "height_m": 0.10162,
+        "points": 3666,
+        "method": "rim_circle",
+        "residual_rms_m": 0.00062,
+        "rim_coverage_deg": 357.1
+      },
+      "horizontal_error_mm": 3.64,
+      "height_error_mm": -6.32
+    },
+    {
+      "t": 2.62,
+      "state": "detect",
+      "image": "frames/001_002.6s_detect.png",
+      "detections": [
+        {
+          "label": "cup",
+          "confidence": 0.951
+        }
+      ],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0299,
+        -0.0405
+      ],
+      "estimate": {
+        "top_centre_b": [
+          0.43923,
+          0.03058,
+          -0.04687
+        ],
+        "radius_m": 0.02593,
+        "top_height_m": 0.00903,
+        "bottom_height_m": -0.09273,
+        "height_m": 0.10175,
+        "points": 3663,
+        "method": "rim_circle",
+        "residual_rms_m": 0.00063,
+        "rim_coverage_deg": 356.6
+      },
+      "horizontal_error_mm": 3.64,
+      "height_error_mm": -6.32
+    },
+    {
+      "t": 2.78,
+      "state": "failed",
+      "image": "frames/002_002.8s_failed.png",
+      "detections": [
+        {
+          "label": "cup",
+          "confidence": 0.952
+        }
+      ],
+      "truth_top_centre_b": [
+        0.4356,
+        0.0299,
+        -0.0405
+      ],
+      "estimate": {
+        "top_centre_b": [
+          0.43921,
+          0.03056,
+          -0.04695
+        ],
+        "radius_m": 0.02592,
+        "top_height_m": 0.00895,
+        "bottom_height_m": -0.09241,
+        "height_m": 0.10136,
+        "points": 3664,
+        "method": "rim_circle",
+        "residual_rms_m": 0.00064,
+        "rim_coverage_deg": 357.4
+      },
+      "horizontal_error_mm": 3.63,
+      "height_error_mm": -6.4
+    }
+  ]
+}

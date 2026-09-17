@@ -1,0 +1,829 @@
+{
+  "events": [
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "settled",
+      "base_height_m": 0.0851,
+      "tilt_deg": 7.28
+    },
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "viewpoint",
+      "q": [
+        0.0071,
+        0.1259,
+        0.9415,
+        0.0279,
+        -0.155,
+        0.022
+      ],
+      "look_at_b": [
+        0.4025,
+        -0.0,
+        -0.1372
+      ],
+      "camera_pos_b": [
+        0.2807,
+        0.0,
+        0.2438
+      ],
+      "distance_m": 0.4,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 0.5,
+      "state": "moving",
+      "event": "move",
+      "to": "view 0",
+      "waypoints": 1
+    },
+    {
+      "t": 2.16,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 0",
+      "error_rad": 0.0043
+    },
+    {
+      "t": 3.58,
+      "state": "detect",
+      "event": "not enough detections",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 3.58,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        0.2955,
+        0.209,
+        0.846,
+        -0.3706,
+        -0.1597,
+        -0.3607
+      ],
+      "look_at_b": [
+        0.4025,
+        0.15,
+        -0.1371
+      ],
+      "camera_pos_b": [
+        0.2901,
+        0.0939,
+        0.2427
+      ],
+      "distance_m": 0.4,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 3.58,
+      "state": "moving",
+      "event": "move",
+      "to": "view 1",
+      "waypoints": 1
+    },
+    {
+      "t": 4.68,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 1",
+      "error_rad": 0.0042
+    },
+    {
+      "t": 6.12,
+      "state": "detect",
+      "event": "not enough detections",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 6.12,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        -0.2139,
+        0.5176,
+        0.4379,
+        -0.8828,
+        0.2339,
+        -1.2067
+      ],
+      "look_at_b": [
+        0.4025,
+        -0.1498,
+        -0.1373
+      ],
+      "camera_pos_b": [
+        0.3605,
+        -0.1203,
+        0.2089
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 75.0,
+      "roll_deg": 15.0
+    },
+    {
+      "t": 6.12,
+      "state": "moving",
+      "event": "move",
+      "to": "view 2",
+      "waypoints": 1
+    },
+    {
+      "t": 7.68,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 2",
+      "error_rad": 0.0046
+    },
+    {
+      "t": 9.12,
+      "state": "detect",
+      "event": "not enough detections",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 9.12,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        0.0056,
+        0.6343,
+        0.5106,
+        0.0203,
+        -0.2331,
+        0.0168
+      ],
+      "look_at_b": [
+        0.501,
+        -0.0003,
+        -0.1495
+      ],
+      "camera_pos_b": [
+        0.3943,
+        0.0003,
+        0.1838
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 9.12,
+      "state": "moving",
+      "event": "move",
+      "to": "view 3",
+      "waypoints": 1
+    },
+    {
+      "t": 11.16,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 3",
+      "error_rad": 0.0043
+    },
+    {
+      "t": 12.6,
+      "state": "detect",
+      "event": "not enough detections",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 12.6,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        0.6077,
+        0.3612,
+        0.6454,
+        -0.5998,
+        0.0906,
+        -0.9177
+      ],
+      "look_at_b": [
+        0.3239,
+        0.22,
+        -0.127
+      ],
+      "camera_pos_b": [
+        0.2906,
+        0.1715,
+        0.2181
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 75.0,
+      "roll_deg": 15.0
+    },
+    {
+      "t": 12.6,
+      "state": "moving",
+      "event": "move",
+      "to": "view 4",
+      "waypoints": 1
+    },
+    {
+      "t": 14.28,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 4",
+      "error_rad": 0.006
+    },
+    {
+      "t": 15.72,
+      "state": "detect",
+      "event": "not enough detections",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 15.72,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        -0.6001,
+        0.3641,
+        0.6446,
+        0.5909,
+        0.0895,
+        0.9001
+      ],
+      "look_at_b": [
+        0.3238,
+        -0.2195,
+        -0.1278
+      ],
+      "camera_pos_b": [
+        0.2905,
+        -0.1723,
+        0.2174
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 75.0,
+      "roll_deg": -15.0
+    },
+    {
+      "t": 15.72,
+      "state": "moving",
+      "event": "move",
+      "to": "view 5",
+      "waypoints": 1
+    },
+    {
+      "t": 18.6,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 5",
+      "error_rad": 0.006
+    },
+    {
+      "t": 20.04,
+      "state": "detect",
+      "event": "not enough detections",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 20.04,
+      "state": "detect",
+      "event": "failed",
+      "reason": "no cup found from any viewpoint"
+    }
+  ],
+  "looks": [
+    {
+      "t": 2.46,
+      "state": "detect",
+      "image": "frames/000_002.5s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 2.62,
+      "state": "detect",
+      "image": "frames/001_002.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 2.78,
+      "state": "detect",
+      "image": "frames/002_002.8s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 2.94,
+      "state": "detect",
+      "image": "frames/003_002.9s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 3.1,
+      "state": "detect",
+      "image": "frames/004_003.1s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 3.26,
+      "state": "detect",
+      "image": "frames/005_003.3s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 3.42,
+      "state": "detect",
+      "image": "frames/006_003.4s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 3.58,
+      "state": "moving",
+      "image": "frames/007_003.6s_moving.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0355
+      ]
+    },
+    {
+      "t": 5.0,
+      "state": "detect",
+      "image": "frames/008_005.0s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 5.16,
+      "state": "detect",
+      "image": "frames/009_005.2s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 5.32,
+      "state": "detect",
+      "image": "frames/010_005.3s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 5.48,
+      "state": "detect",
+      "image": "frames/011_005.5s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 5.64,
+      "state": "detect",
+      "image": "frames/012_005.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 5.8,
+      "state": "detect",
+      "image": "frames/013_005.8s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 5.96,
+      "state": "detect",
+      "image": "frames/014_006.0s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 6.12,
+      "state": "moving",
+      "image": "frames/015_006.1s_moving.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0799,
+        -0.0356
+      ]
+    },
+    {
+      "t": 8.0,
+      "state": "detect",
+      "image": "frames/016_008.0s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 8.16,
+      "state": "detect",
+      "image": "frames/017_008.2s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 8.32,
+      "state": "detect",
+      "image": "frames/018_008.3s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 8.48,
+      "state": "detect",
+      "image": "frames/019_008.5s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 8.64,
+      "state": "detect",
+      "image": "frames/020_008.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 8.8,
+      "state": "detect",
+      "image": "frames/021_008.8s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 8.96,
+      "state": "detect",
+      "image": "frames/022_009.0s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 9.12,
+      "state": "moving",
+      "image": "frames/023_009.1s_moving.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0802,
+        -0.0353
+      ]
+    },
+    {
+      "t": 11.48,
+      "state": "detect",
+      "image": "frames/024_011.5s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 11.64,
+      "state": "detect",
+      "image": "frames/025_011.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 11.8,
+      "state": "detect",
+      "image": "frames/026_011.8s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0801,
+        -0.0354
+      ]
+    },
+    {
+      "t": 11.96,
+      "state": "detect",
+      "image": "frames/027_012.0s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 12.12,
+      "state": "detect",
+      "image": "frames/028_012.1s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 12.28,
+      "state": "detect",
+      "image": "frames/029_012.3s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 12.44,
+      "state": "detect",
+      "image": "frames/030_012.4s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 12.6,
+      "state": "moving",
+      "image": "frames/031_012.6s_moving.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.08,
+        -0.0354
+      ]
+    },
+    {
+      "t": 14.6,
+      "state": "detect",
+      "image": "frames/032_014.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 14.76,
+      "state": "detect",
+      "image": "frames/033_014.8s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 14.92,
+      "state": "detect",
+      "image": "frames/034_014.9s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 15.08,
+      "state": "detect",
+      "image": "frames/035_015.1s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 15.24,
+      "state": "detect",
+      "image": "frames/036_015.2s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 15.4,
+      "state": "detect",
+      "image": "frames/037_015.4s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 15.56,
+      "state": "detect",
+      "image": "frames/038_015.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 15.72,
+      "state": "moving",
+      "image": "frames/039_015.7s_moving.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0797,
+        -0.0357
+      ]
+    },
+    {
+      "t": 18.92,
+      "state": "detect",
+      "image": "frames/040_018.9s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 19.08,
+      "state": "detect",
+      "image": "frames/041_019.1s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 19.24,
+      "state": "detect",
+      "image": "frames/042_019.2s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 19.4,
+      "state": "detect",
+      "image": "frames/043_019.4s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 19.56,
+      "state": "detect",
+      "image": "frames/044_019.6s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 19.72,
+      "state": "detect",
+      "image": "frames/045_019.7s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 19.88,
+      "state": "detect",
+      "image": "frames/046_019.9s_detect.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    },
+    {
+      "t": 20.04,
+      "state": "failed",
+      "image": "frames/047_020.0s_failed.png",
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3959,
+        -0.0804,
+        -0.0351
+      ]
+    }
+  ]
+}

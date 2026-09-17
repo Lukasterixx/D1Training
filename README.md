@@ -73,6 +73,41 @@ Needs the `env_isaaclab` conda env from Rescue's setup (Isaac Sim 5.1, Isaac Lab
 run; the D1 URDF is re-imported and the weld rebuilt into `generated/` on every
 run, so that directory is disposable and gitignored.
 
+## Scripted cup pick (simulation)
+
+A no-learning pick demo: the Go2 lies down, a RealSense on the D1's wrist finds a cup with stock YOLO
+(COCO weights), depth and forward kinematics place it, and `d1_ik` plans a top-down grasp that a
+scripted sequence drives through the same arm model the position-only task uses (10 Hz setpoints into
+the fitted firmware planner, 9 Hz feedback).
+
+```bash
+./run_pick_demo.sh                                 # viewer, real time; R: reset with the cup somewhere new
+./run_pick_demo.sh --seed 7                        # a different sequence of cup positions for R
+./run_pick_demo.sh --headless --episodes 10        # ten picks back to back, cups placed as R places them
+./run_pick_demo.sh --headless                      # writes logs/pick_demo/<run>/pick.mp4 and pick.json
+./run_pick_demo.sh --camera d405 --cup_xy 0.40 -0.05 --cup_yaw_deg 30
+```
+
+`run_pick_demo.sh` sets up `env_isaaclab` the way `run_sim.sh` does and forwards its arguments to
+`run_pick_demo.py`; `--help` lists them all.
+
+To watch it in the reach console (the arm and legs from the simulator, and the wrist camera with YOLO's
+boxes), run `./run_ui.sh` in a second terminal once the simulator is up and open http://localhost:8090.
+The console sees the simulator's feed and runs in sim mode, where it only watches. See `d1_ui/README.md`.
+
+The cup model defaults to `~/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz` (licence not recorded, so
+not committed; `--cup_usdz` points elsewhere). It is rebuilt as a 55 mm x 100 mm mug with simple
+colliders into `generated/pick_demo/`. YOLO needs `ultralytics` in `env_isaaclab`, installed **without its
+dependencies** -- a plain `pip install ultralytics` upgrades numpy to 2.x and breaks Isaac Sim:
+
+```bash
+pip install --no-deps ultralytics==8.3.228 ultralytics-thop==2.0.18
+```
+
+The weights (`generated/yolo/yolo11s-seg.pt`) download on first use. What works, what fails and why is in
+the Week 1 log (2026-09-17). The camera mount, the gripper and the cup are all models, so a simulated
+success says nothing yet about the real arm.
+
 ## Watching it in RViz
 
 The sim publishes the same front **Unitree 4D L1 lidar** P2Dingo simulates —
@@ -285,6 +320,7 @@ error is small. Real per-link inertials would still be better.
 | `position_only/`, `run_position_only.py` | Thesis B 18-action stance-and-reach task and its launcher |
 | `motor_model.py`, `unitree_actuators.py` | Unitree's measured Go2 motor envelope (from unitree_rl_lab, Apache-2.0; see `third_party/`) |
 | `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
+| `pick_demo/`, `run_pick_demo.py`, `run_pick_demo.sh` | scripted cup pick: wrist RealSense model, YOLO, top-down grasp planning, the sequence |
 
 ## Despite the name
 

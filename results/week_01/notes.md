@@ -2087,6 +2087,212 @@ What it does not show:
 - **A G1a pass.** That needs a set nobody has tuned on: `validation` is contaminated (F-042), so a fresh draw.
 - **Anything about the bob's cause**, beyond the legs working harder than the old-arm policies did.
 
+### 2026-09-17 · Scripted cup pick in simulation: the Go2 lying down, a wrist RealSense and stock YOLO (cup-pick session)
+
+Lukas asked for a pick demonstration with no training: the arm's IK plus an Intel RealSense (a **D435i**) on the wrist
+just behind the gripper, YOLO to find a cup, and the Go2 sitting at ground level if that can reach the floor, else
+standing at a table. Tested in simulation first, with the arm's measured latency and acceleration.
+
+New: `pick_demo/` (camera models, perception, grasp planning, the sequence, cup asset, scene) and
+`run_pick_demo.py`; 16 new tests in `tests/test_pick_demo.py`, all passing on the system Python. The arm runs through
+the position-only task's own interface: `d1_servo` force drives, 10 Hz setpoints into the F-045 planner, 9 Hz
+feedback. Its action clip was widened to the joint range (scale π); the planner and hold are unchanged. The legs hold
+Unitree's lie-down target from `go2_stand_example.cpp`. Perception is stock `yolo11s-seg` (COCO class 41, `cup`),
+depth from the rendered camera with D435 range limits (min-Z 17.7 cm at 848×480) and Intel's best-case stereo
+noise, and a rim-circle fit in the base frame through forward kinematics of the *feedback* angles. The cup is
+`~/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz`, rebuilt as a 55 × 100 mm mug with a cylinder-and-box collider.
+Its licence is not recorded, so it is not committed.
+
+**Environment change.** `ultralytics` 8.3.228 and `ultralytics-thop` 2.0.18 installed into `env_isaaclab` with
+`--no-deps`. A plain install would have upgraded numpy 1.26 → 2.4 and added `opencv-python` 5 beside the headless
+build. A later ultralytics (8.4.154) needs a newer `filelock` and was uninstalled. Nothing already installed changed.
+
+#### Can a lying robot reach the floor? Only from above
+
+CPU model, 300,000 configurations inside the soft limits:
+- **Level grasps are out.** No level grasp (approach within 15° of horizontal) puts the jaw centre within 8 cm of
+  the floor, at any base height from 0.12 m to 0.27 m. The lowest the jaw centre gets is 15.7 cm below the base
+  origin in any attitude.
+- **Top-down grasps work for a tall cup.** Pointing down, the IK finds grasp, pregrasp and a clear path for a 10–12 cm
+  cup 35–45 cm ahead of the base at base heights 0.10–0.14 m.
+
+That fixed the design: top-down, jaw axis across the robot-to-cup line, a cup about 10 cm tall. In simulation the
+robot settles lying with its base 8.5 cm up and 7.3° nose-up.
+
+#### Development runs: each failure and the change it caused
+
+| Run | Outcome | What it showed → change |
+| --- | --- | --- |
+| [1](#/week/1/run/20260917T024745_428318Z_pick_seed42) | failed at grasp planning | YOLO found the cup (0.95), rim fit 3.6 mm / −6.3 mm from truth. Every grasp rejected: the trunk/ground proxy puts the floor at z = −base height in the base frame, 5–6 cm too high under a 7.3° pitch (F-050) → ground test along gravity (`grasp.arm_clear`) |
+| [2](#/week/1/run/20260917T024959_791290Z_pick_seed42) | lifted 11.9 cm | Closing pushed the cup 11 mm; cup axis ended 12 mm from the jaw centre. The re-look from 10 cm saw nothing: the gripper hides the cup and a D435 is inside min-Z → pregrasp raised to 18 cm |
+| [3](#/week/1/run/20260917T025256_661501Z_pick_seed42) | lifted 11.9 cm | Re-look now detects (0.55). Finger trace: both fingers close to contact at ~21 mm, then finger 1 closes to 6.8 mm and drives finger 2 to its −30 mm open stop (F-051) → close to 4 mm under the measured diameter |
+| [4](#/week/1/run/20260917T025517_631413Z_pick_seed42) | lifted 11.9 cm | Cup 3.8 mm from the jaw centre, tilt 0.9° |
+| [cup (0.38, −0.08)](#/week/1/run/20260917T025620_184698Z_pick_seed42) | no cup found | Visible in the frames but half hidden behind the gripper, which fills the lower ~40% of the image; no detection from six viewpoints → viewpoints place the look point 30% down the image |
+| [cup (0.48, 0.10)](#/week/1/run/20260917T025709_583644Z_pick_seed42) | out of reach | as the CPU model predicts |
+| [handle 90°](#/week/1/run/20260917T025738_577089Z_pick_seed42) | descent blocked | the handle lies on the jaw axis, under a finger |
+| [D405](#/week/1/run/20260917T025813_331780Z_pick_seed42), [seed 7](#/week/1/run/20260917T025853_553586Z_pick_seed7) | lifted 11.9 cm | — |
+| [default](#/week/1/run/20260917T030037_588865Z_pick_seed42), [handle 45°](#/week/1/run/20260917T030202_259461Z_pick_seed42) | lifted 11.9 cm | aiming change does not break the default |
+| [(0.38, −0.08)](#/week/1/run/20260917T030116_775933Z_pick_seed42), [(0.36, 0.12)](#/week/1/run/20260917T030139_530312Z_pick_seed42) | seen, planning failed | a straight descent could not get under 4 mm at any subdivision (worst 4.2–4.3 mm) → 6 mm tolerance; the open jaws clear the cup by 11 mm a side |
+| [(0.38, −0.08)](#/week/1/run/20260917T030313_712260Z_pick_seed42), [(0.36, 0.12)](#/week/1/run/20260917T030351_634634Z_pick_seed42) | lifted 11.8 / 11.9 cm | — |
+| [camera check](#/week/1/run/20260917T030530_523746Z_pick_seed42) | lifted 11.9 cm | the rendered wrist camera is 11 mm / 1.1° from its modelled mount (F-052) |
+| [measured mount](#/week/1/run/20260917T031040_040502Z_pick_seed42) | lifted 11.9 cm | with the rendered pose as the mount, the estimate error drops to 1.4 mm / +0.3 mm |
+| [D405](#/week/1/run/20260917T031321_560469Z_pick_seed42), [seed 7](#/week/1/run/20260917T031406_039331Z_pick_seed7), [45°](#/week/1/run/20260917T031449_858944Z_pick_seed42) | lifted 11.9–12.0 cm, cup 11 mm off | At 6 mm tolerance the descent became **one** 18 cm move. J2 overshot the target by 7 mrad, the robot-side edge of the wrist shell (+1.9 cm in Link6, lowered by the 10° tilt) came onto the rim, pushed the cup 3.5 mm and held J3 18.6 mrad off → descent capped at 2 cm per move, finger reach limited to keep the shell 15 mm above the rim |
+| [handle 90°](#/week/1/run/20260917T031532_871146Z_pick_seed42), [(0.48, 0.10)](#/week/1/run/20260917T031614_580451Z_pick_seed42) | knocked over / out of reach | — |
+
+#### Final set, same code for every run
+
+`python run_pick_demo.py --headless --max_time 60 [variant]`, D435 preset unless stated:
+
+| Variant | Run | Result | Lift | Cup axis to jaw centre | First look error (horizontal / height) | Re-look error |
+| --- | --- | --- | --- | --- | --- | --- |
+| default, cup (0.42, 0.03) | [run](#/week/1/run/20260917T031953_563859Z_pick_seed42) | success | 11.9 cm | 4 mm | 2.9 / −7.3 mm | 2.3 / −7.5 mm |
+| cup (0.38, −0.08) | [run](#/week/1/run/20260917T032038_913154Z_pick_seed42) | success | 11.9 cm | 4 mm | 3.7 / −6.5 mm | 2.3 / −7.4 mm |
+| cup (0.36, 0.12) | [run](#/week/1/run/20260917T032122_471038Z_pick_seed42) | success | 11.9 cm | 3 mm | 3.3 / −6.4 mm | 2.5 / −7.4 mm |
+| D405 preset | [run](#/week/1/run/20260917T032205_838793Z_pick_seed42) | success | 11.9 cm | 4 mm | 2.8 / −7.5 mm | not re-seen; first estimate used |
+| seed 7 | [run](#/week/1/run/20260917T032252_138343Z_pick_seed7) | success | 11.9 cm | 4 mm | 3.0 / −7.3 mm | 2.4 / −7.4 mm |
+| handle at 45° | [run](#/week/1/run/20260917T032337_691305Z_pick_seed42) | success | 11.9 cm | 4 mm | 2.9 / −7.3 mm | 2.3 / −7.5 mm |
+| handle at 90° | [run](#/week/1/run/20260917T032422_853288Z_pick_seed42) | **failed**: descent blocked by the handle | 0.4 cm | — | 2.9 / −7.3 mm | 2.3 / −7.5 mm |
+| cup (0.48, 0.10) | [run](#/week/1/run/20260917T032502_338994Z_pick_seed42) | success, 4 viewpoints, 30° tilt, fingers only 18 mm down | 11.8 cm | 8 mm | 4.2 / −6.5 mm | 3.7 / −6.3 mm |
+| mount measured from the render | [run](#/week/1/run/20260917T032602_826979Z_pick_seed42) | success | 11.9 cm | 8 mm | **1.4 / +0.3 mm** | **0.05 / +0.2 mm** |
+
+8 of 9 succeed; each pick takes 12.7–13.9 s of simulated time (20.8 s with the scan), about 23–29 s of wall time
+after start-up. Every YOLO look from the first viewpoint detected the cup (confidence 0.95). Figure:
+[wrist views and overview](figures/pick_demo_sim.png). The top row is the first look (rim fit in magenta) and the
+re-look from 18 cm; the bottom row runs start, look, grasp, lifted (the default run of the final set).
+
+#### Where the 7 mm height bias comes from
+
+Forward kinematics of the simulator's joint angles put the jaw where PhysX has Link6, to 0.0 mm. The camera prim's
+local transform is authored exactly: (−0.055, 0, 0.035) m, pitch 20°. Isaac Lab reports intrinsics identical to the
+preset (fx 616.18). Yet the camera pose Isaac Lab reports sits at (−48.8, −0.9, 26.2) mm in the Link6 frame,
+rotated 1.1°. That is the same at the look pose and the pregrasp pose, and it is the pose the image is rendered
+from: estimating with it removes the bias. Two diagnostics (scratch scripts, no run directory) compared Link6's
+PhysX pose, its USD prim and the camera prim. Overriding Link6's principal axes to identity left the offset
+unchanged to 0.01 mm, which rules out the inertia frame. The cause is not isolated.
+
+What it shows:
+
+- **The pipeline closes in simulation:** stock YOLO, depth, forward kinematics and IK lift the cup in 8 of 9
+  configurations, under the measured arm timing and with the robot lying on the floor.
+- **The geometry a demonstration needs:** a cup about 55 mm wide and about 10 cm tall, 35–45 cm ahead of the base
+  centre, handle not across the jaw axis. At (0.48, 0.10) the pick only just works.
+- **What a wrist camera behind the gripper forces.** The gripper hides the lower 40% of the image, and the D435i's
+  18 cm min-Z rules out a close re-look. So viewpoints aim high in the image and the re-look happens from 18 cm.
+- **Two simulator artefacts to keep out of any claim:** the independent finger drives (F-051) and the rendered
+  camera offset (F-052).
+
+What it does not show:
+
+- **Anything about the real arm.** The joint zero is unvalidated (F-023). There is a ~6 mm hold residual (F-029),
+  no bracket and no hand-eye calibration. The real gripper couples its fingers and its grip force and speed are
+  unmeasured.
+- **Real perception.** Rendering is ideal, one lighting, a plain grey floor and one untextured white mug; depth
+  noise is best case with no holes or flying pixels.
+- **A stable real contact.** The cup's collider is a solid cylinder and box.
+- **The streaming caveat.** The descent's 18 waypoints are passed at about the feedback rate, the per-cycle mode
+  F-035 found jerky on the hardware.
+
+**Viewer run.** `python run_pick_demo.py --settle 6` on the desktop display, paced to real time, with `--linger`
+(new, on by default with the viewer) holding the final pose until the window is closed
+([run](#/week/1/run/20260917T034542_706385Z_pick_seed42)). It matched the headless default: cup located after
+2.66 s, fingertips 30 mm below the rim at a 10° tilt, lifted 11.9 cm and held 4 mm from the jaw centre after 13.3 s
+of simulated time. It shows the sequence visually and nothing beyond the final set above.
+
+**R for a new cup position.** Lukas asked for R in the viewer to restart with the cup somewhere random. The runner
+now loops episodes:
+- **What R does:** it aborts or ends the current pick, resets the environment, places the cup with `random_cup` and
+  lets the robot settle again. Positions are drawn from x 0.36–0.44 m and y ±0.10 m from spawn, inside the region
+  the final set picked from. The handle stays within 45° of pointing straight away from or at the robot, excluding
+  the across-the-jaw case that fails (F-049).
+- **Where results go:** each episode writes the usual files, into `episode_NN/` after the first, and
+  `episodes.csv` lists them all.
+- **Headless:** `--episodes N` runs the same placements back to back.
+
+The reset did not work first time. [Episode 0 succeeded](#/week/1/run/20260917T035109_270640Z_pick_seed42), then
+`env.reset()` raised outside `torch.inference_mode`, because the simulator's tensors had been made inside it; the
+reset now runs inside.
+
+`python run_pick_demo.py --headless --max_time 60 --episodes 5`
+([run](#/week/1/run/20260917T035240_481110Z_pick_seed42)) lifted **5 of 5**. Every cup started where it was drawn,
+to 0.1 mm, and the robot re-settled at 8.5 cm and 7.27–7.28° each time. The episodes after the first:
+
+| Episode | Cup (x, y) | Handle relative to away | Lift | Cup axis to jaw centre | First look (horizontal / height) |
+| --- | --- | --- | --- | --- | --- |
+| 1 | (0.412, −0.091) | −43° | 11.8 cm | 4.2 mm | 3.5 / −7.0 mm |
+| 2 | (0.407, −0.055) | −157° (towards) | 11.9 cm | 4.0 mm | 3.3 / −7.1 mm |
+| 3 | (0.394, −0.010) | +41° | 11.9 cm | 3.5 mm | 3.4 / −6.4 mm |
+| 4 | (0.382, −0.044) | +173° (towards) | 11.9 cm | 3.6 mm | 3.6 / −6.6 mm |
+
+Episodes 2 and 4 are the first handles pointing towards the robot; both were picked. Five episodes from one seed
+are a check that the restart works and that the placement region is sound, not a success rate.
+
+In the viewer, Lukas pressed R three times ([run](#/week/1/run/20260917T035921_596731Z_pick_seed42)): **4 of 4** lifted,
+11.8–11.9 cm, 3.5–4.0 mm from the jaw centre. Placements follow the seed, so these repeat the headless draws above;
+`--seed` gives a different sequence. The session ended when the window was closed (the process exited 137, killed,
+after all four episodes had been written).
+
+Start script. `run_pick_demo.sh` wraps the launcher with the same conda/ROS-variable setup as `run_sim.sh`. Checked from
+a clean environment (`env -i ... ./run_pick_demo.sh --headless`,
+[run](#/week/1/run/20260917T041222_229724Z_pick_seed42)): exit 0, cup at (0.420, 0.030) lifted 11.9 cm, 3.9 mm from
+the jaw centre, the same numbers as the default runs above. Shows the script sets the environment up; nothing new about
+the pick.
+
+### 2026-09-17 · Reach console sim mode: it follows the simulator, with the wrist camera and YOLO boxes (cup-pick session, continued)
+
+Lukas asked for the reach console ([`d1_ui/`](../../d1_ui/)) to detect whether it is looking at the simulator or the
+real hardware, to show a live window of the wrist RealSense with the bounding box, and to draw the arm from the
+simulator's joints.
+
+**How.** A simulator now publishes on localhost:8765 ([`d1_ui/sim_feed.py`](../../d1_ui/sim_feed.py)): joints by
+name (arm, fingers, the 12 legs in SDK order), base height, the pick's state and, for the pick demo, the rendered
+wrist frame. It copies nothing off the GPU unless the console has asked in the last 3 s, and a taken port only
+warns. `run_pick_demo.py` and `main.py` start it by default (`--ui_feed_port 0` turns it off). The console decides
+the mode at start-up: a feed answering means **sim**; otherwise the arm's NIC (`enP8p1s0`) being present means
+**hardware** (the dog); neither means sim, waiting. `./run_ui.sh` makes the same check first: a simulator up on this
+PC serves the console here, otherwise it deploys to the dog as before (`./run_ui.sh sim` and `./run_ui.sh robot`
+force either). In sim mode the feed client stands in for `D1Client`'s reads, so the page draws through the same code.
+**Commands are refused in sim mode**: SEND, PARK, RELEASE and LIVE get a 409 from the server and are disabled on the
+page. IK preview still works. The camera window
+([`d1_ui/camera_feed.py`](../../d1_ui/camera_feed.py)) runs the pick's own detector (stock `yolo11s-seg`,
+`--detect cup` by default) in the console's process. It draws the box and mask outline onto the frame it detected
+on and streams that as MJPEG, so a box is never on a different frame. On the dog the source is the RealSense
+through pyrealsense2.
+
+**Checks.** 29 console tests (20 new: the feed round trip in servo degrees, legs reordered to the SDK order, frames,
+no copying without a reader, a taken port, mode detection, commands refused, camera endpoints, frames without a
+detector); the full suite, 211 tests, passes. Then against the running simulator, all headless in real time, with
+the console in sim mode reading throughout:
+
+| Run | What it checked | Pick |
+|---|---|---|
+| [check 1](#/week/1/run/20260917T042456_006283Z_pick_seed42) | console started first, waiting; picked up the feed | lift 11.9 cm, 4 mm |
+| [check 2](#/week/1/run/20260917T042656_120602Z_pick_seed42) | sampled at 2 Hz over 2 episodes (320 samples) | 2 of 2: 11.9 / 11.7 cm |
+| [check 3](#/week/1/run/20260917T042857_021546Z_pick_seed42) | sim first, then plain `./run_ui.sh`: chose sim mode and served locally | lift 11.9 cm, 4 mm |
+| [check 4](#/week/1/run/20260917T043340_187095Z_pick_seed42) | same console across a simulator restart; page open in headless Chrome | lift 11.9 cm, 4 mm |
+| [teleop self-test](#/week/1/run/20260917T043529_517682Z_playback_arm_+1.0_+0.0_+0.0) | `main.py` feed: arm, legs, 0.37 m base height; camera window says this sim has none | 0.943 m/s, min 0.330 m, EE 3.6 cm |
+
+The pick results are unchanged from the runs above, and the self-test matches the 2026-09-15 one (0.945 m/s, 0.328 m,
+3.4 cm), so publishing does not disturb either loop. In check 2 the camera window ran at a median **12.3 frames/s** (8.3–14.4) with
+YOLO at a median **8.7 ms**, and boxed the cup (confidence 0.27–0.95) during the look, re-look and descent, but not once
+it was between the fingers ([camera frame](figures/d1_ui_sim_camera.png)). Rendered in headless Chrome
+([page](figures/d1_ui_sim_page.png)): the lying legs and lifted arm match the simulator, the tool marker sits on the
+pincer, the camera window is live at 11 frames/s, and the arm controls are disabled. That also settles the rendering
+the 2026-09-16 entry could not check by eye: meshes, sphere and leg animation draw correctly, in the simulator's pose
+at least.
+
+**A bug the checks found, fixed.** Frame numbers restart with each simulator, but the console asked for "newer than
+the last frame seen", so after a restart the window stayed blank for as long as the previous run had lasted
+(check 2's first episode). Each feed now has an id; a new id starts the count over. There is a test for it, and
+check 4 streamed straight away after a restart.
+
+**Shows / does not show.** Shows the sim path end to end on this PC. **The hardware path is not run**: the dog was
+unreachable (ssh timed out), so the detection on the Jetson, the RealSense source (written to the documented
+pyrealsense2 API, never opened on a camera), YOLO on the Jetson (whether ultralytics and torch are installed there is
+unknown; without them the window shows frames without boxes) and the extended `run_ui.sh` deploy (it now also copies
+`pick_demo/` and the 21 MB weights, once) are untested. The sim joints are the simulator's true positions at up to
+30 Hz, not a model of the real arm's 9 Hz feedback. The simulator stalls ~2 s at the pick's first YOLO call (model
+warm-up in its own process); the page shows "sim not updating" then, which is accurate.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -2126,6 +2332,10 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-046](../findings.md): with the fitted planner the simulated arm moves as a streamed D1 does (0.81 vs 0.83 rad/s) instead of at single-command speed; current policies lose 5× their steady-state precision on it (confirmed, simulation).
 - [F-047](../findings.md): retrained on the realistic arm, precision mostly recovers but the policies send bigger commands the planner absorbs — holding shake doubles, and G1a still fails on falls (confirmed, three seeds, development only).
 - [F-048](../findings.md): `action_rate` at −0.05 removes the falls (0/300) and the walking (3.6 cm) across three seeds but not the shake, which is now mostly a 2–3 cm body bob at ~2 Hz (confirmed, development only).
+- [F-049](../findings.md): from a lying Go2 the D1 reaches a floor-standing cup only from above; a scripted stock-YOLO, depth and IK pick lifts a 55 × 100 mm mug in 8 of 9 simulated configurations, failing when the handle lies across the jaw axis (provisional, simulation only).
+- [F-050](../findings.md): the trunk/ground proxy assumes a level base, so a 7° pitch puts its floor 5–6 cm off where a cup stands, and nose-down it would accept reaches into the floor (confirmed, in the proxy).
+- [F-051](../findings.md): the URDF gripper's independent finger drives do not centre a grasp; commanding a width 4 mm under the cup does (confirmed, simulation).
+- [F-052](../findings.md): the rendered wrist camera sits 11 mm / 1.1° from its authored mount, constant in Link6, biasing simulated cup estimates by ~3 mm across and ~7 mm in height; cause unexplained (confirmed, measured).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -2147,6 +2357,11 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 
 ## Issues and risks
 
+- **The arm's ground clearance check is wrong on a pitched base, including the tools used on the real arm** (F-050).
+  `clear_of_body`/`path_clearance` put the floor at z = −base height in the base frame. The hardware mover and the
+  browser console use it with a fixed 0.15 m for a sitting robot. Nose-down, it would pass a reach into the floor
+  ahead. The sitting robot's pitch has never been measured. Measure it, or pass gravity as `pick_demo.grasp.arm_clear`
+  does, before any move near the floor.
 - **The target box never needs the base to move.** The free successes are gone (F-016: 0 of 256), but the box is a
   small fixed volume in front of a standing robot, so P0 is still a stance-and-reach task. Base-motion targets are
   plan stage 6 and are not designed yet.

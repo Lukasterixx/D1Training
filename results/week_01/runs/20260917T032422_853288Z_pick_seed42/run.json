@@ -1,0 +1,205 @@
+{
+  "status": "pick_failed",
+  "mode": "pick",
+  "seed": 42,
+  "arguments": {
+    "headless": true,
+    "device": "cuda:0",
+    "seed": 42,
+    "camera": "d435",
+    "mount_pos": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "mount_pitch_deg": 20.0,
+    "mount_calibration": "none",
+    "depth_noise": true,
+    "cup_usdz": "/home/lukas/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "cup_diameter": 0.055,
+    "cup_height": 0.1,
+    "cup_mass": 0.12,
+    "cup_xy": [
+      0.42,
+      0.03
+    ],
+    "cup_yaw_deg": 90.0,
+    "weights": "/home/lukas/D1Training/generated/yolo/yolo11s-seg.pt",
+    "settle": 3.0,
+    "max_time": 60.0,
+    "video_every": 3,
+    "no_video": false,
+    "realtime": false,
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/pick_demo"
+  },
+  "git_commit": "78eb55da755df208991e3e063440a3e8385487c7",
+  "git_status": "M .gitignore\n M README.md\n M results/config.json\n?? pick_demo/\n?? results/week_01/figures/pick_demo_sim.png\n?? results/week_01/runs/20260917T024745_428318Z_pick_seed42/\n?? results/week_01/runs/20260917T024959_791290Z_pick_seed42/\n?? results/week_01/runs/20260917T025256_661501Z_pick_seed42/\n?? results/week_01/runs/20260917T025517_631413Z_pick_seed42/\n?? results/week_01/runs/20260917T025620_184698Z_pick_seed42/\n?? results/week_01/runs/20260917T025709_583644Z_pick_seed42/\n?? results/week_01/runs/20260917T025738_577089Z_pick_seed42/\n?? results/week_01/runs/20260917T025813_331780Z_pick_seed42/\n?? results/week_01/runs/20260917T025853_553586Z_pick_seed7/\n?? results/week_01/runs/20260917T030037_588865Z_pick_seed42/\n?? results/week_01/runs/20260917T030116_775933Z_pick_seed42/\n?? results/week_01/runs/20260917T030139_530312Z_pick_seed42/\n?? results/week_01/runs/20260917T030202_259461Z_pick_seed42/\n?? results/week_01/runs/20260917T030313_712260Z_pick_seed42/\n?? results/week_01/runs/20260917T030351_634634Z_pick_seed42/\n?? results/week_01/runs/20260917T030530_523746Z_pick_seed42/\n?? results/week_01/runs/20260917T031040_040502Z_pick_seed42/\n?? results/week_01/runs/20260917T031321_560469Z_pick_seed42/\n?? results/week_01/runs/20260917T031406_039331Z_pick_seed7/\n?? results/week_01/runs/20260917T031449_858944Z_pick_seed42/\n?? results/week_01/runs/20260917T031532_871146Z_pick_seed42/\n?? results/week_01/runs/20260917T031614_580451Z_pick_seed42/\n?? run_pick_demo.py\n?? tests/test_pick_demo.py",
+  "source_sha256": {
+    "pick_demo/__init__.py": "0b2a80bb766958bf706b452afb7c7f051fcf60b2f0c5e9b4d54f95a19a3a6e1e",
+    "pick_demo/camera.py": "3490ce10f2dfd6a18a5937e1af95f2a9cf239282100e09e88b772f01e9c28e56",
+    "pick_demo/cup_asset.py": "f123129df1ed2beafc8ecaac0a69ab5446725bd391037b318f9d1bb3efd811c1",
+    "pick_demo/grasp.py": "122aa546f8ea9d00b99690c181d005fbb77ba74b2f39a51e0de22f62d50fd76e",
+    "pick_demo/perception.py": "25fd667b1f887c369ccce2ba78be9ec32315356ff2640dff7ee9f92cbf7b7396",
+    "pick_demo/scene.py": "542ba22030556947d8a75ea06487f93f42da61ee9db22e95c4fbc5d7b4addd9c",
+    "pick_demo/sequence.py": "f950a542b589e433e34584afc0097b1bd974f3bee1344ff9fb943496251862d6",
+    "position_only/__init__.py": "f2df2f9826b104a62c7a2d31714ac279115fafa23f02d4ec38f2e710e297a14f",
+    "position_only/agent.py": "3e9529e425b09c27319e9017cd13ec324e5d6e8c8f6ac714943b212b8a978a83",
+    "position_only/arm_response.py": "7535b2d8787c15fdeb424e868d6f3a6bd4d1344b524c5ebc45dbb0be8870e7f6",
+    "position_only/arm_steps.py": "a8597213266b915b761e45bba487c344c1f5021fe2c249275afc152433b9e8e2",
+    "position_only/core.py": "b3ccdd1761a57cb77b47377e034d5d28a1b8e54bc1534b2c74542f420ffd56c1",
+    "position_only/deploy.py": "6a310550f618ac8a4d944913abc807e64d1e0636c1e37abf9b76b65604b9d9ab",
+    "position_only/env_cfg.py": "74b43ab7131210d1611683e2561e10cd8007970facd080c828f6c3d769ac4c55",
+    "position_only/evaluate.py": "e892d0909448c18363a81a2dc52deb8a536f1aae07d47699c0b9d4128993e2d1",
+    "position_only/manifest.py": "08d0746bcbf0b8ef12f61b65674fe918b2c148251bd49f5bb1a667a008288a50",
+    "position_only/mdp.py": "07402bbd91af18e62451606a33fff10659fa6b2b4a1bf4ad6d900384d8cd72e8",
+    "position_only/task_space.py": "feefb7da4653e04ac66502aff3af1241176e36a2e24b84e58598049660db9a76",
+    "position_only/tool_point.py": "24648983774d4a9eab3f4e053c731456b1a13d631f3d52fa7e505b07a6c932a5",
+    "position_only/verify.py": "2c7446dbd5995ebaa706874f9e3b57663a2c8c0d15e5aef951ab9e675708dab7",
+    "position_only/workspace.py": "c82a051bc59d17a54685b2f8910419d11b804efb38f9f5580e7691009428388b",
+    "run_pick_demo.py": "80178aa91582951356ad44f257c1ca9ad75f8ec76a009b925486ae9d5321beef",
+    "d1_ik.py": "e9ad37e2c4f5a75d47e0726f18132a46abdf6bbbed6c7e10fee3985b8bd45065",
+    "flat_env_cfg.py": "4607798cdec5f5e6c07248e507abd8429617c81db2dc2b2f010fcce195b2b9c2",
+    "weld.py": "46da9fd616960d0b0f62cf7912d8fb2ae3bb7bb522d1f63da4b3a88df1cc34fb",
+    "motor_model.py": "6451d3cf0e92354671204a1ac53aabe4979d76013ff950169bbb04e72c2aa944",
+    "unitree_actuators.py": "011cf29c8cb423b524e01ae4b84d1a2c19835cdec3c15d72bb7e667b4626df88",
+    "d1_arm/d1.urdf": "594dd48a8c29153de49e4a81a838037cb252770f8457b8a36b329ac69b88a720"
+  },
+  "packages": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "torch": "2.7.0+cu128",
+    "ultralytics": "8.3.228",
+    "numpy": "1.26.0",
+    "opencv-python-headless": "4.11.0.86"
+  },
+  "task": "scripted_top_down_cup_pick",
+  "learning": null,
+  "camera": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration",
+    "mount_pos_link6": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "mount_pitch_deg": 20.0,
+    "mount_source": "assumed; no bracket measured",
+    "depth_noise": true
+  },
+  "posture": {
+    "legs": {
+      "FR_hip_joint": 0.0,
+      "FL_hip_joint": 0.0,
+      "RR_hip_joint": -0.2,
+      "RL_hip_joint": 0.2,
+      ".*_thigh_joint": 1.36,
+      ".*_calf_joint": -2.65
+    },
+    "source": "unitree_ros2 go2_stand_example.cpp target_pos_1"
+  },
+  "detector": {
+    "weights": "/home/lukas/D1Training/generated/yolo/yolo11s-seg.pt",
+    "weights_sha256": "1caa81c0195412efa411b632bcfb8c184939dddb6ae41f6a80c41b211ff257c3",
+    "classes": "COCO, no fine-tuning"
+  },
+  "robot_usd": "/home/lukas/D1Training/logs/pick_demo/20260917T032422_853288Z_pick_seed42/assets/go2_d1.usd",
+  "robot_usd_sha256": "2f8d2dc17a466c1e8391edfc59117f52a4f0e5b2f7b11b6ac06dece2522a56a6",
+  "cup": {
+    "usd_path": "/home/lukas/D1Training/generated/pick_demo/cup_cb588c107b6a.usd",
+    "source": "/home/lukas/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "source_sha256": "da2194b0a27c46a0b3aefef011c45911c53027f38586c0822011098b6c5dc677",
+    "diameter_m": 0.055,
+    "height_m": 0.1,
+    "mass_kg": 0.12,
+    "colour": [
+      0.92,
+      0.92,
+      0.9
+    ],
+    "roughness": 0.35,
+    "static_friction": 0.9,
+    "dynamic_friction": 0.7,
+    "builder": 1,
+    "source_points": 626087,
+    "source_diameter_units": 198.71906075403803,
+    "source_height_units": 197.18265719683802,
+    "scale_diameter": 0.000276772644714115,
+    "scale_height": 0.0005071439923855717,
+    "handle_box_m": {
+      "min": [
+        0.0276,
+        -0.0059,
+        0.0078
+      ],
+      "max": [
+        0.0499,
+        0.0059,
+        0.093
+      ]
+    },
+    "collision": "solid cylinder (body) + box (handle); the visual mesh has no collider",
+    "spawn_xy_env_m": [
+      0.42,
+      0.03
+    ],
+    "yaw_deg": 90.0
+  },
+  "sim2real": {
+    "leg_actuator": "unitree",
+    "arm_actuator": "d1_servo",
+    "latency": "estimated",
+    "arm_trajectory": {
+      "dead_time_s": 0.01,
+      "accel_rad_s2": 15.5,
+      "decel_rad_s2": 17.4,
+      "replan_velocity_retention": 0.0,
+      "velocity_limits_rad_s": [
+        1.25,
+        1.29,
+        1.23,
+        1.21,
+        1.25,
+        1.25
+      ]
+    },
+    "arm_command_hold_steps": 5,
+    "arm_feedback_period_steps": 6,
+    "arm_action_scale_rad": 3.141592653589793,
+    "policy_hz": 50,
+    "physics_hz": 200,
+    "gripper": "implicit drive, URDF 15 N effort and 0.02 m/s limits; gripper timing not measured on the D1"
+  },
+  "settled": {
+    "base_height_m": 0.0851,
+    "base_xy_env_m": [
+      -0.0173,
+      -0.0
+    ],
+    "cup_start_env_m": [
+      0.42,
+      0.03,
+      -0.0
+    ],
+    "settle_s": 3.0
+  },
+  "pick": {
+    "success": false,
+    "final_state": "failed",
+    "failure": "descend: no arrival by 3.1 s (worst joint error 0.043 rad)",
+    "cup_lift_m": 0.0035,
+    "cup_axis_to_jaw_centre_m": 0.0039,
+    "sim_time_s": 10.12
+  }
+}
