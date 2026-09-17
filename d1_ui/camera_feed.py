@@ -115,13 +115,19 @@ def make_yolo(weights, device: str = "auto", confidence: float = 0.25):
 
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    if not Path(weights).is_file():
-        raise RuntimeError(f"no YOLO weights at {weights}")
     try:
         import ultralytics  # noqa: F401
     except ImportError as exc:
         raise RuntimeError("ultralytics is not installed here") from exc
-    from pick_demo.perception import YoloDetector
+    from pick_demo.perception import YoloDetector, ensure_weights
+
+    if Path(weights) == DEFAULT_WEIGHTS and not DEFAULT_WEIGHTS.is_file():
+        try:
+            ensure_weights(DEFAULT_WEIGHTS)
+        except Exception as exc:     # e.g. the Jetson, with no route to GitHub: run_ui.sh deploys them instead
+            raise RuntimeError(f"no YOLO weights at {weights}, and downloading them failed ({exc})") from exc
+    if not Path(weights).is_file():
+        raise RuntimeError(f"no YOLO weights at {weights}")
 
     if device == "auto":
         import torch

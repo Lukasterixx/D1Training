@@ -275,5 +275,47 @@ class RandomCupTests(unittest.TestCase):
             self.assertLessEqual(off_axis, run_pick_demo.RANDOM_HANDLE_BAND_DEG + 1e-9)
 
 
+
+class WeightsDownloadTests(unittest.TestCase):
+    """`ensure_weights` against a local file:// URL: kept when the hash matches, discarded when it does not."""
+
+    def setUp(self):
+        import tempfile
+
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        self.source = self.dir / "source.pt"
+        self.source.write_bytes(b"not really weights")
+        self.url = self.source.resolve().as_uri()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_a_matching_download_is_kept(self):
+        import hashlib
+
+        from pick_demo.perception import ensure_weights
+
+        target = self.dir / "yolo" / "w.pt"
+        ensure_weights(target, self.url, hashlib.sha256(self.source.read_bytes()).hexdigest())
+        self.assertEqual(target.read_bytes(), self.source.read_bytes())
+
+    def test_a_mismatched_download_leaves_nothing_behind(self):
+        from pick_demo.perception import ensure_weights
+
+        target = self.dir / "yolo" / "w.pt"
+        with self.assertRaises(RuntimeError):
+            ensure_weights(target, self.url, "0" * 64)
+        self.assertEqual(list(target.parent.iterdir()), [])
+
+    def test_existing_weights_are_not_fetched(self):
+        from pick_demo.perception import ensure_weights
+
+        target = self.dir / "w.pt"
+        target.write_bytes(b"already here")
+        ensure_weights(target, "http://127.0.0.1:9/never", "0" * 64)
+        self.assertEqual(target.read_bytes(), b"already here")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2101,7 +2101,7 @@ Unitree's lie-down target from `go2_stand_example.cpp`. Perception is stock `yol
 depth from the rendered camera with D435 range limits (min-Z 17.7 cm at 848×480) and Intel's best-case stereo
 noise, and a rim-circle fit in the base frame through forward kinematics of the *feedback* angles. The cup is
 `~/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz`, rebuilt as a 55 × 100 mm mug with a cylinder-and-box collider.
-Its licence is not recorded, so it is not committed.
+Its licence is not recorded, so it is not committed. (Since found and committed: see the cup-model entry below.)
 
 **Environment change.** `ultralytics` 8.3.228 and `ultralytics-thop` 2.0.18 installed into `env_isaaclab` with
 `--no-deps`. A plain install would have upgraded numpy 1.26 → 2.4 and added `opencv-python` 5 beside the headless
@@ -2292,6 +2292,25 @@ unknown; without them the window shows frames without boxes) and the extended `r
 `pick_demo/` and the 21 MB weights, once) are untested. The sim joints are the simulator's true positions at up to
 30 Hz, not a model of the real arm's 9 Hz feedback. The simulator stalls ~2 s at the pick's first YOLO call (model
 warm-up in its own process); the page shows "sim not updating" then, which is accurate.
+
+### 2026-09-17 · The cup model is committed, with its CC BY 4.0 attribution (cup-pick session, continued)
+
+Lukas wanted the cup model in the repository so the pick demo runs on another PC. The earlier entry said its
+licence was not recorded. It is in the file: the USDZ's layer metadata names "High-Resolution 3D Cup Model (FBX)" by
+fayazg1aa, CC-BY-4.0, and Sketchfab's model API confirms "CC Attribution" for model
+9030ed8db34a4110b6d3c508a9d57807. The repository is public, so it is committed with the attribution the licence
+asks for: `pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz` (unmodified, sha256 `da2194b0…`), credit and the
+run-time changes in `third_party/sketchfab_cup/NOTICE.md`, and the licence text beside it. `run_pick_demo.py` now
+defaults to that path. `pick_demo/cup_asset.py`'s docstring gave the wrong Sketchfab model id; corrected. The
+generated simulation asset is keyed by the source's content hash, so runs from the committed copy use the same cup as
+every run above: a fresh build from the committed file into an empty directory gave the same key (`cb588c107b6a`) and
+identical geometry.
+
+The YOLO weights were the other thing another PC would lack. The README said they "download on first use"; they did
+not, and `run_pick_demo.py` refused to start without them. They are still not committed (21 MB). Now, when the
+default path is empty, they are fetched from Ultralytics' v8.3.0 release and must hash to
+`1caa81c0…ff257c3`, the sha256 recorded in every pick run's `run.json`. The release file matches byte for byte. The
+console's camera window does the same, and on the dog `run_ui.sh` copies them. 3 new tests; 214 pass.
 
 ## Results
 

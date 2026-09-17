@@ -1,7 +1,7 @@
 """Simulated cup pick: Go2 lying down, the D1 with its measured motion model, a wrist RealSense and stock YOLO.
 
-    python run_pick_demo.py --headless --cup_usdz ~/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz
-    python run_pick_demo.py --cup_usdz ...            # in the viewer, paced to real time; R: new cup position
+    python run_pick_demo.py --headless
+    python run_pick_demo.py                            # in the viewer, paced to real time; R: new cup position
 
 No learning anywhere: YOLO (COCO weights) finds the cup, depth and forward kinematics place it, `d1_ik`
 plans a top-down grasp and the scripted `pick_demo.sequence` drives the arm through the same interface
@@ -39,7 +39,8 @@ import time
 import traceback
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_CUP = Path.home() / "Downloads/High-Resolution_3D_Cup_Model_FBX.usdz"
+# CC BY 4.0, by fayazg1aa on Sketchfab: see third_party/sketchfab_cup/NOTICE.md.
+DEFAULT_CUP = ROOT / "pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz"
 DEFAULT_WEIGHTS = ROOT / "generated/yolo/yolo11s-seg.pt"
 
 
@@ -599,6 +600,10 @@ def main():
         args.realtime = not args.headless
     if args.linger is None:
         args.linger = not args.headless
+    if Path(args.weights) == DEFAULT_WEIGHTS and not DEFAULT_WEIGHTS.is_file():
+        from pick_demo.perception import ensure_weights
+
+        ensure_weights(DEFAULT_WEIGHTS)     # not committed; fetched once, pinned by hash
     for name in ("cup_usdz", "weights"):
         if not Path(getattr(args, name)).expanduser().is_file():
             parser.error(f"--{name} must point to an existing file: {getattr(args, name)}")

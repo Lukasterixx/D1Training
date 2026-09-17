@@ -95,16 +95,18 @@ To watch it in the reach console (the arm and legs from the simulator, and the w
 boxes), run `./run_ui.sh` in a second terminal once the simulator is up and open http://localhost:8090.
 The console sees the simulator's feed and runs in sim mode, where it only watches. See `d1_ui/README.md`.
 
-The cup model defaults to `~/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz` (licence not recorded, so
-not committed; `--cup_usdz` points elsewhere). It is rebuilt as a 55 mm x 100 mm mug with simple
-colliders into `generated/pick_demo/`. YOLO needs `ultralytics` in `env_isaaclab`, installed **without its
+The cup model is committed at `pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz`: "High-Resolution
+3D Cup Model (FBX)" by fayazg1aa on Sketchfab, CC BY 4.0, credited in `third_party/sketchfab_cup/NOTICE.md`.
+`--cup_usdz` points elsewhere. It is rebuilt as a 55 mm x 100 mm mug with simple colliders into
+`generated/pick_demo/`. YOLO needs `ultralytics` in `env_isaaclab`, installed **without its
 dependencies** -- a plain `pip install ultralytics` upgrades numpy to 2.x and breaks Isaac Sim:
 
 ```bash
 pip install --no-deps ultralytics==8.3.228 ultralytics-thop==2.0.18
 ```
 
-The weights (`generated/yolo/yolo11s-seg.pt`) download on first use. What works, what fails and why is in
+The weights (`generated/yolo/yolo11s-seg.pt`, not committed) download on first use from Ultralytics' v8.3.0
+release and are checked against the sha256 every recorded run used. What works, what fails and why is in
 the Week 1 log (2026-09-17). The camera mount, the gripper and the cup are all models, so a simulated
 success says nothing yet about the real arm.
 

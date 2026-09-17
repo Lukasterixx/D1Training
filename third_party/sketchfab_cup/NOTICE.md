@@ -1,0 +1,19 @@
+# Cup model (Sketchfab)
+
+"High-Resolution 3D Cup Model (FBX)" by **fayazg1aa** (<https://sketchfab.com/fayazg1aa>), from
+<https://sketchfab.com/3d-models/high-resolution-3d-cup-model-fbx-9030ed8db34a4110b6d3c508a9d57807>.
+Licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0,
+<https://creativecommons.org/licenses/by/4.0/>; full text in `LICENCE` in this folder). Downloaded 2026-09-17 as
+Sketchfab's USDZ export. The licence was read from the file's own layer metadata and confirmed against Sketchfab's
+model API the same day.
+
+| This repository | Source |
+| --- | --- |
+| `pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz` | the model's USDZ download, unmodified (sha256 `da2194b0…5dc677`) |
+
+**Changes.** The committed file is unmodified. At run time `pick_demo/cup_asset.py` derives a simulation asset from
+it, written to `generated/pick_demo/` and not committed. It converts the mesh to metres with Z up, scales it
+independently in diameter and height to a 55 × 100 mm mug, replaces the material with a plain ceramic one, and adds
+a cylinder-and-box collider, mass and friction.
+
+The material is provided as-is, with no warranties, as section 5 of the licence states.

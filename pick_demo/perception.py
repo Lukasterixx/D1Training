@@ -16,7 +16,10 @@ Only `YoloDetector` imports ultralytics, and only when constructed, so the geome
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
 import os
+from pathlib import Path
+import urllib.request
 
 import numpy as np
 
@@ -185,6 +188,34 @@ def masked_points(model: CameraModel, detection: Detection, depth, stride: int =
     z = depth[v, u]
     ok = z > 0.0
     return deproject(model, u[ok], v[ok], z[ok]), float(ok.mean())
+
+
+# The weights every recorded pick used: Ultralytics' v8.3.0 release asset, pinned by content.
+YOLO_WEIGHTS_URL = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-seg.pt"
+YOLO_WEIGHTS_SHA256 = "1caa81c0195412efa411b632bcfb8c184939dddb6ae41f6a80c41b211ff257c3"
+
+
+def ensure_weights(path, url: str = YOLO_WEIGHTS_URL, sha256: str = YOLO_WEIGHTS_SHA256) -> Path:
+    """Download the pinned weights to `path` if they are not there. A download that does not hash to `sha256` is
+    discarded, so a run never silently uses different weights from the ones its record names."""
+    path = Path(path)
+    if path.is_file():
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    partial = path.with_name(path.name + ".part")
+    print(f"[yolo] downloading {url} -> {path}", flush=True)
+    digest = hashlib.sha256()
+    try:
+        with urllib.request.urlopen(url, timeout=60) as response, partial.open("wb") as handle:
+            for chunk in iter(lambda: response.read(1 << 20), b""):
+                digest.update(chunk)
+                handle.write(chunk)
+        if digest.hexdigest() != sha256:
+            raise RuntimeError(f"{url} downloaded with sha256 {digest.hexdigest()}, expected {sha256}")
+        partial.replace(path)
+    finally:
+        partial.unlink(missing_ok=True)
+    return path
 
 
 class YoloDetector:

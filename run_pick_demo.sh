@@ -11,8 +11,8 @@
 #   ./run_pick_demo.sh --headless --episodes 10  # ten picks back to back, results in logs/pick_demo/
 #   ./run_pick_demo.sh --help                    # every option
 #
-# Needs ultralytics in env_isaaclab, installed without its dependencies (see README), and the cup model at
-# ~/Downloads/High-Resolution_3D_Cup_Model_FBX.usdz unless --cup_usdz says otherwise.
+# Needs ultralytics in env_isaaclab, installed without its dependencies (see README). The cup model is in the
+# repository (pick_demo/assets/, CC BY 4.0, credited in third_party/sketchfab_cup/NOTICE.md); --cup_usdz swaps it.
 set -e
 
 cd "$(dirname "$0")"
