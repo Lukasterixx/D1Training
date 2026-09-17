@@ -1,0 +1,102 @@
+{
+  "controller": "checkpoint",
+  "manifest": {
+    "role": "development",
+    "episode_count": 100,
+    "seed": 20260916,
+    "content_sha256": "930d188d26b916601bce25e839200aa6b3fb1fbd8ae182b84d9e01670b74c6ef"
+  },
+  "condition_mismatches": [
+    "arm_trajectory: manifest {'dead_time_s': 0.01, 'accel_rad_s2': 15.5, 'decel_rad_s2': 17.4, 'replan_velocity_retention': 0.0, 'velocity_limits_rad_s': [1.25, 1.29, 1.23, 1.21, 1.25, 1.25]}, run None"
+  ],
+  "episodes": 100,
+  "success": {
+    "count": 92,
+    "rate": 0.92,
+    "wilson95": [
+      0.8500173312059693,
+      0.9589070305141891
+    ]
+  },
+  "falls": {
+    "count": 7,
+    "rate": 0.07,
+    "wilson95": [
+      0.034318824364064096,
+      0.13749671006529757
+    ]
+  },
+  "survived": {
+    "count": 93,
+    "rate": 0.93
+  },
+  "truncated": {
+    "count": 7,
+    "note": "ended before the time limit; their traces stop at the last pre-reset sample and the missing tail is not filled"
+  },
+  "error_all_episodes": {
+    "rms_m": 0.042896289713680744,
+    "p95_m": 0.0653979665264487,
+    "final_m": 0.059422156680375336,
+    "transient_mean_m": 0.03505604308098555,
+    "final_2s_mean_m": 0.03289924554526806
+  },
+  "error_surviving_episodes_only": {
+    "note": "for diagnosis only; the reported result is error_all_episodes",
+    "count": 93,
+    "rms_m": 0.03998305348138655,
+    "final_2s_mean_m": 0.030390350929191037
+  },
+  "time_to_reach_s": {
+    "count": 100,
+    "mean": 0.1536,
+    "of_episodes": 100
+  },
+  "max_dwell_s": {
+    "mean": 3.1667999999999994
+  },
+  "posture": {
+    "min_base_height_m": 0.20265933871269226,
+    "max_tilt_deg": 45.3416633605957
+  },
+  "base_travel": {
+    "mean_final_x_from_spawn_m": 0.20019539594650268,
+    "max_final_x_from_spawn_m": 0.38831496238708496,
+    "max_horizontal_travel_m": 0.46521416306495667
+  },
+  "vibration": {
+    "arm_joint_vel_rms_rad_s": 0.9350823795795441,
+    "leg_joint_vel_rms_rad_s": 0.9296537744998932,
+    "arm_joint_vel_rms_holding_rad_s": 0.8789461028575897,
+    "leg_joint_vel_rms_holding_rad_s": 0.8121817380189895,
+    "hold_base_z_p2p_m": 0.043589736819267276,
+    "hold_base_z_hz": 2.415,
+    "hold_base_x_p2p_m": 0.05197440981864929,
+    "hold_base_x_hz": 1.0175,
+    "hold_error_p2p_m": 0.07347595052618999,
+    "hold_error_hz": 2.835,
+    "note": "RMS joint velocity. The *_holding figures cover the final two seconds, by which the tool point is parked, so they measure shaking rather than motion. The D1 publishes at 9 Hz, answers a step in ~127 ms and needs ~220 ms to reach cruise (F-020, F-021, F-035), so arm chatter above a few rad/s is commanding motion the hardware cannot execute."
+  },
+  "_base_travel_note": {
+    "note": "Displacement from the spawn point, signed in x: negative is the backward settle every episode starts with (about -5.6 cm under zero actions, F-014), positive is the robot walking forward. The task is a stance-and-reach and the workspace analysis says the box is reachable from the settled stance (F-016), so large positive travel means the reach is partly locomotion."
+  },
+  "saturation": {
+    "joint_limit_steps_frac": 0.0,
+    "arm_commanded_effort_at_limit_frac": 1.0,
+    "peak_arm_joint_torque_nm": 26.38838768005371,
+    "leg_effort_saturated_frac": 0.013669701002072543,
+    "peak_leg_torque_nm": 23.399999618530273,
+    "note": "arm_commanded_* is Isaac Lab's PD estimate clipped to the effort limit, not a PhysX measurement, and it saturates even standing still because the arm's 4000 N\u00b7m/rad gains far exceed its 1.7-3.3 N\u00b7m limits. peak_arm_joint_torque_nm is PhysX's reaction torque: the total load carried through the joint, including gravity and inertia from the links beyond it, not the drive's own torque. It is not comparable to the 1.7-3.3 N\u00b7m effort limits and may exceed them without any limit being violated. The legs use an explicit actuator, so their figures are the model's own clipped output."
+  },
+  "g1a": {
+    "criterion": "\u226590% reach within 5 cm for \u22651 s continuous, surviving to episode end, with \u22641% falls",
+    "success_rate_ok": true,
+    "fall_rate_ok": false,
+    "passed": false
+  },
+  "interpretation": "One controller on one frozen manifest, one simulator seed. A zero-action run of the same manifest is the baseline this must be read against.",
+  "wall_time_s": 14.68,
+  "checkpoint": "/home/lukas/D1Training/logs/position_only/20260917T004051_857200Z_train_seed44/model_1499.pt",
+  "checkpoint_sha256": "aaa56d57397adf26a617ff39a1bbacbdefcd0aa8347cdebe6e1b9aadfd903258",
+  "manifest_path": "/home/lukas/D1Training/results/manifests/development.json"
+}

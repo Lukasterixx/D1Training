@@ -41,8 +41,9 @@ Week 2's G4 still depends on them.
 - [x] Headless smoke run, 4 environments
 - [x] Visible 1-environment run inspected (2026-09-16): `view --episode` replays a pinned manifest episode; seed 43 on development ep94. It found two things 300 evaluated episodes had not — the robot walks 20 cm to its target (F-043) and oscillates at 5–8 Hz while holding (F-044)
 - [x] Model the arm's measured command latency and ramp (2026-09-17, F-045, F-046). Fitted from the raw samples, the ~127 ms and ~220 ms figures were feedback-sampling artefacts: 10 ms dead time, 15.5/17.4 rad/s², restart from rest on each setpoint. `--arm_trajectory measured` is the default; `verify` 25/25; manifests re-frozen
-- [ ] Retrain the three seeds under `--arm_trajectory measured` and re-measure falls, precision, oscillation and base travel (F-046)
-- [ ] Hardware: re-send an identical setpoint at 10 Hz through one 30° step to settle whether the D1 restarts its plan on an unchanged setpoint (F-045, F-046)
+- [x] Retrain the three seeds under `--arm_trajectory measured` (2026-09-17, F-047): precision mostly recovers (6.7–11.5 mm), holding shake doubles (median 11.5–14.6 mm), falls 3/0/1 so G1a still fails. Planner-off diagnostic: the planner absorbs the shake rather than causing it
+- [ ] Retune `action_rate` now that the arm model is fitted, and retrain; command chatter is what to price (F-047)
+- [ ] Hardware: re-send an identical setpoint at 10 Hz through one 30° step to settle whether the D1 restarts its plan on an unchanged setpoint (F-045, F-046) — **now a prerequisite for any physical trial** of a planner-trained policy (F-047)
 - [ ] G4 contract: decide whether the deploy stack streams the policy's arm output at 10 Hz, given streaming costs the arm a third of its speed (F-046)
 - [ ] Price base translation, once the timing model is right (F-043)
 - [x] Self-collision check: no resting contact from overlapping weld shapes (measured headless, with a positive control; a screenshot is optional)
@@ -1976,6 +1977,57 @@ What it does not show:
   does, the conservative choice.
 - **Retrained behaviour.** The policies above ran off their training distribution.
 
+### 2026-09-17 · Retraining on the realistic arm (seventh session, continued)
+
+`python run_position_only.py train --headless --num_envs 2048 --iterations 1500 --seed {42,43,44} --arm_trajectory measured`
+([42](#/week/1/run/20260917T001239_982420Z_train_seed42), [43](#/week/1/run/20260917T002655_508750Z_train_seed43),
+[44](#/week/1/run/20260917T004051_857200Z_train_seed44)): 13 min 06 s to 13 min 59 s each, mean 90,810 steps/s
+(the planner costs no measurable throughput), peak GPU 4,959 MiB.
+
+#### Development manifest, against the same seeds trained without the planner on the realistic arm
+
+([42](#/week/1/run/20260917T005428_483101Z_eval_seed42), [43](#/week/1/run/20260917T005449_861568Z_eval_seed42),
+[44](#/week/1/run/20260917T005510_929735Z_eval_seed42))
+
+| Seed | Success | Falls | Final-2 s error | Median tip p-p holding | Base travel | Max tilt |
+| --- | --- | --- | --- | --- | --- | --- |
+| 42 | 96 → 97 | 0 → **3** | 23.2 → **11.5 mm** | 6.6 → **12.2 mm** | 22.2 → 28.3 cm | 28.1° → 44.8° |
+| 43 | 98 → 100 | 0 → 0 | 23.7 → **6.7 mm** | 6.2 → **11.5 mm** | 11.8 → 5.4 cm | 10.2° → 10.7° |
+| 44 | 100 → 99 | 0 → **1** | 7.2 → 10.4 mm | 4.9 → **14.6 mm** | 25.6 → 11.4 cm | 8.4° → 43.5° |
+
+Precision mostly comes back. The shake while holding doubles, in most episodes (77–94% over 10 mm). Seed 42's
+falls return to the far edge of the box (depth 0.92–1.00), F-041's pattern. Training-time action-rate penalty
+rose from −0.021 to −0.032: the policies change their commands about 50% more.
+
+#### Does the planner cause the shake? No
+
+I expected the per-setpoint restarts to be the cause. The same retrained checkpoints with the planner switched
+off, a deliberate mismatch the guard flags ([42](#/week/1/run/20260917T005629_356785Z_eval_seed42),
+[43](#/week/1/run/20260917T005649_629717Z_eval_seed42), [44](#/week/1/run/20260917T005710_296304Z_eval_seed42)):
+
+| Seed | Median tip p-p holding | Final-2 s error | Falls |
+| --- | --- | --- | --- |
+| 42 | 12.2 → **35.1 mm** | 11.5 → 23.5 mm | 3 → 1 |
+| 43 | 11.5 → **67.1 mm** | 6.7 → 44.3 mm | 0 → **46** |
+| 44 | 14.6 → **48.2 mm** | 10.4 → 32.9 mm | 1 → 7 |
+
+The planner absorbs the shake rather than producing it. Trained against an arm that only partly follows each
+command, the policies learned to send bigger ones (F-047).
+
+What it shows:
+
+- **G1a still fails**: 3 / 0 / 1 falls, seed 42 above 1%.
+- **The precision loss of F-046 was mostly a training mismatch**, recovered by retraining.
+- **Command chatter is the thing to price now.** `action_rate` at −0.01 was held back until the arm model was
+  right (F-044); it is now fitted.
+
+What it does not show:
+
+- **Hardware behaviour.** These policies rely on the D1 restarting exactly as modelled. If an identical re-sent
+  setpoint does not restart the real plan (untested, F-045), their commands could act closer to the planner-off
+  numbers. That makes the re-send test a prerequisite for any physical trial of a policy trained this way.
+- **A result on `validation`**, which stays contaminated for this line of work.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -2013,6 +2065,7 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-044](../findings.md): the policies oscillate at 5–8 Hz while holding, above what the D1 can execute, with the arm at 60–90% of its measured speed limit while stationary (confirmed, simulation only).
 - [F-045](../findings.md): fitted to raw samples, the D1 has ~10 ms of command dead time, not ~127 ms, and a ~80 ms-ramp trapezoid that restarts from rest on every new setpoint; corrects F-021, F-035 and F-044 (confirmed).
 - [F-046](../findings.md): with the fitted planner the simulated arm moves as a streamed D1 does (0.81 vs 0.83 rad/s) instead of at single-command speed; current policies lose 5× their steady-state precision on it (confirmed, simulation).
+- [F-047](../findings.md): retrained on the realistic arm, precision mostly recovers but the policies send bigger commands the planner absorbs — holding shake doubles, and G1a still fails on falls (confirmed, three seeds, development only).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).

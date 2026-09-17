@@ -1354,3 +1354,45 @@ result that changes a conclusion gets a new entry, and the old one is marked
   30° step with the setpoint re-sent at 10 Hz answers it), and, for the G4 deployment contract, whether the deploy
   stack should stream the policy's arm output at 10 Hz at all, given that streaming costs the arm a third of its
   speed.
+
+### F-047 — Retrained on the realistic arm, the policies recover most of their precision but send bigger commands the arm's planner absorbs: holding shake doubles, and G1a still fails on falls
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [Week 1 log, 2026-09-17](week_01/notes.md). Seeds 42/43/44 retrained under `--arm_trajectory measured`
+  at the unchanged budget (2048 envs × 1500 iterations, 73,728,000 transitions each; 13 min 06 s to 13 min 59 s;
+  mean 90,810 steps/s; peak GPU 4,959 MiB; runs `20260917T001239_982420Z`, `…002655_508750Z`, `…004051_857200Z`).
+  Development manifest `930d188d26b9`, no condition mismatches. Against the same seeds trained without the planner,
+  evaluated on the realistic arm (F-046):
+
+  | Seed | Success | Falls | Final-2 s error | Median tip p-p holding | Arm vel holding | Base travel | Max tilt |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | 42 | 96 → 97 | 0 → **3** | 23.2 → **11.5 mm** | 6.6 → **12.2 mm** | 0.55 → 0.66 rad/s | 22.2 → 28.3 cm | 28.1° → 44.8° |
+  | 43 | 98 → 100 | 0 → 0 | 23.7 → **6.7 mm** | 6.2 → **11.5 mm** | 0.79 → 0.79 rad/s | 11.8 → 5.4 cm | 10.2° → 10.7° |
+  | 44 | 100 → 99 | 0 → **1** | 7.2 → 10.4 mm | 4.9 → **14.6 mm** | 0.57 → 0.74 rad/s | 25.6 → 11.4 cm | 8.4° → 43.5° |
+
+  (Median tip p-p for the "without planner" column is from those seeds on the old arm; the evaluator's pooled
+  means are inflated by a fall's last two seconds, up to 418 mm, so medians are reported.) The shake is typical:
+  77/99, 77/100 and 94/100 episodes exceed 10 mm peak-to-peak while holding. Seed 42's three falls are at depth
+  0.92–1.00 of the box, dying at 1.62–3.20 s — F-041's far-reach pattern; seed 44's one fall came after holding for
+  7.30 s. Training-time `Episode_Reward/action_rate` rose from −0.021 to −0.032, −0.032 and −0.033: the retrained
+  policies change their commands about 50% more per step.
+
+  **Diagnostic** — the same retrained checkpoints with the planner switched off (runs `…005629_356785Z`,
+  `…005649_629717Z`, `…005710_296304Z`, each flagged as a condition mismatch, deliberately): median tip p-p while
+  holding **12.2 → 35.1, 11.5 → 67.1, 14.6 → 48.2 mm**; final-2 s error 11.5 → 23.5, 6.7 → 44.3, 10.4 → 32.9 mm;
+  falls 3 → 1, **0 → 46**, 1 → 7.
+- **Scope:** three seeds, development manifest only, one simulator seed, `--robustness none`. The planner-off
+  runs are policies evaluated off their training distribution, used as a diagnostic, not a result. `validation`
+  remains contaminated for this line of work (F-042). Nothing here is hardware.
+- **Implication:** **G1a still fails** — seed 42 falls 3 times in 100 against ≤1%. Retraining recovers most of the
+  steady-state precision the corrected arm took away (two seeds from ~23 mm to 6.7 and 11.5 mm), so the precision
+  loss in F-046 was mostly a training-distribution mismatch. But the policies adapted to an arm that only partly
+  follows each command by sending bigger, more frequent command changes; the planner absorbs most of them, leaving
+  12–15 mm of typical holding shake, twice the old-arm policies. The diagnostic refutes the tempting explanation that
+  the planner's restarts *cause* the shake: without the planner the same commands shake 3–6× more and one seed
+  falls in almost half its episodes. Two consequences. First, `action_rate` at −0.01 can now be retuned — F-044
+  held it back until the arm model was right, and the model is now fitted — since command chatter is the thing to
+  price. Second, these policies depend on the firmware restarting exactly as modelled; the untested case of an
+  identical re-sent setpoint (F-045) is now a safety question for any physical trial, not a modelling detail.
