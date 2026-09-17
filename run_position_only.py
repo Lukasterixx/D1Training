@@ -298,6 +298,14 @@ def run(args, report):
                 cfg.viewer.eye, cfg.viewer.lookat = (0.25, -1.7, 0.75), (0.15, 0.0, 0.5)
             cfg.log_dir = str(run_dir)
             agent_cfg = make_agent_cfg(args.seed, args.device, args.iterations)
+            # Reward weight overrides: applied before env.yaml is written, so the dump records what trained.
+            overrides = {}
+            for term, weight in args.reward_weight:
+                if not hasattr(cfg.rewards, term):
+                    raise ValueError(f"--reward_weight: no reward term {term!r}")
+                overrides[term] = {"default": getattr(cfg.rewards, term).weight, "used": weight}
+                getattr(cfg.rewards, term).weight = weight
+            metadata["reward_overrides"] = overrides
             dump_yaml(str(run_dir / "env.yaml"), cfg)
             write_json(run_dir / "agent.json", agent_cfg)
             env = RslRlVecEnvWrapper(ManagerBasedRLEnv(cfg=cfg), clip_actions=1.0)
@@ -507,6 +515,9 @@ def main():
     parser.add_argument("--self_collisions", action=argparse.BooleanOptionalAction, default=True,
                         help="Let the arm collide with the Go2 body (default). Off, the arm passes through the trunk.")
     parser.add_argument("--checkpoint", help="Explicit checkpoint from this task, for resuming training or smoke playback.")
+    parser.add_argument("--reward_weight", action="append", default=[], metavar="TERM=WEIGHT",
+                        type=lambda s: (s.split("=", 1)[0], float(s.split("=", 1)[1])),
+                        help="Override one reward term's weight, e.g. action_rate=-0.1. Repeatable; recorded in run.json.")
     parser.add_argument("--manifest", help="Evaluation manifest JSON (eval mode), or its output path (manifest mode).")
     parser.add_argument("--role", choices=("development", "validation", "test"), default="development",
                         help="Manifest role to build (manifest mode).")

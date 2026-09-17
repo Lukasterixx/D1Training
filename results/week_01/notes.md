@@ -42,7 +42,9 @@ Week 2's G4 still depends on them.
 - [x] Visible 1-environment run inspected (2026-09-16): `view --episode` replays a pinned manifest episode; seed 43 on development ep94. It found two things 300 evaluated episodes had not — the robot walks 20 cm to its target (F-043) and oscillates at 5–8 Hz while holding (F-044)
 - [x] Model the arm's measured command latency and ramp (2026-09-17, F-045, F-046). Fitted from the raw samples, the ~127 ms and ~220 ms figures were feedback-sampling artefacts: 10 ms dead time, 15.5/17.4 rad/s², restart from rest on each setpoint. `--arm_trajectory measured` is the default; `verify` 25/25; manifests re-frozen
 - [x] Retrain the three seeds under `--arm_trajectory measured` (2026-09-17, F-047): precision mostly recovers (6.7–11.5 mm), holding shake doubles (median 11.5–14.6 mm), falls 3/0/1 so G1a still fails. Planner-off diagnostic: the planner absorbs the shake rather than causing it
-- [ ] Retune `action_rate` now that the arm model is fitted, and retrain; command chatter is what to price (F-047)
+- [x] Retune `action_rate` and retrain (2026-09-17, F-048): swept −0.05/−0.1/−0.3 on seed 42 under a rule fixed first; −0.05 selected; three seeds 100/100/100 with 0 falls and 3.6 cm of walking on `development`. Shake unchanged on average (12.4 mm), now mostly a body bob
+- [ ] Draw a fresh validation manifest and measure G1a on the v5 policies (F-048)
+- [ ] Price the ~2 Hz body bob while holding, then retrain (F-048)
 - [ ] Hardware: re-send an identical setpoint at 10 Hz through one 30° step to settle whether the D1 restarts its plan on an unchanged setpoint (F-045, F-046) — **now a prerequisite for any physical trial** of a planner-trained policy (F-047)
 - [ ] G4 contract: decide whether the deploy stack streams the policy's arm output at 10 Hz, given streaming costs the arm a third of its speed (F-046)
 - [ ] Price base translation, once the timing model is right (F-043)
@@ -2028,6 +2030,63 @@ What it does not show:
   numbers. That makes the re-send test a prerequisite for any physical trial of a policy trained this way.
 - **A result on `validation`**, which stays contaminated for this line of work.
 
+### 2026-09-17 · Pricing command changes (seventh session, continued)
+
+F-047 left the retrained policies sending bigger, jumpier commands and shaking twice as much while holding.
+`action_rate` had been held at −0.01 until the arm model was right (F-044); it now is.
+
+The runner gained `--reward_weight TERM=WEIGHT` ([smoke check](#/week/1/run/20260917T011428_380022Z_smoke_seed42):
+rejected a malformed value, recorded `{'default': -0.01, 'used': -0.1}` in `run.json`, and `env.yaml` carries the
+used weight).
+
+#### Sweep on seed 42, rule fixed first
+
+Among weights with ≥95/100 successes and ≤1 fall on `development`, the lowest median tip shake while holding;
+ties go to the smaller magnitude. Seed 42 was chosen because it was the failing seed, which also makes its row
+optimistic.
+
+| Weight | Run | Success | Falls | Settled error | Median shake | Base travel | Max tilt | Reach time |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| −0.01 | (F-047) | 97 | 3 | 11.5 mm | 12.2 mm | 28.3 cm | 44.8° | 0.17 s |
+| **−0.05** | [train](#/week/1/run/20260917T011444_487339Z_train_seed42) / [eval](#/week/1/run/20260917T015631_528331Z_eval_seed42) | 100 | 0 | 4.4 mm | **8.4 mm** | 7.8 cm | 11.2° | 0.17 s |
+| −0.1 | [train](#/week/1/run/20260917T012822_678050Z_train_seed42) / [eval](#/week/1/run/20260917T015652_592002Z_eval_seed42) | 100 | 0 | 5.0 mm | 10.6 mm | 2.0 cm | 11.7° | 0.17 s |
+| −0.3 | [train](#/week/1/run/20260917T014131_782753Z_train_seed42) / [eval](#/week/1/run/20260917T015713_451363Z_eval_seed42) | 100 | 0 | 8.2 mm | 11.2 mm | 11.5 cm | 12.0° | 0.27 s |
+
+Selected: −0.05. Shake does not keep falling with a heavier penalty, and at −0.3 reaching slows.
+
+#### Three seeds at −0.05
+
+Seeds 43 and 44 ([43](#/week/1/run/20260917T015804_638974Z_train_seed43) /
+[eval](#/week/1/run/20260917T022526_763200Z_eval_seed42), [44](#/week/1/run/20260917T021141_560571Z_train_seed44) /
+[eval](#/week/1/run/20260917T022548_061142Z_eval_seed42)):
+
+| | Falls /300 | Success per seed | Mean settled error | Median tip shake per seed | Mean base travel |
+| --- | --- | --- | --- | --- | --- |
+| v3, old arm | 1 | 99 / 100 / 100 | 5.8 mm | 6.6 / 6.2 / 4.9 mm | 23.3 cm |
+| v4, realistic arm, −0.01 | 4 | 97 / 100 / 99 | 9.5 mm | 12.2 / 11.5 / 14.6 mm | 15.0 cm |
+| **v5, realistic arm, −0.05** | **0** | **100 / 100 / 100** | 7.7 mm | **8.4 / 16.3 / 12.5 mm** | **3.6 cm** |
+
+#### Where the shake is
+
+Medians over the final 2 s of each episode:
+
+| | Base height p-p | at | Tip p-p | at | Leg vel holding |
+| --- | --- | --- | --- | --- | --- |
+| v3 seeds 42/43/44 | 7.4 / 7.6 / 4.9 mm | 4–5 Hz | 6.6 / 6.2 / 4.9 mm | 5–8 Hz | 0.22 / 0.31 / 0.21 rad/s |
+| v5 seeds 42/43/44 | 2.5 / **30.0 / 23.6 mm** | ~2 Hz | 8.4 / 16.3 / 12.5 mm | 6.5–9.8 Hz | 0.24 / 0.49 / 0.42 rad/s |
+
+What it shows:
+
+- **Falls and walking are fixed across seeds** (F-048): 0 falls in 300 episodes, base travel 1–8 cm.
+- **G1a's numbers are met on `development` by all three seeds** for the first time. A candidate only.
+- **The shake is not fixed.** Seed 42's improvement did not carry to the other seeds. It is now mostly a 2–3 cm
+  body bob at about 2 Hz, which the stance terms price at about 0.01 per step.
+
+What it does not show:
+
+- **A G1a pass.** That needs a set nobody has tuned on: `validation` is contaminated (F-042), so a fresh draw.
+- **Anything about the bob's cause**, beyond the legs working harder than the old-arm policies did.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -2066,6 +2125,7 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-045](../findings.md): fitted to raw samples, the D1 has ~10 ms of command dead time, not ~127 ms, and a ~80 ms-ramp trapezoid that restarts from rest on every new setpoint; corrects F-021, F-035 and F-044 (confirmed).
 - [F-046](../findings.md): with the fitted planner the simulated arm moves as a streamed D1 does (0.81 vs 0.83 rad/s) instead of at single-command speed; current policies lose 5× their steady-state precision on it (confirmed, simulation).
 - [F-047](../findings.md): retrained on the realistic arm, precision mostly recovers but the policies send bigger commands the planner absorbs — holding shake doubles, and G1a still fails on falls (confirmed, three seeds, development only).
+- [F-048](../findings.md): `action_rate` at −0.05 removes the falls (0/300) and the walking (3.6 cm) across three seeds but not the shake, which is now mostly a 2–3 cm body bob at ~2 Hz (confirmed, development only).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).

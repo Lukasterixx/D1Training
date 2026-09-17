@@ -1396,3 +1396,46 @@ result that changes a conclusion gets a new entry, and the old one is marked
   held it back until the arm model was right, and the model is now fitted — since command chatter is the thing to
   price. Second, these policies depend on the firmware restarting exactly as modelled; the untested case of an
   identical re-sent setpoint (F-045) is now a safety question for any physical trial, not a modelling detail.
+
+### F-048 — Pricing command changes at −0.05 removes the falls and the walking across three seeds, but not the shake, which is now mostly the body bobbing
+
+- **Status:** confirmed
+- **Week:** 1
+- **Date:** 2026-09-17
+- **Evidence:** [Week 1 log, 2026-09-17](week_01/notes.md). A `--reward_weight TERM=WEIGHT` override was added to the
+  runner, recorded in `run.json` and applied before `env.yaml` is written. `action_rate` was swept on seed 42 under
+  the realistic arm at the unchanged budget (runs `20260917T011444_487339Z`, `…012822_678050Z`,
+  `…014131_782753Z`), with the selection rule fixed before any result: among weights scoring ≥95/100 with ≤1 fall on
+  `development`, lowest median tip shake while holding, ties to the smaller magnitude.
+
+  | Weight (seed 42) | Success | Falls | Settled error | Median tip shake | Base travel | Max tilt |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | −0.01 | 97 | 3 | 11.5 mm | 12.2 mm | 28.3 cm | 44.8° |
+  | **−0.05** | 100 | 0 | 4.4 mm | **8.4 mm** | 7.8 cm | 11.2° |
+  | −0.1 | 100 | 0 | 5.0 mm | 10.6 mm | 2.0 cm | 11.7° |
+  | −0.3 | 100 | 0 | 8.2 mm | 11.2 mm | 11.5 cm | 12.0° |
+
+  The rule selected −0.05; at −0.3 reaching slowed (0.27 s against 0.17). Seeds 43 and 44 were then trained at −0.05
+  (runs `20260917T015804_638974Z`, `…021141_560571Z`; 13 min 00–21 s; peak GPU 4,999 MiB). Development manifest
+  `930d188d26b9`, no condition mismatches:
+
+  | | Falls /300 | Success per seed | Mean settled error | Median tip shake per seed | Mean base travel |
+  | --- | --- | --- | --- | --- | --- |
+  | v3, old arm | 1 | 99 / 100 / 100 | 5.8 mm | 6.6 / 6.2 / 4.9 mm | 23.3 cm |
+  | v4, realistic arm, −0.01 | 4 | 97 / 100 / 99 | 9.5 mm | 12.2 / 11.5 / 14.6 mm | 15.0 cm |
+  | **v5, realistic arm, −0.05** | **0** | **100 / 100 / 100** | 7.7 mm | **8.4 / 16.3 / 12.5 mm** | **3.6 cm** |
+
+  Splitting the shake while holding (medians over the final 2 s): v5 base height swings 2.5 / 30.0 / 23.6 mm
+  peak-to-peak at 2.5 / 1.8 / 1.8 Hz, against 7.4 / 7.6 / 4.9 mm for v3; tip error ripples at 6.5 / 8.0 / 9.8 Hz;
+  leg joint velocity while holding is 0.24 / 0.49 / 0.42 rad/s against 0.21–0.31 for v3. Training-time
+  `action_rate_l2` fell from about 3.2 to about 1.0.
+- **Scope:** development manifest only, one simulator seed, `--robustness none`. Seed 42 chose the weight, so its
+  row is optimistic; seeds 43 and 44 are the fair test of it. `validation` is contaminated for this line of work
+  (F-042), so none of this is a G1a measurement. Mean-crossing frequency over 2 s resolves roughly 0.5–12 Hz.
+- **Implication:** at −0.05 all three seeds score 100/100 with no falls and walk 1–8 cm instead of 20–25, so G1a's
+  numbers are met on `development` by every seed for the first time — a candidate, to be measured on a fresh
+  validation draw. The shake is **not** fixed: seed 42's 8.4 mm, which selected the weight, did not carry to seeds
+  43 and 44 (16.3, 12.5 mm), which is the selection optimism the rule's own scope anticipated. What remains is mostly
+  the body bobbing 2–3 cm at about 2 Hz, the body-versus-arm pattern of F-019, F-042 and F-043 once more, now
+  vertical: a ±1.5 cm bob at 2 Hz costs roughly 0.01 per step between `base_height` and `base_motion`, against about
+  3.0 for reaching. The faster tip ripple sits near the 10 Hz command rate.
