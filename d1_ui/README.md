@@ -55,8 +55,7 @@ runs the hardware console here, finding the arm's interface itself (anything on 
 `D1_ARM_IFACE`). There is no `rt/lowstate` without the dog, so the legs are not drawn.
 
 ```bash
-./run_ui.sh bench --pick-depth --pick-base-height 0.02 \
-    --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
+./run_ui.sh bench --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
 ```
 
 Needs `cyclonedds` and `pyrealsense2` in the Isaac env (`pip install --no-deps`, so numpy 1.26 is left
@@ -79,9 +78,13 @@ plans a top-down grasp, and the arm is driven through it. What it is not:
 - **Not accurate in any measured sense.** There is no ground truth on a bench, so a run reports what it
   did and saw, never how close it got.
 
-`--pick-base-height` is required and the button stays off without it: it is the height of the arm's
-mount plane above the surface the cup stands on, and a bench-mounted arm has no IMU to work it out.
-`--pick-up` is world up in the base frame, `[0, 0, 1]` for an arm standing upright.
+**Nothing states where the table is.** Every pose the pick uses — the survey it looks from, the headings
+it sweeps, the grasp — is placed relative to the arm's own mount, and the cup is measured by the camera in
+that frame. There used to be a height to type, the arm's mount plane above the surface, and it was the one
+number on this rig that nobody could measure: it moved three times in one day, and a wrong value did not
+fail loudly, it tilted the plane the grasp was planned against. `--pick-up` remains — world up in the base
+frame, `[0, 0, 1]` for an arm standing upright — because gravity is what a top-down grasp is defined
+against.
 
 **Dry run first.** With LIVE off, PICK runs the whole pipeline — real camera, real depth, real YOLO,
 real planning — against a *virtual* arm pose that slews toward each waypoint, so the sequence runs to
@@ -105,11 +108,10 @@ The fingers close under the drive's own effort. Keep hands out of the jaws.
 
 ### What it needs, and what it remembers
 
-Nothing on the command line. A console started with no flags finds the one calibration stored in
-`pick_demo/assets/calibration/`, loads the saved wrist mount, and streams depth (hardware mode;
-`--no-pick-depth` if the USB bandwidth is wanted elsewhere). The one number nothing can measure — how
-far the arm's mount plane sits above the surface the cup stands on — is a field in the PICK panel; set
-it once and it is remembered in `pick_demo/assets/bench.json`.
+Nothing on the command line, and nothing in the page either. A console started with no flags finds the
+one calibration stored in `pick_demo/assets/calibration/`, loads the saved wrist mount, and streams depth
+(hardware mode; `--no-pick-depth` if the USB bandwidth is wanted elsewhere). There is no height to set:
+the field that used to hold one, and the `pick_demo/assets/bench.json` that remembered it, are gone.
 
 The button still refuses what cannot be worked around: sim mode has no arm to command, and a camera
 without depth cannot place a cup. Those say so in the panel.

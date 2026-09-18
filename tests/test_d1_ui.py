@@ -523,7 +523,7 @@ class MountEditorTests(unittest.TestCase):
         mount = camera.WristMount()
         self.perception = types.SimpleNamespace(mount=mount)
         self.arm.pick_cfg = {"mount": mount, "perception": self.perception,
-                             "mount_source": "assumed", "camera_source": "test", "base_height_m": 0.02}
+                             "mount_source": "assumed", "camera_source": "test"}
         self.arm.mount, self.arm.mount_source, self.arm.mount_file = mount, "assumed", None
 
     def test_without_a_pick_the_editor_still_works_but_drives_nothing(self):
@@ -686,54 +686,21 @@ class PickAvailabilityTests(unittest.TestCase):
         self.arm.camera = self.camera_stub
         mount = camera.WristMount()
         self.arm.pick_cfg = {"mount": mount, "perception": types.SimpleNamespace(mount=mount),
-                             "mount_source": "assumed", "camera_source": "test", "base_height_m": None}
+                             "mount_source": "assumed", "camera_source": "test"}
         self.arm.mount = mount
-        self.settings = Path(server.BENCH_SETTINGS)
-        self.had_settings = self.settings.read_bytes() if self.settings.is_file() else None
 
-    def tearDown(self):
-        if self.had_settings is None:
-            self.settings.unlink(missing_ok=True)
-        else:
-            self.settings.write_bytes(self.had_settings)
-
-    def test_an_unset_base_height_refuses_but_the_pick_is_still_configured(self):
-        """The old behaviour was no pick at all without a launch flag; now it is one refusal to clear."""
+    def test_a_configured_console_offers_the_pick_with_nothing_to_set_first(self):
+        """There used to be one more thing to type: how high the mount sits above the table. Nothing needs
+        it now -- every pose is placed from the arm's own mount -- so a bench console with an arm, a camera
+        and depth is ready as it stands."""
         status = self.arm.pick_status()
         self.assertTrue(status["configured"])
-        self.assertFalse(status["available"])
-        self.assertIn("set the base height", status["refusal"])
-
-    def test_setting_the_base_height_makes_the_pick_available(self):
-        ok, why = self.arm.set_base_height(0.02)
-        self.assertTrue(ok, why)
-        status = self.arm.pick_status()
-        self.assertEqual(status["base_height_m"], 0.02)
         self.assertTrue(status["available"], status["refusal"])
-
-    def test_the_base_height_is_remembered_for_the_next_launch(self):
-        """Typed once, at the bench. Nobody should have to pass it on the command line again."""
-        self.arm.set_base_height(0.037)
-        self.assertEqual(server.load_bench_settings()["base_height_m"], 0.037)
-
-    def test_nonsense_and_millimetres_are_refused(self):
-        for bad in ("high", None, float("nan"), 20.0, -3.0):
-            with self.subTest(bad=bad):
-                ok, why = self.arm.set_base_height(bad)
-                self.assertFalse(ok)
-                self.assertTrue(why)
-        self.assertIsNone(self.arm.pick_cfg["base_height_m"])
-
-    def test_the_base_height_cannot_move_under_a_running_pick(self):
-        self.arm.set_base_height(0.02)
-        self.arm.pick_state["running"] = True
-        ok, why = self.arm.set_base_height(0.05)
-        self.assertFalse(ok)
-        self.assertIn("pick is running", why)
+        self.assertEqual(status["refusal"], "")
+        self.assertNotIn("base_height_m", status)
 
     def test_the_pick_uses_the_mount_the_editor_holds(self):
         """'Use the extrinsics that were loaded': one object, so the two cannot drift apart."""
-        self.arm.set_base_height(0.02)
         self.arm.set_mount([-0.061, 0.034, 0.067], [0.0, 0.0, -90.0])
         expected = self.camera.mount_from_xyz_rpy([-0.061, 0.034, 0.067], [0.0, 0.0, -90.0])
         np.testing.assert_allclose(self.arm.pick_cfg["mount"].pose, expected.pose, atol=1e-9)
@@ -742,7 +709,6 @@ class PickAvailabilityTests(unittest.TestCase):
 
     def test_without_depth_it_still_refuses_because_the_pick_needs_it(self):
         """Not every refusal is a configuration slip; this one is physics and must survive."""
-        self.arm.set_base_height(0.02)
         self.camera_stub.has_depth = lambda: False
         self.assertIn("no depth", self.arm.pick_status()["refusal"])
 

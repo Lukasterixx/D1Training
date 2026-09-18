@@ -3034,6 +3034,361 @@ removes a veto that would have caught it. The veto was never the right protectio
 estimates and bad ones alike — but nothing has replaced it, and the check that would (a rim seen twice
 from different viewpoints agreeing on its height) does not exist yet.
 
+### 2026-09-17 — Searching for the cup by pivoting the arm, and a survey pose that could not see past the dog's head
+
+Lukas asked for the arm to search for the cup by pivoting its base while looking forwards and down, over ±45°
+left and right, tested in simulation first. The search works. Testing it also showed that the survey pose it
+turns could not see past the Go2's head. That had never been tried in simulation: before today the survey had
+run only on the bench, where there is no dog. Written up as F-067 (the head) and F-068 (the search).
+
+**What was built.** `grasp.pivot_stops_deg` and `grasp.plan_pivot`, a `sweep_deg` option on `PickSequence`, and
+`--sweep_deg` (default 45) and `--cup_region {ahead,sweep}` on `run_pick_demo.py`. `pick.json` and
+`episodes.csv` now record which look found the cup.
+- **Only Joint1 moves.** The survey pose is planned once, straight ahead, then turned on Joint1 alone, so the
+  camera keeps its height and tilt. The arm stops at each heading before looking: a frame taken mid-swing
+  would be placed with joint feedback that is about 0.1 s stale at 9 Hz.
+- **The stops are 0, ±22.5° and ±45°, visited 0 → +22.5 → +45 → −22.5 → −45.** Neighbouring stops are no
+  further apart than half the image width. At 640×480 the D435 preset is 54.9° wide, not the datasheet's
+  69.4°, because the 16:9 stream is cropped. So every heading in ±45° falls in the middle half of some frame.
+  The close scan is still the fallback.
+- **Headings are measured about gravity, not read off Joint1.** Lying down, the base settles 7.3° nose-up and
+  Joint1's axis leans with it. On the CPU model, 45° of Joint1 turns the view centre only part of the way, and
+  45° of view needs 47.3°. Joint1 is solved for the view. In simulation the stops landed at 22.44° and 44.91°.
+- **Off on the bench.** `sweep_deg` defaults to 0 in `PickSequence`, and `pick_demo.hardware.run_pick` does not
+  set it. Nothing here has run on the arm.
+- **A side fix that does reach the bench.** A survey that saw nothing used to advance the close scan too, so
+  the scan's first floor point, (0.42, 0), was never visited. Only a failed close-scan look advances it now.
+
+**Before simulating: can the arm see and reach a cup out at ±45°?** CPU model, base lying at 8.5 cm and 7.3°
+nose-up, D435 preset:
+- **Grasp.** A top-down grasp of the 55 mm × 100 mm cup plans at every heading in ±45° from 0.40 to 0.50 m from
+  the arm's mount. Nearer, where the head is in the way, it fails from −15° to +15° at 0.30 m and at ±15° at
+  0.35 m, but plans at ±30–45° at both.
+- **Framing only.** Every cup 0.30–0.55 m out at ±45° is fully in the frame of at least two stops. The single
+  straight-ahead look frames ±25°. This check ignored the dog's body, which turned out to matter.
+
+#### Runs
+
+All headless, `--max_time 90`, seed 42, D435 preset, the saved wrist mount (`wrist_mount.json`, aligned by eye).
+Cup positions are from the spawn point; the arm's mount settles 1.7 cm behind it, so the bearings below are
+close to bearings from the mount.
+
+| Run | Command (after `python run_pick_demo.py --headless --max_time 90`) | Survey | Result |
+| --- | --- | --- | --- |
+| [camera body in shot](#/week/1/run/20260917T125818_565316Z_pick_seed42) | `--cup_xy 0.337 0.283` | over the back | **failed**: nothing detected from 5 stops and 6 close views in 32.3 s. The camera body is drawn by default and, with F-052's rendered eye, every frame is the inside of the case. The runner warns about exactly this. Every run after this one uses `--no_camera_body` |
+| [cup 40° left](#/week/1/run/20260917T125945_370832Z_pick_seed42) | `--no_camera_body --cup_xy 0.337 0.283` | over the back | found at **+22.5°** after the survey saw nothing; 353° of rim; lifted 11.8 cm, 3.9 mm from the jaw centre, 17.2 s |
+| [control: sweep off](#/week/1/run/20260917T130048_072754Z_pick_seed42) | `... --sweep_deg 0` | over the back | **failed**: survey and all six close views missed it, 21.4 s |
+| [cup 45° right](#/week/1/run/20260917T130137_781875Z_pick_seed42) | `--no_camera_body --cup_xy 0.311 -0.311` | over the back | found at **−22.5°**; lifted 11.8 cm, 6.1 mm, 23.2 s |
+| [default cup ahead](#/week/1/run/20260917T130232_291448Z_pick_seed42) | `--no_camera_body` | over the back | the survey and all four pivots saw nothing; the close scan's `view 0` found it; lifted 11.9 cm, **28.7 s** |
+| [11 cups across ±45°](#/week/1/run/20260917T130336_209998Z_pick_seed42) | `--no_camera_body --cup_region sweep --episodes 11` | over the back | **10 of 11** (table below) |
+| [default cup ahead](#/week/1/run/20260917T131112_984198Z_pick_seed42) | `--no_camera_body` | **past the head** | found by the **survey** on the first look; lifted 11.9 cm, 7.1 mm, **13.9 s** |
+| [the same 11 cups](#/week/1/run/20260917T131152_212357Z_pick_seed42) | `--no_camera_body --cup_region sweep --episodes 11` | past the head | **11 of 11** |
+| [control: sweep off](#/week/1/run/20260917T131716_886055Z_pick_seed42) | `--no_camera_body --cup_xy 0.337 0.283 --sweep_deg 0` | past the head | **failed**: survey and all six close views (now including `view 0`) missed it, 20.3 s |
+| [cup 45° right](#/week/1/run/20260917T131805_371086Z_pick_seed42) | `--no_camera_body --cup_xy 0.311 -0.311` | past the head | found at −22.5°; lifted 11.8 cm, 7.9 mm, 21.7 s |
+
+#### The head, and the survey pose that looks past it
+
+**What the default-cup run showed.** The survey stands the camera 5 cm ahead of the arm's mount, 0.40 m up,
+tilted 45° down, over the dog's back. From there the Go2's head covers a cup 0.42 m straight ahead except for
+its rim, and YOLO found nothing in eight frames. Pivoting did not help: the camera sits 8 cm from Joint1's
+axis, so turning barely moves it, and the head stays between it and the cup. The earlier entry
+describing this pose ("a cup at 0.42 m landing in the upper middle of the image, clear of the fingers") is
+right about the framing. On the dog, the head is in the way.
+
+**A cup the head half-hides is worse than one it hides completely.** In the 11-cup run, episode 3 (cup at −4°)
+*was* detected from the survey. But no rim circle could be fitted, and the silhouette fallback put the rim
+**74 mm too high** (horizontal 10 mm). The re-looks from above kept that height, the jaws closed 7 cm above
+the cup, and the sequence reported `done`: lift 0.0 cm. Nothing in the sequence checks that a cup came up.
+The runner's success criterion caught it here. The bench has no such check.
+
+**The body proxy agrees with the render.** From the old camera, at the front edge of the trunk box
+(x = 0.30 m), the line of sight to the cup's rim is 7.6 cm up and the line to its middle 3.8 cm. The box top
+is at 6 cm, so the bare box shows the rim and hides the middle, as the frame does. `sightline_clear` adds a
+2 cm margin, which refuses both. `plan_survey` did not check sightlines at all: it was developed on the bench,
+where there is no dog. It now takes `see_past_body_m`.
+
+**Choosing a survey pose for a search, not for floor in frame.** Each candidate pose was scored on the CPU
+model the way the search uses it. Test cups sat at 0.35, 0.40, 0.45 and 0.50 m and every 5° to ±45°. A cup
+counted as seen if, from at least one of the five stops, it was whole in frame, clear of the fingers, and its
+middle and rim were in sight past the trunk proxy. That is 76 test cups:
+
+| Survey pose (tilt down, camera height, camera ahead of the mount) | Floor in frame | Cups seen, of 76 |
+| --- | --- | --- |
+| 45°, 0.40 m, 0.05 m (the old pose) | 0.20–0.93 m | 26 |
+| 65°, 0.40 m, 0.25 m (the default grid with the sightline alone) | 0.25–0.64 m | 59 |
+| **60°, 0.50 m, 0.20 m** | **0.25–0.80 m** | **63** |
+
+The chosen pose is `grasp.SURVEY_PAST_THE_HEAD`, which `run_pick_demo.py` passes. The bench keeps the old survey
+because it has no dog in front of it. The 13 misses are all at 0.35–0.40 m, in front of the nose and past the
+corners of the head. Stops 15° apart did not change the count for this pose. With the
+placeholder `WristMount()` every pose does badly (38 of 76 at best): it tilts the camera at the fingers, and
+shut they fill the lower frame. The CPU model is conservative in both directions. The old pose's survey found
+cups at −14° to −25° that the model called hidden, because YOLO fires on part of a cup and the real head is
+rounder than a box with a 2 cm margin.
+
+#### The 11-cup runs, same placements
+
+| Ep. | Bearing | Over the back: found by | Result | Past the head: found by | Result |
+| --- | --- | --- | --- | --- | --- |
+| 0 | +4.1° | close scan `view 0` | 11.9 cm, 28.7 s | survey | 11.9 cm, 13.9 s |
+| 1 | −41.1° | pivot −22.5 | 11.8 cm, 22.7 s | pivot −22.5 | 11.6 cm, 21.3 s |
+| 2 | −24.8° | survey | 11.9 cm, 14.4 s | survey | 11.8 cm, 13.0 s |
+| 3 | −4.4° | survey (silhouette, +74 mm) | **lift 0.0 cm** | survey | 11.9 cm, 13.5 s |
+| 4 | −19.9° | survey | 11.8 cm, 14.5 s | survey | 11.8 cm, 13.5 s |
+| 5 | +40.7° | pivot +22.5 | 11.8 cm, 16.7 s | pivot +22.5 | 11.9 cm, 15.5 s |
+| 6 | +40.1° | pivot +22.5 | 11.8 cm, 17.3 s | pivot +22.5 | 11.8 cm, 15.9 s |
+| 7 | −42.0° | pivot −22.5 | 11.8 cm, 23.4 s | pivot −22.5 | 11.7 cm, 22.1 s |
+| 8 | −14.2° | survey | 11.9 cm, 15.0 s | survey | 11.9 cm, 13.2 s |
+| 9 | −4.4° | close scan `view 0` | 11.9 cm, 28.1 s | survey | 11.9 cm, 13.1 s |
+| 10 | +0.4° | close scan `view 0` | 11.9 cm, 28.2 s | survey | 11.9 cm, 13.2 s |
+
+- **Past the head:** median 13.5 s of simulated time per pick (22.1 s at most, for a cup at −42°). First-look
+  error 1.4 mm horizontal (median, 1.7 mm at most), every estimate a rim circle.
+- **Over the back:** median 17.3 s, 28.7 s at most. First-look error 2.5 mm median and 10.8 mm at most, the
+  maximum being the one silhouette estimate.
+- **Height reads about −9 mm in both.** That is F-052's rendered-camera offset, unchanged by either pose.
+- **One number got worse.** Past the head, the cup axis ended 6.4–10.4 mm from the jaw centre, 1.8–3.0 mm from
+  where the plan put it; over the back, episode 3 aside, it was 3.7–8.4 mm and 0.2–1.0 mm. The new plans put the jaw about 2.5 mm
+  nearer the robot for the same cup. The cause is not isolated. It is well inside the 30 mm criterion but
+  should not be read as noise.
+
+Figure: [survey views before and after, a pivot stop, the lift](figures/pick_pivot_search.png), made by
+`figures/pick_pivot_search.py` from the frames of the old and new default-cup runs and episode 5 of the new
+11-cup run.
+
+What it shows:
+
+- **In simulation, pivoting on Joint1 finds cups the straight look cannot.** With the sweep off, a cup at 40°
+  left was never seen, twice, under both survey poses. With it on, every pick of a cup at 40–45° was found at a
+  ±22.5° stop and lifted: 11 picks of 6 placements, under both survey poses.
+- **On the dog, the survey has to stand the camera past the head.** Otherwise straight-ahead cups are hidden
+  (found only by the slower close scan) or half-hidden and badly measured.
+- **The same placements went from 10 of 11 to 11 of 11**, with the median pick 3.8 s shorter.
+
+What it does not show:
+
+- **Anything about the real arm.** The sweep is off on the bench. The bench survey pose is unchanged, and
+  whether the new pose is reachable from a table-mounted arm has not been checked.
+- **Search reliability.** 11 placements from one seed, one lighting, one plain floor and one white cup. No
+  clutter, no second cup, no cup YOLO has trouble with.
+- **Cups nearer than 0.40 m.** The random region was 0.40–0.48 m. The CPU model says 0.35–0.40 m at some
+  bearings is hidden from every stop, and no run went there.
+- **The ±45° edges.** The 11-cup draw reached ±42° and the single runs 40° and 45°.
+- **A grasp check.** Episode 3's `done` with nothing in the jaws is still possible on hardware.
+- **The camera body.** A pick with the housing drawn still sees only the inside of it (F-052); every
+  successful run here drew no housing.
+
+### 2026-09-17 — The camera housing kept out of the wrist view with a near clip, and a continuous search sweep (neither run in simulation yet)
+
+Lukas saw the drawn RealSense housing filling the wrist camera in the reach console's sim view and suggested
+moving the camera forward, off the body. He then asked for the search sweep to be one continuous motion
+rather than discrete stops, whether there is a standard way to keep a simulated camera from seeing its
+housing, and whether the fix would make the simulation less like the real sensor. Both changes are written
+and unit-tested. **Neither has run in the simulator:** Lukas is testing them in the viewer, where his own
+run already held the GPU.
+
+**Where the renderer's eye is, for the mount in use.** In every recorded look of three of today's picks at the
+saved `wrist_mount.json` ([1](#/week/1/run/20260917T125945_370832Z_pick_seed42),
+[2](#/week/1/run/20260917T131112_984198Z_pick_seed42), [3](#/week/1/run/20260917T131805_371086Z_pick_seed42)),
+`camera_model_vs_sim` puts the rendered eye 9.0 mm behind and 5.6 mm below the modelled optical centre, and
+0.9 mm to the side. The glass is 4.2 mm *ahead* of the optical centre, so the eye is 13 mm inside the case.
+- **Constant in Link6.** In Link6 the offset is (+5.57, −0.91, −8.96) mm. Turned into the placeholder mount's
+  optical frame it lands within 0.6 mm of F-057's measurement there, which is F-052's "constant in Link6".
+- **The housing check had used the placeholder's number for every mount.** The runner compared the rendered
+  eye against the case using `RENDERED_EYE_OFFSET_M`, measured at the placeholder mount, whatever mount was
+  loaded. It now uses `camera_body.rendered_eye_offset_m(mount)`.
+
+**Moving the camera forward works, but was not kept.** On the CPU check the case leaves the view once the eye
+is 13 mm further forward, and 20 mm clears it at any mount angle. Written that way, perception had to use the
+moved pose, which makes the simulated viewpoint about 2 cm off the real camera's. The re-look from 18 cm
+would then show the cup 6–11% larger than the D435 would.
+
+**A near clip, which is the usual way, was kept.** A simulated camera renders nothing nearer than its near
+clipping distance, and setting that just past the sensor's own glass is how cameras are commonly kept from
+drawing their housings. Every part of the case the renderer's eye can see lies 4–13 mm from it at this
+mount, and within 15 mm at any mount angle (4.3 mm of glass plus F-052's 10.7 mm). So:
+- **The clip.** The wrist camera's near clip goes from 10 mm to 20 mm (`camera_body.NEAR_CLIP_PAST_HOUSING_M`)
+  and the eye stays where the mount puts it. `view_obstruction` takes `near_m`.
+- **What the check says.** At the clip, the rendered eye is clear for the saved mount, for the placeholder,
+  and for F-052's 10.7 mm pointing straight back, sideways or down.
+- **What it costs the real-sensor comparison.** The D435 measures no depth nearer than ~18 cm and nothing the
+  pick looks at comes within centimetres, so the clip removes only the housing. With `--no_camera_body` the
+  clip hides nothing either.
+- **What it does not fix.** F-052's 9 mm error in the eye's position is unchanged.
+
+**The continuous sweep.** `--sweep_mode continuous`, now the default; `stops` is what the runs in the entry
+above used.
+- **How it moves.** After the still survey look, the arm is sent one Joint1 target at +45°, then one at −45°,
+  and runs to each at its own speed.
+- **Why not a slower sweep.** A single waypoint is the smooth mode on the D1: a clean trapezoid at ~70°/s
+  (F-033, F-035). Streaming small setpoints restarts the trapezoid every cycle and stutters, and the fitted
+  planner in the sim does the same (F-045). A slower smooth sweep would need the firmware's `delay_ms` move
+  duration, which nobody has measured.
+- **Seeing on the move.** YOLO runs on a frame every 0.1 s during a leg. Two frames in a row with a cup stop
+  the arm facing the cup's bearing, where it takes still frames and measures the cup as before.
+- **Why the still look.** The pose for a moving frame comes from 9 Hz feedback that lags the camera, which is
+  fine for choosing where to stop but not for measuring: at 1.2 rad/s a 0.1 s lag is about 7°.
+- **If the still look fails.** The leg resumes, and sightings within 15° of a heading already stopped at are
+  ignored, so a cup that cannot be measured stops the arm once, not over and over.
+- **Tests.** On the CPU model the sweep stops within 5° facing a cup at 40° and picks it, and a cup that can
+  be glimpsed but never measured stops it exactly once before both legs finish. There are three sweep tests
+  and two housing tests; the suite is 333 tests, all passing in the Isaac environment.
+
+What this does not show:
+
+- **That the near clip removes the housing in the RTX render.** Only the geometry check says so. The viewer
+  run is the test. If it holds, F-057's "drawing the body and looking through the wrist camera are mutually
+  exclusive" is superseded and wants a finding.
+- **That the continuous sweep finds cups in simulation**, how often a glimpse's bearing lands the stop with
+  the cup in frame under the modelled feedback lag, or what motion blur does to YOLO on the real camera at
+  ~70°/s. The simulator renders none.
+- **Anything on the arm.** The sweep is still off on the bench.
+
+To try both in the viewer: `./run_pick_demo.sh --cup_region sweep` (housing drawn, continuous sweep, R for a new
+cup anywhere in ±45°); `--sweep_mode stops` for the previous search.
+
+### 2026-09-18 — The pick no longer asks how high the floor is: the search, the grasp and the clearance proxy are all relative to the arm's base
+
+Lukas asked whether the arm's search could stop needing a hardcoded base height, and whether the depth
+camera could measure it instead. It turns out not to need one at all. His call, after the options were laid
+out: cups are always deeper than 35 mm, so drop the floor check entirely and aim the search relative to the
+arm's base. The run stamps below are UTC; this is the night of the 17th.
+
+**What the floor height was doing, and why it was worth removing.** Nothing in perception ever used it: a cup
+is measured by the camera through forward kinematics and the wrist mount, in the base frame. Only the
+planners used it, for two jobs.
+- **A clearance proxy.** Every link was kept 3 cm above a plane at `z = -base_height`. On the Go2 that plane
+  came from the simulator's true root pose; on the bench it was typed in. Nothing on either robot measures
+  it. It moved three times on 2026-09-17 alone (0.02 → 0.0 → −0.09 m), and a wrong value does not fail
+  loudly: too high refused a mug the camera could see (F-066's 27 mm), too low would have put the planner's
+  floor under the table. `ground_under`, which let a measured cup base lower the stated floor but never raise
+  it, existed only to soften that.
+- **Aiming the search.** The survey pose's camera height, the pivot's view centre and the close scan's floor
+  points were all expressed above the floor.
+
+**What replaces it.** The fingertips. An outside grasp stops them `finger_overlap_m` (35 mm) below a rim the
+camera measured, and a wall grasp less (`insert_depth_m`), so on a cup at least 35 mm deep they stop inside
+the cup, above its base, wherever that cup stands. That is the assumption, and it is now stated in
+`grasp.plan_top_down_grasp` and `grasp.arm_clear`: a saucer or a tray would have the fingers reach past its
+base, and nothing would refuse it.
+
+**What changed in the code.**
+- `grasp.arm_clear`, `path_clear`, `proxy_margin`, `solve_link6`, `line_waypoints`, `approach_path`,
+  `sightline_clear`, `plan_top_down_grasp`, `plan_survey` and `plan_pivot` lost their `base_height`; the
+  proxy is the Go2's trunk box alone. `ground_under` and `GraspParams.ground_trust_m` are gone.
+- **Survey poses are measured from the arm's mount.** `plan_survey`'s `heights_m` are now heights above
+  `MOUNT_B`. `SURVEY_PAST_THE_HEAD` carries the same pose it always did, converted once: 0.50/0.45/0.40 m
+  above the floor became 0.335/0.285/0.235 m above the mount, using the settled lying posture (base 0.0851 m
+  up, mount 0.0794 m along gravity from the base origin). The sightline that keeps the dog's head out of the
+  way is a point 0.115 m *below the mount* instead of 0.05 m above the floor.
+- **Poses are no longer scored on how much floor the frame holds.** That took the floor's height and a guess
+  at where cups stand. The grid is now tried in order and the first reachable, holdable, path-clear pose with
+  4 cm of body clearance wins, so the order is the preference. One floor-free check survives: the top row of
+  the image must dip below horizontal, or the pose is looking out at the room.
+- **A pivot's bearing is measured at a range, not at a surface.** `view_point` takes the point
+  `look_range_m` (0.60 m) along the optical axis; `plan_pivot` and `glimpse_bearing_deg` measure bearings
+  about gravity to it from the mount. In simulation the stops land within 0.04° of where they used to.
+- **The close scan is gone**, with `plan_observation` and `LOOK_POINTS_XY`. It aimed at named floor points,
+  which is the one thing that cannot be re-expressed: those points sit 0.165 m below the mount on the lying
+  Go2 and about level with it on the bench. A search that finds nothing now fails after the sweep.
+- **The console has nothing to set.** `--pick-base-height`, the PICK panel's field, `set_base_height`,
+  `/pick/base_height` and `pick_demo/assets/bench.json` are all removed, and a hardware run's `run.json`
+  records no surface height, because none was used.
+
+#### Runs
+
+Headless, seed 42, `--max_time 90`, the housing drawn (the near clip from the entry above), the saved wrist
+mount. 28 picks, 28 successes, and the close scan is not there to fall back on.
+
+| Run | Command (after `python run_pick_demo.py --headless --max_time 90 --seed 42`) | Result |
+| --- | --- | --- |
+| [6 picks, cup ahead](#/week/1/run/20260917T224041_060489Z_pick_seed42) | `--episodes 6` | **6 of 6**, every cup found by the survey, lifts 11.86–11.91 cm, 12.98–13.92 s |
+| [11 placements, stops](#/week/1/run/20260917T224400_609091Z_pick_seed42) | `--episodes 11 --cup_region sweep --sweep_mode stops` | **11 of 11** (table below) |
+| [11 placements, continuous](#/week/1/run/20260917T224941_941015Z_pick_seed42) | `--episodes 11 --cup_region sweep` | **11 of 11**, the first simulation of the continuous sweep |
+
+**The stops run is the same 11 placements as [2026-09-17's 11-of-11](#/week/1/run/20260917T131152_212357Z_pick_seed42),
+and it behaves identically.** Every cup is found by the same look, and nothing moves by more than measurement
+noise: lifts differ by at most 0.4 mm, the cup axis to jaw centre by at most 0.3 mm, the time per pick by at
+most 0.2 s. Median 13.48 s in both.
+
+| Ep. | Bearing | Before (with a floor height) | Now (without one) |
+| --- | --- | --- | --- |
+| 0 | +4.1° | survey, 11.90 cm, 7.1 mm, 13.9 s | survey, 11.90 cm, 7.0 mm, 13.9 s |
+| 1 | −41.1° | pivot −22.5, 11.64 cm, 10.0 mm, 21.3 s | pivot −22.5, 11.67 cm, 10.1 mm, 21.5 s |
+| 2 | −24.8° | survey, 11.76 cm, 10.3 mm, 13.0 s | survey, 11.73 cm, 10.0 mm, 13.0 s |
+| 3 | −4.4° | survey, 11.89 cm, 7.4 mm, 13.5 s | survey, 11.90 cm, 7.5 mm, 13.5 s |
+| 4 | −19.9° | survey, 11.82 cm, 7.3 mm, 13.5 s | survey, 11.84 cm, 7.4 mm, 13.5 s |
+| 5 | +40.7° | pivot +22.5, 11.85 cm, 6.4 mm, 15.5 s | pivot +22.5, 11.84 cm, 6.4 mm, 15.5 s |
+| 6 | +40.1° | pivot +22.5, 11.84 cm, 6.6 mm, 15.9 s | pivot +22.5, 11.84 cm, 6.7 mm, 15.8 s |
+| 7 | −42.0° | pivot −22.5, 11.70 cm, 10.4 mm, 22.1 s | pivot −22.5, 11.69 cm, 10.3 mm, 22.2 s |
+| 8 | −14.2° | survey, 11.88 cm, 7.2 mm, 13.2 s | survey, 11.84 cm, 7.2 mm, 13.2 s |
+| 9 | −4.4° | survey, 11.91 cm, 7.0 mm, 13.1 s | survey, 11.92 cm, 6.9 mm, 13.1 s |
+| 10 | +0.4° | survey, 11.91 cm, 7.2 mm, 13.2 s | survey, 11.90 cm, 7.1 mm, 13.2 s |
+
+**The continuous sweep, simulated for the first time**, picked the same 11: the four cups at 40–42° were
+glimpsed on the move and the arm stopped at −36.0°, +35.9°, +35.7° and −37.5° — 4.1–5.1° short of the cup,
+which is the feedback lag the entry above predicted (about 7° at full speed) — and picked them in 16.0–18.9 s
+against 15.5–22.2 s for the stops. The other seven were found by the survey before any sweep began.
+
+#### On the CPU model, before the simulator
+
+Every plan in a 28-cup sector sweep (0.35–0.50 m, every 15° to ±45°, the lying posture) was compared with the
+same plan from the old planner: **26 identical** in mode, tilt and geometry, and the same 2 refused (0.35 m at
+±15°, where the head is in the way). The survey pose moved by 0.5 mm and the pivots by at most 0.006 rad.
+- **The arm does not come closer to the floor.** Across every planned waypoint and traversal, the lowest point
+  of the arm's link segments sits **6.5 cm** above the real floor. The proxy that was removed wanted 3 cm.
+- **On a bench-like rig** (level arm, surface at the mount's height), three of four test cups plan exactly as
+  before. The fourth is the case the change is for: a 45 mm-deep cup that the stated floor refused now plans,
+  with the fingertips 13.6 mm above the table — inside the cup, as intended.
+
+#### The whole sector, not just the ring the earlier runs sampled
+
+Lukas asked whether the cup positions cover the search area. They did not: `--cup_region sweep` drew the
+bearing across the full ±45° but the range from only 0.40–0.48 m, an 8 cm ring inside the roughly 0.35–0.50 m
+band a top-down grasp plans in, and the near end is exactly where the arm reaches lowest — the part the
+removed floor check bound hardest. `--cup_range NEAR FAR` now sets that band and every run records it.
+
+[20 placements over 0.34–0.52 m across the full sector](#/week/1/run/20260917T234929_503276Z_pick_seed42)
+(`--episodes 20 --cup_region sweep --cup_range 0.34 0.52`, continuous sweep): **17 of 20**, and the three
+failures are all at the far edge.
+
+| Band from the spawn point | Picks | Found by survey / sweep stop | Failures |
+| --- | --- | --- | --- |
+| 0.34–0.40 m (new, nearest) | **5 of 5** | 2 / 3 | — |
+| 0.40–0.48 m (what earlier runs sampled) | **11 of 11** | 7 / 4 | — |
+| 0.48–0.52 m (new, furthest) | **1 of 4** | 2 / 2 | ep 7 (0.520 m, −42.0°) and ep 19 (0.505 m, +34.3°): grasp refused, pregrasp unreachable at every tilt. ep 16 (0.495 m, −16.0°): the **lift** did not arrive — 0.078 rad short on Joint2, 21% of the move covered, arm stopped, cup raised 2 mm |
+
+Lifts 11.7–11.9 cm, cup axis to jaw centre 2.4–10.4 mm, median 13.9 s. Nothing failed for lack of clearance
+and nothing touched the floor: the two refusals are the planner saying the pose is out of reach, which is the
+behaviour that should survive at a workspace edge.
+
+**The near end is where this change had to hold, and it did.** All five cups at 0.34–0.40 m were found and
+picked. On the CPU model two of them (0.349 m at −4.4°, 0.363 m at −14.2°) were predicted hidden from every
+stop, in front of the nose — F-067's blind spot. Both were found in the render, one by the survey and one by
+a sweep stop at −1.8°, which is the same conservatism the earlier entry noted: YOLO fires on part of a cup and
+the real head is rounder than a box with a 2 cm margin.
+
+**The far edge is a reach limit, not a search one.** Both refused cups were seen, measured and then refused by
+inverse kinematics; the lift that stalled had the cup in the jaws. Whether that band is worth having is a
+separate question from this change — at 0.50 m the arm is at full stretch and the lift asks the most of
+Joint2 (F-033's speed and the effort limits), and nothing here measured why it stopped.
+
+#### What this does not show
+
+- **Nothing on the real arm.** The bench has not run since the change. Its survey pose does move: the default
+  grid now stands the camera 0.26 m above the mount and 5 cm ahead (0.16–0.66 m of table in frame, which
+  covers the arm's reach), where the last bench session used 0.15 m ahead at the same height.
+- **Cups shallower than 35 mm are now the operator's problem.** Nothing refuses a saucer.
+- **The close scan was not useless.** In one unrecorded run at 13:27 today the survey saw nothing and the
+  close scan found both cups — that run drew the housing before the near clip existed, so the survey frames
+  were looking at the case. It is the housing fix, not the search, that made those looks unnecessary, and the
+  ±45° sweep covers the bearings the close scan visited. If a survey blind spot turns up on the bench, the
+  fallback to build is a lower survey pose, not the floor points.
+- **One seed, one cup, one lighting, a plain floor.** Same scope as F-067 and F-068. The 20-placement
+  run covers the sector's range and bearing, but from one draw of one seed.
+- **The mount is still assumed**, so the cup's position carries its error exactly as before.
+
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -3048,6 +3403,9 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-003](../findings.md): CPU frame maths and PPO configuration work (confirmed, interface only).
 - [F-066](../findings.md): four live bench picks stalled on the sequence's own arrival tests, not on the arm --
   planning time was charged to the move deadline, and a trembling hold never counted as arrived (confirmed).
+- [F-067](../findings.md): on the lying Go2 the survey pose over the dog's back cannot see past its head -- a cup 0.42 m ahead is hidden, and a half-hidden one was measured 74 mm too high and grasped at thin air; a camera 0.50 m up, 20 cm ahead, 60° down picks the same 11 placements 11 of 11 (confirmed in simulation).
+- [F-068](../findings.md): pivoting the survey pose on Joint1 to ±45° finds cups the straight-ahead look never sees -- 11 picks of 6 placements at 40–45°, all found at the ±22.5° stops and lifted; with the sweep off a cup at 40° was never seen (confirmed in simulation; not run on the arm).
+- [F-069](../findings.md): the pick needs no floor height at all -- with every pose placed from the arm's own mount, the same 11 placements are picked identically to the run that was told where the floor was, 28 of 28 picks succeed without a close scan, and the fingertips stop inside the cup rather than above a stated plane (confirmed in simulation; not run on the arm).
 - [F-065](../findings.md): a cup too wide for the jaws is picked up by its wall -- a simulated pinch of a
   90 mm cup lifts it 11.9 cm, and only because the pads may shut past the URDF's stop (confirmed, simulation only).
 - [F-004](../findings.md): primary implementation choice (provisional until the end of Week 2).

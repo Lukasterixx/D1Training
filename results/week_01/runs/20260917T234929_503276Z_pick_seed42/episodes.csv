@@ -1,0 +1,21 @@
+episode,dir,cup_x_env_m,cup_y_env_m,cup_yaw_deg,cup_bearing_deg,found_by,grasp_mode,final_state,success,cup_lift_m,cup_axis_to_jaw_centre_mm,axis_error_mm,sim_time_s,failure
+0,.,0.42,0.03,0.0,4.1,survey,outside,done,True,0.119,7.0,2.3,13.92,
+1,episode_01,0.3449,-0.3005,-84.3,-41.1,sweep stop -36.0,outside,done,True,0.117,10.4,3.0,18.46,
+2,episode_02,0.4047,-0.1868,177.9,-24.8,survey,outside,done,True,0.117,10.0,2.5,12.62,
+3,episode_03,0.4144,-0.0319,36.6,-4.4,survey,outside,done,True,0.119,7.2,2.5,13.36,
+4,episode_04,0.3668,-0.133,153.0,-19.9,survey,outside,done,True,0.1182,6.7,2.0,12.98,
+5,episode_05,0.3001,0.2578,71.1,40.7,sweep stop +36.1,outside,done,True,0.1187,6.2,1.6,15.74,
+6,episode_06,0.3271,0.2751,48.4,40.1,sweep stop +35.7,outside,done,True,0.1185,6.5,2.0,16.24,
+7,episode_07,0.3864,-0.3474,-76.3,-42.0,sweep stop -37.3,,failed,False,-0.0,332.1,332.1,8.56,"grasp planning: outside tilt 0/10: pregrasp unreachable; outside tilt 20: no IK solution 72% along the line to [0.396, -0.342, -0.052]; outside tilt 30: no IK solution 97% along the line to [0.395, -0.34, -0.046]; pinch tilt 0/0/10/10: pregrasp unreachable; pinch tilt 20: no IK solution 67% along the line to [0.411, -0.324, -0.054]; pinch tilt 20: no IK solution 72% along the line to [0.381, -0.36, -0.05]; pinch tilt 30: no IK solution 97% along the line to [0.41, -0.322, -0.048]; pinch tilt 30: no IK solution 97% along the line to [0.38, -0.358, -0.044]; inside_out tilt 0: the shut fingers reach 47 mm across and the mouth is 42 mm: they do not go in; inside_out tilt 10: the shut fingers reach 54 mm across and the mouth is 42 mm: they do not go in; inside_out tilt 20/30: the shut fingers reach 57 mm across and the mouth is 42 mm: they do not go in"
+8,episode_08,0.3516,-0.0892,-32.2,-14.2,survey,outside,done,True,0.1189,4.2,2.4,13.6,
+9,episode_09,0.3481,-0.0269,180.6,-4.4,sweep stop -1.8,outside,done,True,0.119,2.4,0.7,19.42,
+10,episode_10,0.4014,0.0029,162.8,0.4,survey,outside,done,True,0.1192,6.9,2.1,13.22,
+11,episode_11,0.3329,-0.2472,151.3,-36.6,sweep stop -32.5,outside,done,True,0.1178,6.9,2.3,17.98,
+12,episode_12,0.3524,-0.2708,-34.0,-37.5,sweep stop -33.3,outside,done,True,0.1178,7.7,3.1,18.7,
+13,episode_13,0.3108,-0.2389,126.3,-37.6,sweep stop -33.1,outside,done,True,0.1176,6.8,2.2,18.38,
+14,episode_14,0.3844,-0.2343,-76.0,-31.4,survey,outside,done,True,0.1186,7.2,0.2,13.16,
+15,episode_15,0.4191,0.0487,33.7,6.6,survey,outside,done,True,0.119,7.1,2.3,13.32,
+16,episode_16,0.4759,-0.1367,136.4,-16.0,survey,outside,failed,False,0.002,10.3,0.3,13.76,"lift: no arrival by 4.0 s (worst joint error 0.078 rad; per joint [0.0, 0.078, 0.003, 0.004, 0.001, 0.002]; covered 21% of the move, stopped; gripper 15.4 mm)"
+17,episode_17,0.4055,0.0685,15.6,9.6,survey,outside,done,True,0.1191,7.0,2.2,13.68,
+18,episode_18,0.489,-0.0027,-34.3,-0.3,survey,outside,done,True,0.1183,9.3,0.7,14.82,
+19,episode_19,0.4177,0.2847,49.9,34.3,sweep stop +29.2,outside,failed,False,-0.0,85.5,71.2,8.06,"grasp planning: outside tilt 0/10: pregrasp unreachable; outside tilt 20: no IK solution 78% along the line to [0.428, 0.285, -0.056]; outside tilt 30: no IK solution 100% along the line to [0.426, 0.283, -0.051]; pinch tilt 0/0/10/10: pregrasp unreachable; pinch tilt 20: no IK solution 78% along the line to [0.416, 0.305, -0.054]; pinch tilt 20: no IK solution 78% along the line to [0.441, 0.265, -0.058]; pinch tilt 30: no IK solution 100% along the line to [0.414, 0.303, -0.049]; pinch tilt 30: no IK solution 100% along the line to [0.439, 0.264, -0.052]; inside_out tilt 0: the shut fingers reach 47 mm across and the mouth is 42 mm: they do not go in; inside_out tilt 10: the shut fingers reach 54 mm across and the mouth is 42 mm: they do not go in; inside_out tilt 20/30: the shut fingers reach 57 mm across and the mouth is 42 mm: they do not go in"

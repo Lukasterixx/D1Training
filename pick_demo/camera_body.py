@@ -203,8 +203,28 @@ def _half_extent(model, z: float) -> tuple:
 # to learn what the renderer will actually see.
 RENDERED_EYE_OFFSET_M = (0.0009, 0.00885, -0.00623)
 
+# The same error where it is constant: a translation in the Link6 frame, whatever the mount. From every look of
+# three picks at the saved wrist_mount.json (Week 1 log, 2026-09-17), 9.0 mm back and 5.6 mm down in that
+# mount's optical frame. F-052's reported-pose figure at the placeholder mount, (+6.2, -0.9, -8.8) mm, agrees
+# to 0.6 mm; the rest is its 1.1 deg rotation acting on two different mount positions. Rotated into the
+# placeholder's optical frame this gives (0.9, 8.3, -6.5) mm against `RENDERED_EYE_OFFSET_M`.
+RENDERED_EYE_LINK6_M = (0.00557, -0.00091, -0.00896)
 
-def view_obstruction(model, eye_offset_m=(0.0, 0.0, 0.0), points=None) -> list:
+# The wrist camera's near clipping distance. Nothing nearer its eye than this is drawn, which is how a
+# simulated camera is kept from seeing its own housing: the case's front plate is 4.3 mm ahead of the
+# optical centre and the renderer's eye is at most 10.7 mm from where it should be (F-052), so every part of
+# the case in front of the eye is within 15 mm of it, whatever the mount's angle. The real D435 measures no
+# depth nearer than ~18 cm and nothing the pick looks at comes within centimetres, so the clip hides the
+# housing and nothing else. The eye stays where the mount puts it.
+NEAR_CLIP_PAST_HOUSING_M = 0.020
+
+
+def rendered_eye_offset_m(mount) -> tuple:
+    """The renderer's eye in `mount`'s optical frame (`RENDERED_EYE_LINK6_M` turned into it)."""
+    return tuple(float(v) for v in np.asarray(mount.rotation).T @ np.asarray(RENDERED_EYE_LINK6_M))
+
+
+def view_obstruction(model, eye_offset_m=(0.0, 0.0, 0.0), points=None, near_m: float = 0.0) -> list:
     """Every part of the case that reaches into the colour frustum seen from `eye_offset_m`.
 
     Empty means the camera looks out of a clear aperture. The default eye is the optical origin, which
@@ -218,6 +238,9 @@ def view_obstruction(model, eye_offset_m=(0.0, 0.0, 0.0), points=None) -> list:
 
     Returns one entry per connected run of offending triangles is more than this needs, so it returns
     a single summary entry when anything is found, carrying the count and the extent of the intrusion.
+
+    `near_m` is the camera's near clip: a triangle wholly nearer the eye than that is not drawn, so it
+    cannot obstruct. One that reaches past it still counts.
     """
     if points is None:
         points, faces = mesh_optical()
@@ -229,7 +252,7 @@ def view_obstruction(model, eye_offset_m=(0.0, 0.0, 0.0), points=None) -> list:
     eye = np.asarray(eye_offset_m, dtype=float).reshape(3)
     local = tri - eye
     zmax = local[:, :, 2].max(axis=1)
-    ahead = zmax > 0.0
+    ahead = zmax > max(0.0, near_m)
     if not ahead.any():
         return []
     across = max(model.cx, model.width - model.cx) / model.fx
@@ -312,5 +335,6 @@ def describe(mount) -> list:
 __all__ = ["mesh_to_optical", "MESH_TO_OPTICAL", "MESH_PATH", "mesh_optical", "housing_bounds_m",
            "housing_centre_m", "housing_size_m", "imager_positions_m", "tripod_thread_m",
            "part_pose_link6", "view_obstruction", "clearance_report", "describe",
-           "RENDERED_EYE_OFFSET_M", "COLOUR_FROM_LEFT_IMAGER_M", "STEREO_BASELINE_M",
+           "RENDERED_EYE_OFFSET_M", "RENDERED_EYE_LINK6_M", "NEAR_CLIP_PAST_HOUSING_M", "rendered_eye_offset_m",
+           "COLOUR_FROM_LEFT_IMAGER_M", "STEREO_BASELINE_M",
            "GLASS_AHEAD_OF_OPTICAL_M", "GLASS_BEHIND_PLATE_M", "HOUSING_SIZE_NOMINAL_M"]

@@ -378,14 +378,6 @@
     $('pick').disabled = !p.available || !!s.busy;
     $('pick').textContent = busy ? 'PICKING…' : 'PICK';
     $('pick').className = (p.available && s.live) ? 'danger' : '';
-    // The field is editable, so state must not fight the operator's typing: fill it only while it is
-    // not focused, and leave it alone once they are in it.
-    const baseInput = $('pickbase');
-    if (document.activeElement !== baseInput) {
-      baseInput.value = (p.base_height_m === null || p.base_height_m === undefined)
-        ? '' : Number(p.base_height_m).toFixed(3);
-    }
-    baseInput.disabled = !p.configured || !!s.busy;
     $('pickcam').textContent = p.camera_source || '–';
     $('pickmount').textContent = p.mount_source || '–';
     // An uncalibrated camera or mount is the difference between a demo and a measurement: say so.
@@ -533,20 +525,6 @@
     };
   }
 
-
-  // The one number nothing on a bench arm can measure. Sent on change, remembered by the server, and
-  // the only thing standing between a fresh console and a working PICK button.
-  $('pickbase').addEventListener('change', async () => {
-    const raw = $('pickbase').value.trim();
-    if (raw === '') return;
-    try {
-      const r = await fetch('/pick/base_height', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ m: Number(raw) }),
-      });
-      const j = await r.json();
-      toast(j.ok ? (j.reason || 'base height set — remembered for next launch') : `refused: ${j.reason}`);
-    } catch (e) { toast('could not reach the server'); }
-  });
 
   // ------------------------------------------------------------ wrist mount editor
   //

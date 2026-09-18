@@ -77,13 +77,9 @@
       the same sequence the simulated pick runs. The gripper is <b>not</b> commanded: this is a reach,
       a descent and a lift, not a grasp. STOP interrupts it and leaves the arm holding.
     </div>
-    <div class="row">
-      <span>base height</span>
-      <span><input type="number" id="pickbase" step="0.005" min="-0.5" max="1.5" placeholder="set me"> m</span>
-    </div>
-    <div class="hint" id="pickbasehint">
-      How far the arm's mount plane sits above the surface the cup stands on. Nothing on a bench arm can
-      measure this, and the pick cannot run without it. Remembered for next launch.
+    <div class="hint">
+      Nothing here asks where the table is. Every pose is placed from the arm's own mount and the cup is
+      measured by the camera, so there is no height to set and none to get wrong.
     </div>
     <div class="row"><span>camera model</span><b id="pickcam">–</b></div>
     <div class="row"><span>wrist mount</span><b id="pickmount">–</b></div>

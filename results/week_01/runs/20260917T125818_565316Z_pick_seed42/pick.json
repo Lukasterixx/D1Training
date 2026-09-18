@@ -1,0 +1,51 @@
+{
+  "success": false,
+  "criterion": "sequence finished, cup base raised >= 5 cm, and the cup axis within 3 cm of where the plan put the jaw centre relative to it (on the axis for an outside or inside-out grasp, a wall's radius away for a pinch)",
+  "episode": 0,
+  "settled": {
+    "base_height_m": 0.0851,
+    "base_xy_env_m": [
+      -0.0173,
+      0.0
+    ],
+    "cup_start_env_m": [
+      0.337,
+      0.283,
+      -0.0
+    ],
+    "cup_yaw_deg": 0.0,
+    "settle_s": 3.0
+  },
+  "final_state": "failed",
+  "failure": "no cup found from any viewpoint",
+  "sim_time_s": 32.3,
+  "wall_time_s": 51.9,
+  "cup_lift_m": -0.0,
+  "cup_axis_to_jaw_centre_m": 0.4626,
+  "planned_jaw_offset_from_axis_m": 0.0,
+  "axis_error_m": 0.4626,
+  "cup_tilt_deg_end": 0.0,
+  "base_height_m": 0.0851,
+  "first_look_errors_mm": [],
+  "refine_errors_mm": [],
+  "found_by": null,
+  "looks_tried": [
+    "survey",
+    "pivot +22.5",
+    "pivot +45.0",
+    "pivot -22.5",
+    "pivot -45.0",
+    "view 0",
+    "view 1",
+    "view 2",
+    "view 3",
+    "view 4",
+    "view 5"
+  ],
+  "frames_looked_at": 88,
+  "frames_with_cup_detection": 0,
+  "grasp_plan": null,
+  "cup_estimate_used": null,
+  "first_cup_estimate": null,
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm."
+}

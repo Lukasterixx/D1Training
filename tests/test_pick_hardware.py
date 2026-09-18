@@ -20,13 +20,18 @@ from pick_demo import camera, grasp, hardware, perception
 from position_only.workspace import load_urdf
 
 UP = np.array([0.0, 0.0, 1.0])
-BASE_HEIGHT = 0.12
-CUP_XY = np.array([0.42, 0.03])
+# The bench this module drives: the arm is bolted to the table, so the surface it works over is about the
+# level of its own mount and a 10 cm mug's rim is 0.19 m up in the base frame. The scene used to put the
+# cup 0.12 m *below* the base origin, which is a rig nobody has -- the sort of geometry that makes the arm
+# fold under itself to see, and then need a swing past `MAX_STEP_DEG` to reach out of it. The planner is
+# told none of these heights; they place the cup for the fake camera.
+TABLE_Z = 0.09
+CUP_XY = np.array([0.33, -0.03])
 CUP_RADIUS = 0.0275
 
 
 def cup_top():
-    return np.array([CUP_XY[0], CUP_XY[1], -BASE_HEIGHT + 0.10])
+    return np.array([CUP_XY[0], CUP_XY[1], TABLE_Z + 0.10])
 
 
 class FakeArm:
@@ -96,7 +101,7 @@ class FakePerception:
 
     def _estimate(self):
         truth = cup_top()
-        return perception.CupEstimate(truth, CUP_RADIUS, truth[2], -BASE_HEIGHT, 500, "rim_circle", 0.001, 300.0)
+        return perception.CupEstimate(truth, CUP_RADIUS, truth[2], TABLE_Z, 500, "rim_circle", 0.001, 300.0)
 
     def observe(self, frame):
         self.observed += 1
@@ -123,7 +128,7 @@ def run(**kwargs):
     defaults = dict(client=FakeArm(), joints=joints, links=links,
                     camera_model=camera.CAMERAS["d435"], mount=camera.WristMount(),
                     perception=FakePerception(), pipeline=FakeCamera(),
-                    base_height_m=BASE_HEIGHT, up_b=UP, execute=False, max_time_s=60.0,
+                    up_b=UP, execute=False, max_time_s=60.0,
                     clock=FakeClock(), sleep=lambda _s: None)
     defaults.update(kwargs)
     return defaults["client"], hardware.run_pick(**defaults)
@@ -226,7 +231,7 @@ class GripperTests(unittest.TestCase):
         joints, links = d1_ik.load_urdf()
         top = np.array([0.436, 0.030, -0.085 + 0.10])
         cup = perception.CupEstimate(top, 0.0419, top[2], -0.085, 500, "rim_circle")
-        plan = grasp.plan_top_down_grasp(joints, links, cup, np.array([0.0, 0.0, 1.0]), np.zeros(6), 0.085,
+        plan = grasp.plan_top_down_grasp(joints, links, cup, np.array([0.0, 0.0, 1.0]), np.zeros(6),
                                          grasp.GraspParams())
         self.assertEqual(plan.mode, "pinch")
         self.assertAlmostEqual(d1_hardware.finger_travel_to_gripper_units(plan.gripper_descend_m),
@@ -355,8 +360,12 @@ class CameraTests(unittest.TestCase):
 class MetadataTests(unittest.TestCase):
     def test_the_record_states_what_was_assumed(self):
         meta = hardware.run_metadata(camera_model=camera.CAMERAS["d435"], mount=camera.WristMount(),
-                                     base_height_m=0.02, up_b=UP, execute=False)
-        self.assertEqual(meta["frame"]["base_height_m"], 0.02)
+                                     up_b=UP, execute=False)
+        np.testing.assert_allclose(meta["frame"]["up_b"], UP)
+        # No height of any surface is recorded, because none was used: a record that carried one would
+        # invite the next reader to think the planner had been told where the table is.
+        self.assertNotIn("base_height_m", meta["frame"])
+        self.assertIn("not stated and not used", meta["frame"]["surface"])
         self.assertIn("assumed", meta["mount"]["source"])
         # The gripper is commanded by default now, and the record must say the scale is unverified
         # rather than imply the jaw went to a known width.
@@ -366,7 +375,7 @@ class MetadataTests(unittest.TestCase):
 
     def test_the_record_says_so_when_the_gripper_is_left_out(self):
         meta = hardware.run_metadata(camera_model=camera.CAMERAS["d435"], mount=camera.WristMount(),
-                                     base_height_m=0.02, up_b=UP, execute=False, grip_gripper=False)
+                                     up_b=UP, execute=False, grip_gripper=False)
         self.assertFalse(meta["gripper"]["commanded"])
         self.assertIn("not a grasp", meta["scope"])
 

@@ -18,6 +18,16 @@ needs jaws that shut below a cup wall, which the real arm does (`pinch_closed_ga
 2026-09-17) and the URDF's do not -- they bottom out 17.2 mm apart (F-059), so a simulated pick falls
 through to the inside-out grasp. Neither has yet been tried on a robot, in simulation or on the bench.
 
+Nothing here knows where the floor is, and nothing asks. Everything -- the survey pose, the headings a
+search sweeps through, the grasp -- is placed relative to the arm's own base, and the cup is measured by
+the camera in that same frame. The clearance proxy is the Go2's trunk alone. What used to keep the arm
+off the surface was a plane at a stated height, and a stated height is what nothing on this robot
+measures: on the bench it was an operator's number that moved three times in a day, and where it was
+wrong it either refused reachable cups or put the floor below the table. The fingertips go
+`GraspParams.finger_overlap_m` (35 mm) below the rim of whatever the camera measured, so on a cup at
+least that deep they stop inside the cup, above its base, wherever that cup happens to stand. That
+assumption -- cups at least 35 mm deep, stated by Lukas on 2026-09-17 -- is what replaces the floor.
+
 Everything is in the Go2 base frame. The gripper geometry is the URDF's CAD (`workspace.tip_offsets`),
 not a measurement of the real gripper.
 """
@@ -29,11 +39,11 @@ import math
 import numpy as np
 
 import d1_ik
-from position_only.workspace import (BODY_BOX_B, EFFORT_LIMIT_NM, LINK_RADIUS_M, MOUNT_B, clear_of_body, forward,
-                                     gravity_torques)
+from position_only.workspace import (BODY_BOX_B, EFFORT_LIMIT_NM, LINK_RADIUS_M, MOUNT_B, SOFT_LIMIT_FACTOR,
+                                     clear_of_body, forward, gravity_torques)
 
-from .camera import CameraModel, WristMount, invert, transform
-from .perception import CupEstimate, horizontal_basis
+from .camera import CameraModel, WristMount, camera_pose, invert, pixel_ray, transform
+from .perception import CupEstimate
 
 # Link6 frame, from the URDF CAD: the fingertips' end faces are 12.51 cm along the approach axis and
 # the Link6 shell ends at 7.6 cm, so 4.95 cm of finger stands clear of the palm. The jaw centre is taken
@@ -130,10 +140,6 @@ class GraspParams:
     # 17.2 mm apart (F-059) and pinch nothing, so a simulated run passes `CLOSED_GAP_M` here
     # (`run_pick_demo.py --pinch_closed_gap`). Replace the 2 mm with a gauge reading when one exists.
     pinch_closed_gap_m: float = 0.002
-    # How far a measured cup base may lower the floor the arm is planned against (`ground_under`). The
-    # bench frame is an operator's number and the cup is a measurement; where they disagree this is how
-    # much of the disagreement the cup is allowed to win.
-    ground_trust_m: float = 0.05
 
 
 @dataclass
@@ -193,40 +199,37 @@ def _chain_points(joints, qs) -> np.ndarray:
     return (chain[None, :, :-1] * (1 - t) + chain[None, :, 1:] * t).transpose(1, 0, 2, 3).reshape(len(chain), -1, 3)
 
 
-def arm_clear(joints, qs, base_height, up) -> np.ndarray:
-    """`workspace.clear_of_body` with the ground where gravity puts it.
+def arm_clear(joints, qs) -> np.ndarray:
+    """`workspace.clear_of_body`: the arm's links clear of the Go2's trunk box, and nothing else.
 
-    The proxy takes the ground as the plane z = -base_height in the base frame, which is right only for a
-    level base. Lying down, the simulated Go2 settles 7 deg nose-up (Week 1 log, 2026-09-17), and 44 cm
-    ahead that level plane sits 5-6 cm above the real floor -- exactly where a cup's rim is, so every grasp
-    read as underground. The body box is part of the base and stays as it is; the ground test uses `up`.
+    There is no ground test. It used to be a plane at z = -base_height in the base frame, tilted to
+    gravity, and the height came from the simulator's root pose or an operator typing a number. A number
+    that is wrong does not fail loudly: 3 cm too high refused a mug the camera could see, and 9 cm too low
+    put the "floor" under the bench's table (Week 1 log, 2026-09-17). What keeps the fingers out of the
+    surface now is the grasp itself -- they stop `finger_overlap_m` below a rim the camera measured, so
+    inside any cup at least that deep.
     """
-    qs = np.asarray(qs, dtype=float).reshape(-1, 6)
-    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
-    box_clear = clear_of_body(joints, qs, math.inf)
-    ground_clear = (_chain_points(joints, qs) @ up + base_height > LINK_RADIUS_M).all(axis=1)
-    return box_clear & ground_clear
+    return clear_of_body(joints, np.asarray(qs, dtype=float).reshape(-1, 6), math.inf)
 
 
-def path_clear(joints, q_start, q_goal, base_height, up):
+def path_clear(joints, q_start, q_goal):
     """`d1_ik.path_clearance` with `arm_clear`: (clear, first failing fraction or None)."""
     configs = d1_ik.traversal_configs(q_start, q_goal)
-    ok = arm_clear(joints, configs, base_height, up)
+    ok = arm_clear(joints, configs)
     if bool(ok.all()):
         return True, None
     return False, float(np.flatnonzero(~ok)[0]) / max(1, len(ok) - 1)
 
 
-def proxy_margin(joints, q, base_height, up) -> float:
+def proxy_margin(joints, q) -> float:
     """How far (m) the arm is from failing `arm_clear`: the smallest gap between its link segments (same
-    chain and radius as the proxy) and the body box or the ground. Negative inside."""
+    chain and radius as the proxy) and the body box. Negative inside."""
     points = _chain_points(joints, q)[0]
     low, high = np.array(BODY_BOX_B)[:, 0], np.array(BODY_BOX_B)[:, 1]
     outside = np.linalg.norm(np.maximum(np.maximum(low - points, points - high), 0.0), axis=1)
     inside = np.minimum(points - low, high - points).min(axis=1)
     box = np.where(outside > 0.0, outside, -np.maximum(inside, 0.0))
-    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
-    return float(min((box - LINK_RADIUS_M).min(), (points @ up + base_height - LINK_RADIUS_M).min()))
+    return float((box - LINK_RADIUS_M).min())
 
 
 def jaw_positions(joints, qs) -> np.ndarray:
@@ -262,11 +265,11 @@ def top_down_rotation(heading, up, tilt_deg: float = 0.0) -> np.ndarray:
     return np.column_stack([x, y, z])
 
 
-def solve_link6(joints, links, pos, rot, seeds, base_height, up, offset=JAW_CENTRE_LINK6):
-    """First seed that converges, clears the trunk/ground proxy (`arm_clear`) and can be held against gravity."""
+def solve_link6(joints, links, pos, rot, seeds, offset=JAW_CENTRE_LINK6):
+    """First seed that converges, clears the trunk proxy (`arm_clear`) and can be held against gravity."""
     for seed in seeds:
         result = d1_ik.solve(joints, pos, rot, q0=seed, body="Link6", offset=offset, max_iterations=300)
-        if (result.converged and bool(arm_clear(joints, result.q, base_height, up)[0])
+        if (result.converged and bool(arm_clear(joints, result.q)[0])
                 and holdable(joints, links, result.q)):
             return result
     return None
@@ -292,7 +295,7 @@ def line_deviation(points, start, end) -> np.ndarray:
     return np.linalg.norm(points - (start + t[:, None] * seg), axis=1)
 
 
-def line_waypoints(joints, links, q_start, jaw_start, jaw_end, rot, base_height, up, tolerance_m: float = 0.004,
+def line_waypoints(joints, links, q_start, jaw_start, jaw_end, rot, tolerance_m: float = 0.004,
                    max_step_m: float | None = None, max_segments: int = 32) -> list:
     """Joint waypoints that carry the jaw centre along a straight line.
 
@@ -307,15 +310,15 @@ def line_waypoints(joints, links, q_start, jaw_start, jaw_end, rot, base_height,
         waypoints, previous, worst = [], np.asarray(q_start, dtype=float), 0.0
         for i in range(1, segments + 1):
             point = jaw_start + (jaw_end - jaw_start) * (i / segments)
-            result = solve_link6(joints, links, point, rot, [previous, *_seeds(point)], base_height, up)
+            result = solve_link6(joints, links, point, rot, [previous, *_seeds(point)])
             if result is None:
                 raise PlanningError(f"no IK solution {100 * i / segments:.0f}% along the line to "
                                     f"{np.round(jaw_end, 3).tolist()}")
             configs = d1_ik.traversal_configs(previous, result.q)
             worst = max(worst, float(line_deviation(jaw_positions(joints, configs), jaw_start, jaw_end).max()))
-            clear, _ = path_clear(joints, previous, result.q, base_height, up)
+            clear, _ = path_clear(joints, previous, result.q)
             if not clear:
-                raise PlanningError("a straight-line segment enters the trunk/ground proxy")
+                raise PlanningError("a straight-line segment enters the trunk proxy")
             if worst > tolerance_m:
                 break
             waypoints.append(result.q)
@@ -548,45 +551,23 @@ _MODE_ORDER = {"auto": ("outside", "pinch", "inside_out"), "off": ("outside",), 
                "wall": ("pinch", "inside_out"), "inside_out": ("inside_out",), "pinch": ("pinch",)}
 
 
-def ground_under(cup: CupEstimate, base_height: float, params: "GraspParams"):
-    """The floor to plan against, and a note if the cup disagreed with the one it was given.
-
-    The proxy keeps every part of the arm `LINK_RADIUS_M` clear of a plane at z = -base_height, and that
-    plane is *told* to the planner: the Go2's IMU on the floor, or an operator's number on a bench. A cup
-    standing on the surface is evidence about where the surface is, and on the bench the two disagreed by
-    3.5 cm -- a mug whose rim the camera could see was refused because reaching its wall would have put
-    the fingertips 27 mm above the stated floor, 3 mm inside the proxy (2026-09-17).
-
-    So a measured cup base *below* the stated floor lowers it, by at most `ground_trust_m`. Never the
-    other way: a cup standing on a box says nothing about the ground beside it, and raising the floor on
-    that evidence would let the arm swing into the real one.
-    """
-    floor = -float(base_height)
-    measured = float(cup.bottom_height_m)
-    if measured >= floor - 1e-9:
-        return base_height, ""
-    drop = min(floor - measured, params.ground_trust_m)
-    return -(floor - drop), (f"the cup's base reads {1000 * (floor - measured):.0f} mm below the floor the "
-                             f"planner was given; planned against a floor {1000 * drop:.0f} mm lower")
-
-
-def _attempt(joints, links, cup, params, up, heading, rot, tilt_deg, q_start, base_height, recipe, offset):
+def _attempt(joints, links, cup, params, up, heading, rot, tilt_deg, q_start, recipe, offset):
     """One recipe at one offset: a GraspPlan, or a string saying what stopped it."""
     approach_axis, jaw_axis = rot[:, 2], rot[:, 1]
     fingertip = cup.top_centre_b - up * recipe.insert_m + jaw_axis * offset
     jaw_grasp = fingertip - approach_axis * (FINGERTIP_Z_M - JAW_CENTRE_LINK6[2])
     jaw_pre = jaw_grasp - approach_axis * params.pregrasp_clearance_m
     jaw_lift = jaw_grasp + up * params.lift_m
-    pre = solve_link6(joints, links, jaw_pre, rot, _seeds(jaw_pre, [q_start]), base_height, up)
+    pre = solve_link6(joints, links, jaw_pre, rot, _seeds(jaw_pre, [q_start]))
     if pre is None:
         return "pregrasp unreachable"
-    approach, notes = approach_path(joints, links, q_start, pre.q, jaw_pre, rot, up, base_height)
+    approach, notes = approach_path(joints, links, q_start, pre.q, jaw_pre, rot, up)
     if approach is None:
-        return "every path to the pregrasp crosses the trunk/ground proxy"
+        return "every path to the pregrasp crosses the trunk proxy"
     try:
-        descend = line_waypoints(joints, links, pre.q, jaw_pre, jaw_grasp, rot, base_height, up,
+        descend = line_waypoints(joints, links, pre.q, jaw_pre, jaw_grasp, rot,
                                  recipe.tolerance_m, params.descend_step_m, params.line_max_segments)
-        lift = line_waypoints(joints, links, descend[-1], jaw_grasp, jaw_lift, rot, base_height, up,
+        lift = line_waypoints(joints, links, descend[-1], jaw_grasp, jaw_lift, rot,
                               params.lift_tolerance_m, params.lift_step_m, params.line_max_segments)
     except PlanningError as exc:
         return str(exc)
@@ -596,7 +577,7 @@ def _attempt(joints, links, cup, params, up, heading, rot, tilt_deg, q_start, ba
                      notes, recipe.mode, recipe.gripper_descend_m, recipe.gripper_grasp_m)
 
 
-def plan_top_down_grasp(joints, links, cup: CupEstimate, up, q_start, base_height,
+def plan_top_down_grasp(joints, links, cup: CupEstimate, up, q_start,
                         params: GraspParams | None = None) -> GraspPlan:
     """The first top-down grasp of `cup` that plans: outside the cup if it fits, otherwise by its wall.
 
@@ -604,6 +585,12 @@ def plan_top_down_grasp(joints, links, cup: CupEstimate, up, q_start, base_heigh
     cup the jaws can take from the outside is planned exactly as it was before this fallback existed. A
     cup too wide for that is taken from inside instead, and the refusal, when everything fails, carries
     every mode's reason with its numbers.
+
+    Everything here is placed from `cup`, which the camera measured in this frame, and the surface the cup
+    stands on is never named. An outside grasp puts the fingertips `finger_overlap_m` below the rim and a
+    wall grasp less than that (`insert_depth_m`), so on a cup at least 35 mm deep the tips stop inside it.
+    A shallower cup -- a saucer, a tray -- would have them reach past its base and into whatever it stands
+    on, and nothing in this module would refuse that.
     """
     params = params or GraspParams()
     if params.finger_overlap_m >= FINGERTIP_Z_M - PALM_Z_M:
@@ -613,7 +600,6 @@ def plan_top_down_grasp(joints, links, cup: CupEstimate, up, q_start, base_heigh
                             f"{', '.join(sorted(_MODE_ORDER))}")
     up = np.asarray(up, dtype=float) / np.linalg.norm(up)
     heading = heading_to(cup.top_centre_b, up)
-    base_height, floor_note = ground_under(cup, base_height, params)
     reasons = []
     for mode in _MODE_ORDER[params.wall_grasp]:
         for tilt in params.tilts_deg:
@@ -623,11 +609,8 @@ def plan_top_down_grasp(joints, links, cup: CupEstimate, up, q_start, base_heigh
                 reasons.append((mode, tilt, recipe))
                 continue
             for offset in recipe.offsets_m:
-                outcome = _attempt(joints, links, cup, params, up, heading, rot, tilt, q_start, base_height,
-                                   recipe, offset)
+                outcome = _attempt(joints, links, cup, params, up, heading, rot, tilt, q_start, recipe, offset)
                 if isinstance(outcome, GraspPlan):
-                    if floor_note:
-                        outcome.notes.insert(0, floor_note)
                     return outcome
                 reasons.append((mode, tilt, outcome))
     raise PlanningError(_refusal(reasons))
@@ -690,22 +673,21 @@ def grip_travel_m(diameter_m: float, squeeze_m: float) -> float:
     return float(np.clip((diameter_m - squeeze_m - CLOSED_GAP_M) / 2.0, GRIPPER_CLOSED_M, GRIPPER_OPEN_M))
 
 
-def approach_path(joints, links, q_start, q_goal, jaw_goal, rot, up, base_height, raises=(0.08, 0.16)):
+def approach_path(joints, links, q_start, q_goal, jaw_goal, rot, up, raises=(0.08, 0.16)):
     """Joint waypoints ending at `q_goal` whose every move clears the proxy, and notes; (None, notes) if none.
 
     Tries the direct move, then a via pose above the goal, then one above where the arm starts (backing
     out of a low start before swinging over), then both.
     """
-    if path_clear(joints, q_start, q_goal, base_height, up)[0]:
+    if path_clear(joints, q_start, q_goal)[0]:
         return [q_goal], []
     frames, _, _ = forward(joints, np.asarray(q_start, dtype=float).reshape(1, 6))
     start_rot, start_pos = frames["Link6"][0][0], frames["Link6"][1][0]
     start_jaw = start_pos + start_rot @ np.asarray(JAW_CENTRE_LINK6)
     candidates = []
     for rise in raises:
-        above_goal = solve_link6(joints, links, jaw_goal + up * rise, rot, _seeds(jaw_goal, [q_goal, q_start]),
-                                 base_height, up)
-        above_start = solve_link6(joints, links, start_jaw + up * rise, start_rot, [q_start], base_height, up)
+        above_goal = solve_link6(joints, links, jaw_goal + up * rise, rot, _seeds(jaw_goal, [q_goal, q_start]))
+        above_start = solve_link6(joints, links, start_jaw + up * rise, start_rot, [q_start])
         if above_goal is not None:
             candidates.append(([above_goal.q, q_goal], f"via a pose {100 * rise:.0f} cm above the pregrasp"))
         if above_start is not None:
@@ -715,7 +697,7 @@ def approach_path(joints, links, q_start, q_goal, jaw_goal, rot, up, base_height
     for waypoints, note in candidates:
         previous, ok = q_start, True
         for q in waypoints:
-            if not path_clear(joints, previous, q, base_height, up)[0]:
+            if not path_clear(joints, previous, q)[0]:
                 ok = False
                 break
             previous = q
@@ -735,7 +717,7 @@ def optical_rotation(view, up, roll_deg: float = 0.0) -> np.ndarray:
     return np.column_stack([math.cos(roll) * x + math.sin(roll) * y, -math.sin(roll) * x + math.cos(roll) * y, z])
 
 
-def sightline_clear(camera_pos, target, base_height, margin_m: float = 0.02, samples: int = 25) -> bool:
+def sightline_clear(camera_pos, target, margin_m: float = 0.02, samples: int = 25) -> bool:
     """The camera's line of sight to `target` misses the Go2 body proxy (the last 3 cm are not checked)."""
     camera_pos, target = np.asarray(camera_pos, float), np.asarray(target, float)
     length = float(np.linalg.norm(target - camera_pos))
@@ -761,189 +743,250 @@ def gripper_ahead_of_body(joints, q, heading, up) -> bool:
     return bool(jaw @ heading > (corners @ heading).max())
 
 
-def plan_observation(joints, links, model: CameraModel, mount: WristMount, look_at_b, up, q_start, base_height,
-                     distances=(0.35, 0.40, 0.30, 0.45), elevations=(65.0, 55.0, 45.0, 75.0),
-                     rolls=(0.0, 15.0, -15.0), wanted_margin_m: float = 0.04,
-                     image_row_fraction: float = 0.3) -> ObservationPlan:
-    """An arm pose whose wrist camera looks at `look_at_b` from a distance its depth can measure.
-
-    The look point is placed `image_row_fraction` of the way down the image, not at its centre: the
-    gripper fills the lower ~40% of a wrist camera mounted behind it, and a cup that lands there is hidden
-    and not detected (Week 1 log, 2026-09-17: a cup 8 cm off-centre went unseen from all six viewpoints).
-
-    Takes the first candidate with `wanted_margin_m` of clearance from the body proxy, else the one with
-    the most: a view that only just clears the head leaves no clear path onwards to a grasp.
-
-    This aims at one named floor point from close range, and is the *fallback* scan: `plan_survey` looks
-    over the whole floor ahead first. Two things were learnt trying to make this one do that job
-    (Week 1 log, 2026-09-17). Moving the camera forward does not move the gripper forward -- the camera
-    is mounted behind the fingers, so at 75 deg it stands at x = 0.33 m while the jaws are still at
-    0.27 m -- and pitching steeply enough to carry the whole wrist past the nose (85 deg) points the
-    camera at the floor directly beneath it, where a cup seen exactly end-on stopped being detected at
-    all. Where the wrist sits is not the thing that matters; what the camera is aimed at is.
-    """
-    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
-    look_at_b = np.asarray(look_at_b, dtype=float)
-    heading = heading_to(look_at_b, up)
-    mount_inverse = invert(mount.pose)
-    # Pitch the optical axis down by the angle between the image centre and the wanted row.
-    dip = math.atan((model.cy - image_row_fraction * model.height) / model.fy)
-    tried, best = 0, None
-    for distance in distances:
-        if distance < model.min_depth_m + 0.08 or distance > model.max_depth_m:
-            continue
-        for elevation in elevations:
-            e = math.radians(elevation)
-            view = math.cos(e) * heading - math.sin(e) * up
-            cam_pos = look_at_b - distance * view
-            if not sightline_clear(cam_pos, look_at_b, base_height):
-                continue
-            for roll in rolls:
-                tried += 1
-                optical = optical_rotation(view, up, roll)
-                x, y, z = optical.T
-                optical = np.column_stack([x, math.cos(dip) * y - math.sin(dip) * z, math.sin(dip) * y + math.cos(dip) * z])
-                target = transform(optical, cam_pos) @ mount_inverse
-                result = solve_link6(joints, links, target[:3, 3], target[:3, :3], _seeds(target[:3, 3], [q_start]),
-                                     base_height, up, offset=(0.0, 0.0, 0.0))
-                if result is None:
-                    continue
-                if not path_clear(joints, q_start, result.q, base_height, up)[0]:
-                    continue
-                pose = transform(optical, cam_pos)
-                plan = ObservationPlan(result.q, pose, look_at_b, distance, elevation, roll)
-                margin = proxy_margin(joints, result.q, base_height, up)
-                if margin >= wanted_margin_m:
-                    return plan
-                if best is None or margin > best[0]:
-                    best = (margin, plan)
-    if best is not None:
-        return best[1]
-    raise PlanningError(f"no viewpoint of {np.round(look_at_b, 3).tolist()} from {tried} candidates "
-                        f"(min depth {model.min_depth_m:.2f} m)")
-
-
 @dataclass
 class SurveyPlan(ObservationPlan):
     """An observation pose described by where the camera stands and how far it is pitched down."""
 
     pitch_deg: float = 0.0
-    height_m: float = 0.0            # camera above the floor
-    floor_near_m: float = 0.0        # the swathe of floor the frame covers, along the heading
-    floor_far_m: float = 0.0
+    height_m: float = 0.0            # camera above the arm's mount, along up
+    pivot_deg: float = 0.0           # where the centre of the view points, left of the survey's heading (`plan_pivot`)
 
     def as_dict(self) -> dict:
         d = super().as_dict()
-        d.update(pitch_deg=round(self.pitch_deg, 1), camera_height_m=round(self.height_m, 3),
-                 floor_in_frame_m=[round(self.floor_near_m, 2), round(self.floor_far_m, 2)])
+        d.update(pitch_deg=round(self.pitch_deg, 1), camera_above_mount_m=round(self.height_m, 3),
+                 pivot_deg=round(self.pivot_deg, 2))
         return d
 
 
-def ground_reach_m(model: CameraModel, optical, cam_pos, up, base_height: float, row: float):
-    """Where a row of the image meets the floor, as a distance along the heading. None if it never does."""
-    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
-    ray = np.asarray(optical) @ np.array([0.0, (row - model.cy) / model.fy, 1.0])
-    drop = ray @ up
-    if drop >= -1e-6:
-        return None
-    floor = -base_height
-    point = cam_pos + ray * ((floor - cam_pos @ up) / drop)
-    return float(np.linalg.norm(point[:2] - MOUNT_B[:2]))
+def view_point(joints, q, mount, range_m: float):
+    """The point `range_m` along the optical axis, and the camera pose it was taken from.
+
+    Where a look is *aimed*, without asking what it lands on. The old version of this intersected the
+    optical axis with the floor, which needed the floor's height; at the survey's pitch the two agree to
+    within a couple of centimetres, and the only thing either is used for is a bearing about gravity.
+    """
+    pose = camera_pose(joints, q, mount)
+    return pose[:3, 3] + pose[:3, 2] * float(range_m), pose
 
 
-def plan_survey(joints, links, model: CameraModel, mount: WristMount, up, q_start, base_height, heading,
-                pitches_deg=(45.0, 50.0, 55.0, 40.0, 60.0, 65.0), heights_m=(0.40, 0.35, 0.30, 0.25),
-                offsets_m=(0.05, 0.15, 0.25, -0.05, 0.35), cups_from_m: float = 0.25,
-                cups_to_m: float = 0.85, nearest_row_m: float = 0.28,
-                wanted_margin_m: float = 0.04, holds_enough_m: float = 0.49,
-                max_candidates: int = 40) -> SurveyPlan:
-    """One pose that looks out over the floor in front of the robot, angled rather than straight down.
+# `plan_survey` on the Go2, looking past its head. The pose the pick used before this one stood the camera
+# 5 cm ahead of the arm's mount and 0.40 m above the floor, over the dog's back, and in simulation the head
+# hid a cup 0.42 m straight ahead from it (Week 1 log, 2026-09-17). Scored on the CPU model for the pivoting search -- cups 0.35-0.50 m out at every
+# 5 deg of bearing to +-45, whole cup in frame and clear of the fingers, sightlines to its middle and rim past
+# the trunk proxy, the mount the simulator uses -- that pose sees 26 of 76 and this one 63: camera 20 cm ahead
+# of the mount and 0.335 m above it, 60 deg down. The misses are all at 0.35-0.40 m, in front of the nose and
+# past the corners of the head. The grid is ordered so that pose comes first; the rest are its neighbours in
+# case it is out of reach. Not used on the bench, which has no dog.
+#
+# The heights are 0.50, 0.45 and 0.40 m above the floor as the pose was chosen (the Go2 settles lying with its
+# base 0.0851 m up and 7.3 deg nose-up, so its mount is 0.0794 m along gravity from the base frame's origin),
+# carried over here as heights above the mount so that nothing has to know the floor. On a dog that settles
+# differently, they stay where they are relative to the arm and the frame moves over the floor instead.
+SURVEY_PAST_THE_HEAD = {"pitches_deg": (60.0, 55.0, 65.0), "heights_m": (0.335, 0.285, 0.235),
+                        "offsets_m": (0.20, 0.25), "see_past_body_m": 0.40, "sight_height_m": -0.115}
 
-    `plan_observation` aims at a *named floor point* from a fixed distance, which ties the camera to a
-    two-parameter family: at any elevation shallow enough to see along the floor, the camera lands behind
-    the trunk and the wrist, which is bolted in front of it, folds back over the dog. Pointing steeply
-    enough to carry the wrist out in front leaves the camera staring at the patch of floor directly
-    beneath it. Neither is what a first look is for.
 
-    So a survey pose is described the way a person would set one up: stand the camera at a height above
-    the shoulder and tip it down by `pitch_deg`. The floor it covers falls out of that. Looking down and
-    forwards at an angle, the wrist is welcome to sit over the dog's own back -- Lukas, 2026-09-17, and
-    it is where the height comes from -- so the search reaches back behind the shoulder as well as in
-    front of it.
+def plan_survey(joints, links, model: CameraModel, mount: WristMount, up, q_start, heading,
+                pitches_deg=(45.0, 50.0, 55.0, 40.0, 60.0, 65.0), heights_m=(0.26, 0.31, 0.36, 0.41),
+                offsets_m=(0.05, 0.15, 0.25, -0.05, 0.35), look_range_m: float = 0.60,
+                wanted_margin_m: float = 0.04, max_candidates: int = 40,
+                see_past_body_m: float | None = None, sight_height_m: float = -0.115) -> SurveyPlan:
+    """One pose that looks out over the ground in front of the robot, angled rather than straight down.
 
-    Poses are ranked by how much of [`cups_from_m`, `cups_to_m`] the frame holds, then by clearance from
-    the body proxy. A pose whose near edge is beyond `nearest_row_m` is not used: the bottom of a wrist
-    frame is where the gripper sits, so a cup that only just enters the frame from below is a cup behind
-    the fingers. `nearest_row_m` is 0.28 m because the bench mug sits at 0.29 m (2026-09-17): a survey
-    that starts at 0.36 m is a survey that cannot see it.
+    A survey pose is described the way a person would set one up, and entirely in the arm's own frame:
+    stand the camera `height_m` above the arm's mount and `offset_m` ahead of it along `heading`, and tip
+    it `pitch_deg` down from horizontal. What that lands on is the world's business. Looking down and
+    forwards at an angle, the wrist is welcome to sit over the dog's own back -- Lukas, 2026-09-17, and it
+    is where the height comes from -- so the search reaches back behind the shoulder as well as in front
+    of it.
 
-    The search stops at the first pose holding `holds_enough_m` of that span with clearance to spare, and
-    in any case after `max_candidates` of them: an inverse-kinematics solve that fails costs every seed,
-    and scoring the whole grid took 46 s at one base height while the robot sat waiting for it.
+    The grid is tried in the order it is given and the first pose that is reachable, holdable, path-clear
+    and `wanted_margin_m` clear of the body proxy is taken; failing that, the one with the most clearance.
+    The order is the preference, so the pose a rig has actually used comes first in its grid. Poses used to
+    be *scored* on how much of a stated cup region the frame held, which took the floor's height and a
+    guess at where cups stand; both are gone. What remains is a cheap check that the frame points at the
+    ground at all: the top row of the image must dip below horizontal, or the pose is looking out at the
+    room.
+
+    The defaults are the bench's, where the arm is bolted to the surface the cup stands on: the first pose
+    they reach stands the camera 0.26 m above the mount, 5 cm ahead, 45 deg down, which is within a
+    centimetre of the height the bench has used all along (2026-09-17). Over a table at about the mount's
+    own level that frames 0.16 to 0.66 m out -- the whole of what this arm can reach -- and the grid runs
+    upwards from there. A higher pose sees further but starts further out: from 0.41 m up, the near edge is
+    0.43 m and the bench mug at 0.29 m would be behind the frame.
+
+    The search stops after `max_candidates` poses in any case: an inverse-kinematics solve that fails costs
+    every seed, and scoring a whole grid took 46 s while the robot sat waiting for it.
+
+    Holding ground in the frame is not the same as seeing it. With the arm on the Go2, the pose the default
+    grid picks -- camera 5 cm ahead of the mount, 45 deg down -- looks over the dog's head, and in
+    simulation the head hid a cup 0.42 m straight ahead from every frame but its rim (Week 1 log,
+    2026-09-17). `see_past_body_m` refuses a pose whose line of sight to a point that far along the heading,
+    `sight_height_m` above the mount, crosses the trunk proxy (`sightline_clear`). The bare proxy agrees
+    with that render -- from the old pose the rim's sightline passes 7.6 cm up at the trunk's front edge and
+    the middle's 3.8 cm, against a 6 cm top -- and the check's 2 cm margin refuses both. None keeps the
+    bench's behaviour, where the arm has no dog in front of it.
+
+    `look_range_m` is how far along the optical axis the pose's `look_at_b` is taken to be. It names no
+    surface: it is the range a pivot measures its bearings at (`plan_pivot`), and at the survey's pitch it
+    is about where the axis meets the floor beside a lying Go2.
     """
     up = np.asarray(up, dtype=float) / np.linalg.norm(up)
     heading = np.asarray(heading, dtype=float)
     heading = heading - up * (heading @ up)
     heading /= np.linalg.norm(heading)
-    floor = -base_height
     mount_inverse = invert(mount.pose)
     tried, best = 0, None
     for pitch in pitches_deg:
         rad = math.radians(pitch)
         view = math.cos(rad) * heading - math.sin(rad) * up
         optical = optical_rotation(view, up, 0.0)
+        # The top row of the frame, which is the furthest it sees: pointing at or above horizontal, the
+        # pose is looking out into the room rather than over the ground ahead.
+        top_row = optical @ np.array([0.0, (0.0 - model.cy) / model.fy, 1.0])
+        if top_row @ up >= -1e-6:
+            continue
         for height in heights_m:
             for offset in offsets_m:
                 if tried >= max_candidates and best is not None:
                     return best[1]
                 tried += 1
-                cam_pos = MOUNT_B + heading * offset + up * (floor + height - MOUNT_B @ up)
-                near = ground_reach_m(model, optical, cam_pos, up, base_height, model.height - 1)
-                far = ground_reach_m(model, optical, cam_pos, up, base_height, 0.0)
-                if near is None or far is None or far <= near:
+                cam_pos = MOUNT_B + heading * offset + up * height
+                if see_past_body_m is not None and not sightline_clear(
+                        cam_pos, MOUNT_B + heading * see_past_body_m + up * sight_height_m):
                     continue
                 target = transform(optical, cam_pos) @ mount_inverse
                 # A short seed list on purpose: a failing solve pays for every seed it is given, and this
                 # is a grid search where most candidates fail.
                 result = solve_link6(joints, links, target[:3, 3], target[:3, :3],
-                                     [np.asarray(q_start, dtype=float), *SEEDS], base_height, up,
-                                     offset=(0.0, 0.0, 0.0))
-                if result is None or not path_clear(joints, q_start, result.q, base_height, up)[0]:
+                                     [np.asarray(q_start, dtype=float), *SEEDS], offset=(0.0, 0.0, 0.0))
+                if result is None or not path_clear(joints, q_start, result.q)[0]:
                     continue
-                if near > nearest_row_m:
-                    continue
-                margin = proxy_margin(joints, result.q, base_height, up)
-                axis_floor = cam_pos + view * ((floor - cam_pos @ up) / (view @ up))
-                held = max(0.0, min(far, cups_to_m) - max(near, cups_from_m))
-                plan = SurveyPlan(result.q, transform(optical, cam_pos), axis_floor,
-                                  float(np.linalg.norm(axis_floor - cam_pos)), pitch, 0.0,
-                                  pitch_deg=pitch, height_m=height, floor_near_m=near, floor_far_m=far)
-                # Good enough is good enough: the whole cup region in frame with room to spare from the
-                # body. Scoring every candidate instead took 38 s of IK for a pose that is found in the
-                # first few (Week 1 log, 2026-09-17), and this runs while the robot waits.
-                if held >= holds_enough_m and margin >= wanted_margin_m:
+                margin = proxy_margin(joints, result.q)
+                plan = SurveyPlan(result.q, transform(optical, cam_pos), cam_pos + view * look_range_m,
+                                  float(look_range_m), pitch, 0.0, pitch_deg=pitch, height_m=height)
+                if margin >= wanted_margin_m:
                     return plan
-                score = (round(held, 3), round(margin, 3))
-                if best is None or score > best[0]:
-                    best = (score, plan)
+                if best is None or margin > best[0]:
+                    best = (margin, plan)
     if best is None:
-        raise PlanningError(f"no angled survey pose of the floor ahead from {tried} candidates")
+        raise PlanningError(f"no angled survey pose of the ground ahead from {tried} candidates")
     return best[1]
 
 
-def floor_point(x: float, y: float, up, base_height: float) -> np.ndarray:
-    """A point on the floor in the base frame: (x, y) along the base axes projected level, at -base_height."""
-    up, _, _ = horizontal_basis(up)
-    point = np.array([x, y, 0.0])
-    point -= up * (point @ up)
-    return point - up * base_height
+def pivot_stops_deg(model: CameraModel, sweep_deg: float) -> tuple:
+    """Where a pivoting search points the view, in degrees left of straight ahead, in the order visited.
+
+    Straight ahead first -- the survey pose itself -- then out to the left and back across to the right.
+    Neighbouring stops are no further apart than half the image's horizontal field of view, so every
+    heading in [-`sweep_deg`, +`sweep_deg`] falls in the middle half of some frame rather than at an edge,
+    where a cup is cut off and its rim arc is short. The modelled D435 at 640x480 is 54.9 deg wide, which
+    makes the stops 0, +-22.5 and +-45. Seen from the survey pose's pitch, a heading reaches further across
+    the floor than across the image, so this is the conservative side of the spacing.
+    """
+    if sweep_deg <= 0.0:
+        return (0.0,)
+    fov = math.degrees(math.atan(model.cx / model.fx) + math.atan((model.width - model.cx) / model.fx))
+    per_side = math.ceil(sweep_deg / (fov / 2.0) - 1e-9)
+    left = [sweep_deg * i / per_side for i in range(1, per_side + 1)]
+    return (0.0, *left, *(-a for a in left))
+
+
+def _azimuth_deg(vector, heading, up) -> float:
+    """Angle of `vector` about `up`, left of `heading` positive."""
+    left = np.cross(up, heading)
+    return math.degrees(math.atan2(float(vector @ left), float(vector @ heading)))
+
+
+def _bearing_of(point, up, heading) -> float:
+    """Bearing of `point` about gravity from the arm's mount, left of `heading` positive."""
+    offset = np.asarray(point, dtype=float) - MOUNT_B
+    return _azimuth_deg(offset - up * (offset @ up), heading, up)
+
+
+def survey_heading(joints, mount, survey: SurveyPlan, up) -> np.ndarray:
+    """Unit horizontal direction from the arm's mount to where the survey is looking: the zero that
+    `plan_pivot` and `glimpse_bearing_deg` measure bearings from."""
+    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
+    aim, _ = view_point(joints, survey.q, mount, survey.distance_m)
+    heading = aim - MOUNT_B
+    heading -= up * (heading @ up)
+    norm = float(np.linalg.norm(heading))
+    if norm < 1e-6:
+        raise PlanningError("the survey pose looks straight up or down; no heading to pivot about")
+    return heading / norm
+
+
+def glimpse_bearing_deg(joints, model: CameraModel, mount, q, pixel_uv, up, heading, range_m: float):
+    """Bearing about gravity, left of `heading`, of whatever is at `pixel_uv` `range_m` from the camera.
+
+    For steering a search, not for grasping, and it is why the range may be a nominal one: `q` is feedback,
+    and while the arm swings it lags the camera that took the frame, so the bearing is already off by the
+    swing's speed times that lag -- a larger error than the range's. The range is the survey's own
+    `look_range_m`, and the parallax between the true range and that one is zero when the camera turns
+    about gravity and a couple of degrees when the base lies tilted.
+    """
+    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
+    pose = camera_pose(joints, q, mount)
+    ray = pose[:3, :3] @ pixel_ray(model, float(pixel_uv[0]), float(pixel_uv[1]))
+    return _bearing_of(pose[:3, 3] + ray * float(range_m), up, heading)
+
+
+def plan_pivot(joints, links, model: CameraModel, mount: WristMount, survey: SurveyPlan, pivot_deg: float, up,
+               q_start, tolerance_deg: float = 0.25, iterations: int = 8) -> SurveyPlan:
+    """The survey pose turned on Joint1 alone, until the view lies `pivot_deg` left of the survey's.
+
+    Only the base joint moves, so the camera keeps its height and its tilt down over the ground and the arm
+    swings as one piece -- a search, not a re-plan. The angle is measured about gravity from the arm's
+    mount, not read off Joint1: lying down the base settles 7.3 deg nose-up and Joint1's axis leans with
+    it, so on the CPU model the view needs 47.3 deg of Joint1 to come 45 deg round (and the optical axis
+    then points 41.3 deg round). Joint1 is solved for the view instead.
+
+    "The view" is the point `survey.distance_m` along the optical axis (`view_point`), which is where the
+    survey was aimed. It used to be where the axis met the floor, and the two differ by the difference
+    between that range and the real one, which changes the bearing by a fraction of a degree.
+
+    Refused, as a `PlanningError`, when the turn would need Joint1 past its soft limit, when the pose would
+    fail the trunk proxy or could not be held against gravity, or when the swing from `q_start` crosses the
+    proxy.
+    """
+    up = np.asarray(up, dtype=float) / np.linalg.norm(up)
+    heading = survey_heading(joints, mount, survey, up)
+    low, high = joints["Joint1"]["limits"]
+    middle, half = (low + high) / 2.0, (high - low) / 2.0 * SOFT_LIMIT_FACTOR
+    q = np.asarray(survey.q, dtype=float).copy()
+    q[0] = survey.q[0] + math.radians(pivot_deg)
+    achieved = None
+    for _ in range(iterations):
+        q[0] = float(np.clip(q[0], middle - half, middle + half))
+        aim, _ = view_point(joints, q, mount, survey.distance_m)
+        achieved = _bearing_of(aim, up, heading)
+        error = pivot_deg - achieved
+        if abs(error) <= tolerance_deg:
+            break
+        q[0] += math.radians(error)
+    else:
+        raise PlanningError(f"pivot {pivot_deg:+.1f} deg: the view reaches {achieved:+.1f} deg with Joint1 at "
+                            f"{q[0]:+.3f} rad (soft limit +-{half:.3f})")
+    if not bool(arm_clear(joints, q)[0]):
+        raise PlanningError(f"pivot {pivot_deg:+.1f} deg: the pose crosses the trunk proxy")
+    if not holdable(joints, links, q):
+        raise PlanningError(f"pivot {pivot_deg:+.1f} deg: the pose exceeds a joint's effort limit")
+    clear, fraction = path_clear(joints, q_start, q)
+    if not clear:
+        raise PlanningError(f"pivot {pivot_deg:+.1f} deg: the swing there crosses the proxy {100 * fraction:.0f}% "
+                            f"of the way")
+    aim, pose = view_point(joints, q, mount, survey.distance_m)
+    return SurveyPlan(q, pose, aim, survey.distance_m, survey.elevation_deg, 0.0,
+                      pitch_deg=math.degrees(-math.asin(float(np.clip(pose[:3, 2] @ up, -1.0, 1.0)))),
+                      height_m=float((pose[:3, 3] - MOUNT_B) @ up), pivot_deg=float(achieved))
 
 
 __all__ = ["GraspParams", "GraspPlan", "ObservationPlan", "PlanningError", "JAW_CENTRE_LINK6", "GRIPPER_OPEN_M",
            "jaw_gap_m", "closed_travel_m",
-           "GRIPPER_CLOSED_M", "grip_travel_m", "plan_top_down_grasp", "plan_observation", "line_waypoints", "top_down_rotation",
-           "jaw_positions", "floor_point", "sightline_clear", "gripper_ahead_of_body", "plan_survey",
-           "ground_under",
+           "GRIPPER_CLOSED_M", "grip_travel_m", "plan_top_down_grasp", "line_waypoints", "top_down_rotation",
+           "jaw_positions", "sightline_clear", "gripper_ahead_of_body", "plan_survey", "view_point",
+           "plan_pivot", "pivot_stops_deg", "SURVEY_PAST_THE_HEAD", "survey_heading", "glimpse_bearing_deg",
            "SurveyPlan", "inside_radius_m", "inside_out_travel_m",
            "finger_reach_m", "finger_corners_link6", "insert_depth_m", "CLOSED_SPAN_M", "OPEN_SPAN_M",
            "MAX_INSERT_M"]

@@ -533,9 +533,6 @@ class ArmServer:
             return SIM_REFUSAL
         if self.pick_cfg is None:
             return "the pick needs the arm and the camera, and this console has neither"
-        if self.pick_cfg.get("base_height_m") is None:
-            return ("set the base height first: how far the arm's mount plane sits above the surface the "
-                    "cup stands on. Nothing on a bench arm can measure it.")
         if self.camera is None:
             return "the pick needs the camera window, and it is off (--camera none)"
         if not self.camera.has_depth():
@@ -640,28 +637,6 @@ class ArmServer:
                 self.pick_cfg["mount_source"] = self.mount_source
         return True, str(path)
 
-    def set_base_height(self, value) -> tuple[bool, str]:
-        """How high the arm's mount plane is above the table, in metres. Remembered for next launch."""
-        if self.pick_cfg is None:
-            return False, "the pick is not configured here"
-        try:
-            height = float(value)
-        except (TypeError, ValueError):
-            return False, "the base height must be a number, in metres"
-        if not math.isfinite(height) or not -0.5 <= height <= 1.5:
-            return False, "the base height must be between -0.5 and 1.5 m; check the units (metres)"
-        with self.lock:
-            if self.pick_state.get("running"):
-                return False, "a pick is running; the base height cannot move under it"
-            self.pick_cfg["base_height_m"] = height
-        try:
-            save_bench_settings({**load_bench_settings(), "base_height_m": height,
-                                 "note": "set in the d1_ui console; the height of the arm's mount plane "
-                                         "above the surface the cup stands on, metres"})
-        except OSError as exc:
-            return True, f"set, but not remembered for next launch: {exc}"
-        return True, ""
-
     def pick_status(self) -> dict:
         with self.lock:
             state = dict(self.pick_state)
@@ -671,7 +646,6 @@ class ArmServer:
             "available": not refusal,
             "refusal": refusal,
             "configured": self.pick_cfg is not None,
-            "base_height_m": cfg.get("base_height_m"),
             "up_b": cfg.get("up_b"),
             "mount_source": cfg.get("mount_source"),
             "camera_source": cfg.get("camera_source"),
@@ -699,8 +673,7 @@ class ArmServer:
                 result = pick_hardware.run_pick(
                     client=_PollProxy(self.client), joints=self.joints, links=cfg["links"],
                     camera_model=cfg["camera_model"], mount=cfg["mount"], perception=cfg["perception"],
-                    pipeline=self.camera, base_height_m=cfg["base_height_m"], up_b=cfg["up_b"],
-                    execute=live, should_stop=self.cancel.is_set, on_event=self._log,
+                    pipeline=self.camera, up_b=cfg["up_b"], execute=live, should_stop=self.cancel.is_set, on_event=self._log,
                     grip_gripper=cfg.get("grip_gripper", True),
                     grasp_params=cfg.get("grasp_params"),
                     max_time_s=cfg.get("max_time_s", 180.0))
@@ -733,8 +706,7 @@ class ArmServer:
             run_dir = self.pick_run_root / f"{stamp}_pick_hw"
             run_dir.mkdir(parents=True, exist_ok=True)
             meta = pick_hardware.run_metadata(
-                camera_model=cfg["camera_model"], mount=cfg["mount"],
-                base_height_m=cfg["base_height_m"], up_b=cfg["up_b"], execute=live,
+                camera_model=cfg["camera_model"], mount=cfg["mount"], up_b=cfg["up_b"], execute=live,
                 grip_gripper=cfg.get("grip_gripper", True),
                 grasp_params=cfg.get("grasp_params"),
                 extra={"status": "complete" if result.ok else "pick_failed",
@@ -969,10 +941,6 @@ class Handler(BaseHTTPRequestHandler):
             ok, why = self.arm.set_mount(body.get("xyz_m"), body.get("rpy_deg"))
             return self._json({"ok": ok, "reason": why, "mount": self.arm.mount_status()},
                               HTTPStatus.OK if ok else HTTPStatus.CONFLICT)
-        if path == "/pick/base_height":
-            ok, why = self.arm.set_base_height(body.get("m"))
-            return self._json({"ok": ok, "reason": why, "pick": self.arm.pick_status()},
-                              HTTPStatus.OK if ok else HTTPStatus.CONFLICT)
         if path == "/mount/save":
             ok, detail = self.arm.save_mount(str(body.get("name") or ""))
             return self._json({"ok": ok, "path": detail if ok else None, "reason": "" if ok else detail,
@@ -994,22 +962,6 @@ def _mount_clearance(mount):
 # The bench's own geometry, remembered between launches for the same reason the mount is: it is a
 # property of the table the arm is bolted to, not of a command line. There is no IMU on a bench arm, so
 # nothing can work the base height out -- but having typed it once, nobody should have to type it again.
-BENCH_SETTINGS = ROOT / "pick_demo" / "assets" / "bench.json"
-
-
-def load_bench_settings() -> dict:
-    try:
-        data = json.loads(BENCH_SETTINGS.read_text())
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError):
-        return {}
-
-
-def save_bench_settings(data: dict) -> None:
-    BENCH_SETTINGS.parent.mkdir(parents=True, exist_ok=True)
-    BENCH_SETTINGS.write_text(json.dumps(data, indent=2) + "\n")
-
-
 _MOUNT_ARGS = {"file": None, "pos": (-0.055, 0.0, 0.035), "pitch_deg": 20.0}
 
 
@@ -1072,11 +1024,6 @@ def build_pick_cfg(args, mode: str, camera) -> dict | None:
         mount, mount_source, mount_file = resolve_mount(
             args.pick_mount, fallback=WristMount(tuple(args.pick_mount_pos), args.pick_mount_pitch_deg))
         print(f"pick: wrist mount -- {mount_source}", flush=True)
-        base_height = args.pick_base_height
-        if base_height is None:
-            base_height = load_bench_settings().get("base_height_m")
-            if base_height is not None:
-                print(f"pick: base height {base_height} m (remembered from {BENCH_SETTINGS.name})", flush=True)
         joints, links = d1_ik.load_urdf()
         weights = args.yolo_weights or camera_feed.DEFAULT_WEIGHTS
         detector = camera_feed.make_yolo(weights, device=args.yolo_device)
@@ -1087,9 +1034,6 @@ def build_pick_cfg(args, mode: str, camera) -> dict | None:
         return {
             "camera_model": model, "mount": mount, "links": links,
             "perception": CupPerception(detector, model, joints, mount),
-            # None until someone says how high the arm's mount plane is above the table. The button
-            # then refuses and says so, rather than the server refusing to offer the pick at all.
-            "base_height_m": base_height,
             "up_b": [float(v) for v in args.pick_up],
             "max_time_s": float(args.pick_max_time),
             "grip_gripper": not args.pick_no_gripper,
@@ -1130,10 +1074,6 @@ def main() -> int:
                     help="Stream depth beside colour. Required by the scripted pick, which places the cup "
                          "with it, and so on by default in hardware mode; --no-pick-depth turns it off "
                          "where the USB bandwidth is wanted for something else.")
-    ap.add_argument("--pick-base-height", type=float, default=None,
-                    help="Height of the arm's mount plane above the surface the cup stands on, metres. "
-                         "There is no IMU on a bench-mounted arm, so the pick cannot work this out. "
-                         "Optional: the page can set it, and remembers it in pick_demo/assets/bench.json.")
     ap.add_argument("--pick-up", type=float, nargs=3, default=(0.0, 0.0, 1.0), metavar=("X", "Y", "Z"),
                     help="World up in the arm's base frame. The default suits an arm standing upright.")
     ap.add_argument("--pick-calibration", default=None,

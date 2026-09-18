@@ -4,6 +4,7 @@ Numpy only (no Isaac, no ultralytics), so these run on the system Python.
 """
 import math
 import sys
+import types
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,8 @@ from pick_demo import camera, grasp, perception, sequence
 from position_only.workspace import clear_of_body, forward, load_urdf, tip_offsets
 
 UP = np.array([0.0, 0.0, 1.0])
+# Where the test scene's floor is, as a height below the base frame's origin. Nothing passes it to the
+# planner any more -- it places the cups, and the planner is told only what the camera would measure.
 BASE_HEIGHT = 0.12
 CUP_XY = np.array([0.42, 0.03])
 CUP_RADIUS, CUP_HEIGHT = 0.0275, 0.10
@@ -116,7 +119,7 @@ class PerceptionTests(unittest.TestCase):
         joints, _ = load_urdf()
         model, mount = camera.CAMERAS["d435"], camera.WristMount()
         cup = perception.CupEstimate(cup_top(), CUP_RADIUS, cup_top()[2], -BASE_HEIGHT, 100, "prior")
-        plan = grasp.plan_top_down_grasp(joints, _links(), cup, UP, np.zeros(6), BASE_HEIGHT)
+        plan = grasp.plan_top_down_grasp(joints, _links(), cup, UP, np.zeros(6))
         pose = camera.camera_pose(joints, plan.q_pregrasp, mount)
         moved = cup_top() + np.array([0.006, -0.004, 0.0])
         u, v = camera.project(model, (camera.invert(pose) @ np.r_[moved, 1.0])[:3])[0]
@@ -149,16 +152,28 @@ class GraspTests(unittest.TestCase):
         cls.joints, cls.links = load_urdf()
         cls.cup = perception.CupEstimate(cup_top(), CUP_RADIUS, cup_top()[2], -BASE_HEIGHT, 100, "truth")
 
-    def test_ground_clearance_follows_gravity_not_the_base(self):
-        # A pose reaching 4 cm above a floor that a 7 deg nose-up base puts 5.6 cm lower than level would.
+    def test_the_fingertips_stop_inside_the_cup_wherever_it_stands(self):
+        """What replaces the floor check: the tips are placed from the rim, so they stop inside the cup.
+
+        The proxy used to hold the arm clear of a plane at a stated height, and the same grasp was refused
+        or allowed depending on a number nobody measured. Nothing states a height now, so the thing that
+        keeps the fingers out of the table is that they never go deeper than `finger_overlap_m` below a rim
+        the camera saw -- on a cup at least that deep, above its base. Checked at three quite different
+        heights in the base frame, standing for a dog on the floor and an arm bolted to a bench.
+        """
         pitch = math.radians(7.0)
-        up = np.array([math.sin(pitch), 0.0, math.cos(pitch)])
-        cup = perception.CupEstimate(np.array([0.44, 0.03, -0.047]), CUP_RADIUS, -0.047, -0.14, 100, "tilted")
-        plan = grasp.plan_top_down_grasp(self.joints, self.links, cup, up, np.zeros(6), 0.085)
-        self.assertTrue(grasp.arm_clear(self.joints, plan.descend[-1], 0.085, up)[0])
-        self.assertFalse(clear_of_body(self.joints, plan.descend[-1][None], 0.085)[0])
-        level = grasp.arm_clear(self.joints, plan.descend[-1], 0.085, UP)[0]
-        self.assertEqual(bool(level), bool(clear_of_body(self.joints, plan.descend[-1][None], 0.085)[0]))
+        for up in (UP, np.array([math.sin(pitch), 0.0, math.cos(pitch)])):
+            for rim_height, xy in ((-0.047, (0.44, 0.03)), (0.142, (0.33, -0.03)), (0.05, (0.40, 0.0))):
+                top = np.array([xy[0], xy[1], rim_height])
+                cup = perception.CupEstimate(top, CUP_RADIUS, float(top @ up), float(top @ up) - CUP_HEIGHT,
+                                             100, "truth")
+                plan = grasp.plan_top_down_grasp(self.joints, self.links, cup, up, np.zeros(6))
+                frames, _, _ = forward(self.joints, plan.descend[-1][None])
+                tip = frames["Link6"][1][0] + frames["Link6"][0][0] @ np.array([0.0, 0.0, grasp.FINGERTIP_Z_M])
+                below_rim = float(cup.top_centre_b @ up) - float(tip @ up)
+                self.assertLessEqual(below_rim, grasp.GraspParams().finger_overlap_m + 0.002)
+                self.assertLess(below_rim, CUP_HEIGHT)      # above the cup's own base, so above whatever it stands on
+                self.assertTrue(grasp.arm_clear(self.joints, plan.descend[-1])[0])
 
     def test_top_down_rotation_points_down_with_a_level_jaw(self):
         for tilt in (0.0, 20.0):
@@ -170,17 +185,16 @@ class GraspTests(unittest.TestCase):
             self.assertAlmostEqual(rot[2, 2], -math.cos(math.radians(tilt)), places=12)
 
     def test_default_scene_plans_a_straight_clear_grasp(self):
-        view = grasp.plan_observation(self.joints, self.links, camera.CAMERAS["d435"], camera.WristMount(),
-                                      grasp.floor_point(0.42, 0.03, UP, BASE_HEIGHT), UP, np.zeros(6), BASE_HEIGHT)
+        heading = grasp.heading_to(np.array([0.5, 0.0, 0.0]), UP)
+        view = grasp.plan_survey(self.joints, self.links, camera.CAMERAS["d435"], camera.WristMount(), UP,
+                                 np.zeros(6), heading)
         pose = camera.camera_pose(self.joints, view.q, camera.WristMount())
         np.testing.assert_allclose(pose, view.camera_pose_b, atol=2e-4)
-        self.assertGreaterEqual(view.distance_m, camera.CAMERAS["d435"].min_depth_m)
-        # The look point lands in the upper image, clear of the gripper, not at the centre.
-        u, v = camera.project(camera.CAMERAS["d435"], (camera.invert(pose) @ np.r_[view.look_at_b, 1.0])[:3])[0]
-        self.assertAlmostEqual(u, 319.5, delta=3.0)
-        self.assertAlmostEqual(v, 0.3 * 480 - 0.5, delta=3.0)
+        # The survey aims along its own optical axis: `look_at_b` is that range from the camera, and it is
+        # a range, not a point on any surface.
+        np.testing.assert_allclose(view.look_at_b, pose[:3, 3] + view.distance_m * pose[:3, 2], atol=2e-4)
 
-        plan = grasp.plan_top_down_grasp(self.joints, self.links, self.cup, UP, view.q, BASE_HEIGHT)
+        plan = grasp.plan_top_down_grasp(self.joints, self.links, self.cup, UP, view.q)
         np.testing.assert_allclose(grasp.jaw_positions(self.joints, plan.descend[-1:])[0], plan.jaw_grasp_b, atol=1e-3)
         previous = view.q
         for q in plan.approach + plan.descend + plan.lift:
@@ -206,12 +220,12 @@ class GraspTests(unittest.TestCase):
         wide = perception.CupEstimate(cup_top(), 0.04, cup_top()[2], -BASE_HEIGHT, 100, "truth")
         params = grasp.GraspParams(wall_grasp="off")
         with self.assertRaises(grasp.PlanningError):
-            grasp.plan_top_down_grasp(self.joints, self.links, wide, UP, np.zeros(6), BASE_HEIGHT, params)
+            grasp.plan_top_down_grasp(self.joints, self.links, wide, UP, np.zeros(6), params)
 
     def test_an_out_of_reach_cup_is_refused(self):
         far = perception.CupEstimate(np.array([1.0, 0.0, cup_top()[2]]), CUP_RADIUS, cup_top()[2], -BASE_HEIGHT, 100, "x")
         with self.assertRaises(grasp.PlanningError):
-            grasp.plan_top_down_grasp(self.joints, self.links, far, UP, np.zeros(6), BASE_HEIGHT)
+            grasp.plan_top_down_grasp(self.joints, self.links, far, UP, np.zeros(6))
 
 
 class SequenceTests(unittest.TestCase):
@@ -235,8 +249,7 @@ class SequenceTests(unittest.TestCase):
                 return perception.CupObservation(detection, estimate, np.eye(4), 0.0)
 
         fake = Perception()
-        pick = sequence.PickSequence(joints, links, model, mount, fake, base_height_m=BASE_HEIGHT,
-                                     timing=sequence.Timing(settle_s=0.2))
+        pick = sequence.PickSequence(joints, links, model, mount, fake, timing=sequence.Timing(settle_s=0.2))
         q, dt, t, gripper_log, target = np.zeros(6), 0.02, 0.0, [], None
         while not pick.done and t < 90.0:
             command = pick.update(t, q, UP, lambda: object())
@@ -261,6 +274,228 @@ class SequenceTests(unittest.TestCase):
         self.assertEqual(grasp.grip_travel_m(0.200, 0.004), grasp.GRIPPER_OPEN_M)
 
 
+class PivotSearchTests(unittest.TestCase):
+    """The survey pose pivoted on Joint1 to search +-45 deg, with the base lying 7.3 deg nose-up as it settles in sim."""
+
+    TILT = math.radians(7.28)
+    LYING_UP = np.array([math.sin(TILT), 0.0, math.cos(TILT)])
+    LYING_HEIGHT = 0.0851
+
+    @classmethod
+    def setUpClass(cls):
+        cls.joints, cls.links = load_urdf()
+        # The mount the simulated picks use (pick_demo/assets/mounts/wrist_mount.json, 2026-09-17), written out
+        # so the file can change without changing these. The placeholder `WristMount()` pitches the camera at
+        # the fingers, and with the gripper shut they cover most of the lower frame from any survey pose.
+        cls.model = camera.CAMERAS["d435"]
+        cls.mount = camera.mount_from_xyz_rpy((-0.061, 0.034, 0.067), (0.0, 0.0, -90.0), "wrist_mount.json, 2026-09-17")
+        up, h = cls.LYING_UP, cls.LYING_HEIGHT
+        cls.heading = grasp.heading_to(np.array(sequence.SURVEY_AHEAD_B, dtype=float), up)
+        cls.survey = grasp.plan_survey(cls.joints, cls.links, cls.model, cls.mount, up, np.zeros(6), cls.heading,
+                                       **grasp.SURVEY_PAST_THE_HEAD)
+
+    def cup_base(self, range_m, azimuth_deg):
+        """Centre of the base of a cup standing on the floor, range and azimuth from the arm's mount."""
+        up, left = self.LYING_UP, np.cross(self.LYING_UP, self.heading)
+        a = math.radians(azimuth_deg)
+        mount = grasp.MOUNT_B - up * (grasp.MOUNT_B @ up)
+        return mount - up * self.LYING_HEIGHT + range_m * (math.cos(a) * self.heading + math.sin(a) * left)
+
+    def cup_pixels(self, q, range_m, azimuth_deg, radius=CUP_RADIUS, height=CUP_HEIGHT):
+        """Rim and base circles of a cup standing on the floor, range and azimuth from the arm's mount."""
+        up, left = self.LYING_UP, np.cross(self.LYING_UP, self.heading)
+        centre = self.cup_base(range_m, azimuth_deg)
+        ring = np.array([math.cos(t) * self.heading + math.sin(t) * left for t in np.linspace(0, 2 * np.pi, 24)])
+        points = np.vstack([centre + radius * ring, centre + radius * ring + height * up])
+        cam = (camera.invert(camera.camera_pose(self.joints, q, self.mount)) @ np.c_[points, np.ones(len(points))].T).T
+        return None if (cam[:, 2] < 0.05).any() else camera.project(self.model, cam[:, :3])
+
+    def finger_box(self, q):
+        """Image box (u0, u1, v0, v1) of the fingers below the palm, shut as the sequence holds them while it searches."""
+        corners = np.array([[x, s * grasp.FINGER_OUTER_Y_M, z] for x in grasp.FINGER_X_RANGE_M for s in (-1, 1)
+                            for z in (grasp.PALM_Z_M, grasp.FINGERTIP_Z_M)])
+        cam = camera.invert(camera.camera_pose(self.joints, q, self.mount)) @ camera.link6_pose(self.joints, q)
+        px = camera.project(self.model, (cam @ np.c_[corners, np.ones(len(corners))].T).T[:, :3])
+        return px[:, 0].min(), px[:, 0].max(), px[:, 1].min(), px[:, 1].max()
+
+    def in_view(self, q, range_m, azimuth_deg, margin_px=20):
+        """The whole cup in frame, clear of the image edges and of the fingers by `margin_px`, and its middle and
+        rim in sight past the trunk proxy."""
+        cam = camera.camera_pose(self.joints, q, self.mount)[:3, 3]
+        base = self.cup_base(range_m, azimuth_deg)
+        if not all(grasp.sightline_clear(cam, base + z * self.LYING_UP) for z in (0.05, CUP_HEIGHT)):
+            return False
+        px = self.cup_pixels(q, range_m, azimuth_deg)
+        if px is None or (px < margin_px).any() or (px[:, 0] > self.model.width - margin_px).any() \
+                or (px[:, 1] > self.model.height - margin_px).any():
+            return False
+        u0, u1, v0, _ = self.finger_box(q)
+        behind_fingers = px[:, 0].max() > u0 - margin_px and px[:, 0].min() < u1 + margin_px
+        return not (behind_fingers and px[:, 1].max() > v0 - margin_px)
+
+    def test_stops_are_at_most_half_a_frame_apart_and_reach_the_sweep(self):
+        self.assertEqual(grasp.pivot_stops_deg(self.model, 45.0), (0.0, 22.5, 45.0, -22.5, -45.0))
+        self.assertEqual(grasp.pivot_stops_deg(self.model, 0.0), (0.0,))
+        for preset in camera.CAMERAS.values():
+            stops = sorted(grasp.pivot_stops_deg(preset, 45.0))
+            fov = math.degrees(2 * math.atan(preset.width / 2 / preset.fx))
+            self.assertEqual((stops[0], stops[-1]), (-45.0, 45.0))
+            self.assertLessEqual(max(np.diff(stops)), fov / 2 + 1e-9)
+
+    def test_a_pivot_turns_joint1_alone_and_puts_the_view_where_asked(self):
+        up, h = self.LYING_UP, self.LYING_HEIGHT
+        for pivot in (45.0, -22.5):
+            plan = grasp.plan_pivot(self.joints, self.links, self.model, self.mount, self.survey, pivot, up,
+                                    self.survey.q)
+            np.testing.assert_array_equal(plan.q[1:], self.survey.q[1:])
+            self.assertAlmostEqual(plan.pivot_deg, pivot, delta=0.25)
+            self.assertAlmostEqual(plan.height_m, self.survey.height_m, delta=0.01)
+            self.assertAlmostEqual(plan.pitch_deg, self.survey.pitch_deg, delta=3.0)
+        # The lean of the lying base is why Joint1 is solved for, not set: 45 deg of Joint1 is not 45 deg of view.
+        plan = grasp.plan_pivot(self.joints, self.links, self.model, self.mount, self.survey, 45.0, up, self.survey.q)
+        self.assertGreater(abs(math.degrees(plan.q[0] - self.survey.q[0])), 46.0)
+
+    def test_a_pivot_past_joint1s_soft_limit_is_refused(self):
+        with self.assertRaises(grasp.PlanningError):
+            grasp.plan_pivot(self.joints, self.links, self.model, self.mount, self.survey, 170.0, self.LYING_UP,
+                             self.survey.q)
+
+    def test_the_sweep_sees_every_cup_the_arm_can_reach_across_the_sector(self):
+        """A top-down grasp plans at every heading in +-45 deg from 0.40 to 0.50 m (Week 1 log, 2026-09-17).
+
+        Checked from 0.45 m out: nearer than that the head hides some bearings from every stop.
+        """
+        up, h = self.LYING_UP, self.LYING_HEIGHT
+        stops = [self.survey.q] + [grasp.plan_pivot(self.joints, self.links, self.model, self.mount, self.survey, p,
+                                                    up, self.survey.q).q
+                                   for p in grasp.pivot_stops_deg(self.model, 45.0)[1:]]
+        straight_misses = 0
+        for range_m in (0.45, 0.50):
+            self.assertTrue(self.in_view(self.survey.q, range_m, 0))
+            for azimuth in range(-45, 46, 5):
+                self.assertTrue(any(self.in_view(q, range_m, azimuth) for q in stops), (range_m, azimuth))
+                straight_misses += not self.in_view(self.survey.q, range_m, azimuth)
+        self.assertGreater(straight_misses, 0)     # the single look ahead does not cover it on its own
+        self.assertFalse(self.in_view(self.survey.q, 0.45, 45))
+
+    def test_the_survey_on_the_dog_looks_past_its_head(self):
+        """The pose F-067 measured saw a cup 0.42 m ahead only by its rim in simulation; this one sees all of it.
+
+        That pose -- camera 5 cm ahead of the mount, 0.40 m above the floor, 45 deg down -- is written out
+        here rather than planned, because the grid that used to produce it is now described from the arm's
+        mount and no longer lands there. What is under test is the sightline past the dog, not the grid.
+        """
+        up, h = self.LYING_UP, self.LYING_HEIGHT
+        over_the_back = grasp.MOUNT_B + 0.05 * self.heading + up * (0.40 - h - grasp.MOUNT_B @ up)
+        middle = self.cup_base(0.42, 0.0) + 0.05 * up
+        self.assertFalse(grasp.sightline_clear(over_the_back, middle))
+        self.assertTrue(grasp.sightline_clear(self.survey.camera_pose_b[:3, 3], middle))
+        self.assertTrue(self.in_view(self.survey.q, 0.42, 0.0))
+        # The pose is described from the arm's mount alone: 20 cm ahead of it and 0.335 m above it, which
+        # with the Go2 settled lying is the 0.50 m above the floor the pose was chosen at.
+        cam = self.survey.camera_pose_b[:3, 3]
+        self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ up), 0.335, delta=0.005)
+        self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ self.heading), 0.20, delta=0.005)
+        self.assertAlmostEqual(float(cam @ up) + self.LYING_HEIGHT, 0.50, delta=0.005)
+
+    def run_search(self, azimuth_deg, sweep_deg, range_m=0.44, sweep_mode="stops", measurable=True):
+        """A pick against a perception that sees the cup whenever `in_view` says so. `measurable=False` still
+        lets it be glimpsed on the move but never measured from a stop."""
+        joints, links, up, h = self.joints, self.links, self.LYING_UP, self.LYING_HEIGHT
+        left = np.cross(up, self.heading)
+        a = math.radians(azimuth_deg)
+        mount = grasp.MOUNT_B - up * (grasp.MOUNT_B @ up)
+        truth = mount - up * h + range_m * (math.cos(a) * self.heading + math.sin(a) * left) + CUP_HEIGHT * up
+        test, detection, looks = self, perception.Detection("cup", 0.9, (0, 0, 1, 1), None), []
+
+        class Perception:
+            def observe(self, frame):
+                looks.append(frame.q.copy())
+                if not measurable or not test.in_view(frame.q, range_m, azimuth_deg):
+                    return None
+                estimate = perception.CupEstimate(truth.copy(), CUP_RADIUS, float(truth @ up),
+                                                  float(truth @ up) - CUP_HEIGHT, 500, "rim_circle", 0.001, 300.0)
+                return perception.CupObservation(detection, estimate, np.eye(4), 1.0)
+
+            def reobserve(self, frame, prior):
+                return self.observe(frame)
+
+            def glimpse(self, frame):
+                if not test.in_view(frame.q, range_m, azimuth_deg):
+                    return []
+                u, v = test.cup_pixels(frame.q, range_m, azimuth_deg).mean(axis=0)
+                return [perception.Detection("cup", 0.9, (u - 10, v - 10, u + 10, v + 10), None)]
+
+        pick = sequence.PickSequence(joints, links, self.model, self.mount, Perception(),
+                                     timing=sequence.Timing(settle_s=0.2),
+                                     sweep_deg=sweep_deg, sweep_mode=sweep_mode,
+                                     survey_params=grasp.SURVEY_PAST_THE_HEAD)
+        q, dt, t, target = np.zeros(6), 0.02, 0.0, None
+        while not pick.done and t < 120.0:
+            command = pick.update(t, q, up, lambda: types.SimpleNamespace(q=q.copy()))
+            if command.q is not None:
+                target = command.q
+            if target is not None:
+                q = q + np.clip(target - q, -1.2 * dt, 1.2 * dt)
+            t += dt
+        return pick, q, truth
+
+    def test_the_sweep_finds_and_picks_a_cup_out_to_the_side(self):
+        pick, q, truth = self.run_search(40.0, 45.0)
+        self.assertEqual(pick.state, "done", pick.failure)
+        self.assertTrue(pick.found_by.startswith("pivot +"), pick.found_by)
+        moves = [e["to"] for e in pick.events if e["event"] == "move"]
+        self.assertEqual(moves[0], "survey")
+        np.testing.assert_allclose(pick.cup.top_centre_b, truth, atol=1e-9)
+        np.testing.assert_allclose(grasp.jaw_positions(self.joints, q)[0], pick.plan.jaw_lift_b, atol=0.002)
+
+    def test_without_the_sweep_the_same_cup_is_never_seen(self):
+        pick, _, _ = self.run_search(40.0, 0.0)
+        self.assertEqual(pick.state, "failed")
+        self.assertEqual(pick.failure, "no cup found from the survey or the sweep")
+        self.assertEqual([e["to"] for e in pick.events if e["event"] == "move"], ["survey"])
+
+    def test_a_cup_straight_ahead_is_found_by_the_survey_without_pivoting(self):
+        pick, _, _ = self.run_search(0.0, 45.0)
+        self.assertEqual(pick.state, "done", pick.failure)
+        self.assertEqual(pick.found_by, "survey")
+        self.assertNotIn("pivot", [e["event"] for e in pick.events])
+
+    def test_a_continuous_sweep_stops_facing_the_cup_and_picks_it(self):
+        pick, q, truth = self.run_search(40.0, 45.0, sweep_mode="continuous")
+        self.assertEqual(pick.state, "done", pick.failure)
+        self.assertTrue(pick.found_by.startswith("sweep stop +"), pick.found_by)
+        events = [e["event"] for e in pick.events]
+        self.assertNotIn("pivot", events)
+        # It left for the far end, saw the cup on the way and stopped short, facing it.
+        self.assertNotIn("sweep to +45.0", [e["at"] for e in pick.events if e["event"] == "arrived"])
+        stop = next(e for e in pick.events if e["event"] == "sweep stop")
+        self.assertAlmostEqual(stop["pivot_deg"], 40.0, delta=5.0)
+        np.testing.assert_allclose(pick.cup.top_centre_b, truth, atol=1e-9)
+
+    def test_a_sweep_stop_that_cannot_measure_the_cup_resumes_and_does_not_stop_there_again(self):
+        pick, _, _ = self.run_search(40.0, 45.0, sweep_mode="continuous", measurable=False)
+        self.assertEqual(pick.failure, "no cup found from the survey or the sweep")
+        self.assertEqual([e["event"] for e in pick.events].count("sweep stop"), 1)
+        arrived = [e["at"] for e in pick.events if e["event"] == "arrived"]
+        self.assertIn("sweep to +45.0", arrived)
+        self.assertIn("sweep to -45.0", arrived)
+
+    def test_the_sweep_modes_are_checked(self):
+        with self.assertRaises(ValueError):
+            sequence.PickSequence(self.joints, self.links, self.model, self.mount, None, sweep_mode="spiral")
+
+    def test_a_search_that_finds_nothing_stops_after_the_sweep(self):
+        """There is no close scan behind the sweep any more: it aimed at named floor points, which took a
+        floor height to place, and it had found no cup since the survey learnt to look past the head."""
+        pick, _, _ = self.run_search(80.0, 45.0)
+        self.assertEqual(pick.state, "failed")
+        self.assertEqual(pick.failure, "no cup found from the survey or the sweep")
+        moves = [e["to"] for e in pick.events if e["event"] == "move"]
+        self.assertEqual(moves[0], "survey")
+        self.assertTrue(all(m.startswith(("survey", "pivot")) for m in moves), moves)
+
+
 class RandomCupTests(unittest.TestCase):
     def test_restart_positions_stay_in_the_picked_region_with_the_handle_off_the_jaw_axis(self):
         import run_pick_demo  # stdlib-only at import; Isaac is imported inside run()
@@ -274,6 +509,33 @@ class RandomCupTests(unittest.TestCase):
             rel = (yaw - math.degrees(math.atan2(y, x)) + 180.0) % 360.0 - 180.0
             off_axis = min(abs(rel), 180.0 - abs(rel))
             self.assertLessEqual(off_axis, run_pick_demo.RANDOM_HANDLE_BAND_DEG + 1e-9)
+
+    def test_the_sweep_region_spreads_cups_across_the_searched_sector(self):
+        import run_pick_demo
+
+        rng = np.random.default_rng(0)
+        bearings = []
+        for _ in range(500):
+            (x, y), _ = run_pick_demo.random_cup(rng, "sweep", 45.0)
+            low, high = run_pick_demo.SWEEP_CUP_RANGE_M
+            self.assertTrue(low - 1e-9 <= math.hypot(x, y) <= high + 1e-9)
+            bearings.append(math.degrees(math.atan2(y, x)))
+        self.assertLessEqual(max(abs(b) for b in bearings), 45.0)
+        self.assertTrue(sum(abs(b) > 30.0 for b in bearings) > 100)   # beyond what the single look ahead covers
+
+    def test_the_sweep_range_can_be_widened_to_the_edges_of_what_the_arm_can_grasp(self):
+        """The default band is 8 cm wide and the arm plans grasps over about 15; the near end is where it
+        reaches lowest, so it is the part a run should be able to ask for."""
+        import run_pick_demo
+
+        rng = np.random.default_rng(0)
+        reaches = []
+        for _ in range(500):
+            (x, y), _ = run_pick_demo.random_cup(rng, "sweep", 45.0, (0.34, 0.52))
+            reaches.append(math.hypot(x, y))
+        self.assertTrue(0.34 - 1e-9 <= min(reaches) and max(reaches) <= 0.52 + 1e-9)
+        self.assertLess(min(reaches), run_pick_demo.SWEEP_CUP_RANGE_M[0])     # nearer than the default band
+        self.assertGreater(max(reaches), run_pick_demo.SWEEP_CUP_RANGE_M[1])  # and further
 
 
 
@@ -436,6 +698,28 @@ class CameraBodyTests(unittest.TestCase):
                                                   points=points[kept])
         self.assertTrue(found, "the rendered eye sits inside the case; the guard must say so")
 
+    def test_the_near_clip_keeps_the_case_out_of_the_rendered_view_at_any_mount_angle(self):
+        """Every part of the case in front of the rendered eye is nearer than the clip, however F-052's 10.7 mm
+        falls in the optical frame -- including straight back, where the most case is ahead of the eye."""
+        from pick_demo.camera_asset import carve_lens
+
+        points, faces = self.camera_body.mesh_optical()
+        spawned = points[carve_lens(points, faces)[0]]
+        model, near = camera.CAMERAS["d435"], self.camera_body.NEAR_CLIP_PAST_HOUSING_M
+        error = float(np.linalg.norm(self.camera_body.RENDERED_EYE_LINK6_M))
+        saved = camera.mount_from_xyz_rpy((-0.061, 0.034, 0.067), (0.0, 0.0, -90.0), "wrist_mount.json, 2026-09-17")
+        for eye in (self.camera_body.rendered_eye_offset_m(saved), self.camera_body.rendered_eye_offset_m(self.mount),
+                    (0.0, 0.0, -error), (0.0, error, 0.0), (error, 0.0, 0.0)):
+            self.assertTrue(self.camera_body.view_obstruction(model, eye, points=points), eye)
+            self.assertEqual(self.camera_body.view_obstruction(model, eye, points=spawned, near_m=near), [], eye)
+            self.assertEqual(self.camera_body.view_obstruction(model, eye, points=points, near_m=near), [], eye)
+
+    def test_the_rendered_eye_is_one_offset_in_link6_for_both_mounts_measured(self):
+        """Turned into the placeholder mount's optical frame, the saved mount's measurement lands within 0.6 mm of
+        the placeholder's own (F-057)."""
+        eye = np.array(self.camera_body.rendered_eye_offset_m(self.mount))
+        self.assertLess(np.linalg.norm(eye - np.array(self.camera_body.RENDERED_EYE_OFFSET_M)), 0.0007)
+
     def test_points_transform_into_link6_through_the_mount(self):
         """part_pose_link6 must agree with applying the mount pose by hand."""
         point = self.camera_body.tripod_thread_m()
@@ -542,18 +826,18 @@ class WideCupTests(unittest.TestCase):
         wide = perception.CupEstimate(cup_top(), 0.0415, cup_top()[2], -BASE_HEIGHT, 500, "rim_circle")
         params = grasp.GraspParams(wall_grasp="off")
         with self.assertRaises(grasp.PlanningError) as caught:
-            grasp.plan_top_down_grasp(joints, links, wide, UP, np.zeros(6), BASE_HEIGHT, params)
+            grasp.plan_top_down_grasp(joints, links, wide, UP, np.zeros(6), params)
         self.assertIn("mm a side", str(caught.exception))
 
     def test_a_70_mm_cup_now_plans_a_grasp(self):
         """The bench mug, at the width its best-conditioned look reported."""
         joints, links = load_urdf()
         cup = perception.CupEstimate(cup_top(), 0.035, cup_top()[2], -BASE_HEIGHT, 500, "rim_circle")
-        plan = grasp.plan_top_down_grasp(joints, links, cup, UP, np.zeros(6), BASE_HEIGHT, self.params)
+        plan = grasp.plan_top_down_grasp(joints, links, cup, UP, np.zeros(6), self.params)
         self.assertTrue(plan.descend)
         # The finer tolerance must actually show up as more waypoints than the 55 mm cup needs.
         narrow = perception.CupEstimate(cup_top(), 0.0275, cup_top()[2], -BASE_HEIGHT, 500, "rim_circle")
-        narrow_plan = grasp.plan_top_down_grasp(joints, links, narrow, UP, np.zeros(6), BASE_HEIGHT, self.params)
+        narrow_plan = grasp.plan_top_down_grasp(joints, links, narrow, UP, np.zeros(6), self.params)
         self.assertGreaterEqual(len(plan.descend), len(narrow_plan.descend))
 
     def test_the_descent_for_a_wide_cup_stays_inside_its_own_clearance(self):
@@ -561,7 +845,7 @@ class WideCupTests(unittest.TestCase):
         joints, links = load_urdf()
         radius = 0.035
         cup = perception.CupEstimate(cup_top(), radius, cup_top()[2], -BASE_HEIGHT, 500, "rim_circle")
-        plan = grasp.plan_top_down_grasp(joints, links, cup, UP, np.zeros(6), BASE_HEIGHT, self.params)
+        plan = grasp.plan_top_down_grasp(joints, links, cup, UP, np.zeros(6), self.params)
         jaws = grasp.jaw_positions(joints, np.array(plan.descend))
         deviation = grasp.line_deviation(jaws, plan.jaw_pregrasp_b, plan.jaw_grasp_b)
         self.assertLess(float(np.max(deviation)), grasp.jaw_clearance_per_side_m(radius))
@@ -586,7 +870,7 @@ class WallGraspTests(unittest.TestCase):
 
     def plan(self, diameter_m, **params):
         return grasp.plan_top_down_grasp(self.joints, self.links, self.cup(diameter_m), UP, np.zeros(6),
-                                         BASE_HEIGHT, grasp.GraspParams(**params))
+                                         grasp.GraspParams(**params))
 
     def test_the_cups_that_already_worked_are_planned_exactly_as_before(self):
         """The fallback must not touch a cup the jaws can take: same mode, same waypoints, same grip."""
@@ -691,25 +975,6 @@ class WallGraspTests(unittest.TestCase):
         self.assertAlmostEqual(float(radial @ plan.heading_b[:2]), 0.0, delta=0.002)
         self.assertAlmostEqual(abs(float(radial @ rot[:2, 1])), float(np.linalg.norm(radial)), delta=0.002)
 
-    def test_a_cup_standing_below_the_floor_it_was_given_lowers_the_floor_but_not_the_other_way(self):
-        """The bench refused a mug it could see, by 3 mm of ground proxy (Week 1 log, 2026-09-17).
-
-        The floor is *told* to the planner and the cup is *measured*, so where they disagree the cup wins
-        -- downwards only, and by at most `ground_trust_m`. A cup standing on a box says nothing about
-        the ground beside it.
-        """
-        params = grasp.GraspParams()
-        deep = perception.CupEstimate(np.array([0.273, -0.064, 0.142]), 0.0417, 0.142, 0.055, 500, "rim_circle")
-        floor, note = grasp.ground_under(deep, -0.09, params)
-        self.assertAlmostEqual(floor, -0.055, places=9)
-        self.assertIn("below the floor", note)
-        # ...and never lifted by a cup standing higher than the floor it was given.
-        raised = perception.CupEstimate(np.array([0.29, 0.08, 0.20]), 0.0417, 0.20, 0.13, 500, "rim_circle")
-        self.assertEqual(grasp.ground_under(raised, -0.09, params), (-0.09, ""))
-        # ...and the trust is bounded: a cup reading a long way under does not hand over the whole gap.
-        absurd = perception.CupEstimate(np.array([0.29, 0.08, 0.05]), 0.0417, 0.05, -0.20, 500, "rim_circle")
-        self.assertAlmostEqual(grasp.ground_under(absurd, 0.0, params)[0], params.ground_trust_m, places=9)
-
     def test_an_unknown_mode_is_a_planning_error_not_a_silent_outside_grasp(self):
         with self.assertRaises(grasp.PlanningError):
             self.plan(0.055, wall_grasp="sideways")
@@ -742,7 +1007,7 @@ class WallGraspSequenceTests(unittest.TestCase):
                     truth.copy(), radius, truth[2], -BASE_HEIGHT, 50, "ray_to_height"), np.eye(4), 0.0)
 
         pick = sequence.PickSequence(joints, links, camera.CAMERAS["d435"], camera.WristMount(), Perception(),
-                                     base_height_m=BASE_HEIGHT, timing=sequence.Timing(settle_s=0.2),
+                                     timing=sequence.Timing(settle_s=0.2),
                                      grasp_params=grasp.GraspParams(**params))
         q, dt, t, log, target = np.zeros(6), 0.02, 0.0, [], None
         while not pick.done and t < 90.0:

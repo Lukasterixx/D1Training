@@ -3,7 +3,8 @@
     python run_pick_demo.py --headless
     python run_pick_demo.py                            # in the viewer, paced to real time; R: new cup position
 
-No learning anywhere: YOLO (COCO weights) finds the cup, depth and forward kinematics place it, `d1_ik`
+No learning anywhere: the arm searches by looking ahead past the dog's head and pivoting on Joint1 to
++-`--sweep_deg` either side, YOLO (COCO weights) finds the cup, depth and forward kinematics place it, `d1_ik`
 plans a top-down grasp and the scripted `pick_demo.sequence` drives the arm through the same interface
 the position-only task uses -- 10 Hz setpoints into the fitted firmware planner (F-045), 9 Hz joint
 feedback. See `pick_demo/` for what each piece assumes.
@@ -90,11 +91,22 @@ def quat_to_matrix(q):
 RANDOM_CUP_X = (0.36, 0.44)
 RANDOM_CUP_Y = (-0.10, 0.10)
 RANDOM_HANDLE_BAND_DEG = 45.0
+# `--cup_region sweep`: anywhere in the pivoting search's sector instead. 0.40-0.48 m from the spawn point is
+# inside the band where a top-down grasp of the 55 mm cup plans at every heading out to +-45 deg on the CPU
+# model (Week 1 log, 2026-09-17); the arm's mount settles 1.7 cm behind the spawn point. `--cup_range` widens
+# it: the arm plans a grasp from about 0.35 m to 0.50 m of the mount, and the near end is where it reaches
+# lowest, so a run that never goes there never tests the part of the workspace closest to the floor.
+SWEEP_CUP_RANGE_M = (0.40, 0.48)
 
 
-def random_cup(rng):
+def random_cup(rng, region: str = "ahead", sweep_deg: float = 45.0, range_m=SWEEP_CUP_RANGE_M):
     """(x, y) and a handle yaw in degrees for the next episode."""
-    x, y = float(rng.uniform(*RANDOM_CUP_X)), float(rng.uniform(*RANDOM_CUP_Y))
+    if region == "sweep":
+        reach = float(rng.uniform(*range_m))
+        bearing = math.radians(float(rng.uniform(-sweep_deg, sweep_deg)))
+        x, y = reach * math.cos(bearing), reach * math.sin(bearing)
+    else:
+        x, y = float(rng.uniform(*RANDOM_CUP_X)), float(rng.uniform(*RANDOM_CUP_Y))
     away = math.degrees(math.atan2(y, x))
     offset = float(rng.uniform(-RANDOM_HANDLE_BAND_DEG, RANDOM_HANDLE_BAND_DEG))
     return (x, y), away + offset + (180.0 if rng.random() < 0.5 else 0.0)
@@ -221,8 +233,16 @@ def run(args):
             "git_commit": git_output("rev-parse", "HEAD"), "git_status": git_output("status", "--short"),
             "source_sha256": snapshot_sources(run_dir), "packages": packages,
             "task": "scripted_top_down_cup_pick", "learning": None,
+            "search": {"sweep_deg": args.sweep_deg, "sweep_mode": args.sweep_mode, "pivot_stops_deg": None,
+                       "cup_region": args.cup_region, "cup_range_env_m": [float(v) for v in args.cup_range],
+                       "survey_params": None,
+                       "how": "survey pose straight ahead, then the same pose turned on Joint1 alone: swept to "
+                              "each end with YOLO on the move and a still look wherever a cup shows (continuous), "
+                              "or stopped at fixed headings (stops). No floor height anywhere: every pose is "
+                              "placed from the arm's own mount and the cup is measured by the camera"},
             "camera": {**{k: v for k, v in model.__dict__.items()},
                        "mount": mount_to_dict(mount, mount_source), "mount_source": mount_source,
+
                        "mount_file": mount_file,
                        "model_source": camera_source, "body_drawn": bool(args.camera_body),
                        "depth_noise": args.depth_noise},
@@ -260,14 +280,18 @@ def run(args):
                 # renderer puts it. The second is what the wrist images will actually show.
                 _points, _faces = camera_body_geom.mesh_optical()
                 _spawned = _points[carve_lens(_points, _faces)[0]]
+                # Both at the wrist camera's near clip, which is what keeps the case out of its images.
+                near = camera_body_geom.NEAR_CLIP_PAST_HOUSING_M
                 obstruction = {
-                    "model_eye": camera_body_geom.view_obstruction(model, points=_spawned),
+                    "near_clip_m": near,
+                    "model_eye": camera_body_geom.view_obstruction(model, points=_spawned, near_m=near),
                     "rendered_eye_f052": camera_body_geom.view_obstruction(
-                        model, camera_body_geom.RENDERED_EYE_OFFSET_M, points=_spawned)}
+                        model, camera_body_geom.rendered_eye_offset_m(mount), points=_spawned, near_m=near)}
                 metadata["camera"]["view_obstruction"] = obstruction
                 if obstruction["rendered_eye_f052"]:
-                    print("[pick] WARNING: at the F-052 rendered eye the case is in shot; the wrist "
-                          "view is obstructed. Use --no_camera_body for a pick that needs it.", flush=True)
+                    print(f"[pick] WARNING: at the F-052 rendered eye the case reaches past the "
+                          f"{1000 * near:.0f} mm near clip; the wrist view is obstructed. Use --no_camera_body "
+                          f"for a pick that needs it.", flush=True)
 
             cfg = make_pick_cfg(robot_usd, cup_info["usd_path"], model, mount, tuple(args.cup_xy), args.cup_yaw_deg,
                                 args.seed, args.device, episode_s=args.max_time + (3600.0 if args.linger else 30.0),
@@ -343,6 +367,13 @@ def run(args):
                 metadata["ui_feed"] = feed.url
 
             joints, links = load_urdf()
+            from pick_demo.grasp import SURVEY_PAST_THE_HEAD, pivot_stops_deg
+
+            if args.sweep_mode == "stops":
+                metadata["search"]["pivot_stops_deg"] = list(pivot_stops_deg(model, args.sweep_deg))
+            else:
+                metadata["search"]["sweep_legs_deg"] = [0.0, args.sweep_deg, -args.sweep_deg]
+            metadata["search"]["survey_params"] = SURVEY_PAST_THE_HEAD
             detector = YoloDetector(str(args.weights), device=args.device)
             perception = CupPerception(detector, model, joints, mount)
             rng = np.random.default_rng(args.seed) if args.depth_noise else None
@@ -427,8 +458,12 @@ def run(args):
                 print(f"[pick] settled lying down: base {100 * base_height:.1f} cm above the floor", flush=True)
                 write_json(run_dir / "run.json", metadata)
 
-                sequence = PickSequence(joints, links, model, mount, perception, base_height_m=base_height,
-                                        grasp_params=grasp_params, timing=Timing(settle_s=0.5))
+                # `base_height` is recorded, never planned with: the sequence places every pose from the
+                # arm's own mount. It is here as evidence about the posture a run started from.
+                sequence = PickSequence(joints, links, model, mount, perception,
+                                        grasp_params=grasp_params, timing=Timing(settle_s=0.5),
+                                        sweep_deg=args.sweep_deg, sweep_mode=args.sweep_mode,
+                                        survey_params=SURVEY_PAST_THE_HEAD)
                 captured = {}
 
                 def frame_source():
@@ -577,6 +612,9 @@ def run(args):
                                               "method": l["estimate"]["method"]} for l in first],
                     "refine_errors_mm": [{"horizontal": l["horizontal_error_mm"], "height": l["height_error_mm"],
                                           "method": l["estimate"]["method"]} for l in refine],
+                    "found_by": sequence.found_by,
+                    "looks_tried": [e["to"] for e in sequence.events if e["event"] == "move"
+                                    and e["to"] not in ("pregrasp", "descend", "lift")],
                     "frames_looked_at": len(looks),
                     "frames_with_cup_detection": sum(1 for l in looks if l["detections"]),
                     "grasp_plan": sequence.plan.as_dict() if sequence.plan is not None else None,
@@ -595,6 +633,8 @@ def run(args):
                 episodes.append({"episode": episode, "dir": "." if episode == 0 else out_dir.name,
                                  "cup_x_env_m": round(cup_xy[0], 4), "cup_y_env_m": round(cup_xy[1], 4),
                                  "cup_yaw_deg": round(cup_yaw, 1),
+                                 "cup_bearing_deg": round(math.degrees(math.atan2(cup_xy[1], cup_xy[0])), 1),
+                                 "found_by": sequence.found_by or "",
                                  "grasp_mode": sequence.plan.mode if sequence.plan is not None else "",
                                  "final_state": result["final_state"],
                                  "success": success, "cup_lift_m": result["cup_lift_m"],
@@ -614,11 +654,14 @@ def run(args):
                 metadata["pick"] = {k: result[k] for k in ("success", "final_state", "failure", "cup_lift_m",
                                                           "cup_axis_to_jaw_centre_m", "sim_time_s")}
                 metadata["episodes"] = {"count": len(episodes), "completed": len(completed), "succeeded": wins,
+                                        "cup_region": args.cup_region,
                                         "random_cup_x_env_m": list(RANDOM_CUP_X), "random_cup_y_env_m": list(RANDOM_CUP_Y),
+                                        "sweep_cup_range_env_m": [float(v) for v in args.cup_range],
                                         "random_handle_band_deg": RANDOM_HANDLE_BAND_DEG}
                 write_json(run_dir / "run.json", metadata)
                 outcome = "aborted" if aborted else ("succeeded" if success else "failed")
-                print(f"[pick] episode {episode} {outcome}: {sequence.plan.mode if sequence.plan else 'no'} grasp, "
+                print(f"[pick] episode {episode} {outcome}: found by {sequence.found_by or 'nothing'}, "
+                      f"{sequence.plan.mode if sequence.plan else 'no'} grasp, "
                       f"lift {100 * lift:.1f} cm, axis gap {1000 * axis_gap:.0f} mm "
                       f"({1000 * axis_error:.0f} mm off the plan), {t:.1f} s simulated -> {out_dir}", flush=True)
 
@@ -637,7 +680,7 @@ def run(args):
                 if not app.is_running():
                     break
                 episode += 1
-                cup_xy, cup_yaw = random_cup(cup_rng)
+                cup_xy, cup_yaw = random_cup(cup_rng, args.cup_region, args.sweep_deg, tuple(args.cup_range))
             if restart is not None:
                 restart.close()
         except Exception as exc:
@@ -686,8 +729,8 @@ def main():
                              "This is the camera on the bench rather than the datasheet's idea of one.")
     parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=True,
                         help="Draw the RealSense housing at the mount, to check it against the real bracket. "
-                             "Visual only: no collider and no mass, but it does obstruct the wrist camera "
-                             "while F-052 stands, so a pick that needs the wrist view wants it off.")
+                             "Visual only: no collider and no mass. The renderer's eye sits inside it (F-052); "
+                             "the wrist camera's 20 mm near clip keeps it out of the images.")
     # `BooleanOptionalAction` spells the negative `--no-camera_body`, while run_camera_body_view.py takes
     # `--no_camera_body`, and F-057 and scene.py both name the underscore form. Rather than leave a flag
     # that errors out for anyone following the findings, accept both spellings here.
@@ -721,6 +764,21 @@ def main():
                         help="Cup position on the floor relative to the robot's spawn point (m).")
     parser.add_argument("--cup_yaw_deg", type=float, default=0.0,
                         help="Cup yaw; 0 points the handle along +x, away from the robot.")
+    parser.add_argument("--sweep_deg", type=float, default=45.0,
+                        help="Search by pivoting the survey pose on Joint1 out to this many degrees either side of "
+                             "straight ahead, stopping to look at each heading (pick_demo.grasp.pivot_stops_deg). "
+                             "0: one look straight ahead, as before.")
+    parser.add_argument("--sweep_mode", choices=("continuous", "stops"), default="continuous",
+                        help="continuous: one Joint1 move to each end at the arm's own speed, YOLO on frames taken on "
+                             "the way, and a still look wherever a cup shows. stops: a still look at each of "
+                             "pivot_stops_deg.")
+    parser.add_argument("--cup_region", choices=("ahead", "sweep"), default="ahead",
+                        help="Where R and --episodes put the cup: 'ahead' is the region the first picks came from "
+                             "(x 0.36-0.44, |y| <= 0.10); 'sweep' is anywhere --cup_range out within +-sweep_deg.")
+    parser.add_argument("--cup_range", type=float, nargs=2, default=SWEEP_CUP_RANGE_M, metavar=("NEAR", "FAR"),
+                        help="With --cup_region sweep: how far from the spawn point the cup may stand, metres. "
+                             "The default is the band every bearing could be grasped at; widen it to test the "
+                             "near edge, where the arm reaches lowest.")
     parser.add_argument("--weights", default=str(DEFAULT_WEIGHTS), help="Ultralytics segmentation weights.")
     parser.add_argument("--settle", type=float, default=3.0, help="Seconds lying still before the pick starts.")
     parser.add_argument("--max_time", type=float, default=90.0, help="Simulated seconds before giving up.")

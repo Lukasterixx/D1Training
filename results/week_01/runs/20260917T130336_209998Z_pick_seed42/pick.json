@@ -1,0 +1,132 @@
+{
+  "success": true,
+  "criterion": "sequence finished, cup base raised >= 5 cm, and the cup axis within 3 cm of where the plan put the jaw centre relative to it (on the axis for an outside or inside-out grasp, a wall's radius away for a pinch)",
+  "episode": 0,
+  "settled": {
+    "base_height_m": 0.0851,
+    "base_xy_env_m": [
+      -0.0173,
+      0.0
+    ],
+    "cup_start_env_m": [
+      0.42,
+      0.03,
+      -0.0
+    ],
+    "cup_yaw_deg": 0.0,
+    "settle_s": 3.0
+  },
+  "final_state": "done",
+  "failure": null,
+  "sim_time_s": 28.68,
+  "wall_time_s": 48.4,
+  "cup_lift_m": 0.119,
+  "cup_axis_to_jaw_centre_m": 0.0053,
+  "planned_jaw_offset_from_axis_m": 0.0047,
+  "axis_error_m": 0.0006,
+  "cup_tilt_deg_end": 0.17,
+  "base_height_m": 0.0851,
+  "first_look_errors_mm": [
+    {
+      "horizontal": 1.43,
+      "height": -10.41,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 1.31,
+      "height": -10.46,
+      "method": "rim_circle"
+    },
+    {
+      "horizontal": 1.31,
+      "height": -10.4,
+      "method": "rim_circle"
+    }
+  ],
+  "refine_errors_mm": [],
+  "found_by": "view 0",
+  "looks_tried": [
+    "survey",
+    "pivot +22.5",
+    "pivot +45.0",
+    "pivot -22.5",
+    "pivot -45.0",
+    "view 0"
+  ],
+  "frames_looked_at": 47,
+  "frames_with_cup_detection": 3,
+  "grasp_plan": {
+    "mode": "outside",
+    "heading_b": [
+      0.99,
+      0.0678,
+      -0.1239
+    ],
+    "tilt_deg": 10.0,
+    "jaw_pregrasp_b": [
+      0.423,
+      0.0283,
+      0.1195
+    ],
+    "jaw_grasp_b": [
+      0.4319,
+      0.0302,
+      -0.0603
+    ],
+    "jaw_lift_b": [
+      0.4468,
+      0.0303,
+      0.0588
+    ],
+    "q_pregrasp": [
+      0.0664,
+      0.9399,
+      -0.5234,
+      0.0084,
+      1.104,
+      0.0044
+    ],
+    "approach_waypoints": 2,
+    "descend_waypoints": 18,
+    "lift_waypoints": 6,
+    "gripper_descend_m": 0.03,
+    "gripper_grasp_m": 0.0156,
+    "notes": [
+      "the cup's base reads 12 mm below the floor the planner was given; planned against a floor 12 mm lower",
+      "direct move to the pregrasp crosses the proxy; backing 8 cm up out of the start pose",
+      "fingertips 30 mm below the rim; 12.4 mm a side beside the cup",
+      "descent held to 6.0 mm over 18 waypoints"
+    ]
+  },
+  "cup_estimate_used": {
+    "top_centre_b": [
+      0.43662,
+      0.03046,
+      -0.05041
+    ],
+    "radius_m": 0.0262,
+    "top_height_m": 0.0042,
+    "bottom_height_m": -0.09693,
+    "height_m": 0.10113,
+    "points": 10969,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 157.9
+  },
+  "first_cup_estimate": {
+    "top_centre_b": [
+      0.43662,
+      0.03046,
+      -0.05041
+    ],
+    "radius_m": 0.0262,
+    "top_height_m": 0.0042,
+    "bottom_height_m": -0.09693,
+    "height_m": 0.10113,
+    "points": 10969,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 157.9
+  },
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm."
+}

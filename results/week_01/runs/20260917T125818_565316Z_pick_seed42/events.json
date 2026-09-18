@@ -1,0 +1,3228 @@
+{
+  "events": [
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "settled",
+      "base_height_m": 0.0851,
+      "tilt_deg": 7.28
+    },
+    {
+      "t": 0.5,
+      "state": "settle",
+      "event": "survey",
+      "q": [
+        0.4924,
+        -1.1675,
+        0.8964,
+        -0.3089,
+        1.258,
+        -0.4992
+      ],
+      "look_at_b": [
+        0.4255,
+        -0.0,
+        -0.1401
+      ],
+      "camera_pos_b": [
+        0.0794,
+        0.0,
+        0.3073
+      ],
+      "distance_m": 0.5656854249492382,
+      "elevation_deg": 45.0,
+      "roll_deg": 0.0,
+      "pitch_deg": 45.0,
+      "camera_height_m": 0.4,
+      "floor_in_frame_m": [
+        0.2,
+        0.93
+      ],
+      "pivot_deg": 0.0,
+      "then_pivots_deg": [
+        22.5,
+        45.0,
+        -22.5,
+        -45.0
+      ]
+    },
+    {
+      "t": 0.5,
+      "state": "moving",
+      "event": "move",
+      "to": "survey",
+      "waypoints": 1
+    },
+    {
+      "t": 2.64,
+      "state": "moving",
+      "event": "arrived",
+      "at": "survey",
+      "error_rad": 0.0027
+    },
+    {
+      "t": 4.06,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "survey",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 4.06,
+      "state": "detect",
+      "event": "pivot",
+      "q": [
+        0.9058,
+        -1.1675,
+        0.8964,
+        -0.3089,
+        1.258,
+        -0.4992
+      ],
+      "look_at_b": [
+        0.386,
+        0.1694,
+        -0.135
+      ],
+      "camera_pos_b": [
+        0.0727,
+        0.032,
+        0.3073
+      ],
+      "distance_m": 0.5591874777926708,
+      "elevation_deg": 45.0,
+      "roll_deg": 0.0,
+      "pitch_deg": 45.5,
+      "camera_height_m": 0.399,
+      "floor_in_frame_m": [
+        0.2,
+        0.91
+      ],
+      "pivot_deg": 22.44
+    },
+    {
+      "t": 4.06,
+      "state": "moving",
+      "event": "move",
+      "to": "pivot +22.5",
+      "waypoints": 1
+    },
+    {
+      "t": 5.04,
+      "state": "moving",
+      "event": "arrived",
+      "at": "pivot +22.5",
+      "error_rad": 0.0041
+    },
+    {
+      "t": 6.48,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "pivot +22.5",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 6.48,
+      "state": "detect",
+      "event": "pivot",
+      "q": [
+        1.3164,
+        -1.1675,
+        0.8964,
+        -0.3089,
+        1.258,
+        -0.4992
+      ],
+      "look_at_b": [
+        0.2796,
+        0.3022,
+        -0.1223
+      ],
+      "camera_pos_b": [
+        0.0539,
+        0.0583,
+        0.3073
+      ],
+      "distance_m": 0.5430835958984511,
+      "elevation_deg": 45.0,
+      "roll_deg": 0.0,
+      "pitch_deg": 47.0,
+      "camera_height_m": 0.397,
+      "floor_in_frame_m": [
+        0.2,
+        0.86
+      ],
+      "pivot_deg": 44.91
+    },
+    {
+      "t": 6.48,
+      "state": "moving",
+      "event": "move",
+      "to": "pivot +45.0",
+      "waypoints": 1
+    },
+    {
+      "t": 7.56,
+      "state": "moving",
+      "event": "arrived",
+      "at": "pivot +45.0",
+      "error_rad": 0.0048
+    },
+    {
+      "t": 9.0,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "pivot +45.0",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 9.0,
+      "state": "detect",
+      "event": "pivot",
+      "q": [
+        0.0793,
+        -1.1675,
+        0.8964,
+        -0.3089,
+        1.258,
+        -0.4992
+      ],
+      "look_at_b": [
+        0.3852,
+        -0.1688,
+        -0.1337
+      ],
+      "camera_pos_b": [
+        0.0727,
+        -0.0318,
+        0.3073
+      ],
+      "distance_m": 0.5575708551522919,
+      "elevation_deg": 45.0,
+      "roll_deg": 0.0,
+      "pitch_deg": 45.7,
+      "camera_height_m": 0.399,
+      "floor_in_frame_m": [
+        0.2,
+        0.91
+      ],
+      "pivot_deg": -22.44
+    },
+    {
+      "t": 9.0,
+      "state": "moving",
+      "event": "move",
+      "to": "pivot -22.5",
+      "waypoints": 1
+    },
+    {
+      "t": 11.16,
+      "state": "moving",
+      "event": "arrived",
+      "at": "pivot -22.5",
+      "error_rad": 0.0025
+    },
+    {
+      "t": 12.6,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "pivot -22.5",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 12.6,
+      "state": "detect",
+      "event": "pivot",
+      "q": [
+        -0.331,
+        -1.1675,
+        0.8964,
+        -0.3089,
+        1.258,
+        -0.4992
+      ],
+      "look_at_b": [
+        0.2791,
+        -0.3011,
+        -0.1208
+      ],
+      "camera_pos_b": [
+        0.054,
+        -0.0582,
+        0.3073
+      ],
+      "distance_m": 0.5412334621528848,
+      "elevation_deg": 45.0,
+      "roll_deg": 0.0,
+      "pitch_deg": 47.1,
+      "camera_height_m": 0.397,
+      "floor_in_frame_m": [
+        0.2,
+        0.86
+      ],
+      "pivot_deg": -44.92
+    },
+    {
+      "t": 12.6,
+      "state": "moving",
+      "event": "move",
+      "to": "pivot -45.0",
+      "waypoints": 1
+    },
+    {
+      "t": 13.68,
+      "state": "moving",
+      "event": "arrived",
+      "at": "pivot -45.0",
+      "error_rad": 0.0027
+    },
+    {
+      "t": 15.12,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "pivot -45.0",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 15.12,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        -0.1847,
+        0.2245,
+        0.585,
+        -0.0157,
+        0.5958,
+        0.4277
+      ],
+      "look_at_b": [
+        0.4027,
+        0.0001,
+        -0.1367
+      ],
+      "camera_pos_b": [
+        0.2957,
+        -0.0002,
+        0.1966
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 65.0,
+      "roll_deg": -15.0
+    },
+    {
+      "t": 15.12,
+      "state": "moving",
+      "event": "move",
+      "to": "view 0",
+      "waypoints": 1
+    },
+    {
+      "t": 17.4,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 0",
+      "error_rad": 0.0049
+    },
+    {
+      "t": 18.84,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "view 0",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 18.84,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        0.1993,
+        0.5164,
+        0.0225,
+        0.0444,
+        1.0482,
+        0.1592
+      ],
+      "look_at_b": [
+        0.4029,
+        0.1499,
+        -0.1363
+      ],
+      "camera_pos_b": [
+        0.3601,
+        0.1201,
+        0.2098
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 75.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 18.84,
+      "state": "moving",
+      "event": "move",
+      "to": "view 1",
+      "waypoints": 1
+    },
+    {
+      "t": 20.04,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 1",
+      "error_rad": 0.0056
+    },
+    {
+      "t": 21.48,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "view 1",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 21.48,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        -0.4612,
+        0.2942,
+        0.4854,
+        -0.0992,
+        0.6158,
+        0.3081
+      ],
+      "look_at_b": [
+        0.4029,
+        -0.1498,
+        -0.1364
+      ],
+      "camera_pos_b": [
+        0.3039,
+        -0.1012,
+        0.1957
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 65.0,
+      "roll_deg": -15.0
+    },
+    {
+      "t": 21.48,
+      "state": "moving",
+      "event": "move",
+      "to": "view 2",
+      "waypoints": 1
+    },
+    {
+      "t": 22.8,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 2",
+      "error_rad": 0.0047
+    },
+    {
+      "t": 24.24,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "view 2",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 24.24,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        -0.1025,
+        0.5321,
+        0.1874,
+        0.0209,
+        0.6947,
+        0.1182
+      ],
+      "look_at_b": [
+        0.5014,
+        -0.0004,
+        -0.1485
+      ],
+      "camera_pos_b": [
+        0.394,
+        0.0005,
+        0.1846
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 24.24,
+      "state": "moving",
+      "event": "move",
+      "to": "view 3",
+      "waypoints": 1
+    },
+    {
+      "t": 25.2,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 3",
+      "error_rad": 0.0054
+    },
+    {
+      "t": 26.64,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "view 3",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 26.64,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        0.3064,
+        0.1321,
+        0.7042,
+        0.1937,
+        0.5885,
+        0.4025
+      ],
+      "look_at_b": [
+        0.3242,
+        0.2199,
+        -0.1265
+      ],
+      "camera_pos_b": [
+        0.2396,
+        0.141,
+        0.2038
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 26.64,
+      "state": "moving",
+      "event": "move",
+      "to": "view 4",
+      "waypoints": 1
+    },
+    {
+      "t": 27.72,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 4",
+      "error_rad": 0.0045
+    },
+    {
+      "t": 29.16,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "view 4",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 29.16,
+      "state": "detect",
+      "event": "viewpoint",
+      "q": [
+        -0.6429,
+        0.1012,
+        0.7141,
+        -0.0912,
+        0.5768,
+        0.0152
+      ],
+      "look_at_b": [
+        0.3241,
+        -0.2198,
+        -0.1267
+      ],
+      "camera_pos_b": [
+        0.2396,
+        -0.1411,
+        0.2037
+      ],
+      "distance_m": 0.35,
+      "elevation_deg": 65.0,
+      "roll_deg": 0.0
+    },
+    {
+      "t": 29.16,
+      "state": "moving",
+      "event": "move",
+      "to": "view 5",
+      "waypoints": 1
+    },
+    {
+      "t": 30.84,
+      "state": "moving",
+      "event": "arrived",
+      "at": "view 5",
+      "error_rad": 0.0048
+    },
+    {
+      "t": 32.28,
+      "state": "detect",
+      "event": "not enough detections",
+      "look": "view 5",
+      "seen": 0,
+      "frames": 8
+    },
+    {
+      "t": 32.28,
+      "state": "detect",
+      "event": "failed",
+      "reason": "no cup found from any viewpoint"
+    }
+  ],
+  "looks": [
+    {
+      "t": 2.94,
+      "state": "detect",
+      "image": "frames/000_002.9s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 3.1,
+      "state": "detect",
+      "image": "frames/001_003.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 3.26,
+      "state": "detect",
+      "image": "frames/002_003.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 3.42,
+      "state": "detect",
+      "image": "frames/003_003.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 3.58,
+      "state": "detect",
+      "image": "frames/004_003.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 3.74,
+      "state": "detect",
+      "image": "frames/005_003.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 3.9,
+      "state": "detect",
+      "image": "frames/006_003.9s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 4.06,
+      "state": "detect",
+      "image": "frames/007_004.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.88,
+          0.89,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.0306
+      ]
+    },
+    {
+      "t": 5.36,
+      "state": "detect",
+      "image": "frames/008_005.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.69,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 5.52,
+      "state": "detect",
+      "image": "frames/009_005.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 5.68,
+      "state": "detect",
+      "image": "frames/010_005.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 5.84,
+      "state": "detect",
+      "image": "frames/011_005.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 6.0,
+      "state": "detect",
+      "image": "frames/012_006.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 6.16,
+      "state": "detect",
+      "image": "frames/013_006.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 6.32,
+      "state": "detect",
+      "image": "frames/014_006.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 6.48,
+      "state": "detect",
+      "image": "frames/015_006.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          8.7,
+          4.78,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.031
+      ]
+    },
+    {
+      "t": 7.88,
+      "state": "detect",
+      "image": "frames/016_007.9s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 8.04,
+      "state": "detect",
+      "image": "frames/017_008.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 8.2,
+      "state": "detect",
+      "image": "frames/018_008.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 8.36,
+      "state": "detect",
+      "image": "frames/019_008.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 8.52,
+      "state": "detect",
+      "image": "frames/020_008.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 8.68,
+      "state": "detect",
+      "image": "frames/021_008.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 8.84,
+      "state": "detect",
+      "image": "frames/022_008.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 9.0,
+      "state": "detect",
+      "image": "frames/023_009.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.07,
+          7.85,
+          -3.69
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2826,
+        -0.0311
+      ]
+    },
+    {
+      "t": 11.48,
+      "state": "detect",
+      "image": "frames/024_011.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 11.64,
+      "state": "detect",
+      "image": "frames/025_011.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 11.8,
+      "state": "detect",
+      "image": "frames/026_011.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 11.96,
+      "state": "detect",
+      "image": "frames/027_012.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 12.12,
+      "state": "detect",
+      "image": "frames/028_012.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.13,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 12.28,
+      "state": "detect",
+      "image": "frames/029_012.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 12.44,
+      "state": "detect",
+      "image": "frames/030_012.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 12.6,
+      "state": "detect",
+      "image": "frames/031_012.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          9.41,
+          -3.14,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0301
+      ]
+    },
+    {
+      "t": 14.0,
+      "state": "detect",
+      "image": "frames/032_014.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 14.16,
+      "state": "detect",
+      "image": "frames/033_014.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 14.32,
+      "state": "detect",
+      "image": "frames/034_014.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 14.48,
+      "state": "detect",
+      "image": "frames/035_014.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 14.64,
+      "state": "detect",
+      "image": "frames/036_014.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 14.8,
+      "state": "detect",
+      "image": "frames/037_014.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 14.96,
+      "state": "detect",
+      "image": "frames/038_015.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 15.12,
+      "state": "detect",
+      "image": "frames/039_015.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          7.39,
+          -6.62,
+          -3.7
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0296
+      ]
+    },
+    {
+      "t": 17.72,
+      "state": "detect",
+      "image": "frames/040_017.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 17.88,
+      "state": "detect",
+      "image": "frames/041_017.9s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 18.04,
+      "state": "detect",
+      "image": "frames/042_018.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 18.2,
+      "state": "detect",
+      "image": "frames/043_018.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 18.36,
+      "state": "detect",
+      "image": "frames/044_018.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 18.52,
+      "state": "detect",
+      "image": "frames/045_018.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 18.68,
+      "state": "detect",
+      "image": "frames/046_018.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 18.84,
+      "state": "detect",
+      "image": "frames/047_018.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.49,
+          1.96,
+          -8.13
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2828,
+        -0.03
+      ]
+    },
+    {
+      "t": 20.36,
+      "state": "detect",
+      "image": "frames/048_020.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 20.52,
+      "state": "detect",
+      "image": "frames/049_020.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 20.68,
+      "state": "detect",
+      "image": "frames/050_020.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 20.84,
+      "state": "detect",
+      "image": "frames/051_020.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 21.0,
+      "state": "detect",
+      "image": "frames/052_021.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 21.16,
+      "state": "detect",
+      "image": "frames/053_021.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 21.32,
+      "state": "detect",
+      "image": "frames/054_021.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 21.48,
+      "state": "detect",
+      "image": "frames/055_021.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          4.7,
+          3.0,
+          -9.0
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 23.12,
+      "state": "detect",
+      "image": "frames/056_023.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 23.28,
+      "state": "detect",
+      "image": "frames/057_023.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 23.44,
+      "state": "detect",
+      "image": "frames/058_023.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 23.6,
+      "state": "detect",
+      "image": "frames/059_023.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 23.76,
+      "state": "detect",
+      "image": "frames/060_023.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 23.92,
+      "state": "detect",
+      "image": "frames/061_023.9s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 24.08,
+      "state": "detect",
+      "image": "frames/062_024.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 24.24,
+      "state": "detect",
+      "image": "frames/063_024.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.72,
+          -0.63,
+          -8.16
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 25.52,
+      "state": "detect",
+      "image": "frames/064_025.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.9,
+          -8.02
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 25.68,
+      "state": "detect",
+      "image": "frames/065_025.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 25.84,
+      "state": "detect",
+      "image": "frames/066_025.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 26.0,
+      "state": "detect",
+      "image": "frames/067_026.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 26.16,
+      "state": "detect",
+      "image": "frames/068_026.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 26.32,
+      "state": "detect",
+      "image": "frames/069_026.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 26.48,
+      "state": "detect",
+      "image": "frames/070_026.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 26.64,
+      "state": "detect",
+      "image": "frames/071_026.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.85,
+          0.89,
+          -8.02
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2829,
+        -0.0299
+      ]
+    },
+    {
+      "t": 28.04,
+      "state": "detect",
+      "image": "frames/072_028.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 28.2,
+      "state": "detect",
+      "image": "frames/073_028.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.097,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 28.36,
+      "state": "detect",
+      "image": "frames/074_028.4s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 28.52,
+      "state": "detect",
+      "image": "frames/075_028.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 28.68,
+      "state": "detect",
+      "image": "frames/076_028.7s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 28.84,
+      "state": "detect",
+      "image": "frames/077_028.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 29.0,
+      "state": "detect",
+      "image": "frames/078_029.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 29.16,
+      "state": "detect",
+      "image": "frames/079_029.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          5.17,
+          4.96,
+          -7.8
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3532,
+        0.2831,
+        -0.0292
+      ]
+    },
+    {
+      "t": 31.16,
+      "state": "detect",
+      "image": "frames/080_031.2s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.92
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 31.32,
+      "state": "detect",
+      "image": "frames/081_031.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.93
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 31.48,
+      "state": "detect",
+      "image": "frames/082_031.5s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.92
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 31.64,
+      "state": "detect",
+      "image": "frames/083_031.6s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.93
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 31.8,
+      "state": "detect",
+      "image": "frames/084_031.8s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.92
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 31.96,
+      "state": "detect",
+      "image": "frames/085_032.0s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.92
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 32.12,
+      "state": "detect",
+      "image": "frames/086_032.1s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.93
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    },
+    {
+      "t": 32.28,
+      "state": "detect",
+      "image": "frames/087_032.3s_detect.png",
+      "camera_model_vs_sim": {
+        "position_error_mm": [
+          6.14,
+          -3.4,
+          -7.92
+        ],
+        "rotation_error_deg": 1.096,
+        "intrinsics_sim": [
+          616.18,
+          0.0,
+          320.0,
+          0.0,
+          616.18,
+          240.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "detections": [],
+      "truth_top_centre_b": [
+        0.3533,
+        0.2827,
+        -0.0305
+      ]
+    }
+  ]
+}

@@ -304,6 +304,16 @@ class CupPerception:
             return CupObservation(detection, estimate, pose, valid)
         return None
 
+    def glimpse(self, frame: Frame) -> list[Detection]:
+        """Cups in a frame taken on the move, most confident first: detection only, no depth and no estimate.
+
+        A sweeping search uses these to decide where to stop, and measures the cup only once the arm is
+        still -- the feedback angles a moving frame is placed with lag the camera that took it.
+        """
+        detections = self.detector.detect(frame.rgb, labels=(COCO_CUP,))
+        self.last_detections = detections
+        return sorted((d for d in detections if d.confidence >= self.min_confidence), key=lambda d: -d.confidence)
+
     def reobserve(self, frame: Frame, prior: CupEstimate, gate_m: float = 0.04) -> CupObservation | None:
         """Re-detect near `prior`. Depth when there is enough of it; otherwise the mask's centre, cast onto
         the prior's rim plane."""

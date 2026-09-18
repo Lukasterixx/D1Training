@@ -10,10 +10,11 @@ What differs from `run_pick_demo.py`, and why:
 
 * **No ground truth.** The simulator scores each estimate against the cup's actual pose. Here there is
   nothing to score against, so a run reports what it did and what it saw, never how accurate it was.
-* **`up_b` and `base_height_m` are told, not measured.** In simulation both come from the Go2's root
-  pose and its IMU. On a bench there is no dog: the arm's mounting decides them and they are arguments.
-  Wrong values do not fail loudly -- they tilt the floor the grasp is planned against -- so they are
-  recorded with every run and the caller must state them.
+* **`up_b` is told, not measured.** In simulation it comes from the Go2's IMU. On a bench there is no
+  dog: the arm's mounting decides which way is up and it is an argument, recorded with every run. There
+  is no longer a base height beside it. Nothing in the planner asks where the surface is -- the poses are
+  placed from the arm's own mount and the cup is measured by the camera -- so the number an operator used
+  to type, and get wrong, is gone rather than merely defaulted.
 * **The gripper is commanded on an unverified scale.** Servo 6's units have never been measured on this
   arm: the protocol advertises a 65 mm jaw and the arm reports ~41 at rest, but nobody has put a ruler
   across the fingers at a known command. `grip_gripper=True` sends the sequence's chosen width through
@@ -189,7 +190,7 @@ class CameraPipelineFrames:
 
 
 def run_pick(*, client, joints, links, camera_model, mount, perception, pipeline,
-             base_height_m: float, up_b=(0.0, 0.0, 1.0), execute: bool = False,
+             up_b=(0.0, 0.0, 1.0), execute: bool = False,
              timing: Timing | None = None, should_stop=None, on_event=None,
              max_time_s: float = 180.0, max_step_deg: float = MAX_STEP_DEG,
              grasp_params=None, grip_gripper: bool = True, cycle_s: float = COMMAND_PERIOD_S,
@@ -208,13 +209,11 @@ def run_pick(*, client, joints, links, camera_model, mount, perception, pipeline
     should_stop = should_stop or (lambda: False)
     log = on_event or (lambda line: None)
 
-    sequence = PickSequence(joints, links, camera_model, mount, perception,
-                            base_height_m=base_height_m, timing=timing,
+    sequence = PickSequence(joints, links, camera_model, mount, perception, timing=timing,
                             grasp_params=grasp_params)
     frames = CameraPipelineFrames(pipeline, client, up, log=log)
 
-    log(f"pick: starting {'LIVE' if execute else 'dry run'}, base height {base_height_m:.3f} m, "
-        f"up {np.round(up, 3).tolist()}")
+    log(f"pick: starting {'LIVE' if execute else 'dry run'}, up {np.round(up, 3).tolist()}")
     if not execute:
         log("pick: dry run -- the camera and the planner are real, the arm's pose is simulated")
     started = clock()
@@ -324,7 +323,7 @@ def run_pick(*, client, joints, links, camera_model, mount, perception, pipeline
         feedback="arm" if execute else "virtual (dry run)")
 
 
-def run_metadata(*, camera_model, mount, base_height_m, up_b, execute, grip_gripper: bool = True,
+def run_metadata(*, camera_model, mount, up_b, execute, grip_gripper: bool = True,
                  grasp_params=None, extra=None) -> dict:
     """The record a hardware pick writes beside its events: what it assumed, and which of it was measured."""
     meta = {
@@ -336,9 +335,9 @@ def run_metadata(*, camera_model, mount, base_height_m, up_b, execute, grip_grip
         "mount": {"pos_link6_m": [float(v) for v in mount.pos_link6],
                   "pitch_deg": getattr(mount, "pitch_deg", None),
                   "source": getattr(mount, "source", "assumed; bracket not measured")},
-        "frame": {"base_height_m": float(base_height_m),
-                  "up_b": [float(v) for v in np.asarray(up_b, dtype=float)],
-                  "source": "stated by the operator; there is no IMU on a bench-mounted arm"},
+        "frame": {"up_b": [float(v) for v in np.asarray(up_b, dtype=float)],
+                  "source": "stated by the operator; there is no IMU on a bench-mounted arm",
+                  "surface": "not stated and not used: every pose is placed from the arm's own mount"},
         "gripper": {"commanded": bool(grip_gripper),
                     "units_range": list(d1_hardware.GRIPPER_UNITS_RANGE),
                     "conversion": "finger travel (m) * 2000 -> servo 6 units, as the simulator's client does",

@@ -17,9 +17,9 @@ sampled at the D1's 9 Hz. What changes, and why:
 - **Camera body.** Intel's own D435 case mesh, drawn at the mount so the assumed pose can be checked
   against the real bracket (`camera_body` for the geometry, `camera_asset` for the USD). Visual only
   -- no collider, no mass -- so it cannot change the physics the pick was measured against. It *can*
-  occlude the wrist camera: the asset is built with the colour lens element removed so a pinhole at
-  the sensor plane has a clear aperture, but the renderer's eye sits inside the case while F-052
-  stands, so a pick that needs the wrist view wants `--no_camera_body`.
+  occlude the wrist camera, whose rendered eye sits ~11 mm from the modelled one (F-052), inside the
+  case. The camera's near clip (`camera_body.NEAR_CLIP_PAST_HOUSING_M`, 20 mm) keeps the case out of its
+  images, as simulated cameras usually are kept from seeing their own housings; the eye is not moved.
 
 The camera renders ideal RGB and depth; `camera.realsense_depth` adds range limits and stereo noise on
 the way out.
@@ -117,7 +117,7 @@ def make_pick_cfg(robot_usd: str, cup_usd: str, camera: CameraModel, mount: Wris
         update_latest_camera_pose=True,   # so the run can compare the rendered camera's pose with the model's
         spawn=sim_utils.PinholeCameraCfg.from_intrinsic_matrix(
             intrinsic_matrix=camera.intrinsic_matrix.flatten().tolist(), width=camera.width, height=camera.height,
-            clipping_range=(0.01, 10.0)),
+            clipping_range=(camera_body.NEAR_CLIP_PAST_HOUSING_M, 10.0)),
         offset=CameraCfg.OffsetCfg(pos=tuple(mount.pos_link6), rot=mount.quat_wxyz(), convention="ros"),
     )
     if show_camera_body:

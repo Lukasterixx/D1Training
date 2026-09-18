@@ -12,13 +12,26 @@ are closer together than that tolerance, so in practice they stream at about the
 per-cycle mode F-035 found slower and less smooth on the hardware. In simulation the jaw stayed within
 4.9 mm of the planned descent line (Week 1 log, 2026-09-17).
 
-    settle -> survey (one angled look over the floor ahead; the close scan only if it finds nothing)
+    settle -> survey (one angled look over the ground ahead, then -- with `sweep_deg` -- the same pose
+    pivoted on Joint1 to headings left and right)
     -> plan grasp -> pregrasp
+
+The pivoting search either sweeps (`sweep_mode="continuous"`: one Joint1 move to each end of the sweep, at the
+arm's own speed, with YOLO on frames taken on the way; a cup seen twice running stops the arm facing it, for a
+still look) or visits fixed headings (`"stops"`: `grasp.pivot_stops_deg`, a still look at each). Either way the
+cup is measured only from a still arm.
     -> refine (look again from above, re-plan if the cup is elsewhere) -> descend -> close -> lift -> hold
 
 The gripper is the plan's to choose, not the sequence's: an outside grasp descends open and closes on the
 cup, a wall grasp on a cup too wide for the jaws descends shut and opens against the wall from inside
 (`grasp.GraspParams.wall_grasp`). Both reach the arm the same way, in simulation and on the bench.
+
+Nothing here is told where the floor is. Every pose is placed relative to the arm's own base and every cup
+is measured by the camera in that frame, so the same sequence runs on a dog lying on the floor and on an
+arm bolted to a bench without a number changing. What used to follow the survey -- a close scan that
+hovered over named floor points one at a time -- went with the floor's height, which was the only thing
+that could place those points. It had not found a cup since the survey learnt to look past the dog's head
+(Week 1 log, 2026-09-17); a search that finds nothing now fails after the sweep.
 """
 from __future__ import annotations
 
@@ -27,12 +40,14 @@ import math
 
 import numpy as np
 
-from .grasp import (CLOSED_GAP_M, CLOSED_SPAN_M, GRIPPER_CLOSED_M, GraspParams, PlanningError, floor_point,
-                    heading_to, plan_observation, plan_survey, plan_top_down_grasp)
+from .grasp import (CLOSED_GAP_M, CLOSED_SPAN_M, GRIPPER_CLOSED_M, GraspParams, PlanningError,
+                    glimpse_bearing_deg, heading_to, pivot_stops_deg, plan_pivot, plan_survey,
+                    plan_top_down_grasp, survey_heading)
 from .perception import CupEstimate
 
-# Floor points to look at, (x, y) in the base frame: straight ahead first, then either side and further.
-LOOK_POINTS_XY = ((0.42, 0.0), (0.42, 0.15), (0.42, -0.15), (0.52, 0.0), (0.34, 0.22), (0.34, -0.22))
+# Where the survey looks first, as a point in the arm's own frame: straight ahead, level with the base
+# frame's origin. Only its direction about gravity is used (`grasp.heading_to`), so its height is nothing.
+SURVEY_AHEAD_B = (0.5, 0.0, 0.0)
 
 
 @dataclass
@@ -51,6 +66,11 @@ class Timing:
     detections_needed: int = 3
     close_s: float = 1.5
     hold_s: float = 2.0
+    # A sweeping search: how often a frame is taken on the move, how many in a row must show a cup before
+    # the arm stops for it, and how close to a heading already looked at from a stop a sighting is ignored.
+    sweep_frame_interval_s: float = 0.1
+    glimpses_needed: int = 2
+    sweep_revisit_deg: float = 15.0
     arrive_tolerance_rad: float = 0.03
     stationary_window_s: float = 0.35
     stationary_rad: float = 0.004
@@ -115,17 +135,26 @@ class Motion:
 
 
 class PickSequence:
-    def __init__(self, joints, links, camera_model, mount, perception, *, base_height_m: float,
-                 look_points_xy=LOOK_POINTS_XY, grasp_params: GraspParams | None = None,
+    def __init__(self, joints, links, camera_model, mount, perception, *,
+                 grasp_params: GraspParams | None = None,
                  timing: Timing | None = None, refine_passes: int = 2, refine_min_shift_m: float = 0.004,
-                 survey: bool = True):
+                 survey: bool = True, sweep_deg: float = 0.0, sweep_mode: str = "continuous",
+                 survey_params: dict | None = None):
+        """`sweep_deg` > 0 makes the survey a search: after looking straight ahead the arm pivots on Joint1
+        and looks again at each of `grasp.pivot_stops_deg` out to that many degrees either side. 0 keeps
+        the single straight-ahead look. It is off by default because the bench arm has not run it.
+        `sweep_mode` is "continuous" or "stops" (see the module docstring).
+
+        `survey_params` go to `grasp.plan_survey` (on the Go2: `grasp.SURVEY_PAST_THE_HEAD`)."""
         self.joints, self.links, self.model, self.mount, self.perception = joints, links, camera_model, mount, perception
-        self.base_height = base_height_m
-        self.look_points = list(look_points_xy)
         self.params = grasp_params or GraspParams()
         self.timing = timing or Timing()
         self.refine_passes, self.refine_min_shift = refine_passes, refine_min_shift_m
         self.survey = survey
+        if sweep_mode not in ("continuous", "stops"):
+            raise ValueError(f"sweep_mode must be 'continuous' or 'stops', not {sweep_mode!r}")
+        self.sweep_deg, self.sweep_mode = sweep_deg, sweep_mode
+        self.survey_params = dict(survey_params or {})
 
         self.state, self.state_since = "settle", 0.0
         self.q_target: np.ndarray | None = None
@@ -133,8 +162,19 @@ class PickSequence:
         self.motion: Motion | None = None
         self.history: list[tuple[float, np.ndarray]] = []
         self.events: list[dict] = []
-        self.look_index = 0
         self.surveyed = False
+        self.survey_plan = None
+        self.pivots: list[float] = []
+        self.pivot_index = 0
+        self.heading_b: np.ndarray | None = None
+        self.glimpsing = False            # take frames during the current motion (a sweep leg)
+        self.glimpse_run: list[float] = []
+        self.stopped_at_deg: list[float] = []
+        self.last_glimpse = None          # (t, detection, bearing) for the log and the annotated frame
+        # Which kind of look is under way ("survey", "pivot" or "sweep"), and its name as the log gives it.
+        self.look_kind: str | None = None
+        self.look_name: str | None = None
+        self.found_by: str | None = None
         self.observations: list = []
         self.cup: CupEstimate | None = None
         self.first_cup: CupEstimate | None = None
@@ -191,16 +231,21 @@ class PickSequence:
         state = self.state
         if state == "settle":
             if t - self.state_since >= self.timing.settle_s:
-                self.log(t, "settled", base_height_m=round(self.base_height, 4),
-                         tilt_deg=round(math.degrees(math.acos(min(1.0, abs(float(up_b[2]))))), 2))
+                self.log(t, "settled", tilt_deg=round(math.degrees(math.acos(min(1.0, abs(float(up_b[2]))))), 2))
                 self._plan_observation(t, q_fb, up_b)
 
         elif state == "moving":
+            if self.glimpsing and t - self.last_frame_t >= self.timing.sweep_frame_interval_s:
+                self.last_frame_t = t
+                if self._glimpse(t, q_fb, up_b, frame_source):
+                    self.q_target = self.motion.target
+                    return ArmCommand(self.q_target.copy(), self.gripper, self.state)
             outcome = self.motion.update(t, q_fb, self._stationary(t))
             self.q_target = self.motion.target
             if outcome == "done":
                 self.log(t, "arrived", at=self.motion.name,
                          error_rad=round(float(np.max(np.abs(q_fb - self.motion.target))), 4))
+                self.glimpsing = False
                 self._enter(t, self.after_motion)
             elif outcome == "timeout":
                 # Say *how* it failed to arrive, not just that it did. A pose held short of the target and
@@ -214,6 +259,9 @@ class PickSequence:
                               f"{[round(float(e), 3) for e in errors]}; covered {100 * covered:.0f}% of the "
                               f"move, {'still moving' if not self._stationary(t) else 'stopped'}; "
                               f"gripper {1000 * self.gripper:.1f} mm)")
+
+        elif state == "swept":
+            self._plan_observation(t, q_fb, up_b)
 
         elif state == "detect":
             if self._frame_due(t):
@@ -233,11 +281,12 @@ class PickSequence:
                     self.log(t, "look rejected", why=self.perception.last_rejection)
                 if len(self.observations) >= self.timing.detections_needed:
                     self.cup = self.first_cup = consensus([o.estimate for o in self.observations])
-                    self.log(t, "cup located", **self.cup.as_dict())
+                    self.found_by = self.look_name
+                    self.log(t, "cup located", found_by=self.found_by, **self.cup.as_dict())
                     self._plan_grasp(t, q_fb, up_b)
                 elif self.frames_tried >= self.timing.detect_frames:
-                    self.log(t, "not enough detections", seen=len(self.observations), frames=self.frames_tried)
-                    self.look_index += 1
+                    self.log(t, "not enough detections", look=self.look_name, seen=len(self.observations),
+                             frames=self.frames_tried)
                     self._plan_observation(t, q_fb, up_b)
 
         elif state == "refine":
@@ -288,41 +337,93 @@ class PickSequence:
 
     def _plan_observation(self, t, q_fb, up_b):
         # The first look is a survey: the arm stands the camera up over the robot and tips it down at an
-        # angle, holding most of a metre of floor in one frame, rather than hovering over one named point
-        # at close range. Only if that finds nothing does it fall back to the close scan below, which
-        # visits the floor points one at a time.
+        # angle, holding a swathe of the ground ahead in one frame. Where the camera stands is measured
+        # from the arm's own mount, so this needs nothing to be known about the surface below it.
         if self.survey and not self.surveyed:
             self.surveyed = True
-            heading = heading_to(floor_point(0.5, 0.0, up_b, self.base_height), up_b)
+            heading = heading_to(np.array(SURVEY_AHEAD_B, dtype=float), up_b)
             try:
                 plan = plan_survey(self.joints, self.links, self.model, self.mount, up_b, q_fb,
-                                   self.base_height, heading)
+                                   heading, **self.survey_params)
             except PlanningError as exc:
                 self.log(t, "no survey pose", reason=str(exc))
             else:
-                self.observations, self.frames_tried = [], 0
-                self.log(t, "survey", **plan.as_dict())
-                self._move(t, [plan.q], "survey", q_fb, "detect")
+                self.survey_plan = plan
+                if self.sweep_deg <= 0.0:
+                    self.pivots = []
+                elif self.sweep_mode == "continuous":
+                    self.pivots = [self.sweep_deg, -self.sweep_deg]
+                else:
+                    self.pivots = list(pivot_stops_deg(self.model, self.sweep_deg))[1:]
+                if self.pivots:
+                    self.heading_b = survey_heading(self.joints, self.mount, plan, up_b)
+                self.log(t, "survey", **plan.as_dict(), then_pivots_deg=[round(p, 1) for p in self.pivots])
+                self._look(t, q_fb, plan, "survey", "survey")
                 return
-        while self.look_index < len(self.look_points):
-            x, y = self.look_points[self.look_index]
-            look = floor_point(x, y, up_b, self.base_height)
+        # The sweep: the survey pose turned on Joint1 alone, one heading at a time. The arm stops at each so
+        # the frame is taken where the feedback angles say the camera is; frames taken mid-swing would be
+        # placed with a pose ~0.1 s stale at 9 Hz feedback.
+        while self.survey_plan is not None and self.pivot_index < len(self.pivots):
+            pivot = self.pivots[self.pivot_index]
+            self.pivot_index += 1
             try:
-                plan = plan_observation(self.joints, self.links, self.model, self.mount, look, up_b, q_fb,
-                                        self.base_height)
+                plan = plan_pivot(self.joints, self.links, self.model, self.mount, self.survey_plan, pivot, up_b,
+                                  q_fb)
             except PlanningError as exc:
-                self.log(t, "viewpoint unreachable", look_at=[x, y], reason=str(exc))
-                self.look_index += 1
+                self.log(t, "pivot unreachable", pivot_deg=pivot, reason=str(exc))
                 continue
-            self.observations, self.frames_tried = [], 0
-            self.log(t, "viewpoint", **plan.as_dict())
-            self._move(t, [plan.q], f"view {self.look_index}", q_fb, "detect")
+            if self.sweep_mode == "continuous":
+                self.log(t, "sweep", to_deg=pivot, **plan.as_dict())
+                self._move(t, [plan.q], f"sweep to {pivot:+.1f}", q_fb, "swept")
+                self.glimpsing, self.glimpse_run = True, []
+                return
+            self.log(t, "pivot", **plan.as_dict())
+            self._look(t, q_fb, plan, "pivot", f"pivot {pivot:+.1f}")
             return
-        self._fail(t, "no cup found from any viewpoint")
+        self._fail(t, "no cup found from the survey or the sweep")
+
+    def _look(self, t, q_fb, plan, kind, name):
+        self.observations, self.frames_tried = [], 0
+        self.look_kind, self.look_name = kind, name
+        self.glimpsing = False
+        self._move(t, [plan.q], name, q_fb, "detect")
+
+    def _glimpse(self, t, q_fb, up_b, frame_source) -> bool:
+        """One frame on a sweep leg. True if it stopped the sweep to look at a cup."""
+        frame = frame_source()
+        detections = self.perception.glimpse(frame) if frame is not None else []
+        bearing = None
+        if detections:
+            bearing = glimpse_bearing_deg(self.joints, self.model, self.mount, frame.q,
+                                          detections[0].mask_centroid(), up_b, self.heading_b,
+                                          self.survey_plan.distance_m)
+        if bearing is not None and any(abs(bearing - b) < self.timing.sweep_revisit_deg for b in self.stopped_at_deg):
+            bearing = None          # already looked at from a stop, and it did not hold up
+        self.last_glimpse = (t, detections[0] if detections else None, bearing)
+        self.glimpse_run = self.glimpse_run + [bearing] if bearing is not None else []
+        if len(self.glimpse_run) < self.timing.glimpses_needed:
+            return False
+        bearing = self.glimpse_run[-1]
+        self.log(t, "cup glimpsed", bearing_deg=round(bearing, 1), confidence=round(detections[0].confidence, 3),
+                 frames=len(self.glimpse_run))
+        try:
+            plan = plan_pivot(self.joints, self.links, self.model, self.mount, self.survey_plan, bearing, up_b,
+                              q_fb)
+        except PlanningError as exc:
+            self.log(t, "no stop facing the glimpse", bearing_deg=round(bearing, 1), reason=str(exc))
+            self.stopped_at_deg.append(bearing)
+            self.glimpse_run = []
+            return False
+        # The leg is not finished: if the still look fails, `_plan_observation` resumes it from here.
+        self.pivot_index -= 1
+        self.stopped_at_deg.append(bearing)
+        self.log(t, "sweep stop", **plan.as_dict())
+        self._look(t, q_fb, plan, "sweep", f"sweep stop {bearing:+.1f}")
+        return True
 
     def _plan_grasp(self, t, q_fb, up_b):
         try:
-            self.plan = plan_top_down_grasp(self.joints, self.links, self.cup, up_b, q_fb, self.base_height, self.params)
+            self.plan = plan_top_down_grasp(self.joints, self.links, self.cup, up_b, q_fb, self.params)
         except PlanningError as exc:
             self._fail(t, f"grasp planning: {exc}")
             return
@@ -350,4 +451,4 @@ def consensus(estimates) -> CupEstimate:
                        rim_coverage_deg=float(np.median([e.rim_coverage_deg or 0.0 for e in estimates])))
 
 
-__all__ = ["PickSequence", "Timing", "ArmCommand", "LOOK_POINTS_XY", "consensus"]
+__all__ = ["PickSequence", "Timing", "ArmCommand", "SURVEY_AHEAD_B", "consensus"]

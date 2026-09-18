@@ -31,14 +31,13 @@
 # `bench` is for the arm plugged into this PC rather than the Go2. Everything the dog's console does, it
 # does here, with two differences: the arm's NIC is this machine's (D1_ARM_IFACE, default the first
 # 192.168.123.x interface found) and there is no `rt/lowstate`, so the legs are not drawn. The scripted
-# pick is available in this mode -- see --pick-base-height below, without which its button stays off.
+# pick is available in this mode, with nothing to set up first.
 #
 # Double-clicking the script in a file manager runs it with no arguments, which is the detection above.
-# On this PC that lands in bench mode; anything the pick needs beyond that (--pick-base-height) has to
-# be passed, so for a one-click launch put the full command in a .desktop file with Terminal=true.
+# On this PC that lands in bench mode, and the pick needs nothing further: it finds the stored camera
+# calibration and wrist mount itself, and no height of anything has to be typed.
 #
-#   ./run_ui.sh bench --pick-depth --pick-base-height 0.02 \
-#       --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
+#   ./run_ui.sh bench --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
 #
 # The remote copy lives under /tmp, which does NOT survive a reboot of the dog.
 # Re-run this script after one; it re-deploys every time, so that is the fix for
