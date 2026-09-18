@@ -3433,6 +3433,22 @@ and rewriting them would make the record say something that was never true. Anyt
 names `pick_demo/…` or `d1_ui/…` is now under `demos/cup/`.
 
 
+### 2026-09-18 — The simulated camera is not the calibration: the renderer centres the principal point (F-070)
+
+Found while copying the pick's RealSense into VIP-Rescue's rescue sim, which spawns the wrist camera exactly as
+`demos/cup/pick_demo/scene.py` does. Isaac Lab warns at spawn that Omniverse supports neither non-square pixels
+nor an offset principal point, and uses the mean of fx and fy and the image centre instead. D1Training's own
+record agrees: every look of the [F-053 pick](#/week/1/run/20260917T070917_995149Z_pick_seed42) logs the rendered
+intrinsics as fx = fy = 607.24 at (320.0, 240.0), while the calibration it perceived through has cy = 254.29.
+The preset runs are self-consistent (rendered = modelled = 616.18 at the centre), so only that run is affected.
+No run was launched for this; the evidence is the existing record.
+
+What it does and does not show: the renderer cannot draw the calibration's principal point, so a simulated pick
+can test the calibration's focal length but not its principal point, and F-053's simulated success was with a
+camera centred 14.3 px higher than the one it modelled. It says nothing about the real camera. Recorded as
+[F-070](../findings.md#f-070).
+
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,

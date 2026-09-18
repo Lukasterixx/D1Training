@@ -2128,3 +2128,30 @@ result that changes a conclusion gets a new entry, and the old one is marked
   needed, so a bench console starts with nothing to configure and a wrong number can no longer refuse
   reachable cups or plan against a floor below the table. What the arm is trusted to avoid is now what the
   camera actually sees, which makes the wrist mount's unmeasured error the next thing that matters.
+
+### F-070 — The simulator does not render the calibrated camera: it averages fx and fy and centres the principal point, so the F-053 simulated pick perceived through intrinsics 14.3 px off its own images
+
+- **Status:** confirmed (simulation)
+- **Week:** 1
+- **Date:** 2026-09-18
+- **Evidence:** [Week 1 log, 2026-09-18](week_01/notes.md), "The simulated camera is not the calibration".
+  - **What was rendered.** The [F-053 pick](#/week/1/run/20260917T070917_995149Z_pick_seed42), the one simulated
+    run on the bench D435i's calibration, records the rendered camera in every look (`intrinsics_sim` in
+    `events.json`): fx = fy = 607.24, principal point (320.0, 240.0). The calibration it perceived through is
+    fx 607.11, fy 607.37, principal point (323.00, 254.29).
+  - **Why.** `PinholeCameraCfg.from_intrinsic_matrix` cannot express either difference, and says so at spawn:
+    "Camera non square pixels are not supported by Omniverse. The average of f_x and f_y are used" and "Camera
+    aperture offsets are not supported by Omniverse. c_x and c_y will be half of width and height". Seen with
+    the same Isaac Lab install while building VIP-Rescue's rescue sim, which spawns this camera the same way.
+  - **Every other simulated pick is unaffected.** They used the `d435` preset, whose principal point is the
+    image centre and whose fx = fy: rendered and modelled intrinsics match exactly (616.18, 320, 240) in all
+    four runs checked, including [F-069's](#/week/1/run/20260917T234929_503276Z_pick_seed42).
+- **Scope:** one simulated run; the size of the resulting error was not separated from the mount's (F-052),
+  which biased the same run's estimates in the same direction. The real camera is untouched: this is about
+  what the renderer can draw, not about the calibration.
+- **Implication:** F-053's "a pick on the measured model still succeeds in simulation" holds, but its camera
+  was not the measured one below the image centre: 14.3 px in cy is about 9 mm at 40 cm, the error F-053 was
+  written to warn about. A simulated pick on a calibration should perceive through the intrinsics the renderer
+  reports (`wrist.data.intrinsic_matrices`), not the file's, and cannot test the principal-point part of a
+  calibration at all. VIP-Rescue's rescue sim publishes the rendered intrinsics in its `camera_info` for this
+  reason.
