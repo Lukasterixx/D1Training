@@ -4,7 +4,7 @@ The wrist camera has always been an invisible `CameraCfg` prim at `WristMount.po
 used it, but nothing in the viewer showed where the camera *is*. With a bracket now built, the question
 "does the simulated camera sit where the real one sits" needs a body to look at.
 
-**This is Intel's own CAD**, not a box drawn from datasheet dimensions. `pick_demo/assets/realsense/
+**This is Intel's own CAD**, not a box drawn from datasheet dimensions. `demos/cup/pick_demo/assets/realsense/
 d435_housing.ply` is the D435 case mesh from the ROS package `realsense2_description`, licence and
 provenance in `third_party/realsense2_description/NOTICE.md`. The D435i shares this case:
 `_d435i.urdf.xacro` builds the D435i by including `_d435.urdf.xacro` unchanged and adding IMU frames.
@@ -21,7 +21,7 @@ depth origin is `d435_cam_depth_py` = 17.5 mm along the case from there, the col
 plate. Applying that transform lands the mesh's own lens barrels where the extrinsics say they are --
 the three concentric colour-lens parts at x = 0.00 mm, the left imager at +15.25 mm and the right at
 +65.25 mm -- which is the registration checking itself rather than being asserted.
-`tests/test_pick_demo.py` holds those numbers.
+`demos/cup/tests/test_pick_demo.py` holds those numbers.
 
 Where each number comes from, in the project's usual labels:
 
@@ -81,7 +81,7 @@ MESH_ORIGIN_BEHIND_OPTICAL_M = MOUNT_FROM_CENTRE_M - GLASS_BEHIND_PLATE_M - GLAS
 # Where the mesh's long-axis origin (the tripod screw axis) sits in the colour optical frame. The
 # xacro's nominal colour offset is used, not the measured one, so that the CAD registers against
 # itself: the mesh's own colour lens barrel then lands on the optical axis, which is the check in
-# `tests/test_pick_demo.py`. The bench camera's measured 14.857 mm differs from the nominal 15 mm by
+# `demos/cup/tests/test_pick_demo.py`. The bench camera's measured 14.857 mm differs from the nominal 15 mm by
 # 0.14 mm -- device tolerance, not a registration choice.
 SCREW_TO_COLOUR_M = MESH_DEPTH_FROM_SCREW_M + NOMINAL_COLOUR_FROM_DEPTH_M
 

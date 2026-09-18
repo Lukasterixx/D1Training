@@ -55,7 +55,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--ui_feed_port", type=int, default=8765, metavar="PORT",
-    help="Publish the joints on localhost for the reach console's sim mode (d1_ui/sim_feed.py); 0 turns it off.",
+    help="Publish the joints on localhost for the reach console's sim mode (demos/cup/d1_ui/sim_feed.py); 0 turns it off.",
 )
 parser.add_argument(
     "--lidar_debug", action="store_true",

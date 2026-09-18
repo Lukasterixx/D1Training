@@ -3389,6 +3389,50 @@ Joint2 (F-033's speed and the effort limits), and nothing here measured why it s
 - **The mount is still assumed**, so the cup's position carries its error exactly as before.
 
 
+### 2026-09-18 — The cup pick moved into `demos/cup/`, as one folder with its own tests
+
+Lukas asked for the pick demo, the reach console and everything around them to live together. They now do:
+
+```
+demos/cup/
+  pick_demo/            the scene, camera model, perception, grasp planner, sequence, hardware driver
+  run_pick_demo.py/.sh  the simulated pick
+  d1_ui/                the reach console and its sim feed, run_ui.sh
+  run_camera_body_view.py/.sh
+  tests/                156 tests, numpy only
+```
+
+What stayed at the repository root is what the demo does not own: `d1_ik.py` (the arm's kinematics),
+`d1_hardware.py` (its DDS client), `position_only/`, the walking playback and the weekly record. The
+console's sim feed is still what `sim.py` publishes to during walking playback, so that import now reads
+`from demos.cup.d1_ui.sim_feed import SimFeed`.
+
+**How it hangs together.** `demos/` and `demos/cup/` are packages, and the moved code is imported as
+`demos.cup.pick_demo…` and `demos.cup.d1_ui…` — no `sys.path` tricks beyond the one line each entry script
+already had, so the repository root is importable when a script is run by path. Assets the demo owns are
+found relative to the demo (`HERE`), and `generated/`, `logs/`, the URDFs and the meshes relative to the
+repository (`ROOT`), which is why a run's `source/` snapshot now records `demos/cup/pick_demo/grasp.py`.
+
+**Tests.** The three cup test files moved to `demos/cup/tests/`. Both roots run from one command, which is
+what `CLAUDE.md` now says: `python -m unittest discover -s . -p "test_*.py"` — 329 tests, all passing in
+the Isaac environment.
+
+**Checked, not assumed.**
+- [One simulated pick through the moved launcher](#/week/1/run/20260918T001835_640612Z_pick_seed42)
+  (`./demos/cup/run_pick_demo.sh --headless --episodes 1 --max_time 90 --no_console`): found by the survey,
+  lifted 11.9 cm in 13.9 s, the same as the run before the move. Its `source/` snapshot carries the new paths.
+- The console starts (`python demos/cup/d1_ui/server.py --mode sim --port 8097`): the page, `/model.json`,
+  `/state`, `/static/app.js`, the D1 meshes and Intel's D435 housing all serve.
+- `run_ui.sh`'s deploy to the dog was rewritten to mirror the new layout under `/tmp/d1train`
+  (`demos/cup/d1_ui/`, `demos/cup/pick_demo/`, both `__init__.py` files) and to launch
+  `python3 demos/cup/d1_ui/server.py`. **Not run against the dog**: nothing here has been deployed since
+  the move.
+
+**Older entries in this log keep the paths they were written with.** They record what was run at the time,
+and rewriting them would make the record say something that was never true. Anything above this entry that
+names `pick_demo/…` or `d1_ui/…` is now under `demos/cup/`.
+
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,

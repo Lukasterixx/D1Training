@@ -9,9 +9,9 @@ model API the same day.
 
 | This repository | Source |
 | --- | --- |
-| `pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz` | the model's USDZ download, unmodified (sha256 `da2194b0…5dc677`) |
+| `demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz` | the model's USDZ download, unmodified (sha256 `da2194b0…5dc677`) |
 
-**Changes.** The committed file is unmodified. At run time `pick_demo/cup_asset.py` derives a simulation asset from
+**Changes.** The committed file is unmodified. At run time `demos/cup/pick_demo/cup_asset.py` derives a simulation asset from
 it, written to `generated/pick_demo/` and not committed. It converts the mesh to metres with Z up, scales it
 independently in diameter and height to a 55 × 100 mm mug, replaces the material with a plain ceramic one, and adds
 a cylinder-and-box collider, mass and friction.

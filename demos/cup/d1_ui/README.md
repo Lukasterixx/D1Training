@@ -8,8 +8,8 @@ into a Cartesian target for the real hardware.
 
 The console works out which one it is looking at before anything else:
 
-1. **A simulator is publishing on this PC** (`./run_pick_demo.sh` or `./run_sim.sh`; both start the feed in
-   `d1_ui/sim_feed.py` on localhost:8765). This is **sim mode**: the page draws the simulator's arm, fingers
+1. **A simulator is publishing on this PC** (`./demos/cup/run_pick_demo.sh` or `./run_sim.sh`; both start the feed in
+   `demos/cup/d1_ui/sim_feed.py` on localhost:8765). This is **sim mode**: the page draws the simulator's arm, fingers
    and legs, and the camera window shows the rendered wrist RealSense. SEND, PARK, RELEASE and LIVE are
    disabled on the page and refused by the server; clicking the sphere still previews the IK.
 2. **Otherwise, on the dog** (the arm's NIC `enP8p1s0` exists): **hardware mode**, everything below.
@@ -18,11 +18,11 @@ The console works out which one it is looking at before anything else:
 The header shows **SIM** or **HARDWARE**; hover over it to see why.
 
 ```bash
-./run_pick_demo.sh       # terminal 1: the simulator (its feed starts with it)
-./run_ui.sh              # terminal 2: sees the simulator, serves here in sim mode
+./demos/cup/run_pick_demo.sh       # terminal 1: the simulator (its feed starts with it)
+./demos/cup/run_ui.sh              # terminal 2: sees the simulator, serves here in sim mode
                          # open http://localhost:8090; Ctrl-C stops the console, not the simulator
-./run_ui.sh sim          # sim mode here even before a simulator is up (it waits)
-./run_ui.sh robot        # deploy to the dog even though a simulator is running here
+./demos/cup/run_ui.sh sim          # sim mode here even before a simulator is up (it waits)
+./demos/cup/run_ui.sh robot        # deploy to the dog even though a simulator is running here
 ```
 
 Sim mode runs in `env_isaaclab` (numpy, torch, ultralytics, OpenCV) without starting Isaac. The simulator
@@ -46,16 +46,16 @@ leave it is remembered in this browser). It shows the wrist camera with YOLO's b
 
 **Not yet run on the dog.** The RealSense source is written to librealsense's documented API and has never
 opened a camera. Whether pyrealsense2, ultralytics and torch are installed on the Jetson is unknown.
-`run_ui.sh` deploys `pick_demo/` and the weights (21 MB, copied once) for it.
+`demos/cup/run_ui.sh` deploys `demos/cup/pick_demo/` and the weights (21 MB, copied once) for it.
 
 ## Bench mode: the arm on this PC
 
-The arm and the RealSense can be plugged into the workstation instead of the Go2. `./run_ui.sh bench`
+The arm and the RealSense can be plugged into the workstation instead of the Go2. `./demos/cup/run_ui.sh bench`
 runs the hardware console here, finding the arm's interface itself (anything on 192.168.123.0/24, or
 `D1_ARM_IFACE`). There is no `rt/lowstate` without the dog, so the legs are not drawn.
 
 ```bash
-./run_ui.sh bench --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
+./demos/cup/run_ui.sh bench --pick-calibration demos/cup/pick_demo/assets/calibration/d435i_238222076237_640x480.json
 ```
 
 Needs `cyclonedds` and `pyrealsense2` in the Isaac env (`pip install --no-deps`, so numpy 1.26 is left
@@ -109,9 +109,9 @@ The fingers close under the drive's own effort. Keep hands out of the jaws.
 ### What it needs, and what it remembers
 
 Nothing on the command line, and nothing in the page either. A console started with no flags finds the
-one calibration stored in `pick_demo/assets/calibration/`, loads the saved wrist mount, and streams depth
+one calibration stored in `demos/cup/pick_demo/assets/calibration/`, loads the saved wrist mount, and streams depth
 (hardware mode; `--no-pick-depth` if the USB bandwidth is wanted elsewhere). There is no height to set:
-the field that used to hold one, and the `pick_demo/assets/bench.json` that remembered it, are gone.
+the field that used to hold one, and the `demos/cup/pick_demo/assets/bench.json` that remembered it, are gone.
 
 The button still refuses what cannot be worked around: sim mode has no arm to command, and a camera
 without depth cannot place a cup. Those say so in the panel.
@@ -140,10 +140,10 @@ convention. The saved file is still metres and degrees. Changed numbers turn amb
 
 Every change is sent to the server immediately, so when a pick is configured here the next frame is
 deprojected through the new mount and you can watch the estimate move. Nothing is written until SAVE,
-which asks for a name and writes `pick_demo/assets/mounts/<name>.json`. REVERT goes back to whatever
+which asks for a name and writes `demos/cup/pick_demo/assets/mounts/<name>.json`. REVERT goes back to whatever
 the console started with. A mount cannot move while a pick is running.
 
-`pick_demo/assets/mounts/wrist_mount.json` is **the default everywhere**: save under that name and the
+`demos/cup/pick_demo/assets/mounts/wrist_mount.json` is **the default everywhere**: save under that name and the
 console, the pick and the body renders all load it on the next launch with nothing to pass, so the 3D
 scene, the perception and the simulator agree. Any other name is kept but has to be named explicitly.
 Every launch prints which mount it resolved, and `--pick-mount none` forces the four-number placeholder
@@ -152,9 +152,9 @@ back for a run that means to use it.
 The file is six degrees of freedom with its provenance attached, and both ends take an explicit one:
 
 ```
-./run_ui.sh bench --pick-mount pick_demo/assets/mounts/wrist_mount.json
-python run_pick_demo.py --mount pick_demo/assets/mounts/wrist_mount.json
-python run_camera_body_view.py --mount pick_demo/assets/mounts/wrist_mount.json
+./demos/cup/run_ui.sh bench --pick-mount demos/cup/pick_demo/assets/mounts/wrist_mount.json
+python demos/cup/run_pick_demo.py --mount demos/cup/pick_demo/assets/mounts/wrist_mount.json
+python demos/cup/run_camera_body_view.py --mount demos/cup/pick_demo/assets/mounts/wrist_mount.json
 ```
 
 **What it is not.** Dragging a model until it looks right is an *alignment*, not a calibration. The
@@ -175,49 +175,49 @@ says so — because that is where the simulator runs.
 ## Launching it on the dog
 
 ```bash
-./run_ui.sh              # deploy to the dog, start, print the URL (if no simulator is running here)
-./run_ui.sh status       # is it up, what does it see, is it LIVE
-./run_ui.sh stop         # stop the server (the arm is not touched)
-./run_ui.sh restart      # stop, re-deploy, start
-./run_ui.sh logs         # tail the server log on the dog
+./demos/cup/run_ui.sh              # deploy to the dog, start, print the URL (if no simulator is running here)
+./demos/cup/run_ui.sh status       # is it up, what does it see, is it LIVE
+./demos/cup/run_ui.sh stop         # stop the server (the arm is not touched)
+./demos/cup/run_ui.sh restart      # stop, re-deploy, start
+./demos/cup/run_ui.sh logs         # tail the server log on the dog
 ```
 
 Then open **http://100.99.23.36:8090**.
 
 It **must** run on the Go2's Jetson payload: CycloneDDS only reaches the arm from
 the Jetson's arm-facing NIC (`enP8p1s0`, 192.168.123.x). Running it on the
-workstation cannot see the arm. `run_ui.sh` copies the server and the meshes over
+workstation cannot see the arm. `demos/cup/run_ui.sh` copies the server and the meshes over
 and starts it there; it re-deploys on every `start`, so editing a file here and
 re-running is the normal workflow.
 
 The remote copy lives under `/tmp/d1train`, which **does not survive a reboot of
-the dog**. Re-run `./run_ui.sh` after one.
+the dog**. Re-run `./demos/cup/run_ui.sh` after one.
 
 Overrides: `D1_UI_HOST` (default `$GO2_ROBOT`), `D1_UI_PORT` (8090),
 `D1_UI_REMOTE_DIR` (`/tmp/d1train`). Arguments after the subcommand are forwarded
 to `server.py`:
 
 ```bash
-./run_ui.sh start --sphere-radius 0.45      # bigger reach sphere
-./run_ui.sh start --no-legs                 # skip the Go2 rt/lowstate subscription
-./run_ui.sh start --max-joint-step-deg 8    # per-cycle fallback step cap
+./demos/cup/run_ui.sh start --sphere-radius 0.45      # bigger reach sphere
+./demos/cup/run_ui.sh start --no-legs                 # skip the Go2 rt/lowstate subscription
+./demos/cup/run_ui.sh start --max-joint-step-deg 8    # per-cycle fallback step cap
 ```
 
 ### By hand, without the script
 
 ```bash
 sshuni                                   # or: ssh unitree@100.99.23.36
-cd /tmp/d1train && python3 d1_ui/server.py --port 8090
+cd /tmp/d1train && python3 demos/cup/d1_ui/server.py --port 8090
 ```
 
 Ctrl-C stops it. Killing it from another ssh session needs care: `pkill -f
-d1_ui/server.py` typed inside an inline `ssh '...'` matches the ssh shell running
+demos/cup/d1_ui/server.py` typed inside an inline `ssh '...'` matches the ssh shell running
 it and kills the connection instead. Put it in a script file, or use
-`./run_ui.sh stop`.
+`./demos/cup/run_ui.sh stop`.
 
 ## Just starting it
 
-`./run_ui.sh` with no arguments works out where it is and starts the console, and opens the page:
+`./demos/cup/run_ui.sh` with no arguments works out where it is and starts the console, and opens the page:
 
 | what it finds | what it runs |
 | --- | --- |
@@ -237,8 +237,8 @@ closed keeps the port, though, and the next start then cannot bind — the serve
 is holding it rather than raising. To clear it:
 
 ```
-./run_ui.sh stop-local      # a console on THIS PC (sim or bench)
-./run_ui.sh stop            # the console on the dog
+./demos/cup/run_ui.sh stop-local      # a console on THIS PC (sim or bench)
+./demos/cup/run_ui.sh stop            # the console on the dog
 ```
 
 Neither touches the arm: it holds whatever pose it was in.
@@ -271,7 +271,7 @@ there sweeps through it (F-036 — endpoint clearance is not path clearance), or
 when the point is reachable but **not with the gripper level** (F-037).
 
 Levelling costs workspace: about **51%** of the sphere is reachable with the
-gripper level against **89%** without. `./run_ui.sh start --no-level` trades the
+gripper level against **89%** without. `./demos/cup/run_ui.sh start --no-level` trades the
 level attitude back for the larger workspace. The preview always shows the pitch
 and roll it would finish at, so a refusal says which constraint bit.
 

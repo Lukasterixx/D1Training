@@ -9,10 +9,10 @@ unmodified.
 
 | This repository | Vendored from |
 | --- | --- |
-| `d1_ui/static/vendor/three.min.js` | `build/three.min.js` |
-| `d1_ui/static/vendor/OrbitControls.js` | `examples/js/controls/OrbitControls.js` |
-| `d1_ui/static/vendor/TransformControls.js` | `examples/js/controls/TransformControls.js` |
-| `d1_ui/static/vendor/ColladaLoader.js` | `examples/js/loaders/ColladaLoader.js` |
+| `demos/cup/d1_ui/static/vendor/three.min.js` | `build/three.min.js` |
+| `demos/cup/d1_ui/static/vendor/OrbitControls.js` | `examples/js/controls/OrbitControls.js` |
+| `demos/cup/d1_ui/static/vendor/TransformControls.js` | `examples/js/controls/TransformControls.js` |
+| `demos/cup/d1_ui/static/vendor/ColladaLoader.js` | `examples/js/loaders/ColladaLoader.js` |
 
 r128 is pinned deliberately: it is the last series in which `OrbitControls`, `TransformControls` and
 `ColladaLoader` ship as plain scripts defining `THREE.*` globals. Later releases publish them as ES modules only, which would

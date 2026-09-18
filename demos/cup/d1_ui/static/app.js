@@ -9,7 +9,7 @@
  * Scene graph. Each URDF joint becomes two nodes: a fixed one carrying the
  * joint's origin (xyz, rpy) and a rotating one carrying the joint angle about
  * the axis. That is the same composition `position_only.workspace.forward`
- * uses, and tests/test_d1_ui.py checks the two agree, since a browser cannot
+ * uses, and demos/cup/tests/test_d1_ui.py checks the two agree, since a browser cannot
  * run in the test suite. The small red sphere is the server's FK of the tool
  * point: if it sits on the pincer tip, the page and the solver agree live.
  *
@@ -81,7 +81,7 @@
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     return g;
   }
-  // Intel's D435 case is a binary PLY (pick_demo/assets/realsense). Parsed here for the same reason
+  // Intel's D435 case is a binary PLY (demos/cup/pick_demo/assets/realsense). Parsed here for the same reason
   // parseBinarySTL exists: r128 ships PLYLoader as a separate example script, and vendoring one more
   // file to read one mesh is more than this needs. Only the layout that file actually has is handled --
   // binary little-endian, float x/y/z then any other per-vertex properties, uchar+int face lists -- and

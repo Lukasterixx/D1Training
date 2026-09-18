@@ -1,7 +1,7 @@
 """The reach console's sim mode: a simulator publishes its robot and wrist camera, the console reads them.
 
-A simulator (`run_pick_demo.py`, `main.py`) owns a `SimFeed`, a small HTTP server on localhost that holds
-the latest joint positions and wrist-camera frame. The console (`d1_ui/server.py`) finds it at start-up
+A simulator (`demos/cup/run_pick_demo.py`, `main.py`) owns a `SimFeed`, a small HTTP server on localhost that holds
+the latest joint positions and wrist-camera frame. The console (`demos/cup/d1_ui/server.py`) finds it at start-up
 and reads it through `SimFeedClient`, which mirrors the read half of `d1_hardware.D1Client`, so the page
 draws the simulated arm with the same code that draws the real one.
 

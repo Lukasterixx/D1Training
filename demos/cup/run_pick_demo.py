@@ -1,13 +1,13 @@
 """Simulated cup pick: Go2 lying down, the D1 with its measured motion model, a wrist RealSense and stock YOLO.
 
-    python run_pick_demo.py --headless
-    python run_pick_demo.py                            # in the viewer, paced to real time; R: new cup position
+    python demos/cup/run_pick_demo.py --headless
+    python demos/cup/run_pick_demo.py                            # in the viewer, paced to real time; R: new cup position
 
 No learning anywhere: the arm searches by looking ahead past the dog's head and pivoting on Joint1 to
 +-`--sweep_deg` either side, YOLO (COCO weights) finds the cup, depth and forward kinematics place it, `d1_ik`
 plans a top-down grasp and the scripted `pick_demo.sequence` drives the arm through the same interface
 the position-only task uses -- 10 Hz setpoints into the fitted firmware planner (F-045), 9 Hz joint
-feedback. See `pick_demo/` for what each piece assumes.
+feedback. See `demos/cup/pick_demo/` for what each piece assumes.
 
 Writes logs/pick_demo/<UTC stamp>_pick_seed<seed>/: run.json, pick.json (outcome, and every estimate
 against the simulator's ground truth), events.json, trace.csv, env.yaml, pick.mp4 (annotated wrist view
@@ -16,7 +16,7 @@ and puts the cup somewhere new (`random_cup`); each restart writes the same file
 episodes.csv lists every episode.
 
 While it runs, the joints and the wrist camera are published on localhost:8765 for the reach console's sim
-mode (`./run_ui.sh`, `d1_ui/sim_feed.py`); nothing is copied unless the console is reading.
+mode (`./demos/cup/run_ui.sh`, `demos/cup/d1_ui/sim_feed.py`); nothing is copied unless the console is reading.
 
 Scope: a success here shows the pipeline closes in simulation with ideal rendering, a CAD gripper, a
 primitive cup collider and a camera mount that does not exist yet. It is not evidence the real arm
@@ -39,9 +39,15 @@ import sys
 import time
 import traceback
 
-ROOT = Path(__file__).resolve().parent
+# This demo's own folder, and the repository it lives in. Assets that belong to the pick are found
+# through HERE, so moving the demo moves them with it; `generated/`, `logs/`, the URDFs and the robot's
+# shared modules stay where the repository keeps them.
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))     # `python demos/cup/run_pick_demo.py` puts this file's folder first
 # CC BY 4.0, by fayazg1aa on Sketchfab: see third_party/sketchfab_cup/NOTICE.md.
-DEFAULT_CUP = ROOT / "pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz"
+DEFAULT_CUP = HERE / "pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz"
 DEFAULT_WEIGHTS = ROOT / "generated/yolo/yolo11s-seg.pt"
 
 
@@ -63,9 +69,10 @@ def sha256(path) -> str:
 
 
 def snapshot_sources(run_dir):
-    sources = sorted((ROOT / "pick_demo").glob("*.py")) + sorted((ROOT / "position_only").glob("*.py"))
-    sources += [ROOT / name for name in ("run_pick_demo.py", "d1_ik.py", "d1_ui/sim_feed.py", "flat_env_cfg.py", "weld.py",
-                                         "motor_model.py", "unitree_actuators.py", "d1_arm/d1.urdf")]
+    sources = sorted((HERE / "pick_demo").glob("*.py")) + sorted((ROOT / "position_only").glob("*.py"))
+    sources += [HERE / name for name in ("run_pick_demo.py", "d1_ui/sim_feed.py")]
+    sources += [ROOT / name for name in ("d1_ik.py", "flat_env_cfg.py", "weld.py", "motor_model.py",
+                                         "unitree_actuators.py", "d1_arm/d1.urdf")]
     hashes = {}
     for source in sources:
         relative = source.relative_to(ROOT)
@@ -146,7 +153,7 @@ def annotate(frame_rgb, state, t, perception, observation, model, camera_pose_b,
     import cv2
     import numpy as np
 
-    from pick_demo.camera import invert, project
+    from demos.cup.pick_demo.camera import invert, project
 
     image = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
     for detection in perception.last_detections if perception is not None else []:
@@ -189,13 +196,13 @@ def run(args):
         from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
         from isaaclab.utils.io import dump_yaml
 
-        from pick_demo.camera import (CAMERAS, MeasuredMount, WristMount, camera_pose, invert, link6_pose,
+        from demos.cup.pick_demo.camera import (CAMERAS, MeasuredMount, WristMount, camera_pose, invert, link6_pose,
                                       mount_to_dict, realsense_depth, transform)
-        from pick_demo.cup_asset import build_cup_usd
-        from pick_demo.grasp import CLOSED_GAP_M, JAW_CENTRE_LINK6, GraspParams
-        from pick_demo.perception import CupPerception, Frame, YoloDetector
-        from pick_demo.scene import LYING_LEG_POSE, OVERVIEW_EYE, OVERVIEW_TARGET, make_pick_cfg
-        from pick_demo.sequence import PickSequence, Timing
+        from demos.cup.pick_demo.cup_asset import build_cup_usd
+        from demos.cup.pick_demo.grasp import CLOSED_GAP_M, JAW_CENTRE_LINK6, GraspParams
+        from demos.cup.pick_demo.perception import CupPerception, Frame, YoloDetector
+        from demos.cup.pick_demo.scene import LYING_LEG_POSE, OVERVIEW_EYE, OVERVIEW_TARGET, make_pick_cfg
+        from demos.cup.pick_demo.sequence import PickSequence, Timing
         from position_only.env_cfg import ARM_NAMES
         from position_only.workspace import load_urdf
         from weld import build_welded_robot_usd
@@ -207,7 +214,7 @@ def run(args):
         # idea of one. Measured on D435I 238222076237 the two differ enough to matter (F-053), so say in
         # the record which was used rather than leaving "d435" to mean either.
         if args.calibration:
-            from pick_demo.realsense import load_camera_model
+            from demos.cup.pick_demo.realsense import load_camera_model
 
             model = load_camera_model(args.calibration)
             camera_source = f"calibration file {Path(args.calibration).resolve()}"
@@ -217,7 +224,7 @@ def run(args):
         # A saved mount file (the console's editor, or pick_demo.camera.save_mount) is six degrees of
         # freedom and carries its own provenance; --mount_pos/--mount_pitch_deg are the four-number
         # placeholder for a bracket nobody has measured. The file wins when given.
-        from pick_demo.camera import resolve_mount
+        from demos.cup.pick_demo.camera import resolve_mount
 
         mount, mount_source, mount_file = resolve_mount(
             args.mount, fallback=WristMount(tuple(args.mount_pos), args.mount_pitch_deg))
@@ -263,9 +270,9 @@ def run(args):
 
             camera_usd = None
             if args.camera_body:
-                from pick_demo import camera_body as camera_body_geom
-                from pick_demo.camera_asset import build_camera_usd, carve_lens
-                from pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
+                from demos.cup.pick_demo import camera_body as camera_body_geom
+                from demos.cup.pick_demo.camera_asset import build_camera_usd, carve_lens
+                from demos.cup.pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
 
                 body_info = build_camera_usd(ROOT / "generated/pick_demo")
                 camera_usd = body_info["usd_path"]
@@ -360,14 +367,14 @@ def run(args):
             slices = {name: slice(int(offsets[i]), int(offsets[i + 1])) for i, name in enumerate(terms)}
 
             if args.ui_feed_port:
-                from d1_ui.sim_feed import SimFeed
+                from demos.cup.d1_ui.sim_feed import SimFeed
 
                 feed = SimFeed("pick_demo", camera=True, port=args.ui_feed_port,
                                camera_info={"model": model.name, "width": model.width, "height": model.height})
                 metadata["ui_feed"] = feed.url
 
             joints, links = load_urdf()
-            from pick_demo.grasp import SURVEY_PAST_THE_HEAD, pivot_stops_deg
+            from demos.cup.pick_demo.grasp import SURVEY_PAST_THE_HEAD, pivot_stops_deg
 
             if args.sweep_mode == "stops":
                 metadata["search"]["pivot_stops_deg"] = list(pivot_stops_deg(model, args.sweep_deg))
@@ -709,23 +716,23 @@ def run(args):
 
 
 def main():
-    from pick_demo.grasp import GraspParams
+    from demos.cup.pick_demo.grasp import GraspParams
 
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--seed", type=int, default=42, help="Seeds the depth noise and the command/feedback phases.")
     parser.add_argument("--camera", choices=("d435", "d405", "d455"), default="d435",
-                        help="RealSense preset: intrinsics and depth range (pick_demo/camera.py).")
+                        help="RealSense preset: intrinsics and depth range (demos/cup/pick_demo/camera.py).")
     parser.add_argument("--mount_pos", type=float, nargs=3, default=(-0.055, 0.0, 0.035), metavar=("X", "Y", "Z"),
                         help="Camera position in the Link6 frame (m). Assumed, not measured.")
     parser.add_argument("--mount_pitch_deg", type=float, default=20.0, help="Camera tilt towards the approach axis.")
     parser.add_argument("--mount", default=None, metavar="FILE",
                         help="A saved wrist-mount file (six degrees of freedom, with provenance). "
-                             "Default: pick_demo/assets/mounts/wrist_mount.json when it exists. "
+                             "Default: demos/cup/pick_demo/assets/mounts/wrist_mount.json when it exists. "
                              "'none' forces --mount_pos/--mount_pitch_deg instead.")
     parser.add_argument("--calibration", default=None,
-                        help="A calibration from pick_demo.realsense, used instead of --camera's datasheet preset. "
+                        help="A calibration from demos.cup.pick_demo.realsense, used instead of --camera's datasheet preset. "
                              "This is the camera on the bench rather than the datasheet's idea of one.")
     parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=True,
                         help="Draw the RealSense housing at the mount, to check it against the real bracket. "
@@ -802,7 +809,7 @@ def main():
     if args.linger is None:
         args.linger = not args.headless
     if Path(args.weights) == DEFAULT_WEIGHTS and not DEFAULT_WEIGHTS.is_file():
-        from pick_demo.perception import ensure_weights
+        from demos.cup.pick_demo.perception import ensure_weights
 
         ensure_weights(DEFAULT_WEIGHTS)     # not committed; fetched once, pinned by hash
     for name in ("cup_usdz", "weights"):

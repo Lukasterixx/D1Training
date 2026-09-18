@@ -2,7 +2,7 @@
 # Run the D1 reach console: next to a simulator, or on the Go2's Jetson payload.
 #
 # Sim or hardware is detected first. If a simulator is publishing on this PC
-# (./run_pick_demo.sh or ./run_sim.sh; d1_ui/sim_feed.py), the console runs here
+# (./demos/cup/run_pick_demo.sh or ./run_sim.sh; demos/cup/d1_ui/sim_feed.py), the console runs here
 # in sim mode and follows it: joints, legs, and the rendered wrist camera with
 # YOLO boxes. Commands to the arm are refused in that mode.
 #
@@ -11,22 +11,22 @@
 # (192.168.123.x). This script copies what the server needs, starts it there,
 # and prints the URL. Run it from this PC.
 #
-#   ./run_ui.sh                 # detect where we are: on the dog, a simulator here, the arm here, else the dog
-#   ./run_ui.sh sim             # sim mode here, waiting for a simulator if none is up yet
+#   ./demos/cup/run_ui.sh                 # detect where we are: on the dog, a simulator here, the arm here, else the dog
+#   ./demos/cup/run_ui.sh sim             # sim mode here, waiting for a simulator if none is up yet
 #
 # The page is opened in your browser once the server is listening; D1_UI_OPEN=0 turns that off.
 # `sim` and `bench` then stay in the foreground -- the terminal is the server's log, Ctrl-C stops it.
-#   ./run_ui.sh robot           # deploy to the dog even if a simulator is running here
-#   ./run_ui.sh bench           # hardware mode HERE: the arm on this PC's own NIC, no dog, no ssh
-#   ./run_ui.sh stop            # stop the server on the dog (the arm is not touched)
-#   ./run_ui.sh stop-local      # stop a sim or bench console running on THIS PC
-#   ./run_ui.sh status          # is it up? what does it see?
-#   ./run_ui.sh logs            # tail the server log on the dog
-#   ./run_ui.sh restart         # stop, re-deploy, start
+#   ./demos/cup/run_ui.sh robot           # deploy to the dog even if a simulator is running here
+#   ./demos/cup/run_ui.sh bench           # hardware mode HERE: the arm on this PC's own NIC, no dog, no ssh
+#   ./demos/cup/run_ui.sh stop            # stop the server on the dog (the arm is not touched)
+#   ./demos/cup/run_ui.sh stop-local      # stop a sim or bench console running on THIS PC
+#   ./demos/cup/run_ui.sh status          # is it up? what does it see?
+#   ./demos/cup/run_ui.sh logs            # tail the server log on the dog
+#   ./demos/cup/run_ui.sh restart         # stop, re-deploy, start
 #
 # Anything after the subcommand is forwarded to server.py:
-#   ./run_ui.sh start --sphere-radius 0.5 --no-legs
-#   ./run_ui.sh sim --detect all                # box every COCO class, not just cups
+#   ./demos/cup/run_ui.sh start --sphere-radius 0.5 --no-legs
+#   ./demos/cup/run_ui.sh sim --detect all                # box every COCO class, not just cups
 #
 # `bench` is for the arm plugged into this PC rather than the Go2. Everything the dog's console does, it
 # does here, with two differences: the arm's NIC is this machine's (D1_ARM_IFACE, default the first
@@ -37,7 +37,7 @@
 # On this PC that lands in bench mode, and the pick needs nothing further: it finds the stored camera
 # calibration and wrist mount itself, and no height of anything has to be typed.
 #
-#   ./run_ui.sh bench --pick-calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
+#   ./demos/cup/run_ui.sh bench --pick-calibration demos/cup/pick_demo/assets/calibration/d435i_238222076237_640x480.json
 #
 # The remote copy lives under /tmp, which does NOT survive a reboot of the dog.
 # Re-run this script after one; it re-deploys every time, so that is the fix for
@@ -47,7 +47,9 @@
 # the page is turned on, and that state lives in the server, not the browser.
 set -euo pipefail
 
-cd "$(dirname "$0")"
+# Everything below runs from the repository root: the console imports `demos.cup.d1_ui`, and the
+# deploy mirrors this layout on the dog.
+cd "$(dirname "$0")/../.."
 
 # Same target the rest of the project uses; override with GO2_ROBOT or D1_UI_HOST.
 HOST="${D1_UI_HOST:-${GO2_ROBOT:-unitree@100.99.23.36}}"
@@ -129,7 +131,7 @@ run_bench() {
   unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
   say "http://localhost:$PORT   (DRY RUN until the LIVE switch is on)"
   open_browser "http://localhost:$PORT"
-  PYTHONUNBUFFERED=1 exec python d1_ui/server.py --mode hardware --iface "$iface" --no-legs \
+  PYTHONUNBUFFERED=1 exec python demos/cup/d1_ui/server.py --mode hardware --iface "$iface" --no-legs \
     --port "$PORT" "$@"
 }
 
@@ -149,7 +151,7 @@ run_local() {
   unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
   say "sim mode: http://localhost:$PORT  (Ctrl-C stops it; the simulator keeps running)"
   open_browser "http://localhost:$PORT"
-  PYTHONUNBUFFERED=1 exec python d1_ui/server.py --mode sim --sim-url "$SIM_FEED" --port "$PORT" "$@"
+  PYTHONUNBUFFERED=1 exec python demos/cup/d1_ui/server.py --mode sim --sim-url "$SIM_FEED" --port "$PORT" "$@"
 }
 
 dog_reachable() { ssh -o ConnectTimeout=8 -o BatchMode=yes "$HOST" true 2>/dev/null; }
@@ -171,34 +173,38 @@ run_dog_local() {
   say "on the dog: hardware mode here, arm on $iface, legs drawn"
   say "http://localhost:$PORT   (DRY RUN until the LIVE switch is on)"
   open_browser "http://localhost:$PORT"
-  PYTHONUNBUFFERED=1 exec python3 d1_ui/server.py --mode hardware --iface "$iface" --port "$PORT" "$@"
+  PYTHONUNBUFFERED=1 exec python3 demos/cup/d1_ui/server.py --mode hardware --iface "$iface" --port "$PORT" "$@"
 }
 
 need_dog() {
   dog_reachable \
-    || die "cannot reach $HOST over ssh. Is the dog up and on Tailscale? (try: sshuni)  For the simulator: start ./run_pick_demo.sh, then ./run_ui.sh (or ./run_ui.sh sim)."
+    || die "cannot reach $HOST over ssh. Is the dog up and on Tailscale? (try: sshuni)  For the simulator: start ./demos/cup/run_pick_demo.sh, then ./demos/cup/run_ui.sh (or ./demos/cup/run_ui.sh sim)."
 }
 
 deploy() {
   say "deploying to $HOST:$REMOTE_DIR"
-  ssh "$HOST" "mkdir -p '$REMOTE_DIR'/{d1_ui/static/vendor,position_only,pick_demo,generated/yolo,d1_arm/meshes,description/meshes/go2}"
-  # The server's import closure, plus the geometry the page draws.
+  ssh "$HOST" "mkdir -p '$REMOTE_DIR'/{demos/cup/d1_ui/static/vendor,demos/cup/pick_demo/assets/realsense,position_only,generated/yolo,d1_arm/meshes,description/meshes/go2}"
+  # The server's import closure, plus the geometry the page draws. The dog keeps the repository's layout,
+  # so `demos.cup.d1_ui.server` finds its neighbours there exactly as it does here.
   scp -q d1_ik.py d1_hardware.py "$HOST:$REMOTE_DIR/"
+  scp -q demos/__init__.py "$HOST:$REMOTE_DIR/demos/"
+  scp -q demos/cup/__init__.py "$HOST:$REMOTE_DIR/demos/cup/"
   scp -q position_only/__init__.py position_only/tool_point.py position_only/task_space.py \
          position_only/workspace.py "$HOST:$REMOTE_DIR/position_only/"
-  scp -q d1_ui/__init__.py d1_ui/server.py d1_ui/sim_feed.py d1_ui/camera_feed.py "$HOST:$REMOTE_DIR/d1_ui/"
+  scp -q demos/cup/d1_ui/__init__.py demos/cup/d1_ui/server.py demos/cup/d1_ui/sim_feed.py \
+         demos/cup/d1_ui/camera_feed.py "$HOST:$REMOTE_DIR/demos/cup/d1_ui/"
   # The camera window's detector: the pick demo's YOLO wrapper and weights (the weights only once).
-  scp -q pick_demo/__init__.py pick_demo/camera.py pick_demo/perception.py \
-         pick_demo/camera_body.py pick_demo/grasp.py "$HOST:$REMOTE_DIR/pick_demo/"
+  scp -q demos/cup/pick_demo/__init__.py demos/cup/pick_demo/camera.py demos/cup/pick_demo/perception.py \
+         demos/cup/pick_demo/camera_body.py demos/cup/pick_demo/grasp.py "$HOST:$REMOTE_DIR/demos/cup/pick_demo/"
   # The mount editor's camera model. camera_body reads it with trimesh, which the dog does not carry --
   # there it costs the live clearance warning, while the page draws the mesh itself.
-  ssh "$HOST" "mkdir -p '$REMOTE_DIR/pick_demo/assets/realsense'"
-  scp -q pick_demo/assets/realsense/d435_housing.ply "$HOST:$REMOTE_DIR/pick_demo/assets/realsense/"
+  scp -q demos/cup/pick_demo/assets/realsense/d435_housing.ply "$HOST:$REMOTE_DIR/demos/cup/pick_demo/assets/realsense/"
   if [ -f "$WEIGHTS" ] && ! ssh "$HOST" "test -f '$REMOTE_DIR/$WEIGHTS'"; then
     scp -q "$WEIGHTS" "$HOST:$REMOTE_DIR/$WEIGHTS"
   fi
-  scp -q d1_ui/static/index.html d1_ui/static/app.js d1_ui/static/style.css "$HOST:$REMOTE_DIR/d1_ui/static/"
-  scp -q d1_ui/static/vendor/*.js "$HOST:$REMOTE_DIR/d1_ui/static/vendor/"
+  scp -q demos/cup/d1_ui/static/index.html demos/cup/d1_ui/static/app.js demos/cup/d1_ui/static/style.css \
+         "$HOST:$REMOTE_DIR/demos/cup/d1_ui/static/"
+  scp -q demos/cup/d1_ui/static/vendor/*.js "$HOST:$REMOTE_DIR/demos/cup/d1_ui/static/vendor/"
   scp -q d1_arm/d1.urdf "$HOST:$REMOTE_DIR/d1_arm/"
   scp -q d1_arm/meshes/*.STL "$HOST:$REMOTE_DIR/d1_arm/meshes/"
   scp -q description/go2_d1.urdf "$HOST:$REMOTE_DIR/description/"
@@ -208,11 +214,11 @@ deploy() {
 start() {
   remote_script d1_ui_start.sh \
     "cd '$REMOTE_DIR'" \
-    "pkill -f 'python3 d1_ui/server.py' 2>/dev/null || true" \
+    "pkill -f 'python3 demos/cup/d1_ui/server.py' 2>/dev/null || true" \
     "sleep 0.5" \
-    "nohup python3 d1_ui/server.py --port $PORT $* > $LOG 2>&1 &" \
+    "nohup python3 demos/cup/d1_ui/server.py --port $PORT $* > $LOG 2>&1 &" \
     "sleep 4" \
-    "pgrep -f 'python3 d1_ui/server.py' >/dev/null || { echo '--- server failed to start ---'; tail -20 $LOG; exit 1; }" \
+    "pgrep -f 'python3 demos/cup/d1_ui/server.py' >/dev/null || { echo '--- server failed to start ---'; tail -20 $LOG; exit 1; }" \
     "head -1 $LOG"
   say "up at  http://$HOST_ADDR:$PORT"
   say "starts in DRY RUN; turn on LIVE in the page to command the arm"
@@ -223,13 +229,13 @@ start() {
 
 stop() {
   remote_script d1_ui_stop.sh \
-    "pkill -f 'python3 d1_ui/server.py' 2>/dev/null && echo stopped || echo 'not running'"
+    "pkill -f 'python3 demos/cup/d1_ui/server.py' 2>/dev/null && echo stopped || echo 'not running'"
   say "the arm was not touched; it holds whatever pose it was in"
 }
 
 status() {
   remote_script d1_ui_status.sh \
-    "pgrep -af 'python3 d1_ui/server.py' || { echo 'not running'; exit 0; }" \
+    "pgrep -af 'python3 demos/cup/d1_ui/server.py' || { echo 'not running'; exit 0; }" \
     "curl -s --max-time 5 localhost:$PORT/state | python3 -c \"
 import json,sys
 s=json.load(sys.stdin)
@@ -254,7 +260,7 @@ stop_local() {
   pids="$(ss -ltnp "sport = :$PORT" 2>/dev/null | sed -n 's/.*pid=\([0-9]*\).*/\1/p' | sort -u)"
   [ -n "$pids" ] || { say "nothing is listening on :$PORT here"; return 0; }
   for pid in $pids; do
-    if ps -p "$pid" -o cmd= | grep -q 'd1_ui/server.py'; then
+    if ps -p "$pid" -o cmd= | grep -q 'demos/cup/d1_ui/server.py'; then
       say "stopping the console on :$PORT (pid $pid); the arm is not touched"
       kill "$pid" 2>/dev/null || true
     else
@@ -266,7 +272,7 @@ stop_local() {
 cmd="${1:-start}"; [ $# -gt 0 ] && shift || true
 case "$cmd" in
   start)
-    # Work out where we are and what is attached, then just start the console -- a bare `./run_ui.sh`,
+    # Work out where we are and what is attached, then just start the console -- a bare `./demos/cup/run_ui.sh`,
     # which is what a double-click runs, should not need an argument to do the obvious thing.
     #
     #   on the dog        -> serve here, with the legs. Nothing to deploy, nobody to ssh to.
@@ -280,11 +286,11 @@ case "$cmd" in
     # switched on in the page. `sim`, `bench` and `robot` force one of these if the guess is wrong.
     if on_the_dog; then run_dog_local "$@"; fi
     if sim_feed_up; then
-      say "a simulator is publishing at $SIM_FEED: sim mode, served from this PC (./run_ui.sh robot for the dog)"
+      say "a simulator is publishing at $SIM_FEED: sim mode, served from this PC (./demos/cup/run_ui.sh robot for the dog)"
       run_local "$@"
     fi
     if [ -n "$(find_arm_iface || true)" ]; then
-      say "the arm is on this PC's own NIC: bench mode (./run_ui.sh robot deploys to the dog instead)"
+      say "the arm is on this PC's own NIC: bench mode (./demos/cup/run_ui.sh robot deploys to the dog instead)"
       run_bench "$@"
     fi
     need_dog; deploy; start "$@" ;;

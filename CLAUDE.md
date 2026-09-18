@@ -29,7 +29,8 @@ in the same session as the work, not as a follow-up. Layout and conventions: [re
   `unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH`. Never source ROS into that shell.
 - **The GPU is shared** with other Isaac Lab training (e.g. `~/IsaacLab` Rescue runs). Check `nvidia-smi`
   before launching a simulator; don't start one alongside another job without asking Lukas.
-- Tests: `python -m unittest discover -s tests` (the Isaac env runs all of them; `tests/test_evidence.py`
+- Tests: `python -m unittest discover -s . -p "test_*.py"` runs both roots -- `tests/` for the robot and
+  `demos/cup/tests/` for the cup demo (the Isaac env runs all of them; `tests/test_evidence.py`
   also runs on the system Python).
 - `logs/` is gitignored; the recorded copy in `results/` is what gets committed.
 - Code adapted from other repositories keeps its licence and a provenance row in `third_party/<name>/NOTICE.md`.

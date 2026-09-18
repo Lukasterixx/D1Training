@@ -87,7 +87,7 @@ GRIPPER_UNITS_OPEN = 50.2
 GRIPPER_UNITS_SPAN = (GRIPPER_UNITS_CLOSED, GRIPPER_UNITS_OPEN)
 
 # Per-finger travel at the *open* end, from the URDF (`grasp.GRIPPER_OPEN_M`). Kept here as a number
-# rather than imported so this module stays free of pick_demo.
+# rather than imported so this module stays free of the cup demo (demos/cup/pick_demo).
 GRIPPER_FULL_TRAVEL_M = 0.03
 
 

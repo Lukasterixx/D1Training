@@ -1,6 +1,6 @@
 """The wrist RealSense as the pick needs it: colour and depth, aligned, with this camera's own calibration.
 
-`d1_ui/camera_feed.py` already opens a RealSense for the console's camera window, but colour only: enough
+`demos/cup/d1_ui/camera_feed.py` already opens a RealSense for the console's camera window, but colour only: enough
 to draw YOLO's boxes, not enough to place a cup. The pick's `Frame` needs depth in metres on the same
 pixel grid as the colour image, which is `rs.align(rs.stream.color)`, and it needs intrinsics that
 describe *this* camera rather than the datasheet.
@@ -31,8 +31,7 @@ import numpy as np
 
 from .camera import CameraModel
 
-ROOT = Path(__file__).resolve().parents[1]
-CALIBRATION_DIR = ROOT / "pick_demo" / "assets" / "calibration"
+CALIBRATION_DIR = Path(__file__).resolve().parent / "assets" / "calibration"
 
 # Intel's stereo matcher searches this many disparities, as in `camera.py`: the nearest depth it can
 # report is where that search runs out.
@@ -200,7 +199,7 @@ class RealSenseCamera:
 
     One process at a time can hold a RealSense. The console's camera window opens one for its MJPEG
     stream, so a pick running beside it must share that pipeline rather than construct a second
-    `RealSenseCamera` -- see `d1_ui/camera_feed.py`.
+    `RealSenseCamera` -- see `demos/cup/d1_ui/camera_feed.py`.
     """
 
     def __init__(self, width: int = 640, height: int = 480, fps: int = 30, serial: str | None = None):
@@ -287,7 +286,7 @@ def _main(argv=None) -> int:
     ap.add_argument("--width", type=int, default=640)
     ap.add_argument("--height", type=int, default=480)
     ap.add_argument("--fps", type=int, default=30)
-    ap.add_argument("--out", default=None, help="Where to write the calibration (default: pick_demo/assets/calibration/).")
+    ap.add_argument("--out", default=None, help="Where to write the calibration (default: demos/cup/pick_demo/assets/calibration/).")
     ap.add_argument("--frames", type=int, default=30, help="preview: how many aligned frames to read.")
     args = ap.parse_args(argv)
 

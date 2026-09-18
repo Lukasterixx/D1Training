@@ -1,6 +1,6 @@
 """Turn Intel's D435 case mesh into the visual USD drawn at the wrist mount.
 
-The source is `pick_demo/assets/realsense/d435_housing.ply`: the `d435.dae` shipped in the ROS package
+The source is `demos/cup/pick_demo/assets/realsense/d435_housing.ply`: the `d435.dae` shipped in the ROS package
 `realsense2_description`, converted to PLY -- provenance and licence in
 `third_party/realsense2_description/NOTICE.md`. `camera_body.MESH_TO_OPTICAL` carries the transform
 that puts it in the colour optical frame, derived from that package's own `_d435.urdf.xacro`.

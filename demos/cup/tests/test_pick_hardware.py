@@ -12,11 +12,11 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))   # the repository root
 
 import d1_hardware
 import d1_ik
-from pick_demo import camera, grasp, hardware, perception
+from demos.cup.pick_demo import camera, grasp, hardware, perception
 from position_only.workspace import load_urdf
 
 UP = np.array([0.0, 0.0, 1.0])

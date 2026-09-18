@@ -81,31 +81,31 @@ scripted sequence drives through the same arm model the position-only task uses 
 the fitted firmware planner, 9 Hz feedback).
 
 ```bash
-./run_pick_demo.sh                                 # viewer, real time; R: reset with the cup somewhere new
-./run_pick_demo.sh --seed 7                        # a different sequence of cup positions for R
-./run_pick_demo.sh --headless --episodes 10        # ten picks back to back, cups placed as R places them
-./run_pick_demo.sh --headless                      # writes logs/pick_demo/<run>/pick.mp4 and pick.json
-./run_pick_demo.sh --camera d405 --cup_xy 0.40 -0.05 --cup_yaw_deg 30
+./demos/cup/run_pick_demo.sh                                 # viewer, real time; R: reset with the cup somewhere new
+./demos/cup/run_pick_demo.sh --seed 7                        # a different sequence of cup positions for R
+./demos/cup/run_pick_demo.sh --headless --episodes 10        # ten picks back to back, cups placed as R places them
+./demos/cup/run_pick_demo.sh --headless                      # writes logs/pick_demo/<run>/pick.mp4 and pick.json
+./demos/cup/run_pick_demo.sh --camera d405 --cup_xy 0.40 -0.05 --cup_yaw_deg 30
 ```
 
-`run_pick_demo.sh` sets up `env_isaaclab` the way `run_sim.sh` does and forwards its arguments to
-`run_pick_demo.py`; `--help` lists them all.
+`demos/cup/run_pick_demo.sh` sets up `env_isaaclab` the way `run_sim.sh` does and forwards its arguments
+to `demos/cup/run_pick_demo.py`; `--help` lists them all.
 
 The reach console comes up with it — the arm and legs from the simulator, and the wrist camera with YOLO's
 boxes, on http://localhost:8090, stopped again when the run ends. A viewer run opens the tab once the
 simulator starts publishing (not before: Isaac takes a couple of minutes to load); a `--headless` one leaves
-it to you. The console follows the simulator's feed in sim mode, where it only watches; see `d1_ui/README.md`.
+it to you. The console follows the simulator's feed in sim mode, where it only watches; see `demos/cup/d1_ui/README.md`.
 
 ```bash
-./run_pick_demo.sh --no_console                    # simulator only (D1_UI_CONSOLE=0 does the same)
-D1_UI_PORT=8099 ./run_pick_demo.sh                 # console somewhere else
-D1_UI_ARGS='--yolo-device cpu' ./run_pick_demo.sh  # its detector off the GPU, for the viewer's VRAM
+./demos/cup/run_pick_demo.sh --no_console                    # simulator only (D1_UI_CONSOLE=0 does the same)
+D1_UI_PORT=8099 ./demos/cup/run_pick_demo.sh                 # console somewhere else
+D1_UI_ARGS='--yolo-device cpu' ./demos/cup/run_pick_demo.sh  # its detector off the GPU, for the viewer's VRAM
 ```
 
-A console already answering on the port is left running rather than replaced, so `./run_ui.sh` beforehand
+A console already answering on the port is left running rather than replaced, so `./demos/cup/run_ui.sh` beforehand
 still works and survives the demo.
 
-The cup model is committed at `pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz`: "High-Resolution
+The cup model is committed at `demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz`: "High-Resolution
 3D Cup Model (FBX)" by fayazg1aa on Sketchfab, CC BY 4.0, credited in `third_party/sketchfab_cup/NOTICE.md`.
 `--cup_usdz` points elsewhere. It is rebuilt as a 55 mm x 100 mm mug with simple colliders into
 `generated/pick_demo/`. YOLO needs `ultralytics` in `env_isaaclab`, installed **without its
@@ -332,7 +332,7 @@ error is small. Real per-link inertials would still be better.
 | `position_only/`, `run_position_only.py` | Thesis B 18-action stance-and-reach task and its launcher |
 | `motor_model.py`, `unitree_actuators.py` | Unitree's measured Go2 motor envelope (from unitree_rl_lab, Apache-2.0; see `third_party/`) |
 | `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
-| `pick_demo/`, `run_pick_demo.py`, `run_pick_demo.sh` | scripted cup pick: wrist RealSense model, YOLO, top-down grasp planning, the sequence |
+| `demos/cup/` | the cup pick, kept together: `pick_demo/` (wrist RealSense model, YOLO, top-down grasp planning, the sequence), `run_pick_demo.py/.sh`, the reach console `d1_ui/` and `run_ui.sh`, and its own `tests/` |
 
 ## Despite the name
 

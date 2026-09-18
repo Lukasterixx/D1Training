@@ -10,10 +10,10 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))   # the repository root
 
 import d1_ik
-from pick_demo import camera, grasp, perception, sequence
+from demos.cup.pick_demo import camera, grasp, perception, sequence
 from position_only.workspace import clear_of_body, forward, load_urdf, tip_offsets
 
 UP = np.array([0.0, 0.0, 1.0])
@@ -284,7 +284,7 @@ class PivotSearchTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.joints, cls.links = load_urdf()
-        # The mount the simulated picks use (pick_demo/assets/mounts/wrist_mount.json, 2026-09-17), written out
+        # The mount the simulated picks use (demos/cup/pick_demo/assets/mounts/wrist_mount.json, 2026-09-17), written out
         # so the file can change without changing these. The placeholder `WristMount()` pitches the camera at
         # the fingers, and with the gripper shut they cover most of the lower frame from any survey pose.
         cls.model = camera.CAMERAS["d435"]
@@ -498,7 +498,7 @@ class PivotSearchTests(unittest.TestCase):
 
 class RandomCupTests(unittest.TestCase):
     def test_restart_positions_stay_in_the_picked_region_with_the_handle_off_the_jaw_axis(self):
-        import run_pick_demo  # stdlib-only at import; Isaac is imported inside run()
+        from demos.cup import run_pick_demo  # stdlib-only at import; Isaac is imported inside run()
 
         rng = np.random.default_rng(0)
         for _ in range(500):
@@ -511,7 +511,7 @@ class RandomCupTests(unittest.TestCase):
             self.assertLessEqual(off_axis, run_pick_demo.RANDOM_HANDLE_BAND_DEG + 1e-9)
 
     def test_the_sweep_region_spreads_cups_across_the_searched_sector(self):
-        import run_pick_demo
+        from demos.cup import run_pick_demo
 
         rng = np.random.default_rng(0)
         bearings = []
@@ -526,7 +526,7 @@ class RandomCupTests(unittest.TestCase):
     def test_the_sweep_range_can_be_widened_to_the_edges_of_what_the_arm_can_grasp(self):
         """The default band is 8 cm wide and the arm plans grasps over about 15; the near end is where it
         reaches lowest, so it is the part a run should be able to ask for."""
-        import run_pick_demo
+        from demos.cup import run_pick_demo
 
         rng = np.random.default_rng(0)
         reaches = []
@@ -557,14 +557,14 @@ class WeightsDownloadTests(unittest.TestCase):
     def test_a_matching_download_is_kept(self):
         import hashlib
 
-        from pick_demo.perception import ensure_weights
+        from demos.cup.pick_demo.perception import ensure_weights
 
         target = self.dir / "yolo" / "w.pt"
         ensure_weights(target, self.url, hashlib.sha256(self.source.read_bytes()).hexdigest())
         self.assertEqual(target.read_bytes(), self.source.read_bytes())
 
     def test_a_mismatched_download_leaves_nothing_behind(self):
-        from pick_demo.perception import ensure_weights
+        from demos.cup.pick_demo.perception import ensure_weights
 
         target = self.dir / "yolo" / "w.pt"
         with self.assertRaises(RuntimeError):
@@ -572,7 +572,7 @@ class WeightsDownloadTests(unittest.TestCase):
         self.assertEqual(list(target.parent.iterdir()), [])
 
     def test_existing_weights_are_not_fetched(self):
-        from pick_demo.perception import ensure_weights
+        from demos.cup.pick_demo.perception import ensure_weights
 
         target = self.dir / "w.pt"
         target.write_bytes(b"already here")
@@ -588,7 +588,7 @@ class CameraBodyTests(unittest.TestCase):
     """Intel's D435 case mesh at the wrist mount: geometry only, no Isaac."""
 
     def setUp(self):
-        from pick_demo import camera_body
+        from demos.cup.pick_demo import camera_body
 
         self.camera_body = camera_body
         self.mount = camera.WristMount()
@@ -662,7 +662,7 @@ class CameraBodyTests(unittest.TestCase):
 
     def test_the_carved_asset_leaves_a_clear_aperture_at_the_model_eye(self):
         """The lens element sits on the axis; with it gone every preset looks out of a clear hole."""
-        from pick_demo.camera_asset import carve_lens
+        from demos.cup.pick_demo.camera_asset import carve_lens
 
         points, faces = self.camera_body.mesh_optical()
         kept, dropped = carve_lens(points, faces)
@@ -671,7 +671,7 @@ class CameraBodyTests(unittest.TestCase):
         models = [camera.CAMERAS[n] for n in ("d435", "d405", "d455")]
         stored = self.camera_body.MESH_PATH.parent / "calibration" / "d435i_238222076237_640x480.json"
         if stored.is_file():
-            from pick_demo import realsense
+            from demos.cup.pick_demo import realsense
             models.append(realsense.load_camera_model(stored))
         for model in models:
             with self.subTest(model=model.name):
@@ -689,7 +689,7 @@ class CameraBodyTests(unittest.TestCase):
         This is the regression that put a lens marker in shot while the guard reported clear: it was
         only ever asked about the model frame. If F-052 is ever fixed, this test is what says so.
         """
-        from pick_demo.camera_asset import carve_lens
+        from demos.cup.pick_demo.camera_asset import carve_lens
 
         points, faces = self.camera_body.mesh_optical()
         kept, _ = carve_lens(points, faces)
@@ -701,7 +701,7 @@ class CameraBodyTests(unittest.TestCase):
     def test_the_near_clip_keeps_the_case_out_of_the_rendered_view_at_any_mount_angle(self):
         """Every part of the case in front of the rendered eye is nearer than the clip, however F-052's 10.7 mm
         falls in the optical frame -- including straight back, where the most case is ahead of the eye."""
-        from pick_demo.camera_asset import carve_lens
+        from demos.cup.pick_demo.camera_asset import carve_lens
 
         points, faces = self.camera_body.mesh_optical()
         spawned = points[carve_lens(points, faces)[0]]
@@ -741,7 +741,7 @@ class RealSenseCalibrationTests(unittest.TestCase):
     """The stored calibration and the CameraModel built from it. No camera and no pyrealsense2 needed."""
 
     def setUp(self):
-        from pick_demo import realsense
+        from demos.cup.pick_demo import realsense
 
         self.realsense = realsense
         self.path = realsense.CALIBRATION_DIR / "d435i_238222076237_640x480.json"
@@ -771,7 +771,7 @@ class RealSenseCalibrationTests(unittest.TestCase):
 
     def test_body_offset_matches_the_calibration_it_came_from(self):
         """camera_body's measured offset must be the one in the stored calibration, not a stale copy."""
-        from pick_demo import camera_body
+        from demos.cup.pick_demo import camera_body
 
         measured = self.calibration["depth_to_colour"]["translation_m"][0]
         self.assertAlmostEqual(camera_body.COLOUR_FROM_LEFT_IMAGER_M, measured, places=6)

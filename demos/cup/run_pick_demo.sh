@@ -4,24 +4,25 @@
 # Same environment setup as run_sim.sh, minus the ROS 2 bridge: the pick publishes nothing. Do NOT source
 # /opt/ros/humble/setup.bash first -- system ROS's Python 3.10 on PYTHONPATH breaks Isaac Sim's 3.11.
 #
-# The reach console comes up beside the simulator: d1_ui/server.py in sim mode, following this run's feed
+# The reach console comes up beside the simulator: demos/cup/d1_ui/server.py in sim mode, following this run's feed
 # (joints, legs, and the wrist camera with YOLO's boxes) on http://localhost:8090, and stopped when this
 # script exits. A viewer run opens a browser tab once the simulator is publishing; a --headless one does not.
-# --no_console leaves it out (as does D1_UI_CONSOLE=0), and ./run_ui.sh still runs one by hand.
+# --no_console leaves it out (as does D1_UI_CONSOLE=0), and ./demos/cup/run_ui.sh still runs one by hand.
 #
 # Any arguments are forwarded to run_pick_demo.py, e.g.:
-#   ./run_pick_demo.sh                           # viewer, real time; R resets with the cup somewhere new
-#   ./run_pick_demo.sh --seed 7                  # a different sequence of cup positions for R
-#   ./run_pick_demo.sh --cup_xy 0.38 -0.08       # first cup somewhere specific
-#   ./run_pick_demo.sh --headless --episodes 10  # ten picks back to back, results in logs/pick_demo/
-#   ./run_pick_demo.sh --no_console              # simulator only, no console (a shell flag, not the demo's)
-#   ./run_pick_demo.sh --help                    # every option
+#   ./demos/cup/run_pick_demo.sh                           # viewer, real time; R resets with the cup somewhere new
+#   ./demos/cup/run_pick_demo.sh --seed 7                  # a different sequence of cup positions for R
+#   ./demos/cup/run_pick_demo.sh --cup_xy 0.38 -0.08       # first cup somewhere specific
+#   ./demos/cup/run_pick_demo.sh --headless --episodes 10  # ten picks back to back, results in logs/pick_demo/
+#   ./demos/cup/run_pick_demo.sh --no_console              # simulator only, no console (a shell flag, not the demo's)
+#   ./demos/cup/run_pick_demo.sh --help                    # every option
 #
 # Needs ultralytics in env_isaaclab, installed without its dependencies (see README). The cup model is in the
-# repository (pick_demo/assets/, CC BY 4.0, credited in third_party/sketchfab_cup/NOTICE.md); --cup_usdz swaps it.
+# repository (demos/cup/pick_demo/assets/, CC BY 4.0, credited in third_party/sketchfab_cup/NOTICE.md); --cup_usdz swaps it.
 set -e
 
-cd "$(dirname "$0")"
+# Run from the repository root: the demo imports `demos.cup.…` and writes into logs/.
+cd "$(dirname "$0")/../.."
 
 CONDA_ENV_NAME="${ISAAC_SIM_CONDA_ENV:-env_isaaclab}"
 
@@ -116,7 +117,7 @@ if [ "$CONSOLE" = "1" ] && [ "$FEED_PORT" != "0" ]; then
     # D1_UI_ARGS reaches server.py as it stands, for the console's own options: the detector on the CPU when
     # the viewer wants the VRAM (D1_UI_ARGS='--yolo-device cpu'), every COCO class (--detect all), no legs.
     # shellcheck disable=SC2086
-    python d1_ui/server.py --mode sim --sim-url "http://127.0.0.1:$FEED_PORT" --port "$CONSOLE_PORT" \
+    python demos/cup/d1_ui/server.py --mode sim --sim-url "http://127.0.0.1:$FEED_PORT" --port "$CONSOLE_PORT" \
       ${D1_UI_ARGS:-} > "$CONSOLE_LOG" 2>&1 &
     CONSOLE_PID=$!
     # Give it a moment to bind, and say so plainly if it died instead: the pick itself does not need it.
@@ -149,4 +150,4 @@ if [ "$CONSOLE" = "1" ] && [ "$FEED_PORT" != "0" ]; then
   fi
 fi
 
-python run_pick_demo.py "$@"
+python demos/cup/run_pick_demo.py "$@"

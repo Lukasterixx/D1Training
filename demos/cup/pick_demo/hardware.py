@@ -6,7 +6,7 @@ module is the other end of that seam -- `D1Client` and a real RealSense in place
 camera -- so the state machine, the grasp planner and the perception are the same objects the simulated
 pick runs, not a reimplementation of them.
 
-What differs from `run_pick_demo.py`, and why:
+What differs from `demos/cup/run_pick_demo.py`, and why:
 
 * **No ground truth.** The simulator scores each estimate against the cup's actual pose. Here there is
   nothing to score against, so a run reports what it did and what it saw, never how accurate it was.

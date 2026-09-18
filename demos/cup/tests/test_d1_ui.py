@@ -21,11 +21,11 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))   # the repository root
 
 import d1_ik
-from d1_ui import camera_feed, server, sim_feed
-from pick_demo.perception import Detection
+from demos.cup.d1_ui import camera_feed, server, sim_feed
+from demos.cup.pick_demo.perception import Detection
 from position_only.workspace import rpy_matrix, sample_configs
 
 try:
@@ -442,7 +442,7 @@ class MountFileTests(unittest.TestCase):
     """The wrist mount as six numbers and as a file. No arm, no browser, no Isaac."""
 
     def setUp(self):
-        from pick_demo import camera
+        from demos.cup.pick_demo import camera
 
         self.camera = camera
         self.dir = tempfile.mkdtemp()
@@ -509,7 +509,7 @@ class MountEditorTests(unittest.TestCase):
     """The server side of the console's mount editor: what it accepts, refuses and writes."""
 
     def setUp(self):
-        from pick_demo import camera
+        from demos.cup.pick_demo import camera
 
         self.camera = camera
         # A client that answers nothing: the mount editor touches only pick_cfg, and building a real
@@ -584,7 +584,7 @@ class MountEditorTests(unittest.TestCase):
         self.assertFalse(self.arm.mount_status()["editable"])
 
     def test_saving_writes_a_loadable_file_that_admits_what_it_is(self):
-        root = Path(server.ROOT) / "pick_demo" / "assets" / "mounts"
+        root = Path(server.PICK_ASSETS) / "mounts"
         name = "unittest_tmp_mount"
         path = root / f"{name}.json"
         try:
@@ -600,7 +600,7 @@ class MountEditorTests(unittest.TestCase):
             path.unlink(missing_ok=True)
 
     def test_a_save_name_cannot_escape_the_mounts_directory(self):
-        root = Path(server.ROOT) / "pick_demo" / "assets" / "mounts"
+        root = Path(server.PICK_ASSETS) / "mounts"
         ok, where = self.arm.save_mount("../../etc/passwd")
         try:
             self.assertTrue(ok, where)
@@ -614,7 +614,7 @@ class MountDefaultTests(unittest.TestCase):
     """Which mount a launch uses. One saved file is meant to be enough, with nothing to pass."""
 
     def setUp(self):
-        from pick_demo import camera
+        from demos.cup.pick_demo import camera
 
         self.camera = camera
         self.dir = Path(tempfile.mkdtemp())
@@ -675,7 +675,7 @@ class PickAvailabilityTests(unittest.TestCase):
     """Why the PICK button is on or off, and what turns it on without relaunching the console."""
 
     def setUp(self):
-        from pick_demo import camera
+        from demos.cup.pick_demo import camera
 
         self.camera = camera
         self.arm = server.ArmServer(iface="none", legs=True, sphere_radius_m=0.40, step_deg=5.0, log_path=None,

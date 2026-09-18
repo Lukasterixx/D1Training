@@ -101,10 +101,10 @@ def _start_ros2(env, args_cli):
 
 
 def _start_ui_feed(args_cli):
-    """Publish the joints for the reach console's sim mode (`./run_ui.sh`). A taken port only warns."""
+    """Publish the joints for the reach console's sim mode (`./demos/cup/run_ui.sh`). A taken port only warns."""
     if not args_cli.ui_feed_port:
         return None
-    from d1_ui.sim_feed import SimFeed
+    from demos.cup.d1_ui.sim_feed import SimFeed
 
     feed = SimFeed("teleop", camera=False, port=args_cli.ui_feed_port)
     return feed if feed.active else None

@@ -1,6 +1,6 @@
 """Turn a downloaded cup model into a graspable rigid body: metres, Z up, sized, with simple colliders.
 
-The source is `pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz`: "High-Resolution 3D Cup Model (FBX)" by
+The source is `demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz`: "High-Resolution 3D Cup Model (FBX)" by
 fayazg1aa on Sketchfab (model 9030ed8db34a4110b6d3c508a9d57807), CC BY 4.0 -- attribution and the changes made here
 are in `third_party/sketchfab_cup/NOTICE.md`. As shipped it is Y up, in centimetre
 units, ~2 m across with its stage scale applied, and a mug whose height equals its diameter with the

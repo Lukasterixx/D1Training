@@ -6,10 +6,10 @@ the real camera actually sits -- and that is a question you answer by looking. T
 body (`pick_demo.camera_body`) on the wrist and photographs it from several directions, with the arm
 held in the pose the pick observes from.
 
-    ./run_camera_body_view.sh                        # four views into logs/camera_body/<stamp>/
-    ./run_camera_body_view.sh --mount_pos -0.05 0.0 0.04 --mount_pitch_deg 25
-    ./run_camera_body_view.sh --pose observe         # the arm where the pick looks from (default)
-    ./run_camera_body_view.sh --pose zero            # every joint at zero, easiest to measure against
+    ./demos/cup/run_camera_body_view.sh                        # four views into logs/camera_body/<stamp>/
+    ./demos/cup/run_camera_body_view.sh --mount_pos -0.05 0.0 0.04 --mount_pitch_deg 25
+    ./demos/cup/run_camera_body_view.sh --pose observe         # the arm where the pick looks from (default)
+    ./demos/cup/run_camera_body_view.sh --pose zero            # every joint at zero, easiest to measure against
 
 Each view is saved under its own name, and `run.json` records the mount that produced them, so a render
 can be compared with a later one after the mount is corrected -- and so `./dashboard.py record` takes it
@@ -25,7 +25,10 @@ import json
 import math
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def git_output(*args):
@@ -56,12 +59,12 @@ def run(args) -> int:
         import torch
         from isaaclab.envs import ManagerBasedRLEnv
 
-        from pick_demo import camera_body
-        from pick_demo.camera import CAMERAS, WristMount, camera_pose, link6_pose, mount_to_dict
-        from pick_demo.camera_asset import build_camera_usd
-        from pick_demo.cup_asset import build_cup_usd
-        from pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
-        from pick_demo.scene import make_pick_cfg
+        from demos.cup.pick_demo import camera_body
+        from demos.cup.pick_demo.camera import CAMERAS, WristMount, camera_pose, link6_pose, mount_to_dict
+        from demos.cup.pick_demo.camera_asset import build_camera_usd
+        from demos.cup.pick_demo.cup_asset import build_cup_usd
+        from demos.cup.pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
+        from demos.cup.pick_demo.scene import make_pick_cfg
         from position_only.workspace import load_urdf
         from weld import build_welded_robot_usd
         from isaaclab_assets import ISAACLAB_NUCLEUS_DIR
@@ -72,7 +75,7 @@ def run(args) -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
 
         if args.calibration:
-            from pick_demo.realsense import load_camera_model
+            from demos.cup.pick_demo.realsense import load_camera_model
 
             model = load_camera_model(args.calibration)
         else:
@@ -80,7 +83,7 @@ def run(args) -> int:
         # A saved mount file (the console's editor, or pick_demo.camera.save_mount) is six degrees of
         # freedom and carries its own provenance; --mount_pos/--mount_pitch_deg are the four-number
         # placeholder for a bracket nobody has measured. The file wins when given.
-        from pick_demo.camera import resolve_mount
+        from demos.cup.pick_demo.camera import resolve_mount
 
         mount, mount_source, mount_file = resolve_mount(
             args.mount, fallback=WristMount(tuple(args.mount_pos), args.mount_pitch_deg))
@@ -92,7 +95,7 @@ def run(args) -> int:
         clearance = camera_body.clearance_report(mount, PALM_Z_M, PALM_X_RANGE_M)
         # Ask about the asset that is actually spawned -- the mesh with the lens element carved out --
         # not the raw CAD, or the guard reports a lens that is not in the scene.
-        from pick_demo.camera_asset import carve_lens
+        from demos.cup.pick_demo.camera_asset import carve_lens
 
         _points, _faces = camera_body.mesh_optical()
         _kept, _ = carve_lens(_points, _faces)
@@ -207,7 +210,7 @@ def main() -> int:
     parser.add_argument("--mount_pitch_deg", type=float, default=20.0)
     parser.add_argument("--mount", default=None, metavar="FILE",
                         help="A saved wrist-mount file (six degrees of freedom, with provenance). "
-                             "Default: pick_demo/assets/mounts/wrist_mount.json when it exists. "
+                             "Default: demos/cup/pick_demo/assets/mounts/wrist_mount.json when it exists. "
                              "'none' forces --mount_pos/--mount_pitch_deg instead.")
     parser.add_argument("--no_camera_body", action="store_true", help="Render the wrist without the camera drawn.")
     parser.add_argument("--pose", choices=("observe", "zero"), default="observe")
@@ -215,7 +218,7 @@ def main() -> int:
     parser.add_argument("--frames_per_view", type=int, default=4)
     parser.add_argument("--width", type=int, default=900)
     parser.add_argument("--height", type=int, default=700)
-    parser.add_argument("--cup_usdz", default=str(ROOT / "pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz"))
+    parser.add_argument("--cup_usdz", default=str(HERE / "pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz"))
     parser.add_argument("--robot_usd", default=None)
     parser.add_argument("--output", default=str(ROOT / "logs/camera_body"))
     return run(parser.parse_args())

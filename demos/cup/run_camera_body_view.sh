@@ -5,14 +5,15 @@
 # Same environment setup as run_pick_demo.sh: the Isaac conda env, with ROS kept off PYTHONPATH. No
 # console, no ROS 2 bridge, no policy -- it renders four views of the wrist and exits.
 #
-#   ./run_camera_body_view.sh                                   # four views into logs/camera_body/<stamp>/
-#   ./run_camera_body_view.sh --pose zero                       # every joint at zero, easiest to measure
-#   ./run_camera_body_view.sh --mount_pos -0.05 0 0.04 --mount_pitch_deg 25
-#   ./run_camera_body_view.sh --calibration pick_demo/assets/calibration/d435i_238222076237_640x480.json
-#   ./run_camera_body_view.sh --help                            # every option
+#   ./demos/cup/run_camera_body_view.sh                                   # four views into logs/camera_body/<stamp>/
+#   ./demos/cup/run_camera_body_view.sh --pose zero                       # every joint at zero, easiest to measure
+#   ./demos/cup/run_camera_body_view.sh --mount_pos -0.05 0 0.04 --mount_pitch_deg 25
+#   ./demos/cup/run_camera_body_view.sh --calibration demos/cup/pick_demo/assets/calibration/d435i_238222076237_640x480.json
+#   ./demos/cup/run_camera_body_view.sh --help                            # every option
 set -e
 
-cd "$(dirname "$0")"
+# Run from the repository root: the demo imports `demos.cup.…` and writes into logs/.
+cd "$(dirname "$0")/../.."
 
 CONDA_ENV_NAME="${ISAAC_SIM_CONDA_ENV:-env_isaaclab}"
 
@@ -62,4 +63,4 @@ fi
 
 export PYTHONUNBUFFERED=1
 
-python run_camera_body_view.py "$@"
+python demos/cup/run_camera_body_view.py "$@"

@@ -26,7 +26,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]      # the repository, three up from demos/cup/d1_ui
 DEFAULT_WEIGHTS = ROOT / "generated/yolo/yolo11s-seg.pt"
 
 # BGR, as OpenCV draws: the labels the user asked for in green, anything else in amber.
@@ -45,7 +45,7 @@ class SimFrameSource:
             raise RuntimeError("no simulator feed")
         if not health.get("camera"):
             raise RuntimeError(f"this simulation ({health.get('source')}) has no wrist camera; "
-                               "./run_pick_demo.sh has one")
+                               "./demos/cup/run_pick_demo.sh has one")
 
     def read(self, timeout_s: float = 1.0):
         end = time.monotonic() + timeout_s
@@ -173,7 +173,7 @@ def make_yolo(weights, device: str = "auto", confidence: float = 0.25):
         import ultralytics  # noqa: F401
     except ImportError as exc:
         raise RuntimeError("ultralytics is not installed here") from exc
-    from pick_demo.perception import YoloDetector, ensure_weights
+    from demos.cup.pick_demo.perception import YoloDetector, ensure_weights
 
     if Path(weights) == DEFAULT_WEIGHTS and not DEFAULT_WEIGHTS.is_file():
         try:

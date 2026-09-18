@@ -6,18 +6,18 @@ user click a point on a translucent sphere around the arm to send the tool there
 
 Runs **on the Jetson payload**, because CycloneDDS needs the arm's subnet:
 
-    python3 d1_ui/server.py --port 8090
+    python3 demos/cup/d1_ui/server.py --port 8090
 
 then open http://<dog>:8090 from anywhere that can reach it (Tailscale works).
 
 **Sim or hardware** is decided at start-up (`--mode auto`): if a simulator's feed answers on localhost
-(`d1_ui/sim_feed.py`, published by `run_pick_demo.py` and `main.py`), the page follows the simulator --
+(`demos/cup/d1_ui/sim_feed.py`, published by `demos/cup/run_pick_demo.py` and `main.py`), the page follows the simulator --
 its joints, legs and rendered wrist camera -- and every command that would move an arm is refused. Otherwise,
 if this machine has the arm's network interface, it is the dog, and the page drives the real arm as before.
 Neither means a workstation with no simulator up yet: sim mode, waiting for one.
 
 The camera window shows the wrist RealSense (the simulator's render in sim mode) with the pick's stock YOLO
-boxes drawn on, served as MJPEG from `/camera.mjpg` (`d1_ui/camera_feed.py`).
+boxes drawn on, served as MJPEG from `/camera.mjpg` (`demos/cup/d1_ui/camera_feed.py`).
 
 Everything on the wire is the stdlib: `ThreadingHTTPServer` for the page and
 the meshes, Server-Sent Events for the live state (no websocket dependency),
@@ -60,21 +60,22 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]      # the repository, three up from demos/cup/d1_ui
 sys.path.insert(0, str(ROOT))
 
 import d1_ik  # noqa: E402
 import d1_hardware  # noqa: E402
-from d1_ui.sim_feed import DEFAULT_URL as SIM_FEED_URL, GO2_MOTOR_ORDER, SimFeedClient  # noqa: E402
+from demos.cup.d1_ui.sim_feed import DEFAULT_URL as SIM_FEED_URL, GO2_MOTOR_ORDER, SimFeedClient  # noqa: E402
 from position_only.workspace import BODY_BOX_B, MOUNT_B, clear_of_body  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 STATIC = HERE / "static"
 D1_URDF = ROOT / "d1_arm" / "d1.urdf"
 GO2_URDF = ROOT / "description" / "go2_d1.urdf"
+PICK_ASSETS = HERE.parent / "pick_demo" / "assets"       # this demo's own, beside the console
 MESH_DIRS = {"d1": ROOT / "d1_arm" / "meshes", "go2": ROOT / "description" / "meshes" / "go2",
              # Intel's D435 case, for the mount editor. Provenance: third_party/realsense2_description.
-             "realsense": ROOT / "pick_demo" / "assets" / "realsense"}
+             "realsense": PICK_ASSETS / "realsense"}
 
 FOLDED_PARK_DEG = [0.0, -89.9, 89.9, 0.0, 0.0, 0.0]   # servo degrees; the hard limits of J1/J2
 SPHERE_MIN_Z_ABOVE_MOUNT_M = 0.03
@@ -553,8 +554,8 @@ class ArmServer:
     # pick is running would move the frame under the sequence, so that is refused.
 
     def mount_status(self) -> dict:
-        from pick_demo import camera_body
-        from pick_demo.camera import mount_as_xyz_rpy
+        from demos.cup.pick_demo import camera_body
+        from demos.cup.pick_demo.camera import mount_as_xyz_rpy
 
         with self.lock:
             mount, source, saved_to = self.mount, self.mount_source, self.mount_file
@@ -573,7 +574,7 @@ class ArmServer:
             # frame, which is what the six numbers above place. Sent rather than repeated in JavaScript
             # so `camera_body` stays the one place the registration is written down.
             "mesh_to_optical": [[round(float(v), 9) for v in row] for row in camera_body.MESH_TO_OPTICAL],
-            "mesh_available": (ROOT / "pick_demo" / "assets" / "realsense" / "d435_housing.ply").is_file(),
+            "mesh_available": (PICK_ASSETS / "realsense" / "d435_housing.ply").is_file(),
             # The same check the simulator's runs report: a mount that buries the camera in the wrist
             # is a number here rather than something to notice later in a render. It needs the case
             # mesh, and so `trimesh`, which the dog's deployment has no reason to carry -- so its
@@ -587,7 +588,7 @@ class ArmServer:
 
     def set_mount(self, xyz_m, rpy_deg) -> tuple[bool, str]:
         """Move the camera's optical frame on the wrist. Live for the next frame; nothing is written."""
-        from pick_demo.camera import mount_from_xyz_rpy
+        from demos.cup.pick_demo.camera import mount_from_xyz_rpy
 
         try:
             values = [float(v) for v in xyz_m], [float(v) for v in rpy_deg]
@@ -612,11 +613,11 @@ class ArmServer:
         return True, ""
 
     def save_mount(self, name: str = "") -> tuple[bool, str]:
-        """Write the current mount to `pick_demo/assets/mounts/`. Returns the path, or why not."""
-        from pick_demo.camera import save_mount as write_mount
+        """Write the current mount to `demos/cup/pick_demo/assets/mounts/`. Returns the path, or why not."""
+        from demos.cup.pick_demo.camera import save_mount as write_mount
 
         stem = "".join(c for c in (name or "wrist_mount") if c.isalnum() or c in "-_") or "wrist_mount"
-        path = ROOT / "pick_demo" / "assets" / "mounts" / f"{stem}.json"
+        path = PICK_ASSETS / "mounts" / f"{stem}.json"
         with self.lock:
             mount = self.mount
             camera = (self.pick_cfg or {}).get("camera_source", "")
@@ -664,7 +665,7 @@ class ArmServer:
         cfg = self.pick_cfg
 
         def job():
-            from pick_demo import hardware as pick_hardware
+            from demos.cup.pick_demo import hardware as pick_hardware
 
             with self.lock:
                 self.pick_state = {"running": True, "last": None, "started": time.time()}
@@ -699,7 +700,7 @@ class ArmServer:
         left only a log line could not be cited. What it does *not* contain is any accuracy figure: there
         is no ground truth on a bench.
         """
-        from pick_demo import hardware as pick_hardware
+        from demos.cup.pick_demo import hardware as pick_hardware
 
         try:
             stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime()) + f"_{int(time.time() % 1 * 1e6):06d}Z"
@@ -952,7 +953,7 @@ class Handler(BaseHTTPRequestHandler):
 def _mount_clearance(mount):
     """The case against Link6's CAD shell, or None where the mesh cannot be read (the dog)."""
     try:
-        from pick_demo import camera_body, grasp
+        from demos.cup.pick_demo import camera_body, grasp
 
         return camera_body.clearance_report(mount, grasp.PALM_Z_M, grasp.PALM_X_RANGE_M)
     except Exception:
@@ -972,7 +973,7 @@ def load_default_mount():
     four-number placeholder. Read from `_MOUNT_ARGS`, which `main` fills from the command line, so
     `ArmServer` can be built in a test without a pick, an arm or a camera and still have a mount.
     """
-    from pick_demo.camera import WristMount, resolve_mount
+    from demos.cup.pick_demo.camera import WristMount, resolve_mount
 
     placeholder = WristMount(tuple(_MOUNT_ARGS["pos"]), _MOUNT_ARGS["pitch_deg"])
     return resolve_mount(_MOUNT_ARGS["file"], fallback=placeholder)   # (mount, source, path)
@@ -992,24 +993,24 @@ def build_pick_cfg(args, mode: str, camera) -> dict | None:
     if mode != "hardware" or camera is None:
         return None
     try:
-        from pick_demo.camera import CAMERAS, WristMount
-        from pick_demo.grasp import GraspParams
-        from pick_demo.perception import CupPerception
-        from d1_ui import camera_feed
+        from demos.cup.pick_demo.camera import CAMERAS, WristMount
+        from demos.cup.pick_demo.grasp import GraspParams
+        from demos.cup.pick_demo.perception import CupPerception
+        from demos.cup.d1_ui import camera_feed
 
         # A stored calibration beats the datasheet preset, which F-053 measured as 14 degrees too wide
         # with cy 14.3 px off centre. Falling back to the preset silently was how every console started
         # without the flag got the wrong camera model, so one stored calibration is now found and used.
         calibration = args.pick_calibration
         if not calibration:
-            stored = sorted((ROOT / "pick_demo" / "assets" / "calibration").glob("*.json"))
+            stored = sorted((PICK_ASSETS / "calibration").glob("*.json"))
             if len(stored) == 1:
                 calibration = stored[0]
             elif len(stored) > 1:
                 print(f"pick: {len(stored)} calibrations stored; pass --pick-calibration to choose one",
                       flush=True)
         if calibration:
-            from pick_demo.realsense import load_camera_model
+            from demos.cup.pick_demo.realsense import load_camera_model
 
             model = load_camera_model(calibration)
             camera_source = f"calibration {Path(calibration).name}"
@@ -1019,7 +1020,7 @@ def build_pick_cfg(args, mode: str, camera) -> dict | None:
         print(f"pick: camera model -- {camera_source}", flush=True)
         # A saved mount file wins over the four-number placeholder: it is what the console's editor
         # writes and what the simulator can be handed, so both ends agree on where the camera is.
-        from pick_demo.camera import resolve_mount
+        from demos.cup.pick_demo.camera import resolve_mount
 
         mount, mount_source, mount_file = resolve_mount(
             args.pick_mount, fallback=WristMount(tuple(args.pick_mount_pos), args.pick_mount_pitch_deg))
@@ -1062,7 +1063,7 @@ def main() -> int:
     ap.add_argument("--log", default="/tmp/d1_ui_log.jsonl", help="JSONL record of executed commands.")
     ap.add_argument("--mode", choices=("auto", "sim", "hardware"), default="auto",
                     help="auto: a simulator feed answering means sim, the arm's NIC being here means hardware.")
-    ap.add_argument("--sim-url", default=SIM_FEED_URL, help="Where a simulator publishes (d1_ui/sim_feed.py).")
+    ap.add_argument("--sim-url", default=SIM_FEED_URL, help="Where a simulator publishes (demos/cup/d1_ui/sim_feed.py).")
     ap.add_argument("--camera", choices=("auto", "none"), default="auto",
                     help="auto: the simulator's wrist camera in sim mode, the RealSense on hardware.")
     ap.add_argument("--detect", default="cup",
@@ -1078,14 +1079,14 @@ def main() -> int:
                     help="World up in the arm's base frame. The default suits an arm standing upright.")
     ap.add_argument("--pick-calibration", default=None,
                     help="A pick_demo.realsense calibration for the wrist camera. Default: the one stored "
-                         "in pick_demo/assets/calibration/ when exactly one is. Only with none stored does "
+                         "in demos/cup/pick_demo/assets/calibration/ when exactly one is. Only with none stored does "
                          "it fall back to the datasheet preset, which is measurably wrong (F-053).")
     ap.add_argument("--pick-mount-pos", type=float, nargs=3, default=(-0.055, 0.0, 0.035), metavar=("X", "Y", "Z"),
                     help="Camera optical origin in the Link6 frame. Assumed until the bracket is measured.")
     ap.add_argument("--pick-mount-pitch-deg", type=float, default=20.0)
     ap.add_argument("--pick-mount", default=None, metavar="FILE",
                     help="A mount file written by the console's mount editor (or pick_demo.camera.save_mount). "
-                         "Default: pick_demo/assets/mounts/wrist_mount.json when it exists, so a mount "
+                         "Default: demos/cup/pick_demo/assets/mounts/wrist_mount.json when it exists, so a mount "
                          "saved in the console is used on every launch with nothing to pass. "
                          "'none' forces --pick-mount-pos/--pick-mount-pitch-deg instead.")
     ap.add_argument("--pick-max-time", type=float, default=180.0, help="Seconds before the pick gives up.")
@@ -1134,7 +1135,7 @@ def main() -> int:
     client = SimFeedClient(args.sim_url) if mode == "sim" else None
     camera = None
     if args.camera == "auto":
-        from d1_ui import camera_feed
+        from demos.cup.d1_ui import camera_feed
 
         source = (camera_feed.SimFrameSource(SimFeedClient(args.sim_url)) if mode == "sim"
                   else camera_feed.RealSenseSource(
