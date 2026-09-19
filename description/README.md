@@ -38,7 +38,11 @@ Three deliberate edits along the way:
   already publishes `base_link -> utlidar_lidar` (see `ros2.py`) so the cloud is
   placeable without `robot_state_publisher` running at all. Keeping the link too
   would give that transform two publishers, which is a TF authority conflict.
-- **All `<inertial>` blocks are dropped.** `weld.py` owns the mass model; a
+- **All `<inertial>` blocks are dropped.** This makes the file unusable by any
+  importer that reads inertials for simulation: Isaac Gym derives mass from
+  collision geometry and a density default instead, and the robot NaNs on its
+  first step (F-068). `unifp_go2d1/build_asset.py` rebuilds `weld.py`'s mass
+  model into its own generated copy; anything else must too. `weld.py` owns the mass model; a
   second set of numbers here would drift out of step with it and read as spec.
 
 ## Mesh paths

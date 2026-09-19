@@ -105,6 +105,15 @@ def main() -> None:
     # here would only drift out of step with it and be mistaken for spec.
     # Dropping base_link's also silences KDL's "root link has an inertia"
     # warning from robot_state_publisher.
+    #
+    # So this file must never be handed to an importer that reads inertials.
+    # Isaac Lab does not (weld.py assembles the USD), but Isaac Gym does, and
+    # with no inertials it derives mass from collision geometry times its
+    # density default -- which makes the robot nearly massless and NaNs the
+    # articulation on the first step (F-068). `unifp_go2d1/build_asset.py`
+    # rebuilds weld.py's mass model into its own generated copy for that
+    # reason; anything else reading this URDF for simulation needs to do the
+    # same.
     for link in go2.findall("link"):
         for inertial in list(link.findall("inertial")):
             link.remove(inertial)
