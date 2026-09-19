@@ -1,0 +1,53 @@
+{
+  "id": "Sep18_11-06-23_",
+  "title": "Go2+D1 throughput, 4096 envs, TF32: 40.2k steps/s",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-18T11:12:55+10:00",
+  "started_utc": "2026-09-18T01:12:48+00:00",
+  "source_dir": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-06-23_",
+  "mode": "train",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 18,
+  "steps": null,
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.172,
+  "last_iteration": 17,
+  "final_checkpoint": {
+    "file": "model_18.pt",
+    "sha256": "de4e4fa2ca91964f204015ec1cf89c2ee05d04ac3bfc1a04d1f28fadad58f4d2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 17.127216339111328,
+      "last_step": 17,
+      "mean_last_10": 11.103120613098145,
+      "min": 0.2319437563419342,
+      "max": 17.127216339111328,
+      "points": 18
+    },
+    "Train/mean_episode_length": {
+      "last": 276.94000244140625,
+      "last_step": 17,
+      "mean_last_10": 201.75599975585936,
+      "min": 21.65999984741211,
+      "max": 276.94000244140625,
+      "points": 18
+    },
+    "Perf/total_fps": {
+      "last": 40368.0,
+      "last_step": 17,
+      "mean_last_10": 39874.7,
+      "min": 37536.0,
+      "max": 41637.0,
+      "points": 18
+    }
+  },
+  "copied_files": [
+    "run.json"
+  ]
+}

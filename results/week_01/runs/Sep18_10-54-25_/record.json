@@ -1,0 +1,25 @@
+{
+  "id": "Sep18_10-54-25_",
+  "title": "Go2+D1 port, first launch: articulation NaNs at reset",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-18T11:12:55+10:00",
+  "started_utc": "2026-09-18T01:12:48+00:00",
+  "source_dir": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_10-54-25_",
+  "mode": "train",
+  "seed": 1,
+  "status": "aborted",
+  "error": "ValueError: Expected parameter loc ... found invalid values (NaN actions from NaN observations)",
+  "num_envs": 64,
+  "iterations": 2,
+  "steps": null,
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.172,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "run.json"
+  ]
+}

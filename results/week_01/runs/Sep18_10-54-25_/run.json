@@ -1,0 +1,18 @@
+{
+  "mode": "train",
+  "seed": 1,
+  "status": "aborted",
+  "error": "ValueError: Expected parameter loc ... found invalid values (NaN actions from NaN observations)",
+  "arguments": {
+    "num_envs": 64,
+    "iterations": 2,
+    "steps": null
+  },
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_status": "?? third_party/UniFP/\n?? unifp_go2d1/",
+  "articulation_mass_kg": 18.172,
+  "stack": "isaacgym_preview4/unifp",
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "python legged_gym/scripts/train_go2d1posforce.py --task=go2d1_pos_force --headless --num_envs 64 --max_iterations 2",
+  "notes": "First launch of the port. The articulation NaNed at reset: the URDF carried no inertials, so Isaac Gym derived mass from collision geometry times density 0.005."
+}

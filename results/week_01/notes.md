@@ -77,7 +77,7 @@ Week 2's G4 still depends on them.
 ### Added by the 16 September plan revision
 
 - [x] Frozen-manifest evaluator started, including zero-action reference and terminal metrics (F-018, F-019)
-- [ ] UniFP and one position-only reference reproduction attempts started with a setup time budget
+- [~] UniFP and one position-only reference reproduction attempts started with a setup time budget — **UniFP reproduction complete** (2026-09-20, F-072): the full 60,000-iteration schedule finished in 39.85 h with no crashes, and the curve says ~10,000 would have done (F-072). Policy unevaluated. **UniFP setup and retarget done** (2026-09-18, F-067/F-068): installed on the spare PC in ~40 min of the two-day budget, upstream B2Z1 launched, retargeted to Go2+D1 and a 60,000-iteration run started (F-070). The Go2+D1 position-only reference is **not started**
 - [ ] RealSense stream and AprilTag detections recorded
 - [x] D1 feedback/command timing and basic joint response measured on hardware (2026-09-16): angle feedback 111.0 ms / 9.00 Hz and status 100.5 ms / 9.96 Hz (F-020); J0 step latency 126–138 ms, peak 1.15 rad/s, steady-state error ≤0.1° (F-021). One joint, unloaded
 - [ ] Box latch/lever loads, travel, geometry and tool engagement measured
@@ -3034,10 +3034,234 @@ removes a veto that would have caught it. The veto was never the right protectio
 estimates and bad ones alike — but nothing has replaced it, and the check that would (a rim seen twice
 from different viewpoints agreeing on its height) does not exist yet.
 
+### 2026-09-18 — UniFP set up on the spare PC and retargeted to the Go2+D1: it trains, and the RViz URDF nearly stopped it
+
+On a **different machine** from the rest of this week — a Dell Precision 7680 with an RTX 3500 Ada Laptop
+(12 GB), 32 threads, 31 GB RAM, Ubuntu 22.04, driver 580.178.04 — so the Environment table above does not
+describe these runs. The shared Isaac Lab installation was not touched: the legacy stack lives entirely in
+`~/thesis_b_legacy` and nothing there is committed. The committed source is [unifp_go2d1/](../../unifp_go2d1/),
+which generates the port into a clean UniFP checkout; provenance and licence in
+[third_party/UniFP](../../third_party/UniFP/NOTICE.md).
+
+**Isaac Gym Preview 4 installs and upstream trains (F-067).** From the tarball in `~/Downloads` into a new
+`unifp` conda environment (Python 3.8, torch 2.3.1+cu121, numpy 1.23.5); GPU PhysX comes up and `gymtorch`
+builds unpatched. Then, unmodified UniFP at the pinned `68847a070f88`:
+
+```bash
+cd ~/thesis_b_legacy/UniFP && WANDB_MODE=disabled \
+  python legged_gym/scripts/train_b2z1posforce.py --task=b2z1_pos_force --headless --num_envs 64 --max_iterations 3
+```
+
+[3 iterations](#/week/1/run/Sep18_10-45-06_), 2,973 steps/s, all 40 scalars reporting. About 40 minutes of the
+two-working-day budget, and three stops worth recording because none is in upstream's README: `params_proto`
+must be pinned below 3.0 (3.x needs Python ≥ 3.9, Isaac Gym Preview 4 needs 3.8), `wandb.init` is
+unconditional, and `cfg.asset.file` resolves against the working directory — the README's `cd legged_gym/scripts`
+makes the robot fail to load, and the error you get is `KeyError: 'ee_gripper_link'`, which names neither cause.
+**Scope: the stack installs and the loop optimises. No upstream result is reproduced and no upstream checkpoint
+was obtained.**
+
+**The retarget: 18 actions, not 17.** B2Z1 is 12 legs + 5 controlled arm joints + 2 held; Go2+D1 is 12 legs +
+6 arm joints + 2 held jaws, so every per-DOF observation widens by one (single observation 73 → 76, privileged
+149 → 153). `port_env.py` applies 17 asserted substitutions to upstream's 2,345-line environment and refuses to
+run if upstream ever differs, so the diff stays auditable; the PPO variant, history encoder, estimator
+supervision, force curriculum and reward terms are untouched. Two changes were forced rather than chosen: the
+arm joints are renamed `d1_Joint<n>` (Isaac Gym orders DOFs alphabetically by the joint starting each base
+subtree, which put the arm between the front and rear legs and broke every fixed-index slice), and
+`ee_gripper_link` is added at the CAD pincer tip, which is the same controlled point as the Isaac Lab task
+(F-013 — CAD, not measured on the arm).
+
+**The first launch NaNed before a single policy step, and the cause was our own drawing (F-068).**
+11 of 64 environments had NaN in `dof_pos` at reset. Not self-collision, not the observation maths:
+`description/go2_d1.urdf` drops every `<inertial>` on purpose, because `weld.py` owns the mass model and a
+second set of numbers would drift. Isaac Lab never reads that file. Isaac Gym does, and with no inertials it
+derives mass from collision geometry × `density = 0.005`. `build_asset.py` now rebuilds `weld.py`'s model into
+the generated URDF — Go2 inertials from the Go2 description (15.019 kg), D1 shells from `d1_arm/d1.urdf`
+(0.719 kg), servo masses (0.345 kg), remainder of ARM_MASS_KG on the arm base — and the loaded articulation
+weighs **18.171 kg**, 2.165 kg at the arm base, 0.987 kg of moving arm. That total matches
+`articulation_mass_kg` on the Isaac Lab smoke runs exactly, which is the first cross-check we have between the
+two stacks' robots. The same command then [trains](#/week/1/run/Sep18_11-02-34_).
+
+**The goal sphere was sized against the arm, not guessed at.** Centre on the arm shoulder (0.49 m over flat
+terrain, on the base centreline — the D1 mounts centrally where the Z1 sits forward of the B2), radius
+0.30–0.58 m. Against 200,000 random arm poses through `position_only/workspace.py`, **97.2% of sampled goals
+have a reachable pose within 3 cm** (median 1.4 cm), and the arm's zero pose puts the tip at r = 0.51 m, mid
+range. Self-collision with the dog is not in that check; the environment's own goal keep-out box is.
+
+**The force range is the change that matters (F-069).** Upstream commands ±60 N at the end effector. The D1's
+3.3 N·m shoulder makes about 7 N at this sphere's 0.45 m moment arm, so ±60 N is an instruction the arm can
+only fail. The port commands **±8 N** at the tip and ±20 N at the base. That is arithmetic from published
+limits, not a measured stall force — **force tracking on this robot is a few-newton problem, and the Week 3
+calibration fixture and instrument need to resolve single newtons.**
+
+**What the task actually rewards, since it is easy to misread.** The released config sets
+`tracking_ee_sphere = 0` and puts weight on `tracking_ee_force_world`. That is not position-free: the term
+rewards the tip for reaching `goal + (measured force + commanded force)/k`, so with no force it is end-effector
+position tracking and with a force command it asks for that force through a virtual stiffness.
+`tracking_lin_vel_force_world` does the same for base velocity. This is the unified formulation, and it is why
+a position-only ablation means removing force inputs, force latents and force objectives rather than zeroing
+the force command.
+
+**Throughput, and what a full run costs (F-070).** At 4096 environments: [30.0k steps/s FP32](#/week/1/run/Sep18_11-03-27_),
+3.28 s/iteration; [40.2k steps/s with TF32 matmuls](#/week/1/run/Sep18_11-06-23_), 2.44 s/iteration, 7.2 GB of
+12.3 GB VRAM at 88% utilisation. The PPO update is 45% of an iteration (the actor reads 32 stacked frames of
+76), which is why TF32 buys 26% of wall clock. Upstream's schedule is `max_iterations = 60000`, which the B2Z1
+config does not override: **41 hours** with TF32. `force_start_step = 8000` gates every external force, so the
+first **5.5 hours are locomotion and position tracking only**. TF32 is reduced precision — statistically
+equivalent, not bit-identical — so runs record which was used; every other way to shorten a run (fewer
+environments, fewer iterations, an earlier curriculum, smaller terrain) changes the experiment.
+
+**The long run is launched** and [recording](#/week/1/run/Sep18_11-10-15_): 4096 environments, seed 1, TF32,
+upstream's 60,000-iteration schedule, detached via `./unifp_go2d1/run_training.sh`. Checkpoints land every 200
+iterations (~8 minutes), so it can be stopped at any point and the last checkpoint is still usable. At
+iteration 62 mean episode length was 974 of 1000 steps and mean return 77.5 — the robot is surviving episodes,
+which is **not** evidence that it reaches or tracks force, and the force curriculum has not started.
+
+**Still open on this:** nothing has been evaluated. There is no frozen-manifest equivalent for this task, no
+seed replication, no comparison with the Isaac Lab position-only policies, and the gains, goal ranges and force
+ranges are engineering choices carried in `go2d1_pos_force_config.py` with their reasoning, not measurements.
+The Go2+D1 position-only reference (`nayon007/Loco-Manipulation-with-RL-for-Go2-D1-Robot`) has not been touched,
+so the Week 2 port-versus-retarget decision still has one of its two reproductions missing.
+
+### 2026-09-18 — Making the 42-hour run survive without a human: resume works, but not the way it looks
+
+Lukas is leaving the run unattended, so the question is whether a crash can be recovered from a
+checkpoint without anyone present. It can, and `unifp_go2d1/supervise_training.sh` now does it —
+but testing the resume path first turned up two defects that would have quietly spoiled the run
+(F-071), plus one of my own.
+
+**The force curriculum restarts on resume, silently.** External forces are gated on
+`env.global_steps`, which `_init_buffers` zeroes on every launch, while the policy and optimiser
+come back from the checkpoint. A crash at iteration 20,000 — 12,000 iterations into force
+training — would have resumed into 8,000 more iterations of **position-only** training with
+nothing in any log saying so. Measured on the task with the gate moved to iteration 1: peak
+applied force over 12 steps is **0.000 N** with the gate shut and **0.394 N** past it, so the
+gate really does follow `global_steps` and the fix really does re-arm it. `launch_training.py`
+now sets `global_steps = resumed_iteration × num_steps_per_env` and prints which side of the
+curriculum the run is on.
+
+**`--max_iterations` on a resume is additive.** `learn()` runs
+`current_learning_iteration + num_learning_iterations`, so passing 60,000 to a resume at 20,000
+trains to 80,000. The supervisor asks for exactly the iterations still owed; verified by resuming
+from 3 with 6 owed and stopping at 9.
+
+**And `get_load_path(load_run=-1)` picks the alphabetically last run directory**, which after a
+failed restart is an empty one. `find_checkpoint.py` scans every directory and orders by the
+iteration in the filename.
+
+**The supervisor's own first version was wrong, and the test caught it.** It judged a restart by
+whether the process was still alive after a settle window, so a short run that *finished*
+successfully was recorded as a crash — and the fallback then walked down the checkpoint list past
+the newer checkpoint, hiding it from the completion check. Five restarts in a row "failed" on a
+run that had actually reached its target every time. It now judges by **progress**: a job that
+exits having written a newer checkpoint has succeeded, whatever its lifetime, and the completion
+test always reads the newest checkpoint. Re-tested end to end: resumed from 3 asking for 6,
+landed on 9, recognised the fast exit as success, reported COMPLETE and exited.
+
+The supervisor also kills and resumes a job that is alive but has written no checkpoint for an
+hour (a hung process holds the GPU and writes nothing), falls back one checkpoint if a restart
+makes no progress, and stops after five consecutive failures rather than crash-looping.
+`stop_training.sh` leaves a `STOP` file so a deliberate stop is not treated as a crash. Both the
+training (pid 20922) and the supervisor are session leaders with no controlling terminal, so they
+survive the terminal closing; **neither survives a reboot**, which would need a systemd user unit.
+
+`unifp_go2d1/watch_progress.sh` opens a live readout — progress against the checkpoints (so it
+survives a resume), ETA, whether the force curriculum has started, resume count, and whether the
+job is alive but quiet. It opens a desktop terminal window where there is a display and falls back
+to the current terminal over SSH.
+
+**Not covered:** nothing here has been tested against a real crash of a long run — the resume path
+was exercised on 3-iteration jobs. A resume also re-seeds the environment randomisation from the
+config seed, which is what any legged_gym resume does, but it means a resumed run is not the same
+trajectory as an uninterrupted one. Any comparison across runs has to say whether it was resumed.
+
+### 2026-09-20 — The 60,000-iteration UniFP run finished, and the curve is more interesting than the result
+
+It completed on its own: 60,000 iterations, 5,898,240,000 policy steps, **39.85 hours**, 301
+checkpoints, **zero errors or NaN in 40 hours of log, and zero supervisor restarts** — the process
+that started it is the one that finished it, and the supervisor's entire log is two lines, "up" and
+"COMPLETE". The 41 h predicted from a 25-iteration benchmark (F-070) was out by −2.8%.
+`model_60000.pt` loads, stores `iter = 60000`, and has 2,074,161 finite parameters with an 18-wide
+action head. Curves: [unifp_go2d1_training.png](figures/unifp_go2d1_training.png).
+
+Three things the curve says (F-072), none of which is a statement about the policy's ability,
+because **no evaluation has been run**:
+
+**Most of the run was wasted.** Mean return is 154.6 by iteration 6k–8k and 154.4 at the end. Taking
+only the post-curriculum stretch, so the comparison is like-for-like: 150.7 at 8k–10k against 154.4
+at 58k–60k — **+3.7 return for 52,000 iterations, 35 hours, 87% of the compute.** At 2.4 s/iteration
+a three-seed comparison at this schedule is five days of GPU; at ~15,000 iterations it is about one.
+Upstream's 60,000 is a base-class default its released config never overrides, so there is nothing
+to reproduce by keeping it.
+
+**The force curriculum costs tracking and does not give it back.** Implied tip L1 error ≥8.2 cm just
+before forces, ≥11.3 cm immediately after, best ≥8.8 cm near iteration 48,800, ≥9.3 cm at the end.
+Expected — the task got harder at 8,000 — but worth stating, because the headline return recovers
+past its pre-force level while this term does not, so the composite hides it.
+
+**A destabilisation at 55,000–57,500, twice, that I cannot explain.** Return 157 → 139 → 127. Mean
+episode length 1002 → **929**: episodes terminating early, i.e. falls, after 45,000 iterations pinned
+at ~1000. Collision penalty ten times worse (−0.014 → −0.143), value loss seven times (0.027 →
+0.190), action noise std rising 0.664 → 0.730 as the adaptive-KL schedule widened exploration in
+response. It partially recovers by 60,000 but not to the earlier level. The learning rate did not
+spike (1.0–1.5 × 10⁻⁵ throughout) and no curriculum stage changes after 8,000, so the trigger is
+unidentified.
+
+**Consequently the last checkpoint is not the best one.** By mean training return over the 200
+iterations before each checkpoint, `model_48800.pt` scores 157.5 against `model_60000.pt`'s 155.3,
+with implied tip error 8.8 cm against 9.3 cm. That is selection on the training signal, which is
+what F-019 refused to do for G1a — so it is a candidate to evaluate, not a choice to report.
+
+**What this does not show, and what should come next.** Nothing here measures reaching or force
+tracking. The "tip error" is a Jensen lower bound inferred from the tracking reward, it is an L1
+error over three axes, and its target is the **force-displaced** goal, so it mixes position and
+force and is not a reach error; it must not be set beside the 6.7–11.5 mm of the position-only
+policies (F-047). One seed, no held-out set, no zero-action baseline for this task. The blocking
+piece is now an evaluator: a frozen-manifest equivalent for the UniFP task, with a zero-action
+reference, which would settle the plateau, the checkpoint choice and the cost of the force
+curriculum at once. More training hours will not.
+
+### 2026-09-20 — First look at a trained policy, and the robot was the wrong shape
+
+Visualised `model_48800` — the best checkpoint by training return (F-072), with the external forces
+switched on. Two things came out of it, one of which Lukas spotted immediately.
+
+**The meshes were sideways, and it took two goes to fix (F-073).** `flip_visual_attachments` is one
+flag for the whole asset, but this robot is merged from two sources that disagree: the Go2's `.dae`
+meshes are y-up and need the flip, the D1's `.STL` meshes are z-up and must not have it. With the
+flag off the dog lay on its side with its legs splayed; with it on the dog was right and the arm lay
+on its side. Each arm mesh now gets a `_visflip` copy pre-rotated by Rx(−90°) with only `<visual>`
+pointing at it, and both halves render correctly:
+[unifp_go2d1_policy_48800.png](figures/unifp_go2d1_policy_48800.png).
+
+**The 39.85-hour run is unaffected, and that was measured rather than assumed**: loading the asset
+with the flag on and off gives identical masses and every body within **0.0000 mm** after a 2 s
+settle, because the Go2's collisions are all primitives and the flag does not touch the arm's
+collision meshes. The policy never saw a visual mesh. What *is* affected is any picture taken before
+today — those show a robot in the wrong shape and should not be shown.
+
+**Upstream's play script shows a force policy with the forces off.** Same mechanism as F-071: the
+curriculum is gated on `env.global_steps`, which starts at 0 in a fresh process, so a play session
+never reaches `force_start_step` and nothing ever pushes the robot — with no indication in the
+window. `unifp_go2d1/play_policy.py` winds the gate open, follows the robot with the camera, and can
+write a trace for the record.
+
+**And the first numbers off the policy (F-074).** A 1500-step rollout, randomisation and noise off,
+forces on ([recorded](#/week/1/run/20260920T0945_play48800_forces)): tip-to-goal L1 median **4.6 cm
+undisturbed** and **6.3 cm while being pushed**, p90 11.3 cm, worst 28.0 cm; base height median
+29.4 cm against the 30 cm target; force commanded up to 9.6 N and measured at the gripper up to
+8.1 N. That is one rollout of one checkpoint of one seed under the easiest conditions the task
+offers — not a gate result, and not comparable with the ≥9.2 cm figure inferred from training
+reward in F-072, which is a population average under randomisation, noise and pushes. The useful
+part is that it answers a question the training reward could not: the policy is tracking, not
+merely surviving.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
 6 playback runs and 1 viewer replay on 2026-09-15; 5 smoke, 3 verify, 7 evaluation runs and 2 training runs (a throughput probe and the first P0 candidate) on 2026-09-16.
+6 Isaac Gym runs on 2026-09-18 (1 upstream B2Z1 smoke, 1 aborted port launch, 1 port smoke, 2 throughput benchmarks and the long training run), on the spare PC.
+The UniFP training run completed on 2026-09-20 (F-072); its curves are in
+[figures/unifp_go2d1_training.png](figures/unifp_go2d1_training.png).
 Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [smoke posture](figures/smoke_posture.png),
 [D1 workspace](figures/d1_workspace.png) and the replay captures. External evidence: [Rescue flat ablation](external/rescue_flat_ablation/README.md).
 
@@ -3046,6 +3270,32 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-001](../findings.md): superseded by F-012 (forward walking with the arm reproduced; lateral and yaw added).
 - [F-002](../findings.md): superseded by F-010 (the droop figures came from acceleration drives).
 - [F-003](../findings.md): CPU frame maths and PPO configuration work (confirmed, interface only).
+- [F-067](../findings.md): UniFP's released B2Z1 training starts on Isaac Gym Preview 4 on the spare PC, in
+  ~40 minutes of the two-day budget, with three dependency/usage pins its README does not give (confirmed,
+  setup only -- no upstream result reproduced).
+- [F-068](../findings.md): the Go2+D1 retarget of UniFP trains once `weld.py`'s mass model is rebuilt into the
+  generated URDF. `description/go2_d1.urdf` has no inertials by design, and Isaac Gym then gives the robot
+  almost no mass and NaNs it at reset. The rebuilt model weighs 18.171 kg, matching the Isaac Lab
+  articulation exactly (confirmed; interface and mass model only, no policy).
+- [F-069](../findings.md): UniFP commands +/-60 N at the end effector; a D1 makes about 7 N at this reach, so
+  the port runs at +/-8 N. Force tracking here is a few-newton problem (provisional -- arithmetic from
+  published torque limits, no force measured).
+- [F-074](../findings.md): first numbers off a trained policy -- 4.6 cm median tip L1 undisturbed,
+  6.3 cm under force, in one clean rollout (provisional; one seed, one checkpoint, no baseline).
+- [F-073](../findings.md): the Go2 and the D1 disagree about which way is up and one Isaac Gym flag
+  cannot satisfy both, so every rendering before 2026-09-20 was wrong -- and none of the physics was
+  (identical masses, 0.0000 mm after a settle) (confirmed).
+- [F-072](../findings.md): the Go2+D1 UniFP run finished all 60,000 iterations in 39.85 h with no crashes,
+  but learning is over by ~10,000, the force curriculum permanently costs tip tracking, and an unexplained
+  destabilisation at 55k-57.5k means the last checkpoint is not the best one (confirmed for training-time
+  scalars; no policy evaluation run).
+- [F-071](../findings.md): resuming a UniFP run silently restarts its force curriculum (`global_steps`
+  is zeroed on launch while the policy is restored), and `--max_iterations` on a resume adds to where
+  it resumed rather than being a target. Both fixed in `launch_training.py`; the curriculum gate
+  measured at 0.000 N shut and 0.394 N open (confirmed).
+- [F-070](../findings.md): the full 60,000-iteration schedule costs ~41 hours on this GPU with TF32 (55
+  without), and its force curriculum does not start until iteration 8,000, 5.5 hours in (confirmed
+  throughput; the schedule length is an upstream default).
 - [F-066](../findings.md): four live bench picks stalled on the sequence's own arrival tests, not on the arm --
   planning time was charged to the move deadline, and a trembling hold never counted as arrived (confirmed).
 - [F-065](../findings.md): a cup too wide for the jaws is picked up by its wall -- a simulated pinch of a

@@ -1,0 +1,18 @@
+{
+  "mode": "train",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "arguments": {
+    "num_envs": 4096,
+    "iterations": 60000,
+    "steps": null
+  },
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_status": "M description/README.md\n M description/build_go2_d1_urdf.py\n M docs/codebase_investigation.md\n M results/findings.md\n M results/week_01/notes.md\n?? results/week_01/runs/Sep18_10-45-06_/\n?? results/week_01/runs/Sep18_10-54-25_/\n?? results/week_01/runs/Sep18_11-02-34_/\n?? results/week_01/runs/Sep18_11-03-27_/\n?? results/week_01/runs/Sep18_11-06-23_/\n?? results/week_01/runs/Sep18_11-10-15_/\n?? third_party/UniFP/\n?? unifp_go2d1/",
+  "articulation_mass_kg": 18.172,
+  "stack": "isaacgym_preview4/unifp",
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "./unifp_go2d1/run_training.sh  (launch_training.py --tf32 --no-wandb --task=go2d1_pos_force --num_envs 4096 --headless)",
+  "notes": "Completed the full upstream 60000-iteration schedule: 5,898,240,000 steps in 143,461.8 s (39.85 h), 301 checkpoints, zero errors or NaN in the log, zero supervisor restarts. Forces active from iteration 8000."
+}

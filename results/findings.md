@@ -2020,3 +2020,253 @@ result that changes a conclusion gets a new entry, and the old one is marked
   suspected. It also leaves an open question worth a measurement: run 2 was 0.555 rad short with a full
   gripper stroke in the same message, so whether the firmware paces a coordinated move to its slowest
   axis is still unknown.
+
+### F-067 — UniFP's released B2Z1 training starts on Isaac Gym Preview 4, in under a day of setup, with two dependency pins its README does not give
+
+- **Status:** confirmed (launched and optimising; not a reproduction of its results)
+- **Week:** 1
+- **Date:** 2026-09-18
+- **Evidence:** [upstream B2Z1 smoke](#/week/1/run/Sep18_10-45-06_), 64 environments, 3 iterations, on a
+  **spare machine** (RTX 3500 Ada Laptop 12 GB, Ubuntu 22.04), not the RTX 4080 PC the rest of this week's
+  runs used. Isaac Gym Preview 4 from `~/Downloads/IsaacGym_Preview_4_Package.tar` into a fresh
+  `unifp` conda environment: Python 3.8, torch 2.3.1+cu121, numpy 1.23.5. GPU PhysX initialises and the
+  bundled `gymtorch` extension builds against torch 2.3.1 without patching. Training reports
+  2,973 steps/s and all 40 reward/loss scalars. Setup took about 40 minutes of the two-working-day budget
+  the plan sets, with three avoidable stops:
+  - `params_proto` must be pinned **below 3.0** (`2.12.1` used). 3.x uses `tuple[...]` subscripting and
+    fails to import on Python 3.8, which is the only Python Isaac Gym Preview 4 supports.
+  - `wandb.init` is called unconditionally by `on_policy_runner.learn`, so a machine without a wandb login
+    cannot train at all until `WANDB_MODE=disabled` is set. TensorBoard logging is unaffected.
+  - `cfg.asset.file` is a path relative to the **working directory**, so the README's
+    `cd legged_gym/scripts && python train_b2z1posforce.py` cannot find the robot. The URDF load failure
+    is reported as a parse error and then surfaces as `KeyError: 'ee_gripper_link'`, which names neither
+    cause. Run from the repository root.
+- **Scope:** 3 iterations at 64 environments on the released B2Z1 task. This establishes that the stack
+  installs and the released training loop optimises **here**. It is not a reproduction of UniFP's reported
+  policy or numbers, and no upstream checkpoint was obtained or replayed.
+- **Implication:** the legacy Isaac Gym path is viable on a spare machine without touching the shared
+  Isaac Lab installation, so the Week 2 port-versus-retarget decision can be made from launch evidence
+  rather than from reading. Records the three pins any repeat of this needs.
+
+### F-068 — The Go2+D1 retarget of UniFP trains, once the mass model is rebuilt into the URDF: the RViz drawing has no inertials, and Isaac Gym silently gives the robot almost no mass
+
+- **Status:** confirmed (measured in the simulator, both the failure and the fix)
+- **Week:** 1
+- **Date:** 2026-09-18
+- **Evidence:** first launch of the port [NaNed at reset](#/week/1/run/Sep18_10-54-25_) — 11 of 64
+  environments had NaN in `dof_pos` and 18 in `root_states` before a single policy step, spreading to
+  31 and 34 after one. It is not self-collision (disabling it changes nothing) and not the observation
+  maths (every observation term is finite when the state is). `description/go2_d1.urdf` drops every
+  `<inertial>` block on purpose — it is a drawing for RViz, and `weld.py` owns the simulated mass model
+  (description/README.md). Isaac Lab never reads it. Isaac Gym does, and with no inertials it derives
+  mass from collision geometry times `asset_options.density`, which legged_gym leaves at **0.005**.
+  `unifp_go2d1/build_asset.py` reassembles the same model `weld.py` builds — Go2 inertials from the Go2
+  description (15.019 kg), D1 shells from `d1_arm/d1.urdf` (0.719 kg), servo masses (0.345 kg) and the
+  rest of ARM_MASS_KG on the arm base — and the same command then [trains](#/week/1/run/Sep18_11-02-34_).
+  The loaded articulation weighs **18.171 kg**, with 2.165 kg at the arm base and 0.987 kg of moving arm:
+  the arm base figures match `weld.py`'s own print, and the total matches `articulation_mass_kg` recorded
+  for the Isaac Lab smoke runs ([example](#/week/1/run/20260915T093352_794571Z_smoke_seed42)) exactly.
+  Two further changes were forced by Isaac Gym rather than chosen, both documented in
+  [unifp_go2d1/README.md](../unifp_go2d1/README.md): arm joints renamed `Joint<n>` → `d1_Joint<n>` (Isaac
+  Gym orders DOFs alphabetically by the joint starting each base subtree, which otherwise interleaves the
+  arm between the front and rear legs and breaks every fixed-index slice in the environment), and an
+  `ee_gripper_link` body added at the CAD pincer tip so the environment can index and push the controlled
+  point.
+- **Scope:** the environment constructs, steps and optimises, and the model's mass matches the Isaac Lab
+  model's. That is an interface and mass-model result. **No policy has been trained or evaluated**, the
+  gains and goal ranges below are engineering choices rather than measurements, and nothing here has been
+  compared with the real robot.
+- **Implication:** the port is a runnable retarget rather than a rewrite — the method (PPO variant, history
+  encoder, estimator supervision, force curriculum, reward terms) is upstream's and unchanged. It also
+  says that `description/go2_d1.urdf` must not be handed to any importer that reads inertials; its
+  docstring now says so, and the port regenerates its own asset from it.
+
+### F-069 — UniFP's force commands are eight times what a D1 can produce: the port runs at ±8 N, not ±60 N
+
+- **Status:** provisional (an arithmetic bound from published torque limits; no force has been measured
+  on this arm, in simulation or on hardware)
+- **Week:** 1
+- **Date:** 2026-09-18
+- **Evidence:** UniFP's released B2Z1 config commands end-effector forces uniformly in
+  `[-60, 60] N` per axis (`max_push_force_xyz_gripper_cmd`) against a Z1, and base forces in `[-50, 50] N`
+  against a ~60 kg B2. The D1's published effort limits are 3.3 N·m on J1/J2 and 1.7 N·m on J3–J6
+  (`motor_model.py`, and confirmed exact in PhysX in Week 1). At the ~0.45 m moment arm the port's goal
+  sphere uses, the strongest joint supports about **7 N** at the tool tip. The port therefore commands
+  `[-8, 8] N` at the end effector and `[-20, 20] N` at the base (the same fraction of body weight as
+  upstream's ±50 N on a B2).
+- **Scope:** a static torque-over-lever bound using published limits and one nominal moment arm. It
+  ignores posture, the arm's own weight, and whatever the legs contribute by leaning. It has not been
+  checked against a measured stall force, and the jaw/tool force path is not covered at all.
+- **Implication:** force tracking on this robot is a **few-newton** problem. Any comparison against
+  UniFP's reported force-tracking numbers has to say so, and the H1 force curriculum, the force-sign
+  calibration fixture (Week 3) and the instrumentation chosen to measure ground truth all need to resolve
+  single newtons rather than tens. Measuring the arm's actual achievable tip force, in simulation and then
+  on the bench, would move this to confirmed and should happen before the force comparisons are framed.
+
+### F-070 — A full-schedule UniFP run costs about 41 hours of this GPU, and its force curriculum does not begin until hour 5.5
+
+- **Status:** confirmed (measured throughput; the schedule length is upstream's default)
+- **Week:** 1
+- **Date:** 2026-09-18
+- **Evidence:** the Go2+D1 task at 4096 environments on the RTX 3500 Ada,
+  [FP32](#/week/1/run/Sep18_11-03-27_): 30.0k steps/s, 3.28 s/iteration (collection 1.80 s, PPO update
+  1.47 s). [With TF32 matmuls](#/week/1/run/Sep18_11-06-23_): 40.2k steps/s, 2.44 s/iteration (collection
+  1.74 s, update 0.70 s) — the update is 45% of the iteration because a history encoder consumes a
+  32-frame stack of 76 observations per sample, compressing it to a 64-wide latent that is concatenated
+  with the current observation, so the actor MLP itself is only 140 wide. 7.2 GB of 12.3 GB of VRAM, 88% GPU utilisation. `LeggedRobotCfgPPO.runner.max_iterations`
+  is **60,000** and the B2Z1 config does not override it, so the released schedule is 5.9 × 10⁹ policy
+  steps: **41 hours** with TF32, 55 without. (Measured on completion: 39.85 h, so this estimate was
+  out by −2.8% — F-072.) `commands.force_start_step = 8000` gates every external force,
+  and `global_steps` counts policy steps at 24 per iteration, so forces begin at **iteration 8,000** —
+  5.5 hours in. Everything before that is locomotion and position tracking.
+- **Scope:** throughput on one machine, one task, one environment count. TF32 is a reduced-precision
+  change: a TF32 run is statistically equivalent to an FP32 one but not bit-identical, so runs must record
+  which was used. Nothing here says the schedule is long enough, or that 60,000 iterations is what UniFP
+  actually trained for — the number is a base-class default the released config leaves alone.
+- **Implication:** one seed of the full schedule is a two-day GPU commitment and three seeds are a week, so
+  the seed budget for any UniFP-derived comparison has to be planned rather than assumed. Checkpoints land
+  every 200 iterations (~8 minutes), so a run can be cut short at any point and still yield a usable policy
+  — which is the practical way to buy a shorter experiment without editing the curriculum.
+
+### F-071 — Resuming a UniFP run silently restarts its force curriculum, and `--max_iterations` on a resume means "train this many more", not "train up to this"
+
+- **Status:** confirmed (both behaviours read from the source and the first measured directly)
+- **Week:** 1
+- **Date:** 2026-09-18
+- **Evidence:** found while making the 42-hour run (F-070) survive a crash without a human present.
+  Two separate defects, neither of which raises an error:
+  - **The force curriculum restarts.** External forces are gated on `env.global_steps >
+    commands.force_start_step * num_steps_per_env`, and `global_steps` is set to 0 by
+    `_init_buffers` on every launch while the policy and optimiser are restored from the
+    checkpoint. A crash at iteration 20,000 — 12,000 iterations into force training — would
+    resume into **8,000 more iterations of position-only training** with nothing in the log
+    saying so. Measured directly on the Go2+D1 task with the gate moved to iteration 1: at
+    `global_steps = 0` the peak applied force over 12 steps is **0.000 N**; at `global_steps =
+    5000` it is **0.394 N**. `launch_training.py` now sets `global_steps = resumed_iteration ×
+    num_steps_per_env` after the checkpoint loads, and prints which side of the curriculum the
+    run is on.
+  - **Iterations are additive.** `OnPolicyRunner.learn` computes `tot_iter =
+    current_learning_iteration + num_learning_iterations`, so `--max_iterations 60000` on a
+    resume at iteration 20,000 trains to 80,000. The supervisor asks for exactly the iterations
+    still owed, and a resume from 3 asking for 6 was verified to stop at 9.
+  - A third, smaller one: `get_load_path(load_run=-1)` takes the alphabetically last run
+    directory, which is an empty one if a restart died before saving (and is wrong across a month
+    boundary, as its own TODO says). `find_checkpoint.py` scans every run directory and orders by
+    the iteration in the filename instead.
+- **Scope:** read from UniFP's source at `68847a070f88` and exercised on the Go2+D1 port. The force
+  measurement is one task, 64 environments, 12 steps either side of the gate — it establishes that
+  the gate follows `global_steps`, not what a resumed policy would have learned. No long run has
+  yet been crashed and resumed in anger.
+- **Implication:** any resumed UniFP-derived run before this fix has to be treated as having an
+  unknown curriculum, and any comparison across runs has to state whether it was resumed. It also
+  generalises: this environment keeps curriculum state on the env rather than in the checkpoint,
+  so **anything else added to the curriculum needs the same treatment**, and the checkpoint is not
+  a complete description of training state.
+
+### F-072 — The Go2+D1 UniFP run finished all 60,000 iterations in 39.85 h, and the curve says most of it was wasted: learning is over by ~10,000, and a late destabilisation means the last checkpoint is not the best one
+
+- **Status:** confirmed for what it measures (training-time scalars of one completed run); **no policy
+  evaluation has been run**, so nothing here is a statement about how well the policy reaches or
+  tracks force
+- **Week:** 1
+- **Date:** 2026-09-20
+- **Evidence:** [the run](#/week/1/run/Sep18_11-10-15_), 4096 environments, seed 1, TF32, forces from
+  iteration 8,000. Curves: [unifp_go2d1_training.png](week_01/figures/unifp_go2d1_training.png).
+  - **It completed cleanly.** 60,000 iterations, 5,898,240,000 policy steps, 143,461.8 s = **39.85
+    hours**, 301 checkpoints, **zero errors or NaN in 40 hours of log**, and **zero supervisor
+    restarts** — the process that started it was the one that finished it. Predicted 41 h from a
+    25-iteration benchmark (F-070); out by −2.8%. `model_60000.pt` loads, stores `iter = 60000`,
+    has 2,074,161 finite parameters and an 18-wide action head.
+  - **Learning is over early.** Mean return is 154.6 by iteration 6k–8k and 154.4 at 58k–60k.
+    Measuring only after the curriculum starts, so the comparison is like-for-like: 150.7 at
+    8k–10k against 154.4 at the end — **+3.7 return for 52,000 iterations, 35 hours and 87% of the
+    compute.**
+  - **The force curriculum costs tracking and never fully gives it back.** Implied tip L1 error
+    (from the tracking term; see Scope): ≥8.2 cm just before forces, ≥11.3 cm immediately after,
+    best ≥8.8 cm around iteration 48,800, ≥9.3 cm at the end.
+  - **A destabilisation at 55,000–57,500, twice, unexplained.** Return 157.1 → 139.0 → 127.3;
+    mean episode length 1001.9 → **929.0**, so episodes were terminating early (falls), having been
+    pinned at ~1000 for the previous 45,000 iterations; collision penalty −0.0142 → **−0.1432**, ten
+    times worse; value-function loss 0.027 → **0.190**; action noise std 0.664 → 0.730 as the
+    adaptive-KL schedule widened exploration in response. It partially recovers by 60,000 (return
+    155.4, episode length 1001.6) but does not return to the previous level. The learning rate did
+    **not** spike (1.0–1.5 × 10⁻⁵ throughout) and no curriculum stage changes after iteration 8,000,
+    so the trigger is not identified.
+  - **So the final checkpoint is not the best one.** By mean training return over the 200 iterations
+    preceding each checkpoint, `model_48800.pt` scores 157.5 against `model_60000.pt`'s 155.3
+    (−1.4%), with implied tip error 8.8 cm against 9.3 cm.
+- **Scope:** one seed, training-time scalars sampled at episode reset — the same class of number
+  [results/README.md](README.md#conventions) warns is not an evaluation. The "tip error" is a
+  Jensen lower bound inferred from `rew_tracking_ee_force_world` (weight 2.0, sigma 1.0), it is an
+  **L1** error summed over three axes, and its target is the **force-displaced** goal, so it mixes
+  position and force tracking and is not a reach error. It must not be compared with the 6.7–11.5 mm
+  of the Isaac Lab position-only policies (F-047): different task, different target, plus velocity
+  commands on rough terrain. Picking `model_48800` on training return is itself selection on the
+  training signal, which is exactly what F-019 refused to do for G1a.
+- **Implication:** three things, in order of how much they change the plan.
+  1. **The schedule is not justified by the curve.** Whatever budget the next UniFP-derived runs
+     get, 60,000 iterations is not it — the same return was reached by ~10,000. At 2.4 s/iteration
+     that turns a three-seed comparison from five days of GPU into about one. Any decision to keep
+     the full schedule now needs a reason beyond "it is upstream's default", and the default is a
+     base-class value the released B2Z1 config never overrides (F-070).
+  2. **"Train to the end, take the last checkpoint" is not safe here.** A run can destabilise after
+     45,000 stable iterations. Reporting any UniFP-derived policy must state which checkpoint and
+     how it was chosen.
+  3. **The evaluator is now the blocking piece.** There is no frozen-manifest equivalent for this
+     task, so neither the plateau, the checkpoint choice, nor the effect of the force curriculum can
+     be settled — only observed in training reward. That, not more training, is what the next work
+     on this should be.
+
+### F-073 — The Go2 and the D1 disagree about which way is up, and one Isaac Gym flag cannot satisfy both: every rendering of this robot before 2026-09-20 was wrong, and none of the physics was
+
+- **Status:** confirmed (both halves seen in the viewer, and the physics equivalence measured)
+- **Week:** 1
+- **Date:** 2026-09-20
+- **Evidence:** found by Lukas looking at the first policy rollout and saying the meshes were
+  sideways. `asset_options.flip_visual_attachments` is a single flag for a whole asset, but this
+  robot is merged from two sources with opposite mesh conventions:
+  - the Go2's `.dae` visual meshes are y-up and **need** the flip — without it the dog renders on
+    its side with its legs splayed flat;
+  - the D1's SolidWorks `.STL` meshes are already z-up and **must not** be flipped — with the flag
+    on, the dog is right and the arm lies on its side.
+  The port shipped with the flag off (the dog wrong), then on (the arm wrong). The fix is to give
+  each arm mesh a `_visflip` copy pre-rotated by the inverse of the flip, Rx(−90°): (x,y,z) →
+  (x,z,−y), and point only `<visual>` at it. `<collision>` keeps the original file.
+  **The physics is untouched, and that was measured rather than assumed:** loading the asset with
+  the flag on and off gives identical body masses and every body within **0.0000 mm** after a 2 s
+  settle. The Go2's collisions are all box/cylinder/sphere primitives, and although the D1's
+  collisions *are* meshes, the flag does not touch them.
+- **Scope:** an appearance fault in this port's asset, fixed in `unifp_go2d1/build_asset.py`. The
+  equivalence test is one 2 s settle under gravity with no actions, which is enough to show the
+  flag does not enter the physics pipeline, not a general claim about every Isaac Gym asset option.
+- **Implication:** **the 39.85-hour training run (F-072) is unaffected** — the policy never saw a
+  visual mesh. What is affected is evidence made of pictures: any screenshot or video of this task
+  taken before 2026-09-20 shows a robot in the wrong shape and should not be used or shown.
+  More generally, a merged robot inherits a mesh convention per source, and a per-asset flag is the
+  wrong shape of control for it — worth checking the first time this model is rendered in any new
+  simulator, because nothing errors and the numbers all stay right.
+
+### F-074 — First numbers off a trained Go2+D1 UniFP policy: 4.6 cm median tool-tip error undisturbed, 6.3 cm while being pushed, in a single clean rollout
+
+- **Status:** provisional (one rollout, one seed, one checkpoint, no held-out set, no baseline)
+- **Week:** 1
+- **Date:** 2026-09-20
+- **Evidence:** [playback](#/week/1/run/20260920T0945_play48800_forces) of `model_48800.pt` from
+  [the completed run](#/week/1/run/Sep18_11-10-15_), 1500 steps, one environment, randomisation and
+  observation noise off, external forces **on**. Discarding the first 100 steps of spawn transient,
+  tip-to-goal **L1** error over 1400 steps: median 5.9 cm overall, **4.6 cm in the 528 steps with no
+  force applied** and **6.3 cm in the 872 steps with a force commanded or measured**; p90 11.3 cm,
+  worst 28.0 cm. Base height median 29.4 cm against the 30 cm target (min 24.2, max 38.5). Force
+  commanded up to 9.6 N and measured at the gripper up to 8.1 N (the per-axis range is ±8 N, so a
+  three-axis command can exceed that in magnitude).
+- **Scope:** **one rollout of one checkpoint of one seed**, with randomisation and noise switched
+  off — the easiest conditions the task offers, and not the distribution the policy was trained on.
+  No zero-action baseline, no held-out episode set, no repetition. L1 over three axes, to the
+  **force-displaced** goal, so it is not a reach error. `model_48800` was picked on training return
+  (F-072), which is selection on the training signal. Nothing here is a gate result.
+- **Implication:** it is the first evidence that the policy does something — the training reward
+  alone could not say whether 9 cm meant "tracking loosely" or "not tracking". It also shows the
+  training-reward figure in F-072 (≥9.2 cm L1 lower bound) is a **population average under
+  randomisation, noise and pushes**, roughly twice the error of a clean rollout, so the two numbers
+  must not be quoted against each other. It does not move G1a or any other gate, and it will not
+  until the task has a frozen evaluator with a zero-action reference — still the blocking piece.

@@ -1,0 +1,18 @@
+{
+  "mode": "train",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "arguments": {
+    "num_envs": 64,
+    "iterations": 3,
+    "steps": null
+  },
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_status": "?? third_party/UniFP/\n?? unifp_go2d1/",
+  "articulation_mass_kg": 79.80227,
+  "stack": "isaacgym_preview4/unifp",
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "python legged_gym/scripts/train_b2z1posforce.py --task=b2z1_pos_force --headless --num_envs 64 --max_iterations 3",
+  "notes": "Upstream UniFP, unmodified, at 68847a070f88. Validates the Isaac Gym Preview 4 install."
+}
