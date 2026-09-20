@@ -1,0 +1,23 @@
+{
+  "mode": "eval",
+  "seed": 20260920,
+  "status": "finished",
+  "error": null,
+  "arguments": {
+    "num_envs": 50,
+    "iterations": null,
+    "steps": null
+  },
+  "git_commit": "dd67a41e37d900093438a28399f3c111f0e6ce90",
+  "git_status": "?? results/manifests/unifp_development.json\n?? unifp_go2d1/eval_manifest.py\n?? unifp_go2d1/evaluate.py\n?? unifp_go2d1/run_eval.py",
+  "articulation_mass_kg": 18.172,
+  "stack": "isaacgym_preview4/unifp",
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "/home/victor/D1Training/unifp_go2d1/run_eval.py --load_run Sep18_11-10-15_ --checkpoint 48800 --task=go2d1_pos_force --headless",
+  "notes": "Sep18_11-10-15_/model_48800.pt on development (50 episodes)",
+  "controller": "Sep18_11-10-15_/model_48800.pt",
+  "manifest": "unifp_development.json",
+  "manifest_sha256": "8bb8d2582469c8e160224d6661e1955a4836d031985882434af7edb52aa32aa0",
+  "schedule_mismatches": [],
+  "condition_mismatches": []
+}

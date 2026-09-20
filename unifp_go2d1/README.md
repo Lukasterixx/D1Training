@@ -26,6 +26,9 @@ from this repository's Isaac Lab model or scaled from upstream by hand.
 | `stop_training.sh` | stops training and supervisor deliberately (leaves the `STOP` file) |
 | `progress.py`, `watch_progress.sh` | live status readout: progress, ETA, curriculum, GPU, health |
 | `play_policy.py` | watch or trace a trained policy, with forces on and the camera following |
+| `eval_manifest.py` | frozen evaluation manifests: build, load, hash, condition check |
+| `evaluate.py` | run a manifest's episodes and summarise what the policy did |
+| `run_eval.py` | CLI for both: `build` a manifest, `eval` a checkpoint or the baseline |
 | `run_metadata.py` | writes the `run.json` the evidence record reads |
 
 Nothing is edited inside the clone by hand. `install.sh` is idempotent — change a file here and
@@ -144,6 +147,33 @@ gated on `env.global_steps`, which starts at 0 in a fresh process, so a play ses
 resumed training but lives in the play path too. `--forces` winds `global_steps` past the gate, the
 camera follows the robot, and `--out DIR` writes a `run.json` and `trace.csv` so a rollout can be
 recorded with `./dashboard.py record`.
+
+## Evaluating a policy
+
+```bash
+# freeze a set of episodes, recording the schedule each one receives
+python unifp_go2d1/run_eval.py build --role development --episodes 50 --seed 20260920 \
+    --task=go2d1_pos_force --headless
+
+# the baseline and a checkpoint on the same frozen set
+python unifp_go2d1/run_eval.py eval --manifest results/manifests/unifp_development.json \
+    --zero --task=go2d1_pos_force --headless
+python unifp_go2d1/run_eval.py eval --manifest results/manifests/unifp_development.json \
+    --load_run <run> --checkpoint 48800 --task=go2d1_pos_force --headless
+```
+
+An episode here cannot be stated the way the Isaac Lab task's can: this task *generates* its
+schedule as it runs (velocity commands on a timer, a goal trajectory, force pushes on their own
+intervals) through dozens of random draws. So the set is frozen by one seed and one environment
+count, and each episode carries a **digest of the schedule it actually received**, recomputed on
+every run — `schedule_mismatches` in the result is the check that the episodes are the same
+episodes. Two consequences worth knowing: episodes run in parallel, one per environment, so the
+environment count is part of the frozen conditions (the draws are batched); and termination is
+recorded but not acted on, so one episode's fall cannot shift the schedule of the next.
+
+The physics is **not** bitwise reproducible — GPU PhysX is not deterministic, and the same
+controller on the same manifest gives fall counts that differ by one and medians that move by
+about ±0.1 cm. Repeat any comparison finer than that. Results in F-075.
 
 ## What the task rewards
 

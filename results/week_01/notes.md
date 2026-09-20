@@ -3255,6 +3255,56 @@ reward in F-072, which is a population average under randomisation, noise and pu
 part is that it answers a question the training reward could not: the policy is tracking, not
 merely surviving.
 
+### 2026-09-20 — The policy evaluated: 2.6 cm against 26 cm for doing nothing, on episodes that prove they are the same episodes
+
+Built a frozen-manifest evaluator for the UniFP task — the piece F-072 and F-074 both said was
+blocking — and ran the zero-action baseline and two checkpoints through it (F-075).
+
+**Freezing an episode here is harder than on the Isaac Lab side, and the solution is worth
+recording.** The position-only task has one target per episode, so the manifest states it. This
+task *generates* a schedule as it runs: velocity commands on a 5 s timer, an end-effector goal
+trajectory, gripper force pushes on their own intervals, through dozens of random draws inside the
+environment. Restating all that in a manifest would mean reimplementing the environment's timing —
+a second source of truth that goes stale. So the set is frozen by one seed and one environment
+count, and each episode carries a **digest of the schedule it actually received**. Every run
+recomputes it. Every run reported `schedule_mismatches: []`, for the baseline and both
+checkpoints, so the episodes really are the same episodes rather than merely claimed to be.
+
+Two things had to be got right for that to hold. Episodes run **in parallel, one per environment**,
+because the environment draws its schedule in batches — which is why the environment count is part
+of the frozen conditions, not an implementation detail. And termination is **recorded but not acted
+on**, because a reset mid-batch would redraw one environment's commands and shift the stream for
+every episode after it; it also means the schedule is realised to full length rather than to
+whatever prefix a policy survived. A fallen robot's tracking numbers stop meaning anything, so
+metrics are cut at the fall.
+
+| | zero actions | model_48800 | model_60000 |
+| --- | --- | --- | --- |
+| falls, development / validation | 15 / 19 of 50 | **0 / 0** | **0 / 0** |
+| tip error, force-free, dev / val | 26.9 / 25.6 cm | **2.53 / 2.60 cm** | 2.99 / 2.99 cm |
+| unified tracking, dev / val | 32.2 / 33.0 cm | 3.06 / 3.05 cm | 3.35 / 3.42 cm |
+| force-estimator error, val | — | 1.22 N | 1.39 N |
+| base velocity error, dev | 0.393 m/s | 0.050 m/s | 0.055 m/s |
+
+**F-072's checkpoint call was made on training return alone, and it survives held-out episodes:**
+`model_48800` beats `model_60000` by 0.39–0.46 cm on both sets, against a run-to-run spread of
+about ±0.1 cm measured by repeating the same evaluation three times (2.53 / 2.58 / 2.65 cm). Real,
+and small.
+
+**Also worth knowing: this is not bitwise reproducible.** GPU physics is not deterministic, so the
+zero-action fall count was 16 building the manifest and 15 evaluating it — same seed, same
+controller. The schedule is exactly reproducible; the physics is not. Any comparison at the
+half-centimetre level needs repeats, which is why they were run.
+
+**What it still does not show.** One training seed, one training run — this measures this policy,
+not the method. Randomisation and observation noise are off, which is the easiest condition the
+task offers rather than the distribution it trained on. The force numbers are UniFP's simulated
+admittance, not measured contact force; there is no force sensor anywhere in this loop. No gate is
+defined for this task, so nothing here passes anything. The next two measurements are the same
+policy with randomisation and noise **on**, and a second training seed — and the shorter-schedule
+question from F-072 can now be settled by running 15,000 iterations and comparing on these same
+sets instead of arguing about it.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -3280,6 +3330,10 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-069](../findings.md): UniFP commands +/-60 N at the end effector; a D1 makes about 7 N at this reach, so
   the port runs at +/-8 N. Force tracking here is a few-newton problem (provisional -- arithmetic from
   published torque limits, no force measured).
+- [F-075](../findings.md): the trained policy on frozen episode sets -- 2.6 cm median tip error
+  against 26 cm for zero actions, 0 falls in 100 episodes against 15-19 in 50, and the checkpoint
+  training return preferred wins on held-out episodes too (confirmed; one training seed, quiet
+  conditions, no gate defined).
 - [F-074](../findings.md): first numbers off a trained policy -- 4.6 cm median tip L1 undisturbed,
   6.3 cm under force, in one clean rollout (provisional; one seed, one checkpoint, no baseline).
 - [F-073](../findings.md): the Go2 and the D1 disagree about which way is up and one Isaac Gym flag

@@ -1,0 +1,27 @@
+{
+  "id": "ev_repeat1",
+  "title": "Eval repeatability: model_48800 on development, run repeat1 of 3",
+  "notes": "Same manifest, same checkpoint, re-run to measure run-to-run spread under non-deterministic GPU physics.",
+  "week": 1,
+  "recorded_at": "2026-09-20T10:12:22+10:00",
+  "started_utc": "2026-09-20T00:06:35+00:00",
+  "source_dir": "/tmp/claude-1001/-home-victor-D1Training/898915fa-799f-498c-aedc-048f146d64bf/scratchpad/ev_repeat1",
+  "mode": "eval",
+  "seed": 20260920,
+  "status": "finished",
+  "error": null,
+  "num_envs": 50,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "dd67a41e37d900093438a28399f3c111f0e6ce90",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.172,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "episodes.csv",
+    "eval.json",
+    "run.json"
+  ]
+}

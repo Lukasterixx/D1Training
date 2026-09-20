@@ -2270,3 +2270,63 @@ result that changes a conclusion gets a new entry, and the old one is marked
   randomisation, noise and pushes**, roughly twice the error of a clean rollout, so the two numbers
   must not be quoted against each other. It does not move G1a or any other gate, and it will not
   until the task has a frozen evaluator with a zero-action reference — still the blocking piece.
+
+### F-075 — The trained Go2+D1 UniFP policy evaluated on frozen episode sets: 2.6 cm median tool-tip error against 26 cm for zero actions, no falls against 19 in 50, and the checkpoint training return preferred is the better one on held-out episodes too
+
+- **Status:** confirmed on two frozen 50-episode sets, one of them held out (single seed, single training run)
+- **Week:** 1
+- **Date:** 2026-09-20
+- **Evidence:** a frozen-manifest evaluator built for this task (`unifp_go2d1/eval_manifest.py`,
+  `evaluate.py`, `run_eval.py`) with manifests
+  [`unifp_development.json`](manifests/unifp_development.json) (`8bb8d258…`) and
+  [`unifp_validation.json`](manifests/unifp_validation.json) (`895ecd9d…`), 50 episodes of 20 s
+  each, randomisation and observation noise off, external forces **on**. Median over episodes of
+  the per-episode median:
+
+  | | zero actions | model_48800 | model_60000 |
+  | --- | --- | --- | --- |
+  | falls, development | 15 of 50 | **0** | **0** |
+  | falls, validation | 19 of 50 | **0** | **0** |
+  | tool-tip error, force-free, development | 26.9 cm | **2.53 cm** | 2.99 cm |
+  | tool-tip error, force-free, validation | 25.6 cm | **2.60 cm** | 2.99 cm |
+  | unified tracking, development | 32.2 cm | 3.06 cm | 3.35 cm |
+  | unified tracking, validation | 33.0 cm | 3.05 cm | 3.42 cm |
+  | force-estimator error, validation | — | 1.22 N | 1.39 N |
+  | base velocity error, development | 0.393 m/s | 0.050 m/s | 0.055 m/s |
+
+  Runs: development [zero](#/week/1/run/20260920T100239_development_zero),
+  [48800](#/week/1/run/20260920T100350_development_48800),
+  [60000](#/week/1/run/20260920T100451_development_60000); validation
+  [zero](#/week/1/run/20260920T101004_validation_zero),
+  [48800](#/week/1/run/20260920T101104_validation_48800),
+  [60000](#/week/1/run/20260920T101205_validation_60000).
+  - **The policy is doing the task, by a wide margin over doing nothing.** Zero actions fall in
+    30–38% of episodes and sit ~26 cm from the goal in the rest; the policy never falls in 100
+    episodes across both sets and tracks to 2.6 cm.
+  - **F-072's checkpoint call holds up on held-out episodes.** `model_48800` was picked purely on
+    training return, and it beats `model_60000` by 0.39–0.46 cm on both sets. Re-running the same
+    evaluation three times gives 2.53 / 2.58 / 2.65 cm, so the run-to-run spread is about
+    ±0.1 cm and the gap is three to four times it. That is a real difference, and a small one.
+  - **The frozen schedule verified itself.** Every run reported `schedule_mismatches: []` —
+    the goal, velocity and force schedule each episode received was identical to the one recorded
+    in the manifest, for the baseline and for both checkpoints. The episodes really are the same
+    episodes.
+- **Scope:** **one training seed and one training run**, so this measures this policy, not the
+  method. Randomisation and noise are off — the easiest conditions the task offers, not the
+  training distribution. "Tool-tip error" is Euclidean to the commanded goal on steps with no force
+  commanded or applied; "unified tracking" is to the force-displaced target the reward actually
+  uses. The force numbers are UniFP's simulated admittance, **not measured contact force** — there
+  is no force sensor in this loop, and `force realised` is meaningless for the fallen baseline
+  (a robot on its back is far from the goal, and the projection times a 200 N/m stiffness produces
+  tens of newtons that mean nothing). GPU physics is not bitwise deterministic, so identical
+  re-runs differ: the fall count for zero actions was 16 when the manifest was built and 15 when it
+  was evaluated. No gate is defined for this task, so this passes nothing.
+- **Implication:** the plateau, checkpoint choice and force behaviour in F-072 and F-074 are now
+  measured rather than inferred, and the two can be compared: the clean-rollout figure in F-074
+  (4.6 cm median L1) and this (2.6 cm median Euclidean) are the same policy under the same
+  conditions in different metrics, while the ≥9.2 cm from training reward is a population average
+  under randomisation and noise — roughly four times looser than the quiet-conditions number, which
+  is the size of the gap between "training reward" and "evaluation" for this task. It also gives
+  the shorter-schedule question from F-072 a way to be settled: a 15,000-iteration run can now be
+  compared with this one on the same frozen sets rather than argued about. The obvious next
+  measurements are the same policy **with** randomisation and noise on, and a second training seed.
