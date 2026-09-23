@@ -36,9 +36,15 @@ def main():
     pre.add_argument("--follow", dest="follow", action="store_true", default=True)
     pre.add_argument("--no-follow", dest="follow", action="store_false")
     pre.add_argument("--steps", type=int, default=0, help="0 = run until killed")
+    pre.add_argument("--zero-actions", action="store_true",
+                     help="discard the policy's actions and hold the default pose. The baseline "
+                          "every reach number is read against, and -- since the Isaac Lab port "
+                          "has the same switch -- the one comparison between the two stacks that "
+                          "involves no policy at all, just gravity against the same PD gains.")
     pre.add_argument("--command", nargs=3, type=float, metavar=("VX", "VY", "WZ"),
                      help="hold a fixed base velocity command instead of the sampled one")
-    pre.add_argument("--report-every", type=int, default=50)
+    pre.add_argument("--report-every", type=int, default=50,
+                     help="0 prints nothing per step (useful when --out is doing the recording)")
     pre.add_argument("--out", metavar="DIR",
                      help="write a run directory (run.json + trace.csv) so the rollout can be "
                           "recorded with ./dashboard.py record")
@@ -97,6 +103,8 @@ def main():
     with torch.no_grad():
         for step in range(total):
             actions = policy(obs, info)
+            if known.zero_actions:
+                actions = torch.zeros_like(actions)
             if known.command:
                 env.commands[:, 0], env.commands[:, 1], env.commands[:, 2] = known.command
             obs, _rew, _done, _extras = env.step(actions.detach())
@@ -105,7 +113,8 @@ def main():
                 base = env.root_states[0, :3].tolist()
                 env.set_camera([base[0] + 1.6, base[1] - 1.6, base[2] + 0.9], base)
 
-            if trace is not None or step % known.report_every == 0:
+            reporting = known.report_every > 0 and step % known.report_every == 0
+            if trace is not None or reporting:
                 tip = env.ee_pos[0]
                 goal = env.curr_ee_goal_cart_world[0]
                 err = torch.abs(tip - goal)
@@ -122,7 +131,7 @@ def main():
                             f"{env.root_states[0, 2]:.5f},{f_cmd.norm():.4f},"
                             f"{f_meas.norm():.4f},{est_mag:.4f}\n")
 
-            if step % known.report_every == 0:
+            if reporting:
                 line = (f"[{step:6d}] tip err L1 {err.sum() * 100:5.1f} cm "
                         f"(xyz {err[0] * 100:4.1f} {err[1] * 100:4.1f} {err[2] * 100:4.1f})"
                         f"  base z {env.root_states[0, 2]:.3f} m"
@@ -143,9 +152,11 @@ def main():
             num_envs=env.num_envs, steps=known.steps,
             urdf=os.path.join(UNIFP, env_cfg.asset.file),
             command=" ".join(sys.argv),
-            notes=f"policy rollout from {args.load_run}/model_{args.checkpoint}.pt, "
+            notes=("zero actions (no policy), " if known.zero_actions else
+                   f"policy rollout from {args.load_run}/model_{args.checkpoint}.pt, ") +
                   f"forces {'on' if known.forces else 'off'}, randomisation off",
-            extra={"checkpoint": args.checkpoint, "load_run": args.load_run,
+            extra={"checkpoint": None if known.zero_actions else args.checkpoint,
+                   "load_run": args.load_run, "zero_actions": bool(known.zero_actions),
                    "forces": bool(known.forces), "trace": os.path.basename(trace_path)})
         print(f"[play] wrote {known.out}", flush=True)
 
