@@ -3449,6 +3449,443 @@ camera centred 14.3 px higher than the one it modelled. It says nothing about th
 [F-070](../findings.md#f-070).
 
 
+### 2026-09-19 — Combiner-box scene with the cup demo's resting dog
+
+Added `demos/combiner/run_combiner_demo.sh` and a procedural USD enclosure based
+on Lukas's reference photo. The cabinet has a hollow shell, a left-hinged physical
+door, a vertical pull handle replacing the keyhole, an electrical warning, six
+cable glands, a short stand, and simple internal fuse blocks. Dimensions and
+masses are explicitly assumed: 360 × 400 × 160 mm cabinet, 100 mm above the floor,
+8 kg enclosure and 0.6 kg door. The hinge is passive, with 0–110° travel and no latch.
+
+Both demos now call `demos/common/resting.py` for the existing folded-leg pose,
+0.18 m spawn height, `unitree` leg actuators, and measured `d1_servo` arm model.
+The cup run's source snapshots include this shared code. The combiner's arm holds
+its zero target; autonomous grasping and door opening have not been implemented.
+
+The first scene and every `R` reset sample a reproducible placement: cabinet centre
+0.62–0.70 m from the robot spawn, bearing ±45°, facing the dog with ±10° yaw jitter.
+`--sweep_deg 180` allows the full circle. `O`/`C` directly set the hinge state for
+inspection. The overview follows the sampled bearing so it sees the door face.
+See [the demo guide](../../demos/combiner/README.md) for launch and batch commands.
+
+Validation commands and outcomes:
+
+- `python3 -m unittest discover -s demos/combiner/tests -v`: **12/12 passed**, including
+  seeded placement over 1,000 samples, full-circle coverage, input validation,
+  shared robot setup, two rigid bodies with a passive hinge, outward door motion,
+  grasp clearance and preserved joint anchors under translated/rotated references.
+  The same 12 tests also passed with Isaac's bundled USD 24.5; system USD is 26.8.
+- `/home/lukas/miniconda3/envs/env_isaaclab/bin/python -m unittest demos.cup.tests.test_pick_demo`:
+  **77/77 passed** (13.710 s). These are CPU geometry/planning/sequence regressions.
+- `./demos/combiner/run_combiner_demo.sh --help`, Python compilation, shell syntax
+  and `git diff --check` passed. A standalone `generated/combiner_demo/combiner_box.usda`
+  was built successfully using Isaac's USD libraries without launching Kit.
+
+**No simulation run was launched:** `nvidia-smi` cannot communicate with the
+NVIDIA driver and `/dev/nvidia*` is absent in this session. The physical reset,
+settling, contacts, complete door-swing clearance and Isaac rendered appearance
+are **not validated**. No reaching or hardware claim follows from these CPU checks.
+The pending GPU check is
+`./demos/combiner/run_combiner_demo.sh --headless --episodes 5 --capture`, followed
+by viewer inspection of `R`, `O` and `C`. No decision gate changed.
+
+### 2026-09-19 — Revision: rotating lever handle and latch on the combiner
+
+Lukas requested an ordinary door handle that must rotate before the door opens.
+The vertical pull handle described in the preceding entry is replaced by a
+horizontal 105 mm lever on a separate rigid link, rotating downward through
+0–60° about the spindle. A 1.2 Nm/rad return spring targets its horizontal rest
+position. Its geometry, 0.12 kg mass, damping and latch thresholds are assumptions.
+
+`demos/combiner/latch.py` checks the **measured** handle angle before every physics
+step. The door is constrained to 0–0.5° until the lever reaches 30°. Releasing
+the handle while open keeps the door free; closing within 0.5° with the handle
+below 10° re-latches it. This is a joint-limit latch approximation, not a simulated
+bolt/cam mechanism, and requires the demo runtime in addition to the USD asset.
+
+`H` holds/releases the lever, `O` requests opening only after the latch releases,
+`C` closes, and `F` releases the inspection drives. Door inspection now uses
+bounded torque rather than pose writes. Only reset sets joint poses directly.
+The default seated dog and seeded placement are retained. Logs include measured
+door/handle angles, latch transitions and accepted/refused inspection commands.
+
+Validation: `python -m unittest discover -s demos/combiner/tests -v` using
+`env_isaaclab` with its bundled USD libraries: **22/22 passed**, including
+release/re-latch hysteresis, return while open, reset cleanup, no bypass from a
+handle target alone, no inspection pose writes, and arbitrary joint ordering.
+USD checks now cover three rigid bodies, two joints and a grasp point following
+both rotations. No simulator run was launched: `nvidia-smi` still reports the
+driver unavailable. Contact-driven handle operation, callback timing in live
+PhysX, spring response and latch constraint strength remain **not validated**.
+The pending live inspection is `./demos/combiner/run_combiner_demo.sh`, then
+`O` (must stay shut), `H`, `O`, `H`, `C`, `O` (must stay shut again). No gate changed.
+
+### 2026-09-19 — The combiner scene carries the cup pick's wrist RealSense and brings up the reach console
+
+Lukas asked for the combiner demo to include the RealSense in the sim and open the D1 console as the
+cup demo does. Done by sharing the cup's pieces rather than copying them:
+
+- **Camera.** `demos/cup/pick_demo/scene.py` now has `wrist_camera_cfg(camera, mount)`, taken out of
+  `make_pick_cfg` unchanged, so the pick and the combiner render through the same camera config. The
+  combiner scene adds it and the D435 case (`camera_body_cfg`). `demos/combiner/wrist_camera.py` resolves
+  the model and mount the pick's way: preset `d435` by default (datasheet-derived, not a calibration) and the
+  saved `wrist_mount.json` (aligned by eye, not measured). It accepts the pick's `--camera`,
+  `--calibration`, `--mount` and `--no_camera_body` flags. `run.json` `camera` records both, with the model's
+  and the rendered intrinsics side by side (F-070). The Kit app now always starts with cameras enabled
+  (before, only with `--capture`), and `--capture` also writes `wrist_NNN.png`.
+- **Console.** The block of `run_pick_demo.sh` that starts `d1_ui/server.py --mode sim` beside the
+  simulator, opens the tab once the feed answers and stops the console on exit is now
+  `demos/cup/d1_ui/beside_sim.sh`, sourced by both launchers. The cup launcher's behaviour is unchanged.
+  The combiner starts the console with `--detect none`: there is no cup, and it keeps YOLO off the
+  shared GPU (`D1_UI_ARGS='--detect all'` overrides). The combiner launcher used to `exec` Python, which
+  would have skipped the EXIT trap and orphaned the console; it now runs Python as a child.
+  The runner publishes joints, status and wrist frames through `SimFeed` (source `combiner_demo`).
+
+Checks:
+
+- `python -m unittest discover -s . -p "test_*.py"` in `env_isaaclab`: **361 run, OK, 4 skipped**.
+  Of these, new: `demos/combiner/tests/test_wrist_camera.py` (8), covering flags and file checks
+  before launch, preset/calibration/mount provenance, and a `SimFeed` round trip showing the console
+  reads the runner's joints, status and frame; and `BesideSimTests` (2) in `demos/cup/tests/test_d1_ui.py`,
+  covering the argument split and no `exec` in either launcher. `test_wrist_camera` also passes on the
+  system Python (8/8).
+- The console path without Isaac: `console_start combiner --detect none` against a stand-in `SimFeed`
+  on spare ports (feed 18765, console 18090). The console followed it (`sim.source = combiner_demo`,
+  status passed through) and streamed the frames at 14.2 fps with the detector off. It drew a published
+  Joint2 of 0.3 rad as 17.19 servo degrees, and the launcher's exit stopped it with no listener left.
+- Live, read-only: a viewer run of the new launcher started at 11:00:51, not by this session. It has
+  **not been recorded** here and was still `running` when read:
+  `logs/combiner_demo/20260919T010052_747395Z_combiner_seed42`. Its `run.json` has preset d435 at 640×480,
+  fx = fy = 616.18 and principal point (320, 240), with identical rendered intrinsics (the preset is
+  already centred with square pixels, so F-070's gap does not arise with it). It also has the saved mount
+  and the case asset `generated/pick_demo/d435_b9501e40b983.usd`. The console on :8090 followed
+  `combiner_demo`, with the rendered wrist camera at 10.5 fps, detector off and legs live.
+
+**The wrist camera does not see the box while the arm rests.** A frame read from that console
+showed only the floor grid and the background. By FK of the zero pose with the saved mount, the optical
+axis is level and straight ahead (heading 0°, elevation 0°) from 0.726 m up (live base height 0.0855 m
+plus the 0.08 m weld, with the base assumed level). That run's first box was at bearing −42.7°. Projecting
+points over the whole cabinet for 2,000 default placements (seeded, 0.62–0.70 m, ±45°) put **none** of it
+in the 640×480 image. At best the cabinet reached 54 px below the bottom edge: its top is at 0.50 m and
+the vertical half-angle is 21.3°. So this shows the RealSense is in the scene, rendering and reaching the
+console. It does not show the camera seeing the box, the handle or depth, and nothing about the opening
+task or the real camera. The camera needs an arm pose that looks down at the box, which is not written.
+No gate changed.
+
+### 2026-09-19 — AprilTag-guided lever push on the combiner, and how much torque the arm can turn
+
+Lukas asked to go with the AprilTag method, lower the handle's spring so the arm can turn it, and use that as
+a test of the most torque the robot can turn a handle with. Done in simulation, with the dog lying down and the
+arm alone; the plan's B path (`RealSense + AprilTags → handle pose → programmed sequence`) with the IK
+reference standing in for the learned controller.
+
+**What changed.**
+
+- **Latch at 45°, not 30°.** Lukas's requirement (the handle must turn 45°). `H` now holds the lever at 50°.
+- **Spring sized by torque, with a preload.** The return spring targets −15°, below the 0° stop, so the lever
+  rests preloaded against the stop as a real handle does. It is set by the torque it needs at 45°
+  (`--handle_torque_nm`): stiffness = T₄₅ / 60°, preload T₄₅/4, 1.25·T₄₅ at the 60° stop. Default lowered from
+  the first version's 0.94 N·m at 45° (1.2 N·m/rad about 0°) to **0.4 N·m**. Assumed, not a measured handle.
+  The lever's own weight helps the push by 0.029 N·m at horizontal (collider-volume centre of mass).
+- **AprilTag tag36h11 id 0, 60 mm black square**, on the door above the handle (`demos/combiner/apriltag.py`),
+  drawn as flat cells like the label. Detected with OpenCV's `DICT_APRILTAG_36h11`, pose by `solvePnP`
+  IPPE_SQUARE through the rendered intrinsics (F-070). Not the AprilTag C library `apriltag_ros` wraps.
+- **The push** (`demos/combiner/press.py`, `sequence.py`, `turn_run.py`): search stops at 0, ±20, ±40, ±60°,
+  a close look straight at the tag, then the gripper comes in level, jaws shut, fingers across the top of the
+  lever 80 mm from the spindle, and follows the lever's arc to a commanded 52° at 15°/s, 4 mm inside the
+  lever, holds 2 s, and backs out. Grasping was not used: with the lever 0.13 m above the mount and ~0.5 m out,
+  a near-vertical tool pose does not solve on the CPU model.
+
+**CPU planning check (before any simulator run).** Over 300 seeded default placements, the tag is fully in
+view from at least one search stop, the close look solves and the full push plans in **300 of 300**. The static
+ceiling (`press.press_capacity`: the largest push along the lever's normal at 80 mm for which gravity plus J^T F
+stays inside the published limits) is **0.63–0.87 N·m at 45°, median 0.74**. The elbow (Joint3) binds near
+level and the base yaw (Joint1) once the push turns sideways. The old 0.94 N·m spring was beyond it.
+
+**Runs** (all `./demos/combiner/run_combiner_demo.sh --no_console --headless --turn --capture --episodes 1
+--seed 42 --ui_feed_port 0`, plus the flags shown; `--mount_calibration sim`, the default, locates the tag
+with the camera pose the renderer used, a perfect hand-eye calibration):
+
+- [Smoke, 0.4 N·m, seed-42 box at bearing −43°](#/week/1/run/20260919T015408_437274Z_combiner_seed42): tag
+  found from the −40° stop at 13.4 s (3 of 3 frames, 0.41 m, 95 px, 0.03–0.06 px reprojection); close look at
+  0.25 m (149 px); lever held at **52.05°**, latch released at 21.3 s, done at 28.6 s. The arm joint torques
+  in this run are Isaac Lab's `applied_torque`, which read five of six joints at their limit: at 4000 N·m/rad
+  that estimate saturates for any error (F-017). Later runs trace PhysX's `get_dof_projected_joint_forces`.
+- [Sweep, box straight ahead at 0.66 m, 0.3–1.2 N·m](#/week/1/run/20260919T015634_664610Z_combiner_seed42)
+  (`--box_range 0.66 0.66 --sweep_deg 0 --yaw_jitter_deg 0 --handle_torque_nm 0.3 0.45 0.6 0.7 0.8 0.9 1.0 1.2`)
+  and [its 1.05–1.15 N·m refinement](#/week/1/run/20260919T020150_725196Z_combiner_seed42).
+- [Sweep, seed-42 box at bearing −43°, 0.4–1.1 N·m](#/week/1/run/20260919T020325_562869Z_combiner_seed42)
+  (`--handle_torque_nm 0.4 0.6 0.7 0.8 0.9 1.0 1.1`).
+
+| Spring at 45° (N·m) | Straight ahead: held / peak (°) | Bearing −43°: held / peak (°) |
+| --- | --- | --- |
+| 0.3 | 52.9 / 52.9 | — |
+| 0.4 | — | 52.1 / 52.1 |
+| 0.45 | 52.5 / 52.5 | — |
+| 0.6 | 51.9 / 51.9 | 50.6 / 50.6 |
+| 0.7 | 51.7 / 51.7 | 49.6 / 49.6 |
+| 0.8 | 50.8 / 50.9 | 49.6 / 49.7 |
+| 0.9 | 49.3 / 49.4 | **46.0** / 46.1 |
+| 1.0 | 48.3 / 48.5 | 43.4 / 45.5 (latch released, not held) |
+| 1.05 | 47.3 / 47.5 | — |
+| 1.1 | 46.3 / 47.0 | 33.2 / 43.3 (latch not released) |
+| 1.15 | **45.2** / 46.5 | — |
+| 1.2 | 37.8 / 45.8 (latch released, not held) | — |
+
+"Held" is the mean over the last 0.5 s of the 2 s hold; "peak" the highest angle while pushing or holding.
+**The most the arm held at 45° or past: 1.15 N·m straight ahead, 0.9 N·m at bearing −43°**; the latch
+released momentarily at 1.2 and 1.0. Every one of the 19 attempts found the tag and completed the sequence.
+[Figure](figures/combiner_torque_sweep.png) (`results/week_01/figures/combiner_torque_sweep.py`, from the
+recorded runs).
+
+Why the sim beats the 0.65–0.70 N·m static ceilings for these two placements: the force agrees, the lever
+arm does not. At the limit the fingers push 10.6 N (straight ahead) and 8.5–8.9 N (−43°) against the model's
+8.7 and 8.2 N ceilings, and Joint1 reads 100% of its 3.3 N·m in PhysX from 0.8 N·m on, as the model says. But
+the ratio of the arm's torque on the lever to the finger force grows from 65–90 mm at light springs to
+**105–108 mm** under load: the fingers slide out to the end of the 105 mm lever, which is 30% more torque per
+newton than the planned 80 mm. At the springs that fail it falls back to ~85 mm as the lever slips back. In the 10 attempts that
+recorded it (the refinement and the −43° sweep), the base moved at most 0.34 mm: the dog is not shoved.
+
+**What this shows.** In simulation, with the D1's published torque limits and stiff implicit drives, the lying
+dog's arm can find the tag, locate the lever to within 2.6 mm, and push a handle that needs about 0.9–1.15 N·m at 45°,
+depending on where the box stands, with the base yaw joint as the limit. The 0.4 N·m default is 35–45% of that.
+**What it does not show.** Anything about the real arm: its servos' stiffness under load, their real torque
+limits and the zero points are unmeasured (F-007, F-023), and the real handle's torque is still unmeasured (the
+checklist item stays open). Part of the capacity comes from the fingers sliding to the lever's end, which on a
+real handle is also how they slip off it; the pusher is not a designed tool. One attempt per spring at two
+placements, no repeats, no noise. Perception used the simulator's own camera pose (a perfect hand-eye
+calibration) and a tag the renderer draws perfectly; see F-072 for its accuracy. Door opening is not attempted.
+Not the P0–P4 learned controller: the arm runs the IK reference.
+
+Tests: `python -m unittest discover -s . -p "test_*.py"` in `env_isaaclab`: **373 run, OK, 4 skipped** (12 new:
+`demos/combiner/tests/test_turn.py` — the tag pattern against OpenCV's dictionary, pose recovery from rendered
+views, the plan following the lever's arc to 2 mm and 2°, the static model, 12 seeded placements planned, and
+the whole sequence against rendered tags on the CPU; plus a spring-resize test). The combiner tests also pass on
+the system Python (42, 5 skipped for torch). The position-only task, robot config and weld are unchanged, so
+`run_position_only.py verify` was not rerun. No gate changed. Recorded as [F-071](../findings.md#f-071) and
+[F-072](../findings.md#f-072).
+
+**Launcher default (later the same day).** At Lukas's request, `./demos/combiner/run_combiner_demo.sh` with no
+arguments now runs `--turn --handle_torque_nm 0.8` in the viewer: 0.8 N·m sits inside what the arm held at both
+swept placements (50.8° and 49.6°) but above the static model's 0.63–0.87 N·m for some default placements, so an
+off-axis box may fall short. Any argument hands the choice back (`--seed 42` alone is the resting scene). Checked
+with a new test that runs the launcher against stub `conda` and `python` (`RunnerTests`); no simulator was launched
+for it, so the viewer path of `--turn` (keys, realtime pacing) has still not run live.
+
+### 2026-09-19 — The arm grips the combiner's handle and pulls the door open; the tag in the console's camera window
+
+Lukas asked for two things: the AprilTag detection drawn on the D1 console's wrist-camera window, and the arm
+to grab the handle in the pincher and pull the door open instead of pressing the lever down.
+
+**Tag overlay in the console.** `demos/cup/d1_ui/camera_feed.py` now runs the combiner's tag detector
+(`demos/combiner/apriltag.py`, generalised to any tag36h11 id and to working without intrinsics) on every
+frame the console shows, beside YOLO, and draws each tag's outline in magenta with its id and range. The
+range needs the camera's K. The RealSense source reports it when it opens, and the combiner's simulator feed
+now publishes the rendered K in its `camera_info` (F-070). Without K the console draws the outline and id
+only. `server.py --apriltag` turns it on (`--apriltag-size`, default 60 mm). The combiner launcher passes it,
+and `run_ui.sh`'s deploy now copies the three combiner files the detector needs to the dog. Checked end to end
+on a headless run with the console beside it
+([run](#/week/1/run/20260919T034728_459940Z_combiner_seed42)). The console's `/state` reported
+`tag 0, 0.419 m, 91.5 px` and its `/camera.jpg` carried the outline and label
+([frame](figures/combiner_console_tag_overlay.jpg)). Three new console tests: outline and range with K, outline
+without, off unless asked. The real RealSense path has not been run.
+
+**Grip, turn and pull** (`demos/combiner/pull.py`; `--method pull`, now the default; `--method press` keeps
+F-071's push). The jaws close across the lever 90 mm from the spindle. The tool pose then rides the handle's
+two joints:
+
+1. turn the lever to a commanded 52°;
+2. crack the door 10° with the lever still down;
+3. let the lever back up while holding it;
+4. pull the door to `--door_deg` (60) or as far as the arm reaches, keeping 15% of every joint's torque
+   spare against gravity;
+5. open the jaws and back off.
+
+A bar can be gripped from any side, so the planner tries 5 approach pitches × 2 wrist rolls and keeps the
+grasp that opens the door furthest among those whose static turning ceiling clears the handle's torque by
+10%. From the lying dog, pitches of 70° and more (from above) never solve. 50° solves at 11 of 12 test
+placements, and on the CPU the chosen plans open the door 42–80° (median 56°) with a 0.73–0.97 N·m ceiling.
+
+What had to change after the first runs:
+
+- **The arm's joints settle short of the plan.** Joint2 settles 0.0135 rad below its target and others by
+  0.002–0.005 rad, with the drive target equal to the command. That put the jaw centre 7–9 mm off the bar,
+  of which perception was 2 mm. Before closing, the sequence now adds the shortfall it reads from joint
+  feedback to its targets (`align`, one step). The residual was 0.0002–0.0008 rad in all 17 grasps since,
+  and the same bias rides the rest of the motion. This is the sag F-015 saw, measured now with force drives.
+- **The jaws.** They shut to the real jaws' 2 mm, past the URDF's 17.2 mm stop (the pick's F-063
+  convention). Turning pushes the bar along the jaw axis (cos 40° = 77% of the push for the grasp chosen),
+  and the URDF's two independent finger drives give way that way. At 0.4 N·m the second finger was pushed
+  fully open in 2 of 3 attempts. Squeezing 2 mm inside the bar instead, to keep both drives below their
+  limit, did worse. Coupling the fingers with a PhysX mimic joint, as the real single servo would, froze
+  Joint7_2 at 0 and sent the arm diverging (Joint4 11 rad off) in this Isaac Lab, so it was removed. The
+  fingers stay independent, and the grip's limit below is measured with them.
+- **A blocked approach.** One random placement's first grasp (pitch 60°) stalled on the way in with Joint3
+  0.31 rad short. The trace's new per-link contact column shows an open finger (Link7_1) touching at 2.1 N.
+  The planner models the trunk, not every contact, so the sequence now backs off to the close look and
+  takes the next grasp (up to 3).
+
+**Runs** (`./demos/combiner/run_combiner_demo.sh --no_console --headless --turn [--capture] --ui_feed_port 0
+--seed 42 --box_range 0.66 0.66 --sweep_deg 0 --yaw_jitter_deg 0 --handle_torque_nm …` unless noted; every
+attempt used grasp pitch 40°, roll −1):
+
+- [0.8 N·m, first try](#/week/1/run/20260919T025713_072958Z_combiner_seed42): lever stalled at 40.0°, Joint1
+  at 3.3 N·m, latch held, grip lost (218 mm). Static ceiling for that grasp: 0.78 N·m.
+- [0.4 N·m](#/week/1/run/20260919T025920_590898Z_combiner_seed42): lever 48.7°, latch released, door peak 50.4°,
+  held 44.1°.
+- [0.4 N·m, jaws 2 mm inside the bar](#/week/1/run/20260919T030442_493102Z_combiner_seed42) and
+  [again with finger diagnostics](#/week/1/run/20260919T030701_557631Z_combiner_seed42): lever 44.1° and 44.2°,
+  latch held, one finger pushed fully open. The squeeze was reverted.
+- [0.1 N·m](#/week/1/run/20260919T030923_828206Z_combiner_seed42): lever to its 60° stop, door held 48.3°.
+- [PhysX-mimic jaws](#/week/1/run/20260919T031419_103242Z_combiner_seed42): failed on the first search move,
+  Joint4 11.1 rad off. Abandoned. A standalone check (a scratch script, not recorded) showed Joint7_2 frozen at 0.
+- Sweeps with alignment, straight ahead ([0.2–0.8 N·m](#/week/1/run/20260919T031732_047629Z_combiner_seed42)) and
+  at the seed-42 box, bearing −43° ([0.2–0.4 N·m](#/week/1/run/20260919T032242_084031Z_combiner_seed42), no box
+  flags):
+
+| Spring at 45° (N·m) | Straight ahead: lever peak / door held open | Bearing −43°: lever peak / door held open |
+| --- | --- | --- |
+| 0.2 | 49.3° / 47.5° | 52.2° / 52.2° |
+| 0.3 | 48.7° / 46.3° | 50.6° / 49.0° |
+| 0.4 | 47.6° / 46.2° | 49.2° / 50.2° |
+| 0.5 | 43.3° / latch held | — |
+| 0.6 | 42.6° / latch held | — |
+| 0.8 | 37.4° / latch held | — |
+
+- Four random placements at 0.3 N·m (`--episodes 4 --seed 7`, no box flags):
+  [3 of 4](#/week/1/run/20260919T032546_983560Z_combiner_seed7) before the fallback (the blocked 60° grasp), then
+  [4 of 4](#/week/1/run/20260919T034312_785457Z_combiner_seed7) with it (one needed the second grasp). Door held
+  open at 58.7°, 37.2°, 37.0° and 48.8°.
+- [Beside the console](#/week/1/run/20260919T034728_459940Z_combiner_seed42), 0.3 N·m: door held 46.3° (the
+  overlay check above).
+
+Pictures: [lever turned in the jaws](figures/combiner_grip_pull_lever_turned.png),
+[door pulled open](figures/combiner_grip_pull_door_open.png).
+
+**What this shows.** In simulation the lying dog's arm finds the tag, grips the lever, turns it past 45° and
+pulls the door open 37–59° against a spring needing up to 0.4 N·m at 45°:
+
+- at 0.2–0.4 N·m at both swept placements;
+- at 0.3 N·m, 10 of 11 attempts over 6 placements. The one failure was the blocked approach the fallback now
+  handles, and all 5 attempts since the fallback succeeded.
+
+The door ends up to 19° short of the plan, or up to 6° past it where it swings on. The jaws slide 20–75 mm
+along the bar while pulling.
+
+**What it does not show.**
+- **The grip, not the arm, is the limit.** It fails from 0.5 N·m, while the static ceiling for that grasp
+  is 0.78 and the push turned 1.15 (F-071).
+- **The grip model is the URDF's two independent fingers**, not the real single servo, and the successful
+  attempts too ended with one finger pushed open (jaw pair shifted 16–37 mm): the bar was hooked, not
+  pinched.
+- **Not validated:** the real gripper's force and coupling, and the real handle's torque (still unmeasured).
+- **Not the real system:** the door is a light, undamped proxy; perception used the perfect simulated
+  hand-eye calibration; the arm runs the IK reference, not the learned controller.
+
+**Launcher default.** With no arguments, `run_combiner_demo.sh` now runs the grip-and-pull at **0.3 N·m**, not
+the 0.8 set for the push, which the grip cannot turn.
+
+Tests: `python -m unittest discover -s . -p "test_*.py"` in `env_isaaclab`: **385 run, OK, 4 skipped** (12 new:
+the pull plan's arc and door swing against the asset's own geometry, grasp choice by handle torque, the hold
+margin, the whole grip-turn-pull sequence and its fallback on the CPU, the console's tag overlay, and the
+launcher's 0.3 N·m default). Combiner tests also pass on the system Python (5 skipped for torch). No gate
+changed. Recorded as [F-073](../findings.md#f-073) and [F-074](../findings.md#f-074).
+
+### 2026-09-19 — The grip-and-pull made faster, and the grasps that hold the lever
+
+Lukas asked for the arm to finish the task as fast as possible. Two things came up first.
+
+**Most of the time was the sequence's own pacing, not the arm's speed limit.** In a successful straight-ahead
+attempt (29.7 s), point-to-point moves ran at the simulated firmware's ceiling. The simulated firmware
+restarts its plan at every 10 Hz setpoint (F-045), so long moves averaged about 0.7 rad/s. The rest was the
+sequence's own settings:
+- the lever streamed at a fixed 15°/s and the door at 10°/s;
+- 1.0 s and 1.5 s holds, two 0.8 s alignment waits;
+- 1.5 s each to shut and open jaws that opened 77 mm for an 18 mm bar. The simulated fingers close at about
+  23 mm/s, so they were still closing when the turn began.
+
+The fixed 15°/s was also too fast in places. Through the turn the pitch-40 grasp passes near the wrist's
+Joint5 = 0 singularity, and Joint4 swung 2.1 rad for 52° of lever, trailing its command by 0.4 rad.
+
+**Lukas's viewer run showed the grip is not reliable at 0.3 N·m.**
+[That run](#/week/1/run/20260919T043704_225852Z_combiner_seed42) (launched by Lukas from
+`run_combiner_demo.sh`, recorded here) opened the door at only 5 of 9 placements. The earlier
+"10 of 11" did not hold up. All 4 failures took a grasp other than pitch 40°, roll −1: pitch 20/+1 three
+times, pitch 60/−1 once. The planner had ranked candidates by how far the door would open.
+
+**Changes** (`pull.py`, `sequence.py`, `press.py`):
+- **Arcs.** Each is streamed at the pace its joints allow (`arc_times`): at most 0.6 rad/s per joint, up to
+  45°/s of lever and 30°/s of door.
+- **Holds.** 0.3 s after the turn and 0.5 s with the door open; the alignment wait is 0.4 s.
+- **Jaws.** They open 41 mm (`jaw_open_m` 0.012); gripping gets 0.8 s and letting go 0.6 s.
+- **Grasp choice.** The grasps that have held (`PROVEN_GRASPS`) go first: pitch 40/−1, then pitch 50/−1.
+  Pitch 50 is new to the candidate list.
+- **Search.** The stops run 0, −20, −40, −60, then +20, +40, +60°, not alternating sides. A stop is left
+  after 3 empty frames instead of 8.
+- **Close look.** Before a grip it turns the camera about its view toward the coming grasp (`look_rolls_deg`).
+- **`--grasp PITCH ROLL`** forces one grasp.
+
+**Runs** (`./demos/combiner/run_combiner_demo.sh --no_console --headless --turn --ui_feed_port 0
+--handle_torque_nm 0.3 --seed S --episodes N`, extra flags noted):
+
+| Run | Placements | Door opened | Start to letting go |
+| --- | --- | --- | --- |
+| [Lukas's viewer run, before](#/week/1/run/20260919T043704_225852Z_combiner_seed42) | seed 42, 9 | 5 of 9 | 28.9–49.2 s |
+| [Arcs, holds, jaws, pitch-40 first](#/week/1/run/20260919T054947_045656Z_combiner_seed42) | seed 42, 9 | 7 of 9 | 19.9–35.8 s |
+| [`--grasp 50 -1`](#/week/1/run/20260919T055829_532757Z_combiner_seed42) | seed 42, 9 | 6 of the 6 that plan | — |
+| [Final default](#/week/1/run/20260919T060339_055356Z_combiner_seed42) | seed 42, 9 | **9 of 9** | 18.1–24.8 s |
+| [Final default, fresh placements](#/week/1/run/20260919T061317_145569Z_combiner_seed2026) | seed 2026, 8 | **8 of 8** | 17.7–25.0 s |
+
+- **Arcs, holds, jaws, pitch-40 first.** Pitch 40 then covered placements 7 and 8, which failed in Lukas's
+  run. At 1 and 4 it does not plan, and the fallback, pitch 20/+1, lost the bar again.
+- **`--grasp 50 -1`.** Pitch 50 plans at 6 of the 9 placements and opened the door at all 6. The 3 where it
+  does not plan are placements where pitch 40 does.
+- **Final default runs.** 12 attempts took pitch 40, 5 took pitch 50, and none needed a second grasp. The
+  door was held open at 42–63°. The lever peaked at 48.1–50.1° with pitch 40 and at 45.5–47.4° with pitch 50;
+  the latch releases at 45°.
+
+Median phase times in the final runs, seed 42 / seed 2026:
+- search 5.5 / 2.7 s (most seed-42 boxes sit at −40°);
+- close look 2.3 / 2.5 s;
+- onto the lever 3.0 / 3.4 s;
+- align and grip 1.7 s;
+- turn and hold 3.3 / 3.5 s;
+- crack and let the lever up 1.8 / 2.5 s;
+- pull and hold 2.8 / 3.5 s;
+- let go 0.6 s.
+
+At the 7 placements that both the arcs-holds-jaws run and the final run opened, the median fell from 23.9 to
+20.4 s. Most of that was the search order: the search median fell from 10.1 to 5.5 s. The camera roll moved
+the onto-the-lever median only from 3.2 to 3.0 s.
+
+The record over every grip-and-pull attempt at 0.2–0.4 N·m excludes the two that squeezed inside the bar, a
+grip command since reverted. Pitch 40/−1 opened the door 39 of 39 times (lever peak 47.6–52.2°); pitch 50/−1,
+11 of 11 (45.5–47.9°); pitch 20/+1, 0 of 5; pitch 60/−1, 0 of 1. On the CPU model, over 100 random default
+placements (seed 11), pitch 40 plans at 57 and pitch 50 at 37 of the rest. At 6 neither plans, and the
+planner falls back to pitch 60/−1 or 0/+1, which have no successful record.
+
+**What this shows.** In simulation, choosing the grasp by record rather than by door reach made the
+grip-and-pull reliable at the default placements tried: 17 of 17 at 0.3 N·m, including 8 placements not used
+to pick the grasps. The whole task now takes 18–25 s, not 29–49 s. The faster arcs did not cost the grip
+anything: slip and lever angles are as before.
+
+**What it does not show.**
+- **Why these grasps hold.** The planner's static model cannot see it, and roll +1 at 40–50° and pitch 0/80
+  were never tried.
+- **Margin.** Pitch 50 turns the lever only 0.5–2.9° past the release. The faster arcs were not tried at
+  0.4 N·m.
+- **The real arm's speed.** Whether the real firmware restarts on a repeated identical setpoint, as the
+  model assumes, is unmeasured, and the pick's hardware loop re-sends targets every cycle. If it does not
+  restart, sending each target once would make long moves up to ~40% faster. Timing one long waypoint sent
+  once against the same waypoint re-sent at 10 Hz settles it.
+- **The real jaws' closing speed.**
+- **The real handle and gripper.**
+
+Tests: combiner tests updated and added: grasp ranking by record, joint-paced arcs, the rolled close look, the
+narrower jaw opening, `--grasp` parsing. `python -m unittest discover -s . -p "test_*.py"` in `env_isaaclab`: **387 run, OK, 4 skipped**; `tests/test_evidence.py` on the system Python OK. Recorded as [F-075](../findings.md#f-075) and
+[F-076](../findings.md#f-076); F-073's scope narrowed to those two grasps.
+
 ## Results
 
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
@@ -3468,6 +3905,12 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-069](../findings.md): the pick needs no floor height at all -- with every pose placed from the arm's own mount, the same 11 placements are picked identically to the run that was told where the floor was, 28 of 28 picks succeed without a close scan, and the fingertips stop inside the cup rather than above a stated plane (confirmed in simulation; not run on the arm).
 - [F-065](../findings.md): a cup too wide for the jaws is picked up by its wall -- a simulated pinch of a
   90 mm cup lifts it 11.9 cm, and only because the pads may shut past the URDF's stop (confirmed, simulation only).
+- [F-071](../findings.md): in simulation the lying dog's arm pushes the combiner lever to 45° and holds it against a spring needing up to 1.15 N·m there (box straight ahead) or 0.9 N·m (bearing −43°); base yaw saturates first, and the fingers slide to the lever's end (confirmed in simulation only).
+- [F-072](../findings.md): the door's AprilTag locates the lever to within 2.6 mm (median 1.5) from a close look at 0.25 m, 19 of 19 attempts, with a perfect simulated hand-eye calibration (confirmed in simulation only).
+- [F-073](../findings.md): gripping the lever, the lying dog's arm turns it past 45° and pulls the door open 37–59° against springs up to 0.4 N·m (10 of 11 attempts at 0.3, the failure now handled by a grasp fallback); from 0.5 the independent simulated fingers give way first (confirmed in simulation only; scope narrowed by F-075 to the grasps that hold).
+- [F-074](../findings.md): the simulated arm settles short of its joint targets -- Joint2 by 0.0135 rad at the lever, 7–9 mm at the jaws -- and one step of feedback correction takes it under 0.001 rad (confirmed in simulation).
+- [F-075](../findings.md): only two grasps hold the lever in simulation, both wrist roll −1: pitch 40° (39 of 39) and 50° (11 of 11). Every other grasp taken lost the bar (0 of 6). Ranked first, they opened the door at 17 of 17 placements at 0.3 N·m, where the door-first ranking managed 5 of 9. About 6% of default placements reach neither (confirmed in simulation only).
+- [F-076](../findings.md): the grip-and-pull finishes in 18–25 s, down from 29–49 s. What remains is mostly joint speed: the firmware model's ~0.7 rad/s moves, the wrist swinging through the turn, and the search (confirmed in simulation only; the firmware's restart on a repeated setpoint is unmeasured).
 - [F-004](../findings.md): primary implementation choice (provisional until the end of Week 2).
 - [F-005](../findings.md): stock Isaac Lab Go2 motor model versus Unitree's measured envelope (confirmed, model comparison).
 - [F-006](../findings.md): what unitree_rl_lab/MaiRo offers for sim-to-real, and what it does not show (provisional).

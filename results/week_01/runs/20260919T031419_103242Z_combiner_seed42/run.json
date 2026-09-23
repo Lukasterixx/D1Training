@@ -1,0 +1,415 @@
+{
+  "mode": "combiner_turn",
+  "status": "completed",
+  "seed": 42,
+  "arguments": {
+    "headless": true,
+    "device": "cuda:0",
+    "seed": 42,
+    "box_range": [
+      0.66,
+      0.66
+    ],
+    "sweep_deg": 0.0,
+    "yaw_jitter_deg": 0.0,
+    "door_angle_deg": 0.0,
+    "handle_angle_deg": 0.0,
+    "episodes": 1,
+    "episode_s": 5.0,
+    "capture": true,
+    "realtime": false,
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/combiner_demo",
+    "turn": true,
+    "method": "pull",
+    "door_deg": 60.0,
+    "handle_torque_nm": [
+      0.4
+    ],
+    "mount_calibration": "sim",
+    "attempt_s": 90.0,
+    "settle_s": 2.0,
+    "camera": "d435",
+    "calibration": null,
+    "mount": null,
+    "camera_body": true,
+    "ui_feed_port": 0
+  },
+  "episodes": [
+    {
+      "episode": 0,
+      "attempt": 0,
+      "handle_torque_nm": 0.4,
+      "position": [
+        0.66,
+        0.0,
+        0.0
+      ],
+      "yaw_deg": 180.0,
+      "handle_position_env_m": [
+        0.499,
+        -0.05499999999999997,
+        0.30000000000000004
+      ],
+      "initial_door_angle_deg": 0.0,
+      "initial_handle_angle_deg": 0.0,
+      "latch_transitions": [
+        {
+          "time_s": 0.0,
+          "latched": true
+        }
+      ],
+      "inspection_events": [],
+      "outcome": "failed",
+      "failure": "search +0 deg: no arrival (worst joint error 11.119 rad; per joint [0.095, 0.004, 0.04, 11.119, 0.628, 2.364])",
+      "simulated_s": 9.18,
+      "phase_times_s": {
+        "moving": 0.5,
+        "failed": 6.14
+      },
+      "found_by": null,
+      "events": [
+        {
+          "t": 0.5,
+          "state": "settle",
+          "event": "settled",
+          "search_stops_deg": [
+            0.0,
+            20.0,
+            -20.0,
+            40.0,
+            -40.0,
+            60.0,
+            -60.0
+          ]
+        },
+        {
+          "t": 0.5,
+          "state": "moving",
+          "event": "move",
+          "to": "search +0 deg",
+          "waypoints": 1
+        },
+        {
+          "t": 6.14,
+          "state": "moving",
+          "event": "failed",
+          "reason": "search +0 deg: no arrival (worst joint error 11.119 rad; per joint [0.095, 0.004, 0.04, 11.119, 0.628, 2.364])"
+        }
+      ],
+      "looks": [],
+      "box_truth_b": [
+        [
+          -0.99249,
+          -0.00097,
+          0.12229,
+          0.66488
+        ],
+        [
+          0.00114,
+          -1.0,
+          0.00134,
+          -0.00115
+        ],
+        [
+          0.12229,
+          0.00147,
+          0.99249,
+          -0.16824
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_calibration": "sim",
+      "base_moved": {
+        "position_mm": 0.2,
+        "yaw_deg": 0.01
+      },
+      "method": "pull",
+      "latch_released": false,
+      "latch_released_t_s": null,
+      "reached_45_deg": false,
+      "directory": "attempt_000",
+      "final_door_angle_deg": 2.1116561342120492e-11,
+      "final_handle_angle_deg": -1.7341305211974846e-07,
+      "final_latched": true,
+      "robot_root_position_w_m": [
+        -0.02046583965420723,
+        0.0002619145961944014,
+        0.08567211776971817
+      ]
+    }
+  ],
+  "scope": "AprilTag-guided grasp of the lever, 45 degree turn and door pull in simulation, lying dog, arm only (IK reference); the latch releases at 45 degrees",
+  "robot_usd_uncoupled": "/home/lukas/D1Training/logs/combiner_demo/20260919T031419_103242Z_combiner_seed42/assets/go2_d1.usd",
+  "asset": {
+    "usd_path": "/home/lukas/D1Training/logs/combiner_demo/20260919T031419_103242Z_combiner_seed42/assets/combiner_box.usda",
+    "geometry": {
+      "width": 0.36,
+      "height": 0.4,
+      "depth": 0.16,
+      "bottom": 0.1,
+      "wall": 0.006,
+      "door_thickness": 0.012,
+      "door_gap": 0.004,
+      "handle_projection": 0.065,
+      "handle_length": 0.105,
+      "handle_radius": 0.009,
+      "handle_grasp_offset": 0.07,
+      "handle_limit_deg": 60.0,
+      "handle_release_deg": 45.0,
+      "handle_reset_deg": 10.0,
+      "handle_hold_deg": 50.0,
+      "spring_rest_deg": -15.0,
+      "spring_reference_deg": 45.0,
+      "tag_id": 0,
+      "tag_size": 0.06,
+      "tag_centre_y": 0.11,
+      "tag_centre_z": 0.41,
+      "tag_standoff": 0.0006,
+      "latch_capture_deg": 0.5,
+      "open_limit_deg": 110.0
+    },
+    "hinge_joint": "DoorHinge",
+    "handle_joint": "HandleJoint",
+    "handle_frame": "Handle/HandleGrasp",
+    "door_mass_kg": 0.6,
+    "enclosure_mass_kg": 8.0,
+    "handle_mass_kg": 0.12,
+    "handle_spring": {
+      "torque_at_45_deg_nm": 0.4,
+      "stiffness_nm_per_rad": 0.38197,
+      "rest_deg": -15.0,
+      "preload_at_stop_nm": 0.1,
+      "torque_at_stop_60_deg_nm": 0.5,
+      "drive_effort_limit_nm": 0.6,
+      "lever_weight_nm_at_horizontal": 0.029,
+      "latch_release_deg": 45.0,
+      "source": "assumed; lowered from 0.94 N\u00b7m at 45 deg so the D1 can turn it (Lukas, 2026-09-19)"
+    },
+    "apriltag": {
+      "family": "tag36h11",
+      "id": 0,
+      "size_m": 0.06,
+      "centre_enclosure_m": [
+        0.09660000000000002,
+        0.11,
+        0.41
+      ],
+      "pose_enclosure": [
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0966
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.11
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.41
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "assumptions": "Proxy geometry/masses; spring-return lever; runtime joint-limit latch, not a bolt simulation"
+  },
+  "robot_usd": "/home/lukas/D1Training/logs/combiner_demo/20260919T031419_103242Z_combiner_seed42/assets/go2_d1_coupled_jaws.usda",
+  "posture": {
+    "legs": {
+      "FR_hip_joint": 0.0,
+      "FL_hip_joint": 0.0,
+      "RR_hip_joint": -0.2,
+      "RL_hip_joint": 0.2,
+      ".*_thigh_joint": 1.36,
+      ".*_calf_joint": -2.65
+    },
+    "spawn_height_m": 0.18
+  },
+  "arm_model": {
+    "actuator": "d1_servo",
+    "trajectory": "measured",
+    "latency": "estimated"
+  },
+  "camera": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration",
+    "model_source": "preset d435 (datasheet-derived, not a calibration)",
+    "mount": {
+      "schema": "d1training.wrist_mount/1",
+      "created_utc": "2026-09-19T03:14:25+00:00",
+      "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+      "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+      "xyz_m": [
+        -0.061,
+        0.034,
+        0.067
+      ],
+      "rpy_deg": [
+        0.0,
+        0.0,
+        -90.0
+      ],
+      "pose_link6": [
+        [
+          0.0,
+          1.0,
+          0.0,
+          -0.061
+        ],
+        [
+          -1.0,
+          0.0,
+          -0.0,
+          0.034
+        ],
+        [
+          -0.0,
+          0.0,
+          1.0,
+          0.067
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measured": false,
+      "method": "unstated",
+      "source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+      "camera": ""
+    },
+    "mount_source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+    "mount_file": "/home/lukas/D1Training/demos/cup/pick_demo/assets/mounts/wrist_mount.json",
+    "body_drawn": true,
+    "body_asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "source": "/home/lukas/D1Training/pick_demo/assets/realsense/d435_housing.ply",
+      "source_sha256": "a1a4abe241d5d55ebdb55ac544944da4b8fa76942c24b50c2e94da6785251641",
+      "colour": [
+        0.62,
+        0.63,
+        0.65
+      ],
+      "roughness": 0.35,
+      "clearance_tan": 0.9,
+      "transform": [
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.0325
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0043
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "builder": 1,
+      "triangles": 229148,
+      "triangles_removed": 2038,
+      "vertices": 154149,
+      "bounds_optical_m": [
+        [
+          -0.0125,
+          -0.0125,
+          -0.020755
+        ],
+        [
+          0.077414,
+          0.0125,
+          0.0043
+        ]
+      ],
+      "frame": "colour optical: x right, y down, z forward, origin at the colour sensor",
+      "note": "Intel's d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro's offsets, with the colour lens element removed so a pinhole camera at the sensor plane has a clear aperture. Visual only."
+    },
+    "intrinsics_model": [
+      616.18,
+      0.0,
+      320.0,
+      0.0,
+      616.18,
+      240.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "intrinsics_rendered": [
+      616.18,
+      0.0,
+      320.0,
+      0.0,
+      616.18,
+      240.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "ui_feed": null,
+  "turn": {
+    "detector": "OpenCV ArUco DICT_APRILTAG_36h11 + solvePnP IPPE_SQUARE, rendered intrinsics",
+    "method": "pull",
+    "door_target_deg": 60.0,
+    "mount_calibration": "sim",
+    "handle_torques_nm": [
+      0.4
+    ],
+    "springs": [
+      {
+        "torque_at_45_deg_nm": 0.4,
+        "stiffness_nm_per_rad": 0.38197,
+        "rest_deg": -15.0,
+        "preload_at_stop_nm": 0.1,
+        "torque_at_stop_60_deg_nm": 0.5,
+        "drive_effort_limit_nm": 0.6,
+        "lever_weight_nm_at_horizontal": 0.029,
+        "latch_release_deg": 45.0,
+        "source": "assumed; lowered from 0.94 N\u00b7m at 45 deg so the D1 can turn it (Lukas, 2026-09-19)"
+      }
+    ]
+  }
+}

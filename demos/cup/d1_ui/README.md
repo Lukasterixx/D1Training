@@ -8,8 +8,9 @@ into a Cartesian target for the real hardware.
 
 The console works out which one it is looking at before anything else:
 
-1. **A simulator is publishing on this PC** (`./demos/cup/run_pick_demo.sh` or `./run_sim.sh`; both start the feed in
-   `demos/cup/d1_ui/sim_feed.py` on localhost:8765). This is **sim mode**: the page draws the simulator's arm, fingers
+1. **A simulator is publishing on this PC** (`./demos/cup/run_pick_demo.sh`, `./demos/combiner/run_combiner_demo.sh`
+   or `./run_sim.sh`; each starts the feed in `demos/cup/d1_ui/sim_feed.py` on localhost:8765, and the first two
+   also start this console beside them through `beside_sim.sh`). This is **sim mode**: the page draws the simulator's arm, fingers
    and legs, and the camera window shows the rendered wrist RealSense. SEND, PARK, RELEASE and LIVE are
    disabled on the page and refused by the server; clicking the sphere still previews the IK.
 2. **Otherwise, on the dog** (the arm's NIC `enP8p1s0` exists): **hardware mode**, everything below.
@@ -40,6 +41,10 @@ leave it is remembered in this browser). It shows the wrist camera with YOLO's b
   finds (colour, 640x480 at 30 fps).
 - Detector: the pick demo's stock `generated/yolo/yolo11s-seg.pt`, on the GPU when there is one. Only
   cups are boxed by default: `--detect cup,bottle`, `--detect all`, or `--detect none` for frames only.
+- AprilTags: `--apriltag` outlines tag36h11 tags in magenta with their id, and their range when the camera's
+  intrinsics are known (the RealSense's reported profile, or the rendered K a simulator publishes, as the
+  combiner does). `--apriltag-size` is the black square's edge (default 60 mm, the combiner door's tag). The
+  detector is `demos/combiner/apriltag.py`, which the dog deploy copies.
   `--camera none` turns the window off; `--camera-fps` caps the rate (15).
 - It degrades rather than fails, and says why in the window: no pyrealsense2 or no camera, no frames; no
   ultralytics, frames without boxes.

@@ -452,16 +452,26 @@
     $('camsrc').title = c.source || '';
     $('camfps').textContent = fresh && c.fps ? `${fmt(c.fps, 0)} fps` : '';
     const foot = $('camdet');
-    foot.title = c.detector ? `detector: ${c.detector}` : '';
+    foot.title = [c.detector ? `detector: ${c.detector}` : '', c.tag_detector ? `AprilTag: ${c.tag_detector}` : '']
+      .filter(Boolean).join('\n');
+    let html;
     if (!c.detector_ready) {
-      foot.textContent = c.detector ? `YOLO ${c.detector}` : 'no detector';
+      html = esc(c.detector ? `YOLO ${c.detector}` : 'no detector');
     } else {
       const dets = c.detections || [];
-      foot.innerHTML = (dets.length
+      html = (dets.length
         ? dets.map((d) => `<span class="hit">${esc(d.label)} ${fmt(d.confidence, 2)}</span>`).join(' · ')
         : `YOLO: no ${esc((c.targets || ['objects']).join('/'))} detected`) +
         (c.detect_ms !== null && c.detect_ms !== undefined ? ` · YOLO ${fmt(c.detect_ms, 0)} ms` : '');
     }
+    if (c.tags_enabled) {
+      const tags = c.tags || [];
+      html += ' · ' + (tags.length
+        ? tags.map((t) => `<span class="tag">tag ${esc(t.id)}${t.range_m === null || t.range_m === undefined
+          ? '' : ' ' + fmt(t.range_m, 2) + ' m'}</span>`).join(' · ')
+        : 'no AprilTag in view');
+    }
+    foot.innerHTML = html;
   }
 
   // ------------------------------------------------------------ live state

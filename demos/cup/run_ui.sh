@@ -183,7 +183,7 @@ need_dog() {
 
 deploy() {
   say "deploying to $HOST:$REMOTE_DIR"
-  ssh "$HOST" "mkdir -p '$REMOTE_DIR'/{demos/cup/d1_ui/static/vendor,demos/cup/pick_demo/assets/realsense,position_only,generated/yolo,d1_arm/meshes,description/meshes/go2}"
+  ssh "$HOST" "mkdir -p '$REMOTE_DIR'/{demos/cup/d1_ui/static/vendor,demos/cup/pick_demo/assets/realsense,demos/combiner,position_only,generated/yolo,d1_arm/meshes,description/meshes/go2}"
   # The server's import closure, plus the geometry the page draws. The dog keeps the repository's layout,
   # so `demos.cup.d1_ui.server` finds its neighbours there exactly as it does here.
   scp -q d1_ik.py d1_hardware.py "$HOST:$REMOTE_DIR/"
@@ -196,6 +196,9 @@ deploy() {
   # The camera window's detector: the pick demo's YOLO wrapper and weights (the weights only once).
   scp -q demos/cup/pick_demo/__init__.py demos/cup/pick_demo/camera.py demos/cup/pick_demo/perception.py \
          demos/cup/pick_demo/camera_body.py demos/cup/pick_demo/grasp.py "$HOST:$REMOTE_DIR/demos/cup/pick_demo/"
+  # The camera window's AprilTag outlines (--apriltag): the combiner's detector and the tag's geometry.
+  scp -q demos/combiner/__init__.py demos/combiner/apriltag.py demos/combiner/geometry.py \
+         "$HOST:$REMOTE_DIR/demos/combiner/"
   # The mount editor's camera model. camera_body reads it with trimesh, which the dog does not carry --
   # there it costs the live clearance warning, while the page draws the mesh itself.
   scp -q demos/cup/pick_demo/assets/realsense/d435_housing.ply "$HOST:$REMOTE_DIR/demos/cup/pick_demo/assets/realsense/"

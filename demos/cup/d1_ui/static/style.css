@@ -70,6 +70,7 @@ body.sim .arm-switch { opacity: .55; }
 .camwin-foot { padding: 4px 8px; font: 11px/1.35 var(--mono); color: var(--dim); border-top: 1px solid var(--line);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .camwin-foot .hit { color: var(--ok); }
+.camwin-foot .tag { color: #e040e0; }
 .camwin.collapsed .camwin-body, .camwin.collapsed .camwin-foot { display: none; }
 .camwin.collapsed { resize: none; }
 

@@ -1068,6 +1068,11 @@ def main() -> int:
                     help="auto: the simulator's wrist camera in sim mode, the RealSense on hardware.")
     ap.add_argument("--detect", default="cup",
                     help="Comma-separated COCO labels to box, or 'all'. 'none' shows frames without YOLO.")
+    ap.add_argument("--apriltag", action="store_true",
+                    help="Outline tag36h11 AprilTags in the camera window, with their range when the camera's "
+                         "intrinsics are known (the combiner box's door carries one).")
+    ap.add_argument("--apriltag-size", type=float, default=0.06, metavar="M",
+                    help="Black-square edge of the tags, for their range (default: the combiner's 60 mm).")
     ap.add_argument("--yolo-weights", default=None, help="Ultralytics weights (default: the pick demo's).")
     ap.add_argument("--yolo-device", default="auto", help="auto, cpu or cuda:N.")
     ap.add_argument("--camera-fps", type=float, default=15.0, help="Cap on frames detected and streamed.")
@@ -1144,7 +1149,8 @@ def main() -> int:
         weights = args.yolo_weights or camera_feed.DEFAULT_WEIGHTS
         factory = None if targets == ("none",) else (
             lambda: camera_feed.make_yolo(weights, device=args.yolo_device))
-        camera = camera_feed.CameraPipeline(source, factory, targets=targets, max_fps=args.camera_fps)
+        camera = camera_feed.CameraPipeline(source, factory, targets=targets, max_fps=args.camera_fps,
+                                            tag_size_m=args.apriltag_size if args.apriltag else None)
 
     _MOUNT_ARGS.update(file=args.pick_mount, pos=tuple(args.pick_mount_pos), pitch_deg=args.pick_mount_pitch_deg)
     pick_cfg = build_pick_cfg(args, mode, camera)

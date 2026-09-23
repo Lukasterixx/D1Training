@@ -1,0 +1,2071 @@
+{
+  "mode": "combiner_turn",
+  "status": "completed",
+  "seed": 42,
+  "arguments": {
+    "headless": true,
+    "device": "cuda:0",
+    "seed": 42,
+    "box_range": [
+      0.66,
+      0.66
+    ],
+    "sweep_deg": 0.0,
+    "yaw_jitter_deg": 0.0,
+    "door_angle_deg": 0.0,
+    "handle_angle_deg": 0.0,
+    "episodes": 1,
+    "episode_s": 5.0,
+    "capture": true,
+    "realtime": false,
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/combiner_demo",
+    "turn": true,
+    "method": "pull",
+    "door_deg": 60.0,
+    "handle_torque_nm": [
+      0.4
+    ],
+    "mount_calibration": "sim",
+    "attempt_s": 90.0,
+    "settle_s": 2.0,
+    "camera": "d435",
+    "calibration": null,
+    "mount": null,
+    "camera_body": true,
+    "ui_feed_port": 0
+  },
+  "episodes": [
+    {
+      "episode": 0,
+      "attempt": 0,
+      "handle_torque_nm": 0.4,
+      "position": [
+        0.66,
+        0.0,
+        0.0
+      ],
+      "yaw_deg": 180.0,
+      "handle_position_env_m": [
+        0.499,
+        -0.05499999999999997,
+        0.30000000000000004
+      ],
+      "initial_door_angle_deg": 0.0,
+      "initial_handle_angle_deg": 0.0,
+      "latch_transitions": [
+        {
+          "time_s": 0.0,
+          "latched": true
+        }
+      ],
+      "inspection_events": [],
+      "outcome": "done",
+      "failure": null,
+      "simulated_s": 31.080000000000002,
+      "phase_times_s": {
+        "moving": 0.5,
+        "detect": 2.56,
+        "refine": 4.84,
+        "at_handle": 9.64,
+        "grip": 9.66,
+        "turn": 11.18,
+        "turn_hold": 14.66,
+        "crack": 15.68,
+        "unturn": 16.7,
+        "pull": 20.18,
+        "open_hold": 25.0,
+        "let_go": 26.52,
+        "done": 28.04
+      },
+      "found_by": "search +0 deg",
+      "events": [
+        {
+          "t": 0.5,
+          "state": "settle",
+          "event": "settled",
+          "search_stops_deg": [
+            0.0,
+            20.0,
+            -20.0,
+            40.0,
+            -40.0,
+            60.0,
+            -60.0
+          ]
+        },
+        {
+          "t": 0.5,
+          "state": "moving",
+          "event": "move",
+          "to": "search +0 deg",
+          "waypoints": 1
+        },
+        {
+          "t": 2.56,
+          "state": "moving",
+          "event": "arrived",
+          "at": "search +0 deg",
+          "error_rad": 0.0089
+        },
+        {
+          "t": 2.86,
+          "state": "detect",
+          "event": "tag seen",
+          "look": "search +0 deg",
+          "range_m": 0.419,
+          "side_px": 91.5,
+          "reprojection_px": 0.066
+        },
+        {
+          "t": 3.02,
+          "state": "detect",
+          "event": "tag seen",
+          "look": "search +0 deg",
+          "range_m": 0.419,
+          "side_px": 91.5,
+          "reprojection_px": 0.062
+        },
+        {
+          "t": 3.18,
+          "state": "detect",
+          "event": "tag seen",
+          "look": "search +0 deg",
+          "range_m": 0.419,
+          "side_px": 91.5,
+          "reprojection_px": 0.02
+        },
+        {
+          "t": 3.18,
+          "state": "detect",
+          "event": "tag located",
+          "found_by": "search +0 deg",
+          "box_position_b": [
+            0.669,
+            -0.0027,
+            -0.1691
+          ]
+        },
+        {
+          "t": 3.18,
+          "state": "moving",
+          "event": "move",
+          "to": "close look",
+          "waypoints": 1
+        },
+        {
+          "t": 4.84,
+          "state": "moving",
+          "event": "arrived",
+          "at": "close look",
+          "error_rad": 0.0096
+        },
+        {
+          "t": 5.16,
+          "state": "refine",
+          "event": "tag seen",
+          "look": "close look",
+          "range_m": 0.247,
+          "side_px": 149.5,
+          "reprojection_px": 0.091
+        },
+        {
+          "t": 5.32,
+          "state": "refine",
+          "event": "tag seen",
+          "look": "close look",
+          "range_m": 0.247,
+          "side_px": 149.5,
+          "reprojection_px": 0.053
+        },
+        {
+          "t": 5.48,
+          "state": "refine",
+          "event": "tag seen",
+          "look": "close look",
+          "range_m": 0.247,
+          "side_px": 149.5,
+          "reprojection_px": 0.105
+        },
+        {
+          "t": 5.48,
+          "state": "refine",
+          "event": "tag refined",
+          "shift": {
+            "position_mm": 4.25,
+            "rotation_deg": 0.876
+          }
+        },
+        {
+          "t": 5.48,
+          "state": "refine",
+          "event": "grasp planned",
+          "pitch_deg": 40.0,
+          "roll": -1,
+          "door_final_deg": 58.0,
+          "static_ceiling_at_45_deg_nm": 0.783,
+          "notes": [
+            "door opened to 58 deg, where the arm stops reaching",
+            "chose pitch 40 deg, roll -1 of 10 candidates (7 failed, 3 strong enough for the handle)"
+          ]
+        },
+        {
+          "t": 5.48,
+          "state": "moving",
+          "event": "move",
+          "to": "onto the lever, jaws open",
+          "waypoints": 4
+        },
+        {
+          "t": 9.64,
+          "state": "moving",
+          "event": "arrived",
+          "at": "onto the lever, jaws open",
+          "error_rad": 0.0137
+        },
+        {
+          "t": 9.66,
+          "state": "grip",
+          "event": "shutting the jaws on the lever",
+          "gripper_m": -0.0016
+        },
+        {
+          "t": 11.18,
+          "state": "turn",
+          "event": "turning the lever",
+          "to_deg": 52.0
+        },
+        {
+          "t": 15.68,
+          "state": "crack",
+          "event": "cracking the door open",
+          "to_deg": 10.0
+        },
+        {
+          "t": 16.7,
+          "state": "unturn",
+          "event": "letting the lever back up"
+        },
+        {
+          "t": 20.18,
+          "state": "pull",
+          "event": "pulling the door open",
+          "to_deg": 58.0
+        },
+        {
+          "t": 26.52,
+          "state": "let_go",
+          "event": "letting go of the handle"
+        },
+        {
+          "t": 28.06,
+          "state": "done",
+          "event": "done"
+        }
+      ],
+      "looks": [
+        {
+          "t": 2.86,
+          "state": "detect",
+          "image": "frames/000_002.9s_detect.png",
+          "detections": [
+            {
+              "tag_id": 0,
+              "range_m": 0.4189,
+              "side_px": 91.5,
+              "reprojection_px": 0.066,
+              "corners_px": [
+                [
+                  445.79,
+                  166.31
+                ],
+                [
+                  538.7,
+                  165.57
+                ],
+                [
+                  534.27,
+                  256.61
+                ],
+                [
+                  443.47,
+                  257.43
+                ]
+              ]
+            }
+          ],
+          "camera_model_vs_sim": {
+            "position_error_mm": [
+              -0.0,
+              0.0,
+              -0.0
+            ],
+            "rotation_error_deg": 0.0
+          }
+        },
+        {
+          "t": 3.02,
+          "state": "detect",
+          "image": "frames/001_003.0s_detect.png",
+          "detections": [
+            {
+              "tag_id": 0,
+              "range_m": 0.4188,
+              "side_px": 91.5,
+              "reprojection_px": 0.062,
+              "corners_px": [
+                [
+                  445.74,
+                  166.42
+                ],
+                [
+                  538.61,
+                  165.56
+                ],
+                [
+                  534.23,
+                  256.73
+                ],
+                [
+                  443.39,
+                  257.45
+                ]
+              ]
+            }
+          ],
+          "camera_model_vs_sim": {
+            "position_error_mm": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "rotation_error_deg": 0.0
+          }
+        },
+        {
+          "t": 3.18,
+          "state": "detect",
+          "image": "frames/002_003.2s_detect.png",
+          "detections": [
+            {
+              "tag_id": 0,
+              "range_m": 0.4189,
+              "side_px": 91.5,
+              "reprojection_px": 0.02,
+              "corners_px": [
+                [
+                  445.71,
+                  166.42
+                ],
+                [
+                  538.72,
+                  165.6
+                ],
+                [
+                  534.27,
+                  256.8
+                ],
+                [
+                  443.45,
+                  257.42
+                ]
+              ]
+            }
+          ],
+          "camera_model_vs_sim": {
+            "position_error_mm": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "rotation_error_deg": 0.0
+          }
+        },
+        {
+          "t": 5.16,
+          "state": "refine",
+          "image": "frames/003_005.2s_refine.png",
+          "detections": [
+            {
+              "tag_id": 0,
+              "range_m": 0.2467,
+              "side_px": 149.5,
+              "reprojection_px": 0.091,
+              "corners_px": [
+                [
+                  236.69,
+                  148.46
+                ],
+                [
+                  389.27,
+                  147.01
+                ],
+                [
+                  388.47,
+                  295.77
+                ],
+                [
+                  241.07,
+                  297.56
+                ]
+              ]
+            }
+          ],
+          "camera_model_vs_sim": {
+            "position_error_mm": [
+              -0.0,
+              0.0,
+              -0.0
+            ],
+            "rotation_error_deg": 0.001
+          }
+        },
+        {
+          "t": 5.32,
+          "state": "refine",
+          "image": "frames/004_005.3s_refine.png",
+          "detections": [
+            {
+              "tag_id": 0,
+              "range_m": 0.2468,
+              "side_px": 149.5,
+              "reprojection_px": 0.053,
+              "corners_px": [
+                [
+                  236.82,
+                  148.49
+                ],
+                [
+                  389.32,
+                  146.96
+                ],
+                [
+                  388.39,
+                  296.01
+                ],
+                [
+                  241.04,
+                  297.56
+                ]
+              ]
+            }
+          ],
+          "camera_model_vs_sim": {
+            "position_error_mm": [
+              0.0,
+              -0.0,
+              -0.0
+            ],
+            "rotation_error_deg": 0.0
+          }
+        },
+        {
+          "t": 5.48,
+          "state": "refine",
+          "image": "frames/005_005.5s_refine.png",
+          "detections": [
+            {
+              "tag_id": 0,
+              "range_m": 0.2466,
+              "side_px": 149.5,
+              "reprojection_px": 0.105,
+              "corners_px": [
+                [
+                  236.73,
+                  148.45
+                ],
+                [
+                  389.34,
+                  147.13
+                ],
+                [
+                  388.41,
+                  295.89
+                ],
+                [
+                  241.02,
+                  297.53
+                ]
+              ]
+            }
+          ],
+          "camera_model_vs_sim": {
+            "position_error_mm": [
+              -0.0,
+              0.0,
+              -0.0
+            ],
+            "rotation_error_deg": 0.0
+          }
+        }
+      ],
+      "box_truth_b": [
+        [
+          -0.99308,
+          -0.00308,
+          0.11742,
+          0.66511
+        ],
+        [
+          0.00235,
+          -0.99998,
+          -0.00637,
+          -0.00052
+        ],
+        [
+          0.11744,
+          -0.00605,
+          0.99306,
+          -0.16583
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_calibration": "sim",
+      "base_moved": {
+        "position_mm": 1.4,
+        "yaw_deg": 0.131
+      },
+      "calibrated_mount_link6": [
+        [
+          0.002565,
+          0.999818,
+          -0.018905,
+          -0.057368
+        ],
+        [
+          -0.999997,
+          0.002571,
+          0.000309,
+          0.032753
+        ],
+        [
+          0.000357,
+          0.018905,
+          0.999821,
+          0.061573
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "box_error_search_look": {
+        "position_mm": 4.63,
+        "rotation_deg": 0.247,
+        "lever_contact_error_mm": [
+          3.44,
+          -0.64,
+          -0.86
+        ]
+      },
+      "box_error_close_look": {
+        "position_mm": 7.85,
+        "rotation_deg": 0.969,
+        "lever_contact_error_mm": [
+          2.27,
+          0.32,
+          -1.26
+        ]
+      },
+      "method": "pull",
+      "plan": {
+        "params": {
+          "radius_m": 0.09,
+          "roll": -1,
+          "pitch_deg": 40.0,
+          "standoff_m": 0.1,
+          "turn_deg": 52.0,
+          "turn_speed_deg_s": 15.0,
+          "turn_hold_s": 1.0,
+          "crack_deg": 10.0,
+          "door_deg": 60.0,
+          "door_min_deg": 20.0,
+          "door_speed_deg_s": 10.0,
+          "open_hold_s": 1.5,
+          "step_deg": 2.0,
+          "handle_torque_nm": 0.4,
+          "torque_margin": 1.1,
+          "hold_fraction": 0.85
+        },
+        "door_final_deg": 58.0,
+        "standoff_q": [
+          -0.0942,
+          0.6018,
+          -0.1129,
+          0.1928,
+          0.3223,
+          1.8227
+        ],
+        "turn": [
+          {
+            "lever_deg": 0.0,
+            "q": [
+              -0.0797,
+              0.9704,
+              -0.4703,
+              0.1674,
+              0.309,
+              1.7887
+            ]
+          },
+          {
+            "lever_deg": 2.0,
+            "q": [
+              -0.0697,
+              0.972,
+              -0.4573,
+              0.075,
+              0.2893,
+              1.7204
+            ]
+          },
+          {
+            "lever_deg": 4.0,
+            "q": [
+              -0.0598,
+              0.9742,
+              -0.4449,
+              -0.0291,
+              0.272,
+              1.6402
+            ]
+          },
+          {
+            "lever_deg": 6.0,
+            "q": [
+              -0.0501,
+              0.9769,
+              -0.4326,
+              -0.1456,
+              0.2572,
+              1.5472
+            ]
+          },
+          {
+            "lever_deg": 8.0,
+            "q": [
+              -0.0407,
+              0.9802,
+              -0.4206,
+              -0.2735,
+              0.2457,
+              1.4425
+            ]
+          },
+          {
+            "lever_deg": 10.0,
+            "q": [
+              -0.0316,
+              0.984,
+              -0.409,
+              -0.4111,
+              0.2379,
+              1.328
+            ]
+          },
+          {
+            "lever_deg": 12.0,
+            "q": [
+              -0.0227,
+              0.9882,
+              -0.3975,
+              -0.5557,
+              0.234,
+              1.2061
+            ]
+          },
+          {
+            "lever_deg": 14.0,
+            "q": [
+              -0.0143,
+              0.9931,
+              -0.3865,
+              -0.7017,
+              0.2346,
+              1.0827
+            ]
+          },
+          {
+            "lever_deg": 16.0,
+            "q": [
+              -0.0061,
+              0.9984,
+              -0.3758,
+              -0.8448,
+              0.2395,
+              0.962
+            ]
+          },
+          {
+            "lever_deg": 18.0,
+            "q": [
+              0.0016,
+              1.0042,
+              -0.3652,
+              -0.9807,
+              0.2484,
+              0.8484
+            ]
+          },
+          {
+            "lever_deg": 20.0,
+            "q": [
+              0.009,
+              1.0105,
+              -0.3552,
+              -1.1056,
+              0.2609,
+              0.7457
+            ]
+          },
+          {
+            "lever_deg": 22.0,
+            "q": [
+              0.0159,
+              1.0173,
+              -0.3458,
+              -1.2178,
+              0.2767,
+              0.6555
+            ]
+          },
+          {
+            "lever_deg": 24.0,
+            "q": [
+              0.0225,
+              1.0246,
+              -0.3368,
+              -1.3178,
+              0.295,
+              0.5776
+            ]
+          },
+          {
+            "lever_deg": 26.0,
+            "q": [
+              0.0286,
+              1.0323,
+              -0.3282,
+              -1.4062,
+              0.3155,
+              0.5112
+            ]
+          },
+          {
+            "lever_deg": 28.0,
+            "q": [
+              0.0343,
+              1.0405,
+              -0.3202,
+              -1.4841,
+              0.3376,
+              0.4552
+            ]
+          },
+          {
+            "lever_deg": 30.0,
+            "q": [
+              0.0396,
+              1.049,
+              -0.3124,
+              -1.5535,
+              0.3611,
+              0.4078
+            ]
+          },
+          {
+            "lever_deg": 32.0,
+            "q": [
+              0.0445,
+              1.058,
+              -0.3053,
+              -1.6143,
+              0.3857,
+              0.369
+            ]
+          },
+          {
+            "lever_deg": 34.0,
+            "q": [
+              0.049,
+              1.0675,
+              -0.2989,
+              -1.6684,
+              0.4111,
+              0.337
+            ]
+          },
+          {
+            "lever_deg": 36.0,
+            "q": [
+              0.053,
+              1.0773,
+              -0.293,
+              -1.7167,
+              0.4372,
+              0.3108
+            ]
+          },
+          {
+            "lever_deg": 38.0,
+            "q": [
+              0.0566,
+              1.0874,
+              -0.2872,
+              -1.7609,
+              0.4637,
+              0.2888
+            ]
+          },
+          {
+            "lever_deg": 40.0,
+            "q": [
+              0.0598,
+              1.098,
+              -0.2823,
+              -1.8004,
+              0.4907,
+              0.2717
+            ]
+          },
+          {
+            "lever_deg": 42.0,
+            "q": [
+              0.0625,
+              1.1087,
+              -0.2775,
+              -1.8371,
+              0.518,
+              0.2575
+            ]
+          },
+          {
+            "lever_deg": 44.0,
+            "q": [
+              0.0648,
+              1.1198,
+              -0.2732,
+              -1.8707,
+              0.5455,
+              0.2465
+            ]
+          },
+          {
+            "lever_deg": 46.0,
+            "q": [
+              0.0667,
+              1.1314,
+              -0.27,
+              -1.9014,
+              0.573,
+              0.2388
+            ]
+          },
+          {
+            "lever_deg": 48.0,
+            "q": [
+              0.0681,
+              1.143,
+              -0.2667,
+              -1.9305,
+              0.6007,
+              0.2328
+            ]
+          },
+          {
+            "lever_deg": 50.0,
+            "q": [
+              0.0691,
+              1.1549,
+              -0.2638,
+              -1.9577,
+              0.6285,
+              0.2289
+            ]
+          },
+          {
+            "lever_deg": 52.0,
+            "q": [
+              0.0696,
+              1.167,
+              -0.2615,
+              -1.9834,
+              0.6563,
+              0.2269
+            ]
+          }
+        ],
+        "crack": [
+          {
+            "door_deg": 0.0,
+            "q": [
+              0.0696,
+              1.167,
+              -0.2615,
+              -1.9834,
+              0.6563,
+              0.2269
+            ]
+          },
+          {
+            "door_deg": 2.0,
+            "q": [
+              0.0895,
+              1.1512,
+              -0.2236,
+              -1.9501,
+              0.6981,
+              0.2168
+            ]
+          },
+          {
+            "door_deg": 4.0,
+            "q": [
+              0.1102,
+              1.1374,
+              -0.1906,
+              -1.9135,
+              0.7383,
+              0.2091
+            ]
+          },
+          {
+            "door_deg": 6.0,
+            "q": [
+              0.1317,
+              1.1252,
+              -0.1615,
+              -1.8744,
+              0.7772,
+              0.2025
+            ]
+          },
+          {
+            "door_deg": 8.0,
+            "q": [
+              0.1539,
+              1.1148,
+              -0.1366,
+              -1.8331,
+              0.8148,
+              0.1974
+            ]
+          },
+          {
+            "door_deg": 10.0,
+            "q": [
+              0.1767,
+              1.106,
+              -0.116,
+              -1.7897,
+              0.8514,
+              0.1937
+            ]
+          }
+        ],
+        "unturn": [
+          {
+            "lever_deg": 52.0,
+            "q": [
+              0.1767,
+              1.106,
+              -0.116,
+              -1.7897,
+              0.8514,
+              0.1937
+            ]
+          },
+          {
+            "lever_deg": 50.0,
+            "q": [
+              0.1761,
+              1.093,
+              -0.1175,
+              -1.7717,
+              0.826,
+              0.1898
+            ]
+          },
+          {
+            "lever_deg": 48.0,
+            "q": [
+              0.175,
+              1.08,
+              -0.1192,
+              -1.7534,
+              0.8006,
+              0.1867
+            ]
+          },
+          {
+            "lever_deg": 46.0,
+            "q": [
+              0.1735,
+              1.0671,
+              -0.1209,
+              -1.7346,
+              0.7751,
+              0.1842
+            ]
+          },
+          {
+            "lever_deg": 44.0,
+            "q": [
+              0.1715,
+              1.0543,
+              -0.1227,
+              -1.7154,
+              0.7496,
+              0.1824
+            ]
+          },
+          {
+            "lever_deg": 42.0,
+            "q": [
+              0.1691,
+              1.0416,
+              -0.1246,
+              -1.6956,
+              0.7242,
+              0.1813
+            ]
+          },
+          {
+            "lever_deg": 40.0,
+            "q": [
+              0.1662,
+              1.029,
+              -0.1265,
+              -1.6752,
+              0.6987,
+              0.181
+            ]
+          },
+          {
+            "lever_deg": 38.0,
+            "q": [
+              0.1629,
+              1.0166,
+              -0.1285,
+              -1.6541,
+              0.6732,
+              0.1815
+            ]
+          },
+          {
+            "lever_deg": 36.0,
+            "q": [
+              0.1592,
+              1.0044,
+              -0.131,
+              -1.6317,
+              0.6477,
+              0.1836
+            ]
+          },
+          {
+            "lever_deg": 34.0,
+            "q": [
+              0.155,
+              0.9923,
+              -0.1331,
+              -1.6087,
+              0.6223,
+              0.1863
+            ]
+          },
+          {
+            "lever_deg": 32.0,
+            "q": [
+              0.1504,
+              0.9803,
+              -0.1353,
+              -1.5848,
+              0.5969,
+              0.1901
+            ]
+          },
+          {
+            "lever_deg": 30.0,
+            "q": [
+              0.1454,
+              0.9685,
+              -0.1375,
+              -1.5596,
+              0.5715,
+              0.1951
+            ]
+          },
+          {
+            "lever_deg": 28.0,
+            "q": [
+              0.14,
+              0.957,
+              -0.1397,
+              -1.533,
+              0.5461,
+              0.2016
+            ]
+          },
+          {
+            "lever_deg": 26.0,
+            "q": [
+              0.1342,
+              0.9456,
+              -0.1419,
+              -1.5049,
+              0.5208,
+              0.2098
+            ]
+          },
+          {
+            "lever_deg": 24.0,
+            "q": [
+              0.1279,
+              0.9346,
+              -0.1447,
+              -1.4742,
+              0.4957,
+              0.2206
+            ]
+          },
+          {
+            "lever_deg": 22.0,
+            "q": [
+              0.1213,
+              0.9237,
+              -0.147,
+              -1.4419,
+              0.4706,
+              0.233
+            ]
+          },
+          {
+            "lever_deg": 20.0,
+            "q": [
+              0.1142,
+              0.913,
+              -0.1494,
+              -1.4071,
+              0.4457,
+              0.2479
+            ]
+          },
+          {
+            "lever_deg": 18.0,
+            "q": [
+              0.1067,
+              0.9027,
+              -0.1522,
+              -1.3687,
+              0.4211,
+              0.2665
+            ]
+          },
+          {
+            "lever_deg": 16.0,
+            "q": [
+              0.0989,
+              0.8926,
+              -0.1547,
+              -1.3273,
+              0.3966,
+              0.288
+            ]
+          },
+          {
+            "lever_deg": 14.0,
+            "q": [
+              0.0906,
+              0.8828,
+              -0.1574,
+              -1.2811,
+              0.3726,
+              0.3143
+            ]
+          },
+          {
+            "lever_deg": 12.0,
+            "q": [
+              0.082,
+              0.8733,
+              -0.16,
+              -1.2306,
+              0.3489,
+              0.345
+            ]
+          },
+          {
+            "lever_deg": 10.0,
+            "q": [
+              0.073,
+              0.8642,
+              -0.1628,
+              -1.1734,
+              0.3258,
+              0.3823
+            ]
+          },
+          {
+            "lever_deg": 8.0,
+            "q": [
+              0.0636,
+              0.8553,
+              -0.1654,
+              -1.1096,
+              0.3034,
+              0.426
+            ]
+          },
+          {
+            "lever_deg": 6.0,
+            "q": [
+              0.0538,
+              0.8468,
+              -0.1683,
+              -1.0366,
+              0.282,
+              0.4791
+            ]
+          },
+          {
+            "lever_deg": 4.0,
+            "q": [
+              0.0437,
+              0.8387,
+              -0.1712,
+              -0.9532,
+              0.2618,
+              0.5424
+            ]
+          },
+          {
+            "lever_deg": 2.0,
+            "q": [
+              0.0332,
+              0.8308,
+              -0.174,
+              -0.8585,
+              0.243,
+              0.617
+            ]
+          },
+          {
+            "lever_deg": 0.0,
+            "q": [
+              0.0223,
+              0.8235,
+              -0.177,
+              -0.749,
+              0.2263,
+              0.7063
+            ]
+          }
+        ],
+        "pull": [
+          {
+            "door_deg": 10.0,
+            "q": [
+              0.0223,
+              0.8235,
+              -0.177,
+              -0.749,
+              0.2263,
+              0.7063
+            ]
+          },
+          {
+            "door_deg": 12.0,
+            "q": [
+              0.0463,
+              0.8026,
+              -0.1369,
+              -0.9105,
+              0.2495,
+              0.5063
+            ]
+          },
+          {
+            "door_deg": 14.0,
+            "q": [
+              0.0716,
+              0.7839,
+              -0.1011,
+              -1.0304,
+              0.2804,
+              0.3463
+            ]
+          },
+          {
+            "door_deg": 16.0,
+            "q": [
+              0.0978,
+              0.7675,
+              -0.0698,
+              -1.1132,
+              0.3168,
+              0.222
+            ]
+          },
+          {
+            "door_deg": 18.0,
+            "q": [
+              0.1251,
+              0.7535,
+              -0.0437,
+              -1.1658,
+              0.357,
+              0.1268
+            ]
+          },
+          {
+            "door_deg": 20.0,
+            "q": [
+              0.1531,
+              0.7417,
+              -0.022,
+              -1.1973,
+              0.3995,
+              0.0516
+            ]
+          },
+          {
+            "door_deg": 22.0,
+            "q": [
+              0.1819,
+              0.7323,
+              -0.005,
+              -1.2126,
+              0.4436,
+              -0.0083
+            ]
+          },
+          {
+            "door_deg": 24.0,
+            "q": [
+              0.2113,
+              0.7251,
+              0.0079,
+              -1.2167,
+              0.4889,
+              -0.0577
+            ]
+          },
+          {
+            "door_deg": 26.0,
+            "q": [
+              0.2411,
+              0.7203,
+              0.0158,
+              -1.2114,
+              0.5352,
+              -0.0982
+            ]
+          },
+          {
+            "door_deg": 28.0,
+            "q": [
+              0.2711,
+              0.7178,
+              0.0193,
+              -1.1997,
+              0.5822,
+              -0.1324
+            ]
+          },
+          {
+            "door_deg": 30.0,
+            "q": [
+              0.3012,
+              0.7175,
+              0.0188,
+              -1.1833,
+              0.6297,
+              -0.1623
+            ]
+          },
+          {
+            "door_deg": 32.0,
+            "q": [
+              0.3312,
+              0.7195,
+              0.0136,
+              -1.1631,
+              0.6777,
+              -0.1882
+            ]
+          },
+          {
+            "door_deg": 34.0,
+            "q": [
+              0.3609,
+              0.7239,
+              0.004,
+              -1.1401,
+              0.7262,
+              -0.2108
+            ]
+          },
+          {
+            "door_deg": 36.0,
+            "q": [
+              0.3901,
+              0.7308,
+              -0.0109,
+              -1.1145,
+              0.7755,
+              -0.2302
+            ]
+          },
+          {
+            "door_deg": 38.0,
+            "q": [
+              0.4186,
+              0.7399,
+              -0.0298,
+              -1.0879,
+              0.8252,
+              -0.2479
+            ]
+          },
+          {
+            "door_deg": 40.0,
+            "q": [
+              0.4464,
+              0.7512,
+              -0.0532,
+              -1.0605,
+              0.8754,
+              -0.2637
+            ]
+          },
+          {
+            "door_deg": 42.0,
+            "q": [
+              0.4732,
+              0.765,
+              -0.0812,
+              -1.0327,
+              0.9262,
+              -0.2779
+            ]
+          },
+          {
+            "door_deg": 44.0,
+            "q": [
+              0.499,
+              0.7811,
+              -0.114,
+              -1.0048,
+              0.9777,
+              -0.2905
+            ]
+          },
+          {
+            "door_deg": 46.0,
+            "q": [
+              0.5237,
+              0.7996,
+              -0.1516,
+              -0.9771,
+              1.0301,
+              -0.3017
+            ]
+          },
+          {
+            "door_deg": 48.0,
+            "q": [
+              0.5471,
+              0.8205,
+              -0.1942,
+              -0.9499,
+              1.0834,
+              -0.3115
+            ]
+          },
+          {
+            "door_deg": 50.0,
+            "q": [
+              0.5693,
+              0.844,
+              -0.2422,
+              -0.9234,
+              1.1379,
+              -0.3198
+            ]
+          },
+          {
+            "door_deg": 52.0,
+            "q": [
+              0.5902,
+              0.8702,
+              -0.2959,
+              -0.8978,
+              1.1939,
+              -0.3266
+            ]
+          },
+          {
+            "door_deg": 54.0,
+            "q": [
+              0.6097,
+              0.8997,
+              -0.3566,
+              -0.8733,
+              1.2519,
+              -0.3313
+            ]
+          },
+          {
+            "door_deg": 56.0,
+            "q": [
+              0.628,
+              0.9322,
+              -0.4241,
+              -0.8502,
+              1.3118,
+              -0.3342
+            ]
+          },
+          {
+            "door_deg": 58.0,
+            "q": [
+              0.6449,
+              0.9686,
+              -0.5,
+              -0.8287,
+              1.3746,
+              -0.3346
+            ]
+          }
+        ],
+        "static_capacity": [
+          {
+            "lever_deg": 0.0,
+            "force_n": 7.89,
+            "handle_torque_nm": 0.71,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 2.0,
+            "force_n": 7.91,
+            "handle_torque_nm": 0.712,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 4.0,
+            "force_n": 7.93,
+            "handle_torque_nm": 0.714,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 6.0,
+            "force_n": 7.97,
+            "handle_torque_nm": 0.717,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 8.0,
+            "force_n": 8.01,
+            "handle_torque_nm": 0.721,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 10.0,
+            "force_n": 8.06,
+            "handle_torque_nm": 0.726,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 12.0,
+            "force_n": 8.12,
+            "handle_torque_nm": 0.731,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 14.0,
+            "force_n": 8.2,
+            "handle_torque_nm": 0.738,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 16.0,
+            "force_n": 8.28,
+            "handle_torque_nm": 0.745,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 18.0,
+            "force_n": 8.37,
+            "handle_torque_nm": 0.753,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 20.0,
+            "force_n": 8.48,
+            "handle_torque_nm": 0.763,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 22.0,
+            "force_n": 8.59,
+            "handle_torque_nm": 0.773,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 24.0,
+            "force_n": 8.72,
+            "handle_torque_nm": 0.785,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 26.0,
+            "force_n": 8.87,
+            "handle_torque_nm": 0.798,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 28.0,
+            "force_n": 9.03,
+            "handle_torque_nm": 0.812,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 30.0,
+            "force_n": 9.2,
+            "handle_torque_nm": 0.828,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 32.0,
+            "force_n": 9.4,
+            "handle_torque_nm": 0.846,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 34.0,
+            "force_n": 9.61,
+            "handle_torque_nm": 0.865,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 36.0,
+            "force_n": 9.84,
+            "handle_torque_nm": 0.886,
+            "limiting_joint": "Joint3"
+          },
+          {
+            "lever_deg": 38.0,
+            "force_n": 9.78,
+            "handle_torque_nm": 0.88,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 40.0,
+            "force_n": 9.38,
+            "handle_torque_nm": 0.844,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 42.0,
+            "force_n": 9.02,
+            "handle_torque_nm": 0.812,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 44.0,
+            "force_n": 8.7,
+            "handle_torque_nm": 0.783,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 46.0,
+            "force_n": 8.41,
+            "handle_torque_nm": 0.757,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 48.0,
+            "force_n": 8.15,
+            "handle_torque_nm": 0.733,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 50.0,
+            "force_n": 7.91,
+            "handle_torque_nm": 0.712,
+            "limiting_joint": "Joint1"
+          },
+          {
+            "lever_deg": 52.0,
+            "force_n": 7.7,
+            "handle_torque_nm": 0.693,
+            "limiting_joint": "Joint1"
+          }
+        ],
+        "notes": [
+          "door opened to 58 deg, where the arm stops reaching",
+          "chose pitch 40 deg, roll -1 of 10 candidates (7 failed, 3 strong enough for the handle)"
+        ]
+      },
+      "static_ceiling_at_45_deg_nm": 0.783,
+      "hold": {
+        "handle_deg": 43.82,
+        "spring_torque_nm": 0.3921,
+        "arm_torque_on_lever_nm": 0.3712,
+        "finger_force_n": 5.1,
+        "arm_joint_torque_physx_nm": [
+          -2.2300000190734863,
+          -1.694000005722046,
+          0.11400000005960464,
+          0.3580000102519989,
+          0.5839999914169312,
+          0.03099999949336052
+        ],
+        "arm_joint_torque_fraction_of_limit": [
+          0.6759999990463257,
+          0.5130000114440918,
+          0.06700000166893005,
+          0.210999995470047,
+          0.3440000116825104,
+          0.017999999225139618
+        ]
+      },
+      "peak_handle_deg": 44.12,
+      "peak_spring_torque_nm": 0.3941,
+      "grip": {
+        "slip_after_closing_mm": 8.31,
+        "slip_max_mm": 218.26,
+        "slip_at_end_mm": 217.57,
+        "gripper_soft_limits_m": [
+          [
+            -0.002099999925121665,
+            0.028310000896453857
+          ],
+          [
+            -0.028310000896453857,
+            0.002099999925121665
+          ]
+        ],
+        "commanded_m": -0.0016,
+        "finger_travel_after_closing_m": [
+          -0.0009299999801442027,
+          -0.00171999994199723
+        ]
+      },
+      "door_peak_deg": 0.5,
+      "door_planned_deg": 58.0,
+      "door_held_open_deg": 0.07,
+      "door_final_deg": 0.07,
+      "door_opened": false,
+      "grasp_offsets": {
+        "jaw_minus_lever_mm": [
+          -1.05,
+          6.57,
+          7.96
+        ],
+        "plan_minus_lever_mm (perception)": [
+          -0.67,
+          -0.85,
+          2.88
+        ],
+        "arm_sim_minus_fk_mm (arm model)": [
+          -0.0,
+          -0.0,
+          -0.0
+        ],
+        "fk_minus_plan_mm (servo and IK)": [
+          -0.38,
+          7.43,
+          5.08
+        ]
+      },
+      "latch_released": false,
+      "latch_released_t_s": null,
+      "reached_45_deg": false,
+      "directory": "attempt_000",
+      "final_door_angle_deg": 0.06604522788084571,
+      "final_handle_angle_deg": -2.102022609536437e-07,
+      "final_latched": true,
+      "robot_root_position_w_m": [
+        -0.01997774839401245,
+        -0.0005228440277278423,
+        0.08657895028591156
+      ]
+    }
+  ],
+  "scope": "AprilTag-guided grasp of the lever, 45 degree turn and door pull in simulation, lying dog, arm only (IK reference); the latch releases at 45 degrees",
+  "asset": {
+    "usd_path": "/home/lukas/D1Training/logs/combiner_demo/20260919T030442_493102Z_combiner_seed42/assets/combiner_box.usda",
+    "geometry": {
+      "width": 0.36,
+      "height": 0.4,
+      "depth": 0.16,
+      "bottom": 0.1,
+      "wall": 0.006,
+      "door_thickness": 0.012,
+      "door_gap": 0.004,
+      "handle_projection": 0.065,
+      "handle_length": 0.105,
+      "handle_radius": 0.009,
+      "handle_grasp_offset": 0.07,
+      "handle_limit_deg": 60.0,
+      "handle_release_deg": 45.0,
+      "handle_reset_deg": 10.0,
+      "handle_hold_deg": 50.0,
+      "spring_rest_deg": -15.0,
+      "spring_reference_deg": 45.0,
+      "tag_id": 0,
+      "tag_size": 0.06,
+      "tag_centre_y": 0.11,
+      "tag_centre_z": 0.41,
+      "tag_standoff": 0.0006,
+      "latch_capture_deg": 0.5,
+      "open_limit_deg": 110.0
+    },
+    "hinge_joint": "DoorHinge",
+    "handle_joint": "HandleJoint",
+    "handle_frame": "Handle/HandleGrasp",
+    "door_mass_kg": 0.6,
+    "enclosure_mass_kg": 8.0,
+    "handle_mass_kg": 0.12,
+    "handle_spring": {
+      "torque_at_45_deg_nm": 0.4,
+      "stiffness_nm_per_rad": 0.38197,
+      "rest_deg": -15.0,
+      "preload_at_stop_nm": 0.1,
+      "torque_at_stop_60_deg_nm": 0.5,
+      "drive_effort_limit_nm": 0.6,
+      "lever_weight_nm_at_horizontal": 0.029,
+      "latch_release_deg": 45.0,
+      "source": "assumed; lowered from 0.94 N\u00b7m at 45 deg so the D1 can turn it (Lukas, 2026-09-19)"
+    },
+    "apriltag": {
+      "family": "tag36h11",
+      "id": 0,
+      "size_m": 0.06,
+      "centre_enclosure_m": [
+        0.09660000000000002,
+        0.11,
+        0.41
+      ],
+      "pose_enclosure": [
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0966
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.11
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.41
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "assumptions": "Proxy geometry/masses; spring-return lever; runtime joint-limit latch, not a bolt simulation"
+  },
+  "robot_usd": "/home/lukas/D1Training/logs/combiner_demo/20260919T030442_493102Z_combiner_seed42/assets/go2_d1.usd",
+  "posture": {
+    "legs": {
+      "FR_hip_joint": 0.0,
+      "FL_hip_joint": 0.0,
+      "RR_hip_joint": -0.2,
+      "RL_hip_joint": 0.2,
+      ".*_thigh_joint": 1.36,
+      ".*_calf_joint": -2.65
+    },
+    "spawn_height_m": 0.18
+  },
+  "arm_model": {
+    "actuator": "d1_servo",
+    "trajectory": "measured",
+    "latency": "estimated"
+  },
+  "camera": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration",
+    "model_source": "preset d435 (datasheet-derived, not a calibration)",
+    "mount": {
+      "schema": "d1training.wrist_mount/1",
+      "created_utc": "2026-09-19T03:04:48+00:00",
+      "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+      "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+      "xyz_m": [
+        -0.061,
+        0.034,
+        0.067
+      ],
+      "rpy_deg": [
+        0.0,
+        0.0,
+        -90.0
+      ],
+      "pose_link6": [
+        [
+          0.0,
+          1.0,
+          0.0,
+          -0.061
+        ],
+        [
+          -1.0,
+          0.0,
+          -0.0,
+          0.034
+        ],
+        [
+          -0.0,
+          0.0,
+          1.0,
+          0.067
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measured": false,
+      "method": "unstated",
+      "source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+      "camera": ""
+    },
+    "mount_source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+    "mount_file": "/home/lukas/D1Training/demos/cup/pick_demo/assets/mounts/wrist_mount.json",
+    "body_drawn": true,
+    "body_asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "source": "/home/lukas/D1Training/pick_demo/assets/realsense/d435_housing.ply",
+      "source_sha256": "a1a4abe241d5d55ebdb55ac544944da4b8fa76942c24b50c2e94da6785251641",
+      "colour": [
+        0.62,
+        0.63,
+        0.65
+      ],
+      "roughness": 0.35,
+      "clearance_tan": 0.9,
+      "transform": [
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.0325
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0043
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "builder": 1,
+      "triangles": 229148,
+      "triangles_removed": 2038,
+      "vertices": 154149,
+      "bounds_optical_m": [
+        [
+          -0.0125,
+          -0.0125,
+          -0.020755
+        ],
+        [
+          0.077414,
+          0.0125,
+          0.0043
+        ]
+      ],
+      "frame": "colour optical: x right, y down, z forward, origin at the colour sensor",
+      "note": "Intel's d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro's offsets, with the colour lens element removed so a pinhole camera at the sensor plane has a clear aperture. Visual only."
+    },
+    "intrinsics_model": [
+      616.18,
+      0.0,
+      320.0,
+      0.0,
+      616.18,
+      240.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "intrinsics_rendered": [
+      616.18,
+      0.0,
+      320.0,
+      0.0,
+      616.18,
+      240.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "ui_feed": null,
+  "turn": {
+    "detector": "OpenCV ArUco DICT_APRILTAG_36h11 + solvePnP IPPE_SQUARE, rendered intrinsics",
+    "method": "pull",
+    "door_target_deg": 60.0,
+    "mount_calibration": "sim",
+    "handle_torques_nm": [
+      0.4
+    ],
+    "springs": [
+      {
+        "torque_at_45_deg_nm": 0.4,
+        "stiffness_nm_per_rad": 0.38197,
+        "rest_deg": -15.0,
+        "preload_at_stop_nm": 0.1,
+        "torque_at_stop_60_deg_nm": 0.5,
+        "drive_effort_limit_nm": 0.6,
+        "lever_weight_nm_at_horizontal": 0.029,
+        "latch_release_deg": 45.0,
+        "source": "assumed; lowered from 0.94 N\u00b7m at 45 deg so the D1 can turn it (Lukas, 2026-09-19)"
+      }
+    ]
+  }
+}

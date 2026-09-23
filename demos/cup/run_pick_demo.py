@@ -70,6 +70,7 @@ def sha256(path) -> str:
 
 def snapshot_sources(run_dir):
     sources = sorted((HERE / "pick_demo").glob("*.py")) + sorted((ROOT / "position_only").glob("*.py"))
+    sources += sorted((ROOT / "demos/common").glob("*.py"))
     sources += [HERE / name for name in ("run_pick_demo.py", "d1_ui/sim_feed.py")]
     sources += [ROOT / name for name in ("d1_ik.py", "flat_env_cfg.py", "weld.py", "motor_model.py",
                                          "unitree_actuators.py", "d1_arm/d1.urdf")]

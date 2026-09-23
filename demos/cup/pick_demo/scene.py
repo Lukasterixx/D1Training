@@ -34,17 +34,12 @@ from isaaclab.sensors import CameraCfg
 from isaaclab.utils import configclass
 
 from flat_env_cfg import FlatSceneCfg
-from position_only.env_cfg import ReachSceneCfg, make_cfg
+from position_only.env_cfg import ReachSceneCfg
+from demos.common.resting import LYING_LEG_POSE, LYING_SPAWN_HEIGHT_M, make_resting_cfg
 
 from . import camera_body
 from .camera import CameraModel, WristMount
 
-# Unitree LowCmd order is FR, FL, RR, RL; by name here.
-LYING_LEG_POSE = {
-    "FR_hip_joint": 0.0, "FL_hip_joint": 0.0, "RR_hip_joint": -0.2, "RL_hip_joint": 0.2,
-    ".*_thigh_joint": 1.36, ".*_calf_joint": -2.65,
-}
-LYING_SPAWN_HEIGHT_M = 0.18   # above where the folded legs rest, so the robot settles rather than starts inside the floor
 OVERVIEW_EYE = (0.95, -0.95, 0.70)
 OVERVIEW_TARGET = (0.30, 0.0, 0.10)
 
@@ -79,6 +74,26 @@ def camera_body_cfg(mount: WristMount, usd_path: str,
     )
 
 
+def wrist_camera_cfg(camera: CameraModel, mount: WristMount,
+                     link6_path: str = "{ENV_REGEX_NS}/Robot/D1/Link6") -> CameraCfg:
+    """The wrist RealSense: `camera`'s colour intrinsics at `mount`, rendering RGB and ideal depth.
+
+    Shared by every scene that carries the camera (the pick, the combiner box), so they see through
+    the same one. The near clip keeps the housing `camera_body_cfg` draws out of the images (F-052).
+    """
+    return CameraCfg(
+        prim_path=f"{link6_path}/wrist_cam",
+        update_period=0.0,
+        width=camera.width, height=camera.height,
+        data_types=["rgb", "distance_to_image_plane"],
+        update_latest_camera_pose=True,   # so the run can compare the rendered camera's pose with the model's
+        spawn=sim_utils.PinholeCameraCfg.from_intrinsic_matrix(
+            intrinsic_matrix=camera.intrinsic_matrix.flatten().tolist(), width=camera.width, height=camera.height,
+            clipping_range=(camera_body.NEAR_CLIP_PAST_HOUSING_M, 10.0)),
+        offset=CameraCfg.OffsetCfg(pos=tuple(mount.pos_link6), rot=mount.quat_wxyz(), convention="ros"),
+    )
+
+
 def yaw_quat_wxyz(yaw_deg: float) -> tuple[float, float, float, float]:
     half = math.radians(yaw_deg) / 2.0
     return (math.cos(half), 0.0, 0.0, math.sin(half))
@@ -87,18 +102,8 @@ def yaw_quat_wxyz(yaw_deg: float) -> tuple[float, float, float, float]:
 def make_pick_cfg(robot_usd: str, cup_usd: str, camera: CameraModel, mount: WristMount, cup_xy=(0.42, 0.03),
                   cup_yaw_deg: float = 0.0, seed: int = 42, device: str = "cuda:0", episode_s: float = 120.0,
                   overview_size=(640, 480), show_camera_body: bool = True, camera_usd: str = None):
-    cfg = make_cfg(robot_usd, num_envs=1, seed=seed, device=device, leg_actuator="unitree", robustness="none",
-                   self_collisions=True, latency="estimated", arm_actuator="d1_servo", arm_trajectory="measured",
-                   spawn_height=LYING_SPAWN_HEIGHT_M)
-
+    cfg = make_resting_cfg(robot_usd, seed=seed, device=device, episode_s=episode_s)
     robot = cfg.scene.robot
-    robot.init_state.joint_pos = {**LYING_LEG_POSE, "Joint[1-6]": 0.0, "Joint7_.*": 0.0}
-    cfg.actions.arm.scale = math.pi
-
-    for name in ("low_base", "bad_orientation", "base_contact", "outside_workspace"):
-        setattr(cfg.terminations, name, None)
-    cfg.episode_length_s = episode_s
-    cfg.commands.ee_position.debug_vis = False
 
     scene = PickSceneCfg(num_envs=1, env_spacing=3.0)
     scene.robot = robot
@@ -109,17 +114,7 @@ def make_pick_cfg(robot_usd: str, cup_usd: str, camera: CameraModel, mount: Wris
         spawn=sim_utils.UsdFileCfg(usd_path=cup_usd),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(cup_xy[0], cup_xy[1], 0.001), rot=yaw_quat_wxyz(cup_yaw_deg)),
     )
-    scene.wrist_cam = CameraCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/D1/Link6/wrist_cam",
-        update_period=0.0,
-        width=camera.width, height=camera.height,
-        data_types=["rgb", "distance_to_image_plane"],
-        update_latest_camera_pose=True,   # so the run can compare the rendered camera's pose with the model's
-        spawn=sim_utils.PinholeCameraCfg.from_intrinsic_matrix(
-            intrinsic_matrix=camera.intrinsic_matrix.flatten().tolist(), width=camera.width, height=camera.height,
-            clipping_range=(camera_body.NEAR_CLIP_PAST_HOUSING_M, 10.0)),
-        offset=CameraCfg.OffsetCfg(pos=tuple(mount.pos_link6), rot=mount.quat_wxyz(), convention="ros"),
-    )
+    scene.wrist_cam = wrist_camera_cfg(camera, mount)
     if show_camera_body:
         if camera_usd is None:
             raise ValueError("show_camera_body needs camera_usd: build it with "

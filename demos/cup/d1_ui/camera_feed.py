@@ -17,6 +17,11 @@ pipeline accepts both, draws boxes on the colour image either way, and keeps the
 The detector is `pick_demo.perception.YoloDetector`, the same stock COCO weights the scripted pick uses, so
 a box here is what the pick would see. Everything degrades rather than fails: no pyrealsense2 means no
 frames, no ultralytics means frames without boxes, and the reason is in `status()` for the page to show.
+
+With `tag_size_m` the pipeline also outlines tag36h11 AprilTags, in magenta, with the detector the combiner's
+lever push uses (`demos.combiner.apriltag`). A source that knows its intrinsics (the RealSense's reported
+profile, or a simulator that publishes its rendered `K`) gets each tag's range as well; one that does not
+gets the outline and id alone.
 """
 from __future__ import annotations
 
@@ -32,6 +37,7 @@ DEFAULT_WEIGHTS = ROOT / "generated/yolo/yolo11s-seg.pt"
 # BGR, as OpenCV draws: the labels the user asked for in green, anything else in amber.
 _TARGET_BGR = (60, 200, 60)
 _OTHER_BGR = (0, 200, 230)
+_TAG_BGR = (255, 0, 255)
 
 
 class SimFrameSource:
@@ -46,6 +52,12 @@ class SimFrameSource:
         if not health.get("camera"):
             raise RuntimeError(f"this simulation ({health.get('source')}) has no wrist camera; "
                                "./demos/cup/run_pick_demo.sh has one")
+        self.camera_info = health.get("camera_info") or {}
+
+    def intrinsic_matrix(self):
+        """The rendered camera's K when the simulator publishes it (the combiner does), else None."""
+        k = getattr(self, "camera_info", {}).get("K")
+        return None if k is None else np.asarray(k, dtype=float).reshape(3, 3)
 
     def read(self, timeout_s: float = 1.0):
         end = time.monotonic() + timeout_s
@@ -125,6 +137,13 @@ class RealSenseSource:
             return rgb, None
         return rgb, np.asanyarray(depth.get_data()).astype(np.float32) * self._depth_scale
 
+    def intrinsic_matrix(self):
+        """The colour stream's K, as the device reported it when it opened; None before that."""
+        if not self.calibration:
+            return None
+        c = self.calibration["colour_intrinsics"]
+        return np.array([[c["fx"], 0.0, c["cx"]], [0.0, c["fy"], c["cy"]], [0.0, 0.0, 1.0]])
+
     def close(self) -> None:
         if self._pipeline is not None:
             try:
@@ -163,6 +182,33 @@ def draw_detections(bgr, detections, targets):
     return bgr
 
 
+def draw_tags(bgr, tags):
+    """AprilTag outlines, the printed top-left corner as a dot, and 'tag N 0.41 m' labels, in place."""
+    import cv2
+
+    for tag in tags:
+        quad = np.round(tag.corners_px).astype(np.int32)
+        cv2.polylines(bgr, [quad.reshape(-1, 1, 2)], True, _TAG_BGR, 2)
+        cv2.circle(bgr, (int(quad[0, 0]), int(quad[0, 1])), 4, _TAG_BGR, -1)
+        text = f"tag {tag.tag_id}" + ("" if tag.range_m is None else f" {tag.range_m:.2f} m")
+        (w, h), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        x1, top = int(quad[:, 0].min()), max(int(quad[:, 1].min()) - h - 6, 0)
+        cv2.rectangle(bgr, (x1, top), (x1 + w + 6, top + h + 6), _TAG_BGR, -1)
+        cv2.putText(bgr, text, (x1 + 3, top + h + 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (20, 20, 20), 1, cv2.LINE_AA)
+    return bgr
+
+
+def make_tag_detector(intrinsic_matrix=None, size_m: float = 0.06):
+    """Every tag36h11 tag, measured when `intrinsic_matrix` is known."""
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from demos.combiner.apriltag import TagDetector
+
+    return TagDetector(intrinsic_matrix, tag_size=size_m, tag_id=None)
+
+
 def make_yolo(weights, device: str = "auto", confidence: float = 0.25):
     """The pick's detector on the best device here."""
     import sys
@@ -196,8 +242,10 @@ class CameraPipeline:
     """source -> detector -> boxes -> JPEG, on its own thread. Reopens the source when it drops."""
 
     def __init__(self, source, detector_factory=None, targets=("cup",), max_fps: float = 15.0, log=print,
-                 jpeg_quality: int = 80):
+                 jpeg_quality: int = 80, tag_size_m: float | None = None):
         self.source, self.detector_factory = source, detector_factory
+        self.tag_size_m = tag_size_m
+        self.tag_detector = None
         self.targets = tuple(targets)
         self.period = 1.0 / max_fps
         self.log = log
@@ -209,7 +257,8 @@ class CameraPipeline:
         self._seq = 0
         self._status = {"available": False, "source": source.name, "message": "starting", "targets": list(self.targets),
                         "detector": None, "detector_ready": False, "detections": [], "fps": None, "detect_ms": None,
-                        "frame_age_s": None}
+                        "frame_age_s": None, "tags_enabled": bool(tag_size_m), "tags": [], "tag_ms": None,
+                        "tag_detector": None}
         self._last_frame = 0.0
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True, name="d1-ui-camera")
@@ -285,6 +334,30 @@ class CameraPipeline:
             self._set(detector=f"unavailable: {exc}")
             self.log(f"camera: no detector ({exc}); showing frames without boxes")
 
+    def _tags(self, rgb):
+        """(tags, milliseconds) for this frame; ([], None) when tags are off or the detector will not load."""
+        if not self.tag_size_m:
+            return [], None
+        if self.tag_detector is None:
+            intrinsics = getattr(self.source, "intrinsic_matrix", None)
+            k = intrinsics() if callable(intrinsics) else None
+            try:
+                self.tag_detector = make_tag_detector(k, self.tag_size_m)
+            except Exception as exc:
+                self.tag_size_m = None
+                self._set(tag_detector=f"unavailable: {exc}", tags_enabled=False)
+                self.log(f"camera: no AprilTag detector ({exc})")
+                return [], None
+            self._set(tag_detector=f"tag36h11, {1000 * self.tag_size_m:.0f} mm, "
+                                   + ("with range" if k is not None else "no intrinsics, so no range"))
+        t0 = time.monotonic()
+        try:
+            tags = self.tag_detector.detect(rgb)
+        except Exception as exc:
+            self._set(tag_detector=f"failed: {exc}")
+            return [], None
+        return tags, round(1000 * (time.monotonic() - t0), 1)
+
     def _run(self) -> None:
         try:
             import cv2
@@ -300,6 +373,7 @@ class CameraPipeline:
                 try:
                     self.source.open()
                     opened, last_error = True, None
+                    self.tag_detector = None     # a reopened source may be a different camera
                     self._set(available=True, source=self.source.name, message="waiting for frames")
                 except Exception as exc:
                     if str(exc) != last_error:
@@ -344,7 +418,9 @@ class CameraPipeline:
                     self.detector = None
                 detect_ms = round(1000 * (time.monotonic() - t0), 1)
 
+            tags, tag_ms = self._tags(rgb)
             bgr = draw_detections(np.ascontiguousarray(rgb[..., ::-1]), detections, self.targets)
+            draw_tags(bgr, tags)
             ok, jpeg = cv2.imencode(".jpg", bgr, [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality])
             now = time.monotonic()
             stamps = [s for s in stamps if now - s < 2.0] + [now]
@@ -358,7 +434,11 @@ class CameraPipeline:
                         fps=round((len(stamps) - 1) / (stamps[-1] - stamps[0]), 1) if len(stamps) > 2 else None,
                         width=int(rgb.shape[1]), height=int(rgb.shape[0]),
                         detections=[{"label": d.label, "confidence": round(d.confidence, 3),
-                                     "box": [round(c, 1) for c in d.box]} for d in detections])
+                                     "box": [round(c, 1) for c in d.box]} for d in detections],
+                        tag_ms=tag_ms,
+                        tags=[{"id": t.tag_id, "side_px": round(t.side_px, 1),
+                               "range_m": None if t.range_m is None else round(t.range_m, 3),
+                               "corners": [[round(float(v), 1) for v in c] for c in t.corners_px]} for t in tags])
                     self._cond.notify_all()
                 self._last_frame = now
             self._stop.wait(max(0.0, self.period - (time.monotonic() - started)))

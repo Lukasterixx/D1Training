@@ -2155,3 +2155,231 @@ result that changes a conclusion gets a new entry, and the old one is marked
   reports (`wrist.data.intrinsic_matrices`), not the file's, and cannot test the principal-point part of a
   calibration at all. VIP-Rescue's rescue sim publishes the rendered intrinsics in its `camera_info` for this
   reason.
+
+### F-071 — In simulation the lying dog's arm pushes the combiner lever to 45° and holds it against a spring needing up to 1.15 N·m there (box straight ahead) or 0.9 N·m (bearing −43°); the base yaw joint saturates first
+
+- **Status:** confirmed (simulation only)
+- **Week:** 1
+- **Date:** 2026-09-19
+- **Evidence:** [Week 1 log, 2026-09-19](week_01/notes.md), "AprilTag-guided lever push on the combiner";
+  [figure](week_01/figures/combiner_torque_sweep.png).
+  - **Runs.** [Straight ahead at 0.66 m, 0.3–1.2 N·m](#/week/1/run/20260919T015634_664610Z_combiner_seed42),
+    [its 1.05–1.15 refinement](#/week/1/run/20260919T020150_725196Z_combiner_seed42) and
+    [the seed-42 box at bearing −43°, 0.4–1.1 N·m](#/week/1/run/20260919T020325_562869Z_combiner_seed42): one
+    attempt per spring, the spring sized by the torque it needs at 45° (`--handle_torque_nm`), the latch
+    releasing at 45°. The arm finds the tag, pushes the lever with its fingers along the lever's arc to a
+    commanded 52°, and holds 2 s.
+  - **Result.** Held at 45° or past (mean of the last 0.5 s): up to **1.15 N·m** straight ahead (45.2°; 1.2
+    peaked at 45.8° and fell to 37.8°) and **0.9 N·m** at −43° (46.0°; 1.0 peaked at 45.5° and held 43.4°; 1.1
+    never reached 45°). Below that the lever stays within 1–3° of the commanded 52°.
+  - **Mechanism.** PhysX's projected joint torques put Joint1 (base yaw, 3.3 N·m) at 100% of its limit from 0.8
+    N·m on at both placements, the joint the static model (`press.press_capacity`) names. The finger force at
+    the limit, 10.6 N and 8.5–8.9 N, is near the model's 8.7 and 8.2 N. The model's torque ceiling, 0.69 and 0.65
+    N·m, is low because it assumes the planned 80 mm contact: under load the arm's torque on the lever divided by
+    the finger force grows to 105–108 mm, the lever's end.
+- **Scope:** simulation with the D1's published torque limits and stiff implicit drives (4000 N·m/rad), dog
+  lying, arm only, IK reference rather than the learned controller, perfect simulated hand-eye calibration, two
+  placements, no repeats and no noise. The real servos' behaviour under load, their torque limits and joint zeros
+  are unmeasured (F-007, F-023), and so is the real handle's torque. Part of the margin comes from the fingers
+  sliding to the end of the lever, which on a real handle is also how a pusher slips off.
+- **Implication:** the lowered 0.4 N·m default spring is 35–45% of what the simulated arm turns, and the
+  original 0.94 N·m is inside it straight ahead but close to the limit off-axis. The number to compare against
+  is the real handle's measured torque at 45°, which is still the open Week 1 item. If the real handle needs
+  more, the base yaw is what to relieve (a push closer to vertical, a contact further out, or turning the base),
+  and a tool that holds the contact at the lever's end would make the margin deliberate rather than accidental.
+
+### F-072 — The door's AprilTag locates the combiner lever to within 2.6 mm from a close look at 0.25 m, in 19 of 19 simulated attempts
+
+- **Status:** confirmed (simulation only)
+- **Week:** 1
+- **Date:** 2026-09-19
+- **Evidence:** the four runs of F-071 and [the smoke run](#/week/1/run/20260919T015408_437274Z_combiner_seed42),
+  19 attempts. tag36h11 id 0, 60 mm, on the door above the handle; OpenCV `DICT_APRILTAG_36h11` and `solvePnP`
+  IPPE_SQUARE through the rendered intrinsics; box pose = camera pose from joint feedback and the mount x
+  tag pose x the registered tag-to-box transform, averaged over three frames.
+  - Every attempt found the tag (at the 0° stop straight ahead, the −40° stop off-axis): 114 detections, 0.003–0.30 px
+    reprojection error.
+  - The planned lever contact point, which is what the push depends on, was off by **1.5 mm median, 2.6 mm
+    max** from the close look (0.25 m, 149–150 px tag) and 2.7 / 3.9 mm from the search look (91–95 px). The
+    whole box pose was off by 0.6–10.2 mm and 0.13–1.66°: most of that is rotation error carried to the box's
+    origin on the floor, 0.3 m from the tag.
+- **Scope:** the renderer draws the tag perfectly; there is no blur, noise, glare or lighting variation. The
+  camera pose came from the renderer (`--mount_calibration sim`), a perfect hand-eye calibration; with the saved
+  mount aligned by eye it would carry F-052's ~11 mm offset. The first sweep's errors are measured against the
+  box pose at the end of each attempt rather than at the look; the base moved at most 0.34 mm where it was
+  recorded. OpenCV's detector is not the AprilTag library `apriltag_ros` uses on the robot.
+- **Implication:** in simulation the tag is not the limiting error for the push: 2.6 mm is small against an
+  18 mm lever and 26 mm fingers. On the robot the hand-eye calibration and the tag's registration to the handle
+  are what will set this number, and both still have to be measured (plan, Weeks 1–2).
+
+### F-073 — Gripping the combiner's lever, the lying dog's arm turns it past 45° and pulls the door open 37–59° against springs up to 0.4 N·m; from 0.5 N·m the grip, not the arm, gives way
+
+- **Status:** confirmed (simulation only), with its scope narrowed by [F-075](#f-075) (2026-09-19): every
+  attempt below used grasp pitch 40°, roll −1. Lukas's viewer run of the launcher default opened the door at
+  only 5 of 9 placements at 0.3 N·m, and all 4 failures had taken a different grasp. The 0.2–0.4 N·m range
+  holds for the two grasps F-075 names, not for any grasp the planner might choose.
+- **Week:** 1
+- **Date:** 2026-09-19
+- **Evidence:** [Week 1 log, 2026-09-19](week_01/notes.md), "The arm grips the combiner's handle and pulls the
+  door open"; [lever turned](week_01/figures/combiner_grip_pull_lever_turned.png),
+  [door open](week_01/figures/combiner_grip_pull_door_open.png).
+  - **Method.** AprilTag search and close look as F-072. The jaws close across the lever 90 mm from the
+    spindle, shut to the real jaws' 2 mm past the URDF's stop. The arm then turns the lever to a commanded
+    52°, cracks the door 10°, lets the lever back up while holding it, pulls the door to 60° or as far as it
+    reaches with 15% torque to spare, and lets go. Grasp chosen from 10 approach/roll candidates by door
+    reach among those strong enough for the handle; every attempt used pitch 40°, roll −1.
+  - **Sweeps.** Straight ahead at 0.66 m
+    ([0.2–0.8 N·m](#/week/1/run/20260919T031732_047629Z_combiner_seed42)): the latch released and the door
+    was held open at 47.5°, 46.3° and 46.2° for 0.2, 0.3 and 0.4. At 0.5, 0.6 and 0.8 the lever stopped at
+    43.3°, 42.6° and 37.4°, the latch held, and the grip was lost. At bearing −43°
+    ([0.2–0.4 N·m](#/week/1/run/20260919T032242_084031Z_combiner_seed42)) all three opened it, to 52.2°,
+    49.0° and 50.2°.
+  - **Placements at 0.3 N·m.** 10 of 11 attempts over 6 placements opened the door. The failure was an
+    approach blocked by an open finger touching something the planner does not model (Joint3 0.31 rad short).
+    With a fallback to the next grasp, [4 of 4 random placements](#/week/1/run/20260919T034312_785457Z_combiner_seed7)
+    succeeded, one on its second grasp.
+  - **Why the grip fails first.** At 0.5 N·m the push the lever needs is ~6 N, 77% of it along the jaw axis
+    for this grasp. The static arm ceiling was 0.78 N·m, and the push method turned 1.15 N·m (F-071). The
+    URDF's two finger drives are independent. A sideways load pushes one fully open; successful attempts also
+    ended with the pair shifted 16–37 mm, the bar hooked rather than pinched, sliding 20–75 mm along it.
+    Squeezing inside the bar made it worse. A PhysX mimic coupling froze one finger and sent the arm
+    diverging, so it was not used.
+- **Scope:** simulation, lying dog, arm only, IK reference, perfect simulated hand-eye calibration, a light
+  undamped door. Not validated: the real gripper, which is one servo and whose force and coupling are
+  unmeasured, and the real handle's torque. The 0.4 N·m limit is this simulated gripper's.
+- **Implication:** the grip-and-pull works on the proxy box at 0.3–0.4 N·m, so that is the demonstrator's
+  default (0.3). What sets the real limit is the D1 gripper's squeeze and its coupling under a sideways load,
+  which a bench measurement on the real lever would settle. If it is short, turn by pushing (F-071) and grip
+  only to pull the door. A faithful simulated gripper needs the jaws coupled, which this Isaac Lab did not
+  accept as a mimic joint.
+
+### F-074 — The simulated D1 settles short of its joint targets, Joint2 by 0.0135 rad at the lever (7–9 mm at the jaws); one step of feedback correction takes it to under 0.001 rad
+
+- **Status:** confirmed (simulation)
+- **Week:** 1
+- **Date:** 2026-09-19
+- **Evidence:** [Week 1 log, 2026-09-19](week_01/notes.md), same entry. Trace columns `q_cmd`, `q_drive` (the drive
+  target Isaac Lab sends) and `q_true`:
+  - With the drive target equal to the command, the joints held Joint2 0.0135 rad and the wrist joints
+    0.002–0.005 rad short at the grasp pose, carrying 2.5 N·m on Joint2. At the search poses, with little
+    torque, the shortfall was still 0.002–0.009 rad.
+  - The jaw centre was 7–9 mm from the lever point; perception accounted for 2 mm.
+  - After one correction (targets plus the shortfall read from 9 Hz joint feedback), the residual was
+    0.0002–0.0008 rad in all 17 grasps since.
+- **Scope:** simulation with force drives at 4000 N·m/rad; the cause is not isolated (not the firmware
+  planner, which lands on its goal, nor the soft limits). The real arm's steady error is only known for one
+  unloaded joint (≤0.1°, F-021).
+- **Implication:** open-loop IK poses in this simulator carry ~1 cm at the tool, which F-015 also saw. Any
+  contact task planned from IK here (grasps, presses) should close the loop on joint feedback before
+  contact, and the same correction is cheap on the real arm.
+
+### F-075 — Only two grasps hold the combiner's lever in simulation, both wrist roll −1 (pitch 40° and 50°); ranked first, they opened the door at 17 of 17 placements at 0.3 N·m, where the old choice managed 5 of 9
+
+- **Status:** confirmed (simulation only)
+- **Week:** 1
+- **Date:** 2026-09-19
+- **Evidence:** [Week 1 log, 2026-09-19](week_01/notes.md), "The grip-and-pull made faster, and the grasps that
+  hold the lever".
+  - **The failure.** [Lukas's viewer run](#/week/1/run/20260919T043704_225852Z_combiner_seed42) of the launcher
+    default (0.3 N·m, seed 42) finished 9 attempts and opened the door at 5. The planner ranked grasps by how far
+    the door would open. All 5 successes took pitch 40°, roll −1. The 4 failures took pitch 20°, roll +1 three
+    times and pitch 60°, roll −1 once. In each, the lever stalled at 43.3–44.7° and the jaws lost the bar
+    (slip 160–225 mm).
+  - **The record over every grip-and-pull attempt at 0.2–0.4 N·m.** Every attempt that gripped is counted:
+    the runs before today's, the four below and Lukas's run. Excluded are the two attempts that squeezed
+    2 mm inside the bar, a grip command since reverted.
+
+    | Grasp | Door opened | Lever peak |
+    | --- | --- | --- |
+    | pitch 40°, roll −1 | 39 of 39 | 47.6–52.2° |
+    | pitch 50°, roll −1 | 11 of 11 | 45.5–47.9° |
+    | pitch 20°, roll +1 | 0 of 5 | 43.0–43.6°, then lost |
+    | pitch 60°, roll −1 | 0 of 1 | 44.7°, then lost |
+
+  - **Why ranking alone was not enough.** The pitch-40 grasp does not solve everywhere: on the CPU model it
+    plans at 57 of 100 random default placements (seed 11, handle 0.3 N·m). Pitch 50°, roll −1 plans at 37 of
+    the other 43, and it was not in the candidate list. At the remaining 6 neither plans, and the planner falls
+    back to a grasp with no record: pitch 60°, roll −1 at 3 and pitch 0°, roll +1 at 3.
+    [Forcing it](#/week/1/run/20260919T055829_532757Z_combiner_seed42) (`--grasp 50 -1`) at the 9 seed-42
+    placements opened the door at all 6 where it solves; the other 3 are placements where pitch 40 solves.
+  - **Validation.** With pitch 50 added and the two grasps ranked first (40, then 50):
+    [9 of 9](#/week/1/run/20260919T060339_055356Z_combiner_seed42) at Lukas's placements, and
+    [8 of 8](#/week/1/run/20260919T061317_145569Z_combiner_seed2026) at seed 2026, placements not used to choose
+    the grasps. 12 attempts took pitch 40 and 5 took pitch 50.
+- **Scope:** simulation only, with the URDF's independent finger drives (F-073), 0.3 N·m for the validation, and
+  default placements (0.62–0.70 m, ±45°), about 6% of which reach neither grasp. This is a record, not a model: the static ceiling rates every
+  candidate strong enough, and why roll −1 at 40–50° holds while pitch 20, roll +1 does not is unexplained.
+  Pitch 50 turns the lever to only 45.5–47.9° against a 45° release, so it has the less margin of the two.
+  Other grasps were not all tried: pitch 0, 80 and 40 at roll +1 have no record. Nothing here says which grasp
+  the real jaws hold.
+- **Implication:** the planner's static torque model cannot pick a grasp for this gripper, so grasp choice now
+  follows the record (`pull.PROVEN_GRASPS`), and the record needs extending as placements widen. On the real arm
+  the list starts empty. The first bench grips should try 40° and 50° at roll −1 before anything else, and
+  record each grasp's outcome the same way.
+
+### F-076 — The grip-and-pull now finishes in 18–25 s in simulation, down from 29–49 s; what remains is mostly the arm's own speed
+
+- **Status:** confirmed (simulation only)
+- **Week:** 1
+- **Date:** 2026-09-19
+- **Evidence:** [Week 1 log, 2026-09-19](week_01/notes.md), same entry. From the start of an attempt to letting
+  go of the handle, at 0.3 N·m:
+  - Before: 28.9–49.2 s at Lukas's 9 placements (median 37.8 s over the 4 successes without a second grasp).
+  - After: 18.1–24.8 s at the same 9 and 17.7–25.0 s at 8 fresh ones, all 17 opened.
+  - Median phase times after, at the two seeds: search 5.5 / 2.7 s, close look 2.3 / 2.5 s, onto the lever
+    3.0 / 3.4 s, align and grip 1.7 s, turn 3.3 / 3.5 s, crack and let the lever up 1.8 / 2.5 s, pull and hold
+    2.8 / 3.5 s, let go 0.6 s.
+  - What changed:
+    - **The arcs.** They are streamed at the pace their joints allow: up to 0.6 rad/s, 45°/s of lever and
+      30°/s of door. At a fixed 15°/s the wrist trailed its command by 0.4 rad.
+    - **The waits.** Holds went from 1.0 and 1.5 s to 0.3 and 0.5 s; the alignment wait from 0.8 to 0.4 s.
+      The jaws open 41 mm instead of 77 mm, so gripping takes 0.8 s instead of 1.5 and letting go 0.6 instead
+      of 1.5.
+    - **The search.** Its stops sweep one side, then the other, instead of alternating sides. It leaves an
+      empty stop after 3 frames instead of 8.
+    - **The close look.** It turns the camera about its view toward the coming grasp.
+  - Measured separately at the 7 seed-42 placements that both runs opened:
+    - **Arcs, waits and jaws:** [run](#/week/1/run/20260919T054947_045656Z_combiner_seed42), median 23.9 s.
+    - **Search order and close-look roll, added on top:** median 20.4 s. Most of the drop is the search
+      order: the search median fell from 10.1 to 5.5 s. The camera roll moved the onto-the-lever median only
+      from 3.2 to 3.0 s.
+- **Scope:** simulated arm and firmware model. The grip held at these speeds in every attempt that used a
+  grasp from F-075, but faster arcs were not tried at 0.4 N·m. Not validated:
+  - **The firmware assumption.** The simulated firmware (F-045) restarts its plan at every 10 Hz setpoint,
+    even an unchanged one. That holds long moves to about 0.7 rad/s, against the 1.2–1.3 rad/s ceiling
+    measured for a single command (F-033). Whether the real firmware restarts on a repeated identical setpoint
+    has not been measured, and the pick's hardware loop does repeat them.
+  - **The real jaws' closing speed.** The simulated fingers close at about 23 mm/s.
+  - **The real camera's latency.**
+- **Implication:** most of the remaining time is set by joint speed:
+  - point-to-point moves at the firmware model's ~0.7 rad/s;
+  - the turn, where the pitch-40 grasp passes near the wrist's Joint5 = 0 singularity and Joint4 swings
+    about 2 rad for 52° of lever;
+  - the search, for a box off to the side.
+
+  One bench measurement matters most: time a single long waypoint against the same waypoint re-sent at
+  10 Hz. If the real firmware does not restart on a repeated target, sending each target once could cut
+  every move by up to 40%.
+
+### F-077 — Crouching onto the combiner lever with the arm held still would turn about 1 N·m (up to 1.5) by the static model: the arm's shoulder, not body weight, sets the limit
+
+- **Status:** provisional (static model only; nothing simulated)
+- **Week:** 2
+- **Date:** 2026-09-21
+- **Evidence:** [Week 2 log, 2026-09-21](week_02/notes.md);
+  [`combiner_crouch_push_study.py`](week_02/figures/combiner_crouch_push_study.py).
+  - **Method.** The dog stands level (base 0.274 m). The gripper comes straight down over the lever, 6.5 cm out
+    from the spindle. The arm holds still and the body drops 8.3 cm for 52°. The ceiling is
+    `press.press_capacity`, gravity plus JᵀF against the published joint limits; its force matched the
+    simulated push within 20% in F-071. It is taken over 439 placements where the box clears the dog.
+  - **Result.** Median 0.94 N·m, 90th percentile 1.17, best 1.51 (a push of 14.5 N median, 23 N best). Joint2
+    limits 70% of placements and Joint3 the rest. The best stances put the box beside the dog, with the lever
+    about 0.20 m to the side of the mount. From the lying pose the top-down push does not solve.
+- **Scope:** static, base level, rigid stance, published limits. Not validated: a standing or crouching leg
+  controller in the scene, the palm-on-bar contact of the D1 gripper, the real servos under load, and the
+  exact clearances around the dog's legs. Sitting was not studied.
+- **Implication:** the dog's weight is ample: 15 N per N·m against about 180 N. The force still passes through
+  the arm, and the shoulder carries it about 0.2 m out, so crouching gains about 2.5× over the grip-and-pull
+  (F-073) and at most ~1.3× over the lying push (F-071). A much larger torque needs the force to go around the
+  arm's motors: a longer moment arm (the plan's pre-attached lever tool) or the legs pushing directly.
+

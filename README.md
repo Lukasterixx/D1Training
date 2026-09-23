@@ -120,6 +120,35 @@ release and are checked against the sha256 every recorded run used. What works, 
 the Week 1 log (2026-09-17). The camera mount, the gripper and the cup are all models, so a simulated
 success says nothing yet about the real arm.
 
+## Solar combiner-box scene
+
+The [combiner demo](demos/combiner/README.md) uses the cup demo's same resting dog
+pose beside a randomized light-grey enclosure with a hinged door and a rotating
+lever handle replacing the keyhole. Turning the lever 45° releases a latch; closing
+the door with the handle released latches it again. The first placement and each
+`R` reset are seeded. `H` turns/releases the handle and `O`/`C` pull the door
+open/closed for inspection. With `--turn` the arm finds the door's AprilTag with the
+wrist camera, grips the lever, turns it 45° and pulls the door open. In simulation that
+works against springs up to 0.4 N·m at 45° (F-073), with two grasps that hold (F-075), in
+18–25 s from the start of an attempt to letting go (F-076). `--method press` only pushes the lever
+down, which turned up to 1.15 N·m (F-071). Several `--handle_torque_nm` values sweep the
+spring. The console's camera window outlines the tag with its range.
+
+The wrist carries the cup pick's RealSense (same preset, saved mount and D435 case), and the
+launcher brings up the reach console beside the simulator exactly as the pick's does
+(`demos/cup/d1_ui/beside_sim.sh`, http://localhost:8090), with YOLO off since there is no cup.
+From the resting pose the camera looks level over the box and does not see it; `--turn` moves the
+arm to search poses that do.
+
+```bash
+./demos/combiner/run_combiner_demo.sh                  # no arguments: grips the lever and pulls the door, 0.3 N·m spring
+./demos/combiner/run_combiner_demo.sh --seed 42        # the scene alone, arm at rest
+./demos/combiner/run_combiner_demo.sh --headless --episodes 5 --capture
+./demos/combiner/run_combiner_demo.sh --sweep_deg 180  # placement all around the dog
+./demos/combiner/run_combiner_demo.sh --no_console     # simulator only
+./demos/combiner/run_combiner_demo.sh --turn           # find the tag, grip the lever, pull the door open
+```
+
 ## Watching it in RViz
 
 The sim publishes the same front **Unitree 4D L1 lidar** P2Dingo simulates —
@@ -333,6 +362,7 @@ error is small. Real per-link inertials would still be better.
 | `motor_model.py`, `unitree_actuators.py` | Unitree's measured Go2 motor envelope (from unitree_rl_lab, Apache-2.0; see `third_party/`) |
 | `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
 | `demos/cup/` | the cup pick, kept together: `pick_demo/` (wrist RealSense model, YOLO, top-down grasp planning, the sequence), `run_pick_demo.py/.sh`, the reach console `d1_ui/` and `run_ui.sh`, and its own `tests/` |
+| `demos/combiner/`, `demos/common/` | randomized combiner-box scene, procedural hinged asset with an AprilTag, the cup pick's wrist RealSense and reach console (`wrist_camera.py`), the tag-guided grip-and-pull, lever push and torque sweep (`apriltag.py`, `pull.py`, `press.py`, `sequence.py`, `turn_run.py`), and the resting robot setup shared with the cup demo |
 
 ## Despite the name
 

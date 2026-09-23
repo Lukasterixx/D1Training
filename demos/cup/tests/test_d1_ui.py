@@ -311,6 +311,21 @@ def _missing_ultralytics():
     raise RuntimeError("ultralytics is not installed here")
 
 
+class _TagSource(_StillSource):
+    """The combiner door's tag, 96 px across its black square, square-on to a camera that knows its K."""
+    name = "tag"
+
+    def __init__(self, with_k=True):
+        from demos.combiner.apriltag import tag_image
+
+        self.frame = np.full((480, 640, 3), 128, dtype=np.uint8)
+        self.frame[150:270, 200:320] = tag_image(0, 12)[..., None]
+        self.with_k = with_k
+
+    def intrinsic_matrix(self):
+        return np.array([[600.0, 0, 320], [0, 600.0, 240], [0, 0, 1]]) if self.with_k else None
+
+
 @unittest.skipIf(cv2 is None, "needs OpenCV")
 class CameraPipelineTests(unittest.TestCase):
     def test_boxes_are_drawn_on_the_frame_they_were_detected_in(self):
@@ -339,6 +354,46 @@ class CameraPipelineTests(unittest.TestCase):
         self.assertIn("ultralytics", status["detector"])
         self.assertFalse(status["detector_ready"])
         self.assertTrue(status["available"])
+
+    def test_apriltags_are_outlined_and_ranged_when_the_intrinsics_are_known(self):
+        pipeline = camera_feed.CameraPipeline(_TagSource(), None, max_fps=60, log=QUIET, tag_size_m=0.06).start()
+        try:
+            status = _until(lambda: (lambda s: s if s["tags"] else None)(pipeline.status()))
+            image = cv2.imdecode(np.frombuffer(pipeline.latest_jpeg(), np.uint8), cv2.IMREAD_COLOR)
+        finally:
+            pipeline.stop()
+        self.assertTrue(status["tags_enabled"])
+        tag = status["tags"][0]
+        self.assertEqual(tag["id"], 0)
+        # 600 px focal length, 60 mm across 96 px: 0.375 m square-on, a little more off the optical axis.
+        self.assertTrue(0.36 < tag["range_m"] < 0.40, tag)
+        self.assertIn("with range", status["tag_detector"])
+        # The outline is magenta (BGR 255, 0, 255) on the black square's left edge, where the frame is grey.
+        b, g, r = (int(v) for v in image[210, 212])
+        self.assertGreater(b, 180)
+        self.assertGreater(r, 180)
+        self.assertLess(g, 90)
+
+    def test_apriltags_without_intrinsics_are_outlined_without_a_range(self):
+        pipeline = camera_feed.CameraPipeline(_TagSource(with_k=False), None, max_fps=60, log=QUIET,
+                                              tag_size_m=0.06).start()
+        try:
+            status = _until(lambda: (lambda s: s if s["tags"] else None)(pipeline.status()))
+        finally:
+            pipeline.stop()
+        self.assertEqual(status["tags"][0]["id"], 0)
+        self.assertIsNone(status["tags"][0]["range_m"])
+        self.assertIn("no range", status["tag_detector"])
+
+    def test_tags_are_off_unless_asked_for(self):
+        pipeline = camera_feed.CameraPipeline(_TagSource(), None, max_fps=60, log=QUIET).start()
+        try:
+            self.assertIsNotNone(pipeline.wait_jpeg(0, timeout_s=5.0))
+            status = pipeline.status()
+        finally:
+            pipeline.stop()
+        self.assertFalse(status["tags_enabled"])
+        self.assertEqual(status["tags"], [])
 
     def test_a_simulator_without_a_camera_says_so(self):
         feed = sim_feed.SimFeed("teleop", camera=False, port=0, log=QUIET)
@@ -711,6 +766,40 @@ class PickAvailabilityTests(unittest.TestCase):
         """Not every refusal is a configuration slip; this one is physics and must survive."""
         self.camera_stub.has_depth = lambda: False
         self.assertIn("no depth", self.arm.pick_status()["refusal"])
+
+
+@unittest.skipUnless(shutil.which("bash"), "no bash here")
+class BesideSimTests(unittest.TestCase):
+    """demos/cup/d1_ui/beside_sim.sh: the console the simulator launchers start and stop."""
+
+    ROOT = Path(__file__).resolve().parents[3]
+    LAUNCHERS = ("demos/cup/run_pick_demo.sh", "demos/combiner/run_combiner_demo.sh")
+
+    def split(self, *argv):
+        import subprocess
+
+        script = ('set -euo pipefail; . demos/cup/d1_ui/beside_sim.sh; console_args "$@"; '
+                  'printf "%s\\n" "$CONSOLE" "$HEADLESS" "$FEED_PORT" ${SIM_ARGS[@]+"${SIM_ARGS[@]}"}')
+        out = subprocess.run(["bash", "-c", script, "bash", *argv], cwd=self.ROOT, capture_output=True,
+                             text=True, check=True, env={"PATH": "/usr/bin:/bin"}).stdout.splitlines()
+        return out[0], out[1], out[2], out[3:]
+
+    def test_launcher_flags_are_read_and_the_rest_forwarded(self):
+        self.assertEqual(self.split(), ("1", "0", "8765", []))
+        self.assertEqual(self.split("--headless", "--ui_feed_port", "9001", "--seed", "3"),
+                         ("1", "1", "9001", ["--headless", "--ui_feed_port", "9001", "--seed", "3"]))
+        self.assertEqual(self.split("--no_console", "--ui_feed_port=0", "--box_range", "0.6", "0.7"),
+                         ("0", "0", "0", ["--ui_feed_port=0", "--box_range", "0.6", "0.7"]))
+        self.assertEqual(self.split("--help")[0], "0")
+
+    def test_launchers_keep_the_shell_that_stops_the_console(self):
+        # `exec python ...` would replace the shell whose EXIT trap stops the console, leaving it orphaned.
+        for launcher in self.LAUNCHERS:
+            with self.subTest(launcher=launcher):
+                text = (self.ROOT / launcher).read_text()
+                self.assertIn(". demos/cup/d1_ui/beside_sim.sh", text)
+                self.assertIn("console_start ", text)
+                self.assertNotRegex(text, r"(?m)^\s*exec\s+python")
 
 
 if __name__ == "__main__":
