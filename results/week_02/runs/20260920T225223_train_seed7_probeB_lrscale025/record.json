@@ -1,0 +1,63 @@
+{
+  "id": "20260920T225223_train_seed7_probeB_lrscale025",
+  "title": "Probe B: same, with the learning-rate range moved down 4x",
+  "notes": "500 iters, 1024 envs: mean KL 0.0132 and flat, 0/500 above the upper threshold, schedule regulating again; return 114.3 vs A's 106.4",
+  "week": 2,
+  "recorded_at": "2026-09-21T09:17:00+10:00",
+  "started_utc": "2026-09-20T22:52:23+00:00",
+  "source_dir": "logs/unifp_train/20260920T225223_train_seed7_probeB_lrscale025",
+  "mode": "train",
+  "seed": 7,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 499,
+  "final_checkpoint": {
+    "file": "model_499.pt",
+    "sha256": "df7f7677bafcbe15376722751174f57d11cb202ee57a198944f5972fb76f9ad9"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 114.30232238769531,
+      "last_step": 499,
+      "mean_last_10": 112.29433898925781,
+      "min": 1.2982251644134521,
+      "max": 114.66922760009766,
+      "points": 500
+    },
+    "Train/mean_episode_length": {
+      "last": 997.8599853515625,
+      "last_step": 499,
+      "mean_last_10": 983.1710021972656,
+      "min": 14.5,
+      "max": 999.0,
+      "points": 500
+    },
+    "Policy/mean_std": {
+      "last": 0.9039772748947144,
+      "last_step": 499,
+      "mean_last_10": 0.9040893673896789,
+      "min": 0.9039772748947144,
+      "max": 1.0020397901535034,
+      "points": 500
+    },
+    "Perf/total_fps": {
+      "last": 8428.0,
+      "last_step": 499,
+      "mean_last_10": 9529.4,
+      "min": 6997.0,
+      "max": 14974.0,
+      "points": 500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

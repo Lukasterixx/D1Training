@@ -1,0 +1,187 @@
+{
+  "steps": 1500,
+  "wall_clock_s": 40.78,
+  "tip_err_l1_mean_m": 0.76217,
+  "tip_err_l1_second_half_m": 1.02432,
+  "fall_steps": 489,
+  "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+  "checkpoint_iteration": 48800,
+  "command": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "ee_force_cmd_n": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "ee_force_ext_n": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "zero_actions": true,
+  "model": {
+    "total_mass_kg": 18.171,
+    "arm_mass_kg": 0.9869,
+    "num_joints": 20,
+    "num_bodies": 28,
+    "joint_names": [
+      "FL_hip_joint",
+      "FR_hip_joint",
+      "RL_hip_joint",
+      "RR_hip_joint",
+      "FL_thigh_joint",
+      "FR_thigh_joint",
+      "RL_thigh_joint",
+      "RR_thigh_joint",
+      "Joint1",
+      "FL_calf_joint",
+      "FR_calf_joint",
+      "RL_calf_joint",
+      "RR_calf_joint",
+      "Joint2",
+      "Joint3",
+      "Joint4",
+      "Joint5",
+      "Joint6",
+      "Joint7_1",
+      "Joint7_2"
+    ],
+    "body_names": [
+      "base",
+      "FL_hip",
+      "FR_hip",
+      "Head_upper",
+      "RL_hip",
+      "RR_hip",
+      "base_link",
+      "FL_thigh",
+      "FR_thigh",
+      "Head_lower",
+      "RL_thigh",
+      "RR_thigh",
+      "Link1",
+      "FL_calf",
+      "FR_calf",
+      "RL_calf",
+      "RR_calf",
+      "Link2",
+      "FL_foot",
+      "FR_foot",
+      "RL_foot",
+      "RR_foot",
+      "Link3",
+      "Link4",
+      "Link5",
+      "Link6",
+      "Link7_1",
+      "Link7_2"
+    ],
+    "joint_pos_limits": {
+      "FL_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "FR_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "RL_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "RR_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "FL_thigh_joint": [
+        -1.5708,
+        3.4907
+      ],
+      "FR_thigh_joint": [
+        -1.5708,
+        3.4907
+      ],
+      "RL_thigh_joint": [
+        -0.5236,
+        4.5379
+      ],
+      "RR_thigh_joint": [
+        -0.5236,
+        4.5379
+      ],
+      "Joint1": [
+        -2.35,
+        2.35
+      ],
+      "FL_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "FR_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "RL_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "RR_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "Joint2": [
+        -1.57,
+        1.57
+      ],
+      "Joint3": [
+        -1.57,
+        1.57
+      ],
+      "Joint4": [
+        -2.35,
+        2.35
+      ],
+      "Joint5": [
+        -1.57,
+        1.57
+      ],
+      "Joint6": [
+        -2.35,
+        2.35
+      ],
+      "Joint7_1": [
+        0.0,
+        0.03
+      ],
+      "Joint7_2": [
+        -0.03,
+        0.0
+      ]
+    },
+    "joint_effort_limits": {
+      "FL_hip_joint": 23.7,
+      "FR_hip_joint": 23.7,
+      "RL_hip_joint": 23.7,
+      "RR_hip_joint": 23.7,
+      "FL_thigh_joint": 23.7,
+      "FR_thigh_joint": 23.7,
+      "RL_thigh_joint": 23.7,
+      "RR_thigh_joint": 23.7,
+      "Joint1": 3.3,
+      "FL_calf_joint": 45.43,
+      "FR_calf_joint": 45.43,
+      "RL_calf_joint": 45.43,
+      "RR_calf_joint": 45.43,
+      "Joint2": 3.3,
+      "Joint3": 1.7,
+      "Joint4": 1.7,
+      "Joint5": 1.7,
+      "Joint6": 1.7,
+      "Joint7_1": 15.0,
+      "Joint7_2": 15.0
+    }
+  }
+}

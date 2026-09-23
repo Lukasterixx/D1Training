@@ -1,0 +1,63 @@
+{
+  "id": "20260921T093603_train_seed1_sens_c4000_lo",
+  "title": "Sensitivity at model_4000: fixed rate 1e-6, 20 iters",
+  "notes": "The tenfold-lower rate; the pair tests the quadratic law at a trained checkpoint.",
+  "week": 2,
+  "recorded_at": "2026-09-21T20:26:55+10:00",
+  "started_utc": "2026-09-21T09:36:03+00:00",
+  "source_dir": "logs/unifp_train/20260921T093603_train_seed1_sens_c4000_lo",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 20,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4019,
+  "final_checkpoint": {
+    "file": "model_4019.pt",
+    "sha256": "3296476814a224e27adaee9e008facc6a78c43175f321e8f2be72b9ab295e874"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 73.71037292480469,
+      "last_step": 4019,
+      "mean_last_10": 57.03622703552246,
+      "min": 2.065347909927368,
+      "max": 73.71037292480469,
+      "points": 20
+    },
+    "Train/mean_episode_length": {
+      "last": 467.0,
+      "last_step": 4019,
+      "mean_last_10": 360.0899948120117,
+      "min": 13.09000015258789,
+      "max": 467.0,
+      "points": 20
+    },
+    "Policy/mean_std": {
+      "last": 0.5528607368469238,
+      "last_step": 4019,
+      "mean_last_10": 0.5528744757175446,
+      "min": 0.5528607368469238,
+      "max": 0.5529444813728333,
+      "points": 20
+    },
+    "Perf/total_fps": {
+      "last": 38104.0,
+      "last_step": 4019,
+      "mean_last_10": 38242.0,
+      "min": 38060.0,
+      "max": 40555.0,
+      "points": 20
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

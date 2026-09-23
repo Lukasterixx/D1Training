@@ -1,0 +1,63 @@
+{
+  "id": "20260920T044653_train_seed1_memprobe",
+  "title": "unifp_train throughput and memory probe, 4096 envs",
+  "notes": "4 iterations at upstream's env count: 40k steps/s, 2.45 s/iter, no OOM; sizing for the full run",
+  "week": 1,
+  "recorded_at": "2026-09-20T14:49:16+10:00",
+  "started_utc": "2026-09-20T04:46:53+00:00",
+  "source_dir": "logs/unifp_train/20260920T044653_train_seed1_memprobe",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 3,
+  "final_checkpoint": {
+    "file": "model_3.pt",
+    "sha256": "a2718539d1727f3e5eaad44b39b05138880ec16c4e043ffea5450fb98d6a4f4b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 7.707076072692871,
+      "last_step": 3,
+      "mean_last_10": 4.414637982845306,
+      "min": 1.2056176662445068,
+      "max": 7.707076072692871,
+      "points": 4
+    },
+    "Train/mean_episode_length": {
+      "last": 87.30000305175781,
+      "last_step": 3,
+      "mean_last_10": 50.6850004196167,
+      "min": 13.09000015258789,
+      "max": 87.30000305175781,
+      "points": 4
+    },
+    "Policy/mean_std": {
+      "last": 1.0014913082122803,
+      "last_step": 3,
+      "mean_last_10": 1.0008172243833542,
+      "min": 0.9996090531349182,
+      "max": 1.0014913082122803,
+      "points": 4
+    },
+    "Perf/total_fps": {
+      "last": 40013.0,
+      "last_step": 3,
+      "mean_last_10": 40041.75,
+      "min": 39041.0,
+      "max": 40664.0,
+      "points": 4
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

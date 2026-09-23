@@ -1,0 +1,63 @@
+{
+  "id": "20260921T013053_train_seed7_probeE_4096_seed7",
+  "title": "Probe E: filling the seed/batch 2x2",
+  "notes": "300 iterations, UniFP config unchanged; separates the batch-size effect from the seed effect",
+  "week": 2,
+  "recorded_at": "2026-09-21T11:45:13+10:00",
+  "started_utc": "2026-09-21T01:30:53+00:00",
+  "source_dir": "logs/unifp_train/20260921T013053_train_seed7_probeE_4096_seed7",
+  "mode": "train",
+  "seed": 7,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 299,
+  "final_checkpoint": {
+    "file": "model_299.pt",
+    "sha256": "6086a80e8d1dc09c3c23f65ae51fa45c814f7d419ac5dde838437e9301011bca"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 102.26191711425781,
+      "last_step": 299,
+      "mean_last_10": 102.3858741760254,
+      "min": 1.2199394702911377,
+      "max": 119.75093841552734,
+      "points": 300
+    },
+    "Train/mean_episode_length": {
+      "last": 980.8699951171875,
+      "last_step": 299,
+      "mean_last_10": 965.4609924316406,
+      "min": 14.380000114440918,
+      "max": 999.0,
+      "points": 300
+    },
+    "Policy/mean_std": {
+      "last": 0.8667599558830261,
+      "last_step": 299,
+      "mean_last_10": 0.8669138193130493,
+      "min": 0.8647961616516113,
+      "max": 1.0011911392211914,
+      "points": 300
+    },
+    "Perf/total_fps": {
+      "last": 38293.0,
+      "last_step": 299,
+      "mean_last_10": 38340.0,
+      "min": 37516.0,
+      "max": 39802.0,
+      "points": 300
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

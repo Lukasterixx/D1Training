@@ -1,0 +1,63 @@
+{
+  "id": "20260921T092500_train_seed1_null_frozen",
+  "title": "Null test: both optimisers frozen, 25 iters, 4096 envs",
+  "notes": "PPO rate 0 and estimator rate 0. Any KL reported cannot come from an optimiser step.",
+  "week": 2,
+  "recorded_at": "2026-09-21T19:33:18+10:00",
+  "started_utc": "2026-09-21T09:25:00+00:00",
+  "source_dir": "logs/unifp_train/20260921T092500_train_seed1_null_frozen",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 25,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 24,
+  "final_checkpoint": {
+    "file": "model_24.pt",
+    "sha256": "56b5757d024708a67e5309df37be185b404f5c278d6e15fc474e1500e81313d0"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 38.670528411865234,
+      "last_step": 24,
+      "mean_last_10": 32.6018669128418,
+      "min": 1.2056176662445068,
+      "max": 38.670528411865234,
+      "points": 25
+    },
+    "Train/mean_episode_length": {
+      "last": 542.0700073242188,
+      "last_step": 24,
+      "mean_last_10": 455.7480072021484,
+      "min": 13.09000015258789,
+      "max": 542.0700073242188,
+      "points": 25
+    },
+    "Policy/mean_std": {
+      "last": 1.0,
+      "last_step": 24,
+      "mean_last_10": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "points": 25
+    },
+    "Perf/total_fps": {
+      "last": 39592.0,
+      "last_step": 24,
+      "mean_last_10": 39076.9,
+      "min": 38603.0,
+      "max": 40797.0,
+      "points": 25
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

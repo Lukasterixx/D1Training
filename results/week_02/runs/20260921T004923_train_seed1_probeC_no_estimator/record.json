@@ -1,0 +1,63 @@
+{
+  "id": "20260921T004923_train_seed1_probeC_no_estimator",
+  "title": "Probe probeC: adaptation module disabled, 4096 envs",
+  "notes": "300 iterations, seed 1; C and D have identical mean KL 0.0226, which exonerates the estimator",
+  "week": 2,
+  "recorded_at": "2026-09-21T11:19:07+10:00",
+  "started_utc": "2026-09-21T00:49:23+00:00",
+  "source_dir": "logs/unifp_train/20260921T004923_train_seed1_probeC_no_estimator",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 299,
+  "final_checkpoint": {
+    "file": "model_299.pt",
+    "sha256": "b9e2dec29a03d7254f86c863989a7e7e6c8be8edf369cbc039404ecafeda8858"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 105.50092315673828,
+      "last_step": 299,
+      "mean_last_10": 104.01863555908203,
+      "min": 1.2056176662445068,
+      "max": 113.6170654296875,
+      "points": 300
+    },
+    "Train/mean_episode_length": {
+      "last": 991.27001953125,
+      "last_step": 299,
+      "mean_last_10": 989.22900390625,
+      "min": 13.09000015258789,
+      "max": 999.0,
+      "points": 300
+    },
+    "Policy/mean_std": {
+      "last": 0.8760860562324524,
+      "last_step": 299,
+      "mean_last_10": 0.8764059901237488,
+      "min": 0.8760860562324524,
+      "max": 1.0050767660140991,
+      "points": 300
+    },
+    "Perf/total_fps": {
+      "last": 37652.0,
+      "last_step": 299,
+      "mean_last_10": 37530.1,
+      "min": 36485.0,
+      "max": 38865.0,
+      "points": 300
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

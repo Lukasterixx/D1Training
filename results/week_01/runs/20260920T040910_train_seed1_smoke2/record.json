@@ -1,0 +1,63 @@
+{
+  "id": "20260920T040910_train_seed1_smoke2",
+  "title": "unifp_train PPO smoke, 12 iterations",
+  "notes": "1024 envs, 28k steps/s, estimator loss 3.63 -> 3.44, mean reward 3.3 -> 13.8",
+  "week": 1,
+  "recorded_at": "2026-09-20T14:18:36+10:00",
+  "started_utc": "2026-09-20T04:09:10+00:00",
+  "source_dir": "logs/unifp_train/20260920T040910_train_seed1_smoke2",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 11,
+  "final_checkpoint": {
+    "file": "model_11.pt",
+    "sha256": "ce6185be483300fd71148278b479aa0712c2142056318f25d677e081900fd075"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 13.799410820007324,
+      "last_step": 11,
+      "mean_last_10": 8.099183607101441,
+      "min": 0.8084755539894104,
+      "max": 13.799410820007324,
+      "points": 12
+    },
+    "Train/mean_episode_length": {
+      "last": 234.0500030517578,
+      "last_step": 11,
+      "mean_last_10": 140.23066787719728,
+      "min": 13.117647171020508,
+      "max": 234.0500030517578,
+      "points": 12
+    },
+    "Policy/mean_std": {
+      "last": 0.9968757629394531,
+      "last_step": 11,
+      "mean_last_10": 0.9972526729106903,
+      "min": 0.9968757629394531,
+      "max": 0.9996863603591919,
+      "points": 12
+    },
+    "Perf/total_fps": {
+      "last": 26353.0,
+      "last_step": 11,
+      "mean_last_10": 27355.0,
+      "min": 24175.0,
+      "max": 29476.0,
+      "points": 12
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

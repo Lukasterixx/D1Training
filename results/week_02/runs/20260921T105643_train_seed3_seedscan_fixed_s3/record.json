@@ -1,0 +1,63 @@
+{
+  "id": "20260921T105643_train_seed3_seedscan_fixed_s3",
+  "title": "Seed 3 drift screen, re-taken with the F-080 fix",
+  "notes": "1024 envs, 300 iters, UniFP unchanged. Direct before/after against the 2026-09-21 five-seed scan.",
+  "week": 2,
+  "recorded_at": "2026-09-21T21:12:26+10:00",
+  "started_utc": "2026-09-21T10:56:43+00:00",
+  "source_dir": "logs/unifp_train/20260921T105643_train_seed3_seedscan_fixed_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 1024,
+  "iterations": 300,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 299,
+  "final_checkpoint": {
+    "file": "model_299.pt",
+    "sha256": "a350ead727a402e22ee438a9710a2a517cdf8e103de05b06c1094dee18f6c023"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 118.83882904052734,
+      "last_step": 299,
+      "mean_last_10": 117.94372482299805,
+      "min": 1.0546326637268066,
+      "max": 119.25789642333984,
+      "points": 300
+    },
+    "Train/mean_episode_length": {
+      "last": 990.7000122070312,
+      "last_step": 299,
+      "mean_last_10": 989.6160034179687,
+      "min": 12.961538314819336,
+      "max": 999.0,
+      "points": 300
+    },
+    "Policy/mean_std": {
+      "last": 0.854150652885437,
+      "last_step": 299,
+      "mean_last_10": 0.856659197807312,
+      "min": 0.854150652885437,
+      "max": 1.0012617111206055,
+      "points": 300
+    },
+    "Perf/total_fps": {
+      "last": 27859.0,
+      "last_step": 299,
+      "mean_last_10": 27572.4,
+      "min": 23309.0,
+      "max": 29970.0,
+      "points": 300
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

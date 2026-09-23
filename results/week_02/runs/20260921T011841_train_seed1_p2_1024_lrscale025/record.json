@@ -1,0 +1,63 @@
+{
+  "id": "20260921T011841_train_seed1_p2_1024_lrscale025",
+  "title": "Run on the batch-size conclusion, stopped at 435",
+  "notes": "1024 envs seed 1: did not reproduce probe B (KL 0.0231 vs 0.0135, floor 57% vs 3%); exposed that batch size was confounded with seed",
+  "week": 2,
+  "recorded_at": "2026-09-21T11:26:27+10:00",
+  "started_utc": "2026-09-21T01:18:41+00:00",
+  "source_dir": "logs/unifp_train/20260921T011841_train_seed1_p2_1024_lrscale025",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 471,
+  "final_checkpoint": {
+    "file": "model_471.pt",
+    "sha256": "a7954def0faa6b91d021c101847e29094d8874631f930e43e0cc593b26dbc6f8"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 99.79342651367188,
+      "last_step": 471,
+      "mean_last_10": 98.6050651550293,
+      "min": 1.23664391040802,
+      "max": 102.33274841308594,
+      "points": 472
+    },
+    "Train/mean_episode_length": {
+      "last": 984.0700073242188,
+      "last_step": 471,
+      "mean_last_10": 974.2640014648438,
+      "min": 13.117647171020508,
+      "max": 999.0,
+      "points": 472
+    },
+    "Policy/mean_std": {
+      "last": 0.9358803033828735,
+      "last_step": 471,
+      "mean_last_10": 0.935951966047287,
+      "min": 0.9358803033828735,
+      "max": 1.0016393661499023,
+      "points": 472
+    },
+    "Perf/total_fps": {
+      "last": 27399.0,
+      "last_step": 471,
+      "mean_last_10": 27565.8,
+      "min": 23222.0,
+      "max": 30402.0,
+      "points": 472
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20260921T092618_train_seed1_null_estimator",
+  "title": "Estimator alone: PPO frozen, adaptation module at 1e-5",
+  "notes": "Isolates the adaptation module's KL contribution with nothing to mask it.",
+  "week": 2,
+  "recorded_at": "2026-09-21T19:33:18+10:00",
+  "started_utc": "2026-09-21T09:26:18+00:00",
+  "source_dir": "logs/unifp_train/20260921T092618_train_seed1_null_estimator",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 25,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 24,
+  "final_checkpoint": {
+    "file": "model_24.pt",
+    "sha256": "81e3abbf72e7abb3b2139a9d3b6cac0c1af55fe21d51e903f7a8d2e8732f4794"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 38.58871078491211,
+      "last_step": 24,
+      "mean_last_10": 31.866496276855468,
+      "min": 1.2056176662445068,
+      "max": 38.58871078491211,
+      "points": 25
+    },
+    "Train/mean_episode_length": {
+      "last": 555.4099731445312,
+      "last_step": 24,
+      "mean_last_10": 451.9969970703125,
+      "min": 13.09000015258789,
+      "max": 555.4099731445312,
+      "points": 25
+    },
+    "Policy/mean_std": {
+      "last": 1.0,
+      "last_step": 24,
+      "mean_last_10": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "points": 25
+    },
+    "Perf/total_fps": {
+      "last": 38795.0,
+      "last_step": 24,
+      "mean_last_10": 38680.1,
+      "min": 37396.0,
+      "max": 40257.0,
+      "points": 25
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

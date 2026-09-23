@@ -1,0 +1,63 @@
+{
+  "id": "20260921T010356_train_seed1_probeD_faithful_4096",
+  "title": "Probe probeD: UniFP unchanged at 4096 envs, KL instrumented",
+  "notes": "300 iterations, seed 1; C and D have identical mean KL 0.0226, which exonerates the estimator",
+  "week": 2,
+  "recorded_at": "2026-09-21T11:19:07+10:00",
+  "started_utc": "2026-09-21T01:03:56+00:00",
+  "source_dir": "logs/unifp_train/20260921T010356_train_seed1_probeD_faithful_4096",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 299,
+  "final_checkpoint": {
+    "file": "model_299.pt",
+    "sha256": "17b5ce374730ed7b999f4e7e000167e1cdfcc37ed5f81d3d7531acf7dc5b4f1f"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 95.55683898925781,
+      "last_step": 299,
+      "mean_last_10": 96.763134765625,
+      "min": 1.2056176662445068,
+      "max": 113.45401000976562,
+      "points": 300
+    },
+    "Train/mean_episode_length": {
+      "last": 975.8200073242188,
+      "last_step": 299,
+      "mean_last_10": 976.1879943847656,
+      "min": 13.09000015258789,
+      "max": 999.0,
+      "points": 300
+    },
+    "Policy/mean_std": {
+      "last": 0.8726134300231934,
+      "last_step": 299,
+      "mean_last_10": 0.8728585481643677,
+      "min": 0.8726134300231934,
+      "max": 1.0054304599761963,
+      "points": 300
+    },
+    "Perf/total_fps": {
+      "last": 37013.0,
+      "last_step": 299,
+      "mean_last_10": 37390.3,
+      "min": 36619.0,
+      "max": 40108.0,
+      "points": 300
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

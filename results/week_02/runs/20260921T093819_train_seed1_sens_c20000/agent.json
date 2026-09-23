@@ -1,0 +1,67 @@
+{
+  "actor": {
+    "activation": "elu",
+    "class_name": "unifp_train.models.UniFPActor",
+    "distribution_cfg": {
+      "class_name": "GaussianDistribution",
+      "init_std": 1.0,
+      "std_type": "scalar"
+    },
+    "hidden_dims": [
+      512,
+      256,
+      128
+    ],
+    "obs_normalization": false
+  },
+  "algorithm": {
+    "class_name": "unifp_train.algorithm.UniFPPPO",
+    "clip_param": 0.2,
+    "desired_kl": 0.01,
+    "entropy_coef": 0.01,
+    "fixed_learning_rate": 1e-05,
+    "gamma": 0.99,
+    "lam": 0.95,
+    "learning_rate": 0.001,
+    "max_grad_norm": 1.0,
+    "normalize_advantage_per_mini_batch": false,
+    "num_learning_epochs": 5,
+    "num_mini_batches": 4,
+    "rnd_cfg": null,
+    "schedule": "adaptive",
+    "symmetry_cfg": null,
+    "use_clipped_value_loss": true,
+    "value_loss_coef": 1.0
+  },
+  "check_for_nan": true,
+  "critic": {
+    "activation": "elu",
+    "class_name": "MLPModel",
+    "hidden_dims": [
+      512,
+      256,
+      128
+    ],
+    "obs_normalization": false
+  },
+  "device": "cuda:0",
+  "empirical_normalization": false,
+  "experiment_name": "unifp_go2d1",
+  "load_checkpoint": "model_.*.pt",
+  "load_run": ".*",
+  "logger": "tensorboard",
+  "max_iterations": 20,
+  "num_steps_per_env": 24,
+  "obs_groups": {
+    "actor": [
+      "policy"
+    ],
+    "critic": [
+      "critic"
+    ]
+  },
+  "resume": false,
+  "run_name": "sens_c20000",
+  "save_interval": 200,
+  "seed": 1
+}

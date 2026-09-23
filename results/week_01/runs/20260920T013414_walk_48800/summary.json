@@ -1,0 +1,369 @@
+{
+  "steps": 1500,
+  "wall_clock_s": 63.85,
+  "tip_err_l1_mean_m": 0.51879,
+  "tip_err_l1_second_half_m": 0.51444,
+  "fall_steps": 1232,
+  "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+  "checkpoint_iteration": 48800,
+  "command": [
+    0.5,
+    0.0,
+    0.0
+  ],
+  "ee_force_cmd_n": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "ee_force_ext_n": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "zero_actions": false,
+  "model": {
+    "total_mass_kg": 18.171,
+    "arm_mass_kg": 0.9869,
+    "num_joints": 20,
+    "num_bodies": 28,
+    "joint_names": [
+      "FL_hip_joint",
+      "FR_hip_joint",
+      "RL_hip_joint",
+      "RR_hip_joint",
+      "FL_thigh_joint",
+      "FR_thigh_joint",
+      "RL_thigh_joint",
+      "RR_thigh_joint",
+      "Joint1",
+      "FL_calf_joint",
+      "FR_calf_joint",
+      "RL_calf_joint",
+      "RR_calf_joint",
+      "Joint2",
+      "Joint3",
+      "Joint4",
+      "Joint5",
+      "Joint6",
+      "Joint7_1",
+      "Joint7_2"
+    ],
+    "body_names": [
+      "base",
+      "FL_hip",
+      "FR_hip",
+      "Head_upper",
+      "RL_hip",
+      "RR_hip",
+      "base_link",
+      "FL_thigh",
+      "FR_thigh",
+      "Head_lower",
+      "RL_thigh",
+      "RR_thigh",
+      "Link1",
+      "FL_calf",
+      "FR_calf",
+      "RL_calf",
+      "RR_calf",
+      "Link2",
+      "FL_foot",
+      "FR_foot",
+      "RL_foot",
+      "RR_foot",
+      "Link3",
+      "Link4",
+      "Link5",
+      "Link6",
+      "Link7_1",
+      "Link7_2"
+    ],
+    "joint_pos_limits": {
+      "FL_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "FR_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "RL_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "RR_hip_joint": [
+        -1.0472,
+        1.0472
+      ],
+      "FL_thigh_joint": [
+        -1.5708,
+        3.4907
+      ],
+      "FR_thigh_joint": [
+        -1.5708,
+        3.4907
+      ],
+      "RL_thigh_joint": [
+        -0.5236,
+        4.5379
+      ],
+      "RR_thigh_joint": [
+        -0.5236,
+        4.5379
+      ],
+      "Joint1": [
+        -2.35,
+        2.35
+      ],
+      "FL_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "FR_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "RL_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "RR_calf_joint": [
+        -2.7227,
+        -0.8378
+      ],
+      "Joint2": [
+        -1.57,
+        1.57
+      ],
+      "Joint3": [
+        -1.57,
+        1.57
+      ],
+      "Joint4": [
+        -2.35,
+        2.35
+      ],
+      "Joint5": [
+        -1.57,
+        1.57
+      ],
+      "Joint6": [
+        -2.35,
+        2.35
+      ],
+      "Joint7_1": [
+        0.0,
+        0.03
+      ],
+      "Joint7_2": [
+        -0.03,
+        0.0
+      ]
+    },
+    "joint_effort_limits": {
+      "FL_hip_joint": 23.7,
+      "FR_hip_joint": 23.7,
+      "RL_hip_joint": 23.7,
+      "RR_hip_joint": 23.7,
+      "FL_thigh_joint": 23.7,
+      "FR_thigh_joint": 23.7,
+      "RL_thigh_joint": 23.7,
+      "RR_thigh_joint": 23.7,
+      "Joint1": 3.3,
+      "FL_calf_joint": 45.43,
+      "FR_calf_joint": 45.43,
+      "RL_calf_joint": 45.43,
+      "RR_calf_joint": 45.43,
+      "Joint2": 3.3,
+      "Joint3": 1.7,
+      "Joint4": 1.7,
+      "Joint5": 1.7,
+      "Joint6": 1.7,
+      "Joint7_1": 15.0,
+      "Joint7_2": 15.0
+    },
+    "control": {
+      "action_scale": 0.25,
+      "policy_rate_hz": 50.0,
+      "physics_rate_hz": 200.0,
+      "decimation": 4,
+      "actuator": "IdealPD (explicit torque, UniFP's law)",
+      "armature_kg_m2": 0.0002,
+      "self_collisions": true,
+      "solver_iterations": [
+        8,
+        4
+      ],
+      "ground": {
+        "static_friction": 1.0,
+        "dynamic_friction": 1.0,
+        "restitution": 0.0,
+        "shape": "flat plane"
+      },
+      "spawn_height_m": 0.35
+    }
+  },
+  "final_joint_state": [
+    {
+      "joint": "FL_hip_joint",
+      "pos": 0.6,
+      "target": 0.7791,
+      "default": 0.1,
+      "torque": 4.4274,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "FL_thigh_joint",
+      "pos": 1.1621,
+      "target": 0.9924,
+      "default": 0.8,
+      "torque": -4.3391,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "FL_calf_joint",
+      "pos": -2.0548,
+      "target": -2.0235,
+      "default": -1.5,
+      "torque": 0.8573,
+      "effort_limit": 45.43
+    },
+    {
+      "joint": "FR_hip_joint",
+      "pos": -1.0472,
+      "target": -2.5936,
+      "default": -0.1,
+      "torque": -23.7,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "FR_thigh_joint",
+      "pos": 1.4815,
+      "target": 1.445,
+      "default": 0.8,
+      "torque": 1.9552,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "FR_calf_joint",
+      "pos": -2.1158,
+      "target": -2.0274,
+      "default": -1.5,
+      "torque": -9.6944,
+      "effort_limit": 45.43
+    },
+    {
+      "joint": "RL_hip_joint",
+      "pos": 0.5473,
+      "target": 0.5957,
+      "default": 0.1,
+      "torque": 1.3236,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "RL_thigh_joint",
+      "pos": -0.1084,
+      "target": -0.0784,
+      "default": 1.0,
+      "torque": -3.7118,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "RL_calf_joint",
+      "pos": -1.2156,
+      "target": -1.3102,
+      "default": -1.5,
+      "torque": 11.3912,
+      "effort_limit": 45.43
+    },
+    {
+      "joint": "RR_hip_joint",
+      "pos": -0.8861,
+      "target": -0.8062,
+      "default": -0.1,
+      "torque": -5.217,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "RR_thigh_joint",
+      "pos": 1.6203,
+      "target": 1.6442,
+      "default": 1.0,
+      "torque": -7.3237,
+      "effort_limit": 23.7
+    },
+    {
+      "joint": "RR_calf_joint",
+      "pos": -1.2949,
+      "target": -1.3568,
+      "default": -1.5,
+      "torque": 12.8498,
+      "effort_limit": 45.43
+    },
+    {
+      "joint": "d1_Joint1",
+      "pos": -0.2074,
+      "target": 1.6372,
+      "default": 0.0,
+      "torque": 3.3,
+      "effort_limit": 3.3
+    },
+    {
+      "joint": "d1_Joint2",
+      "pos": 1.5589,
+      "target": -3.2563,
+      "default": 0.0,
+      "torque": -3.3,
+      "effort_limit": 3.3
+    },
+    {
+      "joint": "d1_Joint3",
+      "pos": -0.1268,
+      "target": 2.0493,
+      "default": 0.0,
+      "torque": 1.7,
+      "effort_limit": 1.7
+    },
+    {
+      "joint": "d1_Joint4",
+      "pos": -1.2019,
+      "target": -1.4682,
+      "default": 0.0,
+      "torque": -1.7,
+      "effort_limit": 1.7
+    },
+    {
+      "joint": "d1_Joint5",
+      "pos": -1.2737,
+      "target": 0.2111,
+      "default": 0.0,
+      "torque": 1.7,
+      "effort_limit": 1.7
+    },
+    {
+      "joint": "d1_Joint6",
+      "pos": 0.1411,
+      "target": 0.1013,
+      "default": 0.0,
+      "torque": 0.8587,
+      "effort_limit": 1.7
+    },
+    {
+      "joint": "d1_Joint7_1",
+      "pos": 0.0002,
+      "target": 0.0,
+      "default": 0.0,
+      "torque": -0.1614,
+      "effort_limit": 15.0
+    },
+    {
+      "joint": "d1_Joint7_2",
+      "pos": -0.0027,
+      "target": 0.0,
+      "default": 0.0,
+      "torque": 2.2799,
+      "effort_limit": 15.0
+    }
+  ]
+}

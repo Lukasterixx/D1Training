@@ -1,0 +1,63 @@
+{
+  "id": "20260921T103931_train_seed1_diag4096_c4000",
+  "title": "Storage check at 4096 envs after the fix",
+  "notes": "0 of 98,304 samples disagree while ~100 episodes end per iteration.",
+  "week": 2,
+  "recorded_at": "2026-09-21T21:12:26+10:00",
+  "started_utc": "2026-09-21T10:39:31+00:00",
+  "source_dir": "logs/unifp_train/20260921T103931_train_seed1_diag4096_c4000",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 4,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4003,
+  "final_checkpoint": {
+    "file": "model_4003.pt",
+    "sha256": "5382c8c04956a26c61e7476e02650afcf2046bb464068532bf84581ea24c2ad2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 13.837480545043945,
+      "last_step": 4003,
+      "mean_last_10": 7.901581227779388,
+      "min": 2.065347909927368,
+      "max": 13.837480545043945,
+      "points": 4
+    },
+    "Train/mean_episode_length": {
+      "last": 85.29000091552734,
+      "last_step": 4003,
+      "mean_last_10": 49.11750030517578,
+      "min": 13.09000015258789,
+      "max": 85.29000091552734,
+      "points": 4
+    },
+    "Policy/mean_std": {
+      "last": 0.5529417991638184,
+      "last_step": 4003,
+      "mean_last_10": 0.5529417991638184,
+      "min": 0.5529417991638184,
+      "max": 0.5529417991638184,
+      "points": 4
+    },
+    "Perf/total_fps": {
+      "last": 39390.0,
+      "last_step": 4003,
+      "mean_last_10": 39284.75,
+      "min": 38336.0,
+      "max": 39944.0,
+      "points": 4
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

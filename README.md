@@ -333,6 +333,9 @@ error is small. Real per-link inertials would still be better.
 | `motor_model.py`, `unitree_actuators.py` | Unitree's measured Go2 motor envelope (from unitree_rl_lab, Apache-2.0; see `third_party/`) |
 | `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
 | `pick_demo/`, `run_pick_demo.py`, `run_pick_demo.sh` | scripted cup pick: wrist RealSense model, YOLO, top-down grasp planning, the sequence |
+| `unifp_go2d1/` | UniFP's whole-body position/force task retargeted to this robot, on the legacy Isaac Gym stack |
+| `unifp_isaaclab/`, `run_unifp_isaaclab.py` | the policy that stack trains, run unchanged on the Isaac Lab model: the sim-to-sim check |
+| `unifp_train/`, `run_unifp_train.py` | that task rebuilt to train natively in Isaac Lab: environment, external forces, adaptation-module actor-critic and PPO. Scores within 0.4% of the Isaac Gym task term by term (F-078); no policy trained to completion yet |
 
 ## Despite the name
 

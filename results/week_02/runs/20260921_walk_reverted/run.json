@@ -1,0 +1,217 @@
+{
+  "mode": "playback",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "arguments": {
+    "num_envs": 1,
+    "iterations": null,
+    "steps": 1500
+  },
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M .gitignore\n M README.md\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_01/notes.md\n M results/week_02/notes.md\n M unifp_go2d1/play_policy.py\n?? results/manifests/unifp_isaaclab_validation.json\n?? results/week_01/figures/unifp_sim2sim.png\n?? results/week_01/figures/unifp_sim2sim.py\n?? results/week_01/figures/unifp_task_terms.png\n?? results/week_01/figures/unifp_task_terms.py\n?? results/week_01/runs/20260920T0110_gym_flat_stand_zero/\n?? results/week_01/runs/20260920T0112_gym_flat_stand_48800/\n?? results/week_01/runs/20260920T0114_gym_flat_walk_48800/\n?? results/week_01/runs/20260920T011858_stand_zero/\n?? results/week_01/runs/20260920T012721_stand_48800/\n?? results/week_01/runs/20260920T012721_stand_zero/\n?? results/week_01/runs/20260920T012721_walk_48800/\n?? results/week_01/runs/20260920T012721_walk_zero/\n?? results/week_01/runs/20260920T013414_stand_48800/\n?? results/week_01/runs/20260920T013414_stand_zero/\n?? results/week_01/runs/20260920T013414_walk_48800/\n?? results/week_01/runs/20260920T014015_confirm_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_zero/\n?? results/week_01/runs/20260920T024333_lab0543_walk_48800/\n?? results/week_01/runs/20260920T024333_lab0543_walk_zero/\n?? results/week_01/runs/20260920T040839_train_seed1_smoke/\n?? results/week_01/runs/20260920T040910_train_seed1_smoke2/\n?? results/week_01/runs/20260920T041744_smoke_seed42_baseline_zero/\n?? results/week_01/runs/20260920T041756_play_seed42_baseline_48800/\n?? results/week_01/runs/20260920T041809_play_seed42_forced_48800/\n?? results/week_01/runs/20260920T044653_train_seed1_memprobe/\n?? results/week_01/runs/20260920T044925_train_seed1_p0/\n?? results/week_02/runs/\n?? run_unifp_isaaclab.py\n?? run_unifp_train.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? tests/test_unifp_train.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/\n?? unifp_train/",
+  "stack": "isaaclab/unifp_port",
+  "stack_versions": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "./run_unifp_isaaclab.py play --headless --steps 1500 --command 0.5 0 0 --report_every 0 --out logs/unifp_isaaclab/20260921_walk_reverted",
+  "notes": "UniFP model_48800.pt run on the Isaac Lab welded Go2+D1 (sim-to-sim); base command (0.5, 0.0, 0.0), ee force cmd (0.0, 0.0, 0.0) N, ext (0.0, 0.0, 0.0) N",
+  "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+  "checkpoint_sha256": "845049f46d73d02aa5fa2c59fa01c37bc050705a0500a8a006eae63fe77758fa",
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "trace": "trace.csv",
+  "articulation_mass_kg": 18.171,
+  "summary": {
+    "steps": 1500,
+    "wall_clock_s": 44.04,
+    "tip_err_l1_mean_m": 0.75558,
+    "tip_err_l1_second_half_m": 0.72857,
+    "fall_steps": 161,
+    "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+    "checkpoint_iteration": 48800,
+    "command": [
+      0.5,
+      0.0,
+      0.0
+    ],
+    "ee_force_cmd_n": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "ee_force_ext_n": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "zero_actions": false,
+    "final_joint_state": [
+      {
+        "joint": "FL_hip_joint",
+        "pos": 0.9824,
+        "target": 0.9654,
+        "default": 0.1,
+        "torque": -2.7312,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "FL_thigh_joint",
+        "pos": 0.0557,
+        "target": 0.0415,
+        "default": 0.8,
+        "torque": 1.2034,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "FL_calf_joint",
+        "pos": -2.4997,
+        "target": -2.3432,
+        "default": -1.5,
+        "torque": -9.1799,
+        "effort_limit": 45.43
+      },
+      {
+        "joint": "FR_hip_joint",
+        "pos": -0.1152,
+        "target": -0.1611,
+        "default": -0.1,
+        "torque": -1.5264,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "FR_thigh_joint",
+        "pos": 1.1889,
+        "target": 1.169,
+        "default": 0.8,
+        "torque": -0.7283,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "FR_calf_joint",
+        "pos": -0.8378,
+        "target": -0.3047,
+        "default": -1.5,
+        "torque": 13.3266,
+        "effort_limit": 45.43
+      },
+      {
+        "joint": "RL_hip_joint",
+        "pos": 1.0471,
+        "target": 2.5398,
+        "default": 0.1,
+        "torque": 23.7,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "RL_thigh_joint",
+        "pos": 2.4211,
+        "target": 2.5903,
+        "default": 1.0,
+        "torque": 1.7632,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "RL_calf_joint",
+        "pos": -0.8377,
+        "target": -1.0111,
+        "default": -1.5,
+        "torque": 7.1222,
+        "effort_limit": 45.43
+      },
+      {
+        "joint": "RR_hip_joint",
+        "pos": -0.744,
+        "target": -0.6557,
+        "default": -0.1,
+        "torque": 2.0154,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "RR_thigh_joint",
+        "pos": -0.5236,
+        "target": -0.5296,
+        "default": 1.0,
+        "torque": -0.0432,
+        "effort_limit": 23.7
+      },
+      {
+        "joint": "RR_calf_joint",
+        "pos": -2.3399,
+        "target": -2.0287,
+        "default": -1.5,
+        "torque": 5.6552,
+        "effort_limit": 45.43
+      },
+      {
+        "joint": "d1_Joint1",
+        "pos": 0.1616,
+        "target": -2.2146,
+        "default": 0.0,
+        "torque": -3.3,
+        "effort_limit": 3.3
+      },
+      {
+        "joint": "d1_Joint2",
+        "pos": 1.4566,
+        "target": -3.2156,
+        "default": 0.0,
+        "torque": -3.3,
+        "effort_limit": 3.3
+      },
+      {
+        "joint": "d1_Joint3",
+        "pos": -0.2382,
+        "target": 1.4852,
+        "default": 0.0,
+        "torque": 1.7,
+        "effort_limit": 1.7
+      },
+      {
+        "joint": "d1_Joint4",
+        "pos": -1.202,
+        "target": -0.9681,
+        "default": 0.0,
+        "torque": 1.7,
+        "effort_limit": 1.7
+      },
+      {
+        "joint": "d1_Joint5",
+        "pos": 1.1004,
+        "target": -0.9206,
+        "default": 0.0,
+        "torque": -1.7,
+        "effort_limit": 1.7
+      },
+      {
+        "joint": "d1_Joint6",
+        "pos": 0.8581,
+        "target": 0.827,
+        "default": 0.0,
+        "torque": 1.1547,
+        "effort_limit": 1.7
+      },
+      {
+        "joint": "d1_Joint7_1",
+        "pos": 0.0,
+        "target": 0.0,
+        "default": 0.0,
+        "torque": -0.2685,
+        "effort_limit": 15.0
+      },
+      {
+        "joint": "d1_Joint7_2",
+        "pos": -0.0043,
+        "target": 0.0,
+        "default": 0.0,
+        "torque": 3.5283,
+        "effort_limit": 15.0
+      }
+    ]
+  }
+}

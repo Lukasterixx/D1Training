@@ -1,0 +1,191 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    50,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "checkpoint": "logs/unifp_train/20260920T044925_train_seed1_p0/model_24000.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "info": false,
+    "init_std": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "learning_rate_scale": null,
+    "manifest": "results/manifests/unifp_isaaclab_validation.json",
+    "manifest_out": null,
+    "mode": "eval",
+    "num_envs": 16,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "physics_gpu": 0,
+    "rendering_mode": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "run_name": "eval_lab24000",
+    "seed": 20260921,
+    "std_type": null,
+    "steps": 100,
+    "verbose": false,
+    "xr": false,
+    "zero_actions": false
+  },
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260920T044925_train_seed1_p0/model_24000.pt",
+  "checkpoint_iteration": 24000,
+  "checkpoint_source": "isaaclab",
+  "conditions": {
+    "action_scale": 0.25,
+    "arm_armature": 0.0002,
+    "domain_randomisation": false,
+    "ee_force_range_n": [
+      -8.0,
+      8.0
+    ],
+    "episode_length_s": 20.0,
+    "force_start_step": 0,
+    "goal_sphere_centre_m": [
+      0.0,
+      0.0,
+      0.49
+    ],
+    "gripper_force_kp": 200.0,
+    "noise": false,
+    "num_envs": 50,
+    "policy_hz": 50.0,
+    "simulator": "isaaclab",
+    "solver_iterations": [
+      4,
+      0
+    ],
+    "task": "go2d1_pos_force",
+    "terrain": "flat plane",
+    "tool_body": "Link7_1",
+    "tool_offset_m": [
+      0.0547,
+      0.006,
+      0.017
+    ]
+  },
+  "critic_obs": [
+    50,
+    459
+  ],
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    50,
+    12
+  ],
+  "expected_actor": [
+    50,
+    2432
+  ],
+  "expected_critic": [
+    50,
+    459
+  ],
+  "expected_estimates": [
+    50,
+    12
+  ],
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M .gitignore\n M README.md\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_01/notes.md\n M unifp_go2d1/play_policy.py\n?? results/manifests/unifp_isaaclab_validation.json\n?? results/week_01/figures/unifp_sim2sim.png\n?? results/week_01/figures/unifp_sim2sim.py\n?? results/week_01/figures/unifp_task_terms.png\n?? results/week_01/figures/unifp_task_terms.py\n?? results/week_01/runs/20260920T0110_gym_flat_stand_zero/\n?? results/week_01/runs/20260920T0112_gym_flat_stand_48800/\n?? results/week_01/runs/20260920T0114_gym_flat_walk_48800/\n?? results/week_01/runs/20260920T011858_stand_zero/\n?? results/week_01/runs/20260920T012721_stand_48800/\n?? results/week_01/runs/20260920T012721_stand_zero/\n?? results/week_01/runs/20260920T012721_walk_48800/\n?? results/week_01/runs/20260920T012721_walk_zero/\n?? results/week_01/runs/20260920T013414_stand_48800/\n?? results/week_01/runs/20260920T013414_stand_zero/\n?? results/week_01/runs/20260920T013414_walk_48800/\n?? results/week_01/runs/20260920T014015_confirm_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_zero/\n?? results/week_01/runs/20260920T024333_lab0543_walk_48800/\n?? results/week_01/runs/20260920T024333_lab0543_walk_zero/\n?? results/week_01/runs/20260920T040839_train_seed1_smoke/\n?? results/week_01/runs/20260920T040910_train_seed1_smoke2/\n?? results/week_01/runs/20260920T041744_smoke_seed42_baseline_zero/\n?? results/week_01/runs/20260920T041756_play_seed42_baseline_48800/\n?? results/week_01/runs/20260920T041809_play_seed42_forced_48800/\n?? results/week_01/runs/20260920T044653_train_seed1_memprobe/\n?? results/week_01/runs/20260920T044925_train_seed1_p0/\n?? results/week_02/runs/\n?? run_unifp_isaaclab.py\n?? run_unifp_train.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? tests/test_unifp_train.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/\n?? unifp_train/",
+  "joint_order_ok": true,
+  "mode": "eval",
+  "num_envs": 50,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "seed": 20260921,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "base_vel_err_m_s": {
+      "max": 0.2810733914375305,
+      "mean": 0.10042380200698972,
+      "median": 0.09145724959671497,
+      "n": 50,
+      "p90": 0.17182757705450058
+    },
+    "base_z_m": {
+      "max": 0.2484598085284233,
+      "mean": 0.1994674399495125,
+      "median": 0.19681842625141144,
+      "n": 50,
+      "p90": 0.22362132370471954
+    },
+    "condition_mismatches": [],
+    "controller": "model_24000.pt (isaaclab)",
+    "episodes": 50,
+    "estimator_err_n": {
+      "max": 2.375832200050354,
+      "mean": 1.7247504115104675,
+      "median": 1.734856128692627,
+      "n": 50,
+      "p90": 2.026990294456482
+    },
+    "falls": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "force_cmd_n": {
+      "max": 6.0807140905745936,
+      "mean": 3.285944769193493,
+      "median": 3.424093362767647,
+      "n": 50,
+      "p90": 4.945986537402923
+    },
+    "force_realised_n": {
+      "max": 32.77868107629498,
+      "mean": -1.1759370568341596,
+      "median": -1.336393567509428,
+      "n": 50,
+      "p90": 16.368541101242396
+    },
+    "goal_tracking_quiet_m": {
+      "max": 0.13591566681861877,
+      "mean": 0.07585281562060117,
+      "median": 0.07286065444350243,
+      "n": 50,
+      "p90": 0.10164966434240341
+    },
+    "manifest_role": "validation",
+    "manifest_sha256": "94e576a6221007bcfa0bb1f7bb6ea28832866481a3ea7f50f94446e99f6cf495",
+    "schedule_mismatches": [],
+    "simulator": "isaaclab",
+    "survived_to_time_limit": 50,
+    "unified_tracking_m": {
+      "max": 0.18545720726251602,
+      "mean": 0.11128729820251465,
+      "median": 0.1083248071372509,
+      "n": 50,
+      "p90": 0.15863072127103806
+    },
+    "unified_tracking_pushed_m": {
+      "max": 0.2265264242887497,
+      "mean": 0.13561800718307496,
+      "median": 0.13966530933976173,
+      "n": 50,
+      "p90": 0.16910159587860107
+    }
+  }
+}
