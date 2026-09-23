@@ -2,7 +2,7 @@
 """Train UniFP's position/force task natively in Isaac Lab.
 
 `run_unifp_isaaclab.py` runs a checkpoint trained on the legacy Isaac Gym stack. This trains one
-here instead, which is what F-077 argues for: the Isaac Gym policy holds a stance on the Isaac Lab
+here instead, which is what F-088 argues for: the Isaac Gym policy holds a stance on the Isaac Lab
 model but falls within half a second when told to walk, so moving trained weights between the two
 simulators is not a reliable step.
 

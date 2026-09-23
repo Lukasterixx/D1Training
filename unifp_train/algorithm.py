@@ -64,7 +64,7 @@ class ScaledAdam(torch.optim.Adam):
     schedule's logic.
 
     **Why it did not help, and why it is kept.** It was written on 2026-09-21 to answer a KL
-    sitting at 0.017 against a target of 0.01 *at* the floor. F-080 later found the reason: most
+    sitting at 0.017 against a target of 0.01 *at* the floor. F-091 later found the reason: most
     of that KL was not produced by learning at all but by environments whose stored observation
     had been blanked after the policy acted on it, so the controller was saturated by a corrupted
     input and scaling the optimizer could not move it. With that fixed the rate settles near

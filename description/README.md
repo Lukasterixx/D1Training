@@ -41,7 +41,7 @@ Three deliberate edits along the way:
 - **All `<inertial>` blocks are dropped.** This makes the file unusable by any
   importer that reads inertials for simulation: Isaac Gym derives mass from
   collision geometry and a density default instead, and the robot NaNs on its
-  first step (F-068). `unifp_go2d1/build_asset.py` rebuilds `weld.py`'s mass
+  first step (F-079). `unifp_go2d1/build_asset.py` rebuilds `weld.py`'s mass
   model into its own generated copy; anything else must too. `weld.py` owns the mass model; a
   second set of numbers here would drift out of step with it and read as spec.
 

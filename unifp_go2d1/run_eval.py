@@ -10,7 +10,7 @@
 
 Each `eval` writes a run directory (`eval.json`, `episodes.csv`, `run.json`) for
 `./dashboard.py record`. Randomisation and observation noise are off, and external forces are on:
-evaluating a force policy with the forces off would measure the wrong thing (F-071).
+evaluating a force policy with the forces off would measure the wrong thing (F-082).
 """
 
 import argparse
@@ -44,7 +44,7 @@ def make_env(args, episodes, task="go2d1_pos_force"):
     env, env_cfg = task_registry.make_env(name=task, args=args, env_cfg=env_cfg)
     env.play = True
     # Open the force curriculum gate: global_steps starts at 0 in a fresh process, so without
-    # this the policy is evaluated with the forces it was trained against switched off (F-071).
+    # this the policy is evaluated with the forces it was trained against switched off (F-082).
     env.global_steps = (env_cfg.commands.force_start_step + 1) * train_cfg.runner.num_steps_per_env
     return env, env_cfg, train_cfg
 

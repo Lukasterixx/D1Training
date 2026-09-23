@@ -110,7 +110,7 @@ def main() -> None:
     # Isaac Lab does not (weld.py assembles the USD), but Isaac Gym does, and
     # with no inertials it derives mass from collision geometry times its
     # density default -- which makes the robot nearly massless and NaNs the
-    # articulation on the first step (F-068). `unifp_go2d1/build_asset.py`
+    # articulation on the first step (F-079). `unifp_go2d1/build_asset.py`
     # rebuilds weld.py's mass model into its own generated copy for that
     # reason; anything else reading this URDF for simulation needs to do the
     # same.

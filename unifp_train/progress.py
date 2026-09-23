@@ -9,7 +9,7 @@ The sibling of `unifp_go2d1/progress.py`, which watches the Isaac Gym run. Reads
 directory and the captured stdout; touches nothing, so it is safe against a live job.
 
 It reports the **three objective terms separately**, which is not decoration. The frame bug of
-F-078 left `tracking_ee_force_world` at exactly zero for every environment while every other
+F-089 left `tracking_ee_force_world` at exactly zero for every environment while every other
 term moved and the total stayed plausible; a run where one objective is dead should be visible
 from across the room rather than found by reading a log afterwards.
 """

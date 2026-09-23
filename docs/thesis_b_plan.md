@@ -322,7 +322,7 @@ and a modified Go2+D1 method must be labelled separately.
 
 It is the *method* that transfers, not the weights. A UniFP checkpoint trained on
 the legacy Isaac Gym stack was run unchanged on this repository's Isaac Lab model
-on 2026-09-20 (F-076, F-077): the observation and action interface reproduces
+on 2026-09-20 (F-087, F-088): the observation and action interface reproduces
 exactly, but the policy holds only a stance there and falls within 0.5 s when told
 to walk, and whether it stands at all turns on a PhysX solver setting. So a
 controller intended for evaluation or deployment here has to be trained on the
@@ -332,7 +332,7 @@ involved. Budget for retraining under the adopted method rather than for porting
 a trained policy across. That budget is now spendable: `unifp_train/` rebuilds the
 same task as an Isaac Lab `DirectRLEnv` — external forces, curriculum,
 adaptation-module actor-critic and all — and scores within 0.4% of the Isaac Gym
-recording term by term (F-078, 2026-09-20). What it has not yet produced is a
+recording term by term (F-089, 2026-09-20). What it has not yet produced is a
 policy: a full training run and a frozen-manifest evaluation are the next step,
 and until those exist nothing here is validated beyond the task definition.
 

@@ -3,7 +3,7 @@
 The parts that decide whether a trained policy is the same policy — the observation contract, the
 DOF permutation, the control law, the robot, the goal generator, the gait clock and all 27 reward
 terms — are imported from modules that are each checked against the environment that trained
-`model_48800` (F-076, and `tests/test_unifp_train.py`). What lives here is the wiring: buffers,
+`model_48800` (F-087, and `tests/test_unifp_train.py`). What lives here is the wiring: buffers,
 resets, terminations, command sampling, and the order operations happen in.
 
 That order is itself part of the contract, and it is upstream's:

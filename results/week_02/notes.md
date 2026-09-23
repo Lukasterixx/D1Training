@@ -68,14 +68,14 @@ working down and forward past the front legs.
 what looked like flopping on the native policy. Standing only; low goals while walking are not
 measured. One checkpoint per policy.
 
-[F-082](../findings.md) records it. The practical reading: the deliverable policy has a bounded
+[F-093](../findings.md) records it. The practical reading: the deliverable policy has a bounded
 weak region — roughly three times the error in the bottom tenth of the workspace, steady, with no
 instability anywhere — which is a thing to site tasks around rather than a defect to chase.
 
 ### 2026-09-23 — Evaluated: the natively trained policy wins, 1.5 cm against 3.9
 
 The run finished all 60,000 iterations in 43.5 h, `status: complete`, 301 checkpoints. Ten
-frozen-manifest evaluations against the same 50-episode set F-079 used, **zero schedule or
+frozen-manifest evaluations against the same 50-episode set F-090 used, **zero schedule or
 condition mismatches** in any of them, so every comparison below is paired episode for episode.
 
 | policy | tracking (median) | p90 | falls | base vel err | train return |
@@ -93,16 +93,16 @@ condition mismatches** in any of them, so every comparison below is paired episo
 
 Per-episode, against the ported policy: **50 of 50 episodes better** for every checkpoint but
 40,000 (49 of 50), median paired gain +1.5 to +2.6 cm, sign test p ≈ 2e-15. The zero-action
-baseline reproduces F-079's 38.1 cm to the millimetre, which is the check that the set has not
+baseline reproduces F-090's 38.1 cm to the millimetre, which is the check that the set has not
 moved under us.
 
-**This reverses F-079.** That finding concluded porting beat native training, 3.9 cm against
-6.2 cm. It was measuring a run made with the F-080 defect and stopped at 44%. Fix the defect, let
-it finish, and the same task on the same manifest in the same simulator gives 1.5 cm. F-078 built
+**This reverses F-090.** That finding concluded porting beat native training, 3.9 cm against
+6.2 cm. It was measuring a run made with the F-091 defect and stopped at 44%. Fix the defect, let
+it finish, and the same task on the same manifest in the same simulator gives 1.5 cm. F-089 built
 the native path on the argument that a policy should be trained on the stack it will be evaluated
 on; that argument pays.
 
-**F-079's other finding survives intact, and rather pointedly.** The training return still cannot
+**F-090's other finding survives intact, and rather pointedly.** The training return still cannot
 select a checkpoint: the **highest**-return checkpoint in the ladder is iteration 8,000 at ~173,
 and it is the only one that falls — five times in fifty. Return moves over 162–173 while falls go
 5 → 0 and tracking 2.4 → 1.5 cm, in no useful relation. What has changed is the cost of choosing
@@ -112,9 +112,9 @@ policy at a perfectly ordinary return.
 **What this does not say.** One run, one seed, one 50-episode set, one simulator. No interval is
 attached to any median, so 1.5 against 1.6 against 1.7 inside the plateau is not an ordering — the
 paired test supports the gap to the *ported* policy, not the ranking within. And this manifest is
-Isaac Lab's; it is not comparable episode-for-episode with F-075's 2.6 cm on the Isaac Gym side.
+Isaac Lab's; it is not comparable episode-for-episode with F-086's 2.6 cm on the Isaac Gym side.
 
-[F-081](../findings.md) records it; F-079 is marked superseded.
+[F-092](../findings.md) records it; F-090 is marked superseded.
 
 ### 2026-09-23 — The full run at 80%: still no collapse, and a KL artefact that is not one
 
@@ -154,7 +154,7 @@ Nothing behavioural moves with them:
 The tracking term averages 1.7643 before the first spike and 1.7648 since. So the schedule sees a
 huge KL, cuts to the floor for the duration, and the policy comes out the other side unchanged.
 
-**It is not F-080 returning.** `kl_first_minibatch` stays at ~1e-10 through the bursts — the first
+**It is not F-091 returning.** `kl_first_minibatch` stays at ~1e-10 through the bursts — the first
 mini-batch of each update still sees exactly the policy that acted, so the KL is produced by real
 gradient steps within the update and not by a broken pairing. (It is no longer *exactly* 0 as it
 was for the first 44,000 iterations; 1.6e-09 is eight orders below the defect's 0.063 and is
@@ -168,14 +168,14 @@ floating-point noise.)
 
 The Isaac Gym run did no better over the same stretch: it **lost** 1.74% over its last 12,000
 iterations (1.674 → 1.646), dipping to 1.557 at 54,000–57,000. That is independent corroboration
-of F-072's finding that most of that run's 39.85 h bought nothing.
+of F-083's finding that most of that run's 39.85 h bought nothing.
 
-**This is not a reason to stop early, and the reason why is F-079.** A plateau in the training term
-says nothing about the evaluated policy: F-079 measured the return holding at 130–137 while frozen
+**This is not a reason to stop early, and the reason why is F-090.** A plateau in the training term
+says nothing about the evaluated policy: F-090 measured the return holding at 130–137 while frozen
 tracking swung from 6.2 cm to 60.8 cm on the same run. Stopping on the strength of a flat training
 curve would be reasoning from precisely the signal that was shown not to carry this information.
 Checkpoints are written every 200 iterations, so finishing costs only time and forecloses nothing;
-what it buys is the removal of F-079's largest scope caveat, that it compared a policy stopped at
+what it buys is the removal of F-090's largest scope caveat, that it compared a policy stopped at
 44% against a complete one.
 
 **Untested hypothesis** for the record: a burst of 18 iterations is 432 environment-steps, and an
@@ -207,13 +207,13 @@ one.
 
 Health, over all 15,127 iterations so far:
 
-- `Loss/kl_first_minibatch` **maximum 0**. The F-080 standing check has not wobbled once.
+- `Loss/kl_first_minibatch` **maximum 0**. The F-091 standing check has not wobbled once.
 - Learning rate steady at 5.06e-05 against upstream's 7.59e-05 median; **0% of iterations at the
   1e-5 floor since iteration 9,000** (p0: 100% from iteration 200).
 - Mean KL 0.0124–0.0131 across every window, no drift (−1.5% since the curriculum opened). The
   300-iteration drift screen read +4.3%, reproducing the probe exactly.
 
-**None of this is an evaluation.** These are training-time terms sampled at reset, and F-079
+**None of this is an evaluation.** These are training-time terms sampled at reset, and F-090
 established that on this task the training return cannot distinguish a 6.2 cm policy from a
 60.8 cm one. Whether this run beats the ported policy's 3.9 cm is not addressed by anything above
 and needs the frozen manifest. The GPU is busy with the run itself, so no evaluation has been made.
@@ -227,12 +227,12 @@ and needs the frozen manifest. The GPU is busy with the run itself, so no evalua
 
 No departures: 4,096 environments, seed 1, the force curriculum opening at iteration 8,000, 24
 steps per environment per iteration — 5.9 billion environment-steps, the same budget the Isaac Gym
-run of F-072 had. About 43 hours at the measured 2.59 s/iteration, against that run's 39.85 h.
+run of F-083 had. About 43 hours at the measured 2.59 s/iteration, against that run's 39.85 h.
 Checkpoints every 200 iterations, roughly 10.5 GB.
 
 It is deliberately the faithful configuration and not probe B's 1,024-environment variant. The
 argument for the smaller batch came from the defect-era measurements retired above, and running
-UniFP's own numbers means the comparison with F-072 and with the stopped p0 run carries a
+UniFP's own numbers means the comparison with F-083 and with the stopped p0 run carries a
 simulator difference and nothing else.
 
 **First 67 iterations**, against the p0 run at the same point:
@@ -248,11 +248,11 @@ simulator difference and nothing else.
 The controller is correcting in both directions rather than only downward, which is the thing that
 was never true of any run before today.
 
-**What it is for.** F-079 compared a 26,466-iteration Isaac Lab policy against a complete Isaac Gym
+**What it is for.** F-090 compared a 26,466-iteration Isaac Lab policy against a complete Isaac Gym
 one and found porting ahead, 3.9 cm against 6.2 cm. Both halves of that comparison were
 handicapped — one by being unfinished, both by the defect. This run answers the question the
-honest way, and it will be judged the same way F-079 judged the others: by frozen-manifest
-evaluation of several checkpoints, never by training return, which F-079 showed cannot tell a
+honest way, and it will be judged the same way F-090 judged the others: by frozen-manifest
+evaluation of several checkpoints, never by training return, which F-090 showed cannot tell a
 6.2 cm policy from a 60.8 cm one.
 
 **Watch `Loss/kl_first_minibatch`.** It should stay at 0 for the whole run. If it leaves 0 the
@@ -392,7 +392,7 @@ policy was never trading the objective against a penalty — it was getting wors
 once, within ~300 iterations across all 27 terms. And the first collapse is at iteration 5,399,
 not the 12,000 assumed below.
 
-[F-080](../findings.md) records the result.
+[F-091](../findings.md) records the result.
 
 ### 2026-09-21 — Visual check of the ported policy
 
@@ -411,9 +411,9 @@ through, and `play` mode only wrote its `run.json` after the loop. That gap is n
 `play` and `smoke` write the record before stepping and update it after, so an interrupted run
 still leaves a note. Nothing here is evidence; it is a look.
 
-### 2026-09-21 — Running down the F-077 contradiction: the policy walks, the playback harness does not
+### 2026-09-21 — Running down the F-088 contradiction: the policy walks, the playback harness does not
 
-F-079 and F-077 could not both be right, so the difference was bisected rather than left as a
+F-090 and F-088 could not both be right, so the difference was bisected rather than left as a
 caveat. Both results reproduce exactly — `rollout.py` at a sustained 0.5 m/s gives 0.75558 m and
 161 fall-steps, identical to the digit to the run recorded in week 1 — so neither is noise.
 
@@ -423,7 +423,7 @@ caveat. Both results reproduce exactly — `rollout.py` at a sustained 0.5 m/s g
 | 1 env, 0.5 m/s held, no force | `unifp_isaaclab/rollout.py` | 0.755 m (L1) | 0.154 m | rolls over at step 21 |
 
 Eliminated along the way: the **command protocol** (a held 0.5 and 0.6 m/s both walk fine in the
-training env, so it is not that F-077 used a sustained command), the **environment count** (one
+training env, so it is not that F-088 used a sustained command), the **environment count** (one
 environment walks as well as fifty), **external forces** (off in both), and the **ground**, sim
 timestep, solver iterations, armature, USD and spawn height, which are shared code.
 
@@ -440,7 +440,7 @@ timestep, solver iterations, armature, USD and spawn height, which are shared co
 
 All three were reverted and the original numbers reproduce to the digit. That every perturbation
 breaks this harness is the most informative thing found: it holds the policy on a stability
-knife-edge, which is exactly what F-077 itself reported when 8/4 solver iterations flipped its
+knife-edge, which is exactly what F-088 itself reported when 8/4 solver iterations flipped its
 standing result from success to total failure. The training environment is not in that regime.
 
 **Which side to believe is not symmetric**, and that is what settles it rather than the bisection.
@@ -470,12 +470,12 @@ so this port does the same — and the Isaac Gym fixture was recorded on the tri
 again, so the real gap is larger than the table shows and runs the same way.
 
 That fits the known model difference rather than contradicting it: passively the two robots differ
-by about 3.8 cm (zero actions settle at 23.8 cm in Isaac Gym against 27.5 cm here, F-077), and
+by about 3.8 cm (zero actions settle at 23.8 cm in Isaac Gym against 27.5 cm here, F-088), and
 under the policy they differ by about one. The controller narrows the gap, which is mild evidence
 that it transfers cleanly — it reaches the same commanded posture on a model that rests 4 cm
 higher.
 
-So F-077's locomotion claim is **superseded**: the finding is annotated and the walking number
+So F-088's locomotion claim is **superseded**: the finding is annotated and the walking number
 should not be cited. Its standing and solver-sensitivity results are untouched. The specific defect
 in `rollout.py` remains unidentified, which is recorded as an open issue rather than closed by the
 supersession — the harness is still used by `run_unifp_isaaclab.py`, and anything measured with it
@@ -518,20 +518,20 @@ schedules exactly**, which is what makes this a paired comparison and not merely
 | Isaac Lab, 26,400 (last) | **60.8 cm** | 65.7 | 1/50 | ~134 |
 | **Isaac Gym `model_48800`, ported** | **3.9 cm** | **5.1** | **0/50** | ~154 |
 
-**Two results, in [F-079](../findings.md).** The ported weights beat the natively trained policy
+**Two results, in [F-090](../findings.md).** The ported weights beat the natively trained policy
 in Isaac Lab's own simulator on Isaac Lab's own frozen set — 3.9 cm and no falls against 6.2 cm
 and one. And between iterations 20,000 and 26,400 the training return never leaves the 130–137
 band while evaluated tracking swings from 6.2 cm to 60.8 cm, so **the reward cannot select a
 checkpoint**: the last checkpoint of the run is the worst of its final five and is beaten by an
 inert robot.
 
-That is the answer to the question the whole day was really about. F-078 built the native training
+That is the answer to the question the whole day was really about. F-089 built the native training
 path on the argument that a policy should be trained on the stack it will be evaluated on. Measured
 rather than argued, that does not pay here — and the collapses were not cosmetic after all, which
 is what the evaluation was run to find out.
 
-**It also puts F-077 in question**, and the finding is annotated to say so. The same `model_48800`
-that F-077 reports falling within half a second when told to walk takes **zero falls** across
+**It also puts F-088 in question**, and the finding is annotated to say so. The same `model_48800`
+that F-088 reports falling within half a second when told to walk takes **zero falls** across
 fifty 20-second episodes here, tracking sampled velocity commands to 0.067 m/s — and the
 zero-action baseline's 0.259 m/s error shows those commands are not trivial. The likeliest
 difference is protocol, a sustained maximum-speed command against sampled ones, but it is not run
@@ -558,7 +558,7 @@ agreement on a learning curve, not a single rollout.
 **After that this run oscillates violently and the Isaac Gym one does not.** Over iterations
 5,000–24,000:
 
-| | Isaac Gym (F-072) | Isaac Lab (this run) |
+| | Isaac Gym (F-083) | Isaac Lab (this run) |
 | --- | --- | --- |
 | return, median | 152.8 | 129.1 |
 | return, minimum | 143.2 | **−80.7** (iteration 16,694) |
@@ -601,7 +601,7 @@ Lukas's call was to let it run and watch. It is running; checkpoints every 200 i
 
 ### 2026-09-21 — Chasing the collapse: five hypotheses eliminated, one mechanism left standing
 
-> **Superseded as an explanation (2026-09-21, [F-080](../findings.md)).** Every run in this
+> **Superseded as an explanation (2026-09-21, [F-091](../findings.md)).** Every run in this
 > entry was made with the stale-observation defect present, so its learning rate was held at
 > the 1e-5 floor and part of its gradient came from blanked observations. The numbers are a
 > faithful record of what those runs did; they are not evidence about how this task trains.
@@ -797,7 +797,7 @@ postdates the long run.
 
 ### 2026-09-21 — It is the batch size, and the schedule was never the disease
 
-> **Superseded as an explanation (2026-09-21, [F-080](../findings.md)).** Every run in this
+> **Superseded as an explanation (2026-09-21, [F-091](../findings.md)).** Every run in this
 > entry was made with the stale-observation defect present, so its learning rate was held at
 > the 1e-5 floor and part of its gradient came from blanked observations. The numbers are a
 > faithful record of what those runs did; they are not evidence about how this task trains.
@@ -836,10 +836,10 @@ And the end-effector term follows it exactly: **1.235 at 1,024 environments agai
 **The run that follows from this** is probe B's configuration at full length: 1,024 environments,
 `--learning_rate_scale 0.25`, 60,000 iterations. It is also cheaper — about 0.9 s/iteration
 against 2.6, so roughly 15 hours rather than 42 — and at 1.47 billion environment-steps it still
-clears the ~1 billion that F-072 found was all the Isaac Gym run had needed.
+clears the ~1 billion that F-083 found was all the Isaac Gym run had needed.
 
 Two things it is not. It is **not** upstream's configuration: UniFP trains at 4,096 and this is a
-deliberate, recorded departure on two axes at once, so the comparison with F-072 now carries a
+deliberate, recorded departure on two axes at once, so the comparison with F-083 now carries a
 batch-size difference as well as a simulator one. And 500 iterations of probe B is **not**
 evidence that the collapse is cured — the first collapse took about 12,000 iterations to appear,
 and all that has been shown is that the schedule regulates again, which is the precondition and
@@ -847,7 +847,7 @@ not the result.
 
 ### 2026-09-21 — The batch-size conclusion was confounded with the seed, and it does not survive
 
-> **Superseded as an explanation (2026-09-21, [F-080](../findings.md)).** Every run in this
+> **Superseded as an explanation (2026-09-21, [F-091](../findings.md)).** Every run in this
 > entry was made with the stale-observation defect present, so its learning rate was held at
 > the 1e-5 floor and part of its gradient came from blanked observations. The numbers are a
 > faithful record of what those runs did; they are not evidence about how this task trains.
@@ -912,7 +912,7 @@ gradient clipping, the KL formula, the shared encoder, and the learning-rate flo
 
 ### 2026-09-21 — Measuring the factor instead of inferring it, and the estimator comes back
 
-> **Superseded as an explanation (2026-09-21, [F-080](../findings.md)).** Every run in this
+> **Superseded as an explanation (2026-09-21, [F-091](../findings.md)).** Every run in this
 > entry was made with the stale-observation defect present, so its learning rate was held at
 > the 1e-5 floor and part of its gradient came from blanked observations. The numbers are a
 > faithful record of what those runs did; they are not evidence about how this task trains.
@@ -975,7 +975,7 @@ KL is back inside the dead band rather than above it, and return and tracking bo
 
 ### 2026-09-21 — The drift is the collapse, and it is visible in 300 iterations
 
-> **Superseded as an explanation (2026-09-21, [F-080](../findings.md)).** Every run in this
+> **Superseded as an explanation (2026-09-21, [F-091](../findings.md)).** Every run in this
 > entry was made with the stale-observation defect present, so its learning rate was held at
 > the 1e-5 floor and part of its gradient came from blanked observations. The numbers are a
 > faithful record of what those runs did; they are not evidence about how this task trains.
@@ -1024,7 +1024,7 @@ demonstrate.
 
 ### 2026-09-21 — Five seeds: the degradation is the rule, and seed 7 was the exception
 
-> **Superseded as an explanation (2026-09-21, [F-080](../findings.md)).** Every run in this
+> **Superseded as an explanation (2026-09-21, [F-091](../findings.md)).** Every run in this
 > entry was made with the stale-observation defect present, so its learning rate was held at
 > the 1e-5 floor and part of its gradient came from blanked observations. The numbers are a
 > faithful record of what those runs did; they are not evidence about how this task trains.
@@ -1065,7 +1065,7 @@ cause is not established.
 on this evidence, about a four-in-five chance of producing a degrading run — and it is still not
 known whether degradation in this metric matters for the thing the thesis actually asks. The
 stopped run left `model_26400`, which recovered from three collapses and was scoring 134 against
-upstream's 154. Evaluating it against `model_48800` on the frozen manifests answers F-077's real
+upstream's 154. Evaluating it against `model_48800` on the frozen manifests answers F-088's real
 question — does training natively beat porting the weights — and costs no GPU-hours gambled on
 a run that will probably degrade.
 
@@ -1085,17 +1085,17 @@ the Isaac Gym manifest of the same task.
 
 ## Findings this week
 
-- [F-082](../findings.md): both policies track worst at goals low and in front, confirming an
+- [F-093](../findings.md): both policies track worst at goals low and in front, confirming an
   observation from the viewer — but for opposite reasons. The ported policy oscillates across the
   workspace (error sd 1.8 cm); the native one is steady everywhere (0.4 cm) and under-reaches
   downward by a systematic 4 cm in the lowest pitch band against 1.4 cm elsewhere. Not a joint
   limit, and not under-exposure in training.
-- [F-081](../findings.md): with the F-080 fix and a complete 60,000-iteration run, training
+- [F-092](../findings.md): with the F-091 fix and a complete 60,000-iteration run, training
   natively in Isaac Lab **beats porting the Isaac Gym weights** — 1.5 cm against 3.9 cm on the same
   50 frozen episodes in the same simulator, better on 50 of 50 paired episodes (p ≈ 2e-15), no
-  falls. This reverses [F-079](../findings.md), which measured a defective run stopped at 44%.
+  falls. This reverses [F-090](../findings.md), which measured a defective run stopped at 44%.
   The training return still cannot select a checkpoint: the highest-return one is the only faller.
-- [F-080](../findings.md): the Isaac Lab training collapse has a located cause — `ObsHistory.reset`
+- [F-091](../findings.md): the Isaac Lab training collapse has a located cause — `ObsHistory.reset`
   blanked, in place, an observation the policy had already acted on, for every environment whose
   episode ended. With both optimisers frozen the port reported a KL of 0.063 at `model_4000` and
   1.055 at `model_10000` against a target of 0.01; after the fix the first mini-batch reports
@@ -1104,15 +1104,15 @@ the Isaac Gym manifest of the same task.
   Re-taking the five-seed scan reverses its conclusion: 0 of 5 seeds degrade against 4 of 5, and
   every seed now gains on the end-effector term. **Not** verified over a full run — 300 iterations,
   and the first collapse took 5,399.
-- [F-079](../findings.md): training UniFP's task natively in Isaac Lab does not beat porting the Isaac Gym weights (3.9 cm against 6.2 cm on the same frozen episodes in the same simulator), and the training return cannot select a checkpoint — it holds at 130–137 while evaluated tracking swings tenfold (confirmed on one run, one seed, 50 episodes; the Isaac Lab run was stopped at 44% of its schedule).
-- [F-077](../findings.md): **locomotion claim superseded** — the policy walks (4.1 cm, 0 falls, 0.302 m base height) under F-077's own condition in the verified training environment; the failure is an artefact of the `rollout.py` playback harness, whose specific defect is not yet identified. Standing and solver sensitivity stand.
+- [F-090](../findings.md): training UniFP's task natively in Isaac Lab does not beat porting the Isaac Gym weights (3.9 cm against 6.2 cm on the same frozen episodes in the same simulator), and the training return cannot select a checkpoint — it holds at 130–137 while evaluated tracking swings tenfold (confirmed on one run, one seed, 50 episodes; the Isaac Lab run was stopped at 44% of its schedule).
+- [F-088](../findings.md): **locomotion claim superseded** — the policy walks (4.1 cm, 0 falls, 0.302 m base height) under F-088's own condition in the verified training environment; the failure is an artefact of the `rollout.py` playback harness, whose specific defect is not yet identified. Standing and solver sensitivity stand.
 
 ## Issues and risks
 
-- **Every native training number on this stack predates the F-080 fix** (2026-09-21). The
+- **Every native training number on this stack predates the F-091 fix** (2026-09-21). The
   26,468-iteration run, the nine probes, the 2x2 and the five-seed scan were all measured with the
   learning rate pinned to its floor by a spurious KL. The five-seed scan has been re-taken and
-  reverses (0 of 5 degrade against 4 of 5), but the 26,468-iteration run and F-079's Isaac Lab
+  reverses (0 of 5 degrade against 4 of 5), but the 26,468-iteration run and F-090's Isaac Lab
   column have not: those checkpoints all come from the affected run and no full-length run has
   been made since.
 - **A residual spurious KL of ~5e-4 is unexplained** (2026-09-21). In the frozen null test the
@@ -1125,7 +1125,7 @@ the Isaac Gym manifest of the same task.
   it advances the gait clock a step ahead of UniFP's documented order, and it runs the robot's
   colliders at Isaac Lab's default 0.5 friction rather than UniFP's 1.0. Correcting either of
   those makes it *worse*, so neither is the defect. `run_unifp_isaaclab.py` uses this harness, so
-  F-076's interface results — which are verified offline against recorded Isaac Gym data and do
+  F-087's interface results — which are verified offline against recorded Isaac Gym data and do
   not depend on the rollout loop — stand, but any *behavioural* number measured through it should
   be re-taken in the training environment before it is cited.
 

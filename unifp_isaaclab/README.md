@@ -1,7 +1,7 @@
 # unifp_isaaclab — UniFP's trained Go2+D1 policy, run in Isaac Sim
 
 `unifp_go2d1/` trains UniFP's position/force policy on the legacy stack (Isaac Gym Preview 4,
-Python 3.8). This package runs the resulting checkpoint — `model_48800`, the one F-072 and F-075
+Python 3.8). This package runs the resulting checkpoint — `model_48800`, the one F-083 and F-086
 are about — on **this** repository's Isaac Lab welded Go2+D1 instead. Nothing is retrained and
 nothing is fine-tuned.
 
@@ -85,7 +85,7 @@ The two force flags are different things, and upstream keeps them separate for a
 ## What it found, 2026-09-20
 
 `model_48800`, flat ground, no external forces, no randomisation, one robot, a held velocity
-command, compared over 18 s (F-077):
+command, compared over 18 s (F-088):
 
 | condition | | Isaac Gym | Isaac Lab |
 | --- | --- | --- | --- |
@@ -101,7 +101,7 @@ survives that change; the standing success does not. Read `robot.py`'s deviation
 attributing any of this to the policy — the foot colliders differ between the two models, and
 that is the first suspect for a pair of stacks that agree standing and disagree walking.
 
-Getting this far took four bug fixes, three of which were silent (F-076): the joint state was
+Getting this far took four bug fixes, three of which were silent (F-087): the joint state was
 never written to the sim, `self_collisions = 0` in legged_gym means *enabled*, and matching Isaac
 Gym's zero armature made UniFP's arm gains non-integrable here — `Joint4` left its ±2.35 rad limit
 and reached −127 rad. Each one looked exactly like "the policy does not transfer".
@@ -117,6 +117,6 @@ python unifp_go2d1/play_policy.py --task=go2d1_pos_force --load_run <run> --chec
     --headless --flat_terrain --out <dir>
 ```
 
-Remember that neither side is bitwise reproducible (F-075: the same controller on the same
+Remember that neither side is bitwise reproducible (F-086: the same controller on the same
 manifest moves medians by about ±0.1 cm run to run in Isaac Gym), so a difference smaller than
 that is nothing.

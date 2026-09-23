@@ -5,7 +5,7 @@ UniFP's own `play_*.py` works, but two things make it a poor look at a *force* p
   * **It applies no external forces.** The force curriculum is gated on `env.global_steps`, which
     starts at 0 in a fresh process, so every play session sits below `force_start_step` and the
     robot is never pushed. You would be watching a force-trained policy with the forces off and
-    have no way to tell from the window. This is the same defect as F-071, which was fixed for
+    have no way to tell from the window. This is the same defect as F-082, which was fixed for
     resumed *training*; the play path has it too. `--forces` winds `global_steps` past the gate.
   * **The camera does not follow the robot**, which walks out of frame in a few seconds.
 

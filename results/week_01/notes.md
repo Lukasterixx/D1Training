@@ -77,7 +77,7 @@ Week 2's G4 still depends on them.
 ### Added by the 16 September plan revision
 
 - [x] Frozen-manifest evaluator started, including zero-action reference and terminal metrics (F-018, F-019)
-- [~] UniFP and one position-only reference reproduction attempts started with a setup time budget — **UniFP reproduction complete** (2026-09-20, F-072): the full 60,000-iteration schedule finished in 39.85 h with no crashes, and the curve says ~10,000 would have done (F-072). Policy evaluated on frozen episode sets (2026-09-20, F-075: 2.6 cm against 26 cm for zero actions) and **ported to Isaac Sim** (2026-09-20, F-076/F-077: the interface is exact, but the policy stands and does not walk on the Isaac Lab model). The *task* is now ported too (2026-09-20, F-078): `unifp_train/` trains it natively in Isaac Lab and scores within 0.4% of the Isaac Gym recording term by term; a training run and a frozen-manifest evaluation remain. **UniFP setup and retarget done** (2026-09-18, F-067/F-068): installed on the spare PC in ~40 min of the two-day budget, upstream B2Z1 launched, retargeted to Go2+D1 and a 60,000-iteration run started (F-070). The Go2+D1 position-only reference is **not started**
+- [~] UniFP and one position-only reference reproduction attempts started with a setup time budget — **UniFP reproduction complete** (2026-09-20, F-083): the full 60,000-iteration schedule finished in 39.85 h with no crashes, and the curve says ~10,000 would have done (F-083). Policy evaluated on frozen episode sets (2026-09-20, F-086: 2.6 cm against 26 cm for zero actions) and **ported to Isaac Sim** (2026-09-20, F-087/F-088: the interface is exact, but the policy stands and does not walk on the Isaac Lab model). The *task* is now ported too (2026-09-20, F-089): `unifp_train/` trains it natively in Isaac Lab and scores within 0.4% of the Isaac Gym recording term by term; a training run and a frozen-manifest evaluation remain. **UniFP setup and retarget done** (2026-09-18, F-078/F-079): installed on the spare PC in ~40 min of the two-day budget, upstream B2Z1 launched, retargeted to Go2+D1 and a 60,000-iteration run started (F-081). The Go2+D1 position-only reference is **not started**
 - [ ] RealSense stream and AprilTag detections recorded
 - [x] D1 feedback/command timing and basic joint response measured on hardware (2026-09-16): angle feedback 111.0 ms / 9.00 Hz and status 100.5 ms / 9.96 Hz (F-020); J0 step latency 126–138 ms, peak 1.15 rad/s, steady-state error ≤0.1° (F-021). One joint, unloaded
 - [ ] Box latch/lever loads, travel, geometry and tool engagement measured
@@ -3043,7 +3043,7 @@ describe these runs. The shared Isaac Lab installation was not touched: the lega
 which generates the port into a clean UniFP checkout; provenance and licence in
 [third_party/UniFP](../../third_party/UniFP/NOTICE.md).
 
-**Isaac Gym Preview 4 installs and upstream trains (F-067).** From the tarball in `~/Downloads` into a new
+**Isaac Gym Preview 4 installs and upstream trains (F-078).** From the tarball in `~/Downloads` into a new
 `unifp` conda environment (Python 3.8, torch 2.3.1+cu121, numpy 1.23.5); GPU PhysX comes up and `gymtorch`
 builds unpatched. Then, unmodified UniFP at the pinned `68847a070f88`:
 
@@ -3070,7 +3070,7 @@ subtree, which put the arm between the front and rear legs and broke every fixed
 `ee_gripper_link` is added at the CAD pincer tip, which is the same controlled point as the Isaac Lab task
 (F-013 — CAD, not measured on the arm).
 
-**The first launch NaNed before a single policy step, and the cause was our own drawing (F-068).**
+**The first launch NaNed before a single policy step, and the cause was our own drawing (F-079).**
 11 of 64 environments had NaN in `dof_pos` at reset. Not self-collision, not the observation maths:
 `description/go2_d1.urdf` drops every `<inertial>` on purpose, because `weld.py` owns the mass model and a
 second set of numbers would drift. Isaac Lab never reads that file. Isaac Gym does, and with no inertials it
@@ -3087,7 +3087,7 @@ terrain, on the base centreline — the D1 mounts centrally where the Z1 sits fo
 have a reachable pose within 3 cm** (median 1.4 cm), and the arm's zero pose puts the tip at r = 0.51 m, mid
 range. Self-collision with the dog is not in that check; the environment's own goal keep-out box is.
 
-**The force range is the change that matters (F-069).** Upstream commands ±60 N at the end effector. The D1's
+**The force range is the change that matters (F-080).** Upstream commands ±60 N at the end effector. The D1's
 3.3 N·m shoulder makes about 7 N at this sphere's 0.45 m moment arm, so ±60 N is an instruction the arm can
 only fail. The port commands **±8 N** at the tip and ±20 N at the base. That is arithmetic from published
 limits, not a measured stall force — **force tracking on this robot is a few-newton problem, and the Week 3
@@ -3101,7 +3101,7 @@ position tracking and with a force command it asks for that force through a virt
 a position-only ablation means removing force inputs, force latents and force objectives rather than zeroing
 the force command.
 
-**Throughput, and what a full run costs (F-070).** At 4096 environments: [30.0k steps/s FP32](#/week/1/run/Sep18_11-03-27_),
+**Throughput, and what a full run costs (F-081).** At 4096 environments: [30.0k steps/s FP32](#/week/1/run/Sep18_11-03-27_),
 3.28 s/iteration; [40.2k steps/s with TF32 matmuls](#/week/1/run/Sep18_11-06-23_), 2.44 s/iteration, 7.2 GB of
 12.3 GB VRAM at 88% utilisation. The PPO update is 45% of an iteration (the actor reads 32 stacked frames of
 76), which is why TF32 buys 26% of wall clock. Upstream's schedule is `max_iterations = 60000`, which the B2Z1
@@ -3127,7 +3127,7 @@ so the Week 2 port-versus-retarget decision still has one of its two reproductio
 Lukas is leaving the run unattended, so the question is whether a crash can be recovered from a
 checkpoint without anyone present. It can, and `unifp_go2d1/supervise_training.sh` now does it —
 but testing the resume path first turned up two defects that would have quietly spoiled the run
-(F-071), plus one of my own.
+(F-082), plus one of my own.
 
 **The force curriculum restarts on resume, silently.** External forces are gated on
 `env.global_steps`, which `_init_buffers` zeroes on every launch, while the policy and optimiser
@@ -3179,11 +3179,11 @@ trajectory as an uninterrupted one. Any comparison across runs has to say whethe
 It completed on its own: 60,000 iterations, 5,898,240,000 policy steps, **39.85 hours**, 301
 checkpoints, **zero errors or NaN in 40 hours of log, and zero supervisor restarts** — the process
 that started it is the one that finished it, and the supervisor's entire log is two lines, "up" and
-"COMPLETE". The 41 h predicted from a 25-iteration benchmark (F-070) was out by −2.8%.
+"COMPLETE". The 41 h predicted from a 25-iteration benchmark (F-081) was out by −2.8%.
 `model_60000.pt` loads, stores `iter = 60000`, and has 2,074,161 finite parameters with an 18-wide
 action head. Curves: [unifp_go2d1_training.png](figures/unifp_go2d1_training.png).
 
-Three things the curve says (F-072), none of which is a statement about the policy's ability,
+Three things the curve says (F-083), none of which is a statement about the policy's ability,
 because **no evaluation has been run**:
 
 **Most of the run was wasted.** Mean return is 154.6 by iteration 6k–8k and 154.4 at the end. Taking
@@ -3222,10 +3222,10 @@ curriculum at once. More training hours will not.
 
 ### 2026-09-20 — First look at a trained policy, and the robot was the wrong shape
 
-Visualised `model_48800` — the best checkpoint by training return (F-072), with the external forces
+Visualised `model_48800` — the best checkpoint by training return (F-083), with the external forces
 switched on. Two things came out of it, one of which Lukas spotted immediately.
 
-**The meshes were sideways, and it took two goes to fix (F-073).** `flip_visual_attachments` is one
+**The meshes were sideways, and it took two goes to fix (F-084).** `flip_visual_attachments` is one
 flag for the whole asset, but this robot is merged from two sources that disagree: the Go2's `.dae`
 meshes are y-up and need the flip, the D1's `.STL` meshes are z-up and must not have it. With the
 flag off the dog lay on its side with its legs splayed; with it on the dog was right and the arm lay
@@ -3239,26 +3239,26 @@ settle, because the Go2's collisions are all primitives and the flag does not to
 collision meshes. The policy never saw a visual mesh. What *is* affected is any picture taken before
 today — those show a robot in the wrong shape and should not be shown.
 
-**Upstream's play script shows a force policy with the forces off.** Same mechanism as F-071: the
+**Upstream's play script shows a force policy with the forces off.** Same mechanism as F-082: the
 curriculum is gated on `env.global_steps`, which starts at 0 in a fresh process, so a play session
 never reaches `force_start_step` and nothing ever pushes the robot — with no indication in the
 window. `unifp_go2d1/play_policy.py` winds the gate open, follows the robot with the camera, and can
 write a trace for the record.
 
-**And the first numbers off the policy (F-074).** A 1500-step rollout, randomisation and noise off,
+**And the first numbers off the policy (F-085).** A 1500-step rollout, randomisation and noise off,
 forces on ([recorded](#/week/1/run/20260920T0945_play48800_forces)): tip-to-goal L1 median **4.6 cm
 undisturbed** and **6.3 cm while being pushed**, p90 11.3 cm, worst 28.0 cm; base height median
 29.4 cm against the 30 cm target; force commanded up to 9.6 N and measured at the gripper up to
 8.1 N. That is one rollout of one checkpoint of one seed under the easiest conditions the task
 offers — not a gate result, and not comparable with the ≥9.2 cm figure inferred from training
-reward in F-072, which is a population average under randomisation, noise and pushes. The useful
+reward in F-083, which is a population average under randomisation, noise and pushes. The useful
 part is that it answers a question the training reward could not: the policy is tracking, not
 merely surviving.
 
 ### 2026-09-20 — The policy evaluated: 2.6 cm against 26 cm for doing nothing, on episodes that prove they are the same episodes
 
-Built a frozen-manifest evaluator for the UniFP task — the piece F-072 and F-074 both said was
-blocking — and ran the zero-action baseline and two checkpoints through it (F-075).
+Built a frozen-manifest evaluator for the UniFP task — the piece F-083 and F-085 both said was
+blocking — and ran the zero-action baseline and two checkpoints through it (F-086).
 
 **Freezing an episode here is harder than on the Isaac Lab side, and the solution is worth
 recording.** The position-only task has one target per episode, so the manifest states it. This
@@ -3286,7 +3286,7 @@ metrics are cut at the fall.
 | force-estimator error, val | — | 1.22 N | 1.39 N |
 | base velocity error, dev | 0.393 m/s | 0.050 m/s | 0.055 m/s |
 
-**F-072's checkpoint call was made on training return alone, and it survives held-out episodes:**
+**F-083's checkpoint call was made on training return alone, and it survives held-out episodes:**
 `model_48800` beats `model_60000` by 0.39–0.46 cm on both sets, against a run-to-run spread of
 about ±0.1 cm measured by repeating the same evaluation three times (2.53 / 2.58 / 2.65 cm). Real,
 and small.
@@ -3302,14 +3302,14 @@ task offers rather than the distribution it trained on. The force numbers are Un
 admittance, not measured contact force; there is no force sensor anywhere in this loop. No gate is
 defined for this task, so nothing here passes anything. The next two measurements are the same
 policy with randomisation and noise **on**, and a second training seed — and the shorter-schedule
-question from F-072 can now be settled by running 15,000 iterations and comparing on these same
+question from F-083 can now be settled by running 15,000 iterations and comparing on these same
 sets instead of arguing about it.
 
 ### 2026-09-20 — The trained policy moved to Isaac Sim: it stands there, it cannot walk there, and three of the four bugs were silent
 
 Lukas asked whether `model_48800` could be ported from the UniFP reproduction into Isaac Sim. It
 can, and it now is — `unifp_isaaclab/` plus `run_unifp_isaaclab.py` — but what the port measures is
-worth more than the fact that it runs (F-076, F-077).
+worth more than the fact that it runs (F-087, F-088).
 
 **The policy interface is reproduced exactly, and that is checked rather than asserted.** The
 inference half of the checkpoint is rebuilt as plain PyTorch — no Isaac Gym, no `b2_gym_learn`, so
@@ -3336,7 +3336,7 @@ which is exactly what "the policy does not transfer" looks like.
 - `self_collisions = 0` in legged_gym means self-collision **enabled** — its own comment says
   "1 to disable, 0 to enable". The port had it off.
 - Matching Isaac Gym's zero armature is wrong, for a reason about the integrator rather than the
-  robot (F-076). The D1's wrist inertias are near 1e-5 kg·m², UniFP's 40 N·m/rad on that is a
+  robot (F-087). The D1's wrist inertias are near 1e-5 kg·m², UniFP's 40 N·m/rad on that is a
   natural frequency near 1600 rad/s, and an explicit PD at 200 Hz cannot integrate it. Measured:
   `Joint4` left its ±2.35 rad limit and reached **−127.8 rad** with its torque saturated. With
   2e-4 kg·m² of rotor inertia added it stays put, and zero actions settle at **27.6 cm** —
@@ -3347,7 +3347,7 @@ which is exactly what "the policy does not transfer" looks like.
   Fixed, and `--zero-actions` added alongside it, which is what makes the no-policy comparison below
   possible on the Isaac Gym side.
 
-**The result (F-077).** Same checkpoint, flat ground, no forces, no randomisation, a held velocity
+**The result (F-088).** Same checkpoint, flat ground, no forces, no randomisation, a held velocity
 command, compared over 18 s — the Isaac Gym side resets at 20 s (`episode_length_s`), so a longer
 window would average one continuous run against one-and-a-half episodes.
 
@@ -3408,9 +3408,9 @@ because the zero-action standing height alone disagrees by 3.8 cm with no contro
 
 **What is recorded, and what is not.** Twelve runs are in the record: 3 Isaac Gym references on
 flat ground, 4 Isaac Lab runs of the same conditions, the pre-armature run that is the evidence for
-F-076, 3 at raised solver iterations, and one re-run of the standing case that reproduced the
+F-087, 3 at raised solver iterations, and one re-run of the standing case that reproduced the
 recorded numbers to every digit (so a single-environment run with a fixed seed is repeatable here,
-which is worth knowing beside F-075's ±0.1 cm on the Isaac Gym side). Short diagnostic probes — 5
+which is worth knowing beside F-086's ±0.1 cm on the Isaac Gym side). Short diagnostic probes — 5
 to 400 steps, used to read joint states and limits while chasing the bugs above — were not
 recorded; the one that mattered is kept as the pre-armature run. Two Isaac Gym runs were discarded:
 they hit the `--report-every 0` divide-by-zero and produced a one-row trace and no `run.json`.
@@ -3423,7 +3423,7 @@ leaves via `os._exit`, because otherwise a scripted sequence of runs deadlocks o
 
 ### 2026-09-20 — Restoring the Isaac Lab stack, and starting the training port the sim-to-sim result argues for
 
-Two jobs off the back of F-077, on Lukas's instruction: match the machine's Isaac Lab to what this
+Two jobs off the back of F-088, on Lukas's instruction: match the machine's Isaac Lab to what this
 repository targets, and begin porting UniFP's *training* to Isaac Lab rather than moving trained
 weights across.
 
@@ -3438,14 +3438,14 @@ the suite went from 338 passing with one failure to **339 passing**. Stale Orbit
 that checkout are untracked, absent from the target commit and not installed, so they were left
 alone rather than deleted.
 
-**The simulator version did not move the F-077 numbers, which was worth checking rather than
+**The simulator version did not move the F-088 numbers, which was worth checking rather than
 assuming.** All four Isaac Lab conditions were re-run on 0.54.3: every median and p90 is identical
 to the 0.47.2 run, to the digit. Those re-runs are now the canonical copies because `run.json`
 records the simulator versions — a provenance gap this session found the hard way, since 0.47.2 is
 no longer installed anywhere and the earlier records cannot say what they ran on.
 
 **The training port has its foundation, verified the same way the playback port was.** The
-approach that made F-076 trustworthy — record the contract out of the *running* Isaac Gym
+approach that made F-087 trustworthy — record the contract out of the *running* Isaac Gym
 environment, compare with no simulator on either side — extends to the task.
 `unifp_go2d1/dump_interface.py` now also writes the gait reference, the stance and contact masks,
 the privileged observation, and **each of the 27 reward terms separately**. Not by calling the
@@ -3504,7 +3504,7 @@ command sampling. It builds and steps.
 | `model_48800` in Isaac Gym, same task | 0.176 |
 
 Neither falls. The reward is on the right scale, the trained policy beats doing nothing, and the
-shortfall against Isaac Gym is the size F-077 leads you to expect. **This is a smoke test, not a
+shortfall against Isaac Gym is the size F-088 leads you to expect. **This is a smoke test, not a
 verification**: the two environments cannot be compared step-for-step without matching the random
 streams that draw commands and goals, so what is established is every *component* — observations,
 gait, all 27 reward terms — not their composition. The margin over zero actions is thin because
@@ -3526,7 +3526,7 @@ encoder/decoder actor-critic and the extra loss plug in rather than needing a fo
 
 The rest of `unifp_train/`: the external-force schedule, the force curriculum, the wrench, the
 adaptation-module actor-critic and its extra PPO loss. `./run_unifp_train.py train` now runs.
-Conclusions in [F-078](#/findings). Commands:
+Conclusions in [F-089](#/findings). Commands:
 
 ```
 ./run_unifp_train.py smoke --num_envs 16 --steps 400 --seed 42 --force_start_iteration 8000 --run_name baseline_zero --headless
@@ -3567,7 +3567,7 @@ now write all 27 reward terms as per-step means, so the comparison is 27 numbers
 never exercises, which is the fixture being small rather than a disagreement — and `stand_still`
 alone is larger than the total gap, so without it the port sits 1.9% *below* Isaac Gym rather
 than 0.4%. The two objectives are each 3–4% lower and `action_rate_arm` is four times larger
-(the arm chatters more here), both consistent with F-076's added rotor inertia and F-077's
+(the arm chatters more here), both consistent with F-087's added rotor inertia and F-088's
 transfer gap without separating them.
 
 The zero-action baseline is worth a caveat of its own: it is not a fixed number. Measured over
@@ -3619,7 +3619,7 @@ concatenated on the wrong side of the newest frame has identical shapes and a di
 and mean episodic return 3.3 → 13.8 over 12 iterations
 ([run](#/week/1/run/20260920T040910_train_seed1_smoke2)). Nothing compares the estimator's
 optimisation against upstream's, and no policy has been trained to completion or evaluated
-against the frozen manifests — that is the next step, and it is the one that answers F-077.
+against the frozen manifests — that is the next step, and it is the one that answers F-088.
 
 ### 2026-09-20 — The run is going: 4096 environments, 60,000 iterations, about 42 hours
 
@@ -3635,7 +3635,7 @@ nohup ./run_unifp_train.py train --num_envs 4096 --iterations 60000 --seed 1 --r
 ```
 
 Started 04:49 UTC, [run](#/week/1/run/20260920T044925_train_seed1_p0), ETA about 42 h. Checkpoints
-every 200 iterations, so it can be stopped and evaluated at any point — which matters given F-072,
+every 200 iterations, so it can be stopped and evaluated at any point — which matters given F-083,
 where the Isaac Gym curve said ~10,000 iterations would have done and the other 50,000 were waste.
 Running the full schedule anyway keeps the comparison like-for-like, and the checkpoints mean
 nothing is lost if the curve says the same thing here.
@@ -3656,7 +3656,7 @@ would have shown, and a reminder that the bug reached further than the term that
 First 54 iterations: mean return 11 → 85, mean episode length 996 of 1000 steps, `alive` at 1.26 of
 1.50, all three objectives live (`tracking_ee_force_world` 0.81, where it read 0.0000 before the
 fix). 38k steps/s, GPU 6.8 of 12.3 GB at 80% util and 70 °C. Nothing to conclude from that yet —
-it is 0.1% of the schedule, and F-072's Isaac Gym curve also looked good early.
+it is 0.1% of the schedule, and F-083's Isaac Gym curve also looked good early.
 
 ### 2026-09-20 — (the investigation continues in week 2)
 
@@ -3670,14 +3670,14 @@ too. This entry is the seam, not a summary.
 Runs recorded this week appear under **Runs** below these notes, with their curves: 11 smoke, 11 verify, 3 PPO pilots,
 6 playback runs and 1 viewer replay on 2026-09-15; 5 smoke, 3 verify, 7 evaluation runs and 2 training runs (a throughput probe and the first P0 candidate) on 2026-09-16.
 6 Isaac Gym runs on 2026-09-18 (1 upstream B2Z1 smoke, 1 aborted port launch, 1 port smoke, 2 throughput benchmarks and the long training run), on the spare PC.
-The UniFP training run completed on 2026-09-20 (F-072); its curves are in
+The UniFP training run completed on 2026-09-20 (F-083); its curves are in
 [figures/unifp_go2d1_training.png](figures/unifp_go2d1_training.png).
 A further 4 Isaac Lab runs on 2026-09-20 repeat all four conditions on the restored
 isaaclab 0.54.3 stack and are the canonical copies (they record simulator versions; the earlier
 ones do not).
 The sim-to-sim port added 11 playback runs on 2026-09-20: 3 Isaac Gym references on flat ground
 (zero actions, standing, walking), 4 Isaac Lab runs of the same conditions, 1 pre-armature run kept
-as the evidence for F-076, and 3 at raised solver iterations as the sensitivity probe in F-077.
+as the evidence for F-087, and 3 at raised solver iterations as the sensitivity probe in F-088.
 Figure: [unifp_sim2sim.png](figures/unifp_sim2sim.png).
 The Isaac Lab training port added 7 runs on 2026-09-20: a zero-action baseline, `model_48800`
 with and without external forces, 2 PPO smoke runs with the adaptation module (6 and 12
@@ -3692,34 +3692,34 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-001](../findings.md): superseded by F-012 (forward walking with the arm reproduced; lateral and yaw added).
 - [F-002](../findings.md): superseded by F-010 (the droop figures came from acceleration drives).
 - [F-003](../findings.md): CPU frame maths and PPO configuration work (confirmed, interface only).
-- [F-067](../findings.md): UniFP's released B2Z1 training starts on Isaac Gym Preview 4 on the spare PC, in
+- [F-078](../findings.md): UniFP's released B2Z1 training starts on Isaac Gym Preview 4 on the spare PC, in
   ~40 minutes of the two-day budget, with three dependency/usage pins its README does not give (confirmed,
   setup only -- no upstream result reproduced).
-- [F-068](../findings.md): the Go2+D1 retarget of UniFP trains once `weld.py`'s mass model is rebuilt into the
+- [F-079](../findings.md): the Go2+D1 retarget of UniFP trains once `weld.py`'s mass model is rebuilt into the
   generated URDF. `description/go2_d1.urdf` has no inertials by design, and Isaac Gym then gives the robot
   almost no mass and NaNs it at reset. The rebuilt model weighs 18.171 kg, matching the Isaac Lab
   articulation exactly (confirmed; interface and mass model only, no policy).
-- [F-069](../findings.md): UniFP commands +/-60 N at the end effector; a D1 makes about 7 N at this reach, so
+- [F-080](../findings.md): UniFP commands +/-60 N at the end effector; a D1 makes about 7 N at this reach, so
   the port runs at +/-8 N. Force tracking here is a few-newton problem (provisional -- arithmetic from
   published torque limits, no force measured).
-- [F-075](../findings.md): the trained policy on frozen episode sets -- 2.6 cm median tip error
+- [F-086](../findings.md): the trained policy on frozen episode sets -- 2.6 cm median tip error
   against 26 cm for zero actions, 0 falls in 100 episodes against 15-19 in 50, and the checkpoint
   training return preferred wins on held-out episodes too (confirmed; one training seed, quiet
   conditions, no gate defined).
-- [F-074](../findings.md): first numbers off a trained policy -- 4.6 cm median tip L1 undisturbed,
+- [F-085](../findings.md): first numbers off a trained policy -- 4.6 cm median tip L1 undisturbed,
   6.3 cm under force, in one clean rollout (provisional; one seed, one checkpoint, no baseline).
-- [F-073](../findings.md): the Go2 and the D1 disagree about which way is up and one Isaac Gym flag
+- [F-084](../findings.md): the Go2 and the D1 disagree about which way is up and one Isaac Gym flag
   cannot satisfy both, so every rendering before 2026-09-20 was wrong -- and none of the physics was
   (identical masses, 0.0000 mm after a settle) (confirmed).
-- [F-072](../findings.md): the Go2+D1 UniFP run finished all 60,000 iterations in 39.85 h with no crashes,
+- [F-083](../findings.md): the Go2+D1 UniFP run finished all 60,000 iterations in 39.85 h with no crashes,
   but learning is over by ~10,000, the force curriculum permanently costs tip tracking, and an unexplained
   destabilisation at 55k-57.5k means the last checkpoint is not the best one (confirmed for training-time
   scalars; no policy evaluation run).
-- [F-071](../findings.md): resuming a UniFP run silently restarts its force curriculum (`global_steps`
+- [F-082](../findings.md): resuming a UniFP run silently restarts its force curriculum (`global_steps`
   is zeroed on launch while the policy is restored), and `--max_iterations` on a resume adds to where
   it resumed rather than being a target. Both fixed in `launch_training.py`; the curriculum gate
   measured at 0.000 N shut and 0.394 N open (confirmed).
-- [F-070](../findings.md): the full 60,000-iteration schedule costs ~41 hours on this GPU with TF32 (55
+- [F-081](../findings.md): the full 60,000-iteration schedule costs ~41 hours on this GPU with TF32 (55
   without), and its force curriculum does not start until iteration 8,000, 5.5 hours in (confirmed
   throughput; the schedule length is an upstream default).
 - [F-066](../findings.md): four live bench picks stalled on the sequence's own arrival tests, not on the arm --
@@ -3769,9 +3769,9 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
 - [F-062](../findings.md): servo 6 runs open-to-closed — 0 units is the fingers at the far end of their rails — and the first mapping had it backwards, which would have opened the jaw where the pick meant to close (confirmed, watched on the arm).
 - [F-063](../findings.md): the gripper's closing half is negative and outside the advertised 0–65 — the jaw runs monotonically from −19.8 (pads touching) to +50.2 (widest a command reaches), and the old clamp floored every closing command two thirds of the way open (confirmed, probed and watched).
 - [F-064](../findings.md): a command sent before the arm has discovered the writer is lost silently — two of eight vanished with live feedback and error 0, which made a swept measurement read as non-monotonic (confirmed; fixed by waiting for the publication match).
-- [F-076](../findings.md): UniFP's trained policy now runs on the Isaac Lab model with its observation and action interface reproduced exactly (6e-8 and 9.5e-6 against the training stack), but Isaac Lab needs rotor inertia the training stack does not have or the arm's `Joint4` leaves its limit entirely (confirmed; interface exact, the armature is a stated deviation).
-- [F-077](../findings.md): that policy holds a stance on the Isaac Lab model (8.7 cm against 2.6 cm) but falls within 0.5 s when told to walk; the walking failure survives a solver change and the standing success does not (confirmed as a negative locomotion result; the standing result is marginal and one rollout per condition).
-- [F-078](../findings.md): UniFP's whole task now runs in Isaac Lab — forces, curriculum, adaptation-module actor-critic and PPO — and scores 0.17519 reward/step against the Isaac Gym recording's 0.17586, with 23 of 27 terms agreeing to better than 0.0005/step. The same measurement exposed a frame bug that had been zeroing the main objective entirely (confirmed for the task's reward structure in aggregate; not step-for-step, and no policy trained to completion).
+- [F-087](../findings.md): UniFP's trained policy now runs on the Isaac Lab model with its observation and action interface reproduced exactly (6e-8 and 9.5e-6 against the training stack), but Isaac Lab needs rotor inertia the training stack does not have or the arm's `Joint4` leaves its limit entirely (confirmed; interface exact, the armature is a stated deviation).
+- [F-088](../findings.md): that policy holds a stance on the Isaac Lab model (8.7 cm against 2.6 cm) but falls within 0.5 s when told to walk; the walking failure survives a solver change and the standing success does not (confirmed as a negative locomotion result; the standing result is marginal and one rollout per condition).
+- [F-089](../findings.md): UniFP's whole task now runs in Isaac Lab — forces, curriculum, adaptation-module actor-critic and PPO — and scores 0.17519 reward/step against the Isaac Gym recording's 0.17586, with 23 of 27 terms agreeing to better than 0.0005/step. The same measurement exposed a frame bug that had been zeroing the main objective entirely (confirmed for the task's reward structure in aggregate; not step-for-step, and no policy trained to completion).
 - [F-020](../findings.md): the D1 publishes joint angles at 9.00 Hz (111 ms), not the 10 Hz modelled; the 10 Hz cycle carries status (confirmed, measured on hardware).
 - [F-021](../findings.md): J0 answers a step in ~127 ms and reaches 1.15 rad/s without saturating, above the URDF's unverified 1.05 (provisional, one joint, unloaded).
 - [F-022](../findings.md): the arm cannot be powered off over DDS and enables itself on a motion command, so the driver's documented emergency stop does not work (confirmed).
@@ -3809,7 +3809,7 @@ Frozen evaluation manifests are in [results/manifests](../manifests). Figures: [
   torch 2.0.1) are untracked, absent from the target commit and not installed, so they were left
   in place rather than deleted.
 - **Frame conventions inside an environment are not covered by any test, and one of them was wrong**
-  (F-078). Isaac Lab spaces environments on a grid, so a position with `scene.env_origins` still
+  (F-089). Isaac Lab spaces environments on a grid, so a position with `scene.env_origins` still
   in it and one without differ by metres; Isaac Gym works in one global frame where the origins
   cancel. `unifp_train/env.py` mixed the two and drove `tracking_ee_force_world` to exactly zero.
   The offline test suite cannot reach this — the environment needs a simulator — so the guard is a

@@ -4,7 +4,7 @@
 This package is the other direction: rebuild the **task** in Isaac Lab so a policy can be trained
 on the stack it will be evaluated on.
 
-The motivation is F-077. The Isaac Gym policy holds a stance on the Isaac Lab model but falls
+The motivation is F-088. The Isaac Gym policy holds a stance on the Isaac Lab model but falls
 within 0.5 s when told to walk, and whether it stands at all turns on a PhysX solver setting. That
 is not a defect to debug so much as a reason not to move trained weights between these two
 simulators at all.
@@ -13,7 +13,7 @@ simulators at all.
 
 | piece | state |
 | --- | --- |
-| Observation contract, DOF order, control law, robot | **done**, reused from `unifp_isaaclab/` (F-076: exact to 6e-8 / 9.5e-6) |
+| Observation contract, DOF order, control law, robot | **done**, reused from `unifp_isaaclab/` (F-087: exact to 6e-8 / 9.5e-6) |
 | End-effector goal generator | **done**, reused from `unifp_isaaclab/task.py` |
 | Gait clock: stance mask, reference leg pose (`gait.py`) | **done and verified** against the training environment |
 | Task constants: weights, ranges, limits (`task_cfg.py`) | **done**, all 27 weights checked against the running environment |
@@ -25,8 +25,8 @@ simulators at all.
 | Force curriculum (`cfg.force_start_step`, 8,000 iterations) | **done** |
 | Adaptation-module actor-critic (`models.py`) | **done and verified** — `model_48800`'s weights load into it and it reproduces the reference loader's actions exactly |
 | The extra estimator loss on rsl-rl 5.x (`algorithm.py`, `agent.py`) | **done**, runs and the loss falls; not compared against upstream's optimiser |
-| Training | **fixed, and a full run completed** (F-080, F-081): 60,000 iterations in 43.5 h with no collapse, the end-effector term above the Isaac Gym reference throughout, and `kl_first_minibatch` never above 1.6e-09. Previously (F-080): resetting an environment blanked an observation the policy had already acted on, which pinned the learning-rate schedule to its floor for the whole run. On probe D's configuration the rate now sits at 1.98e-04 rather than the 1e-5 floor and the end-effector term goes 0.618 → 1.465. Verified over 300 iterations, one seed — **not** over a full run |
-| Evaluation against the frozen manifests (`eval.py`) | **done** (F-081): the natively trained policy beats the ported Isaac Gym one, **1.5 cm against 3.9 cm** on the same 50 frozen episodes in the same simulator, better on 50 of 50 paired episodes, no falls. Supersedes F-079, which measured a run made before the F-080 fix and stopped at 44% |
+| Training | **fixed, and a full run completed** (F-091, F-092): 60,000 iterations in 43.5 h with no collapse, the end-effector term above the Isaac Gym reference throughout, and `kl_first_minibatch` never above 1.6e-09. Previously (F-091): resetting an environment blanked an observation the policy had already acted on, which pinned the learning-rate schedule to its floor for the whole run. On probe D's configuration the rate now sits at 1.98e-04 rather than the 1e-5 floor and the end-effector term goes 0.618 → 1.465. Verified over 300 iterations, one seed — **not** over a full run |
+| Evaluation against the frozen manifests (`eval.py`) | **done** (F-092): the natively trained policy beats the ported Isaac Gym one, **1.5 cm against 3.9 cm** on the same 50 frozen episodes in the same simulator, better on 50 of 50 paired episodes, no falls. Supersedes F-090, which measured a run made before the F-091 fix and stopped at 44% |
 
 ## How the port is checked
 
@@ -84,7 +84,7 @@ Term by term (`results/week_01/figures/unifp_task_terms.png`), 23 of the 27 agre
   Isaac Gym rather than 0.4%.
 - **`tracking_ee_force_world` −0.00148** and **`tracking_lin_vel_force_world` −0.00124**, the two
   objectives, are each about 3–4% lower. The policy tracks slightly worse on the Isaac Lab model,
-  which is F-077 in a much milder form than the standing/walking playback showed.
+  which is F-088 in a much milder form than the standing/walking playback showed.
 - **`action_rate_arm` −0.00107**, four times upstream's magnitude: the arm chatters more here.
   The rotor inertia this port has to add (`unifp_isaaclab/robot.py`, `ARM_ARMATURE`) and a
   different integrator are the obvious suspects, and neither has been separated from the other.
@@ -166,7 +166,7 @@ explains about half the variance, and the table already contains a counter-examp
 `learning_rate_scale 0.1` run has the third-lowest drift and the *worst* tracking loss. A run that
 fails the screen is worth stopping; a run that passes it still has to be watched.
 
-All nine of those configurations were measured **before** the F-080 fix, when most of the KL being
+All nine of those configurations were measured **before** the F-091 fix, when most of the KL being
 screened was spurious, so the r = −0.74 calibration is from the broken regime. The screen itself
 held up: re-running the five-seed scan with the fix moved every seed from the amber and red bands
 into the green one, median drift +51% → +8%, and the end-effector term from −20.9% to +21.0%.
@@ -176,7 +176,7 @@ Six of six configurations run since the fix pass it; six of seven before it did 
 taken no gradient step since the rollout, so its KL is the numerical floor and nothing else. It
 should be ~0 on every run. When it is not, the update is not seeing the policy that acted, and
 `--diagnose_storage` prints which samples disagree and whether they are the ones whose episode
-ended. That is how F-080 was found: it read 0.063 with both optimisers switched off.
+ended. That is how F-091 was found: it read 0.063 with both optimisers switched off.
 
 The KL itself is logged because rsl-rl computes it for its adaptive learning rate and then throws
 it away, which leaves the rate as the only visible trace — and a rate pinned at its floor is
@@ -195,7 +195,7 @@ than reimplementing the loop, so the schedule sees exactly what it saw before.
 Both a UniFP checkpoint and an rsl-rl one load through the same path, so the policy trained on the
 legacy stack and one trained here are scored by identical code in identical episodes — which is
 the only way the question "is training natively better than porting the weights" has an answer.
-It currently does not: F-079.
+It currently does not: F-090.
 
 The manifest is **specific to this simulator**. `results/manifests/unifp_validation.json` freezes
 its episodes by a seed and an environment count, and verifies each by a digest of the schedule the

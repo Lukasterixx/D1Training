@@ -143,7 +143,7 @@ python unifp_go2d1/play_policy.py --task=go2d1_pos_force \
 
 Upstream's `play_*.py` works, but shows a force policy **with the forces off**: the curriculum is
 gated on `env.global_steps`, which starts at 0 in a fresh process, so a play session never reaches
-`force_start_step` and the robot is never pushed — the same defect as F-071, which was fixed for
+`force_start_step` and the robot is never pushed — the same defect as F-082, which was fixed for
 resumed training but lives in the play path too. `--forces` winds `global_steps` past the gate, the
 camera follows the robot, and `--out DIR` writes a `run.json` and `trace.csv` so a rollout can be
 recorded with `./dashboard.py record`.
@@ -173,7 +173,7 @@ recorded but not acted on, so one episode's fall cannot shift the schedule of th
 
 The physics is **not** bitwise reproducible — GPU PhysX is not deterministic, and the same
 controller on the same manifest gives fall counts that differ by one and medians that move by
-about ±0.1 cm. Repeat any comparison finer than that. Results in F-075.
+about ±0.1 cm. Repeat any comparison finer than that. Results in F-086.
 
 ## What the task rewards
 
@@ -224,7 +224,7 @@ Three mechanical changes were forced by Isaac Gym rather than chosen:
   have it), so neither setting renders both halves correctly. `build_asset.py` writes a `_visflip`
   copy of each arm mesh rotated by Rx(−90°) and points only `<visual>` at it; `<collision>` keeps
   the original. Measured to be visual-only: identical masses and every body within 0.0000 mm after a
-  2 s settle either way (F-073). Worth re-checking the first time this model is rendered anywhere
+  2 s settle either way (F-084). Worth re-checking the first time this model is rendered anywhere
   new — nothing errors, and the numbers stay right while the picture is wrong.
 - **`ee_gripper_link`** is added at the CAD pincer tip (`position_only/tool_point.py`), because
   UniFP indexes the controlled point and applies the EE force by body name. It is the same

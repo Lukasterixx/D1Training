@@ -15,8 +15,8 @@ split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
 Both figures are from the same 50 frozen episodes in the same simulator
 (`results/manifests/unifp_isaaclab_validation.json`, content `94e576a6…`), forces active, with
-every episode's schedule digest reproduced. See [F-081](../results/findings.md) for the comparison
-and [F-082](../results/findings.md) for the one region where both are weak — goals low and in
+every episode's schedule digest reproduced. See [F-092](../results/findings.md) for the comparison
+and [F-093](../results/findings.md) for the one region where both are weak — goals low and in
 front track at about three times the error of the rest of the workspace.
 
 ## Which to use
@@ -27,7 +27,7 @@ checkpoint is kept as an independent reference trained on a different simulator,
 makes the comparison checkable rather than self-reported.
 
 Do not pick a checkpoint by training return. On this task the return cannot distinguish a 1.5 cm
-policy from a 60 cm one (F-079, reconfirmed in F-081); selection is by frozen-manifest evaluation.
+policy from a 60 cm one (F-090, reconfirmed in F-092); selection is by frozen-manifest evaluation.
 
 ## Running one on another machine
 

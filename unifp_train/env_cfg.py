@@ -1,7 +1,7 @@
 """Configuration for the Isaac Lab build of UniFP's position/force task.
 
 The robot, its control law and the observation contract come from `unifp_isaaclab`, which is
-verified against the training stack (F-076). What is added here is the surrounding environment:
+verified against the training stack (F-087). What is added here is the surrounding environment:
 scene, contact sensing, episode length and the observation widths the learning side needs.
 """
 from __future__ import annotations

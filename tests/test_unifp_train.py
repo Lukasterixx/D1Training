@@ -386,7 +386,7 @@ class TestAdaptationActor(unittest.TestCase):
     So the trained weights are loaded into the new model with `strict=True`, which fails if a
     single tensor is the wrong size or missing, and the result is compared against
     `unifp_isaaclab.policy.UniFPPolicy`, which is itself checked against the running Isaac Gym
-    environment to 9.5e-06 (F-076). Agreement means the two are the same network, not a network
+    environment to 9.5e-06 (F-087). Agreement means the two are the same network, not a network
     of the same size.
     """
 

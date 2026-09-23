@@ -63,7 +63,7 @@ SOFT_TORQUE_LIMIT = 0.9
 CYCLE_TIME = interface.CYCLE_TIME
 
 #: Joint position limits from the URDF, in UniFP's DOF order. Measured identical between the
-#: Isaac Gym asset and the Isaac Lab weld on 2026-09-20 (F-076), all twenty joints.
+#: Isaac Gym asset and the Isaac Lab weld on 2026-09-20 (F-087), all twenty joints.
 JOINT_POS_LIMITS = (
     (-1.0472, 1.0472), (-1.5708, 3.4907), (-2.7227, -0.8378),
     (-1.0472, 1.0472), (-1.5708, 3.4907), (-2.7227, -0.8378),

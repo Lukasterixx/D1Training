@@ -1,7 +1,7 @@
 """UniFP's position/force task, being rebuilt to train natively in Isaac Lab.
 
 `unifp_isaaclab/` runs a checkpoint trained elsewhere; this trains one here. The motivation is
-F-077: the policy trained on the legacy Isaac Gym stack holds a stance on the Isaac Lab model but
+F-088: the policy trained on the legacy Isaac Gym stack holds a stance on the Isaac Lab model but
 falls within half a second when told to walk, and the reproduction is therefore not portable in
 the form it exists in. Training the same task on the stack it will be evaluated on removes the
 question rather than answering it.

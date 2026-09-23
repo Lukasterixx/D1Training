@@ -1,14 +1,14 @@
 """Run a policy against a frozen manifest in Isaac Lab, and summarise what it did.
 
-The point of this module is a comparison the sim-to-sim work could not make. F-077 measured the
-Isaac Gym policy in Isaac Lab and found it stands but cannot walk; F-078 rebuilt the task so a
+The point of this module is a comparison the sim-to-sim work could not make. F-088 measured the
+Isaac Gym policy in Isaac Lab and found it stands but cannot walk; F-089 rebuilt the task so a
 policy could be trained here instead. The question left over is whether training natively is
 actually better than porting the weights — and that question is only answerable if **both**
 policies are measured **in the same simulator, on the same frozen episodes**.
 
 So this evaluates, in Isaac Lab:
 
-  * `model_48800`, trained on Isaac Gym and ported (its loading is verified exactly, F-076);
+  * `model_48800`, trained on Isaac Gym and ported (its loading is verified exactly, F-087);
   * a checkpoint trained here;
   * zero actions, because without the baseline a tracking number says nothing — the resting tool
     tip is already somewhere and some goals are near it.
