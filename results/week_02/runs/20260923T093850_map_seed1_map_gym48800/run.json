@@ -1,0 +1,28 @@
+{
+  "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+  "checkpoint_source": "isaacgym",
+  "checkpoint_iteration": null,
+  "steps": 600,
+  "settle": 400,
+  "seed": 1,
+  "radii": [
+    0.35,
+    0.45,
+    0.55
+  ],
+  "pitch_steps": 9,
+  "yaw_steps": 9,
+  "forces": "off",
+  "base_command": "zero (standing)",
+  "grid_points": 243,
+  "mode": "workspace_map",
+  "status": "finished",
+  "commandable_goals": 243,
+  "error_m_median": 0.03223719820380211,
+  "error_m_max": 0.07684054970741272,
+  "error_sd_m_median": 0.018448054790496826,
+  "lowest_pitch_error_m_median": 0.04503877833485603,
+  "above_lowest_pitch_error_m_median": 0.030984284356236458,
+  "falls": 0,
+  "records_file": "workspace_map.json"
+}

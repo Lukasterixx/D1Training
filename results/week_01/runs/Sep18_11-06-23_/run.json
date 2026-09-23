@@ -1,0 +1,18 @@
+{
+  "mode": "train",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "arguments": {
+    "num_envs": 4096,
+    "iterations": 18,
+    "steps": null
+  },
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_status": "?? third_party/UniFP/\n?? unifp_go2d1/",
+  "articulation_mass_kg": 18.172,
+  "stack": "isaacgym_preview4/unifp",
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "python unifp_go2d1/launch_training.py --tf32 --no-wandb --task=go2d1_pos_force --num_envs 4096 --max_iterations 18",
+  "notes": "Same benchmark with TF32 matmuls: 40.2k steps/s, 2.44 s/iteration (collection 1.74 s, learning 0.70 s)."
+}

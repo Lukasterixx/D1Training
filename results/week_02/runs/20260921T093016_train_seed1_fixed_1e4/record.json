@@ -1,0 +1,63 @@
+{
+  "id": "20260921T093016_train_seed1_fixed_1e4",
+  "title": "Fixed PPO rate 1e4, adaptive schedule neutralised, 25 iters",
+  "notes": "KL as an output of a known rate rather than a quantity the schedule regulates.",
+  "week": 2,
+  "recorded_at": "2026-09-21T19:33:18+10:00",
+  "started_utc": "2026-09-21T09:30:16+00:00",
+  "source_dir": "logs/unifp_train/20260921T093016_train_seed1_fixed_1e4",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 25,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 24,
+  "final_checkpoint": {
+    "file": "model_24.pt",
+    "sha256": "01f800f03899cb1b43e5479a7afe3befa9648950008f881e3470dcf2538cc072"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 47.09048080444336,
+      "last_step": 24,
+      "mean_last_10": 37.55990486145019,
+      "min": 1.2056176662445068,
+      "max": 47.09048080444336,
+      "points": 25
+    },
+    "Train/mean_episode_length": {
+      "last": 576.1400146484375,
+      "last_step": 24,
+      "mean_last_10": 460.05799865722656,
+      "min": 13.09000015258789,
+      "max": 576.1400146484375,
+      "points": 25
+    },
+    "Policy/mean_std": {
+      "last": 0.9890289902687073,
+      "last_step": 24,
+      "mean_last_10": 0.9927153408527374,
+      "min": 0.9890289902687073,
+      "max": 0.9996302723884583,
+      "points": 25
+    },
+    "Perf/total_fps": {
+      "last": 38144.0,
+      "last_step": 24,
+      "mean_last_10": 38359.1,
+      "min": 37745.0,
+      "max": 40010.0,
+      "points": 25
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

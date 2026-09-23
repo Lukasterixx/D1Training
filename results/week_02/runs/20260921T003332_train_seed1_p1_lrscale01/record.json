@@ -1,0 +1,63 @@
+{
+  "id": "20260921T003332_train_seed1_p1_lrscale01",
+  "title": "Fixed-run attempt at learning_rate_scale 0.1, stopped at 345",
+  "notes": "4096 envs: a tenfold cut in the PPO rate moved the KL 4%, so the schedule saturation is not driven by PPO's step size; stopped by the planned 300-iteration check",
+  "week": 2,
+  "recorded_at": "2026-09-21T10:49:42+10:00",
+  "started_utc": "2026-09-21T00:33:32+00:00",
+  "source_dir": "logs/unifp_train/20260921T003332_train_seed1_p1_lrscale01",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 345,
+  "final_checkpoint": {
+    "file": "model_345.pt",
+    "sha256": "9772ee4423ee868b7bda121006bce4f98c48354c20c1a67d31b14c49e8e49ead"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 82.31195831298828,
+      "last_step": 345,
+      "mean_last_10": 81.16213455200196,
+      "min": 1.2056176662445068,
+      "max": 115.40367889404297,
+      "points": 346
+    },
+    "Train/mean_episode_length": {
+      "last": 982.0,
+      "last_step": 345,
+      "mean_last_10": 968.4139953613281,
+      "min": 13.09000015258789,
+      "max": 999.0,
+      "points": 346
+    },
+    "Policy/mean_std": {
+      "last": 0.8782954812049866,
+      "last_step": 345,
+      "mean_last_10": 0.8782786309719086,
+      "min": 0.8771061301231384,
+      "max": 1.0005625486373901,
+      "points": 346
+    },
+    "Perf/total_fps": {
+      "last": 36459.0,
+      "last_step": 345,
+      "mean_last_10": 36702.0,
+      "min": 35585.0,
+      "max": 39773.0,
+      "points": 346
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

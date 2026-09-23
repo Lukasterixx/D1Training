@@ -320,6 +320,22 @@ scaffold pilots are not automatically the P0 baseline. Remove force-supervised
 latents as well as explicit force inputs from P0/P2. An upstream reproduction
 and a modified Go2+D1 method must be labelled separately.
 
+It is the *method* that transfers, not the weights. A UniFP checkpoint trained on
+the legacy Isaac Gym stack was run unchanged on this repository's Isaac Lab model
+on 2026-09-20 (F-087, F-088): the observation and action interface reproduces
+exactly, but the policy holds only a stance there and falls within 0.5 s when told
+to walk, and whether it stands at all turns on a PhysX solver setting. So a
+controller intended for evaluation or deployment here has to be trained on the
+stack it will be evaluated on, or the two stacks reconciled deliberately — the
+zero-action standing height already disagrees by 3.8 cm with no controller
+involved. Budget for retraining under the adopted method rather than for porting
+a trained policy across. That budget is now spendable: `unifp_train/` rebuilds the
+same task as an Isaac Lab `DirectRLEnv` — external forces, curriculum,
+adaptation-module actor-critic and all — and scores within 0.4% of the Isaac Gym
+recording term by term (F-089, 2026-09-20). What it has not yet produced is a
+policy: a full training run and a frozen-manifest evaluation are the next step,
+and until those exist nothing here is validated beyond the task definition.
+
 For low-level comparisons, hold the high-level task sequence, perception source
 and command timing fixed. Separate controller-only tests with registered targets
 from end-to-end camera trials. Report tagged and markerless results separately;

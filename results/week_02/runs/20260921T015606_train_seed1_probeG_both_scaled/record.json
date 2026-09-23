@@ -1,0 +1,63 @@
+{
+  "id": "20260921T015606_train_seed1_probeG_both_scaled",
+  "title": "Probe G: both optimisers scaled 10x",
+  "notes": "4096 envs seed 1: KL 0.0162 vs D's 0.0226, rate off the floor, drift halved to +64%; the schedule compensates for the scaling as an adaptive controller must",
+  "week": 2,
+  "recorded_at": "2026-09-21T12:11:25+10:00",
+  "started_utc": "2026-09-21T01:56:06+00:00",
+  "source_dir": "logs/unifp_train/20260921T015606_train_seed1_probeG_both_scaled",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 299,
+  "final_checkpoint": {
+    "file": "model_299.pt",
+    "sha256": "c9dc0d804ecb4d4ccb52d86154ddcc2e79b3af4b6a2d82ea4d8d42888d0560b2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 102.94921875,
+      "last_step": 299,
+      "mean_last_10": 101.86152954101563,
+      "min": 1.2056176662445068,
+      "max": 115.51691436767578,
+      "points": 300
+    },
+    "Train/mean_episode_length": {
+      "last": 975.6400146484375,
+      "last_step": 299,
+      "mean_last_10": 973.131005859375,
+      "min": 13.09000015258789,
+      "max": 999.0,
+      "points": 300
+    },
+    "Policy/mean_std": {
+      "last": 0.8729827404022217,
+      "last_step": 299,
+      "mean_last_10": 0.8729909658432007,
+      "min": 0.872822105884552,
+      "max": 0.9995670914649963,
+      "points": 300
+    },
+    "Perf/total_fps": {
+      "last": 37467.0,
+      "last_step": 299,
+      "mean_last_10": 37912.0,
+      "min": 37202.0,
+      "max": 40919.0,
+      "points": 300
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20260921T102431_train_seed1_fixed_null_c4000",
+  "title": "Null test at model_4000 after the fix",
+  "notes": "kl_first_minibatch exactly 0; was 0.063.",
+  "week": 2,
+  "recorded_at": "2026-09-21T20:26:56+10:00",
+  "started_utc": "2026-09-21T10:24:31+00:00",
+  "source_dir": "logs/unifp_train/20260921T102431_train_seed1_fixed_null_c4000",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 12,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4011,
+  "final_checkpoint": {
+    "file": "model_4011.pt",
+    "sha256": "d6f582c9d134e0cba2d263b91d760f7ef1c0db8d809e1c67b75f3b23c24e3a9d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 43.910037994384766,
+      "last_step": 4011,
+      "mean_last_10": 26.879618453979493,
+      "min": 2.065347909927368,
+      "max": 43.910037994384766,
+      "points": 12
+    },
+    "Train/mean_episode_length": {
+      "last": 274.54998779296875,
+      "last_step": 4011,
+      "mean_last_10": 168.36999740600587,
+      "min": 13.09000015258789,
+      "max": 274.54998779296875,
+      "points": 12
+    },
+    "Policy/mean_std": {
+      "last": 0.5529417991638184,
+      "last_step": 4011,
+      "mean_last_10": 0.5529417991638184,
+      "min": 0.5529417991638184,
+      "max": 0.5529417991638184,
+      "points": 12
+    },
+    "Perf/total_fps": {
+      "last": 39596.0,
+      "last_step": 4011,
+      "mean_last_10": 40031.9,
+      "min": 39358.0,
+      "max": 41406.0,
+      "points": 12
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

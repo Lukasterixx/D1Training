@@ -1,0 +1,63 @@
+{
+  "id": "20260921T093353_train_seed1_sens_c1000",
+  "title": "Sensitivity at model_1000: fixed rate 1e-5, 20 iters",
+  "notes": "KL produced by a known rate, resumed from the long run's checkpoint.",
+  "week": 2,
+  "recorded_at": "2026-09-21T20:26:55+10:00",
+  "started_utc": "2026-09-21T09:33:53+00:00",
+  "source_dir": "logs/unifp_train/20260921T093353_train_seed1_sens_c1000",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 20,
+  "steps": 100,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1019,
+  "final_checkpoint": {
+    "file": "model_1019.pt",
+    "sha256": "74edfd974ddc1291157eb072c50ee9ec2597d58a993ea99c7693678eb6cff2e0"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 64.5004653930664,
+      "last_step": 1019,
+      "mean_last_10": 50.15237464904785,
+      "min": 1.8356462717056274,
+      "max": 64.5004653930664,
+      "points": 20
+    },
+    "Train/mean_episode_length": {
+      "last": 467.17999267578125,
+      "last_step": 1019,
+      "mean_last_10": 359.41399841308595,
+      "min": 13.09000015258789,
+      "max": 467.17999267578125,
+      "points": 20
+    },
+    "Policy/mean_std": {
+      "last": 0.7928482294082642,
+      "last_step": 1019,
+      "mean_last_10": 0.7933412671089173,
+      "min": 0.7928482294082642,
+      "max": 0.7955154776573181,
+      "points": 20
+    },
+    "Perf/total_fps": {
+      "last": 38788.0,
+      "last_step": 1019,
+      "mean_last_10": 38950.5,
+      "min": 38514.0,
+      "max": 42043.0,
+      "points": 20
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

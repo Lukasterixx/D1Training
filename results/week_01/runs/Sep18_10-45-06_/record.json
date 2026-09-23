@@ -1,0 +1,53 @@
+{
+  "id": "Sep18_10-45-06_",
+  "title": "UniFP upstream B2Z1: released training starts (64 envs, 3 iterations)",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-18T11:12:55+10:00",
+  "started_utc": "2026-09-18T01:12:48+00:00",
+  "source_dir": "/home/victor/thesis_b_legacy/UniFP/logs/b2z1_pos_force/Sep18_10-45-06_",
+  "mode": "train",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 3,
+  "steps": null,
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_dirty": true,
+  "articulation_mass_kg": 79.80227,
+  "last_iteration": 2,
+  "final_checkpoint": {
+    "file": "model_3.pt",
+    "sha256": "084bd88e7c3e1c8dfa452c800f87848fc294d1502021eadd881d517ed1c999af"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 0.904978334903717,
+      "last_step": 2,
+      "mean_last_10": 0.7221603393554688,
+      "min": 0.5783187747001648,
+      "max": 0.904978334903717,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 43.90909194946289,
+      "last_step": 2,
+      "mean_last_10": 35.21969731648763,
+      "min": 23.0,
+      "max": 43.90909194946289,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 2973.0,
+      "last_step": 2,
+      "mean_last_10": 3048.3333333333335,
+      "min": 2973.0,
+      "max": 3150.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "run.json"
+  ]
+}

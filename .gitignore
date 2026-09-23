@@ -16,3 +16,9 @@ logs/pick_hardware/
 # Renders of the camera body, tens of megabytes of them; the figures kept are in results/week_NN/figures/.
 logs/camera_body/
 logs/combiner_demo/
+
+# The UniFP sim-to-sim port: rollouts on the Isaac Lab model, and the matching Isaac Gym runs
+# they are read against. Each run also rebuilds its own USD; the recorded copies are the evidence.
+logs/unifp_isaaclab/
+logs/unifp_gym_flat/
+logs/unifp_train/

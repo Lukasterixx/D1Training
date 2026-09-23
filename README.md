@@ -363,6 +363,10 @@ error is small. Real per-link inertials would still be better.
 | `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
 | `demos/cup/` | the cup pick, kept together: `pick_demo/` (wrist RealSense model, YOLO, top-down grasp planning, the sequence), `run_pick_demo.py/.sh`, the reach console `d1_ui/` and `run_ui.sh`, and its own `tests/` |
 | `demos/combiner/`, `demos/common/` | randomized combiner-box scene, procedural hinged asset with an AprilTag, the cup pick's wrist RealSense and reach console (`wrist_camera.py`), the tag-guided grip-and-pull, lever push and torque sweep (`apriltag.py`, `pull.py`, `press.py`, `sequence.py`, `turn_run.py`), and the resting robot setup shared with the cup demo |
+| `unifp_go2d1/` | UniFP's whole-body position/force task retargeted to this robot, on the legacy Isaac Gym stack |
+| `unifp_isaaclab/`, `run_unifp_isaaclab.py` | the policy that stack trains, run unchanged on the Isaac Lab model: the sim-to-sim check |
+| `unifp_train/`, `run_unifp_train.py` | that task rebuilt to train natively in Isaac Lab: environment, external forces, adaptation-module actor-critic and PPO. Trained to completion and **better than the ported policy** -- 1.5 cm against 3.9 cm on the same 50 frozen episodes (F-092) |
+| `checkpoints/` | the two trained policies, with the commands to run them on another machine |
 
 ## Despite the name
 

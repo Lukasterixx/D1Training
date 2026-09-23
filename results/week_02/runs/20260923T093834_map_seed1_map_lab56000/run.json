@@ -1,0 +1,28 @@
+{
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260921T121141_train_seed1_full_after_f080/model_56000.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 56000,
+  "steps": 600,
+  "settle": 400,
+  "seed": 1,
+  "radii": [
+    0.35,
+    0.45,
+    0.55
+  ],
+  "pitch_steps": 9,
+  "yaw_steps": 9,
+  "forces": "off",
+  "base_command": "zero (standing)",
+  "grid_points": 243,
+  "mode": "workspace_map",
+  "status": "finished",
+  "commandable_goals": 243,
+  "error_m_median": 0.015026875771582127,
+  "error_m_max": 0.06372158974409103,
+  "error_sd_m_median": 0.004333936609327793,
+  "lowest_pitch_error_m_median": 0.03928186744451523,
+  "above_lowest_pitch_error_m_median": 0.014069393277168274,
+  "falls": 0,
+  "records_file": "workspace_map.json"
+}

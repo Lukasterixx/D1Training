@@ -1,0 +1,194 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    50,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "checkpoint": "logs/unifp_train/20260921T121141_train_seed1_full_after_f080/model_8000.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "fixed_learning_rate": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "learning_rate_scale": null,
+    "manifest": "results/manifests/unifp_isaaclab_validation.json",
+    "manifest_out": null,
+    "mode": "eval",
+    "num_envs": 16,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "physics_gpu": 0,
+    "rendering_mode": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "run_name": "new_lab8000",
+    "seed": 20260921,
+    "std_type": null,
+    "steps": 100,
+    "verbose": false,
+    "xr": false,
+    "zero_actions": false
+  },
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260921T121141_train_seed1_full_after_f080/model_8000.pt",
+  "checkpoint_iteration": 8000,
+  "checkpoint_source": "isaaclab",
+  "conditions": {
+    "action_scale": 0.25,
+    "arm_armature": 0.0002,
+    "domain_randomisation": false,
+    "ee_force_range_n": [
+      -8.0,
+      8.0
+    ],
+    "episode_length_s": 20.0,
+    "force_start_step": 0,
+    "goal_sphere_centre_m": [
+      0.0,
+      0.0,
+      0.49
+    ],
+    "gripper_force_kp": 200.0,
+    "noise": false,
+    "num_envs": 50,
+    "policy_hz": 50.0,
+    "simulator": "isaaclab",
+    "solver_iterations": [
+      4,
+      0
+    ],
+    "task": "go2d1_pos_force",
+    "terrain": "flat plane",
+    "tool_body": "Link7_1",
+    "tool_offset_m": [
+      0.0547,
+      0.006,
+      0.017
+    ]
+  },
+  "critic_obs": [
+    50,
+    459
+  ],
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    50,
+    12
+  ],
+  "expected_actor": [
+    50,
+    2432
+  ],
+  "expected_critic": [
+    50,
+    459
+  ],
+  "expected_estimates": [
+    50,
+    12
+  ],
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M .gitignore\n M README.md\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_01/notes.md\n M results/week_02/notes.md\n M unifp_go2d1/play_policy.py\n?? results/manifests/unifp_isaaclab_validation.json\n?? results/week_01/figures/unifp_sim2sim.png\n?? results/week_01/figures/unifp_sim2sim.py\n?? results/week_01/figures/unifp_task_terms.png\n?? results/week_01/figures/unifp_task_terms.py\n?? results/week_01/runs/20260920T0110_gym_flat_stand_zero/\n?? results/week_01/runs/20260920T0112_gym_flat_stand_48800/\n?? results/week_01/runs/20260920T0114_gym_flat_walk_48800/\n?? results/week_01/runs/20260920T011858_stand_zero/\n?? results/week_01/runs/20260920T012721_stand_48800/\n?? results/week_01/runs/20260920T012721_stand_zero/\n?? results/week_01/runs/20260920T012721_walk_48800/\n?? results/week_01/runs/20260920T012721_walk_zero/\n?? results/week_01/runs/20260920T013414_stand_48800/\n?? results/week_01/runs/20260920T013414_stand_zero/\n?? results/week_01/runs/20260920T013414_walk_48800/\n?? results/week_01/runs/20260920T014015_confirm_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_zero/\n?? results/week_01/runs/20260920T024333_lab0543_walk_48800/\n?? results/week_01/runs/20260920T024333_lab0543_walk_zero/\n?? results/week_01/runs/20260920T040839_train_seed1_smoke/\n?? results/week_01/runs/20260920T040910_train_seed1_smoke2/\n?? results/week_01/runs/20260920T041744_smoke_seed42_baseline_zero/\n?? results/week_01/runs/20260920T041756_play_seed42_baseline_48800/\n?? results/week_01/runs/20260920T041809_play_seed42_forced_48800/\n?? results/week_01/runs/20260920T044653_train_seed1_memprobe/\n?? results/week_01/runs/20260920T044925_train_seed1_p0/\n?? results/week_02/runs/\n?? run_unifp_isaaclab.py\n?? run_unifp_train.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? tests/test_unifp_train.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/\n?? unifp_train/",
+  "joint_order_ok": true,
+  "mode": "eval",
+  "num_envs": 50,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "seed": 20260921,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "base_vel_err_m_s": {
+      "max": 0.09223594516515732,
+      "mean": 0.04558129988610744,
+      "median": 0.04672136344015598,
+      "n": 50,
+      "p90": 0.07359619811177254
+    },
+    "base_z_m": {
+      "max": 0.331182062625885,
+      "mean": 0.3178891408443451,
+      "median": 0.31972677260637283,
+      "n": 50,
+      "p90": 0.3277023136615753
+    },
+    "condition_mismatches": [],
+    "controller": "model_8000.pt (isaaclab)",
+    "episodes": 50,
+    "estimator_err_n": {
+      "max": 3.4258785247802734,
+      "mean": 0.4979284977074713,
+      "median": 0.038172838278114796,
+      "n": 50,
+      "p90": 2.171763777732849
+    },
+    "falls": {
+      "count": 5,
+      "rate": 0.1
+    },
+    "force_cmd_n": {
+      "max": 6.518559931924469,
+      "mean": 3.3316654118950937,
+      "median": 3.424093341886524,
+      "n": 50,
+      "p90": 4.961584013416231
+    },
+    "force_realised_n": {
+      "max": 31.126937904859634,
+      "mean": -0.8154011289818195,
+      "median": -0.6728290720326215,
+      "n": 49,
+      "p90": 7.878626690359741
+    },
+    "goal_tracking_quiet_m": {
+      "max": 0.022209886461496353,
+      "mean": 0.015031953053548932,
+      "median": 0.014822048135101795,
+      "n": 50,
+      "p90": 0.02014598622918129
+    },
+    "manifest_role": "validation",
+    "manifest_sha256": "94e576a6221007bcfa0bb1f7bb6ea28832866481a3ea7f50f94446e99f6cf495",
+    "schedule_mismatches": [],
+    "simulator": "isaaclab",
+    "survived_to_time_limit": 45,
+    "unified_tracking_m": {
+      "max": 0.08019625768065453,
+      "mean": 0.027430825121700763,
+      "median": 0.023881907109171152,
+      "n": 50,
+      "p90": 0.03601217083632946
+    },
+    "unified_tracking_pushed_m": {
+      "max": 0.14805160462856293,
+      "mean": 0.043833730481565,
+      "median": 0.034114385955035686,
+      "n": 50,
+      "p90": 0.08020521700382233
+    }
+  }
+}

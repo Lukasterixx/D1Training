@@ -1,0 +1,86 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    16,
+    2432
+  ],
+  "critic_obs": [
+    16,
+    459
+  ],
+  "driven_by": "zero actions",
+  "env_steps_with_external_force": 0,
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    16,
+    12
+  ],
+  "expected_actor": [
+    16,
+    2432
+  ],
+  "expected_critic": [
+    16,
+    459
+  ],
+  "expected_estimates": [
+    16,
+    12
+  ],
+  "force_start_iteration": 8000,
+  "force_start_step": 192000,
+  "frames_consistent": true,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M .gitignore\n M README.md\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_01/notes.md\n M unifp_go2d1/play_policy.py\n?? logs/unifp_train/\n?? results/week_01/figures/unifp_sim2sim.png\n?? results/week_01/figures/unifp_sim2sim.py\n?? results/week_01/runs/20260920T0110_gym_flat_stand_zero/\n?? results/week_01/runs/20260920T0112_gym_flat_stand_48800/\n?? results/week_01/runs/20260920T0114_gym_flat_walk_48800/\n?? results/week_01/runs/20260920T011858_stand_zero/\n?? results/week_01/runs/20260920T012721_stand_48800/\n?? results/week_01/runs/20260920T012721_stand_zero/\n?? results/week_01/runs/20260920T012721_walk_48800/\n?? results/week_01/runs/20260920T012721_walk_zero/\n?? results/week_01/runs/20260920T013414_stand_48800/\n?? results/week_01/runs/20260920T013414_stand_zero/\n?? results/week_01/runs/20260920T013414_walk_48800/\n?? results/week_01/runs/20260920T014015_confirm_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_zero/\n?? results/week_01/runs/20260920T024333_lab0543_walk_48800/\n?? results/week_01/runs/20260920T024333_lab0543_walk_zero/\n?? run_unifp_isaaclab.py\n?? run_unifp_train.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? tests/test_unifp_train.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/\n?? unifp_train/",
+  "joint_order_ok": true,
+  "mean_reward_per_step": 0.09042,
+  "mode": "smoke",
+  "num_envs": 16,
+  "resets": 0,
+  "reward_terms_per_step": {
+    "action_rate": 0.0,
+    "action_rate_arm": 0.0,
+    "alive": 0.03,
+    "ang_vel_xy": -2.3e-05,
+    "base_height": -2.9e-05,
+    "collision": -0.008266,
+    "dof_acc": -6e-06,
+    "dof_acc_arm": -1.5e-05,
+    "dof_pos_limits": -0.030202,
+    "dof_vel": -3.1e-05,
+    "dof_vel_arm": -3.8e-05,
+    "feet_air_time": -5.6e-05,
+    "feet_contact_forces": 0.0,
+    "feet_contact_number": 0.026959,
+    "feet_drag": -0.000117,
+    "feet_height": -0.001083,
+    "feet_height_high": 0.0,
+    "feet_pos_xy": -0.000428,
+    "hip_pos": -6e-06,
+    "lin_vel_z": -0.000333,
+    "ref_dof_leg": 0.017637,
+    "stand_still": 0.0027,
+    "torque_limits": -3.8e-05,
+    "torques": -2.4e-05,
+    "tracking_ang_vel": 0.014663,
+    "tracking_ee_force_world": 0.014817,
+    "tracking_lin_vel_force_world": 0.024333
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "seed": 42,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "steps": 400,
+  "tip_goal_error_m": {
+    "max": 0.6118,
+    "median": 0.4146,
+    "p90": 0.4903
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20260920T044925_train_seed1_p0",
+  "title": "UniFP trained natively in Isaac Lab, stopped at 26,466 of 60,000",
+  "notes": "4096 envs, seed 1, UniFP's PPO config: three policy collapses, learning rate pinned at the floor for the whole run; stopped to restart with the fix",
+  "week": 1,
+  "recorded_at": "2026-09-21T10:33:21+10:00",
+  "started_utc": "2026-09-20T04:49:25+00:00",
+  "source_dir": "logs/unifp_train/20260920T044925_train_seed1_p0",
+  "mode": "train",
+  "seed": 1,
+  "status": "stopped on purpose at 44% to restart with the learning-rate fix (F-089, 2026-09-21)",
+  "error": null,
+  "num_envs": null,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 26468,
+  "final_checkpoint": {
+    "file": "model_26400.pt",
+    "sha256": "7ffbf38bc444a0add84c385d71ea6e9dd4887614c4b757dfaa756ba100ac1189"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 119.64566802978516,
+      "last_step": 26468,
+      "mean_last_10": 120.4025375366211,
+      "min": -80.7050552368164,
+      "max": 161.07537841796875,
+      "points": 26469
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 26468,
+      "mean_last_10": 999.0,
+      "min": 13.09000015258789,
+      "max": 999.0,
+      "points": 26469
+    },
+    "Policy/mean_std": {
+      "last": 0.6501520276069641,
+      "last_step": 26468,
+      "mean_last_10": 0.6502586007118225,
+      "min": 0.5415112972259521,
+      "max": 1.0054304599761963,
+      "points": 26469
+    },
+    "Perf/total_fps": {
+      "last": 37362.0,
+      "last_step": 26468,
+      "mean_last_10": 37444.8,
+      "min": 20073.0,
+      "max": 41187.0,
+      "points": 26469
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

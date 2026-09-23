@@ -1,0 +1,23 @@
+{
+  "mode": "playback",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "arguments": {
+    "num_envs": 1,
+    "iterations": null,
+    "steps": 1500
+  },
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M README.md\n M unifp_go2d1/play_policy.py\n?? logs/unifp_gym_flat/\n?? logs/unifp_isaaclab/\n?? run_unifp_isaaclab.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/",
+  "articulation_mass_kg": 18.172,
+  "stack": "isaacgym_preview4/unifp",
+  "unifp_commit": "68847a070f88d731058c3d8476929bc3b205f5bd",
+  "command": "/home/victor/D1Training/unifp_go2d1/play_policy.py --task=go2d1_pos_force --load_run Sep18_11-10-15_ --checkpoint 48800 --headless --flat_terrain",
+  "notes": "zero actions (no policy), forces off, randomisation off",
+  "checkpoint": null,
+  "load_run": "Sep18_11-10-15_",
+  "zero_actions": true,
+  "forces": false,
+  "trace": "trace.csv"
+}

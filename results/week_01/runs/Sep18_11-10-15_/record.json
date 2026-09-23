@@ -1,0 +1,53 @@
+{
+  "id": "Sep18_11-10-15_",
+  "title": "Go2+D1 UniFP position/force: full 60k-iteration schedule, 4096 envs, seed 1 (COMPLETE)",
+  "notes": "",
+  "week": 1,
+  "recorded_at": "2026-09-20T03:21:41+10:00",
+  "started_utc": "2026-09-19T17:07:46+00:00",
+  "source_dir": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_",
+  "mode": "train",
+  "seed": 1,
+  "status": "finished",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 60000,
+  "steps": null,
+  "git_commit": "3f34f33c2fe9c94886c76c5d066475a4c19a8051",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.172,
+  "last_iteration": 59999,
+  "final_checkpoint": {
+    "file": "model_60000.pt",
+    "sha256": "6d951501fc7e313068419b98c4eab4f322baa86203210b98de91931e049d1614"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 155.20191955566406,
+      "last_step": 59999,
+      "mean_last_10": 155.4931442260742,
+      "min": 0.24041497707366943,
+      "max": 159.51901245117188,
+      "points": 60000
+    },
+    "Train/mean_episode_length": {
+      "last": 1002.0,
+      "last_step": 59999,
+      "mean_last_10": 1001.4960021972656,
+      "min": 21.700000762939453,
+      "max": 1002.0,
+      "points": 60000
+    },
+    "Perf/total_fps": {
+      "last": 38459.0,
+      "last_step": 59999,
+      "mean_last_10": 40754.9,
+      "min": 27522.0,
+      "max": 45723.0,
+      "points": 60000
+    }
+  },
+  "copied_files": [
+    "run.json"
+  ]
+}

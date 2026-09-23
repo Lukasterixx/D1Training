@@ -1,0 +1,120 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    1024,
+    2432
+  ],
+  "agent": {
+    "actor": {
+      "activation": "elu",
+      "class_name": "unifp_train.models.UniFPActor",
+      "distribution_cfg": {
+        "class_name": "GaussianDistribution",
+        "init_std": 1.0,
+        "std_type": "scalar"
+      },
+      "hidden_dims": [
+        512,
+        256,
+        128
+      ],
+      "obs_normalization": false
+    },
+    "algorithm": {
+      "class_name": "unifp_train.algorithm.UniFPPPO",
+      "clip_param": 0.2,
+      "desired_kl": 0.01,
+      "entropy_coef": 0.01,
+      "gamma": 0.99,
+      "lam": 0.95,
+      "learning_rate": 0.001,
+      "max_grad_norm": 1.0,
+      "normalize_advantage_per_mini_batch": false,
+      "num_learning_epochs": 5,
+      "num_mini_batches": 4,
+      "rnd_cfg": null,
+      "schedule": "adaptive",
+      "symmetry_cfg": null,
+      "use_clipped_value_loss": true,
+      "value_loss_coef": 1.0
+    },
+    "check_for_nan": true,
+    "critic": {
+      "activation": "elu",
+      "class_name": "MLPModel",
+      "hidden_dims": [
+        512,
+        256,
+        128
+      ],
+      "obs_normalization": false
+    },
+    "device": "cuda:0",
+    "empirical_normalization": false,
+    "experiment_name": "unifp_go2d1",
+    "load_checkpoint": "model_.*.pt",
+    "load_run": ".*",
+    "logger": "tensorboard",
+    "max_iterations": 300,
+    "num_steps_per_env": 24,
+    "obs_groups": {
+      "actor": [
+        "policy"
+      ],
+      "critic": [
+        "critic"
+      ]
+    },
+    "resume": false,
+    "run_name": "seedscan_s2",
+    "save_interval": 200,
+    "seed": 2
+  },
+  "critic_obs": [
+    1024,
+    459
+  ],
+  "departures_from_unifp": {},
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    1024,
+    12
+  ],
+  "expected_actor": [
+    1024,
+    2432
+  ],
+  "expected_critic": [
+    1024,
+    459
+  ],
+  "expected_estimates": [
+    1024,
+    12
+  ],
+  "final_checkpoint": "/home/victor/D1Training/logs/unifp_train/20260921T041418_train_seed2_seedscan_s2/model_299.pt",
+  "force_start_iteration": 8000,
+  "force_start_step": 192000,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M .gitignore\n M README.md\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_01/notes.md\n M unifp_go2d1/play_policy.py\n?? results/week_01/figures/unifp_sim2sim.png\n?? results/week_01/figures/unifp_sim2sim.py\n?? results/week_01/figures/unifp_task_terms.png\n?? results/week_01/figures/unifp_task_terms.py\n?? results/week_01/runs/20260920T0110_gym_flat_stand_zero/\n?? results/week_01/runs/20260920T0112_gym_flat_stand_48800/\n?? results/week_01/runs/20260920T0114_gym_flat_walk_48800/\n?? results/week_01/runs/20260920T011858_stand_zero/\n?? results/week_01/runs/20260920T012721_stand_48800/\n?? results/week_01/runs/20260920T012721_stand_zero/\n?? results/week_01/runs/20260920T012721_walk_48800/\n?? results/week_01/runs/20260920T012721_walk_zero/\n?? results/week_01/runs/20260920T013414_stand_48800/\n?? results/week_01/runs/20260920T013414_stand_zero/\n?? results/week_01/runs/20260920T013414_walk_48800/\n?? results/week_01/runs/20260920T014015_confirm_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_zero/\n?? results/week_01/runs/20260920T024333_lab0543_walk_48800/\n?? results/week_01/runs/20260920T024333_lab0543_walk_zero/\n?? results/week_01/runs/20260920T040839_train_seed1_smoke/\n?? results/week_01/runs/20260920T040910_train_seed1_smoke2/\n?? results/week_01/runs/20260920T041744_smoke_seed42_baseline_zero/\n?? results/week_01/runs/20260920T041756_play_seed42_baseline_48800/\n?? results/week_01/runs/20260920T041809_play_seed42_forced_48800/\n?? results/week_01/runs/20260920T044653_train_seed1_memprobe/\n?? results/week_01/runs/20260920T044925_train_seed1_p0/\n?? results/week_02/runs/\n?? run_unifp_isaaclab.py\n?? run_unifp_train.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? tests/test_unifp_train.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/\n?? unifp_train/",
+  "iterations_completed": 299,
+  "iterations_requested": 300,
+  "joint_order_ok": true,
+  "mode": "train",
+  "num_envs": 1024,
+  "pid": 572835,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "run_dir": "/home/victor/D1Training/logs/unifp_train/20260921T041418_train_seed2_seedscan_s2",
+  "seed": 2,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "complete",
+  "wall_clock_s": 266.7
+}

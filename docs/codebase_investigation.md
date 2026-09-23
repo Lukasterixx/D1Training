@@ -85,7 +85,7 @@ preview. This makes it useful for testing the choice of command frame and
 future trajectory observations. Begin with its provided example on its own
 robot; then adapt the task interface and evaluation ideas to Go2+D1.
 
-**UniFP:** the released
+**UniFP** (source read 16 September; **installed, launched and retargeted 2026-09-18** — see F-078 to F-081 and [`unifp_go2d1/`](../unifp_go2d1/README.md), which records what the port changes and what is still unvalidated)**:** the released
 [environment configuration](https://github.com/unified-force/UniFP/blob/68847a070f88d731058c3d8476929bc3b205f5bd/legged_gym/envs/b2/b2z1_pos_force_config.py)
 and the README identify the relevant B2Z1 force/position environment and
 `ppo_cse_pf` components. Trace force-command sampling, simulated external forces,
@@ -175,7 +175,7 @@ installation as part of reproducing an Isaac Gym paper.
 | Optional after core reproductions | UMI example checkpoint and its supplied trajectory | Verify downloads and rollout, reproduce reported metric definitions; keep original embodiment clearly labelled |
 | Source reference | Deep-WBC source trace and a pilot only if useful | Identify useful curriculum/advantage-mixing features; avoid a second long reproduction unless it resolves a specific baseline failure |
 | 1b | unitree_rl_lab parts adopted into this repo | Smoke with `--leg_actuator unitree` and `dc_motor`; inspect `params/deploy.yaml`; confirm explicit-actuator stability with the welded arm. Revert to `dc_motor` if the explicit legs are unstable. **2026-09-15: done; explicit legs stand stably, matching `dc_motor` to 0.1 mm, and the manifest checks out ([Week 1](../results/week_01/notes.md))** |
-| 2, B Weeks 1–2 | UniFP example before force adaptation | Time-box legacy setup to two working days; confirm released training starts; trace history encoder, force supervision, commands and force-free ablation before porting. ROS 2 deployment and imitation collection remain unchecked in the release checklist |
+| 2, B Weeks 1–2 | UniFP example before force adaptation | Time-box legacy setup to two working days; confirm released training starts; trace history encoder, force supervision, commands and force-free ablation before porting. ROS 2 deployment and imitation collection remain unchecked in the release checklist. **2026-09-18: installed and launched on a spare PC in ~40 min; released B2Z1 training starts (F-078), and the task is retargeted to the Go2+D1 and training (F-079, F-080, F-081). Reproduction level: launched — no upstream checkpoint obtained or replayed, and no policy from either robot evaluated. Port source in `unifp_go2d1/`** |
 
 Record each attempt as source-only / installed / launched / checkpoint replayed /
 short training passed / independently evaluated. Store setup time, throughput,

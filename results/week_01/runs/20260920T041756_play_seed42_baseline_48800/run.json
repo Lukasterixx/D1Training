@@ -1,0 +1,88 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    16,
+    2432
+  ],
+  "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+  "checkpoint_iteration": 48800,
+  "critic_obs": [
+    16,
+    459
+  ],
+  "driven_by": "model_48800.pt",
+  "env_steps_with_external_force": 0,
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    16,
+    12
+  ],
+  "expected_actor": [
+    16,
+    2432
+  ],
+  "expected_critic": [
+    16,
+    459
+  ],
+  "expected_estimates": [
+    16,
+    12
+  ],
+  "force_start_iteration": 8000,
+  "force_start_step": 192000,
+  "frames_consistent": true,
+  "git_commit": "a81d58a01ce2521b3a88498d58fe590fbf80d36f",
+  "git_status": "M .gitignore\n M README.md\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_01/notes.md\n M unifp_go2d1/play_policy.py\n?? logs/unifp_train/\n?? results/week_01/figures/unifp_sim2sim.png\n?? results/week_01/figures/unifp_sim2sim.py\n?? results/week_01/runs/20260920T0110_gym_flat_stand_zero/\n?? results/week_01/runs/20260920T0112_gym_flat_stand_48800/\n?? results/week_01/runs/20260920T0114_gym_flat_walk_48800/\n?? results/week_01/runs/20260920T011858_stand_zero/\n?? results/week_01/runs/20260920T012721_stand_48800/\n?? results/week_01/runs/20260920T012721_stand_zero/\n?? results/week_01/runs/20260920T012721_walk_48800/\n?? results/week_01/runs/20260920T012721_walk_zero/\n?? results/week_01/runs/20260920T013414_stand_48800/\n?? results/week_01/runs/20260920T013414_stand_zero/\n?? results/week_01/runs/20260920T013414_walk_48800/\n?? results/week_01/runs/20260920T014015_confirm_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_48800/\n?? results/week_01/runs/20260920T024333_lab0543_stand_zero/\n?? results/week_01/runs/20260920T024333_lab0543_walk_48800/\n?? results/week_01/runs/20260920T024333_lab0543_walk_zero/\n?? run_unifp_isaaclab.py\n?? run_unifp_train.py\n?? tests/data/\n?? tests/test_unifp_interface.py\n?? tests/test_unifp_train.py\n?? unifp_go2d1/dump_interface.py\n?? unifp_isaaclab/\n?? unifp_train/",
+  "joint_order_ok": true,
+  "mean_reward_per_step": 0.17519,
+  "mode": "play",
+  "num_envs": 16,
+  "resets": 0,
+  "reward_terms_per_step": {
+    "action_rate": -0.000459,
+    "action_rate_arm": -0.001398,
+    "alive": 0.03,
+    "ang_vel_xy": -0.000113,
+    "base_height": -1.9e-05,
+    "collision": 0.0,
+    "dof_acc": -0.000277,
+    "dof_acc_arm": -8.5e-05,
+    "dof_pos_limits": -0.000213,
+    "dof_vel": -0.000544,
+    "dof_vel_arm": -2.9e-05,
+    "feet_air_time": -0.000523,
+    "feet_contact_forces": -1.4e-05,
+    "feet_contact_number": 0.039289,
+    "feet_drag": -0.00023,
+    "feet_height": -0.000585,
+    "feet_height_high": -0.0,
+    "feet_pos_xy": -0.000604,
+    "hip_pos": -0.000587,
+    "lin_vel_z": -0.000321,
+    "ref_dof_leg": 0.016907,
+    "stand_still": 0.002674,
+    "torque_limits": -0.0001,
+    "torques": -5.8e-05,
+    "tracking_ang_vel": 0.018854,
+    "tracking_ee_force_world": 0.035396,
+    "tracking_lin_vel_force_world": 0.038226
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "seed": 42,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "steps": 400,
+  "tip_goal_error_m": {
+    "max": 0.1618,
+    "median": 0.0376,
+    "p90": 0.0735
+  }
+}
