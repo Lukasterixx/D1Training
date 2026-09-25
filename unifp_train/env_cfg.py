@@ -66,6 +66,21 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: Filled in by the launcher once the welded USD has been built.
     robot_usd: str = ""
 
+    #: The controlled point, from `task_cfg` -- **not** `interface`'s, which records what the
+    #: released checkpoints were trained against. See `task_cfg.TOOL_BODY` for why they differ.
+    #: Set these back to `interface.TOOL_BODY` / `interface.TOOL_OFFSET_M` to train or evaluate
+    #: against the fingertip the released checkpoints used.
+    tool_body: str = task_cfg.TOOL_BODY
+    tool_offset_m: tuple[float, float, float] = task_cfg.TOOL_OFFSET_M
+
+    #: Command and reward the gripper's roll about its approach axis (F-095, F-099). Off by
+    #: default, so an unmodified run still reproduces the task the released checkpoints trained on.
+    #: Turning it on adds `task_cfg.EXTENSION_WEIGHTS` to the reward and starts writing
+    #: `commands[CMD_EE_ORN_R]`, a channel the observation has always carried and the task has
+    #: never written -- so **no observation or action width changes** and every existing checkpoint
+    #: still loads. What changes is what the policy is asked for.
+    roll_objective: bool = False
+
     #: Policy steps of position-only training before the force curriculum opens. Upstream gates on
     #: `global_steps > force_start_step * num_steps_per_env`, and this is that product, so the
     #: default is 8,000 iterations at 24 steps each. Set it to 0 to train with forces from the

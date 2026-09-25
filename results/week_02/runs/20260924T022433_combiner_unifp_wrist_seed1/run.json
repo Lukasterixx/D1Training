@@ -1,0 +1,143 @@
+{
+  "mode": "unifp_demo",
+  "task": "combiner",
+  "controller": "unifp_wrist",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "task": "combiner",
+    "checkpoint": "checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+    "attempts": 16,
+    "num_envs": 16,
+    "seed": 1,
+    "wrist": true,
+    "wrist_joints": "6",
+    "wrist_gain": null,
+    "no_object": false,
+    "free_space": false,
+    "command_tip": false,
+    "jaw_hold": null,
+    "no_jaw_compensation": false,
+    "zero_actions": false,
+    "handle_torque_nm": null,
+    "speed_scale": 1.0,
+    "hold_scale": 1.0,
+    "settle_s": 1.0,
+    "robot_usd": null,
+    "out": null,
+    "run_name": "",
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "./demos/unifp/run_demo.py --task combiner --attempts 16 --headless --wrist",
+  "stack": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_status": "M .gitignore\n M README.md\n M checkpoints/README.md\n M docs/position_only_environment.md\n M docs/thesis_b_plan.md\n M results/config.json\n M results/findings.md\n M results/week_02/notes.md\n M run_unifp_train.py\n M unifp_isaaclab/task.py\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/eval.py\n M unifp_train/rewards.py\n M unifp_train/task_cfg.py\n?? demos/unifp/\n?? results/manifests/unifp_jaw_centre_roll_validation.json\n?? results/week_02/figures/unifp_demos.png\n?? results/week_02/figures/unifp_demos.py\n?? results/week_02/runs/20260923T102440_probe_seed1_orientation_probe/\n?? results/week_02/runs/20260923T110312_cup_unifp_seed1/\n?? results/week_02/runs/20260923T110359_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T110542_cup_unifp_seed1/\n?? results/week_02/runs/20260923T110603_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T110839_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T110859_cup_unifp_seed1/\n?? results/week_02/runs/20260923T110919_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T110946_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T111108_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111114_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T111132_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111200_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111221_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T111242_cup_unifp_seed1/\n?? results/week_02/runs/20260923T111330_cup_unifp_no_object_free_tipgoal_seed1/\n?? results/week_02/runs/20260923T111350_cup_unifp_wrist_no_object_free_seed1/\n?? results/week_02/runs/20260923T111412_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T111620_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T111642_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T111735_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111858_cup_unifp_no_object_free_jaw0mm_seed1/\n?? results/week_02/runs/20260923T111919_cup_unifp_no_object_free_jaw15mm_seed1/\n?? results/week_02/runs/20260923T111940_cup_unifp_no_object_free_jaw30mm_seed1/\n?? results/week_02/runs/20260923T112102_cup_unifp_no_object_free_jaw30mm_seed1/\n?? results/week_02/runs/20260923T112130_cup_unifp_seed1/\n?? results/week_02/runs/20260923T112152_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112416_cup_unifp_seed1/\n?? results/week_02/runs/20260923T112438_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112548_cup_unifp_seed1/\n?? results/week_02/runs/20260923T112611_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112648_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112735_combiner_unifp_seed1/\n?? results/week_02/runs/20260923T112832_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113030_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113054_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113153_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113211_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113251_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113307_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T114039_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T114102_combiner_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T114157_cup_unifp_wrist_no_object_free_seed1/\n?? results/week_02/runs/20260923T114220_combiner_unifp_wrist_no_object_free_seed1/\n?? results/week_02/runs/20260923T114757_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T124649_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T125045_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T125221_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T125405_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T130051_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T130655_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T130839_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T131105_combiner_unifp_seed1/\n?? results/week_02/runs/20260923T131701_cup_unifp_seed1/\n?? results/week_02/runs/20260923T132040_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T140424_ik_seed1_pose_feasibility/\n?? results/week_02/runs/20260923T141537_smoke_seed1/\n?? results/week_02/runs/20260923T141603_train_seed1_roll_smoke/\n?? results/week_02/runs/20260923T141641_eval_seed1_toolpoint_guard/\n?? results/week_02/runs/20260923T144643_manifest_seed1/\n?? results/week_02/runs/20260923T144723_eval_seed1_baseline/\n?? results/week_02/runs/20260923T144746_eval_seed1_baseline/\n?? results/week_02/runs/20260923T144845_eval_seed1_rollbase/\n?? results/week_02/runs/20260923T144908_eval_seed1_rollbase/\n?? results/week_02/runs/20260923T145001_train_seed1_roll_jaw_8h/\n?? tests/test_unifp_roll.py\n?? unifp_train/pose_feasibility.py",
+  "wrist_joints": "6",
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 56000,
+  "num_envs": 16,
+  "attempts": 16,
+  "script_phases": [
+    {
+      "name": "stand",
+      "duration_s": 1.5
+    },
+    {
+      "name": "approach",
+      "duration_s": 2.0
+    },
+    {
+      "name": "settle",
+      "duration_s": 2.0
+    },
+    {
+      "name": "enter",
+      "duration_s": 2.5
+    },
+    {
+      "name": "arrive",
+      "duration_s": 1.2
+    },
+    {
+      "name": "grip",
+      "duration_s": 0.8
+    },
+    {
+      "name": "turn",
+      "duration_s": 2.5
+    },
+    {
+      "name": "crack",
+      "duration_s": 1.2
+    },
+    {
+      "name": "ease",
+      "duration_s": 0.8
+    },
+    {
+      "name": "pull",
+      "duration_s": 3.0
+    },
+    {
+      "name": "release",
+      "duration_s": 0.8
+    },
+    {
+      "name": "back",
+      "duration_s": 1.5
+    }
+  ],
+  "script_total_s": 19.8,
+  "speed_scale": 1.0,
+  "hold_scale": 1.0,
+  "settle_s": 1.0,
+  "handle_torque_nm": 0.4,
+  "jaw_compensation": true,
+  "forces": "scheduled pushes off; contact only",
+  "base_command": "zero (standing)",
+  "perception": "none -- the object pose is given",
+  "assets": {
+    "combiner_usd": "/home/victor/D1Training/generated/unifp_demos/combiner_0.400.usda"
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "attempt_count": 16,
+  "summary": {
+    "attempts": 16,
+    "successes": 11,
+    "falls": 0,
+    "arm_speed_peak_rad_s_median": 1.787,
+    "jaw_centre_error_arrive_m_median": 0.02735,
+    "lateral_error_arrive_m_median": 0.02642,
+    "jaw_tilt_arrive_deg_median": 78.7412,
+    "forearm_contact_arrive_n_median": 0.0,
+    "finger_contact_grip_n_median": 1.4924,
+    "max_door_deg_median": 45.39,
+    "max_handle_deg_median": 54.96,
+    "latch_released": 12,
+    "jaw_centre_error_grip_m_median": 0.0199,
+    "jaw_tilt_grip_deg_median": 79.082
+  }
+}

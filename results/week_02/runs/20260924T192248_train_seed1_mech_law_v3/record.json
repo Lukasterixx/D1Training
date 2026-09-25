@@ -1,0 +1,63 @@
+{
+  "id": "20260924T192248_train_seed1_mech_law_v3",
+  "title": "Mechanism task training, law v3 (pure force-follower: no outcome reward, over-force x4), from control 14499",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-25T06:11:05+10:00",
+  "started_utc": "2026-09-24T19:22:48+00:00",
+  "source_dir": "logs/unifp_train/20260924T192248_train_seed1_mech_law_v3",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 15498,
+  "final_checkpoint": {
+    "file": "model_15498.pt",
+    "sha256": "1d26ee76c9a4c446edd4f091cb323464db51de1cca4190ee19dc5dcb2399e7df"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 165.42897033691406,
+      "last_step": 15498,
+      "mean_last_10": 166.80035705566405,
+      "min": 2.0638813972473145,
+      "max": 171.84616088867188,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 997.2999877929688,
+      "last_step": 15498,
+      "mean_last_10": 996.1059936523437,
+      "min": 12.269662857055664,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.591695249080658,
+      "last_step": 15498,
+      "mean_last_10": 0.5928838431835175,
+      "min": 0.591695249080658,
+      "max": 0.8220938444137573,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 35297.0,
+      "last_step": 15498,
+      "mean_last_10": 34587.4,
+      "min": 23235.0,
+      "max": 37510.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

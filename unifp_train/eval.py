@@ -38,7 +38,7 @@ import torch
 from unifp_go2d1 import eval_manifest as _em
 from unifp_isaaclab import interface
 
-from . import observations, task_cfg
+from . import observations, rewards, task_cfg
 
 #: Distinct from `unifp_go2d1_eval_manifest_v1` on purpose: an Isaac Lab manifest cannot be run in
 #: Isaac Gym or the reverse, and a format that says so fails early rather than at the digest check.
@@ -93,8 +93,13 @@ def conditions_of(env) -> dict:
         "gripper_force_kp": float(env._gripper_force_kp[0, 0]),
         "goal_sphere_centre_m": list(interface.EE_GOAL_CENTER_OFFSET),
         "action_scale": interface.ACTION_SCALE,
-        "tool_body": interface.TOOL_BODY,
-        "tool_offset_m": list(interface.TOOL_OFFSET_M),
+        # From the configuration, not from `interface`: the controlled point is now a choice
+        # (`task_cfg.TOOL_BODY`), and a manifest built against one point must not be silently
+        # scored against another. A frozen set evaluated with the wrong one reports a condition
+        # mismatch, which is the whole reason these are recorded.
+        "tool_body": cfg.tool_body,
+        "tool_offset_m": list(cfg.tool_offset_m),
+        "roll_objective": bool(getattr(cfg, "roll_objective", False)),
         "terrain": "flat plane",
         "solver_iterations": [cfg.robot.spawn.articulation_props.solver_position_iteration_count,
                               cfg.robot.spawn.articulation_props.solver_velocity_iteration_count],
@@ -161,7 +166,7 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
     digests = [hashlib.sha256() for _ in range(n)]
     trace = {k: [[] for _ in range(n)] for k in
              ("goal_err", "unified_err", "force_cmd", "force_applied", "force_along_cmd",
-              "est_err", "base_vel_err", "base_z")}
+              "est_err", "base_vel_err", "base_z", "roll_err")}
 
     try:
         with torch.no_grad():
@@ -191,6 +196,18 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
                 applied_mag = torch.norm(applied, dim=1)
                 direction = cmd_world / cmd_mag.clamp(min=1e-6).unsqueeze(1)
                 realised = ((tip - goal) * direction).sum(dim=1) * stiffness[:, 0]
+                # The roll objective's own error, in degrees, wrapped to the half turn a jaw axis
+                # lives on. Recorded whether or not the objective is on: for a policy that was
+                # never asked for a roll it is the *uncontrolled* spread, which is the number any
+                # claim that roll was learnt has to beat.
+                hand = env._hand_frame_terms()
+                roll_state = rewards.TaskState.__new__(rewards.TaskState)
+                roll_state.ee_approach_w = hand["ee_approach_w"]
+                roll_state.ee_jaw_w = hand["ee_jaw_w"]
+                roll_state.base_forward_w = hand["base_forward_w"]
+                roll_state.commands = env._commands
+                roll_err = torch.rad2deg(rewards.wrap_half_turn(
+                    rewards.tool_roll(roll_state) - rewards.commanded_roll(env._commands)).abs())
                 vel_err = torch.norm(env._robot.data.root_lin_vel_b[:, :2] - vel_cmd[:, :2], dim=1)
                 base_z = env._robot.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
 
@@ -208,7 +225,7 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
                 sph, fcl, vcm = goal_sphere.tolist(), cmd_local.tolist(), vel_cmd.tolist()
                 ge, ue = goal_err.tolist(), unified_err.tolist()
                 cm, am, rl = cmd_mag.tolist(), applied_mag.tolist(), realised.tolist()
-                ve, bz = vel_err.tolist(), base_z.tolist()
+                ve, bz, re_ = vel_err.tolist(), base_z.tolist(), roll_err.tolist()
                 for i in range(n):
                     # Hashed in the policy-independent frames: the goal in arm-frame spherical
                     # coordinates, which is what the trajectory is generated in and what the
@@ -224,6 +241,7 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
                         trace["est_err"][i].append(est_err[i])
                         trace["base_vel_err"][i].append(ve[i])
                         trace["base_z"][i].append(bz[i])
+                        trace["roll_err"][i].append(re_[i])
     finally:
         env._get_dones = original_dones
 
@@ -246,6 +264,7 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
             "estimator_err_n": _stats(trace["est_err"][i]),
             "base_vel_err_m_s": _stats(trace["base_vel_err"][i]),
             "base_z_m": _stats(trace["base_z"][i]),
+            "roll_err_deg": _stats(trace["roll_err"][i]),
         })
         if progress:
             progress(records[-1])
@@ -276,6 +295,7 @@ def summarise(records, manifest, controller, conditions=None) -> dict:
         "estimator_err_n": _pool(records, "estimator_err_n"),
         "base_vel_err_m_s": _pool(records, "base_vel_err_m_s"),
         "base_z_m": _pool(records, "base_z_m"),
+        "roll_err_deg": _pool(records, "roll_err_deg"),
         "condition_mismatches": conditions or [],
     }
 

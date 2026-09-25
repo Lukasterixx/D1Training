@@ -362,6 +362,7 @@ error is small. Real per-link inertials would still be better.
 | `motor_model.py`, `unitree_actuators.py` | Unitree's measured Go2 motor envelope (from unitree_rl_lab, Apache-2.0; see `third_party/`) |
 | `results/`, `dashboard.py`, `evidence/` | the weekly experimental record and its localhost dashboard |
 | `demos/cup/` | the cup pick, kept together: `pick_demo/` (wrist RealSense model, YOLO, top-down grasp planning, the sequence), `run_pick_demo.py/.sh`, the reach console `d1_ui/` and `run_ui.sh`, and its own `tests/` |
+| `demos/unifp/` | the same two demos under the trained UniFP whole-body policy, standing, with the cup on a table and the box on a post: `run_demo.py`, the scene and scripted goal in `env.py`/`script.py`/`props.py`, the wrist roll servo, the hand-orientation probe, and its own `tests/`. See [its README](demos/unifp/README.md) and F-094–F-097 |
 | `demos/combiner/`, `demos/common/` | randomized combiner-box scene, procedural hinged asset with an AprilTag, the cup pick's wrist RealSense and reach console (`wrist_camera.py`), the tag-guided grip-and-pull, lever push and torque sweep (`apriltag.py`, `pull.py`, `press.py`, `sequence.py`, `turn_run.py`), and the resting robot setup shared with the cup demo |
 | `unifp_go2d1/` | UniFP's whole-body position/force task retargeted to this robot, on the legacy Isaac Gym stack |
 | `unifp_isaaclab/`, `run_unifp_isaaclab.py` | the policy that stack trains, run unchanged on the Isaac Lab model: the sim-to-sim check |

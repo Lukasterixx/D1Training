@@ -1,0 +1,104 @@
+{
+  "base_vel_err_m_s": {
+    "max": 0.27639977633953094,
+    "mean": 0.1328641040995717,
+    "median": 0.13017446547746658,
+    "n": 50,
+    "p90": 0.2037954479455948
+  },
+  "base_z_m": {
+    "max": 0.35734473168849945,
+    "mean": 0.3375682461261749,
+    "median": 0.33966943621635437,
+    "n": 50,
+    "p90": 0.3497032970190048
+  },
+  "condition_mismatches": [
+    [
+      "arm_armature",
+      0.0002,
+      {
+        "FL_calf_joint": 0.0002,
+        "FL_hip_joint": 0.0002,
+        "FL_thigh_joint": 0.0002,
+        "FR_calf_joint": 0.0002,
+        "FR_hip_joint": 0.0002,
+        "FR_thigh_joint": 0.0002,
+        "Joint1": 0.01,
+        "Joint2": 0.01,
+        "Joint3": 0.01,
+        "Joint4": 0.01,
+        "Joint5": 0.01,
+        "Joint6": 0.01,
+        "Joint7_1": 0.0002,
+        "Joint7_2": 0.0002,
+        "RL_calf_joint": 0.0002,
+        "RL_hip_joint": 0.0002,
+        "RL_thigh_joint": 0.0002,
+        "RR_calf_joint": 0.0002,
+        "RR_hip_joint": 0.0002,
+        "RR_thigh_joint": 0.0002
+      }
+    ]
+  ],
+  "controller": "model_13000.pt (isaaclab)",
+  "episodes": 50,
+  "estimator_err_n": {
+    "max": 2.510427713394165,
+    "mean": 1.7063549387454986,
+    "median": 1.6583907008171082,
+    "n": 50,
+    "p90": 1.9845043420791626
+  },
+  "falls": {
+    "count": 0,
+    "rate": 0.0
+  },
+  "force_cmd_n": {
+    "max": 6.001059092619611,
+    "mean": 3.4554051784714237,
+    "median": 3.718046540075907,
+    "n": 50,
+    "p90": 5.579490401869076
+  },
+  "force_realised_n": {
+    "max": 21.306336734916123,
+    "mean": -0.920430541038004,
+    "median": 2.477102008187392,
+    "n": 48,
+    "p90": 13.481653875718683
+  },
+  "goal_tracking_quiet_m": {
+    "max": 0.32438477873802185,
+    "mean": 0.08892347246408462,
+    "median": 0.07057120092213154,
+    "n": 50,
+    "p90": 0.16371797025203705
+  },
+  "manifest_role": "validation",
+  "manifest_sha256": "e43e9c4b37cda3e8c99d9368a0ab8223cd6a31c31716bda96db11b83ae5b7788",
+  "roll_err_deg": {
+    "max": 14.619029998779297,
+    "mean": 8.850612316131592,
+    "median": 8.02256965637207,
+    "n": 50,
+    "p90": 13.618167877197266
+  },
+  "schedule_mismatches": [],
+  "simulator": "isaaclab",
+  "survived_to_time_limit": 50,
+  "unified_tracking_m": {
+    "max": 0.19378145784139633,
+    "mean": 0.1043871708214283,
+    "median": 0.09722361713647842,
+    "n": 50,
+    "p90": 0.15498531609773636
+  },
+  "unified_tracking_pushed_m": {
+    "max": 0.29065626859664917,
+    "mean": 0.1257439386844635,
+    "median": 0.11664930358529091,
+    "n": 50,
+    "p90": 0.17753221094608307
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20260923T141603_train_seed1_roll_smoke",
+  "title": "Six iterations with the roll objective: the term is live and accumulating",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T00:17:25+10:00",
+  "started_utc": "2026-09-23T14:16:03+00:00",
+  "source_dir": "logs/unifp_train/20260923T141603_train_seed1_roll_smoke",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 6,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 5,
+  "final_checkpoint": {
+    "file": "model_5.pt",
+    "sha256": "38d689c00e5c7c8a71e45e3c5d742134ec3fd38e46d14a82157375037902bb2c"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 7.932466506958008,
+      "last_step": 5,
+      "mean_last_10": 4.322058210770289,
+      "min": 0.9285920262336731,
+      "max": 7.932466506958008,
+      "points": 6
+    },
+    "Train/mean_episode_length": {
+      "last": 73.11111450195312,
+      "last_step": 5,
+      "mean_last_10": 43.69907474517822,
+      "min": 12.0,
+      "max": 73.11111450195312,
+      "points": 6
+    },
+    "Policy/mean_std": {
+      "last": 1.0001575946807861,
+      "last_step": 5,
+      "mean_last_10": 1.0000950594743092,
+      "min": 0.99965900182724,
+      "max": 1.0002933740615845,
+      "points": 6
+    },
+    "Perf/total_fps": {
+      "last": 3220.0,
+      "last_step": 5,
+      "mean_last_10": 3090.5,
+      "min": 2218.0,
+      "max": 3319.0,
+      "points": 6
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "mode": "pose_feasibility",
+  "status": "finished",
+  "seed": 1,
+  "goals": 147,
+  "orientations_per_goal": 8,
+  "radii": [
+    0.35,
+    0.45,
+    0.55
+  ],
+  "pitch_steps": 7,
+  "yaw_steps": 7,
+  "position_only_fraction": 0.8571,
+  "level_fraction": 0.4286,
+  "full_pose_fraction": 0.0816,
+  "goals_with_no_orientation": 81,
+  "goals_with_every_orientation": 0,
+  "roll_always_reachable": true,
+  "joint6_soft_span_deg": 242.4,
+  "solver": "damped least squares (d1_ik), fixed base, arm alone",
+  "command": "./unifp_train/pose_feasibility.py",
+  "records_file": "pose_feasibility.json"
+}

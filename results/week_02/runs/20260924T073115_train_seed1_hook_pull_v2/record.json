@@ -1,0 +1,63 @@
+{
+  "id": "20260924T073115_train_seed1_hook_pull_v2",
+  "title": "Hook pull v2 (backstop, along-axis curriculum): 397 its from v1, stopped: error flat ~7 N, ceiling stuck at 15 N, slides off rising",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T17:53:58+10:00",
+  "started_utc": "2026-09-24T07:31:15+00:00",
+  "source_dir": "logs/unifp_train/20260924T073115_train_seed1_hook_pull_v2",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 3000,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 11807,
+  "final_checkpoint": {
+    "file": "model_11807.pt",
+    "sha256": "0998de5a502f0347cff1e508029c45eeca742d74814960a000e2b7949a093e81"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 94.88908386230469,
+      "last_step": 11807,
+      "mean_last_10": 93.60156936645508,
+      "min": 2.303636312484741,
+      "max": 140.68551635742188,
+      "points": 398
+    },
+    "Train/mean_episode_length": {
+      "last": 727.2899780273438,
+      "last_step": 11807,
+      "mean_last_10": 716.8890014648438,
+      "min": 14.569999694824219,
+      "max": 962.4000244140625,
+      "points": 398
+    },
+    "Policy/mean_std": {
+      "last": 1.084619402885437,
+      "last_step": 11807,
+      "mean_last_10": 1.0818469882011414,
+      "min": 0.8493375778198242,
+      "max": 1.084619402885437,
+      "points": 398
+    },
+    "Perf/total_fps": {
+      "last": 33877.0,
+      "last_step": 11807,
+      "mean_last_10": 34416.4,
+      "min": 24327.0,
+      "max": 37235.0,
+      "points": 398
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

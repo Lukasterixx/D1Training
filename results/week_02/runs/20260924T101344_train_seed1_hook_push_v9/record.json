@@ -1,0 +1,63 @@
+{
+  "id": "20260924T101344_train_seed1_hook_push_v9",
+  "title": "Hook v9 (tool steadiness term, pad friction curriculum): ~810 its, stopped: press losses plateaued at 0.4-0.57, allowance never tightened",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T20:54:33+10:00",
+  "started_utc": "2026-09-24T10:13:44+00:00",
+  "source_dir": "logs/unifp_train/20260924T101344_train_seed1_hook_push_v9",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 15293,
+  "final_checkpoint": {
+    "file": "model_15293.pt",
+    "sha256": "8a05bdc1ccb6661a3cb77f7bc05ab77de471bd85d8363dd4a5b359609c8ca271"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 92.26795196533203,
+      "last_step": 15293,
+      "mean_last_10": 93.70165405273437,
+      "min": 2.0338330268859863,
+      "max": 113.81954193115234,
+      "points": 812
+    },
+    "Train/mean_episode_length": {
+      "last": 767.8200073242188,
+      "last_step": 15293,
+      "mean_last_10": 779.9860046386718,
+      "min": 14.569999694824219,
+      "max": 943.9099731445312,
+      "points": 812
+    },
+    "Policy/mean_std": {
+      "last": 1.1342428922653198,
+      "last_step": 15293,
+      "mean_last_10": 1.132867956161499,
+      "min": 1.1155375242233276,
+      "max": 1.2010456323623657,
+      "points": 812
+    },
+    "Perf/total_fps": {
+      "last": 32799.0,
+      "last_step": 15293,
+      "mean_last_10": 34086.0,
+      "min": 23278.0,
+      "max": 36609.0,
+      "points": 812
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

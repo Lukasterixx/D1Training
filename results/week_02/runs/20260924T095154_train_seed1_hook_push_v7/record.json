@@ -1,0 +1,63 @@
+{
+  "id": "20260924T095154_train_seed1_hook_push_v7",
+  "title": "Hook v7 (press slide curriculum from 15 cm): ~60 its, stopped: presses now back off; curriculum miscounted unengaged episodes",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T19:56:17+10:00",
+  "started_utc": "2026-09-24T09:51:54+00:00",
+  "source_dir": "logs/unifp_train/20260924T095154_train_seed1_hook_push_v7",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 14110,
+  "final_checkpoint": {
+    "file": "model_14110.pt",
+    "sha256": "923a38c364cb109a58242630cee7beeec11b0d42a5a6ec602a1eb67501cb5485"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 53.385555267333984,
+      "last_step": 14110,
+      "mean_last_10": 57.40161285400391,
+      "min": 1.723272442817688,
+      "max": 86.34402465820312,
+      "points": 61
+    },
+    "Train/mean_episode_length": {
+      "last": 525.4600219726562,
+      "last_step": 14110,
+      "mean_last_10": 558.0659973144532,
+      "min": 14.569999694824219,
+      "max": 846.8499755859375,
+      "points": 61
+    },
+    "Policy/mean_std": {
+      "last": 1.4462487697601318,
+      "last_step": 14110,
+      "mean_last_10": 1.4437589049339294,
+      "min": 1.4413985013961792,
+      "max": 1.456839919090271,
+      "points": 61
+    },
+    "Perf/total_fps": {
+      "last": 33751.0,
+      "last_step": 14110,
+      "mean_last_10": 34136.8,
+      "min": 32239.0,
+      "max": 37630.0,
+      "points": 61
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

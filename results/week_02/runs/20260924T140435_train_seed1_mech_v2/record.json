@@ -1,0 +1,63 @@
+{
+  "id": "20260924T140435_train_seed1_mech_v2",
+  "title": "Mechanism task training v2 (progress + push term), from v1 13800; stopped at ~15000",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-25T01:08:27+10:00",
+  "started_utc": "2026-09-24T14:04:35+00:00",
+  "source_dir": "logs/unifp_train/20260924T140435_train_seed1_mech_v2",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2500,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 15049,
+  "final_checkpoint": {
+    "file": "model_15049.pt",
+    "sha256": "14ae60518fcdc9b4a4ee7fb361dcfc9bf744cf21f2edf975f37db51d917896bf"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 193.8473358154297,
+      "last_step": 15049,
+      "mean_last_10": 192.83585052490236,
+      "min": 2.1487324237823486,
+      "max": 197.33030700683594,
+      "points": 1250
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 15049,
+      "mean_last_10": 998.2929992675781,
+      "min": 12.269662857055664,
+      "max": 999.0,
+      "points": 1250
+    },
+    "Policy/mean_std": {
+      "last": 0.6204840540885925,
+      "last_step": 15049,
+      "mean_last_10": 0.6208202302455902,
+      "min": 0.6204840540885925,
+      "max": 0.7454933524131775,
+      "points": 1250
+    },
+    "Perf/total_fps": {
+      "last": 34038.0,
+      "last_step": 15049,
+      "mean_last_10": 34102.7,
+      "min": 22550.0,
+      "max": 37481.0,
+      "points": 1250
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

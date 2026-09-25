@@ -1,0 +1,63 @@
+{
+  "id": "20260924T075259_train_seed1_hook_pull_v3",
+  "title": "Hook pull v3 (claw over bar, stiffness 500-3000, frontier curriculum): 248 its, stopped: 70-80% of claws lifted off",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T18:06:55+10:00",
+  "started_utc": "2026-09-24T07:52:59+00:00",
+  "source_dir": "logs/unifp_train/20260924T075259_train_seed1_hook_pull_v3",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 3000,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 12055,
+  "final_checkpoint": {
+    "file": "model_12055.pt",
+    "sha256": "af5d91789cb7bcd75b535b25b7a73e4608d5aa2940024731e63b86dee05fa9b4"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 72.59371185302734,
+      "last_step": 12055,
+      "mean_last_10": 74.57260437011719,
+      "min": 2.082875967025757,
+      "max": 84.1172103881836,
+      "points": 249
+    },
+    "Train/mean_episode_length": {
+      "last": 644.3900146484375,
+      "last_step": 12055,
+      "mean_last_10": 655.0460021972656,
+      "min": 14.569999694824219,
+      "max": 733.989990234375,
+      "points": 249
+    },
+    "Policy/mean_std": {
+      "last": 1.23380708694458,
+      "last_step": 12055,
+      "mean_last_10": 1.2321415424346924,
+      "min": 1.0855079889297485,
+      "max": 1.23380708694458,
+      "points": 249
+    },
+    "Perf/total_fps": {
+      "last": 34168.0,
+      "last_step": 12055,
+      "mean_last_10": 33558.2,
+      "min": 31386.0,
+      "max": 37267.0,
+      "points": 249
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

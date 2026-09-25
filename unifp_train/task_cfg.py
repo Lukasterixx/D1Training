@@ -15,6 +15,8 @@ place, because applying it twice is a silent 50x error in every reward term at o
 """
 from __future__ import annotations
 
+import math
+
 from unifp_isaaclab import interface
 
 #: Reward weights, exactly as the config declares them. Terms whose weight is zero are omitted --
@@ -51,6 +53,71 @@ REWARD_WEIGHTS = {
     "feet_pos_xy": -0.5,
     "feet_height_high": -15.0,
 }
+
+# --- this repository's extensions to the task -------------------------------------------------
+#
+# Kept in their own dictionary rather than folded into `REWARD_WEIGHTS`, because that dictionary is
+# the *port's fidelity record*: `tests/test_unifp_train.py` asserts its key set equals the term set
+# of a recorded Isaac Gym rollout, term for term. Adding anything to it would either break that
+# test or, worse, quietly redefine what "reproduces upstream" means. What upstream's task is and
+# what we added to it are different questions and stay in different places.
+
+#: The gripper roll objective (F-095, F-099). Off unless the environment is configured for it.
+#:
+#: Upstream declares `tracking_ee_orn` and `tracking_ee_orn_ry` at weight zero and implements
+#: neither -- there is no `_reward_tracking_ee_orn*` anywhere in its source, so setting a weight on
+#: those names raises rather than trains. This is a new term, not a revived one, and it constrains
+#: **one** rotational degree of freedom for the reason F-099 measured: over this goal sphere 85.7%
+#: of goals admit a position and 8.2% admit a freely chosen orientation, so a full-pose objective
+#: would score mostly unreachable targets. Roll is the one that costs no workspace.
+EXTENSION_WEIGHTS = {
+    "tracking_ee_orn_roll": 1.0,
+}
+
+#: Width of the roll reward, radians. `exp(-|error| / sigma)`: 1.0 on target, 0.82 at 10 degrees,
+#: 0.21 at 45. Untuned -- it and the weight above are the first things to sweep, and neither has
+#: been trained with yet.
+TRACKING_EE_ROLL_SIGMA = 0.5
+
+#: Commanded roll range. A jaw axis is an *axis*, so a commanded jaw direction repeats every 180
+#: degrees and this half-open interval covers every distinguishable one. 0 is jaws level (the cup
+#: on a table); +/- pi/2 is jaws upright (across a lever's horizontal bar).
+EE_ROLL_RANGE_RAD = (-math.pi / 2, math.pi / 2)
+
+
+def scaled_extension_weights() -> dict[str, float]:
+    """`EXTENSION_WEIGHTS` multiplied by the policy timestep, as the environment applies them."""
+    return {name: weight * interface.POLICY_DT for name, weight in EXTENSION_WEIGHTS.items()}
+
+
+# --- the controlled point ----------------------------------------------------------------------
+#
+# **This is not `interface.TOOL_BODY`, and the difference is deliberate.** `unifp_isaaclab.interface`
+# records the contract the released checkpoints were *trained* against -- the tip of the Link7_1
+# pincer, one finger -- and it must keep saying so, or a playback of `model_48800` would be scored
+# against a point that model never tracked. What follows is what this repository's *new* training
+# runs control, and it is a different point for two measured reasons:
+#
+#   * **It does not move when the jaws do** (F-094). `Joint7_1` slides the fingertip up to 30 mm
+#     along the hand, and both jaws are dropped from the observation, so opening them to grasp
+#     moved the controlled point for a reason the policy could not see: 0.91 cm of tracking error
+#     with the jaws shut against 3.50 cm fully open, on the same goal. The two fingers take
+#     opposite joint coordinates, so their midpoint is invariant to jaw travel exactly.
+#   * **It lies on the roll axis** (F-096, F-099). `Joint6` rolls about Link6's own z through its
+#     origin, and this point sits on that axis, so commanding a roll does not disturb the position
+#     at all -- which is what makes one rotational degree of freedom free rather than a trade.
+#
+# The value is `demos/cup/pick_demo/grasp.JAW_CENTRE_LINK6`, which both scripted demos already use
+# as the jaw centre. It is 5.6 mm from the true midpoint of the finger roots, along the palm, and
+# that idealisation is what puts it exactly on the axis; the pads are 26 mm deep, so the point sits
+# inside the volume a grasp closes on. CAD, not measured on the arm -- F-013's caveat applies to it
+# exactly as it applied to the fingertip.
+#
+# **`position_only` still controls the fingertip.** Changing it there would invalidate that task's
+# frozen manifests and its target box, so the two tasks now measure different points; that
+# divergence is a decision for the P0-P4 ladder, not something to make silently here.
+TOOL_BODY = "Link6"
+TOOL_OFFSET_M = (0.0, 0.0, 0.1051)
 
 #: Shaping constants the reward terms read.
 TRACKING_SIGMA = 0.25          # velocity tracking width

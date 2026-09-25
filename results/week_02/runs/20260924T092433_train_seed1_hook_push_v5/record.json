@@ -1,0 +1,63 @@
+{
+  "id": "20260924T092433_train_seed1_hook_push_v5",
+  "title": "Hook v5 (+35% presses on a bare 2 cm button): ~330 its from v4, stopped: every press slid off or backed off",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T19:41:59+10:00",
+  "started_utc": "2026-09-24T09:24:33+00:00",
+  "source_dir": "logs/unifp_train/20260924T092433_train_seed1_hook_push_v5",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 13833,
+  "final_checkpoint": {
+    "file": "model_13833.pt",
+    "sha256": "1ebcffd3340ec620ab1bdfdf1f7577a1ab18006b9758534dd01a591e2ee4dade"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 65.6205062866211,
+      "last_step": 13833,
+      "mean_last_10": 58.00533332824707,
+      "min": 1.9622440338134766,
+      "max": 100.89287567138672,
+      "points": 328
+    },
+    "Train/mean_episode_length": {
+      "last": 643.77001953125,
+      "last_step": 13833,
+      "mean_last_10": 575.8300048828125,
+      "min": 14.569999694824219,
+      "max": 873.3599853515625,
+      "points": 328
+    },
+    "Policy/mean_std": {
+      "last": 1.4326567649841309,
+      "last_step": 13833,
+      "mean_last_10": 1.43104727268219,
+      "min": 1.268187403678894,
+      "max": 1.4326567649841309,
+      "points": 328
+    },
+    "Perf/total_fps": {
+      "last": 34057.0,
+      "last_step": 13833,
+      "mean_last_10": 33738.4,
+      "min": 23727.0,
+      "max": 37148.0,
+      "points": 328
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

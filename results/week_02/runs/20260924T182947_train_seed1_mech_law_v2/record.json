@@ -1,0 +1,63 @@
+{
+  "id": "20260924T182947_train_seed1_mech_law_v2",
+  "title": "Mechanism task training, law v2 (cap per episode, over-force term, lunge x4, bleed), from control 14499",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-25T05:18:26+10:00",
+  "started_utc": "2026-09-24T18:29:47+00:00",
+  "source_dir": "logs/unifp_train/20260924T182947_train_seed1_mech_law_v2",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 15498,
+  "final_checkpoint": {
+    "file": "model_15498.pt",
+    "sha256": "9bf4a36a84f7ff37a429355763a20551bcc01362e51967796847ac3cfa328244"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 188.8756561279297,
+      "last_step": 15498,
+      "mean_last_10": 187.51344299316406,
+      "min": 2.0638813972473145,
+      "max": 193.01280212402344,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 15498,
+      "mean_last_10": 999.0,
+      "min": 12.269662857055664,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.7583227157592773,
+      "last_step": 15498,
+      "mean_last_10": 0.7590225577354431,
+      "min": 0.7576765418052673,
+      "max": 0.8193174600601196,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 35292.0,
+      "last_step": 15498,
+      "mean_last_10": 35400.3,
+      "min": 23056.0,
+      "max": 38505.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

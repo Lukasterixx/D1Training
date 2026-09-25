@@ -57,7 +57,10 @@ class Go2D1PosForceEnv(DirectRLEnv):
         # (`contact_sensor.data.net_forces_w`) by the sensor's. Using one index against the other
         # reads whatever sits at that slot, and on GPU it surfaces as a device-side assert several
         # calls away from the mistake rather than as an IndexError.
-        self._tip_body = self._robot.body_names.index(interface.TOOL_BODY)
+        self._tip_body = self._robot.body_names.index(self.cfg.tool_body)
+        #: The hand itself, looked up independently of the controlled point: the approach and jaw
+        #: axes are properties of Link6 whichever body the tool point is attached to.
+        self._hand_body = self._robot.body_names.index("Link6")
         self._feet_bodies = [self._robot.body_names.index(name) for name in gait.FEET]
         self._thigh_bodies = [self._robot.body_names.index(f"{leg}_thigh")
                               for leg in ("FL", "FR", "RL", "RR")]
@@ -82,7 +85,7 @@ class Go2D1PosForceEnv(DirectRLEnv):
         # moment on `Link7_1`.
         self._tip_body_ids = torch.tensor([self._tip_body], dtype=torch.int32, device=self.device)
         self._tool_offset = torch.as_tensor(
-            interface.TOOL_OFFSET_M, device=self.device).expand(self.num_envs, 1, 3).contiguous()
+            self.cfg.tool_offset_m, device=self.device).expand(self.num_envs, 1, 3).contiguous()
         self._forces = forces.GripperForces(self.num_envs, self.device)
         self._ee_force_w = zeros(self.num_envs, 3)
         #: Never written -- upstream's base push is commented out of its `step()`. Kept as a named
@@ -96,7 +99,9 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._base_force_kd = torch.full(
             (self.num_envs, 3), task_cfg.BASE_FORCE_KD, device=self.device)
 
-        self._goals = goal_task.EeGoalTrajectory(self.num_envs, device=str(self.device))
+        self._goals = goal_task.EeGoalTrajectory(
+            self.num_envs, device=str(self.device),
+            roll_range=task_cfg.EE_ROLL_RANGE_RAD if cfg.roll_objective else None)
         self._actor_history = ObsHistory(self.num_envs, device=str(self.device))
         self._critic_history = ObsHistory(
             self.num_envs, device=str(self.device),
@@ -108,6 +113,12 @@ class Go2D1PosForceEnv(DirectRLEnv):
             self.num_envs, -1).clone()
 
         self._weights = {name: weight for name, weight in task_cfg.scaled_weights().items()}
+        self._terms = dict(rewards.TERMS)
+        if cfg.roll_objective:
+            # Merged here rather than in `task_cfg.REWARD_WEIGHTS`, which is the port's fidelity
+            # record and is asserted term-for-term against a recorded Isaac Gym rollout.
+            self._weights.update(task_cfg.scaled_extension_weights())
+            self._terms.update(rewards.EXTENSION_TERMS)
         self._episode_sums = {name: zeros(self.num_envs) for name in self._weights}
 
         self._command_interval = int(task_cfg.COMMAND_RESAMPLING_TIME_S / interface.POLICY_DT)
@@ -193,7 +204,7 @@ class Go2D1PosForceEnv(DirectRLEnv):
         """
         pos = self._robot.data.body_pos_w[:, self._tip_body]
         quat = self._robot.data.body_quat_w[:, self._tip_body]
-        offset = torch.as_tensor(interface.TOOL_OFFSET_M, device=self.device).expand_as(pos)
+        offset = torch.as_tensor(self.cfg.tool_offset_m, device=self.device).expand_as(pos)
         return pos + interface.quat_apply(quat, offset) - self.scene.env_origins
 
     def _contact_forces(self, sensor_bodies) -> torch.Tensor:
@@ -220,6 +231,7 @@ class Go2D1PosForceEnv(DirectRLEnv):
             feet_air_time=self._feet_air_time,
             penalised_contact_forces=self._contact_forces(self._penalised_contacts),
             ee_pos_w=self._tip_pos(), ee_goal_w=self._goal_world(),
+            **self._hand_frame_terms(),
             thigh_pos_w=self._robot.data.body_pos_w[:, self._thigh_bodies] - self.scene.env_origins.unsqueeze(1),
             feet_vel_w=self._robot.data.body_lin_vel_w[:, self._feet_bodies],
             last_contacts=self._last_contacts, base_yaw_quat=yaw,
@@ -231,6 +243,24 @@ class Go2D1PosForceEnv(DirectRLEnv):
             base_force_cmd=self._commands[:, interface.CMD_BASE_FORCE],
             gripper_force_kp=self._gripper_force_kp,
             base_force_kd=self._base_force_kd)
+
+    def _hand_frame_terms(self) -> dict:
+        """The hand's approach and jaw axes, and the base's heading, all unit vectors in world.
+
+        Link6's own +z points out of the palm toward the fingertips and its +y from one finger to
+        the other -- read off `d1_arm/d1.urdf`, where the two finger joints sit at z = +0.0706 and
+        y = -/+0.0296 in Link6. The base heading is the roll term's fallback reference for a hand
+        pointing straight up or down, where "the horizontal direction perpendicular to the
+        approach" does not exist.
+        """
+        quat = self._robot.data.body_quat_w[:, self._hand_body]
+        axis = lambda vector: interface.quat_apply(
+            quat, torch.as_tensor(vector, device=self.device).expand(self.num_envs, 3))
+        forward = interface.quat_apply(
+            self._base_yaw_quat(),
+            torch.as_tensor((1.0, 0.0, 0.0), device=self.device).expand(self.num_envs, 3))
+        return {"ee_approach_w": axis((0.0, 0.0, 1.0)), "ee_jaw_w": axis((0.0, 1.0, 0.0)),
+                "base_forward_w": forward}
 
     def _goal_centre(self) -> torch.Tensor:
         return goal_task.goal_sphere_center(
@@ -260,7 +290,7 @@ class Go2D1PosForceEnv(DirectRLEnv):
             gripper_force_kp=self._gripper_force_kp,
             ee_force_cmd=self._commands[:, interface.CMD_EE_FORCE],
             leg_ref_diff=dof_pos[:, :12] - gait.reference_leg_pos(self._gait_phase),
-            mass_params=torch.zeros(self.num_envs, 22, device=self.device),
+            mass_params=self._privileged_extra(),
             friction=torch.ones(self.num_envs, 1, device=self.device),
             motor_strength=torch.ones(self.num_envs, interface.NUM_ACTIONS, device=self.device),
             stance_mask=gait.stance_mask(self._gait_phase),
@@ -282,6 +312,14 @@ class Go2D1PosForceEnv(DirectRLEnv):
             "estimates": critic[:, :observations.NUM_ESTIMATES],
         }
 
+    def _privileged_extra(self) -> torch.Tensor:
+        """The critic's 22-wide `mass_params` block: zero, because mass randomisation is off.
+
+        A method rather than a literal so a task built on this one can carry its own privileged
+        state in the block without changing the critic's width (`hook_env` does).
+        """
+        return torch.zeros(self.num_envs, 22, device=self.device)
+
     def _get_rewards(self) -> torch.Tensor:
         # Resample velocity commands on their timer and advance the gait before scoring, which is
         # the order upstream's `_post_physics_step_callback` runs in.
@@ -290,11 +328,15 @@ class Go2D1PosForceEnv(DirectRLEnv):
             self._resample_velocity_commands(due)
         self._gait_phase = interface.gait_step(self._gait_phase, self._commands)
         self._commands[:, interface.CMD_EE_RADIUS:interface.CMD_EE_YAW + 1] = self._goals.step()
+        if self.cfg.roll_objective:
+            # As (sin 2phi, cos 2phi) -- see `rewards.commanded_roll` for why not the angle.
+            self._commands[:, interface.CMD_EE_ORN_R:interface.CMD_EE_ORN_P + 1] = (
+                rewards.encode_roll(self._goals.current_roll))
 
         state = self._task_state()
         total = torch.zeros(self.num_envs, device=self.device)
         for name, weight in self._weights.items():
-            value = rewards.TERMS[name](state) * weight
+            value = self._terms[name](state) * weight
             total += value
             self._episode_sums[name] += value
         # feet_air_time advanced these in place; keep them for the next step.

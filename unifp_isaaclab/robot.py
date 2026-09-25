@@ -72,6 +72,13 @@ SPAWN_HEIGHT_M = 0.35
 #: 2e-4 kg·m² of rotor inertia, an order of magnitude more than the link itself, but negligible
 #: against the 3.3/1.7 N·m the joints can produce at the speeds the task uses) and it is stated
 #: rather than hidden, because it does change the arm's dynamics.
+#:
+#: **It stops the escape and not the oscillation (F-102, 2026-09-24).** Measured at the physics rate
+#: with zero actions, the wrist (Joint4-6) still flips torque sign on 98-99.8% of steps at 75-90% of
+#: its limits, and Joint3 sits at its limit: kd*dt/I is still ~19 on those links. 0.01 kg*m^2 on the
+#: arm stops it (`unifp_train.hook_cfg.ARM_ARMATURE_KG_M2`, which the force-transmission task uses).
+#: Kept at 2e-4 here so the released checkpoints, trained against it, still reproduce -- but no
+#: arm-torque figure from this configuration means what it says.
 ARM_ARMATURE = 2.0e-4
 
 #: PhysX solver iterations (position, velocity).
@@ -108,7 +115,7 @@ def _per_joint(values) -> dict[str, float]:
 def make_robot_cfg(usd_path: str, prim_path: str = "/World/envs/env_.*/Robot",
                    spawn_height: float = SPAWN_HEIGHT_M,
                    self_collisions: bool = True,
-                   armature: float = ARM_ARMATURE,
+                   armature: float | dict[str, float] = ARM_ARMATURE,
                    friction: float = 0.0,
                    solver_iterations: tuple[int, int] = SOLVER_ITERATIONS) -> ArticulationCfg:
     """The welded robot, with UniFP's control law in place of this repository's own.

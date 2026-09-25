@@ -1,0 +1,13 @@
+{
+  "mode": "unifp_demo",
+  "task": "cup",
+  "controller": "unifp_no_object",
+  "status": "aborted",
+  "seed": 1,
+  "error": "ValueError from ContactSensor.find_bodies: Link7_1, Link7_2 unmatched",
+  "notes": "Aborted in scene construction: the task's contact sensor is /World/envs/env_.*/Robot/.*, one level deep, and the weld nests the D1 under Robot/D1/, so find_bodies could not resolve Link7_1/Link7_2. Fixed by giving the demo environment its own arm contact sensor, as position_only/env_cfg.py already does.",
+  "command": "./demos/unifp/run_demo.py --task cup --attempts 4 --headless --no_object",
+  "attempt_count": 0,
+  "summary": {},
+  "record_written": "by hand, 2026-09-23"
+}

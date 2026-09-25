@@ -1,0 +1,242 @@
+{
+  "controller": "unifp_wrist",
+  "task": "cup",
+  "summary": {
+    "attempts": 4,
+    "successes": 0,
+    "falls": 0,
+    "toppled": 4,
+    "toppled_in": {
+      "arrive": 2,
+      "enter": 2
+    },
+    "final_lift_m_median": 0.0275,
+    "max_lift_m_median": 0.0276,
+    "jaw_centre_error_arrive_m_median": 0.09456,
+    "lateral_error_arrive_m_median": 0.08201,
+    "jaw_tilt_arrive_deg_median": 31.9825,
+    "approach_elevation_arrive_deg_median": -36.3137
+  },
+  "attempts": [
+    {
+      "attempt": 0,
+      "fell": false,
+      "phase_start_s": {
+        "spawn": 0.0,
+        "stand": 0.98,
+        "approach": 2.48,
+        "settle": 4.48,
+        "enter": 6.48,
+        "arrive": 8.98,
+        "close": 10.18,
+        "lift": 10.98,
+        "hold": 12.98,
+        "done": 14.48
+      },
+      "max_cup_lift_m": 0.0275,
+      "final_cup_lift_m": 0.0275,
+      "final_phase": "done",
+      "jaw_centre_error_settle_m": 0.0301,
+      "lateral_error_settle_m": 0.0232,
+      "jaw_tilt_settle_deg": 41.1817,
+      "approach_elevation_settle_deg": -47.8818,
+      "final_jaw_centre_error_settle_m": 0.05416,
+      "final_lateral_error_settle_m": 0.03804,
+      "jaw_centre_error_arrive_m": 0.0925,
+      "lateral_error_arrive_m": 0.0795,
+      "jaw_tilt_arrive_deg": 33.8597,
+      "approach_elevation_arrive_deg": -36.3137,
+      "final_jaw_centre_error_arrive_m": 0.09456,
+      "final_lateral_error_arrive_m": 0.08201,
+      "jaw_centre_error_close_m": 0.042,
+      "lateral_error_close_m": 0.0405,
+      "jaw_tilt_close_deg": 27.2877,
+      "approach_elevation_close_deg": -37.8212,
+      "final_jaw_centre_error_close_m": 0.00464,
+      "final_lateral_error_close_m": 0.00418,
+      "jaw_centre_error_hold_m": 0.0539,
+      "lateral_error_hold_m": 0.0445,
+      "jaw_tilt_hold_deg": 45.3417,
+      "approach_elevation_hold_deg": -13.2537,
+      "final_jaw_centre_error_hold_m": 0.04011,
+      "final_lateral_error_hold_m": 0.0282,
+      "site": {
+        "cup_xy_m": [
+          0.4381,
+          0.0556
+        ]
+      },
+      "toppled": {
+        "phase": "arrive",
+        "time_s": 9.0
+      },
+      "final_cup_tilt_deg": 90.0,
+      "success": false
+    },
+    {
+      "attempt": 1,
+      "fell": false,
+      "phase_start_s": {
+        "spawn": 0.0,
+        "stand": 0.98,
+        "approach": 2.48,
+        "settle": 4.48,
+        "enter": 6.48,
+        "arrive": 8.98,
+        "close": 10.18,
+        "lift": 10.98,
+        "hold": 12.98,
+        "done": 14.48
+      },
+      "max_cup_lift_m": 0.0275,
+      "final_cup_lift_m": 0.0275,
+      "final_phase": "done",
+      "jaw_centre_error_settle_m": 0.0293,
+      "lateral_error_settle_m": 0.0237,
+      "jaw_tilt_settle_deg": 42.9695,
+      "approach_elevation_settle_deg": -46.3848,
+      "final_jaw_centre_error_settle_m": 0.04848,
+      "final_lateral_error_settle_m": 0.02933,
+      "jaw_centre_error_arrive_m": 0.1034,
+      "lateral_error_arrive_m": 0.0589,
+      "jaw_tilt_arrive_deg": 31.9825,
+      "approach_elevation_arrive_deg": -52.2877,
+      "final_jaw_centre_error_arrive_m": 0.05326,
+      "final_lateral_error_arrive_m": 0.05072,
+      "jaw_centre_error_close_m": 0.0485,
+      "lateral_error_close_m": 0.0455,
+      "jaw_tilt_close_deg": 39.4458,
+      "approach_elevation_close_deg": -31.778,
+      "final_jaw_centre_error_close_m": 0.03055,
+      "final_lateral_error_close_m": 0.02981,
+      "jaw_centre_error_hold_m": 0.0542,
+      "lateral_error_hold_m": 0.0523,
+      "jaw_tilt_hold_deg": 20.294,
+      "approach_elevation_hold_deg": 5.912,
+      "final_jaw_centre_error_hold_m": 0.00769,
+      "final_lateral_error_hold_m": 0.0069,
+      "site": {
+        "cup_xy_m": [
+          0.4758,
+          -0.0392
+        ]
+      },
+      "toppled": {
+        "phase": "arrive",
+        "time_s": 10.04
+      },
+      "final_cup_tilt_deg": 90.0,
+      "success": false
+    },
+    {
+      "attempt": 2,
+      "fell": false,
+      "phase_start_s": {
+        "spawn": 0.0,
+        "stand": 0.98,
+        "approach": 2.48,
+        "settle": 4.48,
+        "enter": 6.48,
+        "arrive": 8.98,
+        "close": 10.18,
+        "lift": 10.98,
+        "hold": 12.98,
+        "done": 14.48
+      },
+      "max_cup_lift_m": 0.0365,
+      "final_cup_lift_m": 0.0275,
+      "final_phase": "done",
+      "jaw_centre_error_settle_m": 0.0439,
+      "lateral_error_settle_m": 0.0366,
+      "jaw_tilt_settle_deg": 34.8867,
+      "approach_elevation_settle_deg": -49.5867,
+      "final_jaw_centre_error_settle_m": 0.06841,
+      "final_lateral_error_settle_m": 0.0466,
+      "jaw_centre_error_arrive_m": 0.0699,
+      "lateral_error_arrive_m": 0.0634,
+      "jaw_tilt_arrive_deg": 26.8163,
+      "approach_elevation_arrive_deg": -31.9302,
+      "final_jaw_centre_error_arrive_m": 0.10475,
+      "final_lateral_error_arrive_m": 0.09794,
+      "jaw_centre_error_close_m": 0.1096,
+      "lateral_error_close_m": 0.0933,
+      "jaw_tilt_close_deg": 14.4185,
+      "approach_elevation_close_deg": -20.8758,
+      "final_jaw_centre_error_close_m": 0.04822,
+      "final_lateral_error_close_m": 0.04579,
+      "jaw_centre_error_hold_m": 0.0311,
+      "lateral_error_hold_m": 0.0246,
+      "jaw_tilt_hold_deg": 20.8955,
+      "approach_elevation_hold_deg": -12.868,
+      "final_jaw_centre_error_hold_m": 0.02724,
+      "final_lateral_error_hold_m": 0.02109,
+      "site": {
+        "cup_xy_m": [
+          0.4597,
+          -0.0081
+        ]
+      },
+      "toppled": {
+        "phase": "enter",
+        "time_s": 8.82
+      },
+      "final_cup_tilt_deg": 90.0,
+      "success": false
+    },
+    {
+      "attempt": 3,
+      "fell": false,
+      "phase_start_s": {
+        "spawn": 0.0,
+        "stand": 0.98,
+        "approach": 2.48,
+        "settle": 4.48,
+        "enter": 6.48,
+        "arrive": 8.98,
+        "close": 10.18,
+        "lift": 10.98,
+        "hold": 12.98,
+        "done": 14.48
+      },
+      "max_cup_lift_m": 0.0276,
+      "final_cup_lift_m": 0.0275,
+      "final_phase": "done",
+      "jaw_centre_error_settle_m": 0.1343,
+      "lateral_error_settle_m": 0.0604,
+      "jaw_tilt_settle_deg": 25.6461,
+      "approach_elevation_settle_deg": -57.1046,
+      "final_jaw_centre_error_settle_m": 0.05949,
+      "final_lateral_error_settle_m": 0.03945,
+      "jaw_centre_error_arrive_m": 0.0493,
+      "lateral_error_arrive_m": 0.0463,
+      "jaw_tilt_arrive_deg": 16.246,
+      "approach_elevation_arrive_deg": -37.4333,
+      "final_jaw_centre_error_arrive_m": 0.04004,
+      "final_lateral_error_arrive_m": 0.03603,
+      "jaw_centre_error_close_m": 0.0365,
+      "lateral_error_close_m": 0.0323,
+      "jaw_tilt_close_deg": 19.846,
+      "approach_elevation_close_deg": -36.2307,
+      "final_jaw_centre_error_close_m": 0.01956,
+      "final_lateral_error_close_m": 0.01037,
+      "jaw_centre_error_hold_m": 0.0552,
+      "lateral_error_hold_m": 0.0547,
+      "jaw_tilt_hold_deg": 31.5864,
+      "approach_elevation_hold_deg": -6.2155,
+      "final_jaw_centre_error_hold_m": 0.04853,
+      "final_lateral_error_hold_m": 0.04836,
+      "site": {
+        "cup_xy_m": [
+          0.4691,
+          0.0462
+        ]
+      },
+      "toppled": {
+        "phase": "enter",
+        "time_s": 8.06
+      },
+      "final_cup_tilt_deg": 90.0,
+      "success": false
+    }
+  ]
+}

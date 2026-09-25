@@ -1,0 +1,288 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    50,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "checkpoint": "logs/unifp_train/20260924T155754_train_seed1_mech_law_v1/model_17499.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": 0.0,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "learning_rate_scale": null,
+    "manifest": "results/manifests/unifp_jaw_centre_roll_validation.json",
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "eval",
+    "no_curriculum": false,
+    "num_envs": 16,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_from": null,
+    "robot_usd": "generated/go2_d1.usd",
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "free_mech_law_v1_17499",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "task": "hook",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260924T155754_train_seed1_mech_law_v1/model_17499.pt",
+  "checkpoint_iteration": 17499,
+  "checkpoint_source": "isaaclab",
+  "conditions": {
+    "action_scale": 0.25,
+    "arm_armature": {
+      "FL_calf_joint": 0.0002,
+      "FL_hip_joint": 0.0002,
+      "FL_thigh_joint": 0.0002,
+      "FR_calf_joint": 0.0002,
+      "FR_hip_joint": 0.0002,
+      "FR_thigh_joint": 0.0002,
+      "Joint1": 0.01,
+      "Joint2": 0.01,
+      "Joint3": 0.01,
+      "Joint4": 0.01,
+      "Joint5": 0.01,
+      "Joint6": 0.01,
+      "Joint7_1": 0.0002,
+      "Joint7_2": 0.0002,
+      "RL_calf_joint": 0.0002,
+      "RL_hip_joint": 0.0002,
+      "RL_thigh_joint": 0.0002,
+      "RR_calf_joint": 0.0002,
+      "RR_hip_joint": 0.0002,
+      "RR_thigh_joint": 0.0002
+    },
+    "domain_randomisation": false,
+    "ee_force_range_n": [
+      -8.0,
+      8.0
+    ],
+    "episode_length_s": 20.0,
+    "force_start_step": 0,
+    "goal_sphere_centre_m": [
+      0.0,
+      0.0,
+      0.49
+    ],
+    "gripper_force_kp": 200.0,
+    "noise": false,
+    "num_envs": 50,
+    "policy_hz": 50.0,
+    "roll_objective": true,
+    "simulator": "isaaclab",
+    "solver_iterations": [
+      4,
+      0
+    ],
+    "task": "go2d1_pos_force",
+    "terrain": "flat plane",
+    "tool_body": "Link6",
+    "tool_offset_m": [
+      0.0,
+      0.0,
+      0.1051
+    ]
+  },
+  "critic_obs": [
+    50,
+    459
+  ],
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    50,
+    12
+  ],
+  "expected_actor": [
+    50,
+    2432
+  ],
+  "expected_critic": [
+    50,
+    459
+  ],
+  "expected_estimates": [
+    50,
+    12
+  ],
+  "fixture": {
+    "curriculum": true,
+    "fixture_fraction": 0.0,
+    "force_ceiling_max_n": 60.0,
+    "force_ceiling_n": 15.0,
+    "press_fraction": 0.0
+  },
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_status": "M .gitignore\n M README.md\n M checkpoints/README.md\n M docs/position_only_environment.md\n M docs/thesis_b_plan.md\n M results/config.json\n M results/findings.md\n M results/week_02/notes.md\n M run_unifp_train.py\n M unifp_go2d1/README.md\n M unifp_isaaclab/robot.py\n M unifp_isaaclab/task.py\n M unifp_train/README.md\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/eval.py\n M unifp_train/rewards.py\n M unifp_train/task_cfg.py\n?? demos/unifp/\n?? results/manifests/unifp_jaw_centre_roll_validation.json\n?? results/week_02/figures/arm_chatter_probe.json\n?? results/week_02/figures/arm_chatter_probe.py\n?? results/week_02/figures/arm_chatter_probe_armature_0.002.json\n?? results/week_02/figures/arm_chatter_probe_armature_0.01.json\n?? results/week_02/figures/arm_chatter_probe_legs.json\n?? results/week_02/figures/direction_capacity.json\n?? results/week_02/figures/direction_capacity.py\n?? results/week_02/figures/force_transmission_study.json\n?? results/week_02/figures/force_transmission_study.png\n?? results/week_02/figures/force_transmission_study.py\n?? results/week_02/figures/force_transmission_study_samples.npz\n?? results/week_02/figures/hook_staircase.png\n?? results/week_02/figures/hook_staircase.py\n?? results/week_02/figures/mech_arm_probe.py\n?? results/week_02/figures/mech_arm_probe_v1_13600_drawer60.json\n?? results/week_02/figures/mech_capacity.png\n?? results/week_02/figures/mech_capacity.py\n?? results/week_02/figures/unifp_demos.png\n?? results/week_02/figures/unifp_demos.py\n?? results/week_02/runs/20260923T102440_probe_seed1_orientation_probe/\n?? results/week_02/runs/20260923T110312_cup_unifp_seed1/\n?? results/week_02/runs/20260923T110359_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T110542_cup_unifp_seed1/\n?? results/week_02/runs/20260923T110603_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T110839_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T110859_cup_unifp_seed1/\n?? results/week_02/runs/20260923T110919_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T110946_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T111108_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111114_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T111132_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111200_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111221_cup_unifp_no_object_seed1/\n?? results/week_02/runs/20260923T111242_cup_unifp_seed1/\n?? results/week_02/runs/20260923T111330_cup_unifp_no_object_free_tipgoal_seed1/\n?? results/week_02/runs/20260923T111350_cup_unifp_wrist_no_object_free_seed1/\n?? results/week_02/runs/20260923T111412_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T111620_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T111642_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T111735_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T111858_cup_unifp_no_object_free_jaw0mm_seed1/\n?? results/week_02/runs/20260923T111919_cup_unifp_no_object_free_jaw15mm_seed1/\n?? results/week_02/runs/20260923T111940_cup_unifp_no_object_free_jaw30mm_seed1/\n?? results/week_02/runs/20260923T112102_cup_unifp_no_object_free_jaw30mm_seed1/\n?? results/week_02/runs/20260923T112130_cup_unifp_seed1/\n?? results/week_02/runs/20260923T112152_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112416_cup_unifp_seed1/\n?? results/week_02/runs/20260923T112438_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112548_cup_unifp_seed1/\n?? results/week_02/runs/20260923T112611_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112648_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T112735_combiner_unifp_seed1/\n?? results/week_02/runs/20260923T112832_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113030_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113054_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113153_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113211_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113251_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T113307_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T114039_cup_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T114102_combiner_unifp_no_object_free_seed1/\n?? results/week_02/runs/20260923T114157_cup_unifp_wrist_no_object_free_seed1/\n?? results/week_02/runs/20260923T114220_combiner_unifp_wrist_no_object_free_seed1/\n?? results/week_02/runs/20260923T114757_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T124649_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T125045_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T125221_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T125405_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T130051_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T130655_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T130839_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T131105_combiner_unifp_seed1/\n?? results/week_02/runs/20260923T131701_cup_unifp_seed1/\n?? results/week_02/runs/20260923T132040_cup_unifp_wrist_seed1/\n?? results/week_02/runs/20260923T140424_ik_seed1_pose_feasibility/\n?? results/week_02/runs/20260923T141537_smoke_seed1/\n?? results/week_02/runs/20260923T141603_train_seed1_roll_smoke/\n?? results/week_02/runs/20260923T141641_eval_seed1_toolpoint_guard/\n?? results/week_02/runs/20260923T144643_manifest_seed1/\n?? results/week_02/runs/20260923T144723_eval_seed1_baseline/\n?? results/week_02/runs/20260923T144746_eval_seed1_baseline/\n?? results/week_02/runs/20260923T144845_eval_seed1_rollbase/\n?? results/week_02/runs/20260923T144908_eval_seed1_rollbase/\n?? results/week_02/runs/20260923T145001_train_seed1_roll_jaw_8h/\n?? results/week_02/runs/20260924T022033_eval_seed1_ladder4000/\n?? results/week_02/runs/20260924T022057_eval_seed1_ladder6000/\n?? results/week_02/runs/20260924T022122_eval_seed1_ladder8000/\n?? results/week_02/runs/20260924T022146_eval_seed1_ladder9000/\n?? results/week_02/runs/20260924T022211_eval_seed1_ladder10000/\n?? results/week_02/runs/20260924T022236_eval_seed1_ladder10999/\n?? results/week_02/runs/20260924T022346_eval_seed1_ref11000/\n?? results/week_02/runs/20260924T022433_combiner_unifp_wrist_seed1/\n?? results/week_02/runs/20260924T070236_smoke_seed1_hook_smoke/\n?? results/week_02/runs/20260924T070325_hook_eval_seed1_hook_eval_roll10999/\n?? results/week_02/runs/20260924T070416_hook_eval_seed1_hook_eval_zero/\n?? results/week_02/runs/20260924T070514_hook_eval_seed1_hook_eval_zero_loads/\n?? results/week_02/runs/20260924T070831_hook_eval_seed1_hook_eval_roll10999_arm01/\n?? results/week_02/runs/20260924T070931_train_seed1_hook_train_smoke/\n?? results/week_02/runs/20260924T070954_train_seed1_hook_train_smoke/\n?? results/week_02/runs/20260924T071031_train_seed1_hook_pull_v1/\n?? results/week_02/runs/20260924T071453_smoke_seed1_hook_press_smoke/\n?? results/week_02/runs/20260924T072706_hook_eval_seed1_hook_eval_v1_11200/\n?? results/week_02/runs/20260924T073115_train_seed1_hook_pull_v2/\n?? results/week_02/runs/20260924T073157_hook_eval_seed1_hook2_eval_warm10999/\n?? results/week_02/runs/20260924T073400_hook_eval_seed1_hook2_eval_v1_11410/\n?? results/week_02/runs/20260924T073551_hook_eval_seed1_hook2_eval_zero/\n?? results/week_02/runs/20260924T075210_play_seed1_hook_v3_contact_play/\n?? results/week_02/runs/20260924T075259_train_seed1_hook_pull_v3/\n?? results/week_02/runs/20260924T080529_play_seed1_hook_v4_contact_play/\n?? results/week_02/runs/20260924T080558_train_seed1_hook_pull_v4/\n?? results/week_02/runs/20260924T082149_hook_eval_seed1_hook4_eval_v4_model_12200/\n?? results/week_02/runs/20260924T082414_eval_seed1_free_v4_12200/\n?? results/week_02/runs/20260924T082548_eval_seed1_free_warm10999_arm01/\n?? results/week_02/runs/20260924T083755_hook_eval_seed1_hook4_eval_v4_model_12600/\n?? results/week_02/runs/20260924T084017_hook_eval_seed1_hook4_eval_v4_12600_limits/\n?? results/week_02/runs/20260924T084249_hook_eval_seed1_ring_warm10999/\n?? results/week_02/runs/20260924T084441_hook_eval_seed1_ring_v1_11410/\n?? results/week_02/runs/20260924T084631_hook_eval_seed1_ring_zero/\n?? results/week_02/runs/20260924T085620_hook_eval_seed1_ring_v4_13000/\n?? results/week_02/runs/20260924T085947_hook_eval_seed1_ring_v4_13000_paths/\n?? results/week_02/runs/20260924T090231_hook_eval_seed1_bar_v4_13000/\n?? results/week_02/runs/20260924T090428_eval_seed1_free_v4_13000/\n?? results/week_02/runs/20260924T090751_hook_eval_seed1_ring_v4_13000_to100/\n?? results/week_02/runs/20260924T092000_eval_seed1_free_v4_13400/\n?? results/week_02/runs/20260924T092214_hook_eval_seed1_ring_v4_13400/\n?? results/week_02/runs/20260924T092433_train_seed1_hook_push_v5/\n?? results/week_02/runs/20260924T092559_hook_eval_seed1_press_v4_13506/\n?? results/week_02/runs/20260924T093943_hook_eval_seed1_press_v5_13800/\n?? results/week_02/runs/20260924T094052_train_seed1_hook_push_v6/\n?? results/week_02/runs/20260924T094922_hook_eval_seed1_press_v6_14000/\n?? results/week_02/runs/20260924T095030_hook_eval_seed1_press_v6_14000_modes/\n?? results/week_02/runs/20260924T095154_train_seed1_hook_push_v7/\n?? results/week_02/runs/20260924T095510_train_seed1_hook_push_v8/\n?? results/week_02/runs/20260924T101002_hook_eval_seed1_press_v8_14400/\n?? results/week_02/runs/20260924T101134_hook_eval_seed1_press_v8_14400_slide/\n?? results/week_02/runs/20260924T101344_train_seed1_hook_push_v9/\n?? results/week_02/runs/20260924T102839_hook_eval_seed1_press_v9_14600/\n?? results/week_02/runs/20260924T103154_hook_eval_seed1_ring_v9_14800/\n?? results/week_02/runs/20260924T105445_hook_eval_seed1_press_v9_15293/\n?? results/week_02/runs/20260924T105459_hook_eval_seed1_ring_v9_15293/\n?? results/week_02/runs/20260924T105534_hook_eval_seed1_bar_v9_15293/\n?? results/week_02/runs/20260924T105627_eval_seed1_free_v9_15293/\n?? results/week_02/runs/20260924T132045_smoke_seed1/\n?? results/week_02/runs/20260924T132112_play_seed1_mech_play_v4/\n?? results/week_02/runs/20260924T132157_mech_eval_seed1_mech_eval_zero/\n?? results/week_02/runs/20260924T132220_mech_eval_seed1_mech_eval_v4_13000/\n?? results/week_02/runs/20260924T132244_mech_eval_seed1_mech_eval_unifp_10999/\n?? results/week_02/runs/20260924T132337_train_seed1_mech_v1/\n?? results/week_02/runs/20260924T133901_mech_eval_seed1_mech_eval_v1_13200/\n?? results/week_02/runs/20260924T135440_mech_eval_seed1_mech_eval_v1_13600/\n?? results/week_02/runs/20260924T140435_train_seed1_mech_v2/\n?? results/week_02/runs/20260924T140553_mech_eval_seed1_mech_eval_v4_13000_forcelaw/\n?? results/week_02/runs/20260924T140754_mech_eval_seed1_mech_eval_v4_forcelaw_ki500/\n?? results/week_02/runs/20260924T140909_mech_eval_seed1_mech_eval_v4_forcelaw_ki2000/\n?? results/week_02/runs/20260924T141214_play_seed1_mech_law_play_v4/\n?? results/week_02/runs/20260924T141332_mech_eval_seed1_mech_eval_v4_forcelaw_stuck/\n?? results/week_02/runs/20260924T142600_mech_eval_seed1_mech_eval_v2_14200/\n?? results/week_02/runs/20260924T142833_mech_eval_seed1_mech_eval_v4_forcelaw_heldout/\n?? results/week_02/runs/20260924T144617_mech_eval_seed1_mech_eval_v2_14600/\n?? results/week_02/runs/20260924T144831_eval_seed1_free_mech_v2_14600/\n?? results/week_02/runs/20260924T150554_mech_eval_seed1_mech_eval_v2_15000/\n?? results/week_02/runs/20260924T150908_train_seed1_mech_v3/\n?? results/week_02/runs/20260924T152816_mech_eval_seed1_mech_eval_v3_15400/\n?? results/week_02/runs/20260924T154721_mech_eval_seed1_mech_eval_v3_15800/\n?? results/week_02/runs/20260924T154917_mech_eval_seed1_mech_eval_v3_15800_forcelaw/\n?? results/week_02/runs/20260924T155754_train_seed1_mech_law_v1/\n?? results/week_02/runs/20260924T155944_mech_eval_seed1_mech_eval_v3_16000/\n?? results/week_02/runs/20260924T160120_mech_eval_seed1_mech_eval_v3_16000_heldout/\n?? results/week_02/runs/20260924T160232_mech_eval_seed1_mech_eval_v3_16000_stuck/\n?? results/week_02/runs/20260924T160339_eval_seed1_free_mech_v3_16000/\n?? results/week_02/runs/20260924T161836_mech_eval_seed1_mech_eval_law_v1_16400/\n?? results/week_02/runs/20260924T163819_mech_eval_seed1_mech_eval_law_v1_16800/\n?? results/week_02/runs/20260924T165725_mech_eval_seed1_mech_eval_law_v1_17200/\n?? results/week_02/runs/20260924T170003_mech_eval_seed1_mech_test_v4_forcelaw/\n?? results/week_02/runs/20260924T170120_mech_eval_seed1_mech_test_v3_16000/\n?? results/week_02/runs/20260924T171328_mech_eval_seed1_mech_dev_law_v1_17499/\n?? results/week_02/runs/20260924T171443_mech_eval_seed1_mech_test_law_v1_17499/\n?? tests/test_force_transmission.py\n?? tests/test_mechanism.py\n?? tests/test_unifp_roll.py\n?? unifp_train/fixture.py\n?? unifp_train/hook_cfg.py\n?? unifp_train/hook_env.py\n?? unifp_train/hook_eval.py\n?? unifp_train/hook_rewards.py\n?? unifp_train/mech_cfg.py\n?? unifp_train/mech_env.py\n?? unifp_train/mech_eval.py\n?? unifp_train/mech_rewards.py\n?? unifp_train/mechanism.py\n?? unifp_train/pose_feasibility.py",
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "eval",
+  "num_envs": 50,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "roll_objective": true,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "base_vel_err_m_s": {
+      "max": 0.15366597473621368,
+      "mean": 0.08751488443464041,
+      "median": 0.08592108637094498,
+      "n": 50,
+      "p90": 0.13457663357257843
+    },
+    "base_z_m": {
+      "max": 0.3410235196352005,
+      "mean": 0.3207730481028557,
+      "median": 0.32131434977054596,
+      "n": 50,
+      "p90": 0.33241555094718933
+    },
+    "condition_mismatches": [
+      [
+        "arm_armature",
+        0.0002,
+        {
+          "FL_calf_joint": 0.0002,
+          "FL_hip_joint": 0.0002,
+          "FL_thigh_joint": 0.0002,
+          "FR_calf_joint": 0.0002,
+          "FR_hip_joint": 0.0002,
+          "FR_thigh_joint": 0.0002,
+          "Joint1": 0.01,
+          "Joint2": 0.01,
+          "Joint3": 0.01,
+          "Joint4": 0.01,
+          "Joint5": 0.01,
+          "Joint6": 0.01,
+          "Joint7_1": 0.0002,
+          "Joint7_2": 0.0002,
+          "RL_calf_joint": 0.0002,
+          "RL_hip_joint": 0.0002,
+          "RL_thigh_joint": 0.0002,
+          "RR_calf_joint": 0.0002,
+          "RR_hip_joint": 0.0002,
+          "RR_thigh_joint": 0.0002
+        }
+      ]
+    ],
+    "controller": "model_17499.pt (isaaclab)",
+    "episodes": 50,
+    "estimator_err_n": {
+      "max": 2.987778067588806,
+      "mean": 0.790630288720131,
+      "median": 0.5754564702510834,
+      "n": 50,
+      "p90": 1.688059389591217
+    },
+    "falls": {
+      "count": 3,
+      "rate": 0.06
+    },
+    "force_cmd_n": {
+      "max": 6.001058957640139,
+      "mean": 3.420202245294527,
+      "median": 3.7180465745318196,
+      "n": 50,
+      "p90": 5.5794903635130115
+    },
+    "force_realised_n": {
+      "max": 35.07603979360004,
+      "mean": 3.0567941061005843,
+      "median": 3.269916112169736,
+      "n": 48,
+      "p90": 14.585396832962559
+    },
+    "goal_tracking_quiet_m": {
+      "max": 0.08822572231292725,
+      "mean": 0.04033977679908276,
+      "median": 0.03785633109509945,
+      "n": 50,
+      "p90": 0.05261434055864811
+    },
+    "manifest_role": "validation",
+    "manifest_sha256": "e43e9c4b37cda3e8c99d9368a0ab8223cd6a31c31716bda96db11b83ae5b7788",
+    "roll_err_deg": {
+      "max": 7.851866006851196,
+      "mean": 4.427142205238343,
+      "median": 4.058769941329956,
+      "n": 50,
+      "p90": 6.6910412311553955
+    },
+    "schedule_mismatches": [],
+    "simulator": "isaaclab",
+    "survived_to_time_limit": 47,
+    "unified_tracking_m": {
+      "max": 0.15572646260261536,
+      "mean": 0.061190161518752575,
+      "median": 0.05767329689115286,
+      "n": 50,
+      "p90": 0.09344207867980003
+    },
+    "unified_tracking_pushed_m": {
+      "max": 0.29484494030475616,
+      "mean": 0.09646863982081413,
+      "median": 0.08000361919403076,
+      "n": 50,
+      "p90": 0.1526736542582512
+    }
+  },
+  "task": "hook",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ]
+}

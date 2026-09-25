@@ -21,6 +21,8 @@ The keep-out box is a crude model of the robot's own body: goals inside it, or b
 """
 from __future__ import annotations
 
+import math
+
 import torch
 
 from . import interface
@@ -63,13 +65,23 @@ def trajectory_samples(goals: "EeGoalTrajectory", samples: int,
 class EeGoalTrajectory:
     """UniFP's end-effector goal generator, one trajectory per robot."""
 
-    def __init__(self, num_envs: int, device: str = "cpu", generator: torch.Generator | None = None):
+    def __init__(self, num_envs: int, device: str = "cpu", generator: torch.Generator | None = None,
+                 roll_range: tuple[float, float] | None = None):
         self.num_envs = num_envs
         self.device = device
         self.generator = generator
+        #: This repository's addition (F-099). When a range is given, a commanded gripper roll is
+        #: drawn with each goal and slid along the same timer, so the hand is asked to arrive
+        #: turned rather than to turn after arriving. Left as `None` the roll stays zero and every
+        #: buffer below behaves exactly as upstream's does, which is what keeps a run made without
+        #: it comparable with the released checkpoints.
+        self.roll_range = roll_range
         self.start = torch.zeros(num_envs, 3, device=device)
         self.goal = torch.zeros(num_envs, 3, device=device)
         self.current = torch.zeros(num_envs, 3, device=device)
+        self.start_roll = torch.zeros(num_envs, device=device)
+        self.goal_roll = torch.zeros(num_envs, device=device)
+        self.current_roll = torch.zeros(num_envs, device=device)
         self.timer = torch.zeros(num_envs, device=device)
         # Drawn once, as upstream draws them: each robot keeps its cadence for the whole run.
         self.traj_steps = self._uniform(interface.EE_GOAL_TRAJ_TIME_S, (num_envs,)) / interface.POLICY_DT
@@ -98,6 +110,10 @@ class EeGoalTrajectory:
         self.goal[index] = end
         self.current[index] = start
         self.timer[index] = 0.0
+        # Upstream has no opening roll, so every episode starts level and the first draw turns it.
+        self.start_roll[index] = 0.0
+        self.goal_roll[index] = 0.0
+        self.current_roll[index] = 0.0
 
     def _collides(self, start: torch.Tensor, goal: torch.Tensor) -> torch.Tensor:
         """True where the straight line from `start` to `goal` passes through the keep-out box."""
@@ -124,12 +140,28 @@ class EeGoalTrajectory:
             pending = pending[self._collides(self.start[pending], self.goal[pending])]
             if len(pending) == 0:
                 break
+        if self.roll_range is not None:
+            # Drawn uniformly and unconditionally: unlike a position, every roll is reachable from
+            # every position solution, because a jaw axis repeats every 180 degrees and Joint6
+            # spans 242 at its soft limits (F-099). So there is nothing to reject and no rejection
+            # loop -- which is the practical reason this is the orientation worth commanding.
+            # From where the roll actually *is*, not from the previous goal: the two differ by a
+            # half turn whenever the last slide crossed the wrap, and starting from the goal makes
+            # the command jump by pi at every resample.
+            self.start_roll[env_ids] = self.current_roll[env_ids].clone()
+            self.goal_roll[env_ids] = self._uniform(self.roll_range, (len(env_ids),))
         self.timer[env_ids] = 0.0
 
     def step(self) -> torch.Tensor:
         """Advance one policy step and return the commanded goal, (N, 3) as (radius, pitch, yaw)."""
         t = torch.clip(self.timer / self.traj_steps, 0.0, 1.0)
         self.current = torch.lerp(self.start, self.goal, t[:, None])
+        if self.roll_range is not None:
+            # Interpolated the short way round the half-turn: a jaw axis is an axis, so sliding
+            # from +80 to -80 degrees is a 20 degree turn, not a 160 degree one.
+            delta = torch.remainder(self.goal_roll - self.start_roll + math.pi / 2, math.pi) - math.pi / 2
+            self.current_roll = torch.remainder(
+                self.start_roll + delta * t + math.pi / 2, math.pi) - math.pi / 2
         self.timer += 1
         due = (self.timer > self.total_steps).nonzero(as_tuple=False).flatten()
         if len(due) > 0:

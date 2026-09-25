@@ -88,6 +88,10 @@ Term by term (`results/week_01/figures/unifp_task_terms.png`), 23 of the 27 agre
 - **`action_rate_arm` −0.00107**, four times upstream's magnitude: the arm chatters more here.
   The rotor inertia this port has to add (`unifp_isaaclab/robot.py`, `ARM_ARMATURE`) and a
   different integrator are the obvious suspects, and neither has been separated from the other.
+  *2026-09-24 (F-102):* it is the armature. At 2e-4 kg·m² the wrist's explicit PD is in a
+  numerical limit cycle — torque sign flipping on 98–99.8% of physics steps at 75–90% of its limits,
+  with zero actions — and at 0.01 it is still. Arm torque read out of this configuration is mostly
+  that oscillation; `--task hook` runs the arm at 0.01.
 
 **What this is and is not.** It is not a step-for-step verification: the two stacks draw their own
 velocity commands and goal trajectories, so these are two different samples of the same task, and
@@ -216,3 +220,84 @@ scale read out of a running environment is 50x smaller than the one in the confi
 `task_cfg.REWARD_WEIGHTS` holds the config's numbers and `scaled_weights()` does the multiply in
 one place. Applying it twice is a 50x error in every term at once and would look like a learning
 rate problem.
+
+## The force-transmission task (`--task hook`)
+
+UniFP's task asks for a few newtons wherever the goal is. This one engages the tool with a fixture — a
+claw through a ring or over a bar, or a pad on a button — and asks for tens of newtons into it, far more
+than the D1's motors hold in a bent reach (9.4 N median, F-101). Meeting it means lining the arm up with
+the pull and letting the legs and body make the force. Same 76/153-wide observations and 18 actions, so
+a UniFP checkpoint resumes into it.
+
+| module | what |
+| --- | --- |
+| `fixture.py` | the contact (unilateral spring along the axis; ring, claw-over-bar or pad across it), the force-level schedule, axis and handle samplers — plain torch |
+| `hook_cfg.py` | every constant, with the reason for each and the version that changed it |
+| `hook_env.py` | `Go2D1HookEnv`: goal to the handle, engage once settled, hold the goal on the anchor, ramp the force command along the axis; the critic's `mass_params` block carries the fixture |
+| `hook_rewards.py` | `fixture_force_tracking` (along-axis miss + ¼ of the sideways load), `arm_torque_margin`, `fixture_lost`, `fixture_seat` |
+| `hook_eval.py` | the staircase experiment and its scoring |
+
+```
+./run_unifp_train.py smoke --task hook --num_envs 16 --headless                        # zero actions
+./run_unifp_train.py train --task hook --num_envs 4096 --iterations 1500 --headless \
+    --resume_from <UniFP or hook checkpoint> [--press_fraction 0.35] [--force_ceiling 30]
+./run_unifp_train.py hook_eval --task hook --checkpoint <model.pt> --headless \
+    [--fixture_kind ring|bar] [--press] [--eval_levels 20 40 60 80 100]
+```
+
+The arm runs at 0.01 kg·m² of armature here, not the 2e-4 of UniFP's task: at 2e-4 the wrist's explicit
+PD is in a numerical limit cycle and no arm torque means anything (F-102). Evaluations on UniFP's frozen
+free-space manifests work with `eval --task hook --fixture_fraction 0` (the environment draws nothing
+extra, so the schedules replay) and report the armature as a condition mismatch, correctly.
+
+What it is not: the fixture is an anchored virtual spring — nothing opens, latches or moves — and the arm
+runs at its published torque limits while pulling hard, which a real servo may not tolerate (F-103).
+
+## The goal-commanded task (`--task mechanism`)
+
+The pull task commands a force; on a real box nobody knows that number. Here the claw already holds a
+handle, the command is only where the handle should go — a reference sliding along the mechanism's
+path, as a task layer that knows the geometry from tags would plan it — and the resistance is drawn per
+episode and never observed. The force is the policy's to find, and the arm-margin term makes the body
+supply what the arm cannot. Same widths again, so a UniFP or pull-task checkpoint resumes into it.
+
+| module | what |
+| --- | --- |
+| `mechanism.py` | the plant: a slide or a hinge, spring and preload, stick-slip friction, damping, a latch that snaps, stops; the 3-D grasp spring that tears out above its limit; the reference schedule — plain torch |
+| `mech_cfg.py` | every constant and the reason for it; the four evaluation mechanisms |
+| `mech_env.py` | `Go2D1MechEnv`: goal to the handle, grasp once settled, build a mechanism around the tool and shorten its path until it fits, hold the goal on the path's reference; UniFP's virtual spring made rigid, no pushes |
+| `mech_rewards.py` | `mech_progress` (handle against its reference; widths shrink with a short mechanism's travel), `mech_push` (newtons toward the reference × progress lost — what makes it escalate, F-107), `arm_torque_margin` (the pull task's), `mech_torn`, `mech_overspeed` (the lunge after a latch lets go), `mech_effort` |
+| `mech_eval.py` | drawer, latch, door and button at 15 placements × 10–80 N (plus held-out `lid` and `bolt` on request); opened, capacity, and how the force was made |
+
+```
+./run_unifp_train.py smoke --task mechanism --num_envs 16 --steps 400 --headless        # zero actions
+./run_unifp_train.py train --task mechanism --num_envs 4096 --iterations 2500 --headless \
+    --resume_from <UniFP, pull or mechanism checkpoint> [--peak_ceiling 30] [--peak_ceiling_max 80]
+./run_unifp_train.py mech_eval --task mechanism --checkpoint <model.pt> --headless \
+    [--mech_kinds latch button lid bolt] [--mech_levels 10 30 50 70]
+```
+
+**Two ways to give it the goal.** Without `--force_law` the policy gets the goal alone and has to find the
+force itself (F-105, F-107). With `--force_law` a task-layer PI law turns the handle's lag behind its reference
+into a force command (`mech_env.set_force_law`, `mech_cfg.FORCE_LAW_*`) and the goal sits on the handle, as the
+pull task trained: in `mech_eval` that is the hierarchical baseline for a force-following policy (F-106); in
+`train` the law runs inside the loop and the pull task's force-tracking term comes back
+(`mech_cfg.LAW_WEIGHT_CHANGES`). Evaluate a policy the way it was trained — a law-trained policy with
+`--force_law`, a goal-only one without. `--force_law_bleed 1.0` lets the law's integral decay once the handle
+has arrived (without it the integral holds its force against a stop; F-108's torn buttons), and
+`--law_variant v2` adds a price on drive past the command (`mech_overforce`, a cap drawn per episode) and a
+heavier price on the lunge after a release; `v3` also drops the outcome reward, a pure force-follower. Neither makes
+the cap a hard limit (F-109): v3 keeps closest to it and gives up some capacity for it.
+
+`mech_eval --mech_test` is the held-out test condition (`mech_cfg.TEST_*`: other placements, twice the mass, a
+softer grasp, a faster reference, more damping), frozen before any policy was scored on it; the default set is
+the development set every reward change was read against.
+
+**The virtual spring is rigid here** (`mech_cfg.STIFF_KP`). UniFP's target is `goal + force / 200`, which
+pays the policy to give way — right for its pushes, wrong for a latch — so a policy trained on this task
+is a different controller from UniFP's, not a fine-tuned copy of it. Same 0.01 kg·m² arm armature as the
+pull task (F-102).
+
+What it is not: every mechanism number is invented, since there was no hardware to measure; the grasp is
+a ball joint (no torque through the handle, so no knob or lever turned about the wrist); and the robot
+stands — nothing here walks while it opens.

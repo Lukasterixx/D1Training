@@ -2446,7 +2446,10 @@ result that changes a conclusion gets a new entry, and the old one is marked
 ### F-080 — UniFP's force commands are eight times what a D1 can produce: the port runs at ±8 N, not ±60 N
 
 - **Status:** provisional (an arithmetic bound from published torque limits; no force has been measured
-  on this arm, in simulation or on hardware)
+  on this arm, in simulation or on hardware). **Superseded in part by [F-103](#f-103) (2026-09-24):** the
+  bound stands for the arm alone in a bent reach and for UniFP's free-space task, but its implication
+  ("force tracking on this robot is a few-newton problem") does not hold for a force into a fixture the
+  body can lean on — a policy trained for that pulls 60 N in simulation.
 - **Week:** 1
 - **Date:** 2026-09-18
 - **Evidence:** UniFP's released B2Z1 config commands end-effector forces uniformly in
@@ -3244,3 +3247,761 @@ result that changes a conclusion gets a new entry, and the old one is marked
   tracking error, and any pressing or box task should be sited with that in mind. If it later
   needs fixing, the evidence points at the reach geometry rather than at the learning — the error
   is a steady offset, not a control failure.
+
+### F-094 — UniFP's controlled point is the tip of one finger and the jaws are not in its observation, so opening them to grasp costs 2.6 cm of tracking; putting the travel back into the goal recovers all of it
+
+- **Status:** confirmed (simulation only)
+- **Week:** 2
+- **Date:** 2026-09-23
+- **Evidence:** [Week 2 log, 2026-09-23](week_02/notes.md), "Recreating the cup and combiner demos on the
+  UniFP policy". Four placements of the cup demo's own path, run in clear air with the object and the
+  furniture moved aside, the jaws held at a fixed opening for the whole run, error read at the end of a
+  1.2 s hold on the grasp point (`--no_object --free_space --jaw_hold`).
+
+  | jaw travel per finger | gap between the pads | tracking error at the grasp point |
+  | --- | --- | --- |
+  | 0 mm (the pose it trained in) | 17.2 mm | [**0.91 cm**](#/week/2/run/20260923T111858_cup_unifp_no_object_free_jaw0mm_seed1) |
+  | 15 mm | 47.2 mm | [1.44 cm](#/week/2/run/20260923T111919_cup_unifp_no_object_free_jaw15mm_seed1) |
+  | 30 mm (fully open) | 77.2 mm | [**3.50 cm**](#/week/2/run/20260923T111940_cup_unifp_no_object_free_jaw30mm_seed1) |
+  | 30 mm, travel added back into the commanded goal | 77.2 mm | [**0.73 cm**](#/week/2/run/20260923T112102_cup_unifp_no_object_free_jaw30mm_seed1) |
+
+  The 0.91 cm at the trained jaw pose is the same goal's 1.0 cm in the orientation probe and in F-093's
+  workspace map, so the jaws are the whole of the difference.
+  - **The mechanism.** `interface.TOOL_BODY` is `Link7_1` — one pincer — and `interface.single_obs` takes
+    the first 18 of the 20 joints, dropping both jaws. `Joint7_1` is a prismatic joint that slides that
+    pincer up to 30 mm along the hand's jaw axis. So a grasp moves the controlled point by a distance the
+    policy has no observation of, and it tracks to where its trained geometry puts the tip. The residual is
+    the travel, and it is lateral: 2.58 cm of the 3.50 cm total is across the approach.
+  - **Ruled out.** Not the table — the same 3.0 cm appears with the table moved aside and the forearm
+    contact sensor reading 0.0 N
+    ([free space](#/week/2/run/20260923T111200_cup_unifp_no_object_free_seed1) against
+    [table present](#/week/2/run/20260923T111221_cup_unifp_no_object_seed1)). Not the jaw-centre
+    conversion — commanding the tool point straight at the target gives the same
+    [3.6 cm](#/week/2/run/20260923T111330_cup_unifp_no_object_free_tipgoal_seed1). Not settling time — the
+    error does not decay over a 4.8 s hold. Not the base, which drifts 4.7 cm and then holds, correlating
+    with the error at r = +0.18.
+- **Scope:** simulation only, one checkpoint (`unifp_go2d1_isaaclab_model_56000`), one goal region
+  (radius 0.45–0.55, pitch 0–20°), four placements per row, standing with the velocity command zeroed and
+  the force curriculum off. The correction is exact only because the demo knows the jaw travel and the
+  geometry; nothing here says the policy could learn it. Whether the same offset appears on the Isaac Gym
+  checkpoint was not tested.
+- **Implication:** any manipulation task built on this policy must either put the jaw state in the
+  observation and retrain, move the tool point onto the hand's own axis (`Link6` plus the jaw centre, where
+  the travel cancels), or correct the commanded goal by the measured travel as the demo launcher now does
+  (`UniFPDemoEnv.jaw_compensation`). Untreated it is 2.6 cm of error at exactly the moment a grasp is
+  decided, against the 11 mm a 55 mm cup leaves inside the open jaws.
+
+### F-095 — UniFP tracks a tool-tip position to about a centimetre and leaves the hand pointing wherever the goal happens to put it, which is why the policy alone picks up the cup 0 times in 16 and opens the box 2
+
+- **Status:** confirmed (simulation only)
+- **Week:** 2
+- **Date:** 2026-09-23
+- **Evidence:** [Week 2 log, 2026-09-23](week_02/notes.md), "Recreating the cup and combiner demos on the
+  UniFP policy".
+  - **The hand frame over the workspace.**
+    [105 goals held still for 4 s each](#/week/2/run/20260923T102440_probe_seed1_orientation_probe)
+    (`demos/unifp/orientation_probe.py`), standing, forces off. Median tool-tip error **1.2 cm**, worst
+    3 cm, no falls — and the jaw axis anywhere from **4° to 87°** from horizontal (median 57°), the approach
+    from **71° nose-down to 19° up** (median −30°). At a goal that is not moving at all the jaw axis still
+    swings a median of **20°**, p90 46°, worst 93°; only **12 of 105** goals hold it steadier than 10°.
+  - **Why.** `interface.py` declares `CMD_EE_ORN_R/P/Y` in the command vector and the task never writes
+    them. Six arm joints, three numbers commanded, three free, and no reward term that would hold them.
+  - **What it does to the demos.** 16 placements each, standing, object pose given, final configuration:
+    the cup [0 of 16 picked up](#/week/2/run/20260923T112548_cup_unifp_seed1) with the jaw axis 72° from
+    level at the moment the jaws close, and the box
+    [2 of 16 opened](#/week/2/run/20260923T112735_combiner_unifp_seed1), latch released at 6, median door
+    angle 0.5°. Position was never the problem in either: 1.6 cm and 2.8 cm at the grasp point.
+  - **The hand's direction is a property of the goal, not a choice.** Approach elevation runs 40–47°
+    nose-down at goals near the sphere's equator and reaches level only at pitch 20–45°. The first cup
+    demo put the table at 0.42 m, where the hand arrives 38° nose-down, and the cup
+    [rolled out of the jaws on every lift](#/week/2/run/20260923T112152_cup_unifp_wrist_seed1); raising the
+    table to 0.60 m, chosen off the probe, is what made the pick possible at all.
+- **Scope:** simulation only, one checkpoint, standing with a zero velocity command and the scheduled force
+  pushes off. The probe holds each goal still, so it says nothing about the hand while the goal is moving or
+  while the robot walks. "0 of 16" is this demo script at this siting; a different approach direction or a
+  different object might suit the hand the policy happens to present. No perception ran in any of it.
+- **Implication:** the plan already calls for this — "position-only … need not prohibit orientation
+  commands. Match this pose interface in force-aware variants"
+  ([thesis_b_plan.md](../docs/thesis_b_plan.md)) — and this is the measurement of what its absence costs.
+  UniFP as ported is a reaching controller, not a manipulation controller, and the gap is not accuracy.
+  Adding an orientation command and objective to `unifp_train` is the fix; F-096 is what can be done without
+  one.
+
+### F-096 — Servoing the wrist roll alone levels the jaws and lets the standing dog pick the cup up 12 times in 16 and open the box 11; adding the wrist pitch costs 15 cm of reach and fixes nothing more
+
+- **Status:** confirmed (simulation only)
+- **Week:** 2
+- **Date:** 2026-09-23
+- **Evidence:** [Week 2 log, 2026-09-23](week_02/notes.md), "Recreating the cup and combiner demos on the
+  UniFP policy". `demos/unifp/wrist.py` replaces the policy's actions for chosen wrist joints with a
+  two-vector orientation servo, from the standoff hold onward; the policy keeps the legs and the rest of
+  the arm and sees the substituted actions in its own observation.
+
+  | | jaw axis from level, at the grasp | tracking error, clear air | cup | box |
+  | --- | --- | --- | --- | --- |
+  | UniFP alone | 67–72° | 1.7 cm | [0/16](#/week/2/run/20260923T112548_cup_unifp_seed1) | [2/16](#/week/2/run/20260923T112735_combiner_unifp_seed1) |
+  | + roll (`Joint6`) | **1.4°** cup, 79° lever | 5.3 cm cup, 3.5 cm lever | [**12/16**](#/week/2/run/20260923T112611_cup_unifp_wrist_seed1) | [**11/16**](#/week/2/run/20260923T112832_combiner_unifp_wrist_seed1) |
+  | + roll and pitch (`Joint5`) | 1.0° | 15.5 cm | [3/4 knocked over](#/week/2/run/20260923T111642_cup_unifp_wrist_seed1) | not run |
+
+  - **Why the roll is nearly free and the pitch is not.** `Joint6` rotates about the approach axis and the
+    jaw centre lies *on* that axis, so rolling sweeps the jaw axis through every direction perpendicular to
+    the approach — it can always bring the jaws level — while barely moving the point the grasp is placed
+    by. `Joint5` swings the tool point about 20 cm per radian, and taking it from the policy takes away part
+    of how the policy was reaching.
+  - **What the roll still costs.** 5.3 cm against 1.7 in clear air on the cup, 3.5 against 2.8 on the lever.
+    It is a decaying transient — 5.6 cm at the start of the approach, 2.4 cm by the time the jaws close on
+    one traced attempt — and it scales with how far the jaws are open, because the F-094 correction rides on
+    the jaw axis and rolling swings it: 30 mm of travel on the cup, 12 mm on the lever, 3.6 cm and 0.7 cm of
+    cost.
+  - **Two earlier servos that did not work**, kept because the reason is the design rather than the tuning:
+    a rate command (`error × gain × dt`) leads UniFP's PD by a thousandth of what it takes to saturate the
+    1.7 N·m limit, and the wrist barely turned
+    ([4.5 cm, jaws still 62° off](#/week/2/run/20260923T110359_cup_unifp_wrist_seed1)); a full-authority
+    servo on both wrist joints levelled the jaws and cost
+    [8–9 cm](#/week/2/run/20260923T111350_cup_unifp_wrist_no_object_free_seed1).
+  - **No falls** in any run on this page, either controller, either demo.
+- **Scope:** simulation only, one checkpoint, 16 placements per cell, standing, object pose given, no
+  perception. **Every figure in the table above was measured at `--num_envs 16`**, which F-098 later
+  established is a condition rather than a detail: at `--num_envs 1`, the same placements and seed
+  give 0/16 and 7/16 for the cup and 3/16 and 8/16 for the combiner. The comparison this finding
+  makes survives — the servo beats the policy alone by a wide margin in both configurations — but
+  the absolute rates do not transfer between them, and the per-placement outcomes are not
+  reproducible at all. The cup is 55 mm against 77 mm jaws and the lever's spring is the default
+  0.4 N·m. The
+  substituted actions are fed back into the observation, so the policy compensates through what it still
+  owns — but this is **not UniFP**, and a number from it must not be quoted as one. Of the 12 cup picks the
+  median carry tilt is 21°, so the cup is held at an angle, not upright; one of 16 was knocked over. The
+  five combiner failures were not diagnosed.
+- **Implication:** a position-only whole-body policy can be made to manipulate by taking back exactly the
+  one joint whose axis passes through the grasp, and no more. That is a usable stopgap and it is also the
+  argument for the real fix: the roll servo is reconstructing, open-loop and at a measurable cost in
+  tracking, the orientation term F-095 says the task should carry. Which joint to take is not a free choice
+  — the measured difference between `Joint6` and `Joint5` is a factor of three in tracking error.
+
+### F-097 — The UniFP demo opens the box in 8.3 s against the scripted arm's 18–25, and the difference is the arm model rather than the controller: it drives the D1 at 1.77 rad/s where the measured joint ceiling is 1.21–1.29
+
+- **Status:** confirmed (simulation only)
+- **Week:** 2
+- **Date:** 2026-09-23
+- **Evidence:** [Week 2 log, 2026-09-23](week_02/notes.md), "Recreating the cup and combiner demos on the
+  UniFP policy". Same script, every phase duration scaled, 16 placements each, UniFP plus the roll servo.
+
+  | clock | cup | combiner |
+  | --- | --- | --- |
+  | 1.0× | [12/16 in 13.5 s](#/week/2/run/20260923T113030_cup_unifp_wrist_seed1) | [11/16 in 20.8 s](#/week/2/run/20260923T113054_combiner_unifp_wrist_seed1) |
+  | 0.6× | [8/16 in 8.1 s](#/week/2/run/20260923T113153_cup_unifp_wrist_seed1) | [9/16 in 12.5 s](#/week/2/run/20260923T113211_combiner_unifp_wrist_seed1) |
+  | 0.4× | [5/16 in 5.4 s](#/week/2/run/20260923T113251_cup_unifp_wrist_seed1) | [**11/16 in 8.3 s**](#/week/2/run/20260923T113307_combiner_unifp_wrist_seed1) |
+
+  The combiner is as reliable at 8.3 s as at 20.8 s. The cup is not: at 0.6× more attempts close on the cup
+  (15 of 16 lifted) but it tips past 45° in the jaws on the way up, and at 0.4× the pick goes altogether.
+  - **Why the comparison does not hold.** Peak arm joint speed is **1.75–1.79 rad/s** in every one of these
+    runs. The D1's measured single-command ceiling is 1.21–1.29 rad/s (F-033) and a 10 Hz setpoint stream
+    through its firmware planner manages about 0.8 (F-046), which is what the scripted demos simulate
+    (`--arm_actuator d1_servo --arm_trajectory measured --latency estimated`). UniFP's port drives the arm
+    with UniFP's own PD and neither model. F-076 attributes the scripted demo's remaining 18–25 s mostly to
+    the arm's own speed, so the like-for-like comparison is roughly 2.2× slower than 8.3 s — about 18 s, and
+    no advantage at all.
+- **Scope:** simulation only, 16 placements per cell, one checkpoint, standing with the object pose
+  given, and **all of it at `--num_envs 16`** — see F-098, which makes that a condition. The success
+  columns above should be read as "unchanged" or "degraded" within one configuration, not as rates.
+  The script is clock-driven, so these are commanded durations, not times the arm chose; the arm falling
+  short is what the success column measures. Timing excludes the 1 s spawn settle and all perception, where
+  the scripted demo's 18–25 s is from the start of an attempt to letting go and includes its tag search.
+  The two demos are not the same task either: these stand with the object on a table or a post, the scripted
+  ones lie down with it on the floor.
+- **Implication:** no speed claim can be made for UniFP over the scripted arm until both run the same arm
+  model. Running the demo under `position_only`'s measured D1 profile is the experiment that would settle
+  it, and it is worth doing before any of this reaches the thesis as a comparison. What the sweep does show,
+  independent of the arm model, is that the box sequence has no timing margin problem — it tolerates a
+  2.5× faster clock at the same success rate — while the cup pick does not.
+
+### F-098 — The demos' success rate is a property of the simulator configuration, not of the placement: the same sixteen placements disagree on eleven of them between one environment and sixteen, while each configuration reproduces itself exactly
+
+- **Status:** confirmed (simulation only)
+- **Week:** 2
+- **Date:** 2026-09-23
+- **Evidence:** [Week 2 log, 2026-09-23](week_02/notes.md), "The demo numbers depend on how many
+  environments are simulated". Found by running the combiner demo in the viewer for Lukas at
+  `--num_envs 1`, which opened the door at [1 of 4](#/week/2/run/20260923T124649_combiner_unifp_wrist_seed1)
+  where the recorded 16-environment run had opened 11 of 16.
+
+  | controller | task | `--num_envs 16` | `--num_envs 1` |
+  | --- | --- | --- | --- |
+  | UniFP alone | cup | 0/16 | [0/16](#/week/2/run/20260923T131701_cup_unifp_seed1) |
+  | + roll servo | cup | 12/16 | [**7/16**](#/week/2/run/20260923T132040_cup_unifp_wrist_seed1) |
+  | UniFP alone | combiner | 2/16 | [3/16](#/week/2/run/20260923T131105_combiner_unifp_seed1) |
+  | + roll servo | combiner | 11/16 | [**8/16**](#/week/2/run/20260923T125405_combiner_unifp_wrist_seed1) |
+
+  - **Each configuration reproduces itself exactly.** Re-running the 16-environment command gave
+    [11 of 16 again](#/week/2/run/20260923T125221_combiner_unifp_wrist_seed1), with the median door
+    angle, lever angle and latch count identical to the decimal. This is not run-to-run noise.
+  - **The per-placement outcome is not reproducible.** The two configurations draw the *same* 16
+    placements from the same seed, and they disagree on **11 of them** — 7 opened only in the
+    batched run, 4 only in the single. Agreement is 5 of 16, which is *worse* than two independent
+    draws at these rates would give. Which placements succeed carries no information.
+  - **Not the rendering.** Headless at one environment reproduced the viewer's
+    [1 of 4](#/week/2/run/20260923T125045_combiner_unifp_wrist_seed1) on the same four placements.
+  - **Not the reset path, which was the leading suspect.** Sixteen environments over 32 attempts
+    runs batch 2 through exactly the sequential reset the single-environment run uses sixteen
+    times: [batch 1 gave 11 of 16 and batch 2, after a full reset, 12](#/week/2/run/20260923T130839_combiner_unifp_wrist_seed1).
+  - **Not grip margin.** The hypothesis was that the grip sits at the edge of what the arm can turn
+    against the 0.4 N·m spring, so small differences decide it. Dropping to the 0.3 N·m the scripted
+    demo was validated at made the single-environment case
+    [*worse*, 4 of 16](#/week/2/run/20260923T130051_combiner_unifp_wrist_seed1), where the batched
+    case was [unchanged at 11](#/week/2/run/20260923T130655_combiner_unifp_wrist_seed1). A weaker
+    spring cannot make a marginal grip harder, so that explanation is dead.
+- **Scope:** simulation only, 16 attempts per cell, one seed, one checkpoint. With n = 16, 8/16
+  against 11/16 is about 1.2 standard errors — the *aggregate* difference between the two
+  configurations is not established, and this finding does not claim environment count as a
+  mechanism. What is established is the disagreement pattern at the placement level and the exact
+  repeatability within a configuration. The three eliminations above are each a single experiment.
+  No mechanism was identified; F-088 is precedent for this robot being decided by numerical
+  configuration (a PhysX solver setting changes whether the policy stands at all while leaving the
+  passive robot untouched), but that is an analogy, not evidence.
+- **Implication:** every success rate from these demos must state its environment count, and
+  per-placement results must not be quoted at all. F-096 and F-097 are amended accordingly. The
+  binary criteria are what hid this — "door past 30°" is a threshold on a continuous quantity, and
+  the lever angle it thresholds shows the effect immediately (single-environment failures all stall
+  in a narrow 33–42° band, none past it). **Before any retraining is evaluated against these
+  tasks, the criteria should move to the continuous measures and the denominator should grow**, or
+  a training change will be scored against a metric that a change of environment count can move by
+  as much as the change itself.
+
+### F-099 — The D1 has essentially no dexterous workspace at this reach: 86% of UniFP's goal sphere admits a position, 43% a levelled hand and 8% a freely chosen orientation, so a full-pose objective would train mostly on unreachable targets — while roll alone costs nothing
+
+- **Status:** confirmed (kinematics; solver-dependent, see scope)
+- **Week:** 2
+- **Date:** 2026-09-24
+- **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "What to constrain, measured rather than
+  argued". `unifp_train/pose_feasibility.py`, damped least squares over 147 goals of UniFP's own
+  sphere — 3 radii x 7 pitches x 7 yaws — with 8 uniformly random orientations at each
+  ([run](#/week/2/run/20260923T140424_ik_seed1_pose_feasibility)).
+
+  | constrained | goals that solve |
+  | --- | --- |
+  | position only — what the task does today | **85.7%** |
+  | position + roll (1 rotational DOF) | **85.7%** — no loss, analytic |
+  | position + level (2 rotational DOF) | 42.9% |
+  | position + a freely chosen orientation | **8.2%** |
+
+  - **The sharper figure.** Of 147 goals, **none** admitted all eight orientations tried and **81
+    admitted none of them**. A full-pose reward would spend most of training scoring targets no
+    action attains — not a harder task but a corrupted one, since the term becomes noise on the
+    return.
+  - **Why roll is free, and it is an argument rather than a measurement.** A grasp's jaw axis is an
+    *axis*: the two fingers are interchangeable, so a commanded jaw direction repeats every 180°.
+    `Joint6` spans 269° hard and 242° at the soft limits, and an interval wider than 180° contains
+    a representative of any commanded roll wherever the arm is sitting. So roll is reachable from
+    *any* position solution; and with the controlled point moved onto the roll axis (F-094, F-096)
+    reaching it does not disturb the position either.
+  - **Consistent with the demos.** The roll servo of F-096 needed exactly this one degree of
+    freedom, and got the jaw axis to 1.4° for the cup and 79° for the lever from the same rule.
+- **Scope:** **the arm alone, with its base fixed.** UniFP has the whole body, and a policy free to
+  pitch and shift the trunk has more to work with, so 8.2% is a lower bound for the whole-body
+  system and the true figure is unmeasured. Damped least squares with one seed and a 300-iteration
+  budget: a convergence failure is not a proof of infeasibility, and the solver's own staging of
+  the level case lifts it from 24% to 51% (`d1_ik.solve`), so these are solver-dependent numbers
+  rather than a kinematic certificate. The orientations are sampled uniformly over SO(3), which is
+  harsher than a task would ask for. What survives all of that is the ordering and its size: the
+  gap between 85.7% and 8.2% is far too large for the solver to account for, and "0 of 147 goals
+  accept every orientation" is a statement about the arm.
+- **Implication:** read "orientation tracking" in the plan's stage 6 as **one** degree of freedom.
+  [docs/thesis_b_plan.md](../docs/thesis_b_plan.md) is corrected to say so. An orientation term
+  added to `unifp_train` should command the gripper's roll about its approach axis and nothing
+  else; a full-pose variant would need the goal sphere shrunk to the dexterous subset first, and
+  that subset has not been mapped. Nothing here argues against the *force* half of the task: the
+  constraint is kinematic redundancy, not reward capacity, and dropping force would free neither.
+
+### F-100 — Commanding the gripper's roll works: 8 h of training takes the roll error from 62° to 5.7° for about 0.75 cm of tool-tip tracking, with no falls and no collapse
+
+- **Status:** confirmed (simulation only, one run, 11,000 of 60,000 iterations)
+- **Week:** 2
+- **Date:** 2026-09-24
+- **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "Eight hours of it: the roll objective
+  works". 11,000 iterations at 4,096 environments, seed 1, jaw-centre controlled point and the
+  roll objective, force curriculum at its default 8,000 iterations; 8 h 03 m, `status: complete`,
+  56 checkpoints ([run](#/week/2/run/20260923T145001_train_seed1_roll_jaw_8h)).
+  - **The comparison that matters is matched-iteration**, each policy measured on the point it was
+    trained on, both with zero condition mismatches:
+
+    | at iteration 11,000 | tracking | roll error | falls |
+    | --- | --- | --- | --- |
+    | [reference, position only, fingertip](#/week/2/run/20260924T022346_eval_seed1_ref11000) | **4.28 cm** | 62.3° (uncontrolled) | 1/50 |
+    | [this run, roll + jaw centre](#/week/2/run/20260924T022236_eval_seed1_ladder10999) | **5.03 cm** | **5.7°** | **0/50** |
+
+  - **The checkpoint ladder**, 50 frozen episodes each:
+
+    | checkpoint | tracking | roll | falls |
+    | --- | --- | --- | --- |
+    | [4,000](#/week/2/run/20260924T022033_eval_seed1_ladder4000) | 3.46 cm | 2.9° | 3/50 |
+    | [6,000](#/week/2/run/20260924T022057_eval_seed1_ladder6000) | 3.20 cm | 3.5° | 4/50 |
+    | [**8,000**](#/week/2/run/20260924T022122_eval_seed1_ladder8000) — last position-only | **2.85 cm** | 2.5° | **5/50** |
+    | [9,000](#/week/2/run/20260924T022146_eval_seed1_ladder9000) | 5.46 cm | 5.6° | 0/50 |
+    | [10,000](#/week/2/run/20260924T022211_eval_seed1_ladder10000) | 5.86 cm | 6.9° | 1/50 |
+    | [10,999](#/week/2/run/20260924T022236_eval_seed1_ladder10999) | 5.03 cm | 5.7° | 0/50 |
+
+  - **F-092's curriculum signature reproduced exactly.** The best-tracking checkpoint is iteration
+    8,000 and it is the one that falls most — 5 of 50, the same iteration and the same count F-092
+    reported in the earlier run ("Isaac Lab 8,000 | 1.5 cm | **5/50** ... the only one that
+    falls"). The force curriculum trades tracking for robustness at exactly the point it opens.
+    Two independent runs, different task, same signature.
+  - **Roll is learned early and cheaply.** It is under 3° by iteration 4,000, well before the
+    curriculum, and degrades only to ~6° once the wrenches start. Training-curve position deficit
+    against the reference ran 6.1% at iteration 1,500, closing to 2.4% by 6,000, widening to ~5%
+    when the curriculum opened and closing again to 3.4% by 10,100.
+  - **A criterion set wrongly, and stated because it changes how the result reads.** The
+    pre-registered tracking bar was "better than 3.56 cm", which is the *released* `model_56000`
+    measured at the jaw centre — a policy with 52,000 iterations of force training against this
+    run's 3,000. That bar was unmeetable at 11,000 iterations however good the change was. Against
+    the matched-iteration reference the deficit is 0.75 cm.
+- **Scope:** simulation only. **One run, one seed, 11,000 of 60,000 iterations** — a diagnostic,
+  not a deliverable. The roll weight (1.0) and width (sigma = 0.5 rad) are the first values tried
+  and nothing has been swept. 50 frozen episodes per evaluation, so 0/50 against 1/50 falls is not
+  a difference. The two policies in the matched table control points 2.4 cm apart and so are not
+  measuring the same quantity; what the comparison supports is "adding roll did not break
+  position tracking", not a ranking. The reference itself improves from 4.28 cm at 11,000 to
+  1.5 cm at 56,000, so neither policy is near its own ceiling here and the 0.75 cm gap may narrow
+  or widen with the remaining 49,000 iterations. Nothing here is measured on hardware, and the arm
+  model is still not the measured D1 (F-097).
+- **Implication:** the orientation gap F-095 identified can be closed by training, at a cost small
+  enough to be worth paying, and F-099's argument for constraining *one* rotational degree of
+  freedom survives contact with a trained policy. Continue this run to 60,000 rather than starting
+  over — the resume path now restores the force curriculum (F-082 was still live in
+  `run_unifp_train.py` until today). Select the final checkpoint on the frozen set and a ladder,
+  never on the last iteration alone: the best-tracking checkpoint here is the one that falls.
+  *Note, 2026-09-24 later:* the resume path could not have run when this was written — `train()` used
+  `task_cfg` without importing it, so any `--resume_from` raised `NameError` before the first iteration
+  ([failed run](#/week/2/run/20260924T070931_train_seed1_hook_train_smoke)). Fixed the same day; the first
+  resume to succeed is [this smoke run](#/week/2/run/20260924T070954_train_seed1_hook_train_smoke).
+
+### F-101 — Routing the pull through the arm's joints raises what the D1 holds from ~9 N to 40–59 N, but only with the base pitched to line the arm up; exact alignment promises 100–200 N and loses most of it to 2° of joint error
+
+- **Status:** provisional (static model only: published joint limits, the weld's mass model, gravity + JᵀF;
+  no servo loop, no structure, no simulator)
+- **Week:** 2
+- **Date:** 2026-09-24
+- **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "Force through the structure";
+  [`force_transmission_study.py`](week_02/figures/force_transmission_study.py),
+  [figure](week_02/figures/force_transmission_study.png),
+  [numbers](week_02/figures/force_transmission_study.json). The controlled point is the jaw centre
+  (`Link6 + (0, 0, 0.1051)`, the UniFP task's since F-094).
+  - **Typical postures** (97,470 body-clear configurations whose jaw centre lies in UniFP's goal shell,
+    ahead of the base): a horizontal pull holds **5.6 / 9.4 / 14.7 N** (p10 / median / p90); a pull
+    toward the mount 8.2 / 10.9 / 14.5 N; the arm's best direction 19.0 / 22.9 / 30.8 N and its worst
+    1.6 / 2.4 / 4.0 N.
+  - **Best posture for a horizontal pull** on a handle at 0.10–0.70 m, the arm posture optimised at each
+    base height (0.24 / 0.30 / 0.34 m) and pitch (−15° / 0 / +15°, positive nose-down). Scored
+    *robustly*: the 10th percentile when every joint is off by 2° (s.d.). Best over base height:
+    **nose-down 15°: 43.8–59.1 N** for handles at 0.30–0.70 m (33 N at 0.55 m); **level: 18–33 N**,
+    peaking at 0.40 m; **nose-up 15°: at most 21 N**.
+  - **Exact alignment is fragile.** Nominal (zero-error) capacities reach 90–204 N at near-singular
+    postures, and the same postures score 37–49 N robustly. At the best standing posture (base 0.30 m,
+    nose-down 15°) the capacity is 62.4 N exact, **51.9 N at 2° joint error, 35.3 N at 5°, 21.4 N at
+    10°** (p10); a 10° error in the pull's direction leaves 30.9 N at worst.
+  - **Push and pull differ in stability, not in torque.** With the tool pinned (a hooked handle, a
+    button under friction) and the arm's null space loaded, tension is stable at every force at both
+    postures analysed. Compression buckles at a force proportional to servo stiffness: **43.6 / 108 /
+    215 / 430 N at 0.1 / 0.25 / 0.5 / 1× the simulator's kp** (60/40 N·m/rad) at the best posture,
+    32 / 81 / 162 / 324 N at a level posture.
+  - **The body is not the limit.** A rigid 18.17 kg robot on its feet tips over its front feet at
+    172 / 86 / 57 N for a horizontal pull at 0.2 / 0.4 / 0.6 m, 244 / 122 / 81 N leaning back 8 cm, and
+    slides at 89 N on a μ = 0.5 floor.
+- **Scope:** static and arm-only: no dynamics, no servo loop, no gearbox or link strength, the base
+  treated as a rigid mount at three heights and pitches, the body-collision proxy ignoring pitch against
+  the ground. The published torque limits and the weld's mass model are unverified on the arm (F-007,
+  F-023). Robust capacity is a stochastic hill-climb from four seeds per cell, so neighbouring cells
+  scatter by a few newtons (the 0.55 m dip is likely the optimiser). Buckling uses the simulator's kp; the
+  real servo's stiffness is unmeasured, and its overload behaviour (F-028: torque-off drops the arm) is not
+  modelled at all. Corrects my own earlier arithmetic to Lukas (2026-09-24, in conversation): "F ≈ τ/d, so
+  2 cm of alignment gives ~85 N" ignored gravity and the fact that no posture puts the line through every
+  joint at once to 2°.
+- **Implication:** the force-transmission redesign has a real margin — about 4–6× the bent-arm pull —
+  and it comes from the body's pitch and height choosing the arm's line, which is what a whole-body
+  controller is for. It is not unbounded: ~50 N is the practical target for a pull, and a policy
+  holding far more is exploiting a singular posture a real arm will not keep. Pulling is the strong case;
+  pushing needs the real servo stiffness measured before any compression figure is believed. Measure on
+  the bench before relying on any of it: a luggage scale on the straightened, powered arm.
+
+### F-102 — The UniFP port's arm is in a numerical limit cycle: with zero actions its wrist flips torque every physics step at 75–90% of its limits and Joint3 sits pinned at its limit; a geared servo's rotor inertia (0.01 kg·m²) stops it and the holding torques then match the static model
+
+- **Status:** confirmed (simulation; measured at the physics rate, one environment)
+- **Week:** 2
+- **Date:** 2026-09-24
+- **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "Force through the structure";
+  [`arm_chatter_probe.py`](week_02/figures/arm_chatter_probe.py) and its outputs
+  ([2e-4](week_02/figures/arm_chatter_probe.json), [0.002](week_02/figures/arm_chatter_probe_armature_0.002.json),
+  [0.01](week_02/figures/arm_chatter_probe_armature_0.01.json), [legs](week_02/figures/arm_chatter_probe_legs.json)).
+  One standing robot, zero actions, UniFP's control law (`IdealPDActuator`, kp 60/40, kd 1.0/0.8, every
+  5 ms), 560 physics steps after a 0.2 s settle.
+  - **Found by an evaluation, not looked for.** A zero-action run of the new pull task
+    ([run](#/week/2/run/20260924T070514_hook_eval_seed1_hook_eval_zero_loads)) reported the arm at 100% of
+    its limit with nothing loading it.
+  - **At the port's armature, 2e-4 kg·m² on every joint:** Joint4 / 5 / 6 change torque sign on
+    **99.8 / 98.4 / 99.8%** of physics steps, at a mean 75 / 82 / 90% of their limits, and turn at 1.6–1.7
+    rad/s RMS while nominally still. Joint3 sits at **−100% of its limit on every step**. Joint1 flips on
+    73% of steps at 20%.
+  - **At 0.002:** Joint4 and Joint6 (the rolls) still flip on 100% of steps; Joint5 is quiet.
+  - **At 0.01:** Joint4 and Joint6 carry 0% and do not move; Joint2 and Joint3 hold the default pose with
+    **41% and 69%** of their limits, against the static model's **32% and 63%** (F-101's model).
+  - **The legs do not do it**: at 2e-4, sign flips ≤ 1.6% on all twelve, nothing saturated.
+  - **Mechanism:** the explicit damper's kd·dt/I on the wrist links is about 19 against the ~2 an explicit
+    integrator tolerates; the torque limit clips the resulting oscillation into a period-2 limit cycle.
+    `unifp_isaaclab/robot.py` added the 2e-4 because at 0 the arm escaped its limits outright; that was
+    enough to stop the escape and not enough to stop the oscillation.
+- **Scope:** zero actions and one robot; the limit cycle under a policy's commands was not traced at the
+  physics rate. 0.01 kg·m² is an estimate of a geared servo's reflected inertia (a ~1e-6 kg·m² rotor
+  through ~100:1), not a measurement. Isaac Gym, where UniFP trained originally, was not probed.
+  Consequence observed: the warm-start policy `model_10999`, trained on the chattering arm, did worse on the
+  pull staircase once the arm was fixed — sustained force median 10 → 0 N, hooks lost 35 → 47 of 60
+  ([before](#/week/2/run/20260924T070325_hook_eval_seed1_hook_eval_roll10999),
+  [after](#/week/2/run/20260924T070831_hook_eval_seed1_hook_eval_roll10999_arm01)).
+- **Implication:** every Isaac Lab UniFP result so far (F-087–F-100, including the released
+  `model_56000`) was trained and scored on an arm whose wrist chatters at its limits, which is the likely
+  reason `action_rate_arm` read four times upstream's magnitude (unifp_train/README). Tracking numbers
+  are not invalidated by this, but **any claim about arm torque, load or force is**. The force-transmission
+  task uses 0.01 on the arm (`hook_cfg.ARM_ARMATURE_KG_M2`); UniFP's own task keeps 2e-4 so the released
+  checkpoints still reproduce. Whether UniFP's task should move to 0.01 too is a decision for the P0–P4
+  ladder, and the D1's real reflected inertia is worth a bench estimate (a step response unpowered and
+  backdriven).
+
+### F-103 — Trained for it, the whole-body policy pulls 60 N through the D1 on a ring or a bar — six times what the arm holds in a bent reach — with the arm drawn straight along the pull and its motors at their limits
+
+- **Status:** provisional (simulation only; one seed; a chain of four fine-tuning runs, figures from
+  checkpoint 13,000 of a run still going when written; no hardware)
+- **Week:** 2
+- **Date:** 2026-09-24
+- **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "Force through the structure";
+  [figure](week_02/figures/hook_staircase.png). The task is `--task hook` (`unifp_train/hook_env.py`): UniFP's
+  observation, actions and 27 rewards, plus a virtual fixture the tool engages and a commanded force into
+  it, arm armature 0.01 (F-102). The policy is UniFP's `model_10999` (roll + jaw centre, F-100) fine-tuned
+  through v1–v4 of the task, 2,000 iterations in all; what changed between versions, and why each earlier
+  one stalled, is in the log.
+  - **The experiment** (`run_unifp_train.py hook_eval`): 15 handle placements (0.2–0.6 m high × three
+    bearings, 0.45 m reach) × 4 repeats, a horizontal pull straight back toward the robot at 2,000 N/m,
+    commanded up a staircase 10 → 60 N, each level held 2.5 s and read over its last 1 s. *Sustained* is
+    the highest level held (≥ 80%, contact and robot intact) with every lower level held too.
+  - **On a ring** (the claw through a loop; cannot come off):
+
+    | policy | sustained, median (p10–p90) | applied at the 60 N step | lost | fell |
+    | --- | --- | --- | --- | --- |
+    | [zero actions](#/week/2/run/20260924T084631_hook_eval_seed1_ring_zero) | 0 N | 0.5 N | 0 | 0 |
+    | [UniFP `model_10999`](#/week/2/run/20260924T084249_hook_eval_seed1_ring_warm10999) | 10 N (0–21) | 9.4 N | 0 | 0 |
+    | [v1 after 411 iterations](#/week/2/run/20260924T084441_hook_eval_seed1_ring_v1_11410) | 10 N (10–11) | 14.1 N | 0 | 0 |
+    | [v4 at 12,600](#/week/2/run/20260924T083755_hook_eval_seed1_hook4_eval_v4_model_12600) | 35 N (0–60) | 45.6 N | 0 | 0 |
+    | [**v4 at 13,000**](#/week/2/run/20260924T085620_hook_eval_seed1_ring_v4_13000) | **60 N (60–60)** | **60.7 N** | 0 | 0 |
+
+    At 13,000 the applied force follows the command at every step (11.8 / 24.5 / 33.3 / 42.6 / 52.1 /
+    60.7 N for 10–60 — overshooting by 1.8–4.5 N below 50 N), 58–60 of 60 episodes hold each level, and
+    every handle height sustains 60 N. 60 N is the top of the staircase, so the ceiling is not measured
+    there; [a longer staircase](#/week/2/run/20260924T090751_hook_eval_seed1_ring_v4_13000_to100) (20, 40,
+    60, 70, 80, 90, 100 N — past anything trained) finds it: applied force levels off at **~70 N median**
+    (67.1 / 70.4 / 72.1 / 70.9 N for 70–100), sustained 85 N median (p10 70, p90 100), from 75 N at a 0.2 m
+    handle to 100 N at 0.6 m. Past 60 N the base pitch turns nose-up (−2 to −7°): the body leaning back
+    against tipping, which F-101's rigid-body limits put at 86 N level and ~120 N leaning back for a 0.4 m
+    pull.
+  - **On a bar** (the claw must also stay seated; it can lift or slide off):
+    [v4 at 13,000](#/week/2/run/20260924T090231_hook_eval_seed1_bar_v4_13000) sustains 60 N median, 54 of 60
+    episodes hold 60 N, **5 of 60 lose the claw**, none fall.
+  - **How the body does it.** Base pitch rises nose-down to +9–10° by 20–30 N and returns to level at 60 N;
+    base height drops 2 cm (0.332 → 0.309 m). F-101's static study found the nose-down pitch the one that
+    lines the arm up. The sideways load on the fixture at 12,600 was 4–6.5 N median, about the arm's weight.
+  - **Where the load goes** ([paths run](#/week/2/run/20260924T085947_hook_eval_seed1_ring_v4_13000_paths)):
+    through the arm's motors. No arm link touches anything (0 N median and p90, on a sensor that matched all
+    nine D1 bodies), the trunk is untouched, and no arm joint comes within 0.01 rad of a limit. Joint1–3 sit
+    at their torque limits, and Joint5 at 60 N: the pull draws the arm nearly straight along its own line,
+    where the saturated torques balance the residual moments. That is F-101's tension case — stable and
+    self-aligning — which is why the static *robust* estimate (15–20 N at a 0.2 m handle, 2° of random
+    joint error) is pessimistic here: under tension the error is not random, the load pulls the arm into line.
+  - **The force estimate follows**: the adaptation module reads 11.0 → 57.9 N for 11.8 → 60.7 N applied;
+    UniFP's own reads 4.3–7.6 N at every level (trained on ±8 N).
+  - **Cost to reaching:** on the frozen roll + jaw-centre free-space set, 7.1 cm median tracking against
+    4.5 cm for `model_10999` on the same arm, 0 of 50 falls each
+    ([v4](#/week/2/run/20260924T090428_eval_seed1_free_v4_13000),
+    [warm start](#/week/2/run/20260924T082548_eval_seed1_free_warm10999_arm01)).
+- **Scope:** simulation only, one seed, one chain of runs selected by looking at evaluations along the way
+  (so the staircase is a development set, not a held-out one). The fixture is a virtual anchored spring:
+  nothing moves, no door opens, the ring and bar are contact models, not geometry, and the claw does not
+  exist yet. One pull direction, straight back; one stiffness, 2,000 N/m. The arm runs **at its published
+  torque limits** for the whole pull; the real servos' continuous rating, heating and overload behaviour
+  are unmeasured (F-028: a torque-off drops the arm), and 0.01 kg·m² of armature is an estimate. The arm
+  contact sensor has not been shown to read a known contact (no positive control). Not validated on
+  hardware. The ground is μ = 1.0 (UniFP's terrain); on a μ = 0.5 floor the robot slides at ~89 N, so
+  the 70 N plateau is near what a real floor would allow, not comfortably inside it.
+- **Later training changed the bar result** (F-104, 2026-09-24): continuing from v4 with presses added
+  (v5–v9) kept the ring at 60 N but lost claws off bars in 28 of 60 episodes against 5. The checkpoint this
+  finding describes, v4 `model_13000`, is the pull result.
+- **Implication:** the redesign's premise holds in simulation, with room: the whole-body policy finds the
+  posture and makes the force, six times the bent-arm figure and past F-101's robust static ceiling. What
+  limits it now is not the task or the learning but the servo: a policy that holds 60 N with three joints
+  saturated would trip or cook a real D1. Next, in order: measure the servos' stall and continuous torque on
+  the bench (and the straight-arm pull with a luggage scale); raise `arm_torque_margin` until the arm keeps
+  a margin, and see what force survives; then the press case, held-out placements and seeds.
+
+### F-104 — The policy that pulls 60 N through a ring cannot yet press a button: its tool is never still and it lets a fixture carry the arm's weight; rewarding a still tool and letting the pad carry the weight at first makes pressing learnable, from 0 to 6 of 60 presses kept
+
+- **Status:** provisional (simulation only; one seed). **Pushing is not solved**: v9 was stopped when its
+  press-loss rate had plateaued, and its final checkpoint is worse on presses than its best (below)
+- **Week:** 2
+- **Date:** 2026-09-24
+- **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "Force through the structure", v5–v9. The press
+  staircase is the pull staircase pushed the other way: a pad on a button straight away from the robot at
+  the same 15 placements, 2,000 N/m, lost if the pad backs off 3 cm or the button leaves the 4 cm pad
+  (`hook_eval --press`).
+  - **The pull policy has no push**: v4's `model_13506` lost [60 of 60 pads](#/week/2/run/20260924T092559_hook_eval_seed1_press_v4_13506),
+    a median 3.0 s in, before the first 10 N level finished.
+  - **Adding presses to training (35% of fixture episodes) did not by itself teach it**: 60 of 60 lost after
+    ~330 iterations on a bare 2 cm button ([v5](#/week/2/run/20260924T093943_hook_eval_seed1_press_v5_13800)),
+    ~290 with a 4 cm pad tool ([v6](#/week/2/run/20260924T094922_hook_eval_seed1_press_v6_14000)), ~60 with a
+    slide-allowance curriculum (v7), ~370 with pads re-engaging in training
+    ([v8](#/week/2/run/20260924T101002_hook_eval_seed1_press_v8_14400)).
+  - **Why, measured.** 59 of 60 v6 pads [slid off a median 5 steps (0.1 s) after landing](#/week/2/run/20260924T095030_hook_eval_seed1_press_v6_14000_modes):
+    4 cm of sideways tool motion in 0.1 s. Recording the direction on v8
+    ([run](#/week/2/run/20260924T101134_hook_eval_seed1_press_v8_14400_slide)): a median 1.7 cm *down* by the
+    time the pad went (down the main direction in 25 of 60) and 2.8 cm *across*. Two habits the pull training
+    built and a ring or bar hides: the tool is never still (the policy saturates Joint1–3 even in free space),
+    and the arm's weight rests on the fixture (a ring carries it; a pad at rest holds 1 N).
+  - **v9 targets both**: a `fixture_tool_speed` penalty (−5.0 × squared tool speed while on a fixture), and the
+    pad's resting friction on the press curriculum (15 N at the widest allowance, to the real 1 N at 4 cm). In
+    training the fraction of press episodes that lost their pad fell from 0.86 to 0.40–0.50 within 200
+    iterations, where v5–v8 had never left 0.95–1.0. On the strict staircase at
+    [`model_14600`](#/week/2/run/20260924T102839_hook_eval_seed1_press_v9_14600): **6 of 60 presses keep the pad
+    through the staircase**, 9 of 60 hold 10 and 20 N, 2 hold 30 N; while pressing it pushes 20–24 N whatever it
+    is asked for, leaning back 4–5°.
+  - **It did not continue.** Over the next ~700 iterations the training press-loss rate swung between 0.39 and
+    0.59 without trending, the curriculum never tightened below 15 cm, and v9 was stopped at 15,293
+    ([run](#/week/2/run/20260924T101344_train_seed1_hook_push_v9)). Its final checkpoint on the strict staircase:
+    [60 of 60 pads slid off, 5 of 60 held 10 N](#/week/2/run/20260924T105445_hook_eval_seed1_press_v9_15293) —
+    worse than at 14,600.
+  - **What it cost the pull.** On a ring nothing: [60 N sustained (p10 60), 60 of 60 at 60 N](#/week/2/run/20260924T105459_hook_eval_seed1_ring_v9_15293),
+    and closer tracking than v4 (11.0 / 19.8 / 27.4 / 37.3 / 46.9 / 56.3 N for 10–60). On a bar a lot:
+    [40 N sustained, 28 of 60 claws lifted off](#/week/2/run/20260924T105534_hook_eval_seed1_bar_v9_15293) against
+    5 for v4 at 13,000. Free-space reaching [6.3 cm median, p90 10.2](#/week/2/run/20260924T105627_eval_seed1_free_v9_15293),
+    0 falls.
+- **Scope:** simulation only, one seed, a development set. The press curriculum had not yet tightened below its
+  starting 15 cm allowance when these numbers were taken, so training presses were far easier than evaluation
+  ones. The simulator's arm gains keep the compression-buckling force (F-101: ~430 N at these gains) far above
+  anything commanded, so this says nothing about buckling on the real servos, which is the risk F-101 names for
+  pushing. The pad is a contact model, not a designed tool.
+- **Implication:** pushing is a different skill from pulling, not a sign flip: it needs a still tool, and the
+  pull-trained controller does not have one. Fine-tuning a pull policy toward it stalls halfway and erodes the
+  claw-on-bar skill. The next attempt should not be another tweak on this chain: either a press policy trained
+  on its own from the UniFP warm start with the steadiness term from the first iteration, or the steadiness term
+  added to the pull task alone first and measured there (on a ring it cost nothing and tightened the tracking;
+  a real D1 on a 10 Hz firmware loop cannot move the way these policies do, so it is wanted anyway). For the
+  pull deliverable, use v4 at 13,000, not the later checkpoints.
+
+### F-105 — Given only where a held handle should go, no existing policy finds the force: the 60 N pull policy drives at most ~30 N, and a policy trained on the outcome alone stops at the same ~30 N because nothing pays for trying harder until the mechanism gives
+
+- **Status:** provisional (simulation only; one seed; invented mechanisms)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log](week_02/notes.md), "The goal is the input" (2026-09-24) and its v2–v3 continuation
+  (2026-09-25). The goal-commanded task (`--task mechanism`, `unifp_train/mech_*.py`, `mechanism.py`): the claw
+  already holds a handle on a one-degree-of-freedom mechanism (slide or hinge; spring, preload, stick-slip, a latch
+  that snaps; drawn per episode, never observed), and the only command is a reference point sliding along the path.
+  Evaluation (`mech_eval`): drawer, latch, door and button, 15 placements × peaks of 10–80 N, 480 episodes;
+  *capacity* = highest peak with 12 of 15 opened, every lower one too.
+  - Given only the goal: [zero actions](#/week/2/run/20260924T132157_mech_eval_seed1_mech_eval_zero) open 0;
+    [UniFP `model_10999`](#/week/2/run/20260924T132244_mech_eval_seed1_mech_eval_unifp_10999) 47 (capacity 10 N on
+    the latch only); [the pull policy v4 `model_13000`](#/week/2/run/20260924T132220_mech_eval_seed1_mech_eval_v4_13000)
+    — 60 N when *told* to pull (F-103) — 25, capacity 0, largest drive 14–30 N. It still gives way by the
+    compliance it was trained with (UniFP's target is `goal + F / 200`).
+  - Trained on the outcome alone (`mech_v1`: handle-at-reference reward, UniFP's target made rigid, arm-margin,
+    lunge and effort terms; warm-started from the pull policy): capacity 10–20 N and 79–89 opened
+    ([`model_13200`](#/week/2/run/20260924T133901_mech_eval_seed1_mech_eval_v1_13200),
+    [`model_13600`](#/week/2/run/20260924T135440_mech_eval_seed1_mech_eval_v1_13600)); the drive levels off at
+    ~30 N at every resistance, and the curriculum stalled at a 45 N ceiling for 500 iterations
+    ([run](#/week/2/run/20260924T132337_train_seed1_mech_v1)).
+  - The saturation is a load, not a limit cycle: a physics-rate probe of signed arm torque
+    ([`mech_arm_probe_v1_13600_drawer60.json`](week_02/figures/mech_arm_probe_v1_13600_drawer60.json)) has
+    Joint2/Joint3 at −0.96/+0.98 of their limits, sign flips on 0.2%/0.1% of steps, steady within each robot.
+- **Scope:** simulation only; the mechanisms, grasp and resistance ranges are invented (no hardware to measure);
+  the grasp is a ball joint; the robot stands. One training seed, one evaluation seed.
+- **Implication:** commanding the outcome instead of the force is not free. A reward that pays only for the
+  outcome is flat below the breakaway force, and the policy never learns that more force would have worked; it
+  needs a dense term for the push itself (F-107), or the escalation has to live outside the policy (F-106).
+
+### F-106 — The goal can be turned into a force by the task layer: the pull policy, commanded by a three-line PI law on the handle's lag, opens 337 of 480 held mechanisms — 70 N drawers, 60 N latches — with no retraining, insensitive to the gains, and fails safe beyond its capacity; it inherits the pull task's directions
+
+- **Status:** provisional (simulation only; one seed; invented mechanisms)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "The baseline this has to beat". The task layer knows
+  the path (tags) and the handle's position and commands `F = kp lag + ki ∫lag` along the path (integral reset
+  when it would push the other way, clamped to 80 N), with the goal on the handle as the pull task trained
+  (`mech_eval --force_law`; gains chosen before the first run).
+  - [kp 400, ki 1000, 80 N](#/week/2/run/20260924T140553_mech_eval_seed1_mech_eval_v4_13000_forcelaw): drawer 111 of
+    120 (capacity 70 N), latch 100 (60 N), door 77 (40 N), button 49 (30 N): **337 of 480**, no falls, no tears. Drive
+    reaches 67–75 N at 80 N peaks.
+  - Gains: [ki 500](#/week/2/run/20260924T140754_mech_eval_seed1_mech_eval_v4_forcelaw_ki500) 325,
+    [ki 2000](#/week/2/run/20260924T140909_mech_eval_seed1_mech_eval_v4_forcelaw_ki2000) 349; capacities within 10 N.
+  - [Beyond capacity](#/week/2/run/20260924T141332_mech_eval_seed1_mech_eval_v4_forcelaw_stuck) (100 and 150 N,
+    120 episodes): no falls, no tears, 72–77 N held for 14 s against the 80 N cap.
+  - The lunge when a latch lets go at 40–70 N: 0.55–0.90 m/s against a 0.10 m/s reference, the same at every gain.
+  - [Held-out directions](#/week/2/run/20260924T142833_mech_eval_seed1_mech_eval_v4_forcelaw_heldout): a lifted lid
+    0 of 120 (2–5 N upward whatever it is asked), a sideways bolt 18 (capacity 10 N); pushing tops out at ~37–40 N
+    and its force estimator reads ~5 N there.
+- **Scope:** as F-105. The law reads the true handle position; a real task layer would have it from tags or the
+  tool's own kinematics, with latency. The force-following policy was trained on pulls only (F-103, F-104).
+- **Implication:** the "goal is the input" interface does not need an end-to-end policy: a force-tracking
+  whole-body policy plus integral action in the task layer already opens most of these mechanisms, and is the
+  baseline any learned goal policy has to beat. What it lacks is what its force policy lacks — other directions,
+  pushing, and a gentler release — which is where training on the mechanisms can help.
+
+### F-107 — With the push paid for, a policy given only the goal learns to escalate: it opens 358 of 480 held mechanisms with 70–80 N capacity on drawers, latches and doors — more than the hierarchical baseline — but it cannot push a button, leans the wrong way to try, and has no force limit of its own
+
+- **Status:** provisional (simulation only; one seed; invented mechanisms)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "The goal is the input, v2–v3". Same task and evaluation
+  as F-105.
+  - **v2** adds `mech_push`: newtons driven toward the reference × (1 − progress), weight 2.0 against 4.0 for the
+    progress term, so closing the gap always pays more than pushing from behind (tested). Within 800 iterations the
+    drive follows the resistance — 10 → 69 N on the drawer for 10 → 80 N peaks, where v1's was flat at 30 N
+    ([`model_14600`](#/week/2/run/20260924T144617_mech_eval_seed1_mech_eval_v2_14600)); at 1,200,
+    [204 opened](#/week/2/run/20260924T150554_mech_eval_seed1_mech_eval_v2_15000), the door to 40 N capacity. Short
+    mechanisms were left behind: a 3 cm latch or a 1.5 cm button cannot lag by more than its travel, so the push
+    paid half — 8 of 15 latches at 10 N driven with 9.7–10.1 N and never moved.
+  - **v3** scales the progress widths (and so the push term) to a short mechanism's travel. At 1,000 iterations,
+    [`model_16000`](#/week/2/run/20260924T155944_mech_eval_seed1_mech_eval_v3_16000): drawer 111 (capacity 70 N),
+    latch 120 (80 N), door 114 (80 N), button 13: **358 of 480**, no falls, no tears; the hierarchical baseline
+    (F-106) 337.
+  - **Pushing fails**: the button's drive is flat at ~21 N from 30 N up, pushed with the base 7.6° nose-*up*
+    (leaning away; `model_15400`), where the baseline leans 12° into it and drives 38 N.
+  - **No limit**: [beyond capacity](#/week/2/run/20260924T160232_mech_eval_seed1_mech_eval_v3_16000_stuck) it opens
+    11–12 of 15 pull mechanisms at 100 N, drives 128–132 N at 150 N, and tears 3 of 15 drawers out of the claw.
+  - [Held-out directions](#/week/2/run/20260924T160120_mech_eval_seed1_mech_eval_v3_16000_heldout): lid 0 of 120
+    (lifts ~1.7 cm, lets it fall, stops trying), sideways bolt 31. [Free space](#/week/2/run/20260924T160339_eval_seed1_free_mech_v3_16000):
+    3.3 cm quiet tracking, 3 of 50 falls (UniFP's walking-and-push manifest, which this policy does not train on).
+- **Scope:** as F-105. The warm-start chain is pull v4 → v1 → v2 → v3, about 2,850 iterations on this task; the
+  reward was changed twice on the way, each time after reading an evaluation, and the evaluation set is a
+  development set, not a frozen test.
+- **Implication:** "the goal is the input" is learnable end to end for pulls, and the body does the work: the
+  arm's motors are at their limits (F-105) and the drive reaches 80+ N. But the outcome reward has to pay for the
+  push as it happens, not only when it succeeds; the policy does not infer which way to lean from a goal that
+  moves 1.5 cm; and a deployed version needs a force limit that this one does not have.
+
+### F-108 — Trained with the task layer's force law in the loop, the whole-body policy opens 504 of 512 held-out mechanisms — every drawer, latch and door to 80 N, and the button it could not push before — leaning back into pulls and forward onto pushes; it does not stay under the law's force cap, and nothing it does can lift a lid
+
+- **Status:** provisional (simulation only; one seed; invented mechanisms; the test set is frozen but was built
+  on the same day as the policy)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "The hierarchical version trained with the law in the
+  loop". `mech_law_v1`: the F-106 law writes the force command in training, the goal sits on the handle, the pull
+  task's force-tracking term (4.0) replaces `mech_push`; warm-started from `mech_v3` `model_16000` (F-107), 1,500
+  iterations ([run](#/week/2/run/20260924T155754_train_seed1_mech_law_v1)).
+  - **Held-out test set** (`mech_eval --mech_test`: other placements, twice the mass, a softer grasp, a faster
+    reference, more damping; frozen before any policy was scored on it; the final checkpoint named in advance):
+    [final `model_17499`](#/week/2/run/20260924T171443_mech_eval_seed1_mech_test_law_v1_17499) opens drawer, latch
+    and door 128 of 128 each and the button 120 of 128 — **504 of 512**, capacity 80 N on all four, no falls, no
+    tears — against [338 for the untrained pull policy + law](#/week/2/run/20260924T170003_mech_eval_seed1_mech_test_v4_forcelaw)
+    (F-106) and [346 for the goal-only policy](#/week/2/run/20260924T170120_mech_eval_seed1_mech_test_v3_16000) (F-107).
+  - The development set: [480 of 480](#/week/2/run/20260924T171328_mech_eval_seed1_mech_dev_law_v1_17499); the button
+    rose from 31 to 95 opened between 400 and 800 iterations as the base pitch at ≥ 40 N went from −6.6° (leaning
+    back) to +3.1° (leaning in), and the drive from 25 to 50 N.
+  - Costs and failures: 12 buttons (development set) torn out of the claw 2.5–10 s *after* being fully pressed, as
+    the law's integral holds its force against the stop; lunges of 0.5–1.2 m/s when a latch or button lets go;
+    the arm's motors at their limits throughout; [beyond capacity](#/week/2/run/20260924T171744_mech_eval_seed1_mech_eval_law_v1_17499_stuck)
+    it opens every 100 N mechanism and drives 113–134 N at 150 N, past the law's 80 N cap (13 of 15 buttons torn
+    there); [held out](#/week/2/run/20260924T171636_mech_eval_seed1_mech_eval_law_v1_17499_heldout) bolt 54 of 120,
+    lid 0 of 120.
+  - Why the lid fails: the arm alone holds a median 2.8 N upward (p99 11.8 N) over reachable postures, a third of
+    any other direction ([`direction_capacity.json`](week_02/figures/direction_capacity.json)); leaning adds
+    nothing upward.
+- **Scope:** simulation only; invented mechanisms; the grasp is a ball joint; the robot stands; one training seed;
+  the law reads the true handle position. The warm-start chain (pull v4 → v1 → v2 → v3 → this) is long, and
+  whether the end-to-end steps are needed is being tested (log, "Control"; answered in the note below). The arm is simulated at its published
+  torque limits, saturated for most of every push; a real D1 may not hold that.
+- **Implication:** for "the goal is the input", the best of today's designs is hierarchical: a task layer that
+  turns the handle's lag into a force command (integral action, and the direction to lean), and a whole-body
+  policy trained on mechanisms *with that layer in the loop*. It opens nearly everything up to 80 N that pulls,
+  slides or pushes. Before hardware it needs a force limit it actually respects, an integral that stops holding
+  once the handle arrives, a softer release, and an honest answer about the servos at their limits. Lifting is a
+  property of the D1, not of the controller; a box whose latch must be lifted needs a different grasp or tool.
+- **Note, 2026-09-25 (later the same day):** the control answers the scope question. The same hierarchical training
+  started from the plain pull policy (v4 `model_13000`, 1,500 iterations, no end-to-end stage) opens
+  [493 of 512 on the test set](#/week/2/run/20260924T183123_mech_eval_seed1_mech_test_law_from_v4_14499) — every drawer,
+  latch and door to 80 N, 109 of 128 buttons (capacity 30 N), 3 falls on doors — with the law's integral bled
+  (`--force_law_bleed 1.0`). With the bleed, this finding's own policy opens
+  [503 of 512 with none torn](#/week/2/run/20260924T172551_mech_eval_seed1_mech_test_law_v1_17499_bleed) and
+  [480 of 480 on the development set with none torn](#/week/2/run/20260924T172436_mech_eval_seed1_mech_dev_law_v1_17499_bleed).
+  So the end-to-end stage is not needed for pulls; it may help pushing, but the longer chain also had ~2,850 more
+  iterations, so that is not a compute-matched comparison.
+- **Note, 2026-09-25 — "does not keep to the cap" is about peaks, not holding.** Over the last 5 s held against the
+  unopenable 150 N drawers, latches and doors, the median drive is 57.7 N (p90 64.7) for this policy, 60.6 N for law v2
+  at 14,800 and 67.3 N for the untrained baseline — all under the 80 N cap
+  ([mech_trace of the stuck run](#/week/2/run/20260924T171744_mech_eval_seed1_mech_eval_law_v1_17499_stuck)). The
+  113–134 N are the largest *transient* drive, while force is being built; they are what opens the 100 N mechanisms
+  and tears the 150 N buttons. A limit that matters for not breaking things has to bound the peaks.
+- **Note, 2026-09-25 — a second seed.** The law-in-loop recipe from the pull policy, rerun with seed 2 (1,500
+  iterations, [run](#/week/2/run/20260924T201420_train_seed2_mech_law_from_v4_seed2)): on the test set
+  [450 of 512](#/week/2/run/20260924T212713_mech_eval_seed1_mech_test_law_from_v4_seed2) — every drawer, latch and door
+  to 80 N again, but 66 of 128 buttons (capacity 20 N) against seed 1's 109. **The pulls reproduce; the push does not
+  yet**, and this finding's 120 of 128 buttons came from the longer chain, not the recipe alone.
+  Continued 1,000 more iterations ([run](#/week/2/run/20260924T212757_train_seed2_mech_law_from_v4_seed2_cont)), seed 2
+  reaches [480 of 512](#/week/2/run/20260924T221608_mech_eval_seed1_mech_test_law_from_v4_seed2_cont) with 97 buttons:
+  pushing is slower and seed-dependent, not absent.
+
+### F-109 — Making the task layer's force cap a limit trades against capacity: with the outcome reward in training the policy treats the command as advice (146 of 180 mechanisms needing 60–80 N opened under a 40 N budget); as a pure force-follower it keeps closer to the cap (56 of 180) but loses the heavy door and an unseen direction, and no variant bounds the transient peaks
+
+- **Status:** provisional (simulation only; one seed each; invented mechanisms)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "Law v2" and "law v3". Three policies from the same start
+  (the law-in-loop control, F-108 note), final checkpoints, law with the integral bleed:
+  - control `model_14499` (outcome reward + force tracking): [test 493 of 512](#/week/2/run/20260924T183123_mech_eval_seed1_mech_test_law_from_v4_14499);
+    under a 40 N budget [146 of 180](#/week/2/run/20260924T192147_mech_eval_seed1_mech_budget40_law_from_v4_14499)
+    mechanisms needing 60–80 N opened; held-out bolt 112 of 120 with 21 torn out of the claw.
+  - law v2 (+ over-force price −1.0 per (10 N)², lunge price ×4, cap drawn per episode 30–100 N, bleed in training):
+    [test 477](#/week/2/run/20260924T191856_mech_eval_seed1_mech_test_law_v2); budget
+    [113 of 180](#/week/2/run/20260924T191944_mech_eval_seed1_mech_budget40_law_v2); at an 80 N cap
+    [56 of 60](#/week/2/run/20260924T191922_mech_eval_seed1_mech_stuck_law_v2) 100 N mechanisms opened; bolt
+    [116, none torn](#/week/2/run/20260924T192009_mech_eval_seed1_mech_heldout_law_v2).
+  - law v3 (v2 without the outcome reward, over-force ×4): [test 457](#/week/2/run/20260924T201135_mech_eval_seed1_mech_test_law_v3)
+    (door 104, button 113); budget [56 of 180](#/week/2/run/20260924T201222_mech_eval_seed1_mech_budget40_law_v3); at an
+    80 N cap [15 of 60](#/week/2/run/20260924T201200_mech_eval_seed1_mech_stuck_law_v3), holding a median 39 N against
+    a 150 N mechanism (v2 61 N) but peaking at a median 105 N (v2 115 N, `mech_law_v1` 120 N); bolt
+    [41](#/week/2/run/20260924T201247_mech_eval_seed1_mech_heldout_law_v3).
+- **Scope:** one seed per variant; 1,000 iterations each from the same checkpoint; "peak" is the largest drive in the
+  push window, which includes the grasp spring's damping; the budget runs cap the *command*, not the measured force.
+- **Implication:** a force budget set by the task layer is the right interface for hardware — the thesis's "force-aware"
+  half — but a policy trained to open things will use the command as advice. Dropping the outcome reward mostly fixes
+  that at a price in capacity and generality; neither bounds peaks. A peak limit should be enforced where the force is
+  measured (a clamp or an abort in the task layer on the estimated force) rather than hoped for from a penalty.
+
+### F-110 — In the standing combiner demo the mechanism policy, given a claw and the task layer's force law, opens the box in 16 of 16 placements against door closers up to 16 N·m (≈ 60 N at the handle), where UniFP with the same claw and script opens 9 of 16 free doors and none from 8 N·m; the lever turn, not the door, is what limits it
+
+- **Status:** provisional (simulation only; one policy seed; the claw, springs and latch are models)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "The standing combiner demo under the mechanism policy".
+  `run_demo.py --task combiner --mech` (`demos/unifp/mech.py`, `mech_env.py`): the F-108 policy (`mech_law_v1`
+  `model_17499`) with its training's tool point and armature, a roll command, a claw that hooks the lever bar when
+  the grip closes (2,000 N/m, torn out above 150 N), a goal correction during the reach's holds, and while the claw
+  holds, the PI force law on the handle's lag along one box joint per phase (hybrid: goal on the handle along that
+  joint, on the script's reference elsewhere), the door's force capped at 15 N while the latch holds; the script turns
+  the lever to its stop and the claw hooks it 95 mm out. 16 placements per point, lever 0.4 N·m.
+  - Door closer 0 / 4 / 8 / 12 / 16 N·m: `--mech` [16](#/week/2/run/20260925T000233_combiner_mech_law_seed1_door0_mechlaw),
+    [16](#/week/2/run/20260925T000543_combiner_mech_law_seed1_door4_mechlaw), [16](#/week/2/run/20260925T000850_combiner_mech_law_seed1_door8_mechlaw),
+    [16](#/week/2/run/20260925T001156_combiner_mech_law_seed1_door12_mechlaw), [16](#/week/2/run/20260925T001503_combiner_mech_law_seed1_door16_mechlaw)
+    of 16 (door 58 / 44 / 41 / 40 / 35°); the same without the law 1 / 0 / 0 / 0 / 0; UniFP `model_56000` + wrist servo
+    with the same claw, correction and script [9](#/week/2/run/20260925T000439_combiner_unifp_wrist_claw_corr_seed1_door0_oldclaw),
+    [3](#/week/2/run/20260925T000747_combiner_unifp_wrist_claw_corr_seed1_door4_oldclaw), 0, 0, 0. No falls or tears in any run.
+  - Placements not used for tuning (seed 2): [16/16 at 8 N·m](#/week/2/run/20260925T002850_combiner_mech_law_seed2_seed2_door8),
+    [16/16 at 16 N·m](#/week/2/run/20260925T002953_combiner_mech_law_seed2_seed2_door16); one environment at a time
+    [16/16 at 8 N·m](#/week/2/run/20260925T002051_combiner_mech_law_seed1_defaults_env1).
+  - What the configuration needed, each found by a failed run: the goal correction (the policy arrives 5.1 cm off, a
+    steady offset; 2.7 mm corrected); one joint per phase and a re-projected integral (both joints at once wound the law
+    to 80 N on a 5 N lever); and the lever turned to its stop with the claw 95 mm out (pushing the lever down the policy
+    delivers 6–10 N whatever it is commanded, and at 52° and 75 mm the lever stalled at 40–44°, short of the 45° latch).
+  - Cost: peak claw force a median 47–103 N across the closers; the door ends 35–40° open at 12–16 N·m, not the
+    scripted 50°.
+- **Scope:** simulation; the claw is a spring-damper standing in for a claw tool that does not exist yet; the latch is a
+  joint limit and the springs are drives; the task layer reads the box's joint angles (as tags on the lever and the
+  door would report them) and corrects the reach with the arm's own kinematics; the configuration was tuned on the seed-1
+  placements; the arm's motors run at their limits while it pulls (F-108); one policy seed.
+- **Implication:** the goal-commanded design works end to end on the thesis's own box in simulation, and the part the
+  new policy adds — pulling a resisting door with the body — is exactly where the old controller fails. The weak link
+  has moved to the lever: pushing a short lever down is the D1's and this policy's weak direction, so the real box's
+  lever torque, and whether its latch needs lifting or pressing, decide what the hardware demo can do. Measure them.

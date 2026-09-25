@@ -205,6 +205,11 @@ about 7 N at a 0.45 m moment arm, so upstream's ±60 N is an instruction this ar
 Force tracking on this robot is a few-newton problem, and any comparison against UniFP's
 reported numbers has to say so.
 
+*2026-09-24 (F-103):* true of UniFP's task — a force in any direction at wherever the goal is — and
+not of a force into a fixture the whole body can lean on. Trained for that (`unifp_train/hook_env.py`),
+the same architecture pulls 60 N in simulation by lining the arm up with the pull and leaning. The
+7 N figure is the arm alone in a bent reach.
+
 Three mechanical changes were forced by Isaac Gym rather than chosen:
 
 - **Arm joints are renamed `Joint<n>` → `d1_Joint<n>`** in the generated URDF. Isaac Gym orders

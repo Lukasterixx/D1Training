@@ -66,6 +66,31 @@ class TaskState:
     gripper_force_kp: torch.Tensor      # (N, 3) virtual stiffness, N/m
     base_force_kd: torch.Tensor         # (N, 3) virtual damping for the base
     dt: float = interface.POLICY_DT
+    # --- read only by this repository's extension terms, and optional for that reason. The
+    # fidelity test builds a state out of a recorded Isaac Gym rollout, which has no notion of
+    # them; requiring them there would make the port's own guard impossible to run.
+    ee_approach_w: torch.Tensor | None = None   # (N, 3) unit, the hand's approach axis (Link6 +z)
+    ee_jaw_w: torch.Tensor | None = None        # (N, 3) unit, the axis the jaws open along (+y)
+    base_forward_w: torch.Tensor | None = None  # (N, 3) unit, the base heading: the roll fallback
+    # --- read only by the force-transmission task's terms (`hook_rewards.py`), same reason.
+    fixture_engaged: torch.Tensor | None = None     # (N,) 1.0 while the tool is on a fixture
+    fixture_applied_w: torch.Tensor | None = None   # (N, 3) force the robot applies to it, world
+    fixture_command_w: torch.Tensor | None = None   # (N, 3) force it is commanded to apply, world
+    fixture_lost: torch.Tensor | None = None        # (N,) 1.0 on the step the contact was lost
+    fixture_axis_w: torch.Tensor | None = None      # (N, 3) unit, the fixture's force axis d
+    fixture_risk: torch.Tensor | None = None        # (N,) 0 seated .. 1 about to be lost
+    fixture_active: torch.Tensor | None = None      # (N,) 1.0 while engaged or detached (a pad off its button)
+    tool_vel_w: torch.Tensor | None = None          # (N, 3) the controlled point's velocity, world
+    # --- read only by the goal-commanded task's terms (`mech_rewards.py`), same reason. That task
+    # also sets `fixture_engaged` (to "holding the handle"), so `hook_rewards.arm_torque_margin` works.
+    mech_error: torch.Tensor | None = None          # (N,) handle position minus its reference along the path, m
+    mech_speed: torch.Tensor | None = None          # (N,) handle speed along the path, m/s
+    mech_speed_limit: torch.Tensor | None = None    # (N,) speed above which `mech_overspeed` charges, m/s
+    mech_torn: torch.Tensor | None = None           # (N,) 1.0 on the step the handle left the claw
+    mech_force: torch.Tensor | None = None          # (N,) grasp force magnitude, N
+    mech_drive: torch.Tensor | None = None          # (N,) force the robot drives the handle with along the path, N (+ opens)
+    mech_travel: torch.Tensor | None = None         # (N,) the mechanism's full travel, m
+    mech_command: torch.Tensor | None = None        # (N,) the task layer's force command along the path, N (0 without one)
 
 
 def _walking(state: TaskState) -> torch.Tensor:
@@ -303,4 +328,82 @@ def feet_contact_forces(state: TaskState) -> torch.Tensor:
 #: Every term the task uses, by the name its weight is keyed under.
 TERMS = {
     name: globals()[name] for name in task_cfg.REWARD_WEIGHTS
+}
+
+
+# --- this repository's extension: the gripper roll objective ----------------------------------
+#
+# Not upstream's. `TERMS` above is the port's fidelity record and stays exactly as UniFP declares
+# it; what follows lives in `EXTENSION_TERMS`, for the reason `task_cfg.EXTENSION_WEIGHTS` gives.
+
+def tool_roll(state: TaskState) -> torch.Tensor:
+    """The hand's roll about its own approach axis, radians in (-pi/2, pi/2].
+
+    Measured against a **horizontal** reference, so the quantity is gravity-referenced and means
+    the same thing wherever the arm is pointed: the reference direction is the horizontal one
+    perpendicular to the approach, and the roll is the angle of the jaw axis from it. So 0 is jaws
+    level -- both pads meeting a cup's wall at the same height -- and +/- pi/2 is jaws upright,
+    one pad above a lever's bar and one below.
+
+    Wrapped to a half-turn because a jaw axis is an **axis**: the two fingers are interchangeable,
+    so a jaw direction and its negation are the same grasp, and an unwrapped angle would ask the
+    wrist to roll 180 degrees to reach a pose it was already in.
+
+    Where the approach is vertical the horizontal reference is undefined -- every roll is equally
+    level -- and the base's own heading is used instead, which keeps the angle continuous and
+    well-defined rather than making the term vacuous at the top and bottom of the workspace.
+    """
+    up = torch.zeros_like(state.ee_approach_w)
+    up[:, 2] = 1.0
+    reference = torch.cross(up, state.ee_approach_w, dim=-1)
+    degenerate = reference.norm(dim=-1, keepdim=True) < 1e-4
+    fallback = torch.cross(state.base_forward_w, state.ee_approach_w, dim=-1)
+    reference = torch.where(degenerate, fallback, reference)
+    reference = reference / reference.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+    second = torch.cross(state.ee_approach_w, reference, dim=-1)
+    angle = torch.atan2((state.ee_jaw_w * second).sum(-1), (state.ee_jaw_w * reference).sum(-1))
+    return wrap_half_turn(angle)
+
+
+def wrap_half_turn(angle: torch.Tensor) -> torch.Tensor:
+    """Fold an angle into (-pi/2, pi/2], the period of an axis rather than of a direction."""
+    return torch.remainder(angle + math.pi / 2, math.pi) - math.pi / 2
+
+
+def commanded_roll(commands: torch.Tensor) -> torch.Tensor:
+    """Decode the commanded roll from the two channels that carry it.
+
+    It is carried as `(sin 2phi, cos 2phi)` rather than as the angle, and that is not decoration.
+    A jaw axis is an axis, so the angle lives on a half turn and is **discontinuous** at its ends:
+    a command sliding past 90 degrees would jump to -90 in the observation, and the policy would
+    see a step change in what it is being asked for while the hand is asked to keep turning
+    smoothly. Doubling the angle makes it periodic over a full turn, where sine and cosine are
+    continuous everywhere. `CMD_EE_ORN_R` and `CMD_EE_ORN_P` are the two channels used: both are
+    declared in the command vector, carried in the observation at scale 0.5, and never written by
+    upstream's task, so borrowing them changes no width.
+    """
+    return 0.5 * torch.atan2(commands[:, interface.CMD_EE_ORN_R],
+                             commands[:, interface.CMD_EE_ORN_P])
+
+
+def encode_roll(roll: torch.Tensor) -> torch.Tensor:
+    """`(sin 2phi, cos 2phi)` for the two command channels. The inverse of `commanded_roll`."""
+    return torch.stack((torch.sin(2.0 * roll), torch.cos(2.0 * roll)), dim=-1)
+
+
+def tracking_ee_orn_roll(state: TaskState) -> torch.Tensor:
+    """How near the jaws are to the roll they were commanded.
+
+    `exp(-|error| / sigma)` on the wrapped angular error, so it is 1.0 on target and falls off over
+    tens of degrees rather than binarily. Adding this term changes no observation width and leaves
+    every existing checkpoint loadable; what changes is that two always-zero channels start
+    carrying something.
+    """
+    error = wrap_half_turn(tool_roll(state) - commanded_roll(state.commands))
+    return torch.exp(-error.abs() / task_cfg.TRACKING_EE_ROLL_SIGMA)
+
+
+#: This repository's added terms, keyed as `task_cfg.EXTENSION_WEIGHTS` keys them.
+EXTENSION_TERMS = {
+    "tracking_ee_orn_roll": tracking_ee_orn_roll,
 }

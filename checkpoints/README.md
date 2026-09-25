@@ -12,6 +12,7 @@ split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 | --- | --- | --- | --- |
 | `unifp_go2d1_isaaclab_model_56000.pt` | Isaac Lab 0.54.3 / Isaac Sim 5.1, this repository's `unifp_train` | **1.5 cm** median tool-tip error | 0/50 |
 | `unifp_go2d1_isaacgym_model_48800.pt` | Isaac Gym Preview 4 / legged_gym, via `unifp_go2d1/` | 3.9 cm median tool-tip error | 0/50 |
+| `unifp_go2d1_mech_law_model_17499.pt` | Isaac Lab 0.54.3 / Isaac Sim 5.1, `unifp_train --task mechanism --force_law` | 504/512 held mechanisms opened to 80 N (F-108); the standing combiner demo 16/16 to a 16 N·m door closer (F-110) | 0 |
 
 Both figures are from the same 50 frozen episodes in the same simulator
 (`results/manifests/unifp_isaaclab_validation.json`, content `94e576a6…`), forces active, with
@@ -35,6 +36,14 @@ Everything needed is in this repository except the simulator and the Go2 mesh, w
 from Isaac Sim's asset server. `generated/` is gitignored and the welded USD is rebuilt from
 `d1_arm/d1.urdf` on first run, so there is nothing else to copy.
 
+> **Since 2026-09-24 the task controls a different point.** New runs put the controlled point at
+> the jaw centre (`Link6 + (0, 0, 0.1051)`), which does not move when the jaws open and lies on the
+> roll axis (F-094, F-096, F-099). These checkpoints were trained on the Link7_1 **fingertip**, and
+> the two points are 2.4 cm apart, so **the table above only reproduces with
+> `--tool_point fingertip`**. Without it the same policy on the same frozen set reads 3.5 cm rather
+> than 1.5, the manifest reports a condition mismatch, and both are correct — it is a different
+> measurement, not a regression.
+
 ```bash
 source ~/miniconda3/etc/profile.d/conda.sh && conda activate env_isaaclab
 unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
@@ -44,7 +53,7 @@ unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
     --checkpoint checkpoints/unifp_go2d1_isaaclab_model_56000.pt
 
 # score it on the frozen set -- reproduces the table above
-./run_unifp_train.py eval --headless \
+./run_unifp_train.py eval --headless --tool_point fingertip \
     --manifest results/manifests/unifp_isaaclab_validation.json \
     --checkpoint checkpoints/unifp_go2d1_isaaclab_model_56000.pt
 
@@ -57,6 +66,29 @@ A different GPU will not reproduce the numbers bit for bit — PhysX is not dete
 devices — but the manifest re-checks every episode's schedule digest and the environment
 conditions on each run, so a machine that has drifted says so rather than quietly reporting
 different numbers.
+
+## The mechanism policy: `unifp_go2d1_mech_law_model_17499.pt`
+
+A different controller from the two above, not a better copy of them. It holds a handle and is given the goal
+plus a force command from a task layer's PI law on how far the handle lags its reference (F-106, F-108); it was
+trained on invented mechanisms (slides and hinges with springs, stiction and snapping latches), the jaw-centre
+tool point, the roll objective, and **0.01 kg·m² of arm armature** (F-102) — run it with anything else and it is
+not the policy that was measured. Given only a goal, with no force command, it gives way (F-105, F-110).
+
+```bash
+# the standing combiner demo, as it is meant to be run (claw, force law, roll command, goal correction)
+./demos/unifp/run_demo.py --task combiner --mech --num_envs 1 --attempts 1 --door_torque_nm 8
+./demos/unifp/run_demo.py --task combiner --mech --attempts 16 --headless --door_torque_nm 16
+
+# the mechanism evaluation it was scored on: held-out test set, the law with its integral bleed
+./run_unifp_train.py mech_eval --task mechanism --force_law --force_law_bleed 1.0 --mech_test --headless \
+    --checkpoint checkpoints/unifp_go2d1_mech_law_model_17499.pt
+```
+
+It is `logs/unifp_train/20260924T155754_train_seed1_mech_law_v1/model_17499.pt`, byte for byte (`SHA256SUMS`),
+the end of a chain on this task — pull task v4 `model_13000` (F-103) → `mech_v1` → `v2` → `v3` → this, ~4,350
+iterations on mechanisms, one seed; the runs are under `results/week_02/runs/` (`*_mech_*`). Simulation only; the
+arm's motors run at their limits while it pulls, which a real D1 may not tolerate.
 
 ## Provenance
 

@@ -1,0 +1,63 @@
+{
+  "id": "20260924T155754_train_seed1_mech_law_v1",
+  "title": "Mechanism task training, hierarchical (force law in the loop), from mech_v3 16000; complete at 17499",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-25T03:13:13+10:00",
+  "started_utc": "2026-09-24T15:57:54+00:00",
+  "source_dir": "logs/unifp_train/20260924T155754_train_seed1_mech_law_v1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 17499,
+  "final_checkpoint": {
+    "file": "model_17499.pt",
+    "sha256": "678411c35b7493b742cd4e32d64f7bc19fb6406c9bb2f6debe14712116c78994"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 186.90158081054688,
+      "last_step": 17499,
+      "mean_last_10": 188.83367004394532,
+      "min": 2.2726709842681885,
+      "max": 196.57199096679688,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 988.77001953125,
+      "last_step": 17499,
+      "mean_last_10": 993.3710021972656,
+      "min": 12.269662857055664,
+      "max": 999.0,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.7280592918395996,
+      "last_step": 17499,
+      "mean_last_10": 0.7282263398170471,
+      "min": 0.5839857459068298,
+      "max": 0.731407642364502,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 35239.0,
+      "last_step": 17499,
+      "mean_last_10": 34974.9,
+      "min": 23209.0,
+      "max": 37898.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

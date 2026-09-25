@@ -1,0 +1,48 @@
+{
+  "controller": "unifp",
+  "task": "cup",
+  "summary": {
+    "attempts": 1,
+    "successes": 0,
+    "falls": 0,
+    "final_lift_m_median": 0.0275,
+    "max_lift_m_median": 0.0275,
+    "jaw_centre_error_close_m_median": 0.0191,
+    "jaw_tilt_close_deg_median": 62.7762
+  },
+  "attempts": [
+    {
+      "attempt": 0,
+      "fell": false,
+      "phase_start_s": {
+        "settle": 0.0,
+        "stand": 0.98,
+        "approach": 2.48,
+        "enter": 4.48,
+        "close": 5.78,
+        "lift": 6.58,
+        "hold": 8.58,
+        "done": 10.08
+      },
+      "max_cup_lift_m": 0.0275,
+      "final_cup_lift_m": 0.0275,
+      "final_phase": "done",
+      "jaw_centre_error_enter_m": 0.0335,
+      "jaw_tilt_enter_deg": 47.484,
+      "approach_elevation_enter_deg": -41.9963,
+      "jaw_centre_error_close_m": 0.0191,
+      "jaw_tilt_close_deg": 62.7762,
+      "approach_elevation_close_deg": -25.5227,
+      "jaw_centre_error_hold_m": 0.0091,
+      "jaw_tilt_hold_deg": 80.2891,
+      "approach_elevation_hold_deg": -5.0249,
+      "site": {
+        "cup_xy_m": [
+          0.4381,
+          0.0556
+        ]
+      },
+      "success": false
+    }
+  ]
+}

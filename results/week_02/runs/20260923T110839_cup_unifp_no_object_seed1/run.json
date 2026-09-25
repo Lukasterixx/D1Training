@@ -1,0 +1,149 @@
+{
+  "mode": "unifp_demo",
+  "task": "cup",
+  "controller": "unifp_no_object",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "task": "cup",
+    "checkpoint": "checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+    "attempts": 4,
+    "num_envs": 4,
+    "seed": 1,
+    "wrist": false,
+    "wrist_gain": null,
+    "no_object": true,
+    "zero_actions": false,
+    "handle_torque_nm": null,
+    "settle_s": 1.0,
+    "robot_usd": null,
+    "out": null,
+    "run_name": "",
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 56000,
+  "num_envs": 4,
+  "attempts": 4,
+  "script_phases": [
+    {
+      "name": "stand",
+      "duration_s": 1.5
+    },
+    {
+      "name": "approach",
+      "duration_s": 2.0
+    },
+    {
+      "name": "settle",
+      "duration_s": 2.0
+    },
+    {
+      "name": "enter",
+      "duration_s": 2.5
+    },
+    {
+      "name": "arrive",
+      "duration_s": 1.2
+    },
+    {
+      "name": "close",
+      "duration_s": 0.8
+    },
+    {
+      "name": "lift",
+      "duration_s": 2.0
+    },
+    {
+      "name": "hold",
+      "duration_s": 1.5
+    }
+  ],
+  "script_total_s": 13.5,
+  "settle_s": 1.0,
+  "handle_torque_nm": null,
+  "forces": "scheduled pushes off; contact only",
+  "base_command": "zero (standing)",
+  "perception": "none -- the object pose is given",
+  "assets": {
+    "cup": {
+      "usd_path": "/home/victor/D1Training/generated/unifp_demos/cup_a648056e1345.usd",
+      "source": "/home/victor/D1Training/demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+      "source_sha256": "da2194b0a27c46a0b3aefef011c45911c53027f38586c0822011098b6c5dc677",
+      "diameter_m": 0.055,
+      "height_m": 0.1,
+      "mass_kg": 0.12,
+      "colour": [
+        0.92,
+        0.92,
+        0.9
+      ],
+      "roughness": 0.35,
+      "static_friction": 0.9,
+      "dynamic_friction": 0.7,
+      "wall_m": 0.0,
+      "wall_segments": 24,
+      "builder": 2,
+      "source_points": 626087,
+      "source_diameter_units": 198.71906075403803,
+      "source_height_units": 197.18265719683802,
+      "scale_diameter": 0.000276772644714115,
+      "scale_height": 0.0005071439923855717,
+      "handle_box_m": {
+        "min": [
+          0.0276,
+          -0.0059,
+          0.0078
+        ],
+        "max": [
+          0.0499,
+          0.0059,
+          0.093
+        ]
+      },
+      "collision": "solid cylinder (body) + box (handle); the visual mesh has no collider"
+    }
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "stack": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_status": "?? demos/unifp/\n?? logs/unifp_demos/",
+  "command": "./demos/unifp/run_demo.py --task cup --attempts 4 --headless --no_object",
+  "attempt_count": 4,
+  "summary": {
+    "attempts": 4,
+    "successes": 0,
+    "falls": 0,
+    "toppled": 0,
+    "toppled_in": {},
+    "final_lift_m_median": -0.42,
+    "max_lift_m_median": -0.0025,
+    "jaw_centre_error_arrive_m_median": 0.03035,
+    "lateral_error_arrive_m_median": 0.02623,
+    "jaw_tilt_arrive_deg_median": 43.4377,
+    "approach_elevation_arrive_deg_median": -37.64
+  }
+}

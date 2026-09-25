@@ -1,0 +1,166 @@
+{
+  "mode": "unifp_demo",
+  "wrist_joints": "6",
+  "task": "cup",
+  "controller": "unifp_wrist",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "task": "cup",
+    "checkpoint": "checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+    "attempts": 16,
+    "num_envs": 16,
+    "seed": 1,
+    "wrist": true,
+    "wrist_joints": "6",
+    "wrist_gain": null,
+    "no_object": false,
+    "free_space": false,
+    "command_tip": false,
+    "jaw_hold": null,
+    "no_jaw_compensation": false,
+    "zero_actions": false,
+    "handle_torque_nm": null,
+    "speed_scale": 0.4,
+    "hold_scale": 1.0,
+    "settle_s": 1.0,
+    "robot_usd": null,
+    "out": null,
+    "run_name": "",
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 56000,
+  "num_envs": 16,
+  "attempts": 16,
+  "script_phases": [
+    {
+      "name": "stand",
+      "duration_s": 0.6000000000000001
+    },
+    {
+      "name": "approach",
+      "duration_s": 0.8
+    },
+    {
+      "name": "settle",
+      "duration_s": 0.8
+    },
+    {
+      "name": "enter",
+      "duration_s": 1.0
+    },
+    {
+      "name": "arrive",
+      "duration_s": 0.48
+    },
+    {
+      "name": "close",
+      "duration_s": 0.32000000000000006
+    },
+    {
+      "name": "lift",
+      "duration_s": 0.8
+    },
+    {
+      "name": "hold",
+      "duration_s": 0.6000000000000001
+    }
+  ],
+  "script_total_s": 5.4,
+  "speed_scale": 0.4,
+  "hold_scale": 1.0,
+  "settle_s": 1.0,
+  "handle_torque_nm": null,
+  "jaw_compensation": true,
+  "forces": "scheduled pushes off; contact only",
+  "base_command": "zero (standing)",
+  "perception": "none -- the object pose is given",
+  "assets": {
+    "cup": {
+      "usd_path": "/home/victor/D1Training/generated/unifp_demos/cup_a648056e1345.usd",
+      "source": "/home/victor/D1Training/demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+      "source_sha256": "da2194b0a27c46a0b3aefef011c45911c53027f38586c0822011098b6c5dc677",
+      "diameter_m": 0.055,
+      "height_m": 0.1,
+      "mass_kg": 0.12,
+      "colour": [
+        0.92,
+        0.92,
+        0.9
+      ],
+      "roughness": 0.35,
+      "static_friction": 0.9,
+      "dynamic_friction": 0.7,
+      "wall_m": 0.0,
+      "wall_segments": 24,
+      "builder": 2,
+      "source_points": 626087,
+      "source_diameter_units": 198.71906075403803,
+      "source_height_units": 197.18265719683802,
+      "scale_diameter": 0.000276772644714115,
+      "scale_height": 0.0005071439923855717,
+      "handle_box_m": {
+        "min": [
+          0.0276,
+          -0.0059,
+          0.0078
+        ],
+        "max": [
+          0.0499,
+          0.0059,
+          0.093
+        ]
+      },
+      "collision": "solid cylinder (body) + box (handle); the visual mesh has no collider"
+    }
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "stack": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_status": "?? demos/unifp/\n?? logs/unifp_demos/",
+  "command": "./demos/unifp/run_demo.py --task cup --attempts 16 --headless --wrist --speed_scale 0.4",
+  "attempt_count": 16,
+  "summary": {
+    "attempts": 16,
+    "successes": 5,
+    "falls": 0,
+    "arm_speed_peak_rad_s_median": 1.766,
+    "picked": 6,
+    "spilled": 1,
+    "knocked_over": 0,
+    "knocked_over_in": {},
+    "final_cup_tilt_deg_median": 24.4,
+    "final_lift_m_median": 0.0275,
+    "max_lift_m_median": 0.0339,
+    "jaw_centre_error_arrive_m_median": 0.03471,
+    "lateral_error_arrive_m_median": 0.03103,
+    "jaw_tilt_arrive_deg_median": 0.6533,
+    "approach_elevation_arrive_deg_median": -11.3537,
+    "forearm_contact_arrive_n_median": 0.1604,
+    "base_shift_arrive_m_median": 0.0466
+  }
+}

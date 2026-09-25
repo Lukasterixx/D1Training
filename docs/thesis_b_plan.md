@@ -209,6 +209,20 @@ retain the tagged system for the core control evaluation and report the limit.
    “position-only” means no force-control inputs/objective; it need not prohibit
    orientation commands. Match this pose interface in force-aware variants.
 
+   **Corrected 2026-09-24 (F-099): “orientation tracking” here must mean the
+   gripper’s roll about its approach axis, not a full end-effector pose.** The
+   D1 has no dexterous workspace worth the name at this reach. Over UniFP’s own
+   goal sphere, 85.7% of goals admit a position, 42.9% admit a levelled hand
+   (two rotational degrees of freedom) and **8.2% admit a freely chosen
+   orientation**; of 147 goals, none admitted all of the orientations tried and
+   81 admitted none. A full-pose objective would train mostly on targets the arm
+   cannot reach. Roll alone is free: a jaw axis repeats every 180° and `Joint6`
+   spans 269° (242° at the soft limits), so any commanded roll is reachable from
+   any position solution, and with the controlled point moved onto the roll axis
+   (F-094, F-096) rolling to it does not disturb the position at all. Read
+   “orientation commands” as one degree of freedom throughout this plan, and
+   size the tolerances in the Week 2 freeze accordingly.
+
 The current task uses 200 Hz physics and 50 Hz policy steps. Its default
 `--latency estimated` profile holds D1 arm targets for 5 policy steps (the SDK's
 10 Hz streaming rate), samples arm joint angles at the **measured** 9 Hz (F-020)

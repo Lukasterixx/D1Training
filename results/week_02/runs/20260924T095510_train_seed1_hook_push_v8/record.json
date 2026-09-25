@@ -1,0 +1,63 @@
+{
+  "id": "20260924T095510_train_seed1_hook_push_v8",
+  "title": "Hook v8 (presses re-engage in training): 368 its, stopped: every press still lost its pad (drops and drifts)",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-24T20:14:56+10:00",
+  "started_utc": "2026-09-24T09:55:10+00:00",
+  "source_dir": "logs/unifp_train/20260924T095510_train_seed1_hook_push_v8",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "8ed4ad123ccd2177f74b53e30c0517348899e8f4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 14482,
+  "final_checkpoint": {
+    "file": "model_14482.pt",
+    "sha256": "fb8804cfc78724af8f5b98b428876d85ec7f1b2e65fedc60b9b38a968cf1d38e"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 99.81327056884766,
+      "last_step": 14482,
+      "mean_last_10": 97.11034622192383,
+      "min": 1.7421565055847168,
+      "max": 104.44749450683594,
+      "points": 373
+    },
+    "Train/mean_episode_length": {
+      "last": 841.7899780273438,
+      "last_step": 14482,
+      "mean_last_10": 820.4900024414062,
+      "min": 14.569999694824219,
+      "max": 938.7100219726562,
+      "points": 373
+    },
+    "Policy/mean_std": {
+      "last": 1.2018533945083618,
+      "last_step": 14482,
+      "mean_last_10": 1.2023821711540221,
+      "min": 1.2018533945083618,
+      "max": 1.447221279144287,
+      "points": 373
+    },
+    "Perf/total_fps": {
+      "last": 33861.0,
+      "last_step": 14482,
+      "mean_last_10": 33555.9,
+      "min": 23651.0,
+      "max": 36664.0,
+      "points": 373
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}
