@@ -125,5 +125,83 @@ class RollTest(unittest.TestCase):
         self.assertTrue(torch.allclose(mech.jaw_roll(approach, jaw, forward), rewards.tool_roll(state), atol=1e-5))
 
 
+class LipGeometryTest(unittest.TestCase):
+    """The L-claw's lips (`demos/unifp/claw.py`): where they are, and what they allow. numpy only."""
+
+    def test_the_finger_frame_box_lands_where_the_hand_frame_says(self):
+        import numpy as np
+        from demos.unifp import claw
+        for finger, spec in claw.FINGERS.items():
+            centre, size = claw.lip_box_link6(finger)
+            xyz, rpy, size_f = claw.lip_box_finger(finger)
+            rot = claw.rpy_matrix(*spec["rpy"])
+            back = rot @ xyz + np.asarray(spec["xyz"])
+            self.assertTrue(np.allclose(back, centre, atol=1e-9))
+            # The box's axes are Link6's: its rotation in Link6 is the identity.
+            self.assertTrue(np.allclose(rot @ claw.rpy_matrix(*rpy), np.eye(3), atol=1e-6))
+            self.assertTrue(np.allclose(size, size_f))
+
+    def test_the_lips_pass_each_other_and_each_is_fixed_to_its_own_finger(self):
+        from demos.unifp import claw
+        c1, s1 = claw.lip_box_link6("Link7_1")
+        c2, s2 = claw.lip_box_link6("Link7_2")
+        x1 = (c1[0] - s1[0] / 2, c1[0] + s1[0] / 2)
+        x2 = (c2[0] - s2[0] / 2, c2[0] + s2[0] / 2)
+        self.assertGreaterEqual(x1[0] - x2[1], claw.LIP_CLEARANCE_M - 1e-9)   # disjoint halves of the width
+        # Link7_1 sits at -y: its lip starts over its own end (y < -8.6 mm) and reaches 20 mm past its inner face.
+        self.assertLess(c1[1] - s1[1] / 2, -claw.FINGER_INNER_Y_M)
+        self.assertAlmostEqual(c1[1] + s1[1] / 2, -claw.FINGER_INNER_Y_M + claw.LIP_LENGTH_M, places=9)
+        self.assertGreater(c2[1] + s2[1] / 2, claw.FINGER_INNER_Y_M)
+        self.assertAlmostEqual(c2[1] - s2[1] / 2, claw.FINGER_INNER_Y_M - claw.LIP_LENGTH_M, places=9)
+        # Beyond the fingertips, not across them.
+        self.assertGreater(c1[2] - s1[2] / 2, claw.FINGER_END_Z_M)
+
+    def test_at_full_close_each_lip_overbites_the_other_finger_without_touching_it(self):
+        import struct
+        from pathlib import Path
+        import numpy as np
+        from demos.unifp import claw
+
+        def link6_vertices(finger):
+            path = Path(__file__).resolve().parents[3] / "d1_arm" / "meshes" / f"{finger}.STL"
+            data = path.read_bytes()
+            count = struct.unpack("<I", data[80:84])[0]
+            tri = np.frombuffer(data[84:84 + 50 * count],
+                                dtype=np.dtype([("n", "<3f4"), ("v", "<9f4"), ("a", "<u2")]))["v"].reshape(-1, 3)
+            spec = claw.FINGERS[finger]
+            return tri.astype(float) @ claw.rpy_matrix(*spec["rpy"]).T + np.asarray(spec["xyz"])
+
+        for lip, other in (("Link7_1", "Link7_2"), ("Link7_2", "Link7_1")):
+            centre, size = claw.lip_box_link6(lip)
+            lo, hi = centre - size / 2, centre + size / 2
+            verts = link6_vertices(other)       # jaws shut: zero travel
+            inside = np.all((verts > lo) & (verts < hi), axis=1)
+            self.assertFalse(inside.any(), f"{lip}'s lip cuts into {other} at full close")
+            # And it does reach over the other finger's end: an overbite, not a stop short of it.
+            under = (np.abs(verts[:, 0] - centre[0]) < size[0] / 2) & (np.abs(verts[:, 1] - centre[1]) < size[1] / 2)
+            self.assertTrue(under.any())
+        self.assertEqual(claw.LIP_STOP_TRAVEL_M, 0.0)
+
+    def test_what_the_lips_allow(self):
+        from demos.unifp import claw
+        self.assertAlmostEqual(claw.entry_gap_m(claw.MAX_TRAVEL_M), 0.0372, places=6)
+        self.assertLess(claw.entry_gap_m(0.012), 0.018)      # the friction grip's 41.2 mm opening admits no bar
+
+    def test_the_urdf_gets_a_lip_on_each_finger_and_absolute_meshes(self):
+        import tempfile
+        import xml.etree.ElementTree as ET
+        from pathlib import Path
+        from demos.unifp import claw
+        source = Path(__file__).resolve().parents[3] / "d1_arm" / "d1.urdf"
+        with tempfile.TemporaryDirectory() as tmp:
+            out = claw.write_claw_urdf(source, Path(tmp) / "d1_claw.urdf")
+            root = ET.parse(out).getroot()
+            for link in root.iter("link"):
+                boxes = [c for c in link.findall("collision") if c.find("geometry/box") is not None]
+                self.assertEqual(len(boxes), 1 if link.get("name") in claw.FINGERS else 0)
+            for mesh in root.iter("mesh"):
+                self.assertTrue(Path(mesh.get("filename")).is_file(), mesh.get("filename"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -90,16 +90,40 @@ layer's force law in the loop — the way it was trained, which the plain demo w
 
 | what | why |
 | --- | --- |
-| a **claw** hooks the lever bar when the grip closes, if the jaw centre is within 2.5 cm of it (`mech.ClawCoupling`, 2,000 N/m, torn out above 150 N) | the training's grasp, and Lukas's "the pincers become claws"; without it a friction grip is what gives first (F-073) |
+| an **L-lip claw**: a 20 mm lip turned inward just beyond each fingertip, the two on opposite halves of the finger's width so they pass each other and overbite at full close — real colliders (`claw.py`, the robot rebuilt with them in `generated/claw/`), the jaws approaching fully open and closing fully onto the bar | Lukas's claw design; without a claw a friction grip is what gives first (F-073). PhysX decides whether the bar is held; `mech_env` only watches whether it is in the loop. `--claw_model spring` is the first model: a spring from the jaw centre to the lever that holds in every direction |
 | while the claw holds: the **force law** — PI on how far the handle lags the script, 80 N cap, integral bled once it arrives — along the joint each phase drives (the lever to turn it, lever and door to crack it, the door to open it), the goal on the handle along that joint and on the script's reference elsewhere (`mech_env.LAW_JOINTS`, `LAW_GOAL`) | how the policy was trained to be commanded; one joint at a time as training had one |
 | the door's force capped at 15 N while the latch still holds | a task layer that can see the lever should not yank a latched door |
 | a **roll command** puts the jaws across the bar | the policy has the roll objective; no wrist servo |
 | a **goal correction** slides the commanded goal by the jaw centre's steady miss during the reach's holds | this policy arrives 5 cm off (its training grasped wherever it stopped); corrected, 2.5 mm |
-| the jaw-centre tool point, the arm's 0.01 kg·m² armature, turn the lever to its stop (60°) and hook it 95 mm out | its training conditions; pushing the lever down is its weakest move, and at 52° and 75 mm the lever stalled short of the latch |
+| the jaw-centre tool point, the arm's 0.01 kg·m² armature, turn the lever to its stop (60°); with the lip claw hook it 80 mm out and keep it at the stop through the pull, rolling the jaws to its measured angle while the door opens (the spring claw: 95 mm, eased back) | its training conditions; pushing the lever down is its weakest move; the lip claw is 26 mm wide (at 95 mm half of it hangs off the 105 mm lever) and a lever turned by the pull slides out of it |
+
+**Where the robot stands** (`--stance_deg`, F-113): the box turned about the grasp point, so the reach is unchanged and
+only the directions the lever and the door move in turn. Positive is the latch side, where the lever's late turn draws
+the handle toward the robot: the policy turns a stiffer lever there (lip claw best at +15°: 13/16 opened at a 1.2 N·m
+lever, against 2/16 square). Negative is the hinge side, where the opening door comes toward the robot and the pull goes
+into the lips: no late escapes at a 16 N·m closer from −30° (square: 13 of 16). Each side makes the other phase harder;
+at +45° the forearm lands on the box. Pick the side by which of the two is stiff.
 
 `--door_torque_nm` adds a door closer (torque at 45°); `--claw` and `--goal_correction` give any controller the same
-claw and correction, and `--no_force_law` keeps them and drops the law. Measured, 16 placements, lever 0.4 N·m
-(week 2 log, 2026-09-25; `results/week_02/figures/combiner_mech_sweep.png`):
+claw and correction, and `--no_force_law` keeps them and drops the law. Measured with the **L-lip claw**, lips
+overbiting beyond the fingertips, 16 placements, lever 0.4 N·m (F-112; `results/week_02/figures/combiner_mech_sweep_overbite.png`):
+
+| door closer | `--mech` | `--mech --no_force_law` | UniFP + wrist, same claw, correction and script |
+| --- | --- | --- | --- |
+| free | **16/16** (door 46°) | 1/16 | 13/16 |
+| 4 N·m | **16/16** (45°) | 0/16 | 6/16 |
+| 8 N·m | **16/16** (42°) — also 16/16 on untuned placements | 0/16 | 0/16 |
+| 12 N·m | **16/16** (43°); the lever came out of the claw late in 5 | 0/16 | 0/16 |
+| 16 N·m | **16/16** (35°) — also on untuned placements; the lever came out late in 13 (11 untuned) | 0/16 | 0/16 |
+
+From 12 N·m the door peaks past 30° every time, then the lever often leaves the claw near the end of the pull and the
+door swings back: once the door has swung, the pull runs along the lip face rather than into it, and the policy
+commands no direction for the hand. A lip claw wants its pull going into the lips. The first lip model, with the lips
+across the fingertips so the jaws stopped short of the bar (F-111, `combiner_mech_sweep_lips.png`), measured within a
+few degrees of this with the force law; the full close helped the old controller on a free door (13/16 against 11/16)
+but not beyond it.
+
+With the first, spring claw (F-110; `combiner_mech_sweep.png`):
 
 | door closer | `--mech` | `--mech --no_force_law` | UniFP + wrist, same claw, correction and script |
 | --- | --- | --- | --- |
@@ -110,9 +134,11 @@ claw and correction, and `--no_force_law` keeps them and drops the law. Measured
 | 16 N·m | **16/16** (35°) | 0/16 | 0/16 |
 
 No falls or tears anywhere. What it costs: the claw peaks near 100–118 N at 12–16 N·m (its limit 150), and the
-door ends 35–40° open, not the scripted 50°, inside the script's clock. What it does not show: the claw, the box's
-springs and the latch are models, the lever is still only 0.4 N·m — pushing it down is the limit, not pulling the
-door — and nothing here has run on the robot.
+door ends 35–40° open, not the scripted 50°, inside the script's clock. With the lip claw the finger contact force
+peaks at a median 118–124 N at 12–16 N·m. What neither shows: the lips (4 mm thick,
+rigid) and the gripper's drives (the URDF's 15 N) are models of parts not yet made or measured, the box's springs and
+the latch are models, the lever is still only 0.4 N·m — pushing it down is the limit, not pulling the door — and
+nothing here has run on the robot.
 
 ## The pieces
 
@@ -124,6 +150,7 @@ door — and nothing here has run on the robot.
 | `props.py` | table, post, placements, and where the grasp points land in UniFP's goal sphere |
 | `wrist.py` | the roll servo, and why it takes the joint it takes |
 | `mech.py`, `mech_env.py` | `--mech` and `--claw`: the claw, the task layer's force law, the roll command, the goal correction (plain torch, then the environment) |
+| `claw.py` | the L-lip claw's geometry and the lip-carrying copy of the D1 URDF (numpy only) |
 | `orientation_probe.py` | where the jaws point when the policy settles: the feasibility measurement that comes before a demo |
 | `tests/` | `python -m unittest discover -s demos/unifp/tests -t .` — geometry, the phase machine, the servo's algebra, and that every commanded goal stays inside the trained sphere |
 

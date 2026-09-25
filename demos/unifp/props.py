@@ -231,6 +231,25 @@ def sample_box_site(rng) -> BoxSite:
     return BoxSite(distance_m=distance, bearing_deg=bearing, yaw_deg=yaw)
 
 
+def side_stance(site: BoxSite, stance_deg: float) -> BoxSite:
+    """`site` turned about its grasp point by `stance_deg`: the robot stands off the door's normal.
+
+    The grasp point stays where it was in the robot's frame -- the same reach, the same place in the
+    goal sphere -- and only the directions the lever and the door move in turn with the box. Positive
+    puts the robot on the latch side (the lever's spindle, the enclosure's +y, the robot's right when it
+    faces the door squarely): there turning the lever down also draws the handle toward the robot, and
+    the opening door swings away from it. Negative puts it on the hinge side, the other way round.
+    """
+    if not stance_deg:
+        return site
+    grasp = site.grasp_point_m()
+    turned = BoxSite(site.distance_m, site.bearing_deg, site.yaw_deg - stance_deg)
+    moved = turned.grasp_point_m()
+    root = site.root_m
+    x, y = root[0] + grasp[0] - moved[0], root[1] + grasp[1] - moved[1]
+    return BoxSite(math.hypot(x, y), math.degrees(math.atan2(y, x)), turned.yaw_deg)
+
+
 def goal_sphere_coords(point_m) -> tuple[float, float, float]:
     """(radius, pitch, yaw) of a point in the robot's yaw frame, as UniFP commands goals.
 

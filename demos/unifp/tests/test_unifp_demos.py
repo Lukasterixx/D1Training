@@ -132,6 +132,59 @@ class CommandedGoalsStayInsideTheTrainedWorkspace(unittest.TestCase):
         self.assertTrue(in_workspace(script.HOME_POINT))
 
 
+class SideStance(unittest.TestCase):
+    """`props.side_stance`: the robot off the door's normal, the reach unchanged."""
+
+    @staticmethod
+    def toward_robot(before, after):
+        """How much of the grasp point's motion from `before` to `after` comes horizontally toward the robot."""
+        step = unit(tuple(b - a for a, b in zip(before, after)))
+        back = unit((-before[0], -before[1], 0.0))
+        return dot(step, back)
+
+    def test_the_grasp_point_stays_where_it_was(self):
+        for seed in range(20):
+            site = props.sample_box_site(random.Random(seed))
+            for stance in (-30.0, 15.0, 45.0):
+                turned = props.side_stance(site, stance)
+                for a, b in zip(site.grasp_point_m(), turned.grasp_point_m()):
+                    self.assertAlmostEqual(a, b, places=9)
+                self.assertAlmostEqual(turned.yaw_deg, site.yaw_deg - stance)
+        self.assertIs(props.side_stance(site, 0.0), site)
+
+    def test_the_latch_side_turns_the_lever_toward_the_robot(self):
+        site = props.BoxSite(distance_m=0.66, bearing_deg=0.0, yaw_deg=180.0)
+        pull = {stance: self.toward_robot(props.side_stance(site, stance).grasp_point_m(45.0),
+                                          props.side_stance(site, stance).grasp_point_m(46.0))
+                for stance in (-30.0, 0.0, 30.0)}
+        self.assertLess(pull[-30.0], -0.2)
+        self.assertLess(abs(pull[0.0]), 0.15)
+        self.assertGreater(pull[30.0], 0.2)
+
+    def test_the_hinge_side_brings_the_door_toward_the_robot(self):
+        site = props.BoxSite(distance_m=0.66, bearing_deg=0.0, yaw_deg=180.0)
+        pull = {stance: self.toward_robot(props.side_stance(site, stance).grasp_point_m(60.0, 40.0),
+                                          props.side_stance(site, stance).grasp_point_m(60.0, 41.0))
+                for stance in (-30.0, 0.0, 30.0)}
+        self.assertGreater(pull[-30.0], 0.9)
+        self.assertGreater(pull[-30.0], pull[0.0])
+        self.assertGreater(pull[0.0], pull[30.0])
+
+    def test_stances_the_demo_measures_keep_the_goals_in_the_sphere(self):
+        import dataclasses
+        saved = props.LEVER_GRASP_OFFSET_M
+        props.LEVER_GRASP_OFFSET_M = 0.080          # the lip claw's hook, as `--mech` sets it
+        try:
+            timing = dataclasses.replace(script.CombinerTiming(), turn_deg=60.0, ease_deg=60.0)
+            for stance in (-15.0, 15.0, 30.0, 45.0):
+                bad = CommandedGoalsStayInsideTheTrainedWorkspace._sweep(
+                    self, script.combiner_phases(timing), "box_site",
+                    lambda rng: props.side_stance(props.sample_box_site(rng), stance), seeds=40)
+                self.assertEqual(bad[:3], [], f"stance {stance}: {len(bad)} goals outside the trained sphere")
+        finally:
+            props.LEVER_GRASP_OFFSET_M = saved
+
+
 class PhaseMachine(unittest.TestCase):
     def setUp(self):
         self.state = {"cup_site": props.sample_cup_site(random.Random(3)),

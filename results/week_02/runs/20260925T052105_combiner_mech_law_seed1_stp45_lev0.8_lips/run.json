@@ -1,0 +1,202 @@
+{
+  "mode": "unifp_demo",
+  "task": "combiner",
+  "controller": "mech_law",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "task": "combiner",
+    "checkpoint": "checkpoints/unifp_go2d1_mech_law_model_17499.pt",
+    "attempts": 16,
+    "num_envs": 16,
+    "seed": 1,
+    "wrist": false,
+    "wrist_joints": "6",
+    "wrist_gain": null,
+    "mech": true,
+    "claw": false,
+    "claw_model": "lips",
+    "no_force_law": false,
+    "force_law_gains": null,
+    "force_law_bleed": 1.0,
+    "no_goal_correction": false,
+    "goal_correction": false,
+    "turn_deg": 60.0,
+    "ease_deg": 60.0,
+    "jaw_effort_n": null,
+    "turn_s": null,
+    "lever_grasp_m": 0.08,
+    "door_torque_nm": 0.0,
+    "stance_deg": 45.0,
+    "no_object": false,
+    "free_space": false,
+    "command_tip": false,
+    "jaw_hold": null,
+    "no_jaw_compensation": false,
+    "zero_actions": false,
+    "handle_torque_nm": 0.8,
+    "speed_scale": 1.0,
+    "hold_scale": 1.0,
+    "settle_s": 1.0,
+    "robot_usd": null,
+    "out": null,
+    "run_name": "stp45_lev0.8_lips",
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "./demos/unifp/run_demo.py --task combiner --mech --attempts 16 --headless --claw_model lips --stance_deg 45 --handle_torque_nm 0.8 --run_name stp45_lev0.8_lips",
+  "stack": {
+    "isaacsim": "5.1.0.0",
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "git_commit": "96d8ab750266a5cc2789d83360c15bb5855634ca",
+  "git_status": "M demos/unifp/README.md\n M demos/unifp/mech_env.py\n M demos/unifp/props.py\n M demos/unifp/run_demo.py\n M demos/unifp/tests/test_mech_demo.py\n M demos/unifp/tests/test_unifp_demos.py\n M results/findings.md\n M results/week_02/figures/combiner_mech_sweep.png\n M results/week_02/figures/combiner_mech_sweep.py\n M results/week_02/notes.md\n?? demos/unifp/claw.py\n?? results/week_02/figures/combiner_mech_sweep_lips.png\n?? results/week_02/figures/combiner_mech_sweep_overbite.png\n?? results/week_02/figures/combiner_stance_sweep.py\n?? results/week_02/runs/20260925T025731_combiner_mech_law_seed1_lips_first/\n?? results/week_02/runs/20260925T025903_combiner_mech_law_seed1_lips_80/\n?? results/week_02/runs/20260925T030022_combiner_mech_law_seed1_door0_lipslaw/\n?? results/week_02/runs/20260925T030125_combiner_mech_goal_seed1_door0_lipsgoal/\n?? results/week_02/runs/20260925T030226_combiner_unifp_wrist_claw_corr_seed1_door0_lipsold/\n?? results/week_02/runs/20260925T030328_combiner_mech_law_seed1_door4_lipslaw/\n?? results/week_02/runs/20260925T030431_combiner_mech_goal_seed1_door4_lipsgoal/\n?? results/week_02/runs/20260925T030531_combiner_unifp_wrist_claw_corr_seed1_door4_lipsold/\n?? results/week_02/runs/20260925T030632_combiner_mech_law_seed1_door8_lipslaw/\n?? results/week_02/runs/20260925T030734_combiner_mech_goal_seed1_door8_lipsgoal/\n?? results/week_02/runs/20260925T030834_combiner_unifp_wrist_claw_corr_seed1_door8_lipsold/\n?? results/week_02/runs/20260925T030936_combiner_mech_law_seed1_door12_lipslaw/\n?? results/week_02/runs/20260925T031038_combiner_mech_goal_seed1_door12_lipsgoal/\n?? results/week_02/runs/20260925T031137_combiner_unifp_wrist_claw_corr_seed1_door12_lipsold/\n?? results/week_02/runs/20260925T031239_combiner_mech_law_seed1_door16_lipslaw/\n?? results/week_02/runs/20260925T031340_combiner_mech_goal_seed1_door16_lipsgoal/\n?? results/week_02/runs/20260925T031441_combiner_unifp_wrist_claw_corr_seed1_door16_lipsold/\n?? results/week_02/runs/20260925T031652_combiner_mech_law_seed1_lips_hold_door12/\n?? results/week_02/runs/20260925T031754_combiner_mech_law_seed1_lips_hold_door16/\n?? results/week_02/runs/20260925T031919_combiner_mech_law_seed1_lips_hold2_door12/\n?? results/week_02/runs/20260925T032021_combiner_mech_law_seed1_lips_hold2_door16/\n?? results/week_02/runs/20260925T032210_combiner_mech_law_seed1_lips_hold2_door16_jaw50/\n?? results/week_02/runs/20260925T032339_combiner_mech_law_seed1_lips_where_door16/\n?? results/week_02/runs/20260925T032533_combiner_mech_law_seed1_door0_flaw/\n?? results/week_02/runs/20260925T032636_combiner_mech_goal_seed1_door0_fgoal/\n?? results/week_02/runs/20260925T032736_combiner_unifp_wrist_claw_corr_seed1_door0_fold/\n?? results/week_02/runs/20260925T032839_combiner_mech_law_seed1_door4_flaw/\n?? results/week_02/runs/20260925T032943_combiner_mech_goal_seed1_door4_fgoal/\n?? results/week_02/runs/20260925T033044_combiner_unifp_wrist_claw_corr_seed1_door4_fold/\n?? results/week_02/runs/20260925T033146_combiner_mech_law_seed1_door8_flaw/\n?? results/week_02/runs/20260925T033249_combiner_mech_goal_seed1_door8_fgoal/\n?? results/week_02/runs/20260925T033349_combiner_unifp_wrist_claw_corr_seed1_door8_fold/\n?? results/week_02/runs/20260925T033453_combiner_mech_law_seed1_door12_flaw/\n?? results/week_02/runs/20260925T033556_combiner_mech_goal_seed1_door12_fgoal/\n?? results/week_02/runs/20260925T033656_combiner_unifp_wrist_claw_corr_seed1_door12_fold/\n?? results/week_02/runs/20260925T033800_combiner_mech_law_seed1_door16_flaw/\n?? results/week_02/runs/20260925T033902_combiner_mech_goal_seed1_door16_fgoal/\n?? results/week_02/runs/20260925T034002_combiner_unifp_wrist_claw_corr_seed1_door16_fold/\n?? results/week_02/runs/20260925T034105_combiner_mech_law_seed2_seed2_door8_flaw/\n?? results/week_02/runs/20260925T034206_combiner_mech_law_seed2_seed2_door16_flaw/\n?? results/week_02/runs/20260925T040559_combiner_mech_law_seed1_overbite_first/\n?? results/week_02/runs/20260925T040719_combiner_mech_law_seed1_door0_olaw/\n?? results/week_02/runs/20260925T040822_combiner_mech_goal_seed1_door0_ogoal/\n?? results/week_02/runs/20260925T040923_combiner_unifp_wrist_claw_corr_seed1_door0_oold/\n?? results/week_02/runs/20260925T041027_combiner_mech_law_seed1_door4_olaw/\n?? results/week_02/runs/20260925T041132_combiner_mech_goal_seed1_door4_ogoal/\n?? results/week_02/runs/20260925T041233_combiner_unifp_wrist_claw_corr_seed1_door4_oold/\n?? results/week_02/runs/20260925T041336_combiner_mech_law_seed1_door8_olaw/\n?? results/week_02/runs/20260925T041439_combiner_mech_goal_seed1_door8_ogoal/\n?? results/week_02/runs/20260925T041539_combiner_unifp_wrist_claw_corr_seed1_door8_oold/\n?? results/week_02/runs/20260925T041642_combiner_mech_law_seed1_door12_olaw/\n?? results/week_02/runs/20260925T041745_combiner_mech_goal_seed1_door12_ogoal/\n?? results/week_02/runs/20260925T041846_combiner_unifp_wrist_claw_corr_seed1_door12_oold/\n?? results/week_02/runs/20260925T041951_combiner_mech_law_seed1_door16_olaw/\n?? results/week_02/runs/20260925T042054_combiner_mech_goal_seed1_door16_ogoal/\n?? results/week_02/runs/20260925T042155_combiner_unifp_wrist_claw_corr_seed1_door16_oold/\n?? results/week_02/runs/20260925T042258_combiner_mech_law_seed2_seed2_door8_olaw/\n?? results/week_02/runs/20260925T042400_combiner_mech_law_seed2_seed2_door16_olaw/\n?? results/week_02/runs/20260925T045309_combiner_mech_law_seed1_stance30_first/\n?? results/week_02/runs/20260925T045336_combiner_mech_law_seed1_stance30/\n?? results/week_02/runs/20260925T045538_combiner_mech_law_spring_seed1_stm30_lev0.4_spring/\n?? results/week_02/runs/20260925T045646_combiner_mech_law_spring_seed1_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T045752_combiner_mech_law_spring_seed1_stp30_lev0.4_spring/\n?? results/week_02/runs/20260925T045901_combiner_mech_law_spring_seed1_stp45_lev0.4_spring/\n?? results/week_02/runs/20260925T050010_combiner_mech_law_spring_seed1_stm30_lev0.8_spring/\n?? results/week_02/runs/20260925T050117_combiner_mech_law_spring_seed1_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T050225_combiner_mech_law_spring_seed1_stp30_lev0.8_spring/\n?? results/week_02/runs/20260925T050331_combiner_mech_law_spring_seed1_stp45_lev0.8_spring/\n?? results/week_02/runs/20260925T050438_combiner_mech_law_spring_seed1_stm30_lev1.2_spring/\n?? results/week_02/runs/20260925T050545_combiner_mech_law_spring_seed1_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T050653_combiner_mech_law_spring_seed1_stp30_lev1.2_spring/\n?? results/week_02/runs/20260925T050801_combiner_mech_law_spring_seed1_stp45_lev1.2_spring/\n?? results/week_02/runs/20260925T050909_combiner_mech_law_spring_seed1_stm30_lev1.6_spring/\n?? results/week_02/runs/20260925T051016_combiner_mech_law_spring_seed1_stp0_lev1.6_spring/\n?? results/week_02/runs/20260925T051124_combiner_mech_law_spring_seed1_stp30_lev1.6_spring/\n?? results/week_02/runs/20260925T051231_combiner_mech_law_spring_seed1_stp45_lev1.6_spring/\n?? results/week_02/runs/20260925T051339_combiner_mech_law_seed1_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T051442_combiner_mech_law_seed1_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T051546_combiner_mech_law_seed1_stp30_lev0.4_lips/\n?? results/week_02/runs/20260925T051649_combiner_mech_law_seed1_stp45_lev0.4_lips/\n?? results/week_02/runs/20260925T051753_combiner_mech_law_seed1_stm30_lev0.8_lips/\n?? results/week_02/runs/20260925T051857_combiner_mech_law_seed1_stp0_lev0.8_lips/\n?? results/week_02/runs/20260925T052001_combiner_mech_law_seed1_stp30_lev0.8_lips/",
+  "wrist_joints": null,
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_mech_law_model_17499.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 17499,
+  "num_envs": 16,
+  "attempts": 16,
+  "script_phases": [
+    {
+      "name": "stand",
+      "duration_s": 1.5
+    },
+    {
+      "name": "approach",
+      "duration_s": 2.0
+    },
+    {
+      "name": "settle",
+      "duration_s": 2.0
+    },
+    {
+      "name": "enter",
+      "duration_s": 2.5
+    },
+    {
+      "name": "arrive",
+      "duration_s": 1.2
+    },
+    {
+      "name": "grip",
+      "duration_s": 0.8
+    },
+    {
+      "name": "turn",
+      "duration_s": 2.5
+    },
+    {
+      "name": "crack",
+      "duration_s": 1.2
+    },
+    {
+      "name": "ease",
+      "duration_s": 0.8
+    },
+    {
+      "name": "pull",
+      "duration_s": 3.0
+    },
+    {
+      "name": "release",
+      "duration_s": 0.8
+    },
+    {
+      "name": "back",
+      "duration_s": 1.5
+    }
+  ],
+  "script_total_s": 19.8,
+  "speed_scale": 1.0,
+  "hold_scale": 1.0,
+  "settle_s": 1.0,
+  "handle_torque_nm": 0.8,
+  "door_torque_nm": 0.0,
+  "stance_deg": 45.0,
+  "turn_deg": 60.0,
+  "lever_grasp_m": 0.08,
+  "ease_deg": 60.0,
+  "jaw_effort_n": null,
+  "tool_point": {
+    "body": "Link6",
+    "offset_m": [
+      0.0,
+      0.0,
+      0.1051
+    ]
+  },
+  "arm_armature_kg_m2": 0.01,
+  "roll_objective": true,
+  "claw": {
+    "model": "lips",
+    "placement": "beyond the fingertips (overbite)",
+    "lip_length_m": 0.02,
+    "lip_thickness_m": 0.004,
+    "lip_clearance_m": 0.001,
+    "lip_face_z_m": 0.1261,
+    "entry_gap_open_m": 0.03719999999999999,
+    "lost_after_steps": 10
+  },
+  "force_law": {
+    "gains": [
+      400.0,
+      1000.0,
+      80.0
+    ],
+    "bleed_s": 1.0
+  },
+  "goal_correction": {
+    "gain_per_s": 1.5,
+    "max_m": 0.1
+  },
+  "jaw_compensation": true,
+  "forces": "scheduled pushes off; contact only",
+  "base_command": "zero (standing)",
+  "perception": "none -- the object pose is given",
+  "assets": {
+    "combiner_usd": "/home/victor/D1Training/generated/unifp_demos/combiner_0.800.usda"
+  },
+  "robot_usd": "/home/victor/D1Training/generated/claw/go2_d1_claw.usd",
+  "robot_usd_sha256": "4a81263cf36faad951e41f252b594a2afca674d7162277ceb830fd28ca2a97de",
+  "attempt_count": 16,
+  "summary": {
+    "attempts": 16,
+    "successes": 3,
+    "falls": 0,
+    "arm_speed_peak_rad_s_median": 1.73,
+    "jaw_centre_error_arrive_m_median": 0.02211,
+    "lateral_error_arrive_m_median": 0.01128,
+    "jaw_tilt_arrive_deg_median": 79.3415,
+    "forearm_contact_arrive_n_median": 0.8618,
+    "finger_contact_grip_n_median": 0.8371,
+    "max_door_deg_median": 0.5,
+    "max_handle_deg_median": 25.48,
+    "latch_released": 5,
+    "jaw_centre_error_grip_m_median": 0.0129,
+    "jaw_tilt_grip_deg_median": 82.3052,
+    "claw_hooked": 14,
+    "claw_torn": 0,
+    "claw_lost": 10,
+    "claw_capture_m_median": 0.0071,
+    "peak_claw_force_n_median": 43.458,
+    "peak_force_cmd_n_median": 21.805
+  }
+}

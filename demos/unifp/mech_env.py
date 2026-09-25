@@ -4,11 +4,14 @@
 the door along their commanded arcs, and a friction grip on the bar. The mechanism policy
 (F-108) was trained differently, and running it the old way wastes it. So this subclass adds:
 
-  * **A claw** (`mech.ClawCoupling`). When the script leaves its grip phase, if the jaw centre is
-    within `claw_capture_m` of the lever bar, the claw hooks it there: a spring-damper from the jaw
-    centre to that point on the lever, applied to both bodies at the physics rate, torn out above
-    `claw_grip_n`. Off by default; the old controller can have it too (`--claw`), which is what makes
-    the comparison about the policy rather than the tool.
+  * **A claw**, one of two models. `claw_lips`: the L-shaped fingers Lukas is building -- real lip
+    colliders just beyond the finger tips (`claw.py`, built into the robot by the launcher), so PhysX decides
+    whether the bar is held; this environment only watches whether it is inside the loop
+    (`_lip_capture`), to engage the law and to record when it comes out. `claw` (the first model): a
+    spring-damper from the jaw centre to a point on the lever, hooked when the script leaves its grip
+    phase with the jaw centre within `claw_capture_m` of the bar, torn out above `claw_grip_n` -- it
+    holds in every direction, including along the lever, which the lips do not. The old controller can
+    have either (`--claw`), which is what makes a comparison about the policy rather than the tool.
   * **The task layer's force law** (`mech.PlaneForceLaw`), while the claw holds the lever: the force
     command is the PI law on how far the handle lags the script's reference, projected onto the joint
     the phase drives (`LAW_JOINTS`: the lever to turn it, the door to open it); along that joint the goal
@@ -46,6 +49,8 @@ from .env import UniFPDemoEnv, UniFPDemoEnvCfg
 
 #: Phases in which the claw holds the lever and the force law acts; the claw lets go on "release".
 CLAW_PHASES = ("turn", "crack", "ease", "pull")
+#: The claw phases in which the door, not the lever, is being worked.
+DOOR_PHASES = ("ease", "pull")
 RELEASE_PHASE = "release"
 #: Which of the box's joints the force law drives in each claw phase: 0 the lever, 1 the door.
 #:
@@ -73,6 +78,10 @@ class MechDemoEnvCfg(UniFPDemoEnvCfg):
     """The demo's configuration with the claw, the force law and the roll command available."""
 
     claw: bool = False
+    #: The L-lip claw: physical lips on the fingers (the robot must be built with `claw.write_claw_urdf`).
+    claw_lips: bool = False
+    #: Policy steps the bar may be out of the lip claw's loop before it counts as lost.
+    claw_lost_steps: int = 10
     #: The jaw centre must be this close to the lever bar's axis for the claw to hook it.
     claw_capture_m: float = 0.025
     #: The training's evaluation grasp (`unifp_train.mech_cfg.GRASP_STIFFNESS`, `GRASP_DAMPING`, `GRIP_N`).
@@ -108,7 +117,7 @@ class MechDemoEnv(UniFPDemoEnv):
     def __init__(self, cfg: MechDemoEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
         n, device = self.num_envs, self.device
-        if cfg.task != "combiner" and (cfg.claw or cfg.force_law):
+        if cfg.task != "combiner" and (cfg.claw or cfg.claw_lips or cfg.force_law):
             raise ValueError("the claw and the force law are for the combiner task")
         self._handle_body = self._box.body_names.index("Handle") if cfg.task == "combiner" else None
         self._handle_body_ids = (torch.tensor([self._handle_body], dtype=torch.int32, device=device)
@@ -126,6 +135,13 @@ class MechDemoEnv(UniFPDemoEnv):
         self.claw_hooked = torch.zeros(n, dtype=torch.bool, device=device)
         self._wrench_on = False
         self._lag_w = torch.zeros(n, 3, device=device)
+        #: The lip claw: whether the bar is in the loop now, whether it came out for good, and for how long it
+        #: has been out; and where on the bar the claw is (world), which is where the law pushes.
+        self.lip_captured = torch.zeros(n, dtype=torch.bool, device=device)
+        self.claw_lost = torch.zeros(n, dtype=torch.bool, device=device)
+        self._out_steps = torch.zeros(n, dtype=torch.long, device=device)
+        self._lip_point_w = torch.zeros(n, 3, device=device)
+        self._lip_where = torch.zeros(n, 4, device=device)
         self._held_roll = torch.zeros(n, device=device)
         self._roll_held = torch.zeros(n, dtype=torch.bool, device=device)
         #: The goal correction's offset, world frame, m.
@@ -201,6 +217,8 @@ class MechDemoEnv(UniFPDemoEnv):
             sphere = self._corrected_goal(sphere, phases)
         if self.cfg.claw:
             self._hook_and_release(phases)
+        if self.cfg.claw_lips:
+            self._track_lips(phases)
         if self.cfg.force_law:
             sphere = self._law_goal(sphere, phases)
         if self.cfg.roll_command and self.cfg.roll_objective:
@@ -251,6 +269,71 @@ class MechDemoEnv(UniFPDemoEnv):
         if bool(leaving.any()):
             self.claw.release(leaving.nonzero(as_tuple=False).flatten())
 
+    def _lip_capture(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """(bar in the loop, the bar point in the claw (world), its distance from the jaw centre).
+
+        The lever's bar in the hand's (Link6) frame; its point nearest the approach axis must be between
+        the fingers, behind the lips and in front of the palm, with the lips closed far enough that the bar
+        cannot pass between their tips. Whether the claw actually holds is PhysX's business; this is only
+        whether the bar is where the claw can hold it.
+        """
+        from . import claw as lip_geometry
+
+        pos, quat = self._handle_pose()
+        start = torch.tensor([GEOMETRY.handle_projection, 0.0, 0.0], device=self.device).expand(self.num_envs, 3)
+        end = torch.tensor([GEOMETRY.handle_projection, -GEOMETRY.handle_length, 0.0],
+                           device=self.device).expand(self.num_envs, 3)
+        a_w = pos + interface.quat_apply(quat, start)
+        b_w = pos + interface.quat_apply(quat, end)
+        hand_pos = self._robot.data.body_pos_w[:, self._link6]
+        hand_quat = self._robot.data.body_quat_w[:, self._link6]
+        a = interface.quat_rotate_inverse(hand_quat, a_w - hand_pos)
+        b = interface.quat_rotate_inverse(hand_quat, b_w - hand_pos)
+        d = b - a
+        s = (-(a[:, 0] * d[:, 0] + a[:, 1] * d[:, 1]) / (d[:, 0] ** 2 + d[:, 1] ** 2).clamp(min=1e-9))
+        interior = (s > 0.0) & (s < 1.0)
+        q = a + s.clamp(0.0, 1.0).unsqueeze(-1) * d
+        # Each finger's own travel: loaded, they are pushed apart independently. Link7_1 is the -y finger.
+        travel = self._robot.data.joint_pos[:, self._jaw_joint_ids].abs()
+        inner_minus = -(lip_geometry.FINGER_INNER_Y_M + travel[:, 0])
+        inner_plus = lip_geometry.FINGER_INNER_Y_M + travel[:, 1]
+        closed = (inner_plus - inner_minus - 2 * lip_geometry.LIP_LENGTH_M) < 2 * GEOMETRY.handle_radius
+        lip_face = lip_geometry.LIP_FACE_Z_M
+        inside = ((q[:, 1] > inner_minus) & (q[:, 1] < inner_plus) & (q[:, 2] < lip_face)
+                  & (q[:, 2] > lip_geometry.PALM_Z_M)
+                  & (interior | (q[:, 0].abs() < 0.005)) & closed)
+        point_w = hand_pos + interface.quat_apply(hand_quat, q)
+        centre = torch.as_tensor(JAW_CENTRE_LINK6, device=self.device)
+        # Where the bar sits in the claw, for the record: how far out the lever the claw is (from the spindle),
+        # how deep in the loop (along the approach) and how far across it (along the jaw axis), and how askew.
+        tilt = torch.rad2deg(torch.atan2(d[:, 2].abs(), d[:, 0].abs()))
+        self._lip_where = torch.stack((s * GEOMETRY.handle_length, q[:, 2], q[:, 1], tilt), dim=-1)
+        return inside, point_w, (q - centre).norm(dim=-1)
+
+    def _track_lips(self, phases: list[str]) -> None:
+        """Hook, hold and loss for the lip claw: the bar's place in the loop, read every policy step."""
+        in_claw_phase = torch.tensor([p in CLAW_PHASES for p in phases], device=self.device)
+        inside, point_w, distance = self._lip_capture()
+        self._lip_point_w = point_w
+        due = in_claw_phase & ~self.claw_tried
+        if bool(due.any()):
+            ids = due.nonzero(as_tuple=False).flatten()
+            self.claw_tried[ids] = True
+            self.claw_capture[ids] = distance[ids]
+            self.claw_hooked[ids] = inside[ids]
+        holding = self.claw_hooked & ~self.claw_lost & in_claw_phase
+        self._out_steps = torch.where(holding & ~inside, self._out_steps + 1, torch.zeros_like(self._out_steps))
+        self.claw_lost |= self._out_steps >= self.cfg.claw_lost_steps
+        self.lip_captured = holding & ~self.claw_lost
+
+    def _holding(self, phases: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
+        """(which environments the claw holds the lever in a claw phase, where on the lever it holds, world)."""
+        in_claw_phase = torch.tensor([p in CLAW_PHASES for p in phases], device=self.device)
+        if self.cfg.claw_lips:
+            return self.lip_captured & in_claw_phase, self._lip_point_w
+        anchor, _ = self._anchor_world()
+        return self.claw.engaged & in_claw_phase, anchor
+
     def _jacobian(self, index: int, handle_deg: float, door_deg: float) -> torch.Tensor:
         """(3, 2): how the grasp point moves per degree of lever and of door, world directions."""
         site = self.sites[index]
@@ -265,10 +348,9 @@ class MechDemoEnv(UniFPDemoEnv):
 
     def _law_goal(self, sphere: torch.Tensor, phases: list[str]) -> torch.Tensor:
         """For environments whose claw holds the lever: goal on the handle, force from the law."""
-        active = self.claw.engaged & torch.tensor([p in CLAW_PHASES for p in phases], device=self.device)
+        active, anchor = self._holding(phases)
         force_cmd = torch.zeros(self.num_envs, 3, device=self.device)
         if bool(active.any()):
-            anchor, _ = self._anchor_world()
             reference = self._script_target_world()
             truth = self.box_state()
             jac = torch.zeros(self.num_envs, 3, 2, device=self.device)
@@ -328,6 +410,17 @@ class MechDemoEnv(UniFPDemoEnv):
         _, approach, _ = self._hand_frame()
         bar = torch.as_tensor([c.object_axis if c is not None else (0.0, 0.0, 1.0) for c in self.commands],
                               dtype=torch.float32, device=self.device)
+        if self.cfg.claw_lips and self.sites:
+            # With the lip claw, once the door is being opened: across the lever as it *is*, not as the script
+            # says it should be. The loop tolerates a bar a few degrees askew, and a lever turned by a hard pull
+            # (0.4 N·m is not much) slid out of it when the jaws kept to the script's angle. Read from the box, as
+            # tags on the lever would give it. Not during the turn: there the jaws leading the lever to its target
+            # angle is what turns it -- following the lagging lever instead, 3-4 of 16 latches stayed shut.
+            truth = self.box_state()
+            door_phase = [c is not None and c.phase in DOOR_PHASES for c in self.commands]
+            measured = [self.sites[i].lever_axis_unit(float(truth["handle_deg"][i]), float(truth["door_deg"][i]))
+                        if door_phase[i] else tuple(bar[i].tolist()) for i in range(self.num_envs)]
+            bar = torch.as_tensor(measured, dtype=torch.float32, device=self.device)
         bar = wrist.unit(interface.quat_apply(self._spawn_yaw_quat, bar))
         jaw = wrist.desired_jaw_axis(approach, bar)
         forward = interface.quat_apply(self._base_yaw_quat(), torch.tensor(
@@ -352,6 +445,9 @@ class MechDemoEnv(UniFPDemoEnv):
         self.claw_tried[ids] = False
         self.claw_hooked[ids] = False
         self.claw_capture[ids] = float("nan")
+        self.claw_lost[ids] = False
+        self.lip_captured[ids] = False
+        self._out_steps[ids] = 0
         self.goal_offset[ids] = 0.0
         self._roll_held[ids] = False
         super()._reset_idx(env_ids)
@@ -363,6 +459,15 @@ class MechDemoEnv(UniFPDemoEnv):
                 forces=zeros, positions=self._jaw_offset, body_ids=self._link6_ids)
 
     def mech_state(self) -> dict:
-        """What the recorder reads: claw, spring force, and the law's command, per environment."""
+        """What the recorder reads: claw, the force through it, and the law's command, per environment.
+
+        The spring claw's force is its spring; the lip claw's is the contact force on the fingers, lips
+        included -- the peak over the two, as `contact_state` measures it.
+        """
+        if self.cfg.claw_lips:
+            where = self._lip_where
+            return {"claw_engaged": self.lip_captured.float(), "claw_force_n": self.contact_state()["finger_n"],
+                    "force_cmd_n": self.law.command.norm(dim=-1), "bar_along_m": where[:, 0],
+                    "bar_depth_m": where[:, 1], "bar_across_m": where[:, 2], "bar_tilt_deg": where[:, 3]}
         return {"claw_engaged": self.claw.engaged.float(), "claw_force_n": self.claw.spring_n,
                 "force_cmd_n": self.law.command.norm(dim=-1)}

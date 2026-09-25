@@ -37,11 +37,13 @@ never be quoted as UniFP.
 **What `--mech` changes.** It runs a policy trained on the goal-commanded mechanism task with the task
 layer's force law in the loop (`unifp_train/mech_env.py --force_law`, F-108) the way it was trained:
 the jaw-centre tool point, the arm's 0.01 kg·m² armature (F-102), a roll command in place of the
-wrist servo, a claw that hooks the lever bar when the grip closes (the training's grasp; Lukas's
-assumption that the pincers become claws), and, while the claw holds, the goal on the handle and a
-force command from the PI law on how far the handle lags the script (`mech_env.py`). The script
-is the same one. `--claw` gives any other controller the same claw, which is what makes a comparison
-about the policy rather than the tool.
+wrist servo, a claw on the lever bar, and, while the claw holds, the goal on the handle and a force
+command from the PI law on how far the handle lags the script (`mech_env.py`). The claw is by default
+Lukas's L-lip design as geometry -- a lip turned inward beyond each fingertip, the two overbiting so the
+jaws still close fully, real colliders (`claw.py`) -- or, with `--claw_model spring`, a spring from the
+jaw centre to the lever. The script is the same one, with the lever turned to its stop and hooked
+further in (`MECH_*`). `--claw` gives any other controller the same claw, which is what makes a
+comparison about the policy rather than the tool.
 
 **What a result here does and does not show.** The demo is given the cup's or the box's pose. The
 scripted demos find it first, with a wrist camera and a detector, and aiming that camera needs the
@@ -86,6 +88,10 @@ MECH_CHECKPOINT = "checkpoints/unifp_go2d1_mech_law_model_17499.pt"
 #: stalled at ~40-44 degrees, short of the latch's 45, in up to 12 of 16 attempts.
 MECH_TURN_DEG = GEOMETRY.handle_limit_deg
 MECH_LEVER_GRASP_M = 0.095
+#: With the lip claw, further in: its fingers are 26 mm wide, so at 95 mm on the 105 mm lever half the claw
+#: hangs past the lever's end, one lip has no bar under it, and the lever pivoted out of the claw in 4 of 4
+#: attempts (2026-09-25). At 80 mm the whole claw is on the bar with 12 mm to spare.
+MECH_LEVER_GRASP_LIPS_M = 0.080
 
 
 def git_output(*args: str, default: str = "") -> str:
@@ -127,7 +133,12 @@ def build_parser() -> argparse.ArgumentParser:
                              "tool point, 0.01 kg*m^2 arm armature, roll command, claw, force law. See the "
                              "module docstring.")
     parser.add_argument("--claw", action="store_true",
-                        help="Combiner only: a claw hooks the lever bar when the grip closes (implied by --mech).")
+                        help="Combiner only: a claw on the lever bar (implied by --mech). See --claw_model.")
+    parser.add_argument("--claw_model", choices=("lips", "spring"), default="lips",
+                        help="'lips': the L-shaped fingers -- a 20 mm lip turned inward beyond each finger tip, the "
+                             "two overbiting, real colliders built into the robot (demos/unifp/claw.py), the jaws "
+                             "approaching fully open and closing fully onto the bar. 'spring': the first model, a "
+                             "spring-damper from the jaw centre to the lever that holds in every direction.")
     parser.add_argument("--no_force_law", action="store_true",
                         help="With --mech: keep the claw and the roll, but follow the script's arc with the "
                              "goal alone, no force command. Measures what the task layer's law is worth.")
@@ -144,6 +155,14 @@ def build_parser() -> argparse.ArgumentParser:
                         help=f"Combiner only: the lever angle the script turns to (default "
                              f"props.LEVER_TURN_DEG, {props.LEVER_TURN_DEG:g}); the lever's stop is "
                              f"{GEOMETRY.handle_limit_deg:g} and the latch releases at {GEOMETRY.handle_release_deg:g}.")
+    parser.add_argument("--ease_deg", type=float, default=None,
+                        help="Combiner only: the lever angle the script lets the lever back to before the door is "
+                             "pulled (CombinerTiming's 5). With --mech and the lip claw it defaults to the turn "
+                             "angle: the lever is kept against its stop, where a hard pull cannot turn it out of the claw.")
+    parser.add_argument("--jaw_effort_n", type=float, default=None,
+                        help="Combiner only: the finger drives' force limit, N (the model's is the URDF's 15). A "
+                             "bar pressing sideways on a finger pushes it open past this, which is how a lip claw "
+                             "lets go; the real D1 gripper's value is unmeasured.")
     parser.add_argument("--turn_s", type=float, default=None,
                         help="Combiner only: the lever turn's duration, s (default CombinerTiming's 2.5, "
                              "times --speed_scale).")
@@ -153,6 +172,11 @@ def build_parser() -> argparse.ArgumentParser:
                              f"{GEOMETRY.handle_length:g} long). Further out needs less force for the same torque.")
     parser.add_argument("--door_torque_nm", type=float, default=0.0,
                         help="Combiner only: a door closer, the torque it needs at 45 degrees. 0 is a free door.")
+    parser.add_argument("--stance_deg", type=float, default=0.0,
+                        help="Combiner only: stand this far off the door's normal, degrees -- the box turned about "
+                             "the grasp point (props.side_stance), so the reach is unchanged. Positive is the latch "
+                             "side, where turning the lever down also draws it toward the robot; negative the hinge "
+                             "side, where the opening door comes toward it.")
     parser.add_argument("--no_object", action="store_true",
                         help="Run the same script with the cup or the box moved aside. The control "
                              "that separates how well the arm follows the demo path from what "
@@ -228,13 +252,17 @@ def main() -> int:
         args.checkpoint = MECH_CHECKPOINT if args.mech else DEFAULT_CHECKPOINT
     if args.mech:
         args.turn_deg = MECH_TURN_DEG if args.turn_deg is None else args.turn_deg
-        args.lever_grasp_m = MECH_LEVER_GRASP_M if args.lever_grasp_m is None else args.lever_grasp_m
+        if args.lever_grasp_m is None:
+            args.lever_grasp_m = MECH_LEVER_GRASP_LIPS_M if args.claw_model == "lips" else MECH_LEVER_GRASP_M
     claw = args.claw or args.mech
+    lips = claw and args.claw_model == "lips"
     force_law = args.mech and not args.no_force_law
     controller = ("mech_law" if force_law else "mech_goal") if args.mech else (
         "unifp_wrist" if args.wrist else ("zero_actions" if args.zero_actions else "unifp"))
     if claw and not args.mech:
         controller += "_claw"
+    if claw and not lips:
+        controller += "_spring"
     if args.mech and args.no_goal_correction:
         controller += "_nocorr"
     if args.goal_correction and not args.mech:
@@ -266,11 +294,23 @@ def main() -> int:
     }
     (out_dir / "run.json").write_text(json.dumps(early, indent=2))
 
-    robot_usd = args.robot_usd or build_welded_robot_usd(
-        go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
-        d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
-        out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-        mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+    if lips:
+        # The L-lip fingers are geometry, so they are a different robot: a copy of the URDF with a lip on each
+        # finger, welded into its own directory -- the weld writes `d1.usd` beside its output, and sharing
+        # `generated/` would swap the plain robot's arm for this one.
+        from demos.unifp import claw as lip_geometry
+
+        claw_urdf = lip_geometry.write_claw_urdf(ROOT / "d1_arm/d1.urdf", ROOT / "generated/claw/d1_claw.urdf")
+        robot_usd = build_welded_robot_usd(
+            go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
+            d1_urdf_path=str(claw_urdf), out_usd_path=str(ROOT / "generated/claw/go2_d1_claw.usd"),
+            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+    else:
+        robot_usd = args.robot_usd or build_welded_robot_usd(
+            go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
+            d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
+            out_usd_path=str(ROOT / "generated/go2_d1.usd"),
+            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
 
     if args.lever_grasp_m is not None:
         # Before the phases are built: `props.BoxSite.grasp_point_m` reads the module constant, and so
@@ -300,7 +340,17 @@ def main() -> int:
             timing = dataclasses.replace(timing, turn_deg=args.turn_deg)
         if args.turn_s is not None:
             timing = dataclasses.replace(timing, turn_s=args.turn_s)
+        if args.ease_deg is None and args.mech and lips:
+            args.ease_deg = timing.turn_deg
+        if args.ease_deg is not None:
+            timing = dataclasses.replace(timing, ease_deg=args.ease_deg)
         phases = demo_script.combiner_phases(timing)
+        if lips:
+            # The lips narrow the way in: at the friction grip's 41.2 mm opening the lip tips are 1.2 mm apart
+            # and no bar gets between them, so the jaws come in fully open (37.2 mm between the tips). They close
+            # as the friction grip does, onto the bar: beyond the fingertips the lips overbite and stop nothing.
+            jaws = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
+            phases = [dataclasses.replace(p, jaw_m=jaws.get(p.jaw_m, p.jaw_m)) for p in phases]
     total_s = sum(phase.duration_s for phase in phases)
 
     goal_correction = (args.mech and not args.no_goal_correction) or args.goal_correction
@@ -324,8 +374,14 @@ def main() -> int:
         cfg.roll_command = True
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
+    if args.jaw_effort_n is not None:
+        actuator = cfg.robot.actuators["unifp"]
+        for name in ("Joint7_1", "Joint7_2"):
+            actuator.effort_limit[name] = args.jaw_effort_n
+            actuator.effort_limit_sim[name] = args.jaw_effort_n
     if use_mech_env:
-        cfg.claw = claw
+        cfg.claw = claw and not lips
+        cfg.claw_lips = lips
         cfg.force_law = force_law
         cfg.goal_correction = goal_correction
         if args.force_law_gains:
@@ -372,6 +428,7 @@ def main() -> int:
 
     env = (mech_env.MechDemoEnv if use_mech_env else demo_env.UniFPDemoEnv)(cfg)
     if args.task == "combiner":
+        # The grip squeezes the bar past the URDF's stop (F-063), with or without the lips.
         env.open_gripper_stop(demo_script.JAW_BAR_SHUT_M)
         env.attach_latches()
     env.hide_object = args.no_object
@@ -407,14 +464,16 @@ def main() -> int:
         "settle_s": args.settle_s,
         "handle_torque_nm": torque if args.task == "combiner" else None,
         "door_torque_nm": args.door_torque_nm if args.task == "combiner" else None,
+        "stance_deg": args.stance_deg if args.task == "combiner" else None,
         "turn_deg": (args.turn_deg if args.turn_deg is not None else props.LEVER_TURN_DEG)
         if args.task == "combiner" else None,
         "lever_grasp_m": props.LEVER_GRASP_OFFSET_M if args.task == "combiner" else None,
+        "ease_deg": args.ease_deg if args.task == "combiner" else None,
+        "jaw_effort_n": args.jaw_effort_n,
         "tool_point": {"body": cfg.tool_body, "offset_m": list(cfg.tool_offset_m)},
         "arm_armature_kg_m2": 0.01 if args.mech else robot_mod.ARM_ARMATURE,
         "roll_objective": bool(cfg.roll_objective),
-        "claw": ({"capture_m": cfg.claw_capture_m, "stiffness_n_m": cfg.claw_stiffness,
-                  "damping_n_s_m": cfg.claw_damping, "grip_n": cfg.claw_grip_n} if claw else None),
+        "claw": (_claw_record(cfg, lips) if claw else None),
         "force_law": ({"gains": list(cfg.force_law_gains), "bleed_s": cfg.force_law_bleed_s}
                       if force_law else None),
         "goal_correction": ({"gain_per_s": cfg.goal_correction_gain, "max_m": cfg.goal_correction_max_m}
@@ -436,7 +495,11 @@ def main() -> int:
     rows: list[dict] = []
     attempts: list[dict] = []
     rng = random.Random(args.seed)
-    sampler = props.sample_cup_site if args.task == "cup" else props.sample_box_site
+    if args.task == "cup":
+        sampler = props.sample_cup_site
+    else:
+        # The same draws at every stance: a stance sweep compares the same placements, turned.
+        sampler = lambda generator: props.side_stance(props.sample_box_site(generator), args.stance_deg)
     remaining, batch_index = args.attempts, 0
     status = "finished"
 
@@ -495,6 +558,21 @@ def main() -> int:
     env.close()
     sys.stdout.flush()
     os._exit(0)
+
+
+def _claw_record(cfg, lips: bool) -> dict:
+    """What the run's claw was, for `run.json`."""
+    if lips:
+        from demos.unifp import claw as lip_geometry
+
+        return {"model": "lips", "placement": "beyond the fingertips (overbite)",
+                "lip_length_m": lip_geometry.LIP_LENGTH_M,
+                "lip_thickness_m": lip_geometry.LIP_THICKNESS_M, "lip_clearance_m": lip_geometry.LIP_CLEARANCE_M,
+                "lip_face_z_m": lip_geometry.LIP_FACE_Z_M,
+                "entry_gap_open_m": lip_geometry.entry_gap_m(lip_geometry.MAX_TRAVEL_M),
+                "lost_after_steps": cfg.claw_lost_steps}
+    return {"model": "spring", "capture_m": cfg.claw_capture_m, "stiffness_n_m": cfg.claw_stiffness,
+            "damping_n_s_m": cfg.claw_damping, "grip_n": cfg.claw_grip_n}
 
 
 def _servo_wrist(env, action, indices, limits, gain):
@@ -611,6 +689,12 @@ class _AttemptRecord:
         # sphere is centred on the robot's own x,y, so a base that walks carries the commanded
         # goal with it -- and a demo's target is a point in the room, not on the robot.
         base_shift = torch.norm(base[:, :2] - env._spawn_pos[:, :2], dim=1)
+        # The same, signed in the robot's spawn frame (forward, left), and the trunk's roll and pitch:
+        # which way the body leans into the work.
+        shift = torch.zeros_like(base)
+        shift[:, :2] = base[:, :2] - env._spawn_pos[:, :2]
+        shift = interface.quat_rotate_inverse(env._spawn_yaw_quat, shift)
+        body_roll, body_pitch = _roll_pitch_deg(env._robot.data.root_quat_w)
         # Fastest arm joint this step. The D1's measured single-command ceiling is 1.21-1.29 rad/s
         # (F-033) and a 10 Hz stream through its firmware planner manages about 0.8 (F-046);
         # UniFP's port drives the arm with its own PD and neither model, so this is the number
@@ -639,6 +723,10 @@ class _AttemptRecord:
                 "base_height_m": round(float(base_z[index]), 4),
                 "base_shift_m": round(float(base_shift[index]), 4),
                 "base_yaw_deg": round(float(base_yaw[index]), 3),
+                "base_forward_m": round(float(shift[index, 0]), 4),
+                "base_left_m": round(float(shift[index, 1]), 4),
+                "base_roll_deg": round(float(body_roll[index]), 2),
+                "base_pitch_deg": round(float(body_pitch[index]), 2),
                 "arm_speed_rad_s": round(float(arm_speed[index]), 3),
                 "finger_contact_n": round(float(contact["finger_n"][index]), 3),
                 "forearm_contact_n": round(float(contact["forearm_n"][index]), 3),
@@ -654,6 +742,9 @@ class _AttemptRecord:
                 row["claw_engaged"] = int(bool(mech["claw_engaged"][index] > 0.5))
                 row["claw_force_n"] = round(float(mech["claw_force_n"][index]), 3)
                 row["force_cmd_n"] = round(float(mech["force_cmd_n"][index]), 3)
+                for key in ("bar_along_m", "bar_depth_m", "bar_across_m", "bar_tilt_deg"):
+                    if key in mech:
+                        row[key] = round(float(mech[key][index]), 4)
             rows.append(row)
 
             best = self.best[index]
@@ -732,10 +823,21 @@ class _AttemptRecord:
                     record["claw_capture_m"] = None if math.isnan(capture) else round(capture, 4)
                     record["claw_hooked"] = bool(self.env.claw_hooked[index])
                     record["claw_torn"] = bool(self.env.claw.torn[index])
+                    record["claw_lost"] = bool(self.env.claw_lost[index])
                 record["success"] = bool(record.get("max_door_deg", 0.0) >= props.DOOR_SUCCESS_DEG
                                          and not record["fell"])
             out.append(record)
         return out
+
+
+def _roll_pitch_deg(quat: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Roll (positive: left side up) and pitch (positive: nose down) of (w, x, y, z) quaternions, degrees."""
+    import torch
+
+    w, x, y, z = quat.unbind(-1)
+    roll = torch.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))
+    pitch = torch.asin((2 * (w * y - z * x)).clamp(-1.0, 1.0))
+    return torch.rad2deg(roll), torch.rad2deg(pitch)
 
 
 def _tally(values) -> dict:
@@ -802,6 +904,7 @@ def _summarise(attempts: list[dict], task: str) -> dict:
             summary.update({
                 "claw_hooked": sum(1 for a in attempts if a.get("claw_hooked")),
                 "claw_torn": sum(1 for a in attempts if a.get("claw_torn")),
+                "claw_lost": sum(1 for a in attempts if a.get("claw_lost")),
                 "claw_capture_m_median": median([a.get("claw_capture_m") for a in attempts]),
                 "peak_claw_force_n_median": median([a.get("peak_claw_force_n") for a in attempts]),
                 "peak_force_cmd_n_median": median([a.get("peak_force_cmd_n") for a in attempts]),

@@ -26,6 +26,236 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 
 ## Log
 
+### 2026-09-25 — Standing to the side of the box: the lever turn from the door's normal and from either side
+
+**Why.** Lukas: "The position of the dog relative to the task is important too. For opening the handle, could having the
+robot standing more to the side help it? So that it rotates the handle by pulling... I already see the policy trying to
+lean in that direction". The lever turns about a spindle normal to the door, so its grasp point moves in the door's plane:
+straight down at the start, then increasingly toward the latch side (the enclosure's +y, the robot's right when it faces
+the door). Square to the door, the late turn is mostly *sideways* to the robot. From the latch side, part of it becomes a
+pull toward the robot; from the hinge side, a push away. The door does the opposite: it is hinged on the robot's left, so
+from the latch side the opening door swings away from the robot and from the hinge side toward it. The training mix
+matters here (`unifp_train/mech_cfg.py`): 45% of mechanism episodes open toward the robot (±29° yaw, ±20° tilt), 25% away
+(30% of those down onto a top face), 15% sideways, 15% up.
+
+**What was added.** `run_demo.py --stance_deg`: the box turned about the grasp point (`props.side_stance`), so the reach
+and the place in the goal sphere are unchanged and only the directions the lever and door move in turn. Positive is the
+latch side. The same placements (seed 1) at every stance. The trace now records the base's signed shift in the spawn frame
+(`base_forward_m`, `base_left_m`) and the trunk's roll and pitch. 4 CPU tests (the grasp point stays put, the sign of the
+turn's and the door's pull at ±30°, and every scripted goal inside the trained sphere at −15° to +45° with the lip claw's
+timing). At −30° the end of the door pull and the release come to 0.297–0.30 m from the goal centre, up to 3 mm inside
+the trained 0.30 m minimum; at +60° the pull leaves the sphere's far side, so +60° was not run.
+
+**The first run** ([crashed on its first step](#/week/2/run/20260925T045309_combiner_mech_law_seed1_stance30_first): the new roll/pitch helper used `torch` outside
+`main`; fixed, rerun): [+30°, lip claw, lever 0.4 N·m](#/week/2/run/20260925T045336_combiner_mech_law_seed1_stance30): 12/16 opened (square: 16/16), latch released 13, bar out of the
+claw 4. The three turn failures had the bar 42–55° askew in the claw. The policy has no approach command and reaches along
+its own line to the handle, so standing α off the door's normal puts the bar about α askew in the claw (median 31° through
+the turn, against 5° square).
+
+**The sweep.** Lever spring 0.4–1.6 N·m at 45° × stance −30/0/+30/+45°, free door, 16 placements, both claw models
+(the spring claw hooked at 95 mm holds in every direction, so it isolates force; the lip claw hooked at 80 mm):
+
+```bash
+./demos/unifp/run_demo.py --task combiner --mech --attempts 16 --headless --claw_model {spring,lips} \
+    --stance_deg $s --handle_torque_nm $T --run_name st${tag}_lev${T}_${model}
+```
+
+Spring claw, latch released of 16 ([figure](figures/combiner_stance_sweep.png), `combiner_stance_sweep.py`):
+
+| lever | −30° (hinge side) | square | +30° (latch side) | +45° |
+| --- | --- | --- | --- | --- |
+| 0.4 N·m | [16](#/week/2/run/20260925T045538_combiner_mech_law_spring_seed1_stm30_lev0.4_spring) | [16](#/week/2/run/20260925T045646_combiner_mech_law_spring_seed1_stp0_lev0.4_spring) | [15](#/week/2/run/20260925T045752_combiner_mech_law_spring_seed1_stp30_lev0.4_spring) | [4](#/week/2/run/20260925T045901_combiner_mech_law_spring_seed1_stp45_lev0.4_spring) |
+| 0.8 N·m | [15](#/week/2/run/20260925T050010_combiner_mech_law_spring_seed1_stm30_lev0.8_spring) | [6](#/week/2/run/20260925T050117_combiner_mech_law_spring_seed1_stp0_lev0.8_spring) | [15](#/week/2/run/20260925T050225_combiner_mech_law_spring_seed1_stp30_lev0.8_spring) | [4](#/week/2/run/20260925T050331_combiner_mech_law_spring_seed1_stp45_lev0.8_spring) |
+| 1.2 N·m | [8](#/week/2/run/20260925T050438_combiner_mech_law_spring_seed1_stm30_lev1.2_spring) | [0](#/week/2/run/20260925T050545_combiner_mech_law_spring_seed1_stp0_lev1.2_spring) | [14](#/week/2/run/20260925T050653_combiner_mech_law_spring_seed1_stp30_lev1.2_spring) | [4](#/week/2/run/20260925T050801_combiner_mech_law_spring_seed1_stp45_lev1.2_spring) |
+| 1.6 N·m | [1](#/week/2/run/20260925T050909_combiner_mech_law_spring_seed1_stm30_lev1.6_spring) | [0](#/week/2/run/20260925T051016_combiner_mech_law_spring_seed1_stp0_lev1.6_spring) | [8](#/week/2/run/20260925T051124_combiner_mech_law_spring_seed1_stp30_lev1.6_spring) | [4](#/week/2/run/20260925T051231_combiner_mech_law_spring_seed1_stp45_lev1.6_spring) |
+
+Lip claw, latch released / opened / bar out of the claw, of 16:
+
+| lever | −30° (hinge side) | square | +30° (latch side) | +45° |
+| --- | --- | --- | --- | --- |
+| 0.4 N·m | [15 / 15 / 1](#/week/2/run/20260925T051339_combiner_mech_law_seed1_stm30_lev0.4_lips) | [16 / 16 / 1](#/week/2/run/20260925T051442_combiner_mech_law_seed1_stp0_lev0.4_lips) | [13 / 12 / 4](#/week/2/run/20260925T051546_combiner_mech_law_seed1_stp30_lev0.4_lips) | [4 / 4 / 10](#/week/2/run/20260925T051649_combiner_mech_law_seed1_stp45_lev0.4_lips) |
+| 0.8 N·m | [11 / 11 / 3](#/week/2/run/20260925T051753_combiner_mech_law_seed1_stm30_lev0.8_lips) | [10 / 10 / 0](#/week/2/run/20260925T051857_combiner_mech_law_seed1_stp0_lev0.8_lips) | [15 / 10 / 8](#/week/2/run/20260925T052001_combiner_mech_law_seed1_stp30_lev0.8_lips) | [5 / 3 / 10](#/week/2/run/20260925T052105_combiner_mech_law_seed1_stp45_lev0.8_lips) |
+| 1.2 N·m | [4 / 2 / 6](#/week/2/run/20260925T052209_combiner_mech_law_seed1_stm30_lev1.2_lips) | [3 / 2 / 1](#/week/2/run/20260925T052311_combiner_mech_law_seed1_stp0_lev1.2_lips) | [11 / 10 / 7](#/week/2/run/20260925T052415_combiner_mech_law_seed1_stp30_lev1.2_lips) | [2 / 2 / 12](#/week/2/run/20260925T052520_combiner_mech_law_seed1_stp45_lev1.2_lips) |
+| 1.6 N·m | [0 / 0 / 7](#/week/2/run/20260925T052623_combiner_mech_law_seed1_stm30_lev1.6_lips) | [0 / 0 / 0](#/week/2/run/20260925T052726_combiner_mech_law_seed1_stp0_lev1.6_lips) | [9 / 2 / 15](#/week/2/run/20260925T052830_combiner_mech_law_seed1_stp30_lev1.6_lips) | [1 / 1 / 12](#/week/2/run/20260925T052932_combiner_mech_law_seed1_stp45_lev1.6_lips) |
+
+No falls anywhere; the spring claw tore out once at +30° (1.2 N·m) and once in three of the four +45° runs.
+
+- **Force: standing 30° to the latch side turns a stiffer lever.** With the spring claw at 1.2 N·m the latch released in
+  14 of 16 against 0 square; at 1.6 N·m in 8 against 0. The force the policy holds along the lever's arc (the spring's
+  torque at the median furthest angle, over the hook's 95 mm) rises from 10.6 to at least 15.8 N at 1.2 N·m and from 12.4
+  to 16.9 N at 1.6 N·m. The hinge side helps too, less (13.0 and 15.0 N; 8 and 1 released). Square, the late turn is
+  down and sideways with almost nothing toward or away from the robot (at 55°: 0.13 of it away); from the latch side
+  0.30 of it comes toward the robot, from the hinge side 0.51 goes away. Either adds motion along the robot's own axis,
+  which the policy was trained on far more than sideways. That fits, but this sweep does not isolate the cause.
+- **+45° is a collision limit, not a force one.** The forearm presses on the box (over 20 N) in 15 of 16 attempts at
+  every lever torque, the hand cannot go down, and the lever barely moves (median 1–2°): 4 of 16 released even at 0.4
+  N·m. At +30° the forearm touches in 3–5 of 16.
+- **Lip claw: the turn gains, the grip loses.** At +30° the latch releases in 11 and 9 of 16 at 1.2 and 1.6 N·m (square:
+  3 and 0), but the bar sits about 33° askew in the claw (square: 5–6°) and comes out in 4–15 of 16, some during the
+  turn and some after the latch (7 of the 8 at 0.8 N·m after it, 5 of the 7 at 1.2 N·m before it). Opened: 10/16 at 1.2 N·m (square 2/16), 2/16 at 1.6. At 0.4 N·m the side stance is worse (12 against 16). At
+  −30° with the lip claw the forearm touches in 14–15 of 16 from 0.8 N·m (the spring claw's runs there, hooked 15 mm
+  further out, touch in 0–6) and little is gained (released 15/11/4/0 against 16/10/3/0).
+- **The lean Lukas saw.** Through the settle and grip the base sits 2–3 cm forward and 1–1.5 cm left of where it spawned.
+  Through the loaded half of the turn it swings to 6–9 cm *back* and 2–3 cm *right*, rolled 5–7° toward the right and
+  pitched about 5° nose-up (spring claw). It is the same shape at every stance and every lever torque (a little larger at
+  +30°, smaller at −30°). So it is a response to the turn: the body follows the lever's arc toward the latch side and sets
+  itself back, as it would for a pull. It does not grow with the load, and the policy does it square to the door too,
+  where the pull it leans into is not there. What it shows is which way the policy's body wants to push from, not that it
+  has found the lever's axis.
+
+**Then +15°, and stiff doors from either side** (same command with `--stance_deg 15`; the door runs with
+`--door_torque_nm 12|16` at the default 0.4 N·m lever; the square column is the overbite sweep's runs above).
+
++15° on the lever, latch released / opened / bar out, of 16: lip claw [15 / 15 / 2](#/week/2/run/20260925T053215_combiner_mech_law_seed1_stp15_lev0.8_lips) at 0.8 N·m,
+[14 / 13 / 1](#/week/2/run/20260925T053320_combiner_mech_law_seed1_stp15_lev1.2_lips) at 1.2, [4 / 3 / 4](#/week/2/run/20260925T053424_combiner_mech_law_seed1_stp15_lev1.6_lips) at 1.6; spring claw [5 / 4 / 0](#/week/2/run/20260925T053529_combiner_mech_law_spring_seed1_stp15_lev1.2_spring) at 1.2,
+[2 / 2 / 0](#/week/2/run/20260925T053637_combiner_mech_law_spring_seed1_stp15_lev1.6_spring) at 1.6. With the lip claw +15° is the best stance measured up to 1.2 N·m: 13/16 opened
+where square opens 2 and +30° 10, with the bar out once. The bar sits 18° askew in the claw through the turn, against 33° at +30° and 5–6° square. With the spring claw
++15° sits between square and +30° (5 released at 1.2 N·m, against 0 and 14). So the best angle differs between the two
+claw models, and one seed on one set of placements cannot say why.
+
+Stiff doors, lip claw, opened / largest door angle (median) / bar out of the claw, of 16
+([figure](figures/combiner_stance_door.png)):
+
+| door closer | −30° (hinge side) | −15° | square | +15° | +30° (latch side) |
+| --- | --- | --- | --- | --- | --- |
+| 12 N·m | [15, 46°, 0](#/week/2/run/20260925T053743_combiner_mech_law_seed1_stm30_door12_lips) | [15, 45°, 1](#/week/2/run/20260925T053846_combiner_mech_law_seed1_stm15_door12_lips) | [16, 43°, 5](#/week/2/run/20260925T041642_combiner_mech_law_seed1_door12_olaw) | [16, 35°, 9](#/week/2/run/20260925T053949_combiner_mech_law_seed1_stp15_door12_lips) | [5, 29°, 9](#/week/2/run/20260925T054053_combiner_mech_law_seed1_stp30_door12_lips) |
+| 16 N·m | [15, 43°, 0](#/week/2/run/20260925T054157_combiner_mech_law_seed1_stm30_door16_lips) | [15, 44°, 3](#/week/2/run/20260925T054259_combiner_mech_law_seed1_stm15_door16_lips) | [16, 35°, 13](#/week/2/run/20260925T041951_combiner_mech_law_seed1_door16_olaw) | [10, 31°, 13](#/week/2/run/20260925T054402_combiner_mech_law_seed1_stp15_door16_lips) | [0, 27°, 14](#/week/2/run/20260925T054505_combiner_mech_law_seed1_stp30_door16_lips) |
+
+The door is the mirror image of the lever. From the hinge side the door comes toward the robot all the way, the pull goes
+into the lips, and the late losses that F-111/F-112 put down to the pull running along the lip face go: **none of 16 at
+−30°, even at 16 N·m** (square: 13), and the door opens further (43–46° against 35–43°). From the latch side the door
+swings away from the robot and it gets worse: at +30° the latch releases in 14–15 of 16 but the door opens past 30° in 5
+and 0. The one failure at −30° and −15° is a latch that did not release: from the hinge side the lever's late turn is a
+push away from the robot.
+
+**Where to stand, then, depends on which of the two is stiff.** A stiff lever and a light door want the latch side (+15°
+with the lip claw, +30° with the spring claw); a stiff door and a light lever want the hinge side (−15° to −30°); the two
+together want a robot that turns the lever from one side and pulls the door from the other, which a standing demo cannot
+do. The real box's lever torque and door force (still unmeasured, F-110) now decide the stance as well as the demo.
+
+What it does not show: one policy seed and one set of placements; the lever is a modelled spring; the "force held" is
+the spring's torque at the furthest angle reached, a floor wherever the lever reached its 60° stop; the stances are
+the box turned about the grasp point with the robot standing still, not a robot that walked there. The stiff-door runs
+are at the default 0.4 N·m lever only, and the stance-by-lever runs at a free door only; no run has both stiff. Finding:
+F-113.
+
+### 2026-09-25 — The L-lip claw corrected: lips beyond the fingertips, overbiting, and the jaws closing fully
+
+**Why.** The first lip model (the entry below) put each lip *across* its own fingertip, so a lip met the opposite finger
+once the gap was 20 mm and the jaws could not close on the 18 mm bar. Lukas: "The lips should be beyond the pincer so it
+overbites and doesn't obstruct a full close". So each lip now sits 0.5 mm past the fingers' end faces (`claw.LIP_FACE_Z_M`
+= 126.1 mm in Link6; the STL's furthest point is 125.6 mm), spanning from its finger's outer edge to 20 mm past its inner
+face, on its own half of the finger width as before. At full close each lip passes in front of the other finger's end
+without touching it, which a new CPU test checks against the STL meshes (`LipGeometryTest`, 5 tests). `LIP_STOP_TRAVEL_M`
+is 0, and the launcher closes the jaws onto the bar past the URDF stop (`JAW_BAR_SHUT_M`), as the friction grip does.
+The jaws still come in fully open: the lip tips are 37.2 mm apart then.
+
+**The runs** (16 placements, lever 0.4 N·m, hooked at 80 mm, lever kept against its stop through the pull; same script and
+claw for every controller; [figure](figures/combiner_mech_sweep_overbite.png), `combiner_mech_sweep.py overbite`):
+
+```bash
+./demos/unifp/run_demo.py --task combiner --mech --attempts 16 --headless --run_name overbite_first
+# for door in 0 4 8 12 16, the run names door${door}_olaw / _ogoal / _oold:
+./demos/unifp/run_demo.py --task combiner --attempts 16 --headless --door_torque_nm $door --mech                 # olaw
+./demos/unifp/run_demo.py --task combiner --attempts 16 --headless --door_torque_nm $door --mech --no_force_law  # ogoal
+./demos/unifp/run_demo.py --task combiner --attempts 16 --headless --door_torque_nm $door \
+    --wrist --claw --goal_correction --turn_deg 60 --lever_grasp_m 0.080 --ease_deg 60                           # oold
+./demos/unifp/run_demo.py --task combiner --attempts 16 --headless --mech --seed 2 --door_torque_nm {8,16} --run_name seed2_door{8,16}_olaw
+```
+
+First, [free door](#/week/2/run/20260925T040559_combiner_mech_law_seed1_overbite_first): 16/16, door 46°, bar out of the claw in 1.
+
+| door closer | `--mech` | `--mech --no_force_law` | UniFP + wrist, same claw, correction and script |
+| --- | --- | --- | --- |
+| free | [**16/16**](#/week/2/run/20260925T040719_combiner_mech_law_seed1_door0_olaw), door 46°, bar out 1 | [1/16](#/week/2/run/20260925T040822_combiner_mech_goal_seed1_door0_ogoal) | [13/16](#/week/2/run/20260925T040923_combiner_unifp_wrist_claw_corr_seed1_door0_oold), 45°, out 1 |
+| 4 N·m | [**16/16**](#/week/2/run/20260925T041027_combiner_mech_law_seed1_door4_olaw), 45°, 0 | [0/16](#/week/2/run/20260925T041132_combiner_mech_goal_seed1_door4_ogoal) | [6/16](#/week/2/run/20260925T041233_combiner_unifp_wrist_claw_corr_seed1_door4_oold), 24°, 2 |
+| 8 N·m | [**16/16**](#/week/2/run/20260925T041336_combiner_mech_law_seed1_door8_olaw), 42°, 1 | [0/16](#/week/2/run/20260925T041439_combiner_mech_goal_seed1_door8_ogoal) | [0/16](#/week/2/run/20260925T041539_combiner_unifp_wrist_claw_corr_seed1_door8_oold), 18°, 1 |
+| 12 N·m | [**16/16**](#/week/2/run/20260925T041642_combiner_mech_law_seed1_door12_olaw), 43°, 5 | [0/16](#/week/2/run/20260925T041745_combiner_mech_goal_seed1_door12_ogoal) | [0/16](#/week/2/run/20260925T041846_combiner_unifp_wrist_claw_corr_seed1_door12_oold), 19°, 2 |
+| 16 N·m | [**16/16**](#/week/2/run/20260925T041951_combiner_mech_law_seed1_door16_olaw), 35°, **13** | [0/16](#/week/2/run/20260925T042054_combiner_mech_goal_seed1_door16_ogoal) | [0/16](#/week/2/run/20260925T042155_combiner_unifp_wrist_claw_corr_seed1_door16_oold), 15°, 2 |
+
+No falls. Untuned placements (seed 2): [16/16 at 8 N·m, door 42°, bar out 0](#/week/2/run/20260925T042258_combiner_mech_law_seed2_seed2_door8_olaw);
+[16/16 at 16 N·m, door 37°, bar out 11](#/week/2/run/20260925T042400_combiner_mech_law_seed2_seed2_door16_olaw). With the force law the median peak
+finger contact force is 59/26/92/118/124 N across the five closers.
+
+**Against the lips-across model (the entry below).** With the force law the two geometries measure nearly the same:
+16/16 everywhere, the door within 5° (46/45/42/43/35° against 47/45/44/39/36°). The late losses at 12 and 16 N·m are also
+about the same: 5 and 13 of 16 against 5 and 16, and 11 against 10 on the untuned placements at 16 N·m. So F-111's
+conclusion does not depend on where the lips are: from 12 N·m the pull runs along the lip face once the door has swung,
+and the bar works out of the loop. What the full close changes is the grip. At 8 N·m under the law the fingers now
+press the bar at a median 12 N while the lever turns (7 N before). Through the pull the bar's measured offset across
+the claw is 9.8 mm, against 17.3 mm before. The old controller loses the bar less often (1–2 of 16 at every closer,
+against 4–9). It opens more free doors (13 against 11) but fewer at 4 N·m (6 against 10), so the overall picture for the
+old controller is unchanged: it opens free doors and fails from 8 N·m.
+
+What it does not show: the lips are rigid 4 mm boxes and the 0.5 mm overbite clearance is an assumption; the finger drives
+are the URDF's 15 N / 800 N/m model of an unmeasured gripper; contact friction is PhysX's default; the lever is 0.4 N·m;
+one policy seed. Finding: F-112 (supersedes F-111, whose lips were in the wrong place).
+
+### 2026-09-25 — The L-lip claw as geometry: the combiner demo with the fingers Lukas is building
+
+*Superseded in part by the entry above: this model put the lips across the fingertips, which stops the jaws at a
+20 mm gap. Lukas's lips are beyond the fingertips and overbite. The runs below stay as the record of that model.*
+
+**Why.** The claw in the entry below was a spring-damper from the jaw centre to a point on the lever: it held in every
+direction, including along the lever, and could not come off anywhere but at 150 N. Lukas's actual design: "turn each
+straight pincer into an L shape with a 90 degree lip facing inwards by 2 cm... these lips will pass by each other".
+He asked for the sim to model that, for more realistic physics. So the lips are now **colliders on the fingers**
+(`demos/unifp/claw.py`: a copy of `d1_arm/d1.urdf` with a 20 mm × 4 mm lip on each fingertip, `Link7_1`'s on the +x half
+of the finger's 26 mm width and `Link7_2`'s on the −x half, 1 mm between them; the robot welded into its own
+`generated/claw/`). PhysX decides whether the bar is held; the environment only watches whether it is in the loop —
+between the fingers, behind the lips, in front of the palm, lips closed (`mech_env._lip_capture`) — to engage the force law
+and to record when the bar comes out (`claw_lost`: out for 0.2 s). `run_demo.py --mech` now uses it by default
+(`--claw_model lips`; `spring` is the first model). 4 more CPU tests (the lips' placement against the finger meshes, that
+they pass each other, the stop and entry gap, the URDF).
+
+What the geometry implies before any run: a 20 mm lip meets the *opposite* finger once the gap is 20 mm, so the jaws
+cannot close below that (the model's self-collision makes that stop real) — on the 18 mm lever the bar sits ~1 mm loose
+each side, the fingers need not squeeze; and the bar must pass between the lip tips to get in — 37.2 mm apart fully
+open, **1.2 mm at the 41.2 mm the friction grip approached with**, so the jaws now come in fully open.
+
+**Development** (16 placements, lever 0.4 N·m, seed 1 unless said):
+
+| run | what | opened | what it showed |
+| --- | --- | --- | --- |
+| [lips_first](#/week/2/run/20260925T025731_combiner_mech_law_seed1_lips_first) (4) | lever hooked at 95 mm, as the spring claw had it | 3 of 4 | **the bar left the claw in 4 of 4**: at 95 mm on a 105 mm lever half the 26 mm-wide claw hangs past the end, one lip has nothing under it, and the lever pivots out |
+| [lips_80](#/week/2/run/20260925T025903_combiner_mech_law_seed1_lips_80) | hooked at 80 mm | **16** | bar never out; lever to its stop, door 50° |
+| sweep, lever eased back to 5° before the pull | door closers 0–16 N·m | 16/16/16/16/13 | the bar left the claw in 0, 0, 7, 15, 15 of 16: a stiff door's pull turned the 0.4 N·m lever (5° → its 60° stop) under jaws kept across the script's angle, and a bar ~55° askew pries out of a loop that tolerates a few degrees |
+| [hold, 12 N·m](#/week/2/run/20260925T031652_combiner_mech_law_seed1_lips_hold_door12), [16](#/week/2/run/20260925T031754_combiner_mech_law_seed1_lips_hold_door16) | lever kept against its stop through the pull; jaws rolled to the *measured* lever angle throughout | 13, 12 | fewer escapes (4, 9) but 3–4 latches never released: following the lagging lever during the turn is worse than leading it |
+| [hold2, 12](#/week/2/run/20260925T031919_combiner_mech_law_seed1_lips_hold2_door12), [16](#/week/2/run/20260925T032021_combiner_mech_law_seed1_lips_hold2_door16) | the measured-angle roll only while opening the door | **16, 16** | escapes 5 and 16 of 16, all in the last 3–19% of the pull, after the door had peaked (31–41°) |
+| [finger drives 50 N](#/week/2/run/20260925T032210_combiner_mech_law_seed1_lips_hold2_door16_jaw50) (16 N·m) | the model's finger drives are the URDF's 15 N | 16 | escapes 14 of 16: not mainly the fingers being pushed open |
+| [where the bar sits](#/week/2/run/20260925T032339_combiner_mech_law_seed1_lips_where_door16) (16 N·m) | recording the bar's place in the claw | 16 | pressed against the lips (12 mm deep) all the pull, but drifting *across* the loop (16–19 → 29–33 mm) and out along the lever (80 → ~92 mm) as the door swings: the pull turns sideways to the hand — the policy has no command for where the hand points, only its roll — so near 30–40° it runs along the lip face, not into it |
+
+The earlier sweep (lever eased to 5°): [0](#/week/2/run/20260925T030022_combiner_mech_law_seed1_door0_lipslaw),
+[4](#/week/2/run/20260925T030328_combiner_mech_law_seed1_door4_lipslaw), [8](#/week/2/run/20260925T030632_combiner_mech_law_seed1_door8_lipslaw),
+[12](#/week/2/run/20260925T030936_combiner_mech_law_seed1_door12_lipslaw), [16](#/week/2/run/20260925T031239_combiner_mech_law_seed1_door16_lipslaw) N·m;
+goal only and the old controller alongside each (`*_lipsgoal`, `*_lipsold`) — 0 and 7/1/0/0/0.
+
+**The final configuration** (`--mech` defaults with the lip claw: hooked at 80 mm, turned to the stop and kept there, jaws
+leading the lever in the turn and following its measured angle while the door opens), against the same claw and script for
+the others ([figure](figures/combiner_mech_sweep_lips.png), `combiner_mech_sweep.py lips`):
+
+| door closer | `--mech` | `--mech --no_force_law` | UniFP + wrist, same claw, correction and script |
+| --- | --- | --- | --- |
+| free | [**16/16**](#/week/2/run/20260925T032533_combiner_mech_law_seed1_door0_flaw), door 47°, bar out 0 | [0/16](#/week/2/run/20260925T032636_combiner_mech_goal_seed1_door0_fgoal) | [11/16](#/week/2/run/20260925T032736_combiner_unifp_wrist_claw_corr_seed1_door0_fold), out 9 |
+| 4 N·m | [**16/16**](#/week/2/run/20260925T032839_combiner_mech_law_seed1_door4_flaw), 45°, 0 | [0/16](#/week/2/run/20260925T032943_combiner_mech_goal_seed1_door4_fgoal) | [10/16](#/week/2/run/20260925T033044_combiner_unifp_wrist_claw_corr_seed1_door4_fold), 4 |
+| 8 N·m | [**16/16**](#/week/2/run/20260925T033146_combiner_mech_law_seed1_door8_flaw), 44°, 0 | [0/16](#/week/2/run/20260925T033249_combiner_mech_goal_seed1_door8_fgoal) | [1/16](#/week/2/run/20260925T033349_combiner_unifp_wrist_claw_corr_seed1_door8_fold), 6 |
+| 12 N·m | [**16/16**](#/week/2/run/20260925T033453_combiner_mech_law_seed1_door12_flaw), 39°, 5 | [0/16](#/week/2/run/20260925T033556_combiner_mech_goal_seed1_door12_fgoal) | [0/16](#/week/2/run/20260925T033656_combiner_unifp_wrist_claw_corr_seed1_door12_fold), 4 |
+| 16 N·m | [**16/16**](#/week/2/run/20260925T033800_combiner_mech_law_seed1_door16_flaw), 36°, **16** | [0/16](#/week/2/run/20260925T033902_combiner_mech_goal_seed1_door16_fgoal) | [0/16](#/week/2/run/20260925T034002_combiner_unifp_wrist_claw_corr_seed1_door16_fold), 4 |
+
+No falls anywhere. Untuned placements (seed 2): [16/16 at 8 N·m, bar out 0](#/week/2/run/20260925T034105_combiner_mech_law_seed2_seed2_door8_flaw),
+[16/16 at 16 N·m, bar out 10](#/week/2/run/20260925T034206_combiner_mech_law_seed2_seed2_door16_flaw).
+
+**What the real geometry shows that the spring hid.** Up to 8 N·m the lip claw holds as well as the spring did and every door
+opens. Beyond that the door still opens every time — it peaks at 36–39°, past the 30° threshold — but the bar comes out of the
+claw near the end of the pull (5 and 16 of 16 at 12 and 16 N·m), the door then swinging shut: once the door has swung the pull
+runs along the lip face, not into it, because nothing points the hand along the door's normal as it turns. The peak contact
+force on the fingers is ~110–123 N there. For the hardware: hook the lever well inboard of its end (the claw is 26 mm wide);
+keep the lever against its stop while pulling; and a lip claw wants a pull *into* its lips — either the hand turned with the
+door (the policy commands no approach direction; the wrist servo can) or the pull stopped before it turns that far.
+
+What it does not show: the lips are boxes with an assumed 4 mm thickness and a rigid attachment; the fingers' drives are the
+URDF's 15 N / 800 N/m model of an unmeasured gripper; contact friction is PhysX's default; the lever is still 0.4 N·m.
+
 ### 2026-09-25 — The standing combiner demo under the mechanism policy: every door to a 16 N·m closer
 
 **Why.** Lukas asked for a version of the standing combiner demo that uses the mechanism policy (F-108)
@@ -1893,7 +2123,7 @@ down and should not be asserted.
 ### 2026-09-21 — Continuing the UniFP training port from week 1
 
 The Isaac Lab training run started on 20 September ([week 1](../week_01/notes.md), run
-[p0](#/week/2/run/20260920T044925_train_seed1_p0)) is the subject of everything below. The task
+[p0](#/week/1/run/20260920T044925_train_seed1_p0)) is the subject of everything below. The task
 port itself, its verification against the Isaac Gym recording and the launch of that run are in
 week 1; what follows is what happened to it.
 
@@ -2519,6 +2749,9 @@ the Isaac Gym manifest of the same task.
 
 ## Findings this week
 
+- [F-113](../findings.md): where the robot stands trades the lever against the door. 30° to the latch side the mechanism policy turns a stiffer lever (spring claw: 14/16 released at 1.2 N·m against 0 square, the force it holds on the lever up 36–50%; lip claw best at +15°, 13/16 opened against 2); 15–30° to the hinge side the lip claw holds a 16 N·m door with no late escapes (0/16 against 13); each side makes the other phase harder, and +45° puts the forearm on the box. The lean Lukas saw is the policy's pull posture following the lever's arc (provisional, simulation, one seed).
+- [F-112](../findings.md): with the lips modelled beyond the fingertips as Lukas specified (overbiting, full close), the L-lip claw opens the combiner box 16 of 16 against door closers to 16 N·m under the mechanism policy (also on untuned placements), within 5° of the lips-across model; the late losses from 12 N·m remain (5 and 13 of 16), and the full close grips the bar harder and keeps it nearer the jaw centre (provisional, simulation, modelled lips and gripper). Supersedes F-111.
+- [F-111](../findings.md) (superseded by F-112: the lips were modelled across the fingertips): modelled as geometry, the L-lip claw opens the combiner box 16 of 16 against door closers to 16 N·m under the mechanism policy (also on untuned placements), with the lever hooked at 80 mm and kept against its stop; from 12 N·m the lever comes out of the claw near the end of the pull, because the swinging door turns the pull along the lip face (provisional, simulation, modelled lips and gripper).
 - [F-110](../findings.md): in the standing combiner demo the mechanism policy, given a claw and the task layer's force law, opens the box in 16 of 16 placements against door closers up to 16 N·m (≈ 60 N at the handle), also on untuned placements; UniFP with the same claw and script opens 9 of 16 free doors and none from 8 N·m; the lever turn (pushing down) is the limit (provisional, simulation, modelled claw and latch).
 - [F-109](../findings.md): making the task layer's force cap a limit trades against capacity — with the outcome reward in training the policy treats the command as advice (146 of 180 heavy mechanisms opened under a 40 N budget); as a pure force-follower it keeps closer (56 of 180) but loses the heavy door and an unseen direction; no variant bounds the transient peaks (~105–120 N at an 80 N cap) (provisional).
 - [F-108](../findings.md): trained with the task layer's force law in the loop, the whole-body policy opens 504 of 512 held-out test mechanisms — every drawer, latch and door to 80 N and 120 of 128 buttons — leaning back 15° into pulls and forward 8–9° onto pushes; with the law's integral bled once the handle arrives, no handle is torn out; it does not keep to the law's force cap (113–134 N at a 150 N mechanism), lunges 0.5–1.2 m/s at a release, and no controller lifts a lid, because the arm alone holds a median 2.8 N upward (provisional, simulation, invented mechanisms, one seed).

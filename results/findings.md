@@ -4005,3 +4005,103 @@ result that changes a conclusion gets a new entry, and the old one is marked
   new policy adds — pulling a resisting door with the body — is exactly where the old controller fails. The weak link
   has moved to the lever: pushing a short lever down is the D1's and this policy's weak direction, so the real box's
   lever torque, and whether its latch needs lifting or pressing, decide what the hardware demo can do. Measure them.
+- **Note, 2026-09-25 (later):** the claw here is a spring that holds in every direction. Modelled as the L-lip geometry Lukas is
+  building (F-111), every door still opens to 16 N·m, but the lever has to be hooked further in (80 mm) and kept against its stop,
+  and from 12 N·m the lever comes out of the claw near the end of the pull.
+
+### F-111 — Modelled as geometry, Lukas's L-lip claw opens the combiner box 16 of 16 against door closers to 16 N·m under the mechanism policy, but it only holds a pull that goes into its lips: from 12 N·m the swinging door turns the pull along the lip face and the lever comes out near the end of the pull, and a claw hooked near the lever's end loses it at once
+
+- **Status:** superseded
+- **Superseded by:** [F-112](#f-112), below (2026-09-25: this model put the lips *across* the fingertips, which stops the jaws
+  at a 20 mm gap; Lukas's lips are beyond the fingertips and overbite, so the jaws close fully. Remodelled that way the
+  results stand within a few degrees and a few escapes, so this finding's conclusion carries over to F-112)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "The L-lip claw as geometry". Each finger gets a 20 mm × 4 mm lip at its
+  tip, turned inward, the two on opposite halves of the 26 mm finger width so they pass each other (`demos/unifp/claw.py`,
+  colliders in a copy of the D1 URDF); PhysX holds the bar or does not. `run_demo.py --task combiner --mech` (lip claw by
+  default), 16 placements, lever 0.4 N·m:
+  - Final configuration — lever hooked at 80 mm, turned to its 60° stop and kept there through the pull, jaws rolled to the
+    lever's measured angle while the door opens: door closer 0/4/8/12/16 N·m **16/16/16/16/16** opened (door 47/45/44/39/36°),
+    the bar out of the claw in 0/0/0/5/16 ([16 N·m](#/week/2/run/20260925T033800_combiner_mech_law_seed1_door16_flaw)); goal
+    only 0 at every closer; UniFP + wrist servo with the same claw, correction and script 11/10/1/0/0. Untuned placements:
+    [16/16 at 8 N·m](#/week/2/run/20260925T034105_combiner_mech_law_seed2_seed2_door8_flaw),
+    [16/16 at 16 N·m](#/week/2/run/20260925T034206_combiner_mech_law_seed2_seed2_door16_flaw). No falls.
+  - Hooked at 95 mm (the spring claw's setting), [the bar left the claw in 4 of 4](#/week/2/run/20260925T025731_combiner_mech_law_seed1_lips_first):
+    half the claw's width hangs past the 105 mm lever's end.
+  - With the lever eased back to 5° before the pull, the stiff door turned the lever to its stop under jaws kept at the
+    script's angle and the bar came out in 7 and 15 of 16 at 8 and 12 N·m ([12 N·m](#/week/2/run/20260925T030936_combiner_mech_law_seed1_door12_lipslaw)).
+  - The late escapes are not the fingers being pushed open (a 50 N finger drive: [14 of 16 still](#/week/2/run/20260925T032210_combiner_mech_law_seed1_lips_hold2_door16_jaw50)):
+    the bar stays pressed on the lips but drifts across the loop and out along the lever as the door swings
+    ([recorded](#/week/2/run/20260925T032339_combiner_mech_law_seed1_lips_where_door16)); the policy commands no hand direction.
+- **Scope:** the lip thickness, its rigid attachment, the gripper's 15 N / 800 N/m drives and PhysX's default contact friction
+  are assumptions; one policy seed; the lever torque is the demo's 0.4 N·m; everything else as F-110.
+- **Implication:** the claw design works for this task in simulation and changes what the task layer must do: hook the lever
+  well inboard of its end, keep the lever against its stop while the door is pulled, and keep the pull going *into* the lips —
+  turn the hand with the door (a wrist servo; the policy has no approach command) or stop the pull before the door has turned
+  it aside. The claw's width against the lever's length, and the gripper's real drive force, are worth checking on the part.
+
+### F-112 — With the lips modelled beyond the fingertips as Lukas specified, overbiting so the jaws close fully onto the bar, the L-lip claw opens the combiner box 16 of 16 against door closers to 16 N·m under the mechanism policy, within 5° of the lips-across model; from 12 N·m the lever still works out of the claw late in the pull, and the full close grips the bar harder
+
+- **Status:** provisional (simulation only; lips, overbite clearance and finger drives are models of parts not yet made or measured)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "The L-lip claw corrected". Each lip is a 20 mm × 4 mm box 0.5 mm
+  beyond the fingers' end faces (`demos/unifp/claw.py`, `LIP_FACE_Z_M` = 126.1 mm in Link6), from its finger's outer edge
+  to 20 mm past its inner face, on opposite halves of the 26 mm finger width. A CPU test checks against the STL meshes
+  that at full close each lip passes over the other finger's end without touching it. `run_demo.py --task combiner --mech`,
+  16 placements, lever 0.4 N·m, hooked at 80 mm and kept against its stop, jaws closed past the URDF stop onto the bar:
+  - Door closer 0/4/8/12/16 N·m: **16/16/16/16/16** opened (door 46/45/42/43/35°), bar out of the claw in 1/0/1/5/13
+    ([16 N·m](#/week/2/run/20260925T041951_combiner_mech_law_seed1_door16_olaw)), median peak finger contact 59/26/92/118/124 N.
+    Goal only: 1/0/0/0/0. UniFP + wrist servo with the same claw, correction and script: 13/6/0/0/0, bar out 1–2 of 16.
+    Untuned placements: [16/16 at 8 N·m](#/week/2/run/20260925T042258_combiner_mech_law_seed2_seed2_door8_olaw) (out 0),
+    [16/16 at 16 N·m](#/week/2/run/20260925T042400_combiner_mech_law_seed2_seed2_door16_olaw) (out 11). No falls.
+  - Against F-111's lips-across model with the force law: door within 5° at every closer, escapes 5 and 13 against 5 and 16
+    at 12 and 16 N·m (untuned, 16 N·m: 11 against 10). At 8 N·m the fingers now press the bar at a median 12 N while the
+    lever turns (7 N before), and through the pull the bar's measured offset across the claw is 9.8 mm (17.3 mm before).
+- **Scope:** the lip thickness, the 0.5 mm overbite clearance, the rigid attachment, the gripper's 15 N / 800 N/m drives and
+  PhysX's default contact friction are assumptions; one policy seed; the lever torque is the demo's 0.4 N·m; everything else
+  as F-110. Whether the bar leaves the claw is `mech_env`'s loop test (out for 0.2 s), not a contact measurement.
+- **Implication:** F-111's implications stand with the correct geometry: hook the lever well inboard of its end, keep it
+  against its stop through the pull, and keep the pull going into the lips. For the part, the overbite
+  costs nothing in this task and gives back the squeeze. The late escapes at stiff doors come from the pull direction, not
+  from where the lips are, so a wrist that turns the hand with the door, or a shorter pull, is the next thing to try.
+- **Note, 2026-09-25 (later):** standing 15–30° to the door's hinge side removes those late escapes (none of 16 at −30°,
+  even at 16 N·m) by turning the door's swing into a pull toward the robot; see F-113.
+
+### F-113 — Where the robot stands against the combiner box trades the lever against the door: 30° to the latch side the mechanism policy turns a stiffer lever (spring claw: 14/16 latches released at 1.2 N·m against 0 square; the stiffness at which half release doubles), 15–30° to the hinge side the lip claw holds a 16 N·m door with no late escapes (0/16 against 13), and each side makes the other half of the task harder
+
+- **Status:** provisional (simulation only; one policy seed, one set of placements, modelled lever spring, door closer, claws)
+- **Week:** 2
+- **Date:** 2026-09-25
+- **Evidence:** [Week 2 log, 2026-09-25](week_02/notes.md), "Standing to the side of the box" ([figure](week_02/figures/combiner_stance_sweep.png),
+  [door figure](week_02/figures/combiner_stance_door.png)). `run_demo.py --task combiner --mech --stance_deg`, the box turned about
+  the grasp point so the reach is unchanged; positive is the latch side, where the lever's late turn draws the handle
+  toward the robot, negative the hinge side, where the opening door comes toward it. 16 placements per point, the same
+  draws at every stance:
+  - Free door, lever spring 0.4–1.6 N·m at 45°, spring claw (holds in every direction), latch released: square
+    16/6/0/0; +30° 15/15/14/8 ([1.2 N·m](#/week/2/run/20260925T050653_combiner_mech_law_spring_seed1_stp30_lev1.2_spring)); −30°
+    16/15/8/1; +15° 5 and 2 at 1.2 and 1.6. The force held along the lever's arc at 1.2/1.6 N·m: square 10.6/12.4 N,
+    +30° ≥15.8/16.9 N (36–50% more). Half the latches release up to about 0.8 N·m square and 1.6 N·m at +30°.
+  - The same with the L-lip claw, latch released / opened: square 16/16, 10/10, 3/2, 0/0; +15° 15/15 at 0.8 N·m and
+    14/13 at 1.2 ([run](#/week/2/run/20260925T053320_combiner_mech_law_seed1_stp15_lev1.2_lips)), 4/3 at 1.6; +30° 13/12, 15/10,
+    11/10, 9/2 with the bar out of the claw in 4–15 of 16. The policy reaches along its own line to the handle, so the
+    bar sits about as askew in the claw as the stance angle (median 18° at +15°, 33° at +30°, 5–6° square).
+  - +45°: the forearm presses on the box in 15 of 16 attempts and the lever barely moves (4 of 16 released at any torque).
+  - Lip claw, lever 0.4 N·m, door closers 12 and 16 N·m, opened / bar out: −30° 15/0 and 15/0
+    ([16 N·m](#/week/2/run/20260925T054157_combiner_mech_law_seed1_stm30_door16_lips)); −15° 15/1 and 15/3; square 16/5 and 16/13;
+    +15° 16/9 and 10/13; +30° 5/9 and 0/14. The one hinge-side failure per run is a latch that did not release.
+  - The body's lean through the turn (spring claw): 6–9 cm back and 2–3 cm toward the latch side, rolled 5–7° that way,
+    about 5° nose-up, from 2–3 cm forward before it — the same shape at every stance and lever torque.
+- **Scope:** one policy seed and one set of placements; the lever spring and door closer are models; the "force held" is
+  the spring's torque at the furthest angle reached, a floor where the lever reached its stop; the stiff-door runs used
+  the 0.4 N·m lever and the lever runs a free door, so no run had both stiff; the robot stands still at each stance (it did
+  not walk there); −30° takes the door pull's end up to 3 mm inside the trained 0.30 m goal radius.
+- **Implication:** where the robot stands is a task-layer decision as real as the goal. The mechanism's geometry says
+  which way each phase moves (the lever in the door's plane toward the latch side, the door toward the hinge side), and
+  the policy's strength is along its own axis, not across it; standing so the stiff phase moves toward the robot uses
+  that. For the real box, the lever torque and the door force decide the stance: a stiff lever wants the latch side, a
+  stiff door the hinge side, both a robot that repositions between the turn and the pull. The lean Lukas saw is real
+  (back and toward the latch side in every turn) but it is the policy's pull posture following the lever's arc, not
+  evidence that it has found the lever's axis. The lip claw's tolerance to a bar askew, and an approach the task layer can
+  command, are what limit the latch-side stance with that claw.
