@@ -31,13 +31,13 @@ welded model `weld.py` builds from) and writes an Isaac-Gym-loadable copy:
     The arm's base is welded to the Go2 and collapses into `base_link`, so its ~2.1 kg loads
     the dog rather than any arm joint, exactly as in the Isaac Lab model.
 
-  * The arm's VISUAL meshes are pre-rotated. `asset_options.flip_visual_attachments` is one flag
-    for the whole asset, but the two halves of this robot disagree: the Go2's `.dae` meshes are
+  * The STL VISUAL meshes are pre-rotated. `asset_options.flip_visual_attachments` is one flag
+    for the whole asset, but the parts of this robot disagree: the Go2's `.dae` meshes are
     y-up and need the flip (without it the dog renders on its side with its legs splayed), while
-    the D1's SolidWorks `.STL` meshes are already z-up and must not be flipped. With the flag on,
-    the dog is right and the arm lies on its side. So each arm mesh gets a `_visflip` copy rotated
-    by the inverse of the flip, and only `<visual>` points at it -- `<collision>` keeps the
-    original file. That is safe because the flag is visual-only: measured masses identical and
+    the D1's SolidWorks `.STL` meshes, and the expansion dock's (`dock.py`), are already z-up and
+    must not be flipped. With the flag on, the dog is right and the arm lies on its side. So each
+    STL visual gets a `_visflip` copy rotated by the inverse of the flip, and only `<visual>` points
+    at it -- `<collision>` keeps the original file. That is safe because the flag is visual-only: measured masses identical and
     every body within 0.0000 mm after a 2 s settle with it on and off, since the Go2's collisions
     are all primitives and the flag does not touch the arm's collision meshes either.
 
@@ -194,24 +194,22 @@ def build(dest_root):
         else:
             raise ValueError(f"unhandled mesh URI: {fn}")
 
-    # 1b. Give the arm's visual meshes a pre-rotated copy (see module docstring).
+    # 1b. Give the z-up STL visual meshes (the arm's, the dock's) a pre-rotated copy (see module docstring).
     rotated = 0
     for link in root.findall("link"):
-        visual = link.find("visual")
-        if visual is None:
-            continue
-        mesh = visual.find("geometry/mesh")
-        if mesh is None or "/d1/" not in mesh.get("filename"):
-            continue
-        rel = mesh.get("filename")
-        stem, ext = os.path.splitext(rel)
-        flipped = stem + _VISFLIP + ext
-        src = os.path.join(dest_root, rel.lstrip("./"))
-        dst = os.path.join(dest_root, flipped.lstrip("./"))
-        _rotate_stl(src, dst)
-        mesh.set("filename", flipped)
-        rotated += 1
-    print(f"  {rotated} arm visual meshes pre-rotated; collision meshes left untouched")
+        for visual in link.findall("visual"):
+            mesh = visual.find("geometry/mesh")
+            if mesh is None or not mesh.get("filename").lower().endswith(".stl"):
+                continue
+            rel = mesh.get("filename")
+            stem, ext = os.path.splitext(rel)
+            flipped = stem + _VISFLIP + ext
+            src = os.path.join(dest_root, rel.lstrip("./"))
+            dst = os.path.join(dest_root, flipped.lstrip("./"))
+            _rotate_stl(src, dst)
+            mesh.set("filename", flipped)
+            rotated += 1
+    print(f"  {rotated} STL visual meshes pre-rotated (arm and dock); collision meshes left untouched")
 
     # 2. Reorder the DOFs into UniFP's [12 legs | 6 arm | 2 gripper] layout (see module docstring).
     arm_joints = [f"Joint{n}" for n in (1, 2, 3, 4, 5, 6)] + ["Joint7_1", "Joint7_2"]

@@ -29,13 +29,14 @@ import numpy as np
 import torch
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
 from weld import build_welded_robot_usd
+from mount import LEGACY_ARM_MOUNT_POS_M  # the mount the recorded result was built on
 from unifp_isaaclab import interface, robot as robot_mod
 from unifp_train.env import Go2D1PosForceEnv
 from unifp_train.env_cfg import Go2D1PosForceEnvCfg
 
 usd = build_welded_robot_usd(go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
                              d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"), out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-                             mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+                             mount_pos=LEGACY_ARM_MOUNT_POS_M, arm_mass_kg=3.152).usd_path
 cfg = Go2D1PosForceEnvCfg()
 cfg.scene.num_envs = 1
 kwargs = {} if args.armature is None else {"armature": args.armature}

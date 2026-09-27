@@ -47,9 +47,11 @@ import d1_ik  # noqa: E402
 from position_only.workspace import SOFT_LIMIT_FACTOR, load_urdf  # noqa: E402
 
 #: The goal sphere's centre in the *arm's* base frame. `interface.EE_GOAL_CENTER_OFFSET` puts it
-#: 0.49 m above the ground under the robot; the arm is mounted 0.08 m above a base that stands at
-#: about 0.30 m, so it sits this far below the arm's own origin.
-ARM_MOUNT_HEIGHT_M = 0.38
+#: 0.49 m above the ground under the robot; the arm is mounted at `mount.ARM_MOUNT_POS_M` (85.5 mm up, 2.5 mm ahead:
+#: F-117) on a base that stands at about 0.30 m, so the centre sits this far from the arm's own origin.
+from mount import ARM_MOUNT_POS_M  # noqa: E402
+ARM_MOUNT_HEIGHT_M = 0.30 + ARM_MOUNT_POS_M[2]
+ARM_MOUNT_AHEAD_M = ARM_MOUNT_POS_M[0]
 GOAL_CENTRE_Z_M = 0.49
 
 #: `Joint6`'s travel, from `d1_arm/d1.urdf`.
@@ -70,7 +72,7 @@ def roll_is_always_reachable(soft: float = SOFT_LIMIT_FACTOR) -> tuple[bool, flo
 
 
 def sphere_point(radius: float, pitch: float, yaw: float) -> np.ndarray:
-    centre = np.array([0.0, 0.0, GOAL_CENTRE_Z_M - ARM_MOUNT_HEIGHT_M])
+    centre = np.array([-ARM_MOUNT_AHEAD_M, 0.0, GOAL_CENTRE_Z_M - ARM_MOUNT_HEIGHT_M])
     return centre + np.array([radius * math.cos(pitch) * math.cos(yaw),
                               radius * math.cos(pitch) * math.sin(yaw),
                               radius * math.sin(pitch)])

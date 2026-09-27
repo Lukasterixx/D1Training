@@ -1,0 +1,306 @@
+{
+  "status": "complete",
+  "mode": "camera_body_view",
+  "seed": 42,
+  "arguments": {
+    "device": "cuda:0",
+    "seed": 42,
+    "camera": "d435",
+    "calibration": null,
+    "mount_pos": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "mount_pitch_deg": 20.0,
+    "mount": null,
+    "no_camera_body": false,
+    "pose": "observe",
+    "look_at": "dock",
+    "settle_steps": 120,
+    "frames_per_view": 4,
+    "width": 900,
+    "height": 700,
+    "cup_usdz": "/home/victor/D1Training/demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "robot_usd": null,
+    "output": "/home/victor/D1Training/logs/camera_body"
+  },
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_status": "M README.md\n M checkpoints/README.md\n M checkpoints/SHA256SUMS\n M demos/combiner/run_combiner_demo.py\n M demos/cup/run_camera_body_view.py\n M demos/cup/run_pick_demo.py\n M demos/cup/tests/test_d1_ui.py\n M demos/cup/tests/test_pick_demo.py\n M demos/unifp/README.md\n M demos/unifp/mech_env.py\n M demos/unifp/orientation_probe.py\n M demos/unifp/run_demo.py\n M description/README.md\n M description/build_go2_d1_urdf.py\n M description/go2_d1.urdf\n M flat_env_cfg.py\n M position_only/workspace.py\n M results/findings.md\n M results/week_02/figures/arm_chatter_probe.py\n M results/week_02/notes.md\n M run_position_only.py\n M run_unifp_isaaclab.py\n M run_unifp_train.py\n M sim.py\n M tests/test_mechanism.py\n M tests/test_workspace.py\n M unifp_go2d1/go2d1_pos_force_config.py\n M unifp_train/README.md\n M unifp_train/fixture.py\n M unifp_train/mech_cfg.py\n M unifp_train/mech_env.py\n M unifp_train/mech_eval.py\n M unifp_train/mech_rewards.py\n M unifp_train/mechanism.py\n M unifp_train/pose_feasibility.py\n M unifp_train/rewards.py\n M unifp_train/task_cfg.py\n M unifp_train/workspace_map.py\n M weld.py\n?? checkpoints/unifp_go2d1_mech_lever_model_20497.pt\n?? demos/insertion/\n?? description/dock_from_cad.py\n?? description/meshes/go2/expansion_dock.stl\n?? description/meshes/go2/expansion_dock_rails.stl\n?? description/mount_from_cad.py\n?? dock.py\n?? logs/insertion_demo/\n?? mount.py\n?? results/week_02/figures/combiner_lever_policy.png\n?? results/week_02/figures/insertion_training.png\n?? results/week_02/figures/insertion_training.py\n?? results/week_02/figures/mech_lever_eval.png\n?? results/week_02/figures/mech_lever_training.py\n?? results/week_02/figures/mount_sensitivity.png\n?? results/week_02/figures/mount_sensitivity.py\n?? results/week_02/runs/20260925T084901_smoke_seed1_lever_smoke/\n?? results/week_02/runs/20260925T085018_mech_eval_seed1_mech_lever_17499/\n?? results/week_02/runs/20260925T085153_train_seed1_mech_law_lever/\n?? results/week_02/runs/20260925T100416_mech_eval_seed1_mech_lever_18998/\n?? results/week_02/runs/20260925T100443_mech_eval_seed1_mech_test_law_lever_18998_bleed/\n?? results/week_02/runs/20260925T100559_combiner_mech_law_spring_seed1_lvr_stm30_lev0.4_spring/\n?? results/week_02/runs/20260925T100707_combiner_mech_law_spring_seed1_lvr_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T100814_combiner_mech_law_spring_seed1_lvr_stp15_lev0.4_spring/\n?? results/week_02/runs/20260925T100920_combiner_mech_law_spring_seed1_lvr_stp30_lev0.4_spring/\n?? results/week_02/runs/20260925T101027_combiner_mech_law_spring_seed1_lvr_stm30_lev0.8_spring/\n?? results/week_02/runs/20260925T101133_combiner_mech_law_spring_seed1_lvr_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T101241_combiner_mech_law_spring_seed1_lvr_stp15_lev0.8_spring/\n?? results/week_02/runs/20260925T101347_combiner_mech_law_spring_seed1_lvr_stp30_lev0.8_spring/\n?? results/week_02/runs/20260925T101452_combiner_mech_law_spring_seed1_lvr_stm30_lev1.2_spring/\n?? results/week_02/runs/20260925T101559_combiner_mech_law_spring_seed1_lvr_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T101705_combiner_mech_law_spring_seed1_lvr_stp15_lev1.2_spring/\n?? results/week_02/runs/20260925T101811_combiner_mech_law_spring_seed1_lvr_stp30_lev1.2_spring/\n?? results/week_02/runs/20260925T101917_combiner_mech_law_spring_seed1_lvr_stm30_lev1.6_spring/\n?? results/week_02/runs/20260925T102022_combiner_mech_law_spring_seed1_lvr_stp0_lev1.6_spring/\n?? results/week_02/runs/20260925T102128_combiner_mech_law_spring_seed1_lvr_stp15_lev1.6_spring/\n?? results/week_02/runs/20260925T102236_combiner_mech_law_spring_seed1_lvr_stp30_lev1.6_spring/\n?? results/week_02/runs/20260925T102343_combiner_mech_law_spring_seed1_lvr_stm30_lev2.4_spring/\n?? results/week_02/runs/20260925T102450_combiner_mech_law_spring_seed1_lvr_stp0_lev2.4_spring/\n?? results/week_02/runs/20260925T102556_combiner_mech_law_spring_seed1_lvr_stp15_lev2.4_spring/\n?? results/week_02/runs/20260925T102702_combiner_mech_law_spring_seed1_lvr_stp30_lev2.4_spring/\n?? results/week_02/runs/20260925T102808_combiner_mech_law_seed1_lvr_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T102908_combiner_mech_law_seed1_lvr_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T103009_combiner_mech_law_seed1_lvr_stp15_lev0.4_lips/\n?? results/week_02/runs/20260925T103110_combiner_mech_law_seed1_lvr_stp30_lev0.4_lips/\n?? results/week_02/runs/20260925T103210_combiner_mech_law_seed1_lvr_stm30_lev0.8_lips/\n?? results/week_02/runs/20260925T103309_combiner_mech_law_seed1_lvr_stp0_lev0.8_lips/\n?? results/week_02/runs/20260925T103411_combiner_mech_law_seed1_lvr_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T103512_combiner_mech_law_seed1_lvr_stp30_lev0.8_lips/\n?? results/week_02/runs/20260925T103613_combiner_mech_law_seed1_lvr_stm30_lev1.2_lips/\n?? results/week_02/runs/20260925T103713_combiner_mech_law_seed1_lvr_stp0_lev1.2_lips/\n?? results/week_02/runs/20260925T103813_combiner_mech_law_seed1_lvr_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T103914_combiner_mech_law_seed1_lvr_stp30_lev1.2_lips/\n?? results/week_02/runs/20260925T104016_combiner_mech_law_seed1_lvr_stm30_lev1.6_lips/\n?? results/week_02/runs/20260925T104116_combiner_mech_law_seed1_lvr_stp0_lev1.6_lips/\n?? results/week_02/runs/20260925T104218_combiner_mech_law_seed1_lvr_stp15_lev1.6_lips/\n?? results/week_02/runs/20260925T104319_combiner_mech_law_seed1_lvr_stp30_lev1.6_lips/\n?? results/week_02/runs/20260925T104421_combiner_mech_law_seed1_lvr_stm30_lev2.4_lips/\n?? results/week_02/runs/20260925T104521_combiner_mech_law_seed1_lvr_stp0_lev2.4_lips/\n?? results/week_02/runs/20260925T104623_combiner_mech_law_seed1_lvr_stp15_lev2.4_lips/\n?? results/week_02/runs/20260925T104725_combiner_mech_law_seed1_lvr_stp30_lev2.4_lips/\n?? results/week_02/runs/20260925T104825_combiner_mech_law_seed1_lvr_stm30_door12_lips/\n?? results/week_02/runs/20260925T104925_combiner_mech_law_seed1_lvr_stp0_door12_lips/\n?? results/week_02/runs/20260925T105027_combiner_mech_law_seed1_lvr_stm30_door16_lips/\n?? results/week_02/runs/20260925T105127_combiner_mech_law_seed1_lvr_stp0_door16_lips/\n?? results/week_02/runs/20260925T105243_mech_eval_seed1_mech_lever_high_17499/\n?? results/week_02/runs/20260925T105307_mech_eval_seed1_mech_lever_high_18998/\n?? results/week_02/runs/20260925T105332_combiner_mech_law_spring_seed1_ce_new_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T105439_combiner_mech_law_seed1_ce_new_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T105540_combiner_mech_law_seed1_ce_new_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T105643_combiner_mech_law_seed1_ce_new_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T105745_combiner_mech_law_seed1_ce_new_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T105847_combiner_mech_law_spring_seed1_ce_old_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T105956_combiner_mech_law_seed1_ce_old_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T110059_combiner_mech_law_seed1_ce_old_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T110203_combiner_mech_law_seed1_ce_old_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T110306_combiner_mech_law_seed1_ce_old_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T110410_combiner_mech_law_spring_seed1_high_old_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T110517_combiner_mech_law_seed1_high_old_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T110620_combiner_mech_law_spring_seed1_high_new_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T110726_combiner_mech_law_seed1_high_new_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T111044_smoke_seed1_lever_high_smoke/\n?? results/week_02/runs/20260925T111115_train_seed1_mech_law_lever_high/\n?? results/week_02/runs/20260925T122454_mech_eval_seed1_mech_lever_20497/\n?? results/week_02/runs/20260925T122521_mech_eval_seed1_mech_lever_high_20497/\n?? results/week_02/runs/20260925T122546_mech_eval_seed1_mech_test_law_lever_high_20497_bleed/\n?? results/week_02/runs/20260925T122613_combiner_mech_law_seed1_v2_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T122716_combiner_mech_law_seed1_v2_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T122819_combiner_mech_law_seed1_v2_stp15_lev0.4_lips/\n?? results/week_02/runs/20260925T122921_combiner_mech_law_seed1_v2_stp30_lev0.4_lips/\n?? results/week_02/runs/20260925T123023_combiner_mech_law_seed1_v2_stm30_lev0.8_lips/\n?? results/week_02/runs/20260925T123126_combiner_mech_law_seed1_v2_stp0_lev0.8_lips/\n?? results/week_02/runs/20260925T123228_combiner_mech_law_seed1_v2_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T123330_combiner_mech_law_seed1_v2_stp30_lev0.8_lips/\n?? results/week_02/runs/20260925T123432_combiner_mech_law_seed1_v2_stm30_lev1.2_lips/\n?? results/week_02/runs/20260925T123534_combiner_mech_law_seed1_v2_stp0_lev1.2_lips/\n?? results/week_02/runs/20260925T123638_combiner_mech_law_seed1_v2_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T123741_combiner_mech_law_seed1_v2_stp30_lev1.2_lips/\n?? results/week_02/runs/20260925T123844_combiner_mech_law_seed1_v2_stm30_lev1.6_lips/\n?? results/week_02/runs/20260925T123946_combiner_mech_law_seed1_v2_stp0_lev1.6_lips/\n?? results/week_02/runs/20260925T124049_combiner_mech_law_seed1_v2_stp15_lev1.6_lips/\n?? results/week_02/runs/20260925T124150_combiner_mech_law_seed1_v2_stp30_lev1.6_lips/\n?? results/week_02/runs/20260925T124252_combiner_mech_law_seed1_v2_stm30_lev2.4_lips/\n?? results/week_02/runs/20260925T124354_combiner_mech_law_seed1_v2_stp0_lev2.4_lips/\n?? results/week_02/runs/20260925T124457_combiner_mech_law_seed1_v2_stp15_lev2.4_lips/\n?? results/week_02/runs/20260925T124558_combiner_mech_law_seed1_v2_stp30_lev2.4_lips/\n?? results/week_02/runs/20260925T124701_combiner_mech_law_spring_seed1_v2_stm30_lev0.4_spring/\n?? results/week_02/runs/20260925T124809_combiner_mech_law_spring_seed1_v2_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T124916_combiner_mech_law_spring_seed1_v2_stp15_lev0.4_spring/\n?? results/week_02/runs/20260925T125024_combiner_mech_law_spring_seed1_v2_stp30_lev0.4_spring/\n?? results/week_02/runs/20260925T125130_combiner_mech_law_spring_seed1_v2_stm30_lev0.8_spring/\n?? results/week_02/runs/20260925T125238_combiner_mech_law_spring_seed1_v2_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T125344_combiner_mech_law_spring_seed1_v2_stp15_lev0.8_spring/\n?? results/week_02/runs/20260925T125452_combiner_mech_law_spring_seed1_v2_stp30_lev0.8_spring/\n?? results/week_02/runs/20260925T125559_combiner_mech_law_spring_seed1_v2_stm30_lev1.2_spring/\n?? results/week_02/runs/20260925T125705_combiner_mech_law_spring_seed1_v2_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T125812_combiner_mech_law_spring_seed1_v2_stp15_lev1.2_spring/\n?? results/week_02/runs/20260925T125921_combiner_mech_law_spring_seed1_v2_stp30_lev1.2_spring/\n?? results/week_02/runs/20260925T130028_combiner_mech_law_spring_seed1_v2_stm30_lev1.6_spring/\n?? results/week_02/runs/20260925T130134_combiner_mech_law_spring_seed1_v2_stp0_lev1.6_spring/\n?? results/week_02/runs/20260925T130241_combiner_mech_law_spring_seed1_v2_stp15_lev1.6_spring/\n?? results/week_02/runs/20260925T130348_combiner_mech_law_spring_seed1_v2_stp30_lev1.6_spring/\n?? results/week_02/runs/20260925T130455_combiner_mech_law_spring_seed1_v2_stm30_lev2.4_spring/\n?? results/week_02/runs/20260925T130602_combiner_mech_law_spring_seed1_v2_stp0_lev2.4_spring/\n?? results/week_02/runs/20260925T130709_combiner_mech_law_spring_seed1_v2_stp15_lev2.4_spring/\n?? results/week_02/runs/20260925T130817_combiner_mech_law_spring_seed1_v2_stp30_lev2.4_spring/\n?? results/week_02/runs/20260925T130924_combiner_mech_law_seed1_v2_stm30_door12_lips/\n?? results/week_02/runs/20260925T131026_combiner_mech_law_seed1_v2_stp0_door12_lips/\n?? results/week_02/runs/20260925T131130_combiner_mech_law_seed1_v2_stm30_door16_lips/\n?? results/week_02/runs/20260925T131233_combiner_mech_law_seed1_v2_stp0_door16_lips/\n?? results/week_02/runs/20260925T131336_combiner_mech_law_seed1_v2high_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T131440_combiner_mech_law_seed1_v2high_stp15_lev0.4_lips/\n?? results/week_02/runs/20260925T131543_combiner_mech_law_seed1_v2high_stp0_lev1.2_lips/\n?? results/week_02/runs/20260925T131646_combiner_mech_law_seed1_v2high_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T131750_combiner_mech_law_spring_seed1_v2high_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T131856_combiner_mech_law_spring_seed1_v2high_stp15_lev0.4_spring/\n?? results/week_02/runs/20260925T132004_combiner_mech_law_spring_seed1_v2high_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T132113_combiner_mech_law_spring_seed1_v2high_stp15_lev1.2_spring/\n?? results/week_02/runs/20260925T132316_combiner_mech_law_seed1_both_v2_stm30_door12/\n?? results/week_02/runs/20260925T132419_combiner_mech_law_seed1_both_v2_stm30_door16/\n?? results/week_02/runs/20260925T132524_combiner_mech_law_seed1_both_v0_stp15_door16/\n?? results/week_02/runs/20260925T132628_combiner_mech_law_seed1_both_v0_stm30_door16/\n?? results/week_02/runs/20260925T155907_smoke_seed1_ins_smoke_zero/\n?? results/week_02/runs/20260925T155942_smoke_seed1_ins_smoke_17499/\n?? results/week_02/runs/20260925T160033_play_seed1_ins_play_17499/\n?? results/week_02/runs/20260925T160135_train_seed1_ins_v1/\n?? results/week_02/runs/20260925T160719_insertion_zero_seed1_first_zero/\n?? results/week_02/runs/20260925T160825_insertion_policy_seed1_untrained_17499/\n?? results/week_02/runs/20260925T161215_train_seed1_ins_v2/\n?? results/week_02/runs/20260925T161607_play_seed1_ins_play_17499_fixed/\n?? results/week_02/runs/20260925T161818_play_seed1_ins_debug/\n?? results/week_02/runs/20260925T161956_play_seed1_ins_debug_17600/\n?? results/week_02/runs/20260925T162305_train_seed1_ins_v3/\n?? results/week_02/runs/20260925T162813_play_seed1_ins_v3_17600/\n?? results/week_02/runs/20260925T163033_train_seed1_ins_v4/\n?? results/week_02/runs/20260925T163544_play_seed1_ins_v4_17600/\n?? results/week_02/runs/20260925T164048_train_seed1_ins_v5/\n?? results/week_02/runs/20260925T184512_insertion_policy_seed1_v5_lat0/\n?? results/week_02/runs/20260925T184540_insertion_policy_seed1_v5_lat2/\n?? results/week_02/runs/20260925T184608_insertion_policy_seed1_v5_lat4/\n?? results/week_02/runs/20260925T184637_insertion_policy_seed1_u17499_lat2/\n?? results/week_02/runs/20260925T184708_ins_eval_seed1_ins_eval_lateral_v5b/\n?? results/week_02/runs/20260925T184734_ins_eval_seed1_ins_eval_detent_v5b/\n?? results/week_02/runs/20260925T184800_ins_eval_seed1_ins_eval_lateral_17499b/\n?? results/week_02/runs/20260925T184831_insertion_policy_seed1_v5_lat2_tipcorr/\n?? results/week_02/runs/20260925T184900_insertion_policy_seed1_u17499_lat2_tipcorr/\n?? results/week_02/runs/20260926T011051_054410Z_verify_seed42/\n?? results/week_02/runs/20260926T011712_eval_seed1_mount_legacy/\n?? results/week_02/runs/20260926T011815_eval_seed1_mount_new/\n?? results/week_02/runs/20260926T011838_eval_seed1_mount_x-0.05/\n?? results/week_02/runs/20260926T011902_eval_seed1_mount_x-0.03/\n?? results/week_02/runs/20260926T011926_eval_seed1_mount_x-0.015/\n?? results/week_02/runs/20260926T011950_eval_seed1_mount_x0.015/\n?? results/week_02/runs/20260926T012014_eval_seed1_mount_x0.03/\n?? results/week_02/runs/20260926T012038_eval_seed1_mount_x0.05/\n?? results/week_02/runs/20260926T012103_eval_seed1_mount_z0.04/\n?? results/week_02/runs/20260926T012127_eval_seed1_mount_z0.06/\n?? results/week_02/runs/20260926T012152_eval_seed1_mount_z0.07/\n?? results/week_02/runs/20260926T012216_eval_seed1_mount_z0.09/\n?? results/week_02/runs/20260926T012240_eval_seed1_mount_z0.10/\n?? results/week_02/runs/20260926T012304_eval_seed1_mount_z0.12/\n?? results/week_02/runs/20260926T012328_eval_seed1_mount_y-0.02/\n?? results/week_02/runs/20260926T012352_eval_seed1_mount_y0.02/\n?? results/week_02/runs/20260926T012416_mech_eval_seed1_mech_mount_legacy/\n?? results/week_02/runs/20260926T012443_mech_eval_seed1_mech_mount_new/\n?? results/week_02/runs/20260926T012510_mech_eval_seed1_mech_mount_z0.10/\n?? results/week_02/runs/20260926T012536_mech_eval_seed1_mech_mount_x-0.03/\n?? tests/test_insertion.py\n?? unifp_train/insert_cfg.py\n?? unifp_train/insert_env.py\n?? unifp_train/insert_eval.py\n?? unifp_train/insert_rewards.py\n?? unifp_train/insertion.py",
+  "task": "expansion dock render",
+  "learning": null,
+  "look_at": "dock",
+  "captured_utc": "2026-09-26T01:55:24+00:00",
+  "mount": {
+    "schema": "d1training.wrist_mount/1",
+    "created_utc": "2026-09-26T01:55:24+00:00",
+    "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+    "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+    "xyz_m": [
+      -0.061,
+      0.034,
+      0.067
+    ],
+    "rpy_deg": [
+      0.0,
+      0.0,
+      -90.0
+    ],
+    "pose_link6": [
+      [
+        0.0,
+        1.0,
+        0.0,
+        -0.061
+      ],
+      [
+        -1.0,
+        0.0,
+        -0.0,
+        0.034
+      ],
+      [
+        -0.0,
+        0.0,
+        1.0,
+        0.067
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "measured": false,
+    "method": "unstated",
+    "source": "wrist_mount.json (the saved default): d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI (aligned by eye, not measured: the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence)",
+    "camera": ""
+  },
+  "mount_file": "/home/victor/D1Training/demos/cup/pick_demo/assets/mounts/wrist_mount.json",
+  "camera_model": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration"
+  },
+  "arm_pose_rad": [
+    0.0,
+    0.10451,
+    0.83087,
+    -0.00013,
+    0.16044,
+    -0.0
+  ],
+  "pose": "observe",
+  "link6_origin_base_m": [
+    0.21869,
+    -0.00128,
+    0.2548
+  ],
+  "optical_origin_base_m": [
+    0.30358,
+    0.03272,
+    0.22311
+  ],
+  "body_clearance": {
+    "housing_x_link6_m": [
+      -0.0735,
+      -0.0485
+    ],
+    "housing_y_link6_m": [
+      -0.0434,
+      0.0465
+    ],
+    "housing_z_link6_m": [
+      0.0462,
+      0.0713
+    ],
+    "y_checked": false,
+    "shell_x_link6_m": [
+      -0.038,
+      0.019
+    ],
+    "shell_z_link6_m": [
+      0.0,
+      0.076
+    ],
+    "intersects_shell": false,
+    "overlap_m": [
+      0.0,
+      0.0251
+    ]
+  },
+  "view_obstruction": {
+    "model_eye": [],
+    "rendered_eye_f052": [
+      {
+        "part": "housing",
+        "triangles": 1367,
+        "of": 229148,
+        "eye_offset_mm": [
+          0.9,
+          8.85,
+          -6.23
+        ],
+        "depth_range_m": [
+          0.0034,
+          0.01053
+        ],
+        "x_range_m": [
+          -0.00747,
+          0.0641
+        ],
+        "y_range_m": [
+          -0.00512,
+          0.00212
+        ]
+      }
+    ]
+  },
+  "body": {
+    "asset": {
+      "usd_path": "/home/victor/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "source": "/home/victor/D1Training/demos/cup/pick_demo/assets/realsense/d435_housing.ply",
+      "source_sha256": "a1a4abe241d5d55ebdb55ac544944da4b8fa76942c24b50c2e94da6785251641",
+      "colour": [
+        0.62,
+        0.63,
+        0.65
+      ],
+      "roughness": 0.35,
+      "clearance_tan": 0.9,
+      "transform": [
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.0325
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0043
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "builder": 1,
+      "triangles": 229148,
+      "triangles_removed": 2038,
+      "vertices": 154149,
+      "bounds_optical_m": [
+        [
+          -0.0125,
+          -0.0125,
+          -0.020755
+        ],
+        [
+          0.077414,
+          0.0125,
+          0.0043
+        ]
+      ],
+      "frame": "colour optical: x right, y down, z forward, origin at the colour sensor",
+      "note": "Intel's d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro's offsets, with the colour lens element removed so a pinhole camera at the sensor plane has a clear aperture. Visual only."
+    },
+    "size_m": [
+      0.089914,
+      0.025,
+      0.025055
+    ],
+    "bounds_optical_m": [
+      [
+        -0.0125,
+        -0.0125,
+        -0.020755
+      ],
+      [
+        0.077414,
+        0.0125,
+        0.0043
+      ]
+    ],
+    "imagers_optical_m": {
+      "left_ir": [
+        0.014857,
+        0.0,
+        0.0042
+      ],
+      "colour": [
+        0.0,
+        0.0,
+        0.0042
+      ],
+      "right_ir": [
+        0.064904,
+        0.0,
+        0.0042
+      ]
+    },
+    "tripod_optical_m": [
+      0.0325,
+      0.0125,
+      -0.0106
+    ],
+    "source": "Intel d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro"
+  },
+  "views": [
+    {
+      "view": "dock_side",
+      "eye_offset_m": [
+        0.0,
+        -0.42,
+        0.1
+      ],
+      "file": "dock_side.png"
+    },
+    {
+      "view": "dock_rear_three_quarter",
+      "eye_offset_m": [
+        -0.32,
+        -0.28,
+        0.22
+      ],
+      "file": "dock_rear_three_quarter.png"
+    },
+    {
+      "view": "dock_rear",
+      "eye_offset_m": [
+        -0.42,
+        0.0,
+        0.08
+      ],
+      "file": "dock_rear.png"
+    },
+    {
+      "view": "dock_front_three_quarter",
+      "eye_offset_m": [
+        0.3,
+        0.3,
+        0.2
+      ],
+      "file": "dock_front_three_quarter.png"
+    }
+  ]
+}

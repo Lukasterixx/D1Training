@@ -104,6 +104,19 @@ lever, against 2/16 square). Negative is the hinge side, where the opening door 
 into the lips: no late escapes at a 16 N·m closer from −30° (square: 13 of 16). Each side makes the other phase harder;
 at +45° the forearm lands on the box. Pick the side by which of the two is stiff.
 
+**The lever-trained checkpoint** (`checkpoints/unifp_go2d1_mech_lever_model_20497.pt`, F-114) moves the best side to the
+hinge side, where it takes a stiff lever and a stiff door together: with the lip claw, 12/16 at a 1.2 N·m lever (the
+default checkpoint 2) and 9/16 with a 16 N·m door closer as well (the default 4 at its best stance). It is worse from the
+latch side and needs `--correct_entry`, which keeps the goal correction on through the entry, across the approach:
+
+```bash
+./demos/unifp/run_demo.py --task combiner --mech --num_envs 1 --attempts 1 --correct_entry --stance_deg -30 \
+    --handle_torque_nm 1.2 --door_torque_nm 16 --checkpoint checkpoints/unifp_go2d1_mech_lever_model_20497.pt
+```
+
+`--post_top_m` and `--box_distance_m` raise the box and bring it nearer; `--post_top_m 0.53 --box_distance_m 0.56 0.60`
+puts the handle at 0.83 m, above the robot's shoulder, with every goal inside the trained sphere.
+
 `--door_torque_nm` adds a door closer (torque at 45°); `--claw` and `--goal_correction` give any controller the same
 claw and correction, and `--no_force_law` keeps them and drops the law. Measured with the **L-lip claw**, lips
 overbiting beyond the fingertips, 16 placements, lever 0.4 N·m (F-112; `results/week_02/figures/combiner_mech_sweep_overbite.png`):

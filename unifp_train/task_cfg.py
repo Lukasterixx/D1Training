@@ -85,6 +85,16 @@ TRACKING_EE_ROLL_SIGMA = 0.5
 EE_ROLL_RANGE_RAD = (-math.pi / 2, math.pi / 2)
 
 
+#: The approach objective (`rewards.tracking_ee_orn_approach`), for the tasks that command one (insertion). Weighted
+#: above the roll because a slot admits a few degrees where a grasp admitted tens; the fine width is 3 degrees.
+#: 1.5 until the v6 run (2026-09-27), which found the approach still 4-6 degrees off at the pre-insertion pose.
+APPROACH_WEIGHTS = {
+    "tracking_ee_orn_approach": 2.5,
+}
+TRACKING_EE_APPROACH_SIGMA_FINE = 0.05
+TRACKING_EE_APPROACH_SIGMA_COARSE = 0.3
+
+
 def scaled_extension_weights() -> dict[str, float]:
     """`EXTENSION_WEIGHTS` multiplied by the policy timestep, as the environment applies them."""
     return {name: weight * interface.POLICY_DT for name, weight in EXTENSION_WEIGHTS.items()}

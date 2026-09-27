@@ -54,9 +54,11 @@ class Go2D1PosForceRoughCfg(LeggedRobotCfg):
         arm_induced_pitch = 0.38
 
         class sphere_center:
-            # The D1 mounts on the base centreline (arm_mount_joint xyz = 0 0 0.08), not ahead
-            # of it as the Z1 does on the B2, so there is no x offset. z is the shoulder
-            # (d1_Joint2) height over flat terrain: 0.30 m standing base + 0.19 m of arm base.
+            # The D1 mounts on the base centreline, not ahead of it as the Z1 does on the B2, so there is
+            # no x offset. z is the shoulder (d1_Joint2) height over flat terrain: 0.30 m standing base +
+            # 0.19 m of arm base. The mount was arm_mount_joint xyz = 0 0 0.08 when this was trained; the
+            # measured one (mount.py, F-117) is 2.5 mm ahead and 5.5 mm up. The sphere is the task's
+            # definition and was left as it was.
             x_offset = 0.0
             y_offset = 0.0
             z_invariant_offset = 0.49

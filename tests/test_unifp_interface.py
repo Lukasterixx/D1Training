@@ -148,6 +148,15 @@ class TestObservation(unittest.TestCase):
         with self.assertRaises(KeyError):
             interface.permutation_from(["FL_hip_joint"] * interface.NUM_DOF)
 
+    def test_passive_joints_pass_only_when_declared(self):
+        names = list(interface.ISAACLAB_NAMES) + ["key_rx", "key_ry"]
+        gather = interface.permutation_from(names, passive=("key_rx", "key_ry"))
+        self.assertEqual([names[i] for i in gather], list(interface.ISAACLAB_NAMES))
+        with self.assertRaises(ValueError):
+            interface.permutation_from(names)
+        with self.assertRaises(ValueError):
+            interface.permutation_from(names, passive=("key_rx",))
+
     def test_gait_phase_is_pinned_while_standing(self):
         standing = torch.zeros(1, interface.NUM_COMMANDS)
         phase = interface.gait_step(torch.tensor([0.4]), standing)

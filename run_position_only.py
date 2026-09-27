@@ -275,7 +275,7 @@ def run(args, report):
                     go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
                     d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
                     out_usd_path=str(run_dir / "assets/go2_d1.usd"),
-                    mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152,
+                    arm_mass_kg=3.152,
                 ).usd_path
             metadata["robot_usd"] = robot_path
             metadata["robot_usd_sha256"] = hashlib.sha256(Path(robot_path).read_bytes()).hexdigest()

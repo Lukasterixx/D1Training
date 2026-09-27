@@ -162,19 +162,22 @@ TOOL_OFFSET_M = (0.0547, 0.0060, 0.0170)
 EE_FORCE_RANGE_N = (-8.0, 8.0)
 
 
-def permutation_from(names: list[str]) -> list[int]:
+def permutation_from(names: list[str], passive: tuple[str, ...] = ()) -> list[int]:
     """Gather index that reorders `names` into UniFP's DOF order.
 
     `joint_pos[:, permutation_from(robot.joint_names)]` is the vector UniFP's observation expects.
     Raises rather than silently dropping a joint, because a quietly wrong permutation is the one
-    failure mode of this port that produces plausible-looking motion.
+    failure mode of this port that produces plausible-looking motion. The only joints it lets
+    through unused are the ones named in `passive` -- declared, not guessed: the insertion demo's
+    compliant key (`demos/insertion/key.py`) hangs on two sprung joints no policy drives.
     """
     index = {name: i for i, name in enumerate(names)}
     missing = [n for n in ISAACLAB_NAMES if n not in index]
     if missing:
         raise KeyError(f"articulation is missing {missing}; it has {sorted(names)}")
-    if len(names) != NUM_DOF:
-        raise ValueError(f"expected {NUM_DOF} joints, got {len(names)}: {names}")
+    extra = [n for n in names if n not in ISAACLAB_NAMES]
+    if len(names) != NUM_DOF + len(extra) or any(n not in passive for n in extra):
+        raise ValueError(f"expected {NUM_DOF} joints (plus declared passive {list(passive)}), got {len(names)}: {names}")
     return [index[name] for name in ISAACLAB_NAMES]
 
 

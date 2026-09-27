@@ -27,6 +27,7 @@ from d1_ik_controller import D1CartesianController, IsaacKinematics
 from flat_env_cfg import (
     ARM_BASE_DAMPING,
     ARM_BASE_STIFFNESS,
+    ARM_MOUNT_POS_M,
     ARM_MOUNT_Z,
     D1_ARM_JOINTS,
     D1_GRIPPER_JOINTS,
@@ -518,7 +519,7 @@ def run(args_cli, simulation_app):
             go2_usd_path=_resolve_go2_usd(),
             d1_urdf_path=os.path.join(os.path.dirname(__file__), "d1_arm", "d1.urdf"),
             out_usd_path=os.path.join(os.path.dirname(__file__), "generated", "go2_d1.usd"),
-            mount_pos=(0.0, 0.0, ARM_MOUNT_Z),
+            mount_pos=ARM_MOUNT_POS_M,
             arm_mass_kg=args_cli.arm_mass,
         )
         robot_usd = weld.usd_path

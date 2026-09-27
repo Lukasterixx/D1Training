@@ -178,6 +178,82 @@ class ResistanceAndAxesTest(unittest.TestCase):
         self.assertTrue(torch.allclose(door, Z, atol=1e-6))
 
 
+class LeverTest(unittest.TestCase):
+    """`mechanism.lever_axes` / `lever_opening`: a combiner box's handle, and where the robot stands against it."""
+
+    BACK = torch.tensor([[-1.0, 0.0, 0.0]])      # the robot is at -x of the handle, facing +x; its right is -y
+
+    def lever(self, stance_deg, flip=False, rest_deg=0.0, radius=0.08):
+        n = 1
+        axis = mechanism.lever_axes(self.BACK, torch.tensor([math.radians(stance_deg)]), torch.tensor([flip]))
+        opening = mechanism.lever_opening(axis, torch.tensor([math.radians(rest_deg)]))
+        return make(n, hinge=True, opening=opening, axis=axis, radius=radius, travel=radius * math.radians(60.0)), axis
+
+    def toward_robot(self, mech, turned_deg):
+        tangent = mech.tangent(torch.tensor([0.08 * math.radians(turned_deg)]))
+        return float((tangent * self.BACK).sum(-1))
+
+    def test_the_spindle_is_level_and_the_handle_starts_straight_down(self):
+        for stance in (-45.0, 0.0, 30.0):
+            for flip in (False, True):
+                mech, axis = self.lever(stance, flip)
+                self.assertAlmostEqual(float(axis[0, 2]), 0.0, places=6)
+                self.assertAlmostEqual(float(axis.norm()), 1.0, places=6)
+                self.assertTrue(torch.allclose(mech.tangent(), -Z, atol=1e-6))
+
+    def test_square_the_spindle_points_at_the_robot_from_its_right(self):
+        mech, axis = self.lever(0.0)
+        self.assertTrue(torch.allclose(axis, self.BACK, atol=1e-6))
+        self.assertLess(float(mech.centre[0, 1]), -0.07)          # the spindle 8 cm to the robot's right
+        self.assertAlmostEqual(self.toward_robot(mech, 55.0), 0.0, places=6)
+        flipped, _ = self.lever(0.0, flip=True)
+        self.assertGreater(float(flipped.centre[0, 1]), 0.07)
+
+    def test_from_the_spindle_side_the_late_turn_is_a_pull_and_from_the_tip_side_a_push(self):
+        for flip in (False, True):
+            spindle_side, _ = self.lever(30.0, flip)
+            tip_side, _ = self.lever(-30.0, flip)
+            self.assertAlmostEqual(self.toward_robot(spindle_side, 55.0), 0.5 * math.sin(math.radians(55.0)), places=5)
+            self.assertAlmostEqual(self.toward_robot(tip_side, 55.0), -0.5 * math.sin(math.radians(55.0)), places=5)
+
+    def test_a_lever_resting_raised_first_moves_down_and_away_from_its_spindle(self):
+        mech, axis = self.lever(0.0, rest_deg=-20.0)
+        start = mech.tangent()[0]
+        self.assertAlmostEqual(float((start * axis[0]).sum()), 0.0, places=6)
+        self.assertAlmostEqual(float(-start[2]), math.cos(math.radians(20.0)), places=5)
+        self.assertGreater(float(start[1]), 0.0)                   # away from the spindle on the robot's right
+
+    def test_the_lever_eval_kinds_are_the_combiner_handle(self):
+        for name, stance in (("lever", 0.0), ("lever_spindle_side", 30.0), ("lever_tip_side", -30.0)):
+            spec = mech_cfg.EVAL_KINDS[name]
+            self.assertEqual((spec["axis"], spec["opening"], spec["stance_deg"]), ("lever", "down", stance))
+            self.assertAlmostEqual(spec["radius_m"] * spec["angle_rad"], 0.08 * math.radians(60.0))
+        self.assertEqual(set(mech_cfg.LEVER_EVAL_KINDS), {"lever", "lever_spindle_side", "lever_tip_side"})
+        # Off by default, so every earlier training command still draws what it drew.
+        self.assertEqual(mech_cfg.LEVER_FRACTION, 0.0)
+
+    def test_high_levers_stay_inside_what_the_policy_was_trained_to_reach(self):
+        from unifp_train import fixture, hook_cfg
+        radius_range, pitch_range = interface.EE_GOAL_RADIUS_RANGE, interface.EE_GOAL_PITCH_RANGE
+        for radius, pitch, yaw in mech_cfg.lever_high_handle_spheres():
+            self.assertTrue(radius_range[0] <= radius <= radius_range[1])
+            self.assertTrue(pitch_range[0] <= pitch <= pitch_range[1])
+            ahead, side = radius * math.cos(pitch) * math.cos(yaw), radius * math.cos(pitch) * math.sin(yaw)
+            self.assertTrue(ahead >= hook_cfg.HANDLE_CLEAR_AHEAD_M - 1e-3 or abs(side) >= hook_cfg.HANDLE_CLEAR_SIDE_M)
+        heights = [hook_cfg.GOAL_CENTRE_HEIGHT_M + r * math.sin(p) for r, p, _ in mech_cfg.lever_high_handle_spheres()]
+        self.assertAlmostEqual(min(heights), 0.60, places=6)
+        self.assertAlmostEqual(max(heights), 0.90, places=6)
+        # Training draws reach above the robot's shoulder, and never out of UniFP's pitch range.
+        self.assertLessEqual(mech_cfg.LEVER_HANDLE_PITCH_RANGE[1], pitch_range[1])
+        draws = fixture.sample_handles(4000, "cpu", generator=torch.Generator().manual_seed(0),
+                                       pitch_range=mech_cfg.LEVER_HANDLE_PITCH_RANGE)
+        z = hook_cfg.GOAL_CENTRE_HEIGHT_M + draws[:, 0] * torch.sin(draws[:, 1])
+        self.assertGreater(float((z > 0.8).float().mean()), 0.05)
+        self.assertLess(float(z.max()), 1.0)
+        default = fixture.sample_handles(4000, "cpu", generator=torch.Generator().manual_seed(0))
+        self.assertLess(float((hook_cfg.GOAL_CENTRE_HEIGHT_M + default[:, 0] * torch.sin(default[:, 1]) > 0.8).float().mean()), 0.001)
+
+
 class TravelGoalTest(unittest.TestCase):
     def test_slides_at_its_speed_holds_then_moves_on(self):
         goal = mechanism.TravelGoal(1, "cpu", speed_m_s=(0.1, 0.1), hold_s=(0.1, 0.1), first_fraction=(1.0, 1.0),
@@ -286,6 +362,17 @@ class RewardTermsTest(unittest.TestCase):
         self.assertEqual(float(mech_rewards.mech_overforce(state)[0]), 0.0)
         state.mech_drive = torch.tensor([80.0])
         self.assertAlmostEqual(float(mech_rewards.mech_overforce(state)[0]), 9.0, places=5)
+
+    def test_offpath_charges_only_the_force_across_the_path(self):
+        state = self.state()
+        state.fixture_axis_w = torch.tensor([[0.0, 0.0, -1.0]])
+        state.fixture_applied_w = torch.tensor([[0.0, 0.0, -35.0]])          # all of it down the path: free
+        self.assertAlmostEqual(float(mech_rewards.mech_offpath(state)[0]), 0.0, places=6)
+        state.fixture_applied_w = torch.tensor([[20.0, 0.0, -35.0]])         # 20 N across: one unit
+        self.assertAlmostEqual(float(mech_rewards.mech_offpath(state)[0]), (20.0 / mech_cfg.OFFPATH_SCALE_N) ** 2, places=5)
+        state.fixture_engaged = torch.zeros(1)
+        self.assertEqual(float(mech_rewards.mech_offpath(state)[0]), 0.0)
+        self.assertEqual(mech_cfg.WEIGHTS["mech_offpath"], 0.0)              # off unless asked for
 
     def test_effort_is_the_squared_force_per_hundred_newtons(self):
         self.assertAlmostEqual(float(mech_rewards.mech_effort(self.state(force=60.0))[0]), 0.36, places=6)

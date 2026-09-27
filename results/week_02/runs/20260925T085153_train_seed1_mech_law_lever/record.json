@@ -1,0 +1,63 @@
+{
+  "id": "20260925T085153_train_seed1_mech_law_lever",
+  "title": "Mechanism policy + levers: 1,500 iterations from model_17499, 30% levers (law v1)",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-25T20:03:48+10:00",
+  "started_utc": "2026-09-25T08:51:53+00:00",
+  "source_dir": "logs/unifp_train/20260925T085153_train_seed1_mech_law_lever",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 18998,
+  "final_checkpoint": {
+    "file": "model_18998.pt",
+    "sha256": "e7782dd89453c214f7aeab28a0caece836ac42424fc79969ce7d9894f46a5e44"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 198.12843322753906,
+      "last_step": 18998,
+      "mean_last_10": 195.7827346801758,
+      "min": 2.1644256114959717,
+      "max": 202.9195556640625,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 18998,
+      "mean_last_10": 994.2570007324218,
+      "min": 12.269662857055664,
+      "max": 999.0,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.7706044316291809,
+      "last_step": 18998,
+      "mean_last_10": 0.7707323431968689,
+      "min": 0.7288471460342407,
+      "max": 0.7721530795097351,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 34547.0,
+      "last_step": 18998,
+      "mean_last_10": 34307.6,
+      "min": 32309.0,
+      "max": 38276.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

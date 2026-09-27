@@ -124,6 +124,9 @@ def score_episode(trace: dict, env: int, dt: float = interface.POLICY_DT) -> dic
     drive = trace["drive"][window, env]
     peak_at = window[int(np.nanargmax(drive))]
     out["peak_drive_n"] = round(float(np.nanmax(drive)), 2)
+    # Force across the path (what a claw has to hold and a ball joint does not): |force|^2 - drive^2.
+    across = np.sqrt(np.clip(np.square(trace["force"][window, env]) - np.square(drive), 0.0, None))
+    out["across_p95_n"] = round(float(np.nanpercentile(across, 95)), 2)
     out["pitch_at_peak_deg"] = round(math.degrees(float(trace["pitch"][peak_at, env])), 2)
     out["arm_load_p95"] = round(float(np.nanpercentile(trace["arm_load"][window, env], 95)), 3)
     out["arm_saturated_fraction"] = round(float(np.nanmean(trace["arm_load"][window, env] >= 0.99)), 3)
@@ -173,6 +176,7 @@ def score(trace: dict, kinds: list[str], levels, placements_per_level: int | Non
                    "torn": sum(e["torn_step"] is not None for e in cell),
                    "open_time_s": median([e["open_time_s"] for e in opened]),
                    "peak_drive_n": median([e["peak_drive_n"] for e in cell if "peak_drive_n" in e]),
+                   "across_p95_n": median([e["across_p95_n"] for e in cell if "across_p95_n" in e]),
                    "arm_load_p95": median([e["arm_load_p95"] for e in cell if "arm_load_p95" in e]),
                    "pitch_at_peak_deg": median([e["pitch_at_peak_deg"] for e in cell if "pitch_at_peak_deg" in e]),
                    "base_moved_at_peak_m": median([e["base_moved_at_peak_m"] for e in cell if "base_moved_at_peak_m" in e]),

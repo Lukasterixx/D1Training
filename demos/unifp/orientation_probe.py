@@ -83,7 +83,7 @@ def main() -> int:
         go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
         d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
         out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-        mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+        arm_mass_kg=3.152).usd_path
 
     cfg = Go2D1PosForceEnvCfg()
     cfg.scene.num_envs = len(points)

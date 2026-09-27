@@ -293,11 +293,67 @@ the cap a hard limit (F-109): v3 keeps closest to it and gives up some capacity 
 softer grasp, a faster reference, more damping), frozen before any policy was scored on it; the default set is
 the development set every reward change was read against.
 
+**Levers** (F-114), all off by default so earlier commands draw what they drew. `--lever_fraction 0.3` makes that share
+of mechanisms short levers turned *down* about a level spindle pointing at the robot (`mechanism.lever_axes`,
+`mech_cfg.LEVER_*`: 5–12 cm, 40–75°, the spindle turned ±45° for where the robot stands, 3–35 N, never at the
+curriculum's frontier). `--lever_high` draws their handles up to ~0.96 m, above the shoulder, where turning a lever
+down is a pull. `--offpath_weight 2.0` prices force across the mechanism's path (`mech_offpath`, per (20 N)²): a claw
+lets go under it and this task's ball-joint grasp does not (F-115). The lever tests: `mech_eval --mech_kinds lever
+lever_spindle_side lever_tip_side` (the combiner's handle square and 30° either side, 5–40 N), and with `--lever_high`
+the same at 0.6–0.9 m. `across_p95_n` in every `mech_eval` is the force across the path during the push, a proxy for
+what a claw would have to hold; `Mechanism/grasp_error_m` in training is how far from the handle the grasp was made.
+
 **The virtual spring is rigid here** (`mech_cfg.STIFF_KP`). UniFP's target is `goal + force / 200`, which
 pays the policy to give way — right for its pushes, wrong for a latch — so a policy trained on this task
 is a different controller from UniFP's, not a fine-tuned copy of it. Same 0.01 kg·m² arm armature as the
 pull task (F-102).
 
 What it is not: every mechanism number is invented, since there was no hardware to measure; the grasp is
-a ball joint (no torque through the handle, so no knob or lever turned about the wrist); and the robot
-stands — nothing here walks while it opens.
+a ball joint closed wherever the tool stopped (no torque through the handle, so no knob or lever turned about the
+wrist, and no reach precision or claw geometry: F-115); and the robot stands — nothing here walks while it opens.
+
+## The insertion task (`--task insertion`)
+
+A held key into a keyed slot on a door, from an estimate of where the slot is (2026-09-26; the demo is
+`demos/insertion/`). The same hierarchical recipe as the mechanisms: a task layer (`insertion.InsertionTaskLayer`)
+drives the insertion and the whole-body policy is trained with it in the loop.
+
+| file | |
+| --- | --- |
+| `insertion.py` | the slot (a penalty-contact model of a chamfered channel, a panel face, a detent and a seat, the force acting at the key's tip), the task layer (a PI force law along the estimated axis, capped low on the face with a spiral search, higher once in; across the axis the goal yields to the tip after a touch), its outer loops (`PoseCorrection`) and the compliant grip (`CompliantGrip`) -- plain torch, `tests/test_insertion.py` |
+| `insert_cfg.py` | where slots are, their sizes, the curriculum on the estimate's error and the detent, the task layer's gains, the rewards, the frozen evaluation |
+| `insert_env.py` | `Go2D1InsertEnv`: the goal to the pre-insertion pose with the approach commanded, the slot placed off the estimate once the hand is there, the layer's goal and force each step |
+| `insert_rewards.py` | depth against the reference, the jaw centre's precision, seated, force across the axis, contact above a safe force, damage, the tool's speed while the goal is held |
+| `insert_eval.py` | the frozen slots (`--ins_set lateral`: three heights × four estimate errors × four directions × two blade rolls; `detent`: four detents) and their scoring |
+
+```bash
+./run_unifp_train.py smoke --task insertion --num_envs 64 --steps 600 --headless
+./run_unifp_train.py train --task insertion --num_envs 4096 --iterations 5000 --headless --tool_point jaw_centre \
+    --resume_from <model.pt> --ins_compliant_grip --resume_arm_std 0.15 --entropy_coef 0.002     # v7, 2026-09-27
+./run_unifp_train.py ins_eval --task insertion --headless --checkpoint <model.pt> [--ins_set detent] [--ins_compliant_grip]
+./run_unifp_train.py play --task insertion --num_envs 32 --steps 900 --headless --checkpoint <model.pt> --ins_debug 0
+```
+
+**The approach objective.** A key goes in only along the slot's axis, so the hand's approach is commanded: the
+elevation in `CMD_EE_ORN_Y` (1 + elevation when on, 0 when off), the azimuth the goal's own bearing, which is the
+slot's axis when the robot stands on it. It is on only in insertion episodes, whose slots sit where a level approach
+is reachable (0.65-0.95 m up): over the whole goal sphere a commanded orientation is mostly unreachable (F-099).
+
+**What made it trainable** (2026-09-27, after five runs that did not learn it, F-116):
+
+- **Outer loops** (`insertion.PoseCorrection`, on by default; `--ins_tip_gain`, `--ins_attitude_gain`, 0 = off). The
+  policy never observes its own hand (F-118), so it arrives steadily off. The task layer integrates the measured
+  miss of the key's tip, the approach's elevation and the blade's roll into the commands; with them on, the layer
+  waits for the tip to converge (3 mm) before it starts, and starts anyway at the deadline if within 3 cm.
+- **A compliant grip** (`insertion.CompliantGrip`, `--ins_compliant_grip`): the key tilts about the jaw centre on a
+  2 N·m/rad spring, up to 10°, settled against the contact each physics step before it is committed (`Slot.probe`).
+  A rigid key off the axis or in a jittering hand bangs the walls (160 N at a 5 mm jitter against 22 N compliant).
+  It is a hardware requirement this sets, not a free choice: the key has to be held so it can tilt.
+- **Less arm noise in training** (`--resume_arm_std`). Checkpoints of the pull lineage carry an action-noise std of
+  0.7-0.9 on the arm, ~0.2 rad of random target per step: nothing inserts under it, so nothing is learned.
+- **Holding still** (`ins_tool_speed`): every starting policy jitters its arm at ~10 Hz by a few millimetres while
+  holding a pose (F-104 saw the habit on a pad). And an **easier slot** below curriculum level 1 (up to 2.5 mm more
+  clearance and 3 mm more chamfer), so the first episodes can seat.
+
+What it is not: the slot is a model -- a penalty contact, one friction coefficient, a key rigid or sprung in a rigid
+hand -- and the demo inserts the same key in PhysX to check it; the estimate's error is drawn, not measured.

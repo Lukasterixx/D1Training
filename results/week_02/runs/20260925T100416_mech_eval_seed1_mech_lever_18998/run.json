@@ -1,0 +1,635 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    360,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "checkpoint": "logs/unifp_train/20260925T085153_train_seed1_mech_law_lever/model_18998.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": true,
+    "force_law_bleed": 1.0,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": [
+      "lever",
+      "lever_spindle_side",
+      "lever_tip_side"
+    ],
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "mech_eval",
+    "no_curriculum": false,
+    "num_envs": 16,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "mech_lever_18998",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "task": "mechanism",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_contact_bodies": [
+    "base_link",
+    "Link1",
+    "Link2",
+    "Link3",
+    "Link4",
+    "Link5",
+    "Link6",
+    "Link7_1",
+    "Link7_2"
+  ],
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260925T085153_train_seed1_mech_law_lever/model_18998.pt",
+  "checkpoint_iteration": 18998,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_18998.pt",
+  "critic_obs": [
+    360,
+    459
+  ],
+  "episode_length_steps": 700,
+  "estimate_obs": [
+    360,
+    12
+  ],
+  "expected_actor": [
+    360,
+    2432
+  ],
+  "expected_critic": [
+    360,
+    459
+  ],
+  "expected_estimates": [
+    360,
+    12
+  ],
+  "fixture": null,
+  "force_law": {
+    "bleed_s": 1.0,
+    "ki": 1000.0,
+    "kp": 400.0,
+    "max": 80.0
+  },
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_status": "M results/week_02/notes.md\n M run_unifp_train.py\n M tests/test_mechanism.py\n M unifp_train/mech_cfg.py\n M unifp_train/mech_env.py\n M unifp_train/mechanism.py\n?? logs/mech_law_lever_train.log\n?? logs/mech_lever_17499.log\n?? logs/mech_lever_18998.log\n?? logs/unifp_train_lever_smoke.log\n?? results/week_02/runs/20260925T084901_smoke_seed1_lever_smoke/\n?? results/week_02/runs/20260925T085018_mech_eval_seed1_mech_lever_17499/\n?? results/week_02/runs/20260925T085153_train_seed1_mech_law_lever/",
+  "joint_order_ok": true,
+  "mech_conditions": {
+    "damping_n_s_m": 5.0,
+    "grasp_k": 2000.0,
+    "mass_kg": 1.0,
+    "speed_m_s": 0.1
+  },
+  "mech_kinds": [
+    "lever",
+    "lever_spindle_side",
+    "lever_tip_side"
+  ],
+  "mech_levels_n": [
+    5.0,
+    10.0,
+    15.0,
+    20.0,
+    25.0,
+    30.0,
+    35.0,
+    40.0
+  ],
+  "mech_placements": [
+    [
+      0.5353503525729669,
+      -0.5724598138180511,
+      -0.4
+    ],
+    [
+      0.5353503525729669,
+      -0.5724598138180511,
+      0.0
+    ],
+    [
+      0.5353503525729669,
+      -0.5724598138180511,
+      0.4
+    ],
+    [
+      0.48846698967279256,
+      -0.3995154939993745,
+      -0.4
+    ],
+    [
+      0.48846698967279256,
+      -0.3995154939993745,
+      0.0
+    ],
+    [
+      0.48846698967279256,
+      -0.3995154939993745,
+      0.4
+    ],
+    [
+      0.4589117562233506,
+      -0.1973955598498807,
+      -0.4
+    ],
+    [
+      0.4589117562233506,
+      -0.1973955598498807,
+      0.0
+    ],
+    [
+      0.4589117562233506,
+      -0.1973955598498807,
+      0.4
+    ],
+    [
+      0.45011109739707594,
+      0.022218565326719078,
+      -0.4
+    ],
+    [
+      0.45011109739707594,
+      0.022218565326719078,
+      0.0
+    ],
+    [
+      0.45011109739707594,
+      0.022218565326719078,
+      0.4
+    ],
+    [
+      0.4632493928760188,
+      0.23974310887045655,
+      -0.4
+    ],
+    [
+      0.4632493928760188,
+      0.23974310887045655,
+      0.0
+    ],
+    [
+      0.4632493928760188,
+      0.23974310887045655,
+      0.4
+    ]
+  ],
+  "mech_set": "development",
+  "mechanism": {
+    "curriculum": false,
+    "force_law": false,
+    "force_law_bleed_s": null,
+    "force_law_gains": [
+      400.0,
+      1000.0,
+      80.0
+    ],
+    "law_variant": "v1",
+    "lever_fraction": 0.0,
+    "mechanism_fraction": 0.8,
+    "opening_probs": [
+      0.45,
+      0.25,
+      0.15,
+      0.15
+    ],
+    "peak_ceiling_max_n": 80.0,
+    "peak_ceiling_n": 15.0
+  },
+  "mode": "mech_eval",
+  "num_envs": 360,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6437a5f5520165d247ce2365e8eef047a36af0ff925ef6da712a86acbd9956c",
+  "roll_objective": true,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "episodes": 360,
+    "kinds": {
+      "lever": {
+        "by_level": [
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.015,
+            "estimate_at_peak_n": 5.87,
+            "fell": 0,
+            "level_n": 5.0,
+            "of": 15,
+            "open_time_s": 0.8,
+            "opened": 15,
+            "peak_drive_n": 7.56,
+            "peak_speed_m_s": 0.236,
+            "pitch_at_peak_deg": -0.66,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.023,
+            "estimate_at_peak_n": 9.36,
+            "fell": 0,
+            "level_n": 10.0,
+            "of": 15,
+            "open_time_s": 0.82,
+            "opened": 15,
+            "peak_drive_n": 10.81,
+            "peak_speed_m_s": 0.229,
+            "pitch_at_peak_deg": -1.71,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.048,
+            "estimate_at_peak_n": 13.21,
+            "fell": 0,
+            "level_n": 15.0,
+            "of": 15,
+            "open_time_s": 1.37,
+            "opened": 14,
+            "peak_drive_n": 14.55,
+            "peak_speed_m_s": 0.202,
+            "pitch_at_peak_deg": 1.78,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.072,
+            "estimate_at_peak_n": 19.8,
+            "fell": 0,
+            "level_n": 20.0,
+            "of": 15,
+            "open_time_s": 1.56,
+            "opened": 15,
+            "peak_drive_n": 19.92,
+            "peak_speed_m_s": 0.245,
+            "pitch_at_peak_deg": 5.98,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.055,
+            "estimate_at_peak_n": 25.26,
+            "fell": 1,
+            "level_n": 25.0,
+            "of": 15,
+            "open_time_s": 1.16,
+            "opened": 14,
+            "peak_drive_n": 27.49,
+            "peak_speed_m_s": 0.531,
+            "pitch_at_peak_deg": 7.29,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.053,
+            "estimate_at_peak_n": 34.08,
+            "fell": 0,
+            "level_n": 30.0,
+            "of": 15,
+            "open_time_s": 1.06,
+            "opened": 15,
+            "peak_drive_n": 36.53,
+            "peak_speed_m_s": 0.695,
+            "pitch_at_peak_deg": 8.41,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.058,
+            "estimate_at_peak_n": 40.15,
+            "fell": 0,
+            "level_n": 35.0,
+            "of": 15,
+            "open_time_s": 0.96,
+            "opened": 15,
+            "peak_drive_n": 43.13,
+            "peak_speed_m_s": 0.771,
+            "pitch_at_peak_deg": 9.56,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.057,
+            "estimate_at_peak_n": 43.14,
+            "fell": 0,
+            "level_n": 40.0,
+            "of": 15,
+            "open_time_s": 0.94,
+            "opened": 15,
+            "peak_drive_n": 46.54,
+            "peak_speed_m_s": 1.135,
+            "pitch_at_peak_deg": 10.71,
+            "torn": 0
+          }
+        ],
+        "capacity_n": 40.0,
+        "fell": 1,
+        "of": 120,
+        "opened": 118,
+        "torn": 0
+      },
+      "lever_spindle_side": {
+        "by_level": [
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.012,
+            "estimate_at_peak_n": 6.0,
+            "fell": 0,
+            "level_n": 5.0,
+            "of": 15,
+            "open_time_s": 0.78,
+            "opened": 15,
+            "peak_drive_n": 8.94,
+            "peak_speed_m_s": 0.273,
+            "pitch_at_peak_deg": -1.46,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.018,
+            "estimate_at_peak_n": 8.16,
+            "fell": 0,
+            "level_n": 10.0,
+            "of": 15,
+            "open_time_s": 0.86,
+            "opened": 15,
+            "peak_drive_n": 10.42,
+            "peak_speed_m_s": 0.238,
+            "pitch_at_peak_deg": -2.05,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.029,
+            "estimate_at_peak_n": 15.27,
+            "fell": 0,
+            "level_n": 15.0,
+            "of": 15,
+            "open_time_s": 1.96,
+            "opened": 11,
+            "peak_drive_n": 14.38,
+            "peak_speed_m_s": 0.213,
+            "pitch_at_peak_deg": 0.67,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.062,
+            "estimate_at_peak_n": 21.85,
+            "fell": 0,
+            "level_n": 20.0,
+            "of": 15,
+            "open_time_s": 1.77,
+            "opened": 10,
+            "peak_drive_n": 22.92,
+            "peak_speed_m_s": 0.618,
+            "pitch_at_peak_deg": 3.2,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.053,
+            "estimate_at_peak_n": 29.16,
+            "fell": 0,
+            "level_n": 25.0,
+            "of": 15,
+            "open_time_s": 1.4,
+            "opened": 12,
+            "peak_drive_n": 31.84,
+            "peak_speed_m_s": 0.795,
+            "pitch_at_peak_deg": 6.68,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.043,
+            "estimate_at_peak_n": 35.86,
+            "fell": 0,
+            "level_n": 30.0,
+            "of": 15,
+            "open_time_s": 1.16,
+            "opened": 12,
+            "peak_drive_n": 37.6,
+            "peak_speed_m_s": 0.792,
+            "pitch_at_peak_deg": 9.25,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.051,
+            "estimate_at_peak_n": 40.76,
+            "fell": 0,
+            "level_n": 35.0,
+            "of": 15,
+            "open_time_s": 1.03,
+            "opened": 12,
+            "peak_drive_n": 42.94,
+            "peak_speed_m_s": 0.938,
+            "pitch_at_peak_deg": 11.13,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.053,
+            "estimate_at_peak_n": 45.11,
+            "fell": 0,
+            "level_n": 40.0,
+            "of": 15,
+            "open_time_s": 0.95,
+            "opened": 12,
+            "peak_drive_n": 47.98,
+            "peak_speed_m_s": 0.978,
+            "pitch_at_peak_deg": 11.75,
+            "torn": 0
+          }
+        ],
+        "capacity_n": 10.0,
+        "fell": 0,
+        "of": 120,
+        "opened": 99,
+        "torn": 0
+      },
+      "lever_tip_side": {
+        "by_level": [
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.009,
+            "estimate_at_peak_n": 6.56,
+            "fell": 0,
+            "level_n": 5.0,
+            "of": 15,
+            "open_time_s": 0.78,
+            "opened": 15,
+            "peak_drive_n": 8.07,
+            "peak_speed_m_s": 0.226,
+            "pitch_at_peak_deg": -1.49,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.029,
+            "estimate_at_peak_n": 9.81,
+            "fell": 0,
+            "level_n": 10.0,
+            "of": 15,
+            "open_time_s": 0.82,
+            "opened": 15,
+            "peak_drive_n": 11.16,
+            "peak_speed_m_s": 0.201,
+            "pitch_at_peak_deg": -1.33,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.038,
+            "estimate_at_peak_n": 11.95,
+            "fell": 0,
+            "level_n": 15.0,
+            "of": 15,
+            "open_time_s": 0.88,
+            "opened": 15,
+            "peak_drive_n": 14.38,
+            "peak_speed_m_s": 0.2,
+            "pitch_at_peak_deg": -2.0,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.046,
+            "estimate_at_peak_n": 17.84,
+            "fell": 0,
+            "level_n": 20.0,
+            "of": 15,
+            "open_time_s": 0.96,
+            "opened": 15,
+            "peak_drive_n": 18.53,
+            "peak_speed_m_s": 0.223,
+            "pitch_at_peak_deg": 2.96,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.073,
+            "estimate_at_peak_n": 21.81,
+            "fell": 0,
+            "level_n": 25.0,
+            "of": 15,
+            "open_time_s": 1.02,
+            "opened": 15,
+            "peak_drive_n": 23.95,
+            "peak_speed_m_s": 0.222,
+            "pitch_at_peak_deg": 4.58,
+            "torn": 1
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.06,
+            "estimate_at_peak_n": 30.58,
+            "fell": 0,
+            "level_n": 30.0,
+            "of": 15,
+            "open_time_s": 0.9,
+            "opened": 15,
+            "peak_drive_n": 33.09,
+            "peak_speed_m_s": 0.738,
+            "pitch_at_peak_deg": 7.64,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.054,
+            "estimate_at_peak_n": 37.52,
+            "fell": 0,
+            "level_n": 35.0,
+            "of": 15,
+            "open_time_s": 0.94,
+            "opened": 15,
+            "peak_drive_n": 39.89,
+            "peak_speed_m_s": 1.428,
+            "pitch_at_peak_deg": 9.24,
+            "torn": 0
+          },
+          {
+            "arm_load_p95": 1.0,
+            "base_moved_at_peak_m": 0.065,
+            "estimate_at_peak_n": 41.45,
+            "fell": 0,
+            "level_n": 40.0,
+            "of": 15,
+            "open_time_s": 0.92,
+            "opened": 15,
+            "peak_drive_n": 45.54,
+            "peak_speed_m_s": 1.4,
+            "pitch_at_peak_deg": 10.41,
+            "torn": 0
+          }
+        ],
+        "capacity_n": 40.0,
+        "fell": 0,
+        "of": 120,
+        "opened": 120,
+        "torn": 1
+      }
+    }
+  },
+  "task": "mechanism",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ]
+}

@@ -216,7 +216,7 @@ def main() -> int:
             out_usd_path=str(destination),
             # Same mount and same published D1-550 mass as every other task in this repository,
             # so the Isaac Lab robot is the one the rest of the evidence is about.
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152,
+            arm_mass_kg=3.152,
         ).usd_path
     args.robot_usd = robot_usd
 

@@ -1,0 +1,36 @@
+{
+  "id": "20260926T011051_054410Z_verify_seed42",
+  "title": "G0 verify after moving the D1 mount to the measured (0.0025, 0, 0.0855) m (F-117)",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-26T11:11:28+10:00",
+  "started_utc": "2026-09-26T01:10:51+00:00",
+  "source_dir": "logs/position_only/20260926T011051_054410Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_passed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": true,
+    "passed": 25,
+    "total": 25,
+    "failed": [],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

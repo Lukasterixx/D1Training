@@ -1,0 +1,63 @@
+{
+  "id": "20260925T161215_train_seed1_ins_v2",
+  "title": "Insertion training v2: stopped at ~17620 -- collapsed (approach 125\u00b0 off) from unbounded face forces",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-26T02:22:07+10:00",
+  "started_utc": "2026-09-25T16:12:15+00:00",
+  "source_dir": "logs/unifp_train/20260925T161215_train_seed1_ins_v2",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2500,
+  "steps": 100,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 17674,
+  "final_checkpoint": {
+    "file": "model_17674.pt",
+    "sha256": "680c97ae9869f4bf15482112ec4800abff6ee79c76b72264278578a875ae07dd"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 170.193359375,
+      "last_step": 17674,
+      "mean_last_10": 168.78079681396486,
+      "min": 2.3849010467529297,
+      "max": 170.81491088867188,
+      "points": 176
+    },
+    "Train/mean_episode_length": {
+      "last": 997.0599975585938,
+      "last_step": 17674,
+      "mean_last_10": 998.0179992675781,
+      "min": 12.84000015258789,
+      "max": 999.0,
+      "points": 176
+    },
+    "Policy/mean_std": {
+      "last": 0.7197566032409668,
+      "last_step": 17674,
+      "mean_last_10": 0.7240847945213318,
+      "min": 0.7197566032409668,
+      "max": 0.7596189975738525,
+      "points": 176
+    },
+    "Perf/total_fps": {
+      "last": 33941.0,
+      "last_step": 17674,
+      "mean_last_10": 33778.9,
+      "min": 23222.0,
+      "max": 36690.0,
+      "points": 176
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

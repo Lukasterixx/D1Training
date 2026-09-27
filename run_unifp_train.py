@@ -19,6 +19,8 @@ simulators is not a reliable step.
     ./run_unifp_train.py smoke --task mechanism --num_envs 16 --steps 400 --headless
     ./run_unifp_train.py mech_eval --task mechanism --checkpoint <model.pt> --headless   # 4 kinds x 10-80 N
     ./run_unifp_train.py train --task mechanism --resume_from <model.pt> --iterations 3000 --headless
+    ./run_unifp_train.py smoke --task insertion --num_envs 64 --steps 600 --headless        # a key into a slot
+    ./run_unifp_train.py ins_eval --task insertion --checkpoint <model.pt> --headless [--ins_set detent]
 
 `smoke` and `play` step the environment directly and report shapes and reward scale. `train`
 builds the rsl-rl runner around it: `unifp_train.models.UniFPActor` for the adaptation-module
@@ -35,6 +37,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -48,19 +51,54 @@ ROOT = Path(__file__).resolve().parent
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval"),
+    parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval", "ins_eval"),
                         help="'play' drives the new environment with an existing UniFP checkpoint, "
                              "which checks the whole loop -- observation, action mapping, reward -- "
                              "against a policy already known to work on this robot. 'train' runs "
                              "PPO with the adaptation module. 'manifest' freezes an "
                              "evaluation set; 'eval' scores a policy against one.")
-    parser.add_argument("--task", choices=("unifp", "hook", "mechanism"), default="unifp",
+    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion"), default="unifp",
                         help="'unifp' is UniFP's task as ported. 'hook' adds a fixture: a handle the "
                              "claw pulls or a button the pad presses, loaded with tens of newtons "
                              "(unifp_train/hook_env.py). 'mechanism' has the claw holding a drawer, "
                              "latch, door or button whose resistance is never observed, and commands "
                              "only where the handle should go (unifp_train/mech_env.py). Same "
                              "observation and action widths, so a UniFP checkpoint resumes into either.")
+    parser.add_argument("--insertion_fraction", type=float, default=None,
+                        help="'insertion' only: fraction of episodes holding a key to a slot (default 0.8).")
+    parser.add_argument("--ins_level", type=float, default=None,
+                        help="'insertion' training: the curriculum's starting level, 0-1 (default 0.2).")
+    parser.add_argument("--ins_debug", type=int, default=None, metavar="ENV",
+                        help="'insertion' smoke/play: print one environment's task layer every 10 steps.")
+    parser.add_argument("--ins_set", choices=("lateral", "detent"), default="lateral",
+                        help="'ins_eval': the frozen slots to score (insert_cfg.EVAL_*).")
+    parser.add_argument("--ins_tip_gain", type=float, default=None,
+                        help="'insertion': the task layer's tip loop gain, 1/s (insertion.PoseCorrection; default "
+                             "insert_cfg.TIP_CORRECTION_GAIN). 0 turns it off, as for the runs before v6.")
+    parser.add_argument("--ins_tip_max", type=float, default=None,
+                        help="'insertion': the tip loop's clamp, m (default insert_cfg.TIP_CORRECTION_MAX_M, 0.05).")
+    parser.add_argument("--ins_elevation_max_deg", type=float, default=None,
+                        help="'insertion': the elevation loop's clamp, degrees (default 20).")
+    parser.add_argument("--ins_roll_max_deg", type=float, default=None,
+                        help="'insertion': the roll loop's clamp, degrees (default 20).")
+    parser.add_argument("--ins_promote_every", type=int, default=None,
+                        help="'insertion' training: the fewest iterations between curriculum promotions "
+                             "(default insert_cfg.CURRICULUM_MIN_ITERATIONS, 50).")
+    parser.add_argument("--ins_engage_attitude_deg", type=float, default=None,
+                        help="'insertion': the layer also waits for the approach's elevation and the roll to be "
+                             "within this of their targets, degrees (default: the tip alone).")
+    parser.add_argument("--ins_approach_weight", type=float, default=None,
+                        help="'insertion': the approach term's weight per second (default task_cfg.APPROACH_WEIGHTS, 2.5).")
+    parser.add_argument("--ins_true_targets", action="store_true",
+                        help="'insertion': score the policy's reach and roll against the task's targets, not the "
+                             "commands the outer loops shift (insert_env.reward_true_targets).")
+    parser.add_argument("--ins_no_hold", action="store_true",
+                        help="'insertion': the task layer keeps driving a seated key instead of holding it home "
+                             "(the layer before 2026-09-27).")
+    parser.add_argument("--ins_compliant_grip", action="store_true",
+                        help="'insertion': hold the key in a compliant grip (insertion.CompliantGrip) rather than rigidly.")
+    parser.add_argument("--ins_attitude_gain", type=float, default=None,
+                        help="'insertion': the approach-elevation and roll loops' gain, 1/s (default insert_cfg's).")
     parser.add_argument("--mechanism_fraction", type=float, default=None,
                         help="'mechanism' only: fraction of episodes holding a mechanism (default 0.8).")
     parser.add_argument("--peak_ceiling", type=float, default=None,
@@ -69,9 +107,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--peak_ceiling_max", type=float, default=None,
                         help="'mechanism' only: where the curriculum stops raising it, N (default 80).")
     parser.add_argument("--mech_kinds", nargs="+", default=None,
-                        choices=("drawer", "latch", "door", "button", "lid", "bolt"),
+                        choices=("drawer", "latch", "door", "button", "lid", "bolt",
+                                 "lever", "lever_spindle_side", "lever_tip_side"),
                         help="'mech_eval': which fixed mechanisms (default the four the comparisons use; "
-                             "'lid' and 'bolt' are held-out geometries).")
+                             "'lid' and 'bolt' are held-out geometries; the three levers are a combiner box's "
+                             "handle square and from either side, scored at mech_cfg.LEVER_EVAL_LEVELS_N unless "
+                             "--mech_levels says otherwise).")
     parser.add_argument("--force_law", action="store_true",
                         help="'mechanism': the hierarchical variant -- hold the goal on the handle and "
                              "command a force from the handle's lag behind its reference "
@@ -84,6 +125,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--force_law_bleed", type=float, default=None, metavar="TAU_S",
                         help="'--force_law': let the law's integral decay with this time constant once the handle is "
                              "within mech_cfg.FORCE_LAW_ARRIVED_M of its reference (default: no bleed, as trained).")
+    parser.add_argument("--lever_fraction", type=float, default=None,
+                        help="'mechanism' training: fraction of mechanisms that are short levers turned down about a "
+                             "spindle pointing at the robot (mech_cfg.LEVER_*; default 0).")
+    parser.add_argument("--offpath_weight", type=float, default=None,
+                        help="'mechanism' training: price on force across the mechanism's path (mech_rewards.mech_offpath, "
+                             "per (20 N)^2; default 0). A claw lets go under it; the training's ball-joint grasp does not.")
+    parser.add_argument("--lever_high", action="store_true",
+                        help="'mechanism' training: draw lever handles up to mech_cfg.LEVER_HANDLE_PITCH_RANGE (~0.96 m), "
+                             "above the robot's shoulder. 'mech_eval': score the high-handle lever placements "
+                             "(mech_cfg.LEVER_HIGH_*, 0.6-0.9 m) instead of the development grid.")
     parser.add_argument("--opening_probs", type=float, nargs=4, default=None, metavar=("PULL", "PUSH", "SIDE", "UP"),
                         help="'mechanism' training: how often mechanisms open each way (default mech_cfg.OPENING_PROBS).")
     parser.add_argument("--force_law_gains", type=float, nargs=3, default=None, metavar=("KP", "KI", "MAX"),
@@ -123,6 +174,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Policy updates, for 'train'. Upstream's config asks for 60000.")
     parser.add_argument("--seed", type=int, default=1, help="UniFP's config seed is 1.")
     parser.add_argument("--robot_usd", help="Existing welded USD; otherwise it is rebuilt.")
+    parser.add_argument("--mount_pos", type=float, nargs=3, default=None, metavar=("X", "Y", "Z"),
+                        help="Weld the D1 at this offset from the Go2's base link, m (default mount.ARM_MOUNT_POS_M, the "
+                             "measured mount, F-117). For measuring how much a policy depends on where the arm is.")
     parser.add_argument("--output", default=str(ROOT / "logs/unifp_train"),
                         help="Where 'train' writes its run directory.")
     parser.add_argument("--run_name", default="", help="Appended to the run directory's name.")
@@ -184,6 +238,11 @@ def build_parser() -> argparse.ArgumentParser:
                              "adaptive rate to [1e-5, 1e-2] and the floor binds on this task, so "
                              "the schedule stops regulating; 0.25 moves the range down without "
                              "changing the schedule.")
+    parser.add_argument("--resume_arm_std", type=float, default=None,
+                        help="After --resume_from, set the arm's six action-noise std entries to this (action "
+                             "units; x 0.25 rad). Checkpoints from the pull lineage carry 0.7-0.9 there -- ~0.2 rad "
+                             "of random arm target every step -- which no millimetre task can succeed under in "
+                             "training (the insertion, 2026-09-27). The legs keep theirs.")
     parser.add_argument("--entropy_coef", type=float, default=None,
                         help="Entropy bonus. UniFP's is 0.01, and it is the term pushing the "
                              "action noise back up once the learning rate is floored.")
@@ -240,11 +299,15 @@ def main() -> int:
     from unifp_train.hook_env import Go2D1HookEnv, Go2D1HookEnvCfg  # noqa: E402
     from unifp_train import mech_cfg  # noqa: E402
     from unifp_train.mech_env import Go2D1MechEnv, Go2D1MechEnvCfg  # noqa: E402
+    from unifp_train import insert_cfg  # noqa: E402
+    from unifp_train.insert_env import Go2D1InsertEnv, Go2D1InsertEnvCfg  # noqa: E402
 
     if args.mode == "hook_eval" and args.task != "hook":
         parser.error("hook_eval needs --task hook")
     if args.mode == "mech_eval" and args.task != "mechanism":
         parser.error("mech_eval needs --task mechanism")
+    if args.mode == "ins_eval" and args.task != "insertion":
+        parser.error("ins_eval needs --task insertion")
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     suffix = f"_{args.run_name}" if args.run_name else ""
@@ -253,15 +316,53 @@ def main() -> int:
     if args.robot_usd:
         robot_usd = str(Path(args.robot_usd).resolve())
     else:
+        from mount import ARM_MOUNT_POS_M
+        mount_pos = tuple(args.mount_pos) if args.mount_pos is not None else ARM_MOUNT_POS_M
         robot_usd = build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
             out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152,
+            mount_pos=mount_pos, arm_mass_kg=3.152,
         ).usd_path
 
-    cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
-    cfg.scene.num_envs = args.num_envs
+    cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg,
+           "insertion": Go2D1InsertEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
+    if args.task == "insertion":
+        if args.insertion_fraction is not None:
+            cfg.insertion_fraction = args.insertion_fraction
+        if args.ins_level is not None:
+            cfg.curriculum_level = args.ins_level
+        if args.ins_tip_gain is not None:
+            cfg.tip_correction_gain = args.ins_tip_gain
+        if args.ins_attitude_gain is not None:
+            cfg.elevation_correction_gain = cfg.roll_correction_gain = args.ins_attitude_gain
+        if args.ins_compliant_grip:
+            cfg.compliant_grip = True
+        if args.ins_no_hold:
+            cfg.hold_home = False
+        if args.ins_true_targets:
+            cfg.reward_true_targets = True
+        if args.ins_engage_attitude_deg is not None:
+            cfg.engage_attitude_rad = math.radians(args.ins_engage_attitude_deg)
+        if args.ins_approach_weight is not None:
+            cfg.approach_weight = args.ins_approach_weight
+        if args.ins_promote_every is not None:
+            cfg.curriculum_min_iterations = args.ins_promote_every
+        if args.ins_tip_max is not None:
+            cfg.tip_correction_max_m = args.ins_tip_max
+        if args.ins_elevation_max_deg is not None:
+            cfg.elevation_correction_max_rad = math.radians(args.ins_elevation_max_deg)
+        if args.ins_roll_max_deg is not None:
+            cfg.roll_correction_max_rad = math.radians(args.ins_roll_max_deg)
+        if args.no_curriculum:
+            cfg.curriculum = False
+    ins_rows = None
+    if args.mode == "ins_eval":
+        from unifp_train import insert_eval
+        ins_plan, ins_rows = insert_eval.build_plan(args.ins_set, "cpu")
+        cfg.scene.num_envs = len(ins_rows)
+        cfg.episode_length_s = insert_cfg.EVAL_EPISODE_S
+    cfg.scene.num_envs = args.num_envs if ins_rows is None else len(ins_rows)
     if args.task == "mechanism":
         for name, value in (("mechanism_fraction", args.mechanism_fraction),
                             ("peak_ceiling_n", args.peak_ceiling),
@@ -273,6 +374,12 @@ def main() -> int:
         if args.opening_probs:
             total = sum(args.opening_probs)
             cfg.opening_probs = tuple(v / total for v in args.opening_probs)
+        if args.lever_fraction is not None:
+            cfg.lever_fraction = args.lever_fraction
+        if args.offpath_weight is not None:
+            cfg.offpath_weight = args.offpath_weight
+        if args.lever_high and args.mode != "mech_eval":
+            cfg.lever_handle_pitch_range = mech_cfg.LEVER_HANDLE_PITCH_RANGE
         if args.force_law and args.mode != "mech_eval":
             cfg.force_law = True
             if args.force_law_gains:
@@ -282,8 +389,10 @@ def main() -> int:
     if args.mode == "mech_eval":
         # One episode per environment: every kind at every level at every placement.
         mech_kinds = args.mech_kinds or list(mech_cfg.EVAL_DEFAULT_KINDS)
-        mech_levels = args.mech_levels or list(mech_cfg.EVAL_LEVELS_N)
-        mech_placements = mech_cfg.test_handle_spheres() if args.mech_test else hook_cfg.eval_handle_spheres()
+        levers_only = all(kind in mech_cfg.LEVER_EVAL_KINDS for kind in mech_kinds)
+        mech_levels = args.mech_levels or list(mech_cfg.LEVER_EVAL_LEVELS_N if levers_only else mech_cfg.EVAL_LEVELS_N)
+        mech_placements = (mech_cfg.test_handle_spheres() if args.mech_test
+                           else mech_cfg.lever_high_handle_spheres() if args.lever_high else hook_cfg.eval_handle_spheres())
         cfg.scene.num_envs = len(mech_placements) * len(mech_levels) * len(mech_kinds)
         cfg.episode_length_s = mech_cfg.EVAL_EPISODE_S
     if args.task == "hook":
@@ -322,7 +431,7 @@ def main() -> int:
         cfg.roll_objective = args.roll_objective
     if args.tool_point == "fingertip":
         cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
-    if args.task in ("hook", "mechanism"):
+    if args.task in ("hook", "mechanism", "insertion"):
         # F-102: the arm's explicit PD chatters at UniFP's 2e-4 armature; see hook_cfg.ARM_ARMATURE_KG_M2.
         armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18]
                            else robot_mod.ARM_ARMATURE) for name in interface.ISAACLAB_NAMES}
@@ -342,7 +451,10 @@ def main() -> int:
         cfg.viewer.eye = (1.6, -1.8, 0.9)
         cfg.viewer.lookat = (0.0, 0.0, 0.3)
 
-    env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
+    env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv,
+           "insertion": Go2D1InsertEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
+    if args.mode == "ins_eval":
+        env.set_evaluation(ins_plan)
     if args.mode == "mech_eval":
         from unifp_train import mech_eval
 
@@ -385,17 +497,30 @@ def main() -> int:
         "force_start_iteration": cfg.force_start_step // task_cfg.NUM_STEPS_PER_ENV,
         "roll_objective": cfg.roll_objective,
         "task": args.task,
-        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism")
+        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion")
                                else robot_mod.ARM_ARMATURE),
         "fixture": ({name: getattr(cfg, name) for name in (
             "fixture_fraction", "press_fraction", "force_ceiling_n", "force_ceiling_max_n", "curriculum")}
             if args.task == "hook" else None),
         "mechanism": ({name: getattr(cfg, name) for name in (
             "mechanism_fraction", "peak_ceiling_n", "peak_ceiling_max_n", "curriculum", "force_law", "force_law_gains",
-            "force_law_bleed_s", "law_variant", "opening_probs")}
+            "force_law_bleed_s", "law_variant", "opening_probs", "lever_fraction", "lever_handle_pitch_range", "offpath_weight")}
             if args.task == "mechanism" else None),
+        "insertion": ({"insertion_fraction": cfg.insertion_fraction, "curriculum": cfg.curriculum,
+                       "curriculum_level": cfg.curriculum_level,
+                       "outer_loops": {"tip_gain": cfg.tip_correction_gain, "elevation_gain": cfg.elevation_correction_gain,
+                                       "roll_gain": cfg.roll_correction_gain, "tip_max_m": cfg.tip_correction_max_m,
+                                       "elevation_max_rad": cfg.elevation_correction_max_rad,
+                                       "roll_max_rad": cfg.roll_correction_max_rad},
+                       "compliant_grip": cfg.compliant_grip, "hold_home": cfg.hold_home,
+                       "curriculum_min_iterations": cfg.curriculum_min_iterations,
+                       "reward_true_targets": cfg.reward_true_targets,
+                       "engage_attitude_rad": cfg.engage_attitude_rad, "approach_weight": cfg.approach_weight}
+                      if args.task == "insertion" else None),
         "tool_body": cfg.tool_body,
         "tool_offset_m": list(cfg.tool_offset_m),
+        "mount_pos_m": (list(args.mount_pos) if args.mount_pos is not None else None) if args.robot_usd else
+                       list(args.mount_pos if args.mount_pos is not None else __import__("mount").ARM_MOUNT_POS_M),
         "robot_usd": robot_usd,
         "robot_usd_sha256": hashlib.sha256(Path(robot_usd).read_bytes()).hexdigest(),
         "stack": stack_versions(),
@@ -414,6 +539,10 @@ def main() -> int:
         report["run_dir"] = str(run_dir)
     elif args.mode == "mech_eval":
         status = mech_evaluate(args, env, obs, report, run_dir, mech_kinds, mech_levels, mech_placements)
+        write_json(run_dir / "run.json", report)
+        report["run_dir"] = str(run_dir)
+    elif args.mode == "ins_eval":
+        status = ins_evaluate(args, env, obs, report, run_dir, ins_rows)
         write_json(run_dir / "run.json", report)
         report["run_dir"] = str(run_dir)
     elif args.mode in ("manifest", "eval"):
@@ -469,6 +598,8 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
     rewards_seen, resets, pushed, errors = [], 0, 0, []
     hook = hasattr(env, "_fixture")
     mech = hasattr(env, "_mech")
+    ins = hasattr(env, "_slot")
+    ins_engaged, ins_entered, ins_seated, ins_peak, ins_deepest, ins_approach = 0, 0, 0, 0.0, -1.0, []
     engaged_steps, lost, peak_force, peak_command = 0, 0, 0.0, 0.0
     held_steps, torn, peak_grasp, peak_speed, furthest = 0, 0, 0.0, 0.0, 0.0
     for _ in range(args.steps):
@@ -498,6 +629,20 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
             peak_speed = max(peak_speed, float(env._mech.v.abs().max()))
             travel = env._mech.travel.clamp(min=1e-6)
             furthest = max(furthest, float((env._mech.s / travel * env._mech.grasped).max()))
+        if ins and args.ins_debug is not None and len(rewards_seen) % 10 == 0:
+            ins_debug_print(env, args.ins_debug, len(rewards_seen))
+        if ins:
+            ins_engaged += int(env._engaged.sum())
+            ins_entered += int(env._slot.entered.sum())
+            ins_seated += int(env._slot.seated().sum())
+            ins_peak = max(ins_peak, float(env._slot.normal_sum_n.max()))
+            active = env._slot.active
+            if bool(active.any()):
+                ins_deepest = max(ins_deepest, float(env._slot.tip_depth[active].max()))
+            if bool(env._ins_env.any()):
+                approach = env._hand_frame_terms()["ee_approach_w"]
+                cos = (approach * env._approach_des_w).sum(-1).clamp(-1.0, 1.0)[env._ins_env]
+                ins_approach.append(torch.rad2deg(torch.acos(cos)))
 
     report["steps"] = len(rewards_seen)
     report["mean_reward_per_step"] = round(sum(rewards_seen) / max(1, len(rewards_seen)), 5)
@@ -533,6 +678,14 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
                                "peak_handle_speed_m_s": round(peak_speed, 3),
                                "furthest_fraction_of_travel": round(furthest, 3),
                                "peak_ceiling_n": env._ceiling}
+    if ins:
+        # Sanity checks on the contact, not results: a force far past `DAMAGE_N` or a key metres deep means it rang.
+        stacked = torch.cat(ins_approach) if ins_approach else torch.zeros(1)
+        report["insertion"] = {"engaged_env_steps": ins_engaged, "entered_env_steps": ins_entered,
+                               "seated_env_steps": ins_seated, "peak_contact_n": round(ins_peak, 2),
+                               "deepest_tip_m": round(ins_deepest, 4),
+                               "approach_error_deg_median": round(float(stacked.median()), 2),
+                               "curriculum_level": env._level}
     report["reward_terms_per_step"] = {
         name: round(float(total.mean()) / max(1, len(rewards_seen)), 6)
         for name, total in env._episode_sums.items()}
@@ -695,6 +848,106 @@ def hook_evaluate(args, env, obs, report: dict, run_dir: Path) -> int:
     return 0
 
 
+def ins_debug_print(env, i: int, count: int) -> None:
+    """One insertion environment's task layer, loops and motion, and the holding environments' medians (`--ins_debug`)."""
+    import torch
+
+    key = env.key_state()
+    goal_jaw = env._goal_world()[i]
+    mouth_p, axis_p = env._planned_world(torch.arange(env.num_envs, device=env.device))
+    planned_tip = mouth_p - env._standoff.unsqueeze(-1) * axis_p
+    tip_miss = (key["tip"] - planned_tip).norm(dim=-1)
+    appr = torch.rad2deg(torch.acos((env._hand_frame_terms()["ee_approach_w"] * env._approach_des_w).sum(-1).clamp(-1, 1)))
+    speed = env._tool_vel_w().norm(dim=-1)
+    print(f"[ins {count}] ins {bool(env._ins_env[i])} tip-miss {1000*float(tip_miss[i]):.1f} mm "
+          f"approach {float(appr[i]):.1f} deg speed {float(speed[i]):.3f} | all: tip-miss median "
+          f"{1000*float(tip_miss[env._ins_env].median()) if bool(env._ins_env.any()) else -1:.1f} mm, "
+          f"<30mm {int(((tip_miss < 0.03) & env._ins_env).sum())}/{int(env._ins_env.sum())} "
+          f"missed {int(env._missed.sum())} engaged {int(env._engaged.sum())}", flush=True)
+    print(f"[ins {count}] engaged {bool(env._engaged[i])} s {1000*float(env._layer.s[i]):.1f} "
+          f"ref {1000*float(env._layer.ref[i]):.1f} depth {1000*float(env._slot.tip_depth[i]):.1f} "
+          f"F {float(env._layer.force_cmd[i].norm()):.1f} contact {float(env._slot.normal_sum_n[i]):.1f} "
+          f"jaw-goal {1000*float((env._tip_pos()[i]-goal_jaw).norm()):.1f} mm "
+          f"stall {float(env._layer.stall[i]):.2f} theta {float(env._layer.theta[i]):.2f} "
+          f"v {1000*float(env._layer.v[i]):.1f} mm/s", flush=True)
+    att = torch.rad2deg(env._attitude_miss()[i])
+    c = env._correction
+    print(f"[ins {count}] loops: miss elev {float(att[0]):+.1f} azim {float(att[1]):+.1f} "
+          f"roll {float(att[2]):+.1f} deg | cmd elev {math.degrees(float(c.elevation[i])):+.1f} "
+          f"roll {math.degrees(float(c.roll[i])):+.1f} deg, tip offset {[round(1000 * float(v), 1) for v in c.offset[i]]} mm "
+          f"| entered {bool(env._slot.entered[i])} touched {bool(env._layer.touched[i])}"
+          + (f" | grip tilt {[round(math.degrees(float(v)), 1) for v in env._grip.tilt[i]]} deg"
+             if getattr(env, "_grip", None) is not None else ""), flush=True)
+    rd = env._robot.data
+    arm_qd = rd.joint_vel[i, env._robot.find_joints("Joint[1-6]")[0]]
+    print(f"[ins {count}] motion: base {float(rd.root_lin_vel_w[i].norm()):.3f} m/s "
+          f"{float(rd.root_ang_vel_w[i].norm()):.3f} rad/s, arm joints |qd| {float(arm_qd.norm()):.3f} rad/s "
+          f"max {float(arm_qd.abs().max()):.3f}, action |a_arm| {float(env._actions[i, 12:18].norm()):.2f}", flush=True)
+    holding = env._ins_env & env._goals.hold_mask & ~env._engaged
+    if bool(holding.any()):
+        att_all = torch.rad2deg(env._attitude_miss()[holding]).abs()
+        print(f"[ins {count}] holding {int(holding.sum())}: median tool speed "
+              f"{float(speed[holding].median()):.3f} m/s, tip-miss {1000*float(tip_miss[holding].median()):.1f} mm, "
+              f"|elev| {float(att_all[:, 0].median()):.1f} |azim| {float(att_all[:, 1].median()):.1f} "
+              f"|roll| {float(att_all[:, 2].median()):.1f} deg", flush=True)
+
+
+def ins_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) -> int:
+    """Insert a key into every planned slot once, and score it (`unifp_train.insert_eval`)."""
+    import numpy as np
+    import torch
+
+    from unifp_isaaclab import interface
+    from unifp_train import eval as evaluation, insert_eval
+
+    run_dir.mkdir(parents=True, exist_ok=True)
+    policy = None
+    if not args.zero_actions:
+        policy = evaluation.EvaluablePolicy(args.checkpoint, device=str(env.device))
+        report["checkpoint"] = os.path.abspath(args.checkpoint)
+        report["checkpoint_source"] = policy.source
+        report["checkpoint_iteration"] = policy.iteration
+    controller = "zero actions" if policy is None else os.path.basename(args.checkpoint)
+    report["controller"] = controller
+    report["ins_set"] = args.ins_set
+    report["ins_rows"] = rows
+    report["ins_conditions"] = env._evaluation["conditions"]
+    done = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    trace = {key: [] for key in insert_eval.FIELDS}
+    with torch.inference_mode():
+        for _ in range(int(env.max_episode_length) - 1):
+            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+                       if policy is None else policy.act(obs["policy"]))
+            obs, _, terminated, truncated, _ = env.step(actions)
+            ended = (terminated | truncated) & ~done
+            step = insert_eval.record_step(env, done, ended)
+            if args.ins_debug is not None and len(trace["engaged"]) % 10 == 0:
+                ins_debug_print(env, args.ins_debug, len(trace["engaged"]))
+            for key in insert_eval.FIELDS:
+                trace[key].append(step[key])
+            done |= ended
+            if bool(done.all()):
+                break
+    trace = {key: np.stack(values) for key, values in trace.items()}
+    np.savez_compressed(run_dir / "ins_trace.npz", **trace)
+    result = insert_eval.score(trace, rows)
+    write_json(run_dir / "ins_eval.json", result["summary"])
+    write_json(run_dir / "ins_eval_episodes.json", {"episodes": result["episodes"]})
+    report["summary"] = result["summary"]
+    report["status"] = "evaluated"
+    s = result["summary"]
+    print(f"\n[ins_eval {args.ins_set}] {controller}  seated {s['seated']}/{s['episodes']}  started {s['started']}  "
+          f"entered {s['entered']}  ever seated {s['ever_seated']}  fell {s['fell']}  damaged {s['damaged']}  "
+          f"at start {s['at_start_median_abs']}",
+          flush=True)
+    for key in ("by_lateral", "by_detent", "by_height", "by_roll"):
+        for row in s[key]:
+            print(f"  {key[3:]} {list(row.values())[0]}: seated {row['seated']}/{row['of']}  searched {row['searched']}  "
+                  f"time {row['time_to_seat_s']}  contact {row['peak_contact_n']}  lateral {row['peak_lateral_n']}  "
+                  f"approach {row['approach_err_start_deg']} deg", flush=True)
+    return 0
+
+
 def mech_evaluate(args, env, obs, report: dict, run_dir: Path, kinds: list[str], levels: list[float],
                   placements: list) -> int:
     """Open every planned mechanism once, and score it (`unifp_train.mech_eval`)."""
@@ -715,7 +968,7 @@ def mech_evaluate(args, env, obs, report: dict, run_dir: Path, kinds: list[str],
     report["controller"] = controller
     report["arm_contact_bodies"] = list(env._arm_contact.body_names)
     report["mech_kinds"], report["mech_levels_n"] = kinds, levels
-    report["mech_set"] = "test" if args.mech_test else "development"
+    report["mech_set"] = "test" if args.mech_test else "lever_high" if args.lever_high else "development"
     report["mech_conditions"] = env._evaluation["conditions"]
     report["mech_placements"] = [list(p) for p in placements]
     report["force_law"] = env._force_law
@@ -842,6 +1095,17 @@ def train(args, env, report: dict, run_dir: Path) -> int:
         env.common_step_counter = done * task_cfg.NUM_STEPS_PER_ENV
         report["resumed_from"] = os.path.abspath(args.resume_from)
         report["resumed_iteration"] = done
+        if args.resume_arm_std is not None:
+            import torch
+
+            std = runner.alg.actor.distribution.std_param
+            report["departures_from_unifp"]["resume_arm_std"] = {
+                "from": [round(float(v), 4) for v in std.data[12:18]], "to": args.resume_arm_std}
+            with torch.no_grad():
+                std.data[12:18] = args.resume_arm_std
+            print(f"[unifp] arm action-noise std set to {args.resume_arm_std} (was "
+                  f"{report['departures_from_unifp']['resume_arm_std']['from']})", flush=True)
+            write_json(run_dir / "run.json", report)
         report["forces_active_at_resume"] = bool(
             env.common_step_counter > env.cfg.force_start_step)
         # Also worth saying out loud: on a resume `--iterations` means "this many *more*", because

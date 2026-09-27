@@ -15,13 +15,21 @@ arm -- which is the whole point: the payload now perturbs the gait.
 The cost lands in `flat_env_cfg.py`: the robot no longer has exactly the 12
 joints the policy was trained on, so every observation and action term has to be
 scoped back down to the legs. See LEG_JOINTS there.
+
+The Go2 EDU's expansion dock and its rails, which the arm stands on, are drawn
+on the trunk (`dock.py`): meshes only, with no collider and no mass, so the
+physics is the same with them or without.
 """
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
 
-from pxr import Gf, PhysxSchema, Usd, UsdGeom, UsdPhysics
+import numpy as np
+from pxr import Gf, PhysxSchema, Usd, UsdGeom, UsdPhysics, Vt
+
+from dock import DOCK_MESHES, MESH_DIR, read_binary_stl
+from mount import ARM_MOUNT_POS_M
 
 
 @dataclass
@@ -236,20 +244,48 @@ def _apply_d1_mass_model(subtree_root: Usd.Prim, total_kg: float) -> float:
     return total_kg / shell_total
 
 
+def _add_dock_visuals(stage: Usd.Stage, go2_base: Usd.Prim) -> int:
+    """Draw the expansion dock and its rails under the Go2's base body; returns the triangles drawn.
+
+    The meshes are already in the base's frame. No CollisionAPI and no MassAPI, so PhysX never sees them. Normals are
+    per face (faceVarying), because these are machined parts: shared, smoothed normals would round their edges.
+    """
+    if go2_base.IsInstanceProxy():
+        raise RuntimeError(f"[weld] {go2_base.GetPath()} is inside an instance; the dock cannot be drawn under it")
+    drawn = 0
+    for name, filename, rgb in DOCK_MESHES:
+        tri = read_binary_stl(MESH_DIR / filename)
+        points, index = np.unique(tri.reshape(-1, 3), axis=0, return_inverse=True)
+        normals = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+        normals /= np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-12)
+        mesh = UsdGeom.Mesh.Define(stage, go2_base.GetPath().AppendChild(name))
+        mesh.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(points.astype(np.float32)))
+        mesh.CreateFaceVertexCountsAttr(Vt.IntArray.FromNumpy(np.full(len(tri), 3, dtype=np.int32)))
+        mesh.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(index.reshape(-1).astype(np.int32)))
+        mesh.CreateNormalsAttr(Vt.Vec3fArray.FromNumpy(np.repeat(normals, 3, axis=0).astype(np.float32)))
+        mesh.SetNormalsInterpolation(UsdGeom.Tokens.faceVarying)
+        mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
+        mesh.CreateExtentAttr([Gf.Vec3f(*points.min(axis=0)), Gf.Vec3f(*points.max(axis=0))])
+        mesh.CreateDisplayColorAttr([Gf.Vec3f(*rgb)])
+        drawn += len(tri)
+    return drawn
+
+
 def build_welded_robot_usd(
     go2_usd_path: str,
     d1_urdf_path: str,
     out_usd_path: str,
-    mount_pos: tuple[float, float, float] = (0.0, 0.0, 0.08),
+    mount_pos: tuple[float, float, float] = ARM_MOUNT_POS_M,
     go2_base_link: str = "base",
     d1_base_link: str = "base_link",
     arm_mass_kg: float | None = None,
+    dock_visual: bool = True,
 ) -> WeldResult:
     """Compose go2.usd + d1.usd into one articulation.
 
-    `mount_pos` is the arm base's offset from the Go2's base link, in metres.
-    It matches Rescue's ARM_MOUNT_Z so the reach limits and IK targets ported
-    from there stay meaningful.
+    `mount_pos` is the arm base's offset from the Go2's base link, in metres: by default the measured mount on the
+    Go2 EDU's expansion-dock rails (`mount.ARM_MOUNT_POS_M`, F-117). Before 2026-09-26 it was Rescue's (0, 0, 0.08).
+    `dock_visual` draws the dock and its rails on the trunk (visual only, `dock.py`).
     """
     os.makedirs(os.path.dirname(out_usd_path), exist_ok=True)
     d1_usd_path = os.path.join(os.path.dirname(out_usd_path), "d1.usd")
@@ -308,6 +344,10 @@ def build_welded_robot_usd(
     # Left default (False) on purpose: excluding it would make PhysX treat the
     # weld as a maximal joint and re-split the articulation in two.
     joint.CreateExcludeFromArticulationAttr().Set(False)
+
+    if dock_visual:
+        drawn = _add_dock_visuals(stage, go2_base)
+        print(f"[weld] Drew the expansion dock and rails on {go2_base.GetPath()} ({drawn} triangles, visual only).")
 
     # Duplicate body names are ambiguous to Isaac Lab's find_bodies() regexes,
     # and the failure is a silently wrong body index rather than an exception.

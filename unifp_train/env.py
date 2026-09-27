@@ -47,7 +47,7 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
         # UniFP's DOF order against this articulation's. The single most dangerous thing to get
         # wrong in the whole port, so it is resolved by name and raises rather than guessing.
-        order = interface.permutation_from(list(self._robot.joint_names))
+        order = interface.permutation_from(list(self._robot.joint_names), tuple(self.cfg.passive_joints))
         self._order = torch.as_tensor(order, device=self.device)
         self._action_joint_ids = self._order[:interface.NUM_ACTIONS]
         self._jaw_joint_ids = self._order[interface.NUM_ACTIONS:]

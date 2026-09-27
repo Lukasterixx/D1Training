@@ -279,6 +279,32 @@ def hinge_axes(opening: torch.Tensor, vertical: torch.Tensor, flip: torch.Tensor
     return torch.where(flip.unsqueeze(-1), -axis, axis)
 
 
+def lever_axes(back: torch.Tensor, stance_rad: torch.Tensor, flip: torch.Tensor) -> torch.Tensor:
+    """A lever's spindle: level, pointing from the handle toward the robot, turned by where the robot stands.
+
+    `back` (N, 3) is the horizontal unit direction from the handle to the robot. Unflipped, the spindle is
+    on the robot's right of the handle and the lever reaches left from it, as on a combiner box's door; `flip`
+    mirrors that. `stance_rad` turns the spindle about the vertical so that a positive stance puts the robot
+    on the spindle's side: there the lever's late turn draws the handle toward the robot, a pull, and at a
+    negative stance it pushes it away (`demos/unifp/props.side_stance`, F-113).
+    """
+    sign = torch.where(flip, -torch.ones_like(stance_rad), torch.ones_like(stance_rad))
+    up = torch.zeros_like(back)
+    up[:, 2] = 1.0
+    right = torch.cross(up, back, dim=-1)
+    turn = (-sign * stance_rad).unsqueeze(-1)
+    return sign.unsqueeze(-1) * (torch.cos(turn) * back + torch.sin(turn) * right)
+
+
+def lever_opening(axis: torch.Tensor, rest_rad: torch.Tensor) -> torch.Tensor:
+    """Which way a lever's handle first moves: straight down for a lever resting level, turned about the
+    (level) `axis` by `rest_rad` for one resting that far into its turn already (negative: resting raised)."""
+    down = torch.zeros_like(axis)
+    down[:, 2] = -1.0
+    rest = rest_rad.unsqueeze(-1)
+    return torch.cos(rest) * down + torch.sin(rest) * torch.cross(axis, down, dim=-1)
+
+
 class TravelGoal:
     """Where the handle is asked to be: a reference sliding to a target, holding, then another.
 

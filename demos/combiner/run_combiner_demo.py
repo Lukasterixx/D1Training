@@ -96,7 +96,7 @@ def run(args):
         robot_usd = str(Path(args.robot_usd).resolve()) if args.robot_usd else build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"), out_usd_path=str(run_dir / "assets/go2_d1.usd"),
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+            arm_mass_kg=3.152).usd_path
         metadata.update(asset=asset, robot_usd=robot_usd,
                         posture={"legs": LYING_LEG_POSE, "spawn_height_m": LYING_SPAWN_HEIGHT_M},
                         arm_model={"actuator": "d1_servo", "trajectory": "measured", "latency": "estimated"})

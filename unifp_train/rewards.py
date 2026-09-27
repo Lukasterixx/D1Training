@@ -91,6 +91,20 @@ class TaskState:
     mech_drive: torch.Tensor | None = None          # (N,) force the robot drives the handle with along the path, N (+ opens)
     mech_travel: torch.Tensor | None = None         # (N,) the mechanism's full travel, m
     mech_command: torch.Tensor | None = None        # (N,) the task layer's force command along the path, N (0 without one)
+    # --- read only by the approach objective (`tracking_ee_orn_approach`) and the insertion task (`insert_rewards.py`).
+    approach_des_w: torch.Tensor | None = None      # (N, 3) unit, the approach the hand is asked for, world
+    approach_active: torch.Tensor | None = None     # (N,) 1.0 where an approach is commanded
+    ins_error: torch.Tensor | None = None           # (N,) the key tip's depth minus the reference, m
+    ins_travel: torch.Tensor | None = None          # (N,) standoff + depth, m
+    ins_seated: torch.Tensor | None = None          # (N,) 1.0 while the key is seated
+    ins_contact_n: torch.Tensor | None = None       # (N,) every contact normal force on the key, summed, N
+    ins_lateral_n: torch.Tensor | None = None       # (N,) force on the key across the estimated axis, N
+    ins_reach_error: torch.Tensor | None = None     # (N,) the jaw centre's miss: to its goal, or across the axis once in, m
+    ins_active: torch.Tensor | None = None          # (N,) 1.0 in an episode with a slot
+    ins_holding: torch.Tensor | None = None         # (N,) 1.0 while its goal is held: at the pre-insertion pose or inserting
+    # --- the roll's true target where a task layer's loop shifts the command (insertion, `--ins_true_targets`).
+    roll_true: torch.Tensor | None = None           # (N,) rad
+    roll_true_mask: torch.Tensor | None = None      # (N,) bool: score against `roll_true` rather than the command
 
 
 def _walking(state: TaskState) -> torch.Tensor:
@@ -399,11 +413,51 @@ def tracking_ee_orn_roll(state: TaskState) -> torch.Tensor:
     every existing checkpoint loadable; what changes is that two always-zero channels start
     carrying something.
     """
-    error = wrap_half_turn(tool_roll(state) - commanded_roll(state.commands))
+    target = commanded_roll(state.commands)
+    if state.roll_true is not None:
+        # A task layer's roll loop moves the command to cancel the policy's miss; scored against the command, the
+        # policy would be paid for tracking that correction rather than for the roll the task wants.
+        target = torch.where(state.roll_true_mask, state.roll_true, target)
+    error = wrap_half_turn(tool_roll(state) - target)
     return torch.exp(-error.abs() / task_cfg.TRACKING_EE_ROLL_SIGMA)
 
 
 #: This repository's added terms, keyed as `task_cfg.EXTENSION_WEIGHTS` keys them.
 EXTENSION_TERMS = {
     "tracking_ee_orn_roll": tracking_ee_orn_roll,
+}
+
+
+# --- the approach objective (2026-09-26, the insertion task) -----------------------------------------------------
+#
+# A key goes into a slot only along the slot's axis, so the hand's approach has to be commanded, not left to the
+# policy. Over the whole goal sphere a commanded orientation is mostly unreachable (F-099), so this is commanded only
+# where an environment asks for it -- the insertion task, whose slots sit where a level approach is reachable -- and
+# the channel says whether it is on: `CMD_EE_ORN_Y` = 1 + elevation (rad) when active, 0 when not. The azimuth is not
+# commanded: it is the goal's own bearing, which is the slot's axis when the robot stands on it.
+
+def encode_approach(elevation: torch.Tensor, active: torch.Tensor) -> torch.Tensor:
+    """`CMD_EE_ORN_Y`: 1 + elevation where active, else 0."""
+    return torch.where(active, 1.0 + elevation, torch.zeros_like(elevation))
+
+
+def approach_direction(elevation: torch.Tensor, goal_yaw: torch.Tensor, base_yaw_quat: torch.Tensor) -> torch.Tensor:
+    """The unit approach, world frame: `elevation` above horizontal, along the goal's bearing in the base's yaw frame."""
+    local = torch.stack((torch.cos(elevation) * torch.cos(goal_yaw), torch.cos(elevation) * torch.sin(goal_yaw),
+                         torch.sin(elevation)), dim=-1)
+    return interface.quat_apply(base_yaw_quat, local)
+
+
+def tracking_ee_orn_approach(state: TaskState) -> torch.Tensor:
+    """How near the hand's approach is to the commanded one, where one is commanded: two exponentials on the angle,
+    a sharp one (`TRACKING_EE_APPROACH_SIGMA_FINE`) because a slot admits a few degrees, a broad one for the gradient."""
+    cos = (state.ee_approach_w * state.approach_des_w).sum(-1).clamp(-1.0, 1.0)
+    angle = torch.acos(cos)
+    reward = 0.5 * torch.exp(-angle / task_cfg.TRACKING_EE_APPROACH_SIGMA_FINE) \
+        + 0.5 * torch.exp(-angle / task_cfg.TRACKING_EE_APPROACH_SIGMA_COARSE)
+    return reward * state.approach_active
+
+
+APPROACH_TERMS = {
+    "tracking_ee_orn_approach": tracking_ee_orn_approach,
 }

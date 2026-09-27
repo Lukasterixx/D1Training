@@ -1,0 +1,995 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    96,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "checkpoint": "logs/unifp_train/20260926T214320_train_seed3_ins_recipe_seed3_cont/model_21400.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": true,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "ins_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "ins_eval_lateral_recipe_s3c_21400",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "task": "insertion",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260926T214320_train_seed3_ins_recipe_seed3_cont/model_21400.pt",
+  "checkpoint_iteration": 21400,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_21400.pt",
+  "critic_obs": [
+    96,
+    459
+  ],
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    96,
+    12
+  ],
+  "expected_actor": [
+    96,
+    2432
+  ],
+  "expected_critic": [
+    96,
+    459
+  ],
+  "expected_estimates": [
+    96,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_status": "M README.md\n M checkpoints/README.md\n M checkpoints/SHA256SUMS\n M demos/combiner/run_combiner_demo.py\n M demos/cup/run_camera_body_view.py\n M demos/cup/run_pick_demo.py\n M demos/cup/tests/test_d1_ui.py\n M demos/cup/tests/test_pick_demo.py\n M demos/unifp/README.md\n M demos/unifp/mech_env.py\n M demos/unifp/orientation_probe.py\n M demos/unifp/run_demo.py\n M description/README.md\n M description/build_go2_d1_urdf.py\n M description/go2_d1.urdf\n M flat_env_cfg.py\n M position_only/workspace.py\n M results/findings.md\n M results/week_02/figures/arm_chatter_probe.py\n M results/week_02/notes.md\n M run_position_only.py\n M run_unifp_isaaclab.py\n M run_unifp_train.py\n M sim.py\n M tests/test_mechanism.py\n M tests/test_unifp_interface.py\n M tests/test_workspace.py\n M unifp_go2d1/build_asset.py\n M unifp_go2d1/go2d1_pos_force_config.py\n M unifp_isaaclab/interface.py\n M unifp_train/README.md\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/fixture.py\n M unifp_train/mech_cfg.py\n M unifp_train/mech_env.py\n M unifp_train/mech_eval.py\n M unifp_train/mech_rewards.py\n M unifp_train/mechanism.py\n M unifp_train/pose_feasibility.py\n M unifp_train/rewards.py\n M unifp_train/task_cfg.py\n M unifp_train/workspace_map.py\n M weld.py\n?? checkpoints/unifp_go2d1_insertion_model_20200.pt\n?? checkpoints/unifp_go2d1_insertion_model_21400.pt\n?? checkpoints/unifp_go2d1_insertion_seed3_model_21200.pt\n?? checkpoints/unifp_go2d1_mech_lever_model_20497.pt\n?? demos/insertion/\n?? description/dock_from_cad.py\n?? description/meshes/go2/expansion_dock.stl\n?? description/meshes/go2/expansion_dock_rails.stl\n?? description/mount_from_cad.py\n?? dock.py\n?? logs/insertion_demo/\n?? mount.py\n?? results/week_02/figures/combiner_lever_policy.png\n?? results/week_02/figures/expansion_dock_sim_dock_and_arm.png\n?? results/week_02/figures/expansion_dock_sim_rear_three_quarter.png\n?? results/week_02/figures/expansion_dock_sim_side.png\n?? results/week_02/figures/insertion_checkpoints.png\n?? results/week_02/figures/insertion_checkpoints.py\n?? results/week_02/figures/insertion_seeds.png\n?? results/week_02/figures/insertion_seeds.py\n?? results/week_02/figures/insertion_training.png\n?? results/week_02/figures/insertion_training.py\n?? results/week_02/figures/insertion_v7.png\n?? results/week_02/figures/insertion_v7.py\n?? results/week_02/figures/mech_lever_eval.png\n?? results/week_02/figures/mech_lever_training.py\n?? results/week_02/figures/mount_sensitivity.png\n?? results/week_02/figures/mount_sensitivity.py\n?? results/week_02/runs/20260925T084901_smoke_seed1_lever_smoke/\n?? results/week_02/runs/20260925T085018_mech_eval_seed1_mech_lever_17499/\n?? results/week_02/runs/20260925T085153_train_seed1_mech_law_lever/\n?? results/week_02/runs/20260925T100416_mech_eval_seed1_mech_lever_18998/\n?? results/week_02/runs/20260925T100443_mech_eval_seed1_mech_test_law_lever_18998_bleed/\n?? results/week_02/runs/20260925T100559_combiner_mech_law_spring_seed1_lvr_stm30_lev0.4_spring/\n?? results/week_02/runs/20260925T100707_combiner_mech_law_spring_seed1_lvr_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T100814_combiner_mech_law_spring_seed1_lvr_stp15_lev0.4_spring/\n?? results/week_02/runs/20260925T100920_combiner_mech_law_spring_seed1_lvr_stp30_lev0.4_spring/\n?? results/week_02/runs/20260925T101027_combiner_mech_law_spring_seed1_lvr_stm30_lev0.8_spring/\n?? results/week_02/runs/20260925T101133_combiner_mech_law_spring_seed1_lvr_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T101241_combiner_mech_law_spring_seed1_lvr_stp15_lev0.8_spring/\n?? results/week_02/runs/20260925T101347_combiner_mech_law_spring_seed1_lvr_stp30_lev0.8_spring/\n?? results/week_02/runs/20260925T101452_combiner_mech_law_spring_seed1_lvr_stm30_lev1.2_spring/\n?? results/week_02/runs/20260925T101559_combiner_mech_law_spring_seed1_lvr_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T101705_combiner_mech_law_spring_seed1_lvr_stp15_lev1.2_spring/\n?? results/week_02/runs/20260925T101811_combiner_mech_law_spring_seed1_lvr_stp30_lev1.2_spring/\n?? results/week_02/runs/20260925T101917_combiner_mech_law_spring_seed1_lvr_stm30_lev1.6_spring/\n?? results/week_02/runs/20260925T102022_combiner_mech_law_spring_seed1_lvr_stp0_lev1.6_spring/\n?? results/week_02/runs/20260925T102128_combiner_mech_law_spring_seed1_lvr_stp15_lev1.6_spring/\n?? results/week_02/runs/20260925T102236_combiner_mech_law_spring_seed1_lvr_stp30_lev1.6_spring/\n?? results/week_02/runs/20260925T102343_combiner_mech_law_spring_seed1_lvr_stm30_lev2.4_spring/\n?? results/week_02/runs/20260925T102450_combiner_mech_law_spring_seed1_lvr_stp0_lev2.4_spring/\n?? results/week_02/runs/20260925T102556_combiner_mech_law_spring_seed1_lvr_stp15_lev2.4_spring/\n?? results/week_02/runs/20260925T102702_combiner_mech_law_spring_seed1_lvr_stp30_lev2.4_spring/\n?? results/week_02/runs/20260925T102808_combiner_mech_law_seed1_lvr_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T102908_combiner_mech_law_seed1_lvr_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T103009_combiner_mech_law_seed1_lvr_stp15_lev0.4_lips/\n?? results/week_02/runs/20260925T103110_combiner_mech_law_seed1_lvr_stp30_lev0.4_lips/\n?? results/week_02/runs/20260925T103210_combiner_mech_law_seed1_lvr_stm30_lev0.8_lips/\n?? results/week_02/runs/20260925T103309_combiner_mech_law_seed1_lvr_stp0_lev0.8_lips/\n?? results/week_02/runs/20260925T103411_combiner_mech_law_seed1_lvr_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T103512_combiner_mech_law_seed1_lvr_stp30_lev0.8_lips/\n?? results/week_02/runs/20260925T103613_combiner_mech_law_seed1_lvr_stm30_lev1.2_lips/\n?? results/week_02/runs/20260925T103713_combiner_mech_law_seed1_lvr_stp0_lev1.2_lips/\n?? results/week_02/runs/20260925T103813_combiner_mech_law_seed1_lvr_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T103914_combiner_mech_law_seed1_lvr_stp30_lev1.2_lips/\n?? results/week_02/runs/20260925T104016_combiner_mech_law_seed1_lvr_stm30_lev1.6_lips/\n?? results/week_02/runs/20260925T104116_combiner_mech_law_seed1_lvr_stp0_lev1.6_lips/\n?? results/week_02/runs/20260925T104218_combiner_mech_law_seed1_lvr_stp15_lev1.6_lips/\n?? results/week_02/runs/20260925T104319_combiner_mech_law_seed1_lvr_stp30_lev1.6_lips/\n?? results/week_02/runs/20260925T104421_combiner_mech_law_seed1_lvr_stm30_lev2.4_lips/\n?? results/week_02/runs/20260925T104521_combiner_mech_law_seed1_lvr_stp0_lev2.4_lips/\n?? results/week_02/runs/20260925T104623_combiner_mech_law_seed1_lvr_stp15_lev2.4_lips/\n?? results/week_02/runs/20260925T104725_combiner_mech_law_seed1_lvr_stp30_lev2.4_lips/\n?? results/week_02/runs/20260925T104825_combiner_mech_law_seed1_lvr_stm30_door12_lips/\n?? results/week_02/runs/20260925T104925_combiner_mech_law_seed1_lvr_stp0_door12_lips/\n?? results/week_02/runs/20260925T105027_combiner_mech_law_seed1_lvr_stm30_door16_lips/\n?? results/week_02/runs/20260925T105127_combiner_mech_law_seed1_lvr_stp0_door16_lips/\n?? results/week_02/runs/20260925T105243_mech_eval_seed1_mech_lever_high_17499/\n?? results/week_02/runs/20260925T105307_mech_eval_seed1_mech_lever_high_18998/\n?? results/week_02/runs/20260925T105332_combiner_mech_law_spring_seed1_ce_new_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T105439_combiner_mech_law_seed1_ce_new_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T105540_combiner_mech_law_seed1_ce_new_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T105643_combiner_mech_law_seed1_ce_new_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T105745_combiner_mech_law_seed1_ce_new_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T105847_combiner_mech_law_spring_seed1_ce_old_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T105956_combiner_mech_law_seed1_ce_old_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T110059_combiner_mech_law_seed1_ce_old_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T110203_combiner_mech_law_seed1_ce_old_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T110306_combiner_mech_law_seed1_ce_old_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T110410_combiner_mech_law_spring_seed1_high_old_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T110517_combiner_mech_law_seed1_high_old_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T110620_combiner_mech_law_spring_seed1_high_new_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T110726_combiner_mech_law_seed1_high_new_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T111044_smoke_seed1_lever_high_smoke/\n?? results/week_02/runs/20260925T111115_train_seed1_mech_law_lever_high/\n?? results/week_02/runs/20260925T122454_mech_eval_seed1_mech_lever_20497/\n?? results/week_02/runs/20260925T122521_mech_eval_seed1_mech_lever_high_20497/\n?? results/week_02/runs/20260925T122546_mech_eval_seed1_mech_test_law_lever_high_20497_bleed/\n?? results/week_02/runs/20260925T122613_combiner_mech_law_seed1_v2_stm30_lev0.4_lips/\n?? results/week_02/runs/20260925T122716_combiner_mech_law_seed1_v2_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T122819_combiner_mech_law_seed1_v2_stp15_lev0.4_lips/\n?? results/week_02/runs/20260925T122921_combiner_mech_law_seed1_v2_stp30_lev0.4_lips/\n?? results/week_02/runs/20260925T123023_combiner_mech_law_seed1_v2_stm30_lev0.8_lips/\n?? results/week_02/runs/20260925T123126_combiner_mech_law_seed1_v2_stp0_lev0.8_lips/\n?? results/week_02/runs/20260925T123228_combiner_mech_law_seed1_v2_stp15_lev0.8_lips/\n?? results/week_02/runs/20260925T123330_combiner_mech_law_seed1_v2_stp30_lev0.8_lips/\n?? results/week_02/runs/20260925T123432_combiner_mech_law_seed1_v2_stm30_lev1.2_lips/\n?? results/week_02/runs/20260925T123534_combiner_mech_law_seed1_v2_stp0_lev1.2_lips/\n?? results/week_02/runs/20260925T123638_combiner_mech_law_seed1_v2_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T123741_combiner_mech_law_seed1_v2_stp30_lev1.2_lips/\n?? results/week_02/runs/20260925T123844_combiner_mech_law_seed1_v2_stm30_lev1.6_lips/\n?? results/week_02/runs/20260925T123946_combiner_mech_law_seed1_v2_stp0_lev1.6_lips/\n?? results/week_02/runs/20260925T124049_combiner_mech_law_seed1_v2_stp15_lev1.6_lips/\n?? results/week_02/runs/20260925T124150_combiner_mech_law_seed1_v2_stp30_lev1.6_lips/\n?? results/week_02/runs/20260925T124252_combiner_mech_law_seed1_v2_stm30_lev2.4_lips/\n?? results/week_02/runs/20260925T124354_combiner_mech_law_seed1_v2_stp0_lev2.4_lips/\n?? results/week_02/runs/20260925T124457_combiner_mech_law_seed1_v2_stp15_lev2.4_lips/\n?? results/week_02/runs/20260925T124558_combiner_mech_law_seed1_v2_stp30_lev2.4_lips/\n?? results/week_02/runs/20260925T124701_combiner_mech_law_spring_seed1_v2_stm30_lev0.4_spring/\n?? results/week_02/runs/20260925T124809_combiner_mech_law_spring_seed1_v2_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T124916_combiner_mech_law_spring_seed1_v2_stp15_lev0.4_spring/\n?? results/week_02/runs/20260925T125024_combiner_mech_law_spring_seed1_v2_stp30_lev0.4_spring/\n?? results/week_02/runs/20260925T125130_combiner_mech_law_spring_seed1_v2_stm30_lev0.8_spring/\n?? results/week_02/runs/20260925T125238_combiner_mech_law_spring_seed1_v2_stp0_lev0.8_spring/\n?? results/week_02/runs/20260925T125344_combiner_mech_law_spring_seed1_v2_stp15_lev0.8_spring/\n?? results/week_02/runs/20260925T125452_combiner_mech_law_spring_seed1_v2_stp30_lev0.8_spring/\n?? results/week_02/runs/20260925T125559_combiner_mech_law_spring_seed1_v2_stm30_lev1.2_spring/\n?? results/week_02/runs/20260925T125705_combiner_mech_law_spring_seed1_v2_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T125812_combiner_mech_law_spring_seed1_v2_stp15_lev1.2_spring/\n?? results/week_02/runs/20260925T125921_combiner_mech_law_spring_seed1_v2_stp30_lev1.2_spring/\n?? results/week_02/runs/20260925T130028_combiner_mech_law_spring_seed1_v2_stm30_lev1.6_spring/\n?? results/week_02/runs/20260925T130134_combiner_mech_law_spring_seed1_v2_stp0_lev1.6_spring/\n?? results/week_02/runs/20260925T130241_combiner_mech_law_spring_seed1_v2_stp15_lev1.6_spring/\n?? results/week_02/runs/20260925T130348_combiner_mech_law_spring_seed1_v2_stp30_lev1.6_spring/\n?? results/week_02/runs/20260925T130455_combiner_mech_law_spring_seed1_v2_stm30_lev2.4_spring/\n?? results/week_02/runs/20260925T130602_combiner_mech_law_spring_seed1_v2_stp0_lev2.4_spring/\n?? results/week_02/runs/20260925T130709_combiner_mech_law_spring_seed1_v2_stp15_lev2.4_spring/\n?? results/week_02/runs/20260925T130817_combiner_mech_law_spring_seed1_v2_stp30_lev2.4_spring/\n?? results/week_02/runs/20260925T130924_combiner_mech_law_seed1_v2_stm30_door12_lips/\n?? results/week_02/runs/20260925T131026_combiner_mech_law_seed1_v2_stp0_door12_lips/\n?? results/week_02/runs/20260925T131130_combiner_mech_law_seed1_v2_stm30_door16_lips/\n?? results/week_02/runs/20260925T131233_combiner_mech_law_seed1_v2_stp0_door16_lips/\n?? results/week_02/runs/20260925T131336_combiner_mech_law_seed1_v2high_stp0_lev0.4_lips/\n?? results/week_02/runs/20260925T131440_combiner_mech_law_seed1_v2high_stp15_lev0.4_lips/\n?? results/week_02/runs/20260925T131543_combiner_mech_law_seed1_v2high_stp0_lev1.2_lips/\n?? results/week_02/runs/20260925T131646_combiner_mech_law_seed1_v2high_stp15_lev1.2_lips/\n?? results/week_02/runs/20260925T131750_combiner_mech_law_spring_seed1_v2high_stp0_lev0.4_spring/\n?? results/week_02/runs/20260925T131856_combiner_mech_law_spring_seed1_v2high_stp15_lev0.4_spring/\n?? results/week_02/runs/20260925T132004_combiner_mech_law_spring_seed1_v2high_stp0_lev1.2_spring/\n?? results/week_02/runs/20260925T132113_combiner_mech_law_spring_seed1_v2high_stp15_lev1.2_spring/\n?? results/week_02/runs/20260925T132316_combiner_mech_law_seed1_both_v2_stm30_door12/\n?? results/week_02/runs/20260925T132419_combiner_mech_law_seed1_both_v2_stm30_door16/\n?? results/week_02/runs/20260925T132524_combiner_mech_law_seed1_both_v0_stp15_door16/\n?? results/week_02/runs/20260925T132628_combiner_mech_law_seed1_both_v0_stm30_door16/\n?? results/week_02/runs/20260925T155907_smoke_seed1_ins_smoke_zero/\n?? results/week_02/runs/20260925T155942_smoke_seed1_ins_smoke_17499/\n?? results/week_02/runs/20260925T160033_play_seed1_ins_play_17499/\n?? results/week_02/runs/20260925T160135_train_seed1_ins_v1/\n?? results/week_02/runs/20260925T160719_insertion_zero_seed1_first_zero/\n?? results/week_02/runs/20260925T160825_insertion_policy_seed1_untrained_17499/\n?? results/week_02/runs/20260925T161215_train_seed1_ins_v2/\n?? results/week_02/runs/20260925T161607_play_seed1_ins_play_17499_fixed/\n?? results/week_02/runs/20260925T161818_play_seed1_ins_debug/\n?? results/week_02/runs/20260925T161956_play_seed1_ins_debug_17600/\n?? results/week_02/runs/20260925T162305_train_seed1_ins_v3/\n?? results/week_02/runs/20260925T162813_play_seed1_ins_v3_17600/\n?? results/week_02/runs/20260925T163033_train_seed1_ins_v4/\n?? results/week_02/runs/20260925T163544_play_seed1_ins_v4_17600/\n?? results/week_02/runs/20260925T164048_train_seed1_ins_v5/\n?? results/week_02/runs/20260925T184512_insertion_policy_seed1_v5_lat0/\n?? results/week_02/runs/20260925T184540_insertion_policy_seed1_v5_lat2/\n?? results/week_02/runs/20260925T184608_insertion_policy_seed1_v5_lat4/\n?? results/week_02/runs/20260925T184637_insertion_policy_seed1_u17499_lat2/\n?? results/week_02/runs/20260925T184708_ins_eval_seed1_ins_eval_lateral_v5b/\n?? results/week_02/runs/20260925T184734_ins_eval_seed1_ins_eval_detent_v5b/\n?? results/week_02/runs/20260925T184800_ins_eval_seed1_ins_eval_lateral_17499b/\n?? results/week_02/runs/20260925T184831_insertion_policy_seed1_v5_lat2_tipcorr/\n?? results/week_02/runs/20260925T184900_insertion_policy_seed1_u17499_lat2_tipcorr/\n?? results/week_02/runs/20260926T011051_054410Z_verify_seed42/\n?? results/week_02/runs/20260926T011712_eval_seed1_mount_legacy/\n?? results/week_02/runs/20260926T011815_eval_seed1_mount_new/\n?? results/week_02/runs/20260926T011838_eval_seed1_mount_x-0.05/\n?? results/week_02/runs/20260926T011902_eval_seed1_mount_x-0.03/\n?? results/week_02/runs/20260926T011926_eval_seed1_mount_x-0.015/\n?? results/week_02/runs/20260926T011950_eval_seed1_mount_x0.015/\n?? results/week_02/runs/20260926T012014_eval_seed1_mount_x0.03/\n?? results/week_02/runs/20260926T012038_eval_seed1_mount_x0.05/\n?? results/week_02/runs/20260926T012103_eval_seed1_mount_z0.04/\n?? results/week_02/runs/20260926T012127_eval_seed1_mount_z0.06/\n?? results/week_02/runs/20260926T012152_eval_seed1_mount_z0.07/\n?? results/week_02/runs/20260926T012216_eval_seed1_mount_z0.09/\n?? results/week_02/runs/20260926T012240_eval_seed1_mount_z0.10/\n?? results/week_02/runs/20260926T012304_eval_seed1_mount_z0.12/\n?? results/week_02/runs/20260926T012328_eval_seed1_mount_y-0.02/\n?? results/week_02/runs/20260926T012352_eval_seed1_mount_y0.02/\n?? results/week_02/runs/20260926T012416_mech_eval_seed1_mech_mount_legacy/\n?? results/week_02/runs/20260926T012443_mech_eval_seed1_mech_mount_new/\n?? results/week_02/runs/20260926T012510_mech_eval_seed1_mech_mount_z0.10/\n?? results/week_02/runs/20260926T012536_mech_eval_seed1_mech_mount_x-0.03/\n?? results/week_02/runs/20260926T015512_960253Z/\n?? results/week_02/runs/20260926T015938_267134Z_verify_seed42/\n?? results/week_02/runs/20260926T040927_478152Z/\n?? results/week_02/runs/20260926T140026_ins_eval_seed1_ins_eval_lateral_v5_noloops_newmount/\n?? results/week_02/runs/20260926T140053_ins_eval_seed1_ins_eval_lateral_v5_loops_newmount/\n?? results/week_02/runs/20260926T140121_ins_eval_seed1_ins_eval_lateral_v5_loops_legacymount/\n?? results/week_02/runs/20260926T140246_play_seed1_ins_v5_loops_trace/\n?? results/week_02/runs/20260926T140341_play_seed1_ins_v5_loops_motion/\n?? results/week_02/runs/20260926T140440_play_seed1_ins_still_v5/\n?? results/week_02/runs/20260926T140455_play_seed1_ins_still_mech17499/\n?? results/week_02/runs/20260926T140509_play_seed1_ins_still_unifp56000/\n?? results/week_02/runs/20260926T140648_train_seed1_ins_v6_smoke/\n?? results/week_02/runs/20260926T140712_train_seed1_ins_v6/\n?? results/week_02/runs/20260926T141318_play_seed1_ins_v5_grip_trace/\n?? results/week_02/runs/20260926T141624_train_seed1_ins_v7/\n?? results/week_02/runs/20260926T142032_insertion_policy_seed1_v5_compliant_smoke/\n?? results/week_02/runs/20260926T142228_ins_eval_seed1_ins_eval_lateral_v5_grip/\n?? results/week_02/runs/20260926T142357_ins_eval_seed1_ins_eval_detent_v5_grip/\n?? results/week_02/runs/20260926T142540_ins_eval_seed1_ins_eval_lateral_v5_grip_noloops/\n?? results/week_02/runs/20260926T143013_ins_eval_seed1_ins_eval_lateral_v7_20200/\n?? results/week_02/runs/20260926T143156_ins_eval_seed1_ins_eval_lateral_v7_20200_hold/\n?? results/week_02/runs/20260926T143506_insertion_policy_seed1_v7_20200_compliant_lat2/\n?? results/week_02/runs/20260926T145425_ins_eval_seed1_ins_eval_lateral_v7_20600/\n?? results/week_02/runs/20260926T145643_train_seed1_ins_v8/\n?? results/week_02/runs/20260926T145701_ins_eval_seed1_ins_eval_lateral_v7_20400/\n?? results/week_02/runs/20260926T145834_ins_eval_seed1_ins_eval_lateral_v7_20635/\n?? results/week_02/runs/20260926T150113_ins_eval_seed1_ins_eval_lateral_v7_20635_trace1/\n?? results/week_02/runs/20260926T150702_insertion_policy_seed1_v7_20200_compliant_lat0/\n?? results/week_02/runs/20260926T150841_insertion_policy_seed1_v7_20200_compliant_lat4/\n?? results/week_02/runs/20260926T151020_insertion_policy_seed1_v7_20200_rigid_lat2/\n?? results/week_02/runs/20260926T151148_ins_eval_seed1_ins_eval_detent_v7_20200/\n?? results/week_02/runs/20260926T151432_ins_eval_seed1_ins_eval_lateral_v7_20200_rigid/\n?? results/week_02/runs/20260926T151557_ins_eval_seed1_ins_eval_lateral_v7_20200_noloops/\n?? results/week_02/runs/20260926T151723_ins_eval_seed1_ins_eval_lateral_v7_20200_nohold/\n?? results/week_02/runs/20260926T152235_ins_eval_seed1_ins_eval_lateral_v8_21000/\n?? results/week_02/runs/20260926T152526_train_seed1_ins_v9/\n?? results/week_02/runs/20260926T153157_ins_eval_seed1_ins_eval_lateral_v7_20200_wideloops/\n?? results/week_02/runs/20260926T153412_ins_eval_seed1_ins_eval_lateral_v7_20200_trace64/\n?? results/week_02/runs/20260926T153613_ins_eval_seed1_ins_eval_lateral_v7_20200_roll40/\n?? results/week_02/runs/20260926T155036_ins_eval_seed1_ins_eval_lateral_v9_20600/\n?? results/week_02/runs/20260926T155251_insertion_policy_seed2_v7_20200_compliant_lat2_n48/\n?? results/week_02/runs/20260926T155506_insertion_policy_seed2_v7_20200_compliant_lat2_n48b/\n?? results/week_02/runs/20260926T160011_insertion_policy_seed2_v7_20200_compliant_lat2_n48_clamp20/\n?? results/week_02/runs/20260926T161647_ins_eval_seed1_ins_eval_lateral_v9_21000/\n?? results/week_02/runs/20260926T161849_insertion_policy_seed2_v9_21000_compliant_lat2_n48/\n?? results/week_02/runs/20260926T164100_ins_eval_seed1_ins_eval_lateral_v9_21400/\n?? results/week_02/runs/20260926T170411_ins_eval_seed1_ins_eval_lateral_v9_21800/\n?? results/week_02/runs/20260926T170707_train_seed1_ins_v10/\n?? results/week_02/runs/20260926T170719_ins_eval_seed1_ins_eval_detent_v9_21000/\n?? results/week_02/runs/20260926T170850_ins_eval_seed1_ins_eval_detent_v9_21800/\n?? results/week_02/runs/20260926T173120_ins_eval_seed1_ins_eval_lateral_v10_21400/\n?? results/week_02/runs/20260926T173249_ins_eval_seed1_ins_eval_detent_v10_21400/\n?? results/week_02/runs/20260926T175530_ins_eval_seed1_ins_eval_lateral_v10_21800/\n?? results/week_02/runs/20260926T175702_ins_eval_seed1_ins_eval_detent_v10_21800/\n?? results/week_02/runs/20260926T175915_ins_eval_seed1_ins_eval_detent_v10_21800_trace77/\n?? results/week_02/runs/20260926T180118_insertion_policy_seed2_v10_21400_compliant_lat2_n48_s2/\n?? results/week_02/runs/20260926T180557_insertion_policy_seed3_v10_21400_compliant_lat2_n48_s3/\n?? results/week_02/runs/20260926T182214_ins_eval_seed1_ins_eval_lateral_v10_22200/\n?? results/week_02/runs/20260926T182347_ins_eval_seed1_ins_eval_detent_v10_22200/\n?? results/week_02/runs/20260926T182654_train_seed1_ins_v11/\n?? results/week_02/runs/20260926T185037_ins_eval_seed1_ins_eval_lateral_v11_21800/\n?? results/week_02/runs/20260926T185206_ins_eval_seed1_ins_eval_detent_v11_21800/\n?? results/week_02/runs/20260926T191448_ins_eval_seed1_ins_eval_lateral_v11_22200/\n?? results/week_02/runs/20260926T191657_train_seed1_ins_recipe_seed1/\n?? results/week_02/runs/20260926T194003_ins_eval_seed1_ins_eval_lateral_recipe_s1_20200/\n?? results/week_02/runs/20260926T194041_train_seed2_ins_recipe_seed2/\n?? results/week_02/runs/20260926T200348_ins_eval_seed1_ins_eval_lateral_recipe_s2_20200/\n?? results/week_02/runs/20260926T200425_train_seed3_ins_recipe_seed3/\n?? results/week_02/runs/20260926T202733_ins_eval_seed1_ins_eval_lateral_recipe_s3_20200/\n?? results/week_02/runs/20260926T202825_ins_eval_seed1_ins_eval_lateral_recipe_s1_20397/\n?? results/week_02/runs/20260926T202902_ins_eval_seed1_ins_eval_lateral_recipe_s2_20397/\n?? results/week_02/runs/20260926T202940_ins_eval_seed1_ins_eval_lateral_recipe_s3_20397/\n?? results/week_02/runs/20260926T203032_ins_eval_seed1_ins_eval_lateral_v5_grip_now/\n?? results/week_02/runs/20260926T203152_train_seed2_ins_recipe_seed2_cont/\n?? results/week_02/runs/20260926T214129_ins_eval_seed1_ins_eval_lateral_recipe_s2c_20800/\n?? results/week_02/runs/20260926T214207_ins_eval_seed1_ins_eval_lateral_recipe_s2c_21200/\n?? results/week_02/runs/20260926T214243_ins_eval_seed1_ins_eval_lateral_recipe_s2c_21596/\n?? results/week_02/runs/20260926T214320_train_seed3_ins_recipe_seed3_cont/\n?? results/week_02/runs/20260926T225255_ins_eval_seed1_ins_eval_lateral_recipe_s3c_20800/\n?? results/week_02/runs/20260926T225333_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21200/\n?? results/week_02/runs/20260926T225410_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21596/\n?? results/week_02/runs/20260926T225504_ins_eval_seed1_ins_eval_detent_recipe_s3c_21200/\n?? results/week_02/runs/20260926T225544_insertion_policy_seed2_s3c_21200_compliant_lat2_n48_s2/\n?? results/week_02/runs/20260926T225659_insertion_policy_seed3_s3c_21200_compliant_lat2_n48_s3/\n?? results/week_02/runs/20260926T225918_train_seed3_ins_recipe_seed3_level08/\n?? results/week_02/runs/20260926T234518_ins_eval_seed1_ins_eval_lateral_recipe_s3l08_21200/\n?? results/week_02/runs/20260926T234555_ins_eval_seed1_ins_eval_lateral_recipe_s3l08_21599/\n?? results/week_02/runs/20260926T234715_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21000/\n?? tests/test_dock.py\n?? tests/test_insertion.py\n?? third_party/unitree_go2_cad/\n?? unifp_train/insert_cfg.py\n?? unifp_train/insert_env.py\n?? unifp_train/insert_eval.py\n?? unifp_train/insert_rewards.py\n?? unifp_train/insertion.py",
+  "ins_conditions": {
+    "chamfer_m": 0.002,
+    "clearance_m": 0.001,
+    "depth_m": 0.018,
+    "detent_fraction": 0.65,
+    "max_n": 30.0,
+    "mu": 0.3,
+    "search_n": 6.0,
+    "speed_m_s": 0.02,
+    "standoff_m": 0.012
+  },
+  "ins_rows": [
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    }
+  ],
+  "ins_set": "lateral",
+  "insertion": {
+    "compliant_grip": true,
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "hold_home": true,
+    "insertion_fraction": 0.8,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "roll_gain": 1.5,
+      "roll_max_rad": 0.6981317007977318,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "reward_true_targets": false
+  },
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "ins_eval",
+  "mount_pos_m": [
+    0.0025,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 96,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "e8a83b56e04405954a477ce26e46b558d4615540417d5d5ac57fb59863405515",
+  "roll_objective": true,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "at_start_median_abs": {
+      "azimuth_deg": 1.78,
+      "elevation_deg": 4.47,
+      "roll_deg": 0.365,
+      "tip_miss_mm": 3.215
+    },
+    "by_detent": [
+      {
+        "approach_err_start_deg": 4.77,
+        "damaged": 2,
+        "detent_n": 12.0,
+        "fell": 0,
+        "of": 96,
+        "peak_contact_n": 16.425,
+        "peak_lateral_n": 6.145,
+        "searched": 39,
+        "seated": 51,
+        "time_to_seat_s": 2.34
+      }
+    ],
+    "by_height": [
+      {
+        "approach_err_start_deg": 3.75,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.7,
+        "of": 32,
+        "peak_contact_n": 11.38,
+        "peak_lateral_n": 4.82,
+        "searched": 10,
+        "seated": 22,
+        "time_to_seat_s": 1.9
+      },
+      {
+        "approach_err_start_deg": 4.77,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.78,
+        "of": 32,
+        "peak_contact_n": 20.43,
+        "peak_lateral_n": 14.995,
+        "searched": 10,
+        "seated": 21,
+        "time_to_seat_s": 2.78
+      },
+      {
+        "approach_err_start_deg": 11.91,
+        "damaged": 2,
+        "fell": 0,
+        "height_m": 0.86,
+        "of": 32,
+        "peak_contact_n": 10.915,
+        "peak_lateral_n": 3.2,
+        "searched": 19,
+        "seated": 8,
+        "time_to_seat_s": 3.15
+      }
+    ],
+    "by_lateral": [
+      {
+        "approach_err_start_deg": 4.765,
+        "damaged": 1,
+        "fell": 0,
+        "lateral_m": 0.0,
+        "of": 24,
+        "peak_contact_n": 21.205,
+        "peak_lateral_n": 8.135,
+        "searched": 4,
+        "seated": 18,
+        "time_to_seat_s": 2.3
+      },
+      {
+        "approach_err_start_deg": 4.84,
+        "damaged": 1,
+        "fell": 0,
+        "lateral_m": 0.0015,
+        "of": 24,
+        "peak_contact_n": 20.31,
+        "peak_lateral_n": 10.58,
+        "searched": 6,
+        "seated": 16,
+        "time_to_seat_s": 2.33
+      },
+      {
+        "approach_err_start_deg": 4.79,
+        "damaged": 0,
+        "fell": 0,
+        "lateral_m": 0.003,
+        "of": 24,
+        "peak_contact_n": 15.485,
+        "peak_lateral_n": 4.8,
+        "searched": 11,
+        "seated": 11,
+        "time_to_seat_s": 1.96
+      },
+      {
+        "approach_err_start_deg": 4.785,
+        "damaged": 0,
+        "fell": 0,
+        "lateral_m": 0.0045,
+        "of": 24,
+        "peak_contact_n": 11.44,
+        "peak_lateral_n": 3.9,
+        "searched": 18,
+        "seated": 6,
+        "time_to_seat_s": 2.47
+      }
+    ],
+    "by_roll": [
+      {
+        "approach_err_start_deg": 5.09,
+        "damaged": 1,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 9.075,
+        "peak_lateral_n": 3.155,
+        "roll_rad": 0.0,
+        "searched": 24,
+        "seated": 21,
+        "time_to_seat_s": 3.62
+      },
+      {
+        "approach_err_start_deg": 4.63,
+        "damaged": 1,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 20.01,
+        "peak_lateral_n": 12.585,
+        "roll_rad": 1.5707963267948966,
+        "searched": 15,
+        "seated": 30,
+        "time_to_seat_s": 1.76
+      }
+    ],
+    "damaged": 2,
+    "entered": 60,
+    "episodes": 96,
+    "ever_seated": 52,
+    "fell": 0,
+    "seated": 51,
+    "started": 96
+  },
+  "task": "insertion",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ]
+}

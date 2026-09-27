@@ -87,6 +87,19 @@ def mech_effort(state: TaskState) -> torch.Tensor:
     return torch.square(state.mech_force / mech_cfg.EFFORT_SCALE_N) * state.fixture_engaged
 
 
+def mech_offpath(state: TaskState) -> torch.Tensor:
+    """The force the robot puts on the handle *across* its path, squared, per (`OFFPATH_SCALE_N`)^2, while held.
+
+    Across the path the mechanism does not move, so the force opens nothing, and the training's grasp (a ball-joint
+    spring) holds it whatever it is. A real claw does not: the combiner's L-lip claw lets the bar slide along the lever
+    and off its end under it (2026-09-25, `model_18998`). `fixture_force_tracking` counts it at a quarter weight on
+    the reasoning that a hook's resting load is harmless; this term is for a policy that has to keep a claw on.
+    """
+    applied, axis = state.fixture_applied_w, state.fixture_axis_w
+    across = (applied - (applied * axis).sum(-1, keepdim=True) * axis).norm(dim=-1)
+    return torch.square(across / mech_cfg.OFFPATH_SCALE_N) * state.fixture_engaged
+
+
 TERMS = {
     "mech_progress": mech_progress,
     "mech_push": mech_push,
@@ -95,4 +108,5 @@ TERMS = {
     "mech_overspeed": mech_overspeed,
     "mech_effort": mech_effort,
     "mech_overforce": mech_overforce,
+    "mech_offpath": mech_offpath,
 }

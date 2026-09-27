@@ -26,6 +26,900 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 
 ## Log
 
+### 2026-09-27 — Insertion, continued: why the policy could not learn it, and what made keys seat
+
+**Why.** Lukas: "Can [you] continue trying to improve the key insertion task? You have an entire day of gpu". Where
+it stood: F-116, five runs, 0 keys seated anywhere.
+
+**The diagnosis, in the order it was found.**
+
+1. **The policy's steady miss can be looped out, but not all of it.** The outer loops are new
+   (`insertion.PoseCorrection`, on by default). They integrate the measured miss of the key's tip, the approach's
+   elevation and the blade's roll into the task layer's commands, because the policy never observes its own hand
+   (F-118). With them on, the layer also waits for the tip to converge before it starts. v5 `model_19998` on the
+   frozen lateral set (96 slots, 1 mm clearance), new mount:
+   - loops off: [0/96](#/week/2/run/20260926T140026_ins_eval_seed1_ins_eval_lateral_v5_noloops_newmount), 33 entered the mouth,
+     17 damaged. At the layer's start the tip was 10.3 mm off and the approach 7.9° off in elevation, 1.7° in azimuth,
+     2.5° in roll.
+   - loops on: [0/96](#/week/2/run/20260926T140053_ins_eval_seed1_ins_eval_lateral_v5_loops_newmount), **93 entered** but 76
+     damaged. At the start the tip was 4.1 mm off, elevation 5.8°, azimuth 4.2°, roll 0.5°.
+   - loops on, legacy mount: [0/96](#/week/2/run/20260926T140121_ins_eval_seed1_ins_eval_lateral_v5_loops_legacymount),
+     94 entered, 78 damaged.
+
+   The roll loop works. The elevation loop drives its command to the 20° clamp while the hand moves 2°
+   ([trace](#/week/2/run/20260926T140246_play_seed1_ins_v5_loops_trace)): v5 barely answers its elevation command.
+2. **No starting policy holds its hand still.** While "holding" the pre-insertion pose, the median tool speed over
+   ~45 environments was 0.31-0.38 m/s for v5 ([run](#/week/2/run/20260926T140440_play_seed1_ins_still_v5)), 0.23-0.31 for the
+   mechanism `model_17499` ([run](#/week/2/run/20260926T140455_play_seed1_ins_still_mech17499)) and 0.37-0.44 for UniFP
+   `model_56000` ([run](#/week/2/run/20260926T140509_play_seed1_ins_still_unifp56000)). The base is still (0.01 m/s)
+   and the arm joints move at 1.2-2.3 rad/s ([trace](#/week/2/run/20260926T140341_play_seed1_ins_v5_loops_motion)): a ~10 Hz arm
+   jitter of a few millimetres, the habit F-104 saw on a pad. The 76 damaged keys above were banged into the channel's
+   walls at 0-7 mm deep, the contact jumping from ~0 to over 150 N within one policy step. A rigid tilted key alone
+   does not do it: driven 6° off the axis the plant's walls give 9 N, a 5 mm jitter 160 N (`tests/test_insertion.py`).
+3. **Training could not see a success.** The checkpoints of the pull lineage carry an action-noise std of 0.69-0.89
+   on the six arm actions, against 0.48-0.62 on the legs. At the 0.25 rad action scale that is ~0.2 rad of random arm
+   target every step. v6 (loops, a stillness penalty, an easier slot; below) found no insertion in any training
+   rollout, the tip 12-14 mm off where the layer started, and was
+   [stopped at 20,161](#/week/2/run/20260926T140712_train_seed1_ins_v6) ([smoke](#/week/2/run/20260926T140648_train_seed1_ins_v6_smoke)).
+
+**What was changed** (each with tests; 23 in `tests/test_insertion.py`, 5 in `demos/insertion/tests`):
+
+- **A compliant grip** (`insertion.CompliantGrip`, `--ins_compliant_grip`): the key tilts about the jaw centre on a
+  2 N·m/rad spring, up to 10°. Each physics step it settles implicitly against the contact probed at the hand's new
+  position (`Slot.probe`, split out of `Slot.step`) before the step is committed. The first, explicit version needed
+  heavy damping to stay stable, and that damping itself pushed the key into the walls. A 5 mm jitter now gives 22 N
+  where a rigid key gives 160 N, and 6° off the axis 0.3 N against 9 N. In PhysX (`demos/insertion`,
+  `--compliant_key`) the blade is its own link on two sprung revolute joints (`key_rx`, `key_ry`), which the policy's
+  joint map declares as passive (`interface.permutation_from(passive=...)`, `passive_joints`). **This is a hardware
+  requirement the simulation sets: the key has to be held so it can tilt.**
+- **A home hold** in the task layer (`InsertionTaskLayer.home`, `--ins_no_hold` to turn it off). Once the key is within
+  1 mm of the seat, the goal holds it there with a 5 N push. 11 of the 16 keys damaged under v5 with the grip had
+  seated first and been let drift back out.
+- **Training:** `--resume_arm_std 0.15` (the arm's noise, recorded as a departure); `--entropy_coef 0.002`; a
+  stillness term `ins_tool_speed` (−8 × squared tool speed while the goal is held); the approach weight 1.5 → 2.5; and
+  below curriculum level 1 an easier slot (up to 2.5 mm more clearance and 3 mm more chamfer). The frozen evaluation's
+  slots are unchanged.
+- **Reporting:** the frozen evaluation now also reports the tip, elevation, azimuth and roll miss at the layer's start,
+  and how many keys ever reached the seat (the frozen metric still asks for no damage or fall afterwards).
+  `play --ins_debug` prints the loops and the arm's motion.
+
+**The grip and the loops, before any training for them** (v5 `model_19998`, frozen lateral set):
+
+| v5 `model_19998` | seated | entered | damaged | run |
+| --- | --- | --- | --- | --- |
+| rigid, loops off | 0/96 | 33 | 17 | [run](#/week/2/run/20260926T140026_ins_eval_seed1_ins_eval_lateral_v5_noloops_newmount) |
+| rigid, loops on | 0/96 | 93 | 76 | [run](#/week/2/run/20260926T140053_ins_eval_seed1_ins_eval_lateral_v5_loops_newmount) |
+| grip, loops off | 23/96 | 38 | 1 | [run](#/week/2/run/20260926T142540_ins_eval_seed1_ins_eval_lateral_v5_grip_noloops) |
+| grip, loops on | 32/96 | 96 | 16 | [run](#/week/2/run/20260926T142228_ins_eval_seed1_ins_eval_lateral_v5_grip) |
+| grip, loops on, detent set | 37/96 | 96 | 25 | [run](#/week/2/run/20260926T142357_ins_eval_seed1_ins_eval_detent_v5_grip) |
+
+In PhysX with the compliant key, at 2 mm: [1 of 8 seated](#/week/2/run/20260926T142032_insertion_policy_seed1_v5_compliant_smoke),
+the first key ever seated there ([the grip in the plant's play](#/week/2/run/20260926T141318_play_seed1_ins_v5_grip_trace)).
+
+**v7**, trained from v5 `model_19998` with the grip, the loops, arm noise 0.15, entropy 0.002, the stillness term and
+the easier slot. v7 loaded its code before the home hold was added, so it trains without it; every evaluation below
+has it:
+
+```bash
+./run_unifp_train.py train --task insertion --num_envs 4096 --iterations 5000 --headless --tool_point jaw_centre \
+    --resume_from logs/unifp_train/20260925T164048_train_seed1_ins_v5/model_19998.pt --ins_compliant_grip \
+    --resume_arm_std 0.15 --entropy_coef 0.002 --run_name ins_v7
+```
+
+- **In training** (sampled at resets, on the curriculum's slots): the seated fraction went from 0.32 in the first 50
+  iterations to 0.92 by iteration 20,100. The curriculum, which never left level 0.2 in v5, reached 0.7 by 20,260.
+- **`model_20200`** (200 iterations): frozen lateral set
+  [55/96 seated](#/week/2/run/20260926T143156_ins_eval_seed1_ins_eval_lateral_v7_20200_hold) (58 reached the seat, 20 damaged;
+  the tip 5.2 mm and the approach 1.9° in elevation off at the start). In PhysX with the compliant key at 2 mm:
+  **[14 of 16 seated](#/week/2/run/20260926T143506_insertion_policy_seed1_v7_20200_compliant_lat2)**, a median 1.8 s after the
+  layer started, peak force 33 N, 1 damaged, no falls.
+  - What still fails, on the frozen set: at 0.86 m the approach starts 7.4-9.4° off in elevation, near the grip's
+    10° (12 of the 20 damaged); at 0.70 m with the blade upright, the tip starts 22-29 mm off; and 21 keys neither
+    seated nor were damaged, mostly stopped on the door's face at 0.70 m.
+- **v7's checkpoints on the frozen lateral set** (grip, loops, hold):
+
+  | checkpoint | seated | reached the seat | started | damaged | run |
+  | --- | --- | --- | --- | --- | --- |
+  | 20,200 | **55/96** | 58 | 93 | 20 | [run]({R}20260926T143156_ins_eval_seed1_ins_eval_lateral_v7_20200_hold) |
+  | 20,400 | 51/96 | 51 | 80 | 18 | [run]({R}20260926T145701_ins_eval_seed1_ins_eval_lateral_v7_20400) |
+  | 20,600 | 47/96 | 47 | 80 | 17 | [run]({R}20260926T145425_ins_eval_seed1_ins_eval_lateral_v7_20600) |
+  | 20,635 (stopped) | 49/96 | 49 | 80 | 13 | [run]({R}20260926T145834_ins_eval_seed1_ins_eval_lateral_v7_20635) |
+
+  The 16 unstarted slots from 20,400 on are all the 0.70 m upright blade. [A trace of one]({R}20260926T150113_ins_eval_seed1_ins_eval_lateral_v7_20635_trace1)
+  shows the roll loop correct the roll to about 1°, the azimuth stay about 9° off, the elevation loop reach its 20°
+  clamp, and the tip loop saturate at its 5 cm clamp with the tip still 30-36 mm off. At the deadline the episode
+  becomes a free reach. Both blade rolls are reachable at every evaluation height by the arm alone: full-pose IK
+  (`d1_ik`) with at least 40° of margin at every joint, the upright blade putting Joint6 at ±90°. This is the
+  policy, not the arm. `model_20200`, the best, is also on the frozen detent set:
+  [56/96]({R}20260926T151148_ins_eval_seed1_ins_eval_detent_v7_20200) (59 reached the seat, 30 damaged).
+- **`model_20200` in PhysX**, 16 attempts each:
+
+  | key | estimate off by | seated | damaged | searched | run |
+  | --- | --- | --- | --- | --- | --- |
+  | compliant | 0 mm | 13/16 | 1 | 4 | [run]({R}20260926T150702_insertion_policy_seed1_v7_20200_compliant_lat0) |
+  | compliant | 2 mm | **14/16** | 1 | 4 | [run]({R}20260926T143506_insertion_policy_seed1_v7_20200_compliant_lat2) |
+  | compliant | 4 mm | 13/16 | 0 | 8 | [run]({R}20260926T150841_insertion_policy_seed1_v7_20200_compliant_lat4) |
+  | rigid | 2 mm | 5/16 | 2 | 7 | [run]({R}20260926T151020_insertion_policy_seed1_v7_20200_rigid_lat2) |
+
+  Median time to seat is 1.7-2.0 s after the layer starts, with peak force 26-34 N. PhysX damages far fewer keys than
+  the analytic plant: 0-1 of 16, where the plant damages 13-30 of 96. The two count damage differently: PhysX by the
+  contact sensor's net force on the key, the plant by summing its penalty contacts' normal forces. Both use a 150 N
+  threshold, so the plant's damage count is the more pessimistic.
+
+- **What each part is worth to the trained policy** (`model_20200`, frozen lateral set):
+
+  | condition | seated | started | damaged | run |
+  | --- | --- | --- | --- | --- |
+  | as trained: grip, loops, hold | 55/96 | 93 | 20 | [run](#/week/2/run/20260926T143156_ins_eval_seed1_ins_eval_lateral_v7_20200_hold) |
+  | rigid key | 0/96 | 93 | 86 | [run](#/week/2/run/20260926T151432_ins_eval_seed1_ins_eval_lateral_v7_20200_rigid) |
+  | loops off | 0/96 | 15 | 3 | [run](#/week/2/run/20260926T151557_ins_eval_seed1_ins_eval_lateral_v7_20200_noloops) |
+  | no home hold | 54/96 | 93 | 21 | [run](#/week/2/run/20260926T151723_ins_eval_seed1_ins_eval_lateral_v7_20200_nohold) |
+
+  - The grip is essential in the plant, where a rigid key damages 86 of 96. In PhysX a rigid key seats 5 of 16 at 2 mm
+    (above), so the plant is the harsher of the two.
+  - The trained policy leans on the loops. Without them it starts only 15 slots: the tip 27 mm off, the elevation
+    12°, **the roll 30°**. The roll loop was carrying the roll throughout v7. Policy and task layer are one system.
+  - The home hold barely matters to v7, where it saved most of v5's damaged keys.
+  - The two failing cases by blade and height (seated of 16): 0.70 m level 13, **0.70 m upright 3**, 0.78 m level 10,
+    0.78 m upright 14, **0.86 m level 0** (9 damaged), 0.86 m upright 15. Widening the loops' clamps (tip 5 → 8 cm,
+    elevation 20 → 30°) gives [57/96](#/week/2/run/20260926T153157_ins_eval_seed1_ins_eval_lateral_v7_20200_wideloops): 0.70 m
+    upright 3 → 5 but damaged 2 → 7, and 0.86 m level still 0. The defaults stay (`--ins_tip_max` and
+    `--ins_elevation_max_deg` now set them). The same height with the blade upright seats 15.
+  - [A trace of a 0.86 m level slot](#/week/2/run/20260926T153412_ins_eval_seed1_ins_eval_lateral_v7_20200_trace64) finds the roll as well: there the policy holds the
+    blade 30° off in roll with the loops off, and with them on both attitude loops sit at their 20° clamps, leaving the
+    roll 5-10° off, too much for a 1 mm slot. The grip barely tilts (2° at most). With the roll clamp at 40° and the
+    elevation's at 30°, [59/96](#/week/2/run/20260926T153613_ins_eval_seed1_ins_eval_lateral_v7_20200_roll40): 0.86 m level 0 → 5
+    (9 still damaged), the rest unchanged. **These are now the defaults** (`insert_cfg`, 2026-09-27), and the roll
+    clamp can be set with `--ins_roll_max_deg`; evaluations before this used 20° for both.
+  - In PhysX, 48 attempts at 2 mm (seed 2; the demo now runs more attempts than environments, in batches, after a
+    [crash at the second batch's reset](#/week/2/run/20260926T155251_insertion_policy_seed2_v7_20200_compliant_lat2_n48), fixed):
+    [34/48 with the wider clamps](#/week/2/run/20260926T155506_insertion_policy_seed2_v7_20200_compliant_lat2_n48b) against
+    [30/48 with 20°](#/week/2/run/20260926T160011_insertion_policy_seed2_v7_20200_compliant_lat2_n48_clamp20) on the same draws,
+    1 and 0 damaged. By blade and height (wider clamps): level 10/10, 8/8 and 0/3 from low to high, upright 1/5, 6/9
+    and 9/13. The same two cases fail as in the plant.
+
+![insertion v7](figures/insertion_v7.png)
+
+(`figures/insertion_v7.py`, from the recorded runs.)
+
+**v8**, from v7 `model_20635` with the home hold in training, at curriculum level 1.0. Its first ~100 iterations went
+backwards: nearly every insertion episode missed its pre-insertion pose and the joint-limit penalty rose from
+−0.05 to −0.43, before it recovered (seated 0.63 and missed 0.24 in training by 20,870). v7's own first update after
+resuming showed the same thing: a KL of 243 (v8: 286). rsl-rl restarts its adaptive learning rate at the
+configured 1e-3 on every launch. With the arm's noise at 0.15, even a small change to the mean is a very large KL,
+so the first update after a resume is a large step. A resume of a low-noise policy should start from a small rate
+(`--fixed_learning_rate` or `--learning_rate_scale`), or the rate should be saved with the checkpoint (an open issue).
+v7's recorded learning rate was at rsl-rl's 1e-5 floor from its first logged iteration to its last. Deterministically, v8
+never recovered: `model_21000` seated [2/96](#/week/2/run/20260926T152235_ins_eval_seed1_ins_eval_lateral_v8_21000) on the frozen lateral set (4 entered; the tip 11 mm and the
+azimuth 8.7° off at the start), while its training rollouts reported 0.79 seated. What it relearned works under the
+training noise, which searches for the mouth, and not without it. v8 was
+[stopped at 21,042](#/week/2/run/20260926T145643_train_seed1_ins_v8).
+
+**v9**: from `model_20200` (v7's best), `--fixed_learning_rate 1e-5`, the home hold, the curriculum from 0.5 with at
+least 200 iterations between promotions (`--ins_promote_every 200`; v7 promoted every 50). The later v7 checkpoints,
+trained through levels 0.6-1.0, scored lower on the frozen set than `model_20200`, trained to 0.5. `model_20200` is in
+`checkpoints/` as `unifp_go2d1_insertion_model_20200.pt` (sha256 in `SHA256SUMS`). Findings: F-119, F-120; F-116 has a
+note pointing to them.
+
+```bash
+./run_unifp_train.py train --task insertion --num_envs 4096 --iterations 4000 --headless --tool_point jaw_centre \
+    --resume_from logs/unifp_train/20260926T141624_train_seed1_ins_v7/model_20200.pt --ins_compliant_grip \
+    --entropy_coef 0.002 --fixed_learning_rate 1e-5 --ins_level 0.5 --ins_promote_every 200 --run_name ins_v9
+```
+
+With the learning rate pinned, the resume is smooth: the first update's KL is 0.016, against 243 (v7) and 286 (v8).
+v9's checkpoints, on the frozen lateral set with the wider clamps (`model_20200` there: 59/96, 20 damaged):
+
+| checkpoint | seated | started | damaged | 0.70 m upright | 0.86 m level | run |
+| --- | --- | --- | --- | --- | --- | --- |
+| 20,600 | 55/96 | 96 | 13 | 6/16 | 0/16 | [run](#/week/2/run/20260926T155036_ins_eval_seed1_ins_eval_lateral_v9_20600) |
+| 21,000 | **67/96** | 96 | 10 | 13/16 | 3/16 | [run](#/week/2/run/20260926T161647_ins_eval_seed1_ins_eval_lateral_v9_21000) |
+
+`model_21000` in PhysX on the same 48 draws: [37/48](#/week/2/run/20260926T161849_insertion_policy_seed2_v9_21000_compliant_lat2_n48) (`model_20200`: 34), 0
+damaged, peak force 12 N (29 N), roll at the layer's start 0.7° (15°). It gains on the upright blades (3/5, 9/9, 12/13
+from low to high) and loses some low level ones (6/10 against 10/10).
+
+| checkpoint | seated | started | damaged | 0.70 m upright | 0.86 m level | run |
+| --- | --- | --- | --- | --- | --- | --- |
+| 21,400 | 49/96 | 96 | 6 | | | [run](#/week/2/run/20260926T164100_ins_eval_seed1_ins_eval_lateral_v9_21400) |
+| 21,800 | 27/96 | 96 | 19 | | | [run](#/week/2/run/20260926T170411_ins_eval_seed1_ins_eval_lateral_v9_21800) |
+
+**v9 went downhill after 21,000 while its training rollouts held at ~0.86 seated**, so the loss was in what the
+deterministic policy does. At 21,800, 33 keys that entered stopped at 11.1-11.5 mm, which is the frozen set's detent
+(65% of 18 mm, 12 N over its last 1.5 mm). On the detent set:
+
+| detent | `model_21000` | `model_21800` |
+| --- | --- | --- |
+| 0 N | 22/24 | 23/24 |
+| 10 N | 20/24 | 11/24 |
+| 20 N | 17/24 | 5/24 |
+| 30 N | 11/24 | 1/24 |
+| all | [70/96](#/week/2/run/20260926T170719_ins_eval_seed1_ins_eval_detent_v9_21000), 2 damaged | [40/96](#/week/2/run/20260926T170850_ins_eval_seed1_ins_eval_detent_v9_21800), 16 damaged |
+
+Free insertion stayed; the push through a detent went. The stillness term `ins_tool_speed` priced the tool's whole speed
+while the goal was held, the insertion included, and as the action noise shrank (entropy 6.8 → 4.3) the policy
+learned not to move along the axis either. **Fix:** once the layer has started, only speed across its axis is priced
+(`insert_rewards.ins_tool_speed`, test in `tests/test_insertion.py`). v9 was
+[stopped at 21,846](#/week/2/run/20260926T152526_train_seed1_ins_v9).
+
+**v10**: from v9 `model_21000` with that fix, the learning rate at 1e-5, the curriculum from 0.9 (200 iterations
+between promotions), 3,000 iterations, the lateral and detent sets evaluated at every 400th checkpoint.
+
+| checkpoint | lateral seated | damaged | detent seated | damaged | runs |
+| --- | --- | --- | --- | --- | --- |
+| 21,400 | **71/96** | 1 | **71/96** | 3 | [lateral](#/week/2/run/20260926T173120_ins_eval_seed1_ins_eval_lateral_v10_21400), [detent](#/week/2/run/20260926T173249_ins_eval_seed1_ins_eval_detent_v10_21400) |
+| 21,800 | 52/96 | 4 | 39/96 | 12 | [lateral](#/week/2/run/20260926T175530_ins_eval_seed1_ins_eval_lateral_v10_21800), [detent](#/week/2/run/20260926T175702_ins_eval_seed1_ins_eval_detent_v10_21800) |
+| 22,200 | 55/96 | 3 | 43/96 | 9 | [lateral](#/week/2/run/20260926T182214_ins_eval_seed1_ins_eval_lateral_v10_22200), [detent](#/week/2/run/20260926T182347_ins_eval_seed1_ins_eval_detent_v10_22200) |
+
+`model_21400` in PhysX (compliant key, 2 mm, 48 attempts): [40/48](#/week/2/run/20260926T180118_insertion_policy_seed2_v10_21400_compliant_lat2_n48_s2) on
+seed 2 (v9 `model_21000` 37, v7 `model_20200` 34) and [36/48](#/week/2/run/20260926T180557_insertion_policy_seed3_v10_21400_compliant_lat2_n48_s3) on seed
+3, fresh draws that no checkpoint was chosen on. 0 damaged, 0 falls, peak force ~13 N, 1.5 s to seat.
+
+The fix did not stop the decline. By 21,800 the detent stalls are back (by detent 19, 14, 5, 1 of 24), and 25 keys
+spiral on the face without finding the mouth. [A trace of a key stuck at a 10 N detent](#/week/2/run/20260926T175915_ins_eval_seed1_ins_eval_detent_v10_21800_trace77):
+the layer's command climbs to its 30 N cap, the key does not move, and the contact settles at 16 N, about what the
+detent and the walls' friction resist. The policy does not deliver the push it is commanded. Its jaw sits 30-37 mm
+from its commanded goal throughout: the tip loop has moved that goal to cancel the policy's own bias. One reading, not
+tested: the policy's position tracking toward a goal it believes is 3 cm off works against the force command. Both
+v9 and v10 improve for a few hundred iterations at the high curriculum levels and then decline, while their training
+rollouts hold. **Checkpoints have to be chosen by evaluation, not taken last.**
+
+`model_21400` is in `checkpoints/` as `unifp_go2d1_insertion_model_21400.pt`, the insertion policy to use. v10 was
+[stopped at 22,277](#/week/2/run/20260926T170707_train_seed1_ins_v10).
+
+**v11**, a guess at the decline, tested. Two of the policy's rewards score it against the commands the outer loops
+shift:
+- `ins_reach`: the jaw against the loop-shifted jaw goal;
+- the roll term: the roll against the loop-shifted roll command.
+
+Paid to track the corrections, the policy and the loops can chase each other; the traced key's jaw sat 30-37 mm from
+its commanded goal. `--ins_true_targets` scores them against the task instead: once the goal is held, the key's tip
+against the layer's tip goal, and the blade's roll against the slot's (`insert_env.reward_true_targets`,
+`rewards.TaskState.roll_true`; tested). From v10 `model_21400`, the learning rate at 1e-5, curriculum 1.0,
+2,500 iterations.
+
+It made things worse, and quickly:
+- lateral set: [52/96](#/week/2/run/20260926T185037_ins_eval_seed1_ins_eval_lateral_v11_21800) at 21,800, then
+  [16/96](#/week/2/run/20260926T191448_ins_eval_seed1_ins_eval_lateral_v11_22200) at 22,200 (44 reached the seat, 28 damaged);
+- detent set at 21,800: [29/96](#/week/2/run/20260926T185206_ins_eval_seed1_ins_eval_detent_v11_21800).
+
+Re-targeting the reward under a policy trained against the shifted commands disrupts it. This does not test whether
+a policy trained from the start on the true targets would decline less. v11 was
+[stopped at 22,233](#/week/2/run/20260926T182654_train_seed1_ins_v11). **Not adopted**: `reward_true_targets` stays off by default.
+
+![insertion checkpoints](figures/insertion_checkpoints.png)
+
+(`figures/insertion_checkpoints.py`: every checkpoint scored with the roll clamp at 40°.)
+
+**Does it reproduce? Three seeds of the recipe, and the baseline without training.** The v7 recipe as the code now
+stands (the hold, the wider clamps, stillness across the axis) was run from v5 `model_19998` with seeds 1, 2 and 3,
+400 iterations each (`--seed N`, otherwise v7's command). Frozen lateral set:
+
+| | 200 iterations | 400 iterations (20,397) | damaged at 400 | runs |
+| --- | --- | --- | --- | --- |
+| seed 1 | 64/96 | **68/96** | 21 | [train](#/week/2/run/20260926T191657_train_seed1_ins_recipe_seed1), [200](#/week/2/run/20260926T194003_ins_eval_seed1_ins_eval_lateral_recipe_s1_20200), [400](#/week/2/run/20260926T202825_ins_eval_seed1_ins_eval_lateral_recipe_s1_20397) |
+| seed 2 | 42/96 | 36/96 | 9 | [train](#/week/2/run/20260926T194041_train_seed2_ins_recipe_seed2), [200](#/week/2/run/20260926T200348_ins_eval_seed1_ins_eval_lateral_recipe_s2_20200), [400](#/week/2/run/20260926T202902_ins_eval_seed1_ins_eval_lateral_recipe_s2_20397) |
+| seed 3 | 20/96 | 32/96 | 5 | [train](#/week/2/run/20260926T200425_train_seed3_ins_recipe_seed3), [200](#/week/2/run/20260926T202733_ins_eval_seed1_ins_eval_lateral_recipe_s3_20200), [400](#/week/2/run/20260926T202940_ins_eval_seed1_ins_eval_lateral_recipe_s3_20397) |
+| v5, no training | [28/96](#/week/2/run/20260926T203032_ins_eval_seed1_ins_eval_lateral_v5_grip_now) | | 18 | |
+
+**The training's share is seed-dependent, and seed 1 is the lucky one.** The grip and the loops take v5 from 0 to 28
+with no training. Seed 1, v7's seed, adds 40 in 400 iterations; seeds 2 and 3 add 4-8, mostly as less damage (9 and
+5 against 18). The best checkpoint (71/96) comes from continuing seed 1's line. Seeds 2 and 3 are being continued as
+that line was (v9's settings: the learning rate at 1e-5, a promotion at most every 200 iterations, 1,200 iterations),
+to see whether they catch up.
+
+Seed 2, continued from its 20,397 checkpoint ([train](#/week/2/run/20260926T203152_train_seed2_ins_recipe_seed2_cont)):
+[59/96](#/week/2/run/20260926T214129_ins_eval_seed1_ins_eval_lateral_recipe_s2c_20800) at 20,800 (6 damaged),
+[61/96](#/week/2/run/20260926T214207_ins_eval_seed1_ins_eval_lateral_recipe_s2c_21200) at 21,200 (6 damaged), then
+[40/96](#/week/2/run/20260926T214243_ins_eval_seed1_ins_eval_lateral_recipe_s2c_21596) at 21,596. It catches up most of the way, and it peaks and
+declines as seed 1's line did.
+
+Seed 3, continued the same way ([train](#/week/2/run/20260926T214320_train_seed3_ins_recipe_seed3_cont)):
+[71/96](#/week/2/run/20260926T225255_ins_eval_seed1_ins_eval_lateral_recipe_s3c_20800) at 20,800 (2 damaged),
+**[75/96](#/week/2/run/20260926T225333_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21200) at 21,200 (1 damaged)**, then
+[48/96](#/week/2/run/20260926T225410_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21596) at 21,596. So the weakest seed at 200 iterations ends with
+the best checkpoint of the day. `model_21200` on the checks it was not chosen on:
+- detent set: [71/96](#/week/2/run/20260926T225504_ins_eval_seed1_ins_eval_detent_recipe_s3c_21200), 4 damaged;
+- PhysX, compliant key, 2 mm, 48 attempts: [43/48](#/week/2/run/20260926T225544_insertion_policy_seed2_s3c_21200_compliant_lat2_n48_s2) on seed 2's draws
+  (v10 `model_21400`: 40) and [43/48](#/week/2/run/20260926T225659_insertion_policy_seed3_s3c_21200_compliant_lat2_n48_s3) on seed 3's (36); 0 damaged,
+  no falls, peak force ~13 N, 1.5 s to seat.
+
+It is `checkpoints/unifp_go2d1_insertion_seed3_model_21200.pt`, now the policy to use.
+
+**What the three lines share:** each peaks between 0 and 800 iterations after its curriculum reaches level 1.0, then
+declines, while its training rollouts do not. Level 1 was reached at 20,614 (seed 3), 20,414 (seed 2), 21,016 (v9); v10
+started at it. Whether level 1 causes the decline, or long training would anyway, is being tested: seed 3's
+`model_20800` continued with the curriculum held at 0.8. Finding: F-122.
+
+![insertion seeds](figures/insertion_seeds.png)
+
+(`figures/insertion_seeds.py`, from the recorded runs; seed 1's continuation is v9/v10, in the checkpoints figure above.)
+
+**What the decline is not.**
+- **The curriculum's level.** Seed 3's `model_20800`, continued with the curriculum held at 0.8
+  ([train](#/week/2/run/20260926T225918_train_seed3_ins_recipe_seed3_level08)): [58/96](#/week/2/run/20260926T234518_ins_eval_seed1_ins_eval_lateral_recipe_s3l08_21200)
+  at 21,200 and [30/96](#/week/2/run/20260926T234555_ins_eval_seed1_ins_eval_lateral_recipe_s3l08_21599) at 21,599 (30 damaged), against 75 and 48
+  when it went on to level 1. Holding it lower is worse.
+- **The action noise collapsing.** Over seed 3's continuation the arm's std stayed at 0.12-0.21 and the legs' mean went
+  from 0.52 to 0.48.
+- **Along with the earlier ones:** stillness priced along the axis (v10), rewards on the loop-shifted targets (v11).
+
+**And it is noisier than a peak.** Seed 3's line at every 200 iterations:
+- 71/96 at 20,800
+- [54/96](#/week/2/run/20260926T234715_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21000) at 21,000
+- 75/96 at 21,200
+- [51/96](#/week/2/run/20260926T234752_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21400) at 21,400
+- 48/96 at 21,596
+
+The frozen score swings by up to ~20 between checkpoints 200 iterations apart, under a downward trend later on.
+`model_21200` is confirmed by the checks it was not chosen on (detent 71/96, PhysX 43/48 twice), but its 75 on the
+lateral set is partly the luck of the draw among neighbours. Evaluate every 200 iterations, and choose on both sets
+and PhysX together.
+
+**What the best checkpoint still misses: the level blade.** `model_21200` by blade and height, lateral set (seated of
+16, from low to high): level 13, 9, 6; upright 15, 16, 16 (detent set: level 12, 11, 4; upright 16, 15, 13). A roll
+error eats the clearance across the blade's thin side (the blade's 10 mm width turns into it: `insertion.blade_extent`).
+For a level blade that side is vertical, where the approach's elevation error acts (4-6° at the layer's start). For an
+upright blade the thin side is horizontal, where the azimuth error acts (1-2°). Making the layer also wait for the
+elevation and the roll to be within 2° (`--ins_engage_attitude_deg 2`) gives
+[73/96](#/week/2/run/20260926T235001_ins_eval_seed1_ins_eval_lateral_recipe_s3c_21200_att2) and [70/96](#/week/2/run/20260926T235037_ins_eval_seed1_ins_eval_detent_recipe_s3c_21200_att2),
+no better. The elevation does not get under 2° before the deadline: this policy does not answer its elevation
+command well enough. Not adopted (off by default). The next thing to try is the elevation itself, in training.
+
+**The elevation in training: the approach term's weight 2.5 → 5** (`--ins_approach_weight 5`, from seed 3's
+`model_21200`, 1,000 iterations, [train](#/week/2/run/20260926T235215_train_seed3_ins_recipe_seed3_approach5)). Frozen lateral set:
+
+| checkpoint | seated | level blade, 0.70 / 0.78 / 0.86 m | upright blade, 0.70 / 0.78 / 0.86 m | run |
+| --- | --- | --- | --- | --- |
+| 21,200 (start) | 75 | 13 / 9 / 6 | 15 / 16 / 16 | |
+| 21,400 | 72 | 16 / 13 / 12 | 14 / 12 / 5 | [run](#/week/2/run/20260927T005042_ins_eval_seed1_ins_eval_lateral_recipe_s3a5_21400) |
+| 21,600 | 64 | 15 / 11 / 2 | 11 / 11 / 14 | [run](#/week/2/run/20260927T005119_ins_eval_seed1_ins_eval_lateral_recipe_s3a5_21600) |
+| 21,800 | 59 | 2 / 14 / 16 | 13 / 12 / 2 | [run](#/week/2/run/20260927T005155_ins_eval_seed1_ins_eval_lateral_recipe_s3a5_21800) |
+| 22,000 | 7 | 0 / 0 / 4 | 2 / 0 / 1 | [run](#/week/2/run/20260927T005231_ins_eval_seed1_ins_eval_lateral_recipe_s3a5_22000) |
+| 22,199 | 21 | 0 / 8 / 8 | 0 / 3 / 2 | [run](#/week/2/run/20260927T005308_ins_eval_seed1_ins_eval_lateral_recipe_s3a5_22199) |
+
+Not adopted: it collapses by 22,000.
+
+The table shows what the checkpoint-to-checkpoint swings are. **Whole cases flip.** The level blade at 0.86 m
+goes 6 → 12 → 2 → 16 in 600 iterations. Each case's 16 frozen slots differ only in the estimate's error, so they tend
+to succeed or fail together, and the frozen set's effective sample is nearer six cases than 96 slots. PhysX draws
+heights and rolls continuously, so it averages over more poses. The final choice among the best checkpoints is
+therefore made on 96 PhysX attempts each (seed 4, draws none of them was chosen on).
+
+**The final choice** (PhysX, compliant key, 2 mm, 96 attempts, seed 4; all 0 damaged, 0 falls, peak force 11-13 N
+except the approach-weight run's 21 N):
+
+| checkpoint | PhysX seated | frozen lateral / detent | all PhysX so far | run |
+| --- | --- | --- | --- | --- |
+| v10 `model_21400` | **83/96** | 71 / 71 | 159/192 | [run](#/week/2/run/20260927T005411_insertion_policy_seed4_final_v10_21400_lat2_n96_s4) |
+| seed 3 `model_21200` | **80/96** | 75 / 71 | **166/192** | [run](#/week/2/run/20260927T010105_insertion_policy_seed4_final_s3c_21200_lat2_n96_s4) |
+| v9 `model_21000` | 77/96 | 67 / 70 | | [run](#/week/2/run/20260927T005631_insertion_policy_seed4_final_v9_21000_lat2_n96_s4) |
+| seed 2 `model_21200` | 72/96 | 61 / - | | [run](#/week/2/run/20260927T010323_insertion_policy_seed4_final_s2c_21200_lat2_n96_s4) |
+| approach 5 `model_21400` | 70/96 | 72 / - | | [run](#/week/2/run/20260927T010541_insertion_policy_seed4_final_a5_21400_lat2_n96_s4) |
+| seed 3 `model_20800` | 63/96 | 71 / - | | [run](#/week/2/run/20260927T005847_insertion_policy_seed4_final_s3c_20800_lat2_n96_s4) |
+
+The top two are within noise of each other (83 and 80 of 96; one attempt's standard error is ~4). Seed 3's
+`model_21200` has the more on everything it has been scored on (PhysX 166/192 against 159, frozen 146/192 against 142),
+and stays the policy to use; v10's `model_21400` is as good a second. The frozen set ranked seed 3's `model_20800`
+with them (71/96); PhysX puts it last (63/96).
+
+**Where the day ended.** From 0 keys seated anywhere (F-116), to **80-83 of 96 PhysX attempts at a 2 mm estimate error**,
+with no damage and no falls, and 71-75 of 96 frozen 1 mm slots in the plant. What made the difference, in order of
+size:
+1. the compliant grip;
+2. the task layer's outer loops;
+3. arm action noise low enough to learn under;
+4. a pinned learning rate on resume;
+5. choosing checkpoints by evaluation.
+
+The level blade high up is still the weakest case. What was tried and not adopted: rewards on the true targets
+(v11), the curriculum held at 0.8, waiting for the attitude before starting, and a heavier approach term. The decline
+after each run's peak is not explained. None of this is on hardware, and the grip it depends on is not built.
+
+### 2026-09-26 — The expansion dock and its rails drawn on the robot
+
+**Why.** Lukas: "Are you able to model in the jetson expansion dock and rails visually into the robot model". The
+repo's Go2 meshes have no dock, so the D1 was drawn floating 28.5 mm above the trunk's top channel.
+
+**What was done.**
+- **The meshes.** `description/dock_from_cad.py` takes the dock and rails from Unitree's CAD, the same STEP that
+  gave the mount (F-117). It tessellates with Open CASCADE (`cascadio`, in a scratch venv; the Isaac environment has
+  no STEP reader) to 0.5 mm / 0.5 rad, and registers to `base_link` with the mount's registration (now
+  `mount_from_cad.register`; its printed numbers are unchanged). It keeps the two parts that lie wholly on top of the
+  trunk in the dock's footprint:
+  - `description/meshes/go2/expansion_dock.stl`: 17,449 triangles, x −118.1 to +69.0 mm, y ±52.0, z 57.0 to 82.0.
+  - `expansion_dock_rails.stl`: 2,632 triangles, x −117.8 to +55.0, y ±35.5, z 75.5 to 85.5.
+
+  The script fails unless the rails' tops are at the mount height (85.5 mm). A small red part (6 × 60 mm) just
+  behind the trunk at x ≈ −130 mm is left out, because the CAD does not say it belongs to the dock. Provenance, with
+  **no licence stated** by Unitree: `third_party/unitree_go2_cad/NOTICE.md`.
+- **`dock.py`** holds the list of meshes and their colours (dock grey, rails aluminium; a choice, not the robot's),
+  and a binary STL reader. Everything below reads it.
+- **RViz and the cup console.** `description/go2_d1.urdf` gains a link `expansion_dock` on a fixed joint from
+  `base_link` at the origin, with two visuals and no collision or inertial.
+  - The URDF is generated again, not hand-patched. `build_go2_d1_urdf.py` now also takes Go2RemoteConnection's copy
+    of the Go2 URDF, keeping only the mesh file names. Before the dock was added, its output was byte-identical to
+    the committed file, including the mount.
+  - The cup console (`demos/cup/d1_ui`) reads the same URDF and now draws the dock.
+- **The sim.** `weld.py` draws the two meshes as `UsdGeom.Mesh` under `/Robot/base`, with per-face normals and no
+  CollisionAPI or MassAPI: 20,081 triangles, visual only, physics unchanged. It is on by default; `dock_visual=False`
+  turns it off.
+- **Isaac Gym.** `unifp_go2d1/build_asset.py` now pre-rotates every STL visual, not only the arm's (the dock's STLs are
+  z-up like the arm's). Built into a scratch directory it pre-rotates 11 (9 arm, 2 dock), and the dock joins the
+  massless fixed frames that collapse into the trunk.
+- **Rendering.** `demos/cup/run_camera_body_view.sh --look_at dock` photographs the dock. The script had been missing
+  `import sys` since it moved into `demos/cup` (5e19028), so it could not start; that is fixed.
+
+**Checks.**
+- `tests/test_dock.py` (9 tests): the rails' tops at the mount height, centred across the dog, the dock on the trunk
+  in `base_link`, the D1's rear screws over the rails, the URDF link drawn only and in the sim's colours. All 592
+  tests pass.
+- G0 checks with the dock drawn: [25 of 25](#/week/2/run/20260926T015938_267134Z_verify_seed42)
+  (`run_position_only.py verify --headless --num_envs 8`).
+- The sim render: [dock render](#/week/2/run/20260926T015512_960253Z) (`./demos/cup/run_camera_body_view.sh --look_at dock`,
+  four views, the pick scene's lying pose).
+
+![the dock in the sim, from behind and to the right](figures/expansion_dock_sim_rear_three_quarter.png)
+![the dock in the sim, from the right](figures/expansion_dock_sim_side.png)
+
+A wider view was added the same day for Lukas, a fifth `--look_at dock` view (`dock_and_arm`), in
+[a second render](#/week/2/run/20260926T040927_478152Z):
+
+![the whole arm on the dock in the sim](figures/expansion_dock_sim_dock_and_arm.png)
+
+**What the renders show.**
+- The dock sits in the trunk's top channel, with its ports facing back.
+- The two T-slot rails run along its top, their fastening screws at x = −84.5 and +46.5 mm.
+- The D1's base stands on the rails, with no gap and no overlap.
+- Seen from above, the D1's front screws (x = +56.5 mm) land just past the rails' front end. The rails' tops end at
+  +53.0 mm and their flange at +55.0, which is F-117's open question, now visible.
+
+**What it does not do.**
+- **The dock is not a collider.** The trunk's collision box ends at z = 57 mm, where the dock begins, so in the sim
+  (and Isaac Gym) the arm can pass through the dock and rails.
+- **It is not validated against the robot.** The CAD is Unitree's "simplified" model, the colours are not the
+  robot's, and nothing has been measured on the robot.
+
+### 2026-09-26 — How sensitive the policy is to the mount: the whole shift ends up at the tool tip
+
+**Why.** Lukas: "How sensitive is the policy to changes in thr mount position". Every policy so far was trained with the
+arm welded at the legacy `(0, 0, 0.08)` m; the measured mount (F-117, applied today) is 2.5 mm further forward and 5.5 mm higher.
+
+**What was added.** `run_unifp_train.py --mount_pos X Y Z` welds the arm somewhere other than `mount.ARM_MOUNT_POS_M`
+and records it in `run.json` as `mount_pos_m`. Nothing else changes: the goal sphere stays where the task puts it
+relative to the base, and so does the policy.
+
+```bash
+./run_unifp_train.py eval --headless --tool_point fingertip --manifest results/manifests/unifp_isaaclab_validation.json \
+    --checkpoint checkpoints/unifp_go2d1_isaaclab_model_56000.pt --mount_pos X Y Z --run_name mount_<name>
+./run_unifp_train.py mech_eval --task mechanism --force_law --force_law_bleed 1.0 --mech_test --headless \
+    --tool_point jaw_centre --checkpoint checkpoints/unifp_go2d1_mech_law_model_17499.pt --mount_pos X Y Z --run_name mech_mount_<name>
+```
+
+**Reaching (UniFP `model_56000`, the frozen 50-episode manifest, fingertip tool point).** Settled tool-tip error
+(`goal_tracking_quiet_m`), median / 90th percentile, cm; shifts are relative to the mount it was trained at:
+
+| mount shift | median | p90 | unified median | falls | run |
+| --- | --- | --- | --- | --- | --- |
+| none (legacy, trained) | 1.51 | 2.17 | 2.16 | 0 | [legacy](#/week/2/run/20260926T011712_eval_seed1_mount_legacy) |
+| **the measured mount** (+2.5 mm x, +5.5 mm z) | **1.89** | **2.72** | 2.34 | 0 | [new](#/week/2/run/20260926T011815_eval_seed1_mount_new) |
+| x −5 / −3 / −1.5 cm | 5.54 / 3.47 / 2.17 | 6.12 / 3.97 / 2.70 | 5.87 / 3.90 / 2.70 | 0 | [−5](#/week/2/run/20260926T011838_eval_seed1_mount_x-0.05), [−3](#/week/2/run/20260926T011902_eval_seed1_mount_x-0.03), [−1.5](#/week/2/run/20260926T011926_eval_seed1_mount_x-0.015) |
+| x +1.5 / +3 / +5 cm | 2.39 / 3.78 / 5.99 | 3.05 / 4.68 / 6.88 | 2.67 / 4.01 / 6.15 | 0 | [+1.5](#/week/2/run/20260926T011950_eval_seed1_mount_x0.015), [+3](#/week/2/run/20260926T012014_eval_seed1_mount_x0.03), [+5](#/week/2/run/20260926T012038_eval_seed1_mount_x0.05) |
+| z −4 / −2 / −1 cm | 3.73 / 2.04 / 1.48 | 4.23 / 2.56 / 2.02 | 4.06 / 2.46 / 2.10 | 0 | [−4](#/week/2/run/20260926T012103_eval_seed1_mount_z0.04), [−2](#/week/2/run/20260926T012127_eval_seed1_mount_z0.06), [−1](#/week/2/run/20260926T012152_eval_seed1_mount_z0.07) |
+| z +1 / +2 / +4 cm | 2.19 / 3.02 / 4.86 | 2.82 / 3.58 / 5.41 | 2.64 / 3.31 / 5.05 | 0 | [+1](#/week/2/run/20260926T012216_eval_seed1_mount_z0.09), [+2](#/week/2/run/20260926T012240_eval_seed1_mount_z0.10), [+4](#/week/2/run/20260926T012304_eval_seed1_mount_z0.12) |
+| y −2 / +2 cm | 2.93 / 2.68 | 3.50 / 3.47 | 3.25 / 3.23 | 0 | [−2](#/week/2/run/20260926T012328_eval_seed1_mount_y-0.02), [+2](#/week/2/run/20260926T012352_eval_seed1_mount_y0.02) |
+
+![mount sensitivity](figures/mount_sensitivity.png)
+
+(`figures/mount_sensitivity.py`, from the recorded runs.)
+
+- **None of the shift is corrected.** Every measured point lies on or above the dashed curve, which is the policy's own
+  1.51 cm miss with the whole shift added at right angles to it. Beyond about 2 cm the median grows 0.85–1.1 cm per cm of
+  shift (fore-aft: 3.5 → 5.5 cm and 3.8 → 6.0 cm from 3 to 5 cm; up: 3.0 → 4.9 cm from 2 to 4 cm; down: 2.0 → 3.7 cm).
+  Close to the trained mount the shift adds roughly in quadrature, so the first centimetre costs less
+  (±1.5 cm fore-aft: +0.7 and +0.9 cm on the median).
+- **Why: the actor never sees its tool tip.** `unifp_isaaclab.interface.single_obs`, the policy's observation, is body
+  roll and pitch, angular velocity, joint positions and velocities, the previous action, the gait phase and the commands.
+  The measured tip (`ee_pos_w`) goes only to the critic's privileged observation (`unifp_train/env.py`
+  `_get_observations`). The goal is given in the base frame, so the policy turns goal into joint angles through the arm
+  geometry it was trained on. Moving the arm's base moves the tip by the same amount, and nothing in the observation says so.
+  I designed the sweep assuming the actor was closed-loop on its tip; it is not.
+- **Up and down are not symmetric.** One centimetre lower is as good as the trained mount (1.48 against 1.51 cm) and one
+  centimetre higher is worse (2.19). At the trained mount the policy's settled tip is on average a few millimetres above
+  its goal. That fits F-093's under-reach at low goals. Fitting a quadrature model to the ±4 cm points puts it about 6 mm
+  high, and the ±5 cm fore-aft points put it about 3 mm ahead. These are inferences from medians, not measured
+  per-episode vectors, which `eval_episodes.json` does not keep.
+- **This is why the measured mount costs more than its size.** It moves the arm up and forward, the same way as the
+  policy's existing miss, so a 6.0 mm shift costs 3.8 mm on the median (1.51 → 1.89 cm) and 5.5 mm on the p90 (2.17 → 2.72 cm).
+- **Standing is unaffected**: no falls anywhere, base height 0.319–0.324 m throughout.
+
+**The mechanism policy** (`model_17499` with the task layer's force law, the held-out `--mech_test` set, 512 episodes,
+jaw-centre tool point) barely moves:
+
+| mount | button | door | drawer | latch | capacity | median open time | run |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| legacy | 119/128 | 128/128 | 128/128 | 128/128 | 80 N each | 0.98 s | [legacy](#/week/2/run/20260926T012416_mech_eval_seed1_mech_mount_legacy) |
+| measured | 120/128 | 128 | 128 | 128 | 80 N | 1.00 s | [new](#/week/2/run/20260926T012443_mech_eval_seed1_mech_mount_new) |
+| z +2 cm | 119/128 | 128 | 128 | 128 | 80 N | 0.96 s | [z +2](#/week/2/run/20260926T012510_mech_eval_seed1_mech_mount_z0.10) |
+| x −3 cm | 114/128 | 128 | 128 | 128 | 80 N | 1.00 s (button 1.17 s, against 0.88) | [x −3](#/week/2/run/20260926T012536_mech_eval_seed1_mech_mount_x-0.03) |
+
+This does not show the policy is robust to the mount. The task grasps the handle wherever the tool point settles
+(`mech_env._engage_due`: `self._mech.grasp(ids, point, ...)`), and from then on the goal moves along the path from that
+point, so the reach error a mount shift causes never enters the test (F-115). All the test can see is the work
+happening somewhere else in the workspace. The button, a press that has to stay on its face, is the only kind that
+noticed, at −3 cm fore-aft.
+
+**What this shows.** In simulation, `model_56000` is 3.8 mm worse on the median at the measured mount than at the mount it
+was trained on. For shifts beyond about 2 cm, the tip is off by about 1 cm for every centimetre the arm is mounted off
+from where the policy was trained.
+
+**What it does not show.**
+- Hardware.
+- Rotations of the mount: the D1 is assumed square to the dog. A 1° yaw at 0.5 m of reach is about 9 mm.
+- A policy trained at the new mount.
+- Whether the robot's mount matches the CAD (F-117's 3.5 mm rail end).
+- The combiner and insertion demos at the new mount (not rerun).
+
+On the robot the tip is known only through the same kinematics, so a wrong mount is invisible to the robot as well. A
+goal measured by the wrist camera and taken into the base frame through those kinematics would carry the same offset
+and cancel it (for a pure translation). A goal from a body-mounted camera, or from a map, would not. That is
+reasoning, not tested. Finding: F-118.
+
+### 2026-09-26 — Where the D1 sits on the Go2 EDU: the mount, measured off Unitree's CAD
+
+**Why.** Lukas: the D1 is mounted "on top of the jetson expansion dock of the edu go2 ... vertically on top of these rails
+and has each of its 4 screws exactly 1cm forwards from each 4 of the screws fastening the rail to the dog"; the sim's
+weld, `(0, 0, 0.08)` m (`weld.py`, `flat_env_cfg.ARM_MOUNT_Z`, `description/build_go2_d1_urdf.py`), was carried over
+from Rescue as a guess.
+
+**Sources.** The Go2 meshes in the repo (`description/meshes/go2/base.dae`) have no dock or rails. Unitree's own CAD,
+"GO2 simplified, with expansion dock" (a STEP file dated 2023-09-11, linked from the MYBOTSHOP forum, downloaded from
+`oss-global-cdn.unitree.com`; not committed) does. `description/mount_from_cad.py <stp>` reproduces everything below
+from it and `d1_arm/meshes/base_link.STL`, with regular expressions on the STEP text (no CAD kernel).
+
+- **Registration.** The CAD's thigh-motor axes (lateral) are 385.8 mm apart (URDF 386.8) at one height, its hip-roll
+  axes (fore-aft) at ±46.5 mm (URDF ±46.5): `base_link` is the thighs' midpoint at their height. Forward is the side the
+  body reaches 327 mm from it (the head); the URDF's trunk mesh reaches 332 mm forward and 128 mm back, the CAD 327
+  and 132.
+- **The dock's rails**, in `base_link`: two T-slot rails centred at y = ±29.0 mm, from x = −115.8 to +53.0 mm, their
+  tops at **z = 85.5 mm**. Each is fastened by two M3 screws (vertical holes of radius 1.7 mm on the centreline) at
+  **x = −84.5 and +46.5 mm**: four screws, 131 mm apart fore-aft, 58 mm across.
+- **The D1's base**: four M4 holes (radius 2.25 mm) at **(±54, ±29) mm** in its base frame, whose origin is the middle
+  of its bottom face: 108 mm along its x, 58 mm across. Across, it matches the rails exactly (the D1 bolts into their
+  T-slots, its x fore-aft).
+
+**The mount.** Fore-aft the D1's holes are 108 mm apart and the rail screws 131 mm, so only one pair of D1 screws can
+be 1 cm ahead of its rail screws. With the front pair, the D1's front screws would be at x = +56.5 mm, past the rails'
+front end (+53.0): no T-nut goes there. With the rear pair: the D1's rear screws at −74.5 mm, its front screws at
++33.5 mm (13 mm behind the front rail screws), its origin at **(−0.0205, 0, 0.0855) m** from `base_link` -- 2.05 cm
+further back and 5.5 mm higher than the weld's `(0, 0, 0.08)`. Not yet applied to the sim; Lukas to confirm which
+pair of screws his "1 cm" is (a tape measure between the D1's front and rear screws should read 108 mm). Finding: F-117.
+
+**Applied, the front pair** (Lukas: "Let's put it 1cm in front of the front screws"): the D1's front screws 1 cm ahead of
+the rails' front screws, its origin at **(0.0025, 0, 0.0855) m**. In the CAD the rails end at +53.0 mm, 3.5 mm short of
+where those front screws land (+56.5 mm), which is to be checked on the robot. One constant now carries it, `mount.py`
+`ARM_MOUNT_POS_M` (with `LEGACY_ARM_MOUNT_POS_M` = (0, 0, 0.08) naming what came before): `weld.py`'s default, which
+every launcher now takes (the nine hard-coded `(0.0, 0.0, 0.08)` removed), `flat_env_cfg.ARM_MOUNT_Z`, `sim.py`,
+`position_only.workspace.MOUNT_B` (IK and the cup pick), `unifp_train/pose_feasibility.py`, and
+`description/build_go2_d1_urdf.py`; `description/go2_d1.urdf`'s `arm_mount_joint` was patched to it by hand (P2Dingo,
+the builder's other source, is not on this machine). `results/week_02/figures/arm_chatter_probe.py` keeps the legacy
+mount on purpose, to reproduce what it recorded. Three tests pinned absolute positions measured at the old mount; they
+now add the mount's shift. 583 tests pass; the G0 checks [pass, 25 of 25](#/week/2/run/20260926T011051_054410Z_verify_seed42)
+(`run_position_only.py verify --headless --num_envs 8`), including Link6 and the tool point against URDF kinematics.
+What it does not change: every policy trained so far (UniFP, mechanism, lever, insertion) was trained on the legacy
+mount, 2.5 mm further back and 5.5 mm lower, and the goal sphere (a task definition) is left where it was.
+
+### 2026-09-26 — Force-aware insertion of a handle into a key slot: a new demo, and five training runs that did not learn it
+
+**Why.** Lukas: "Combiner boxes often don't have handles. Can we train a force aware insertion of a handle into its
+corresponding key slot on the door?" -- "Organise this as a new demo called insertion". He was away for ten hours.
+
+**What was built.**
+
+- `unifp_train/insertion.py`: the slot as a model (a 10 × 3 mm key blade rigid in the hand, its tip 70 mm beyond the
+  jaw centre; a channel 0.6–1.5 mm wider each side, a 45° chamfer, a detent, a seat, a panel face; penalty contacts with
+  friction, the force acting at the key's tip) and the **task layer**: goal to the estimated mouth, a PI force law along
+  the estimated axis capped low while the key is on the face, a spiral search when it stalls there, the full cap once
+  in, the goal yielding across the axis once the key has touched. 14 CPU tests (`tests/test_insertion.py`), including
+  the layer finding slots 5.5 mm off in a kinematic loop.
+- **An approach objective** (`rewards.tracking_ee_orn_approach`, `task_cfg.APPROACH_WEIGHTS`): the approach's elevation
+  in `CMD_EE_ORN_Y`, a channel UniFP declares and never writes (1 + elevation on, 0 off), the azimuth the goal's bearing.
+  On only in insertion episodes: an arm-only IK check (`d1_ik`) first showed a level straight-ahead approach is reachable
+  with the jaw centre 0.65–0.95 m up and 0.30–0.50 m ahead, not below ~0.6 m.
+- The training task (`insert_env.py`, `insert_cfg.py`, `insert_rewards.py`; `run_unifp_train.py --task insertion`), a
+  curriculum on the estimate's error (to 5 mm, 3°, 5° roll) and the detent (to 25 N), and a frozen evaluation
+  (`insert_eval.py`, `ins_eval --ins_set lateral|detent`: 96 fixed slots each), fixed before any policy was scored.
+- **The demo**, `demos/insertion/`: the same environment with a PhysX door and lock (`asset.py`: box and convex
+  colliders, 1 mm contact offsets) and the key as a collider on `Link6` (`key.py`), placed per attempt at the true pose
+  the estimate misses by `--lateral_mm`, `--tilt_deg`, `--roll_error_deg`; `run_demo.py`; 5 CPU tests.
+
+**Baselines, the untrained mechanism policy `model_17499`.** In the training plant
+([play](#/week/2/run/20260925T160033_play_seed1_ins_play_17499), 64 environments): the key entered in 0 of 40,359 engaged
+environment-steps, the approach 12° off, contact up to 117 N. In PhysX
+([4 attempts](#/week/2/run/20260925T160825_insertion_policy_seed1_untrained_17499)): 0 seated, the tip 8–32 mm off the slot
+where the task layer started, approach 10–12° off. Zero actions: [smoke](#/week/2/run/20260925T155907_smoke_seed1_ins_smoke_zero),
+[PhysX](#/week/2/run/20260925T160719_insertion_zero_seed1_first_zero). (One run titled as driven by `model_17499` was zero actions --
+smoke mode ignores `--checkpoint`; [recorded as such](#/week/2/run/20260925T155942_smoke_seed1_ins_smoke_17499).)
+
+**Five training runs, from `model_17499`, 4,096 environments.** Each failure was found by tracing one environment
+under `play --ins_debug`; each fix is in the code with its reason.
+
+| run | what went wrong | fix |
+| --- | --- | --- |
+| [v1](#/week/2/run/20260925T160135_train_seed1_ins_v1) (stopped ~17,670) | the task layer capped the reference 4 mm ahead of the tip, and along the axis the goal *is* the tip: a hand that hovered short of the door was never behind. Early 117 N rams were priced; it learned to hover. No contact in any episode | the reference runs to the seat regardless; the integral is bounded on the face and cleared (the reference brought back) the moment the key goes in |
+| [v2](#/week/2/run/20260925T161215_train_seed1_ins_v2) (~17,620) | the door face was an infinite plane: a hand past it when the slot was placed got k × depth -- thousands of newtons. Collapsed within 100 iterations: approach 125° off, the hand 22 cm from its goal ([trace](#/week/2/run/20260925T161956_play_seed1_ins_debug_17600)) | the face is a 30 cm panel, 1–1.5 cm thick; past it is damage, and every penalty force is capped; the layer starts only once the tip is within 3 cm of its pre-insertion pose, else the episode is a free reach |
+| [v3](#/week/2/run/20260925T162305_train_seed1_ins_v3) (~17,620) | every episode missed the pre-insertion pose: the approach fine (6°), the hand 8–22 cm off ([trace](#/week/2/run/20260925T162813_play_seed1_ins_v3_17600)). UniFP's position term is exp(−2 × error), 82% at 10 cm; the approach term is sharp, so position was traded for it | `ins_reach`: the jaw centre's precision, 1 cm and 4 cm exponentials, weight 4; the approach weight 2 → 1.5 |
+| [v4](#/week/2/run/20260925T163033_train_seed1_ins_v4) (~17,680) | keys pushed into an 8,000 N/m face sank 3 mm in, which the layer read as "in"; it raised its cap and drove them through the door (every started episode damaged, 122 N) | face 16,000 N/m, "in" at 4 mm, damage at 150 N and priced −500 |
+| [v5](#/week/2/run/20260925T164048_train_seed1_ins_v5) (2,500 iterations, 2.0 h) | trained to the end; see below | -- |
+
+v5, training-time logs (sampled at resets, not the frozen evaluation; [figure](figures/insertion_training.png),
+`insertion_training.py`): of insertion episodes, 90% missed the pre-insertion pose from start to end; of the rest, 0
+seated (one blip near 19,750), damage fell from over half to ~10% and peak contact from ~190 N to ~50 N; the jaw
+centre's precision reward rose 0.01 → ~0.4 and the approach's 0.02 → ~0.11. The curriculum never left its first
+level. So it learned not to ram, and to arrive closer -- not close enough, and not to push.
+
+**v5 in PhysX** (`model_19998`, 16 attempts each, blade level or upright at random): estimate 0 mm off
+[0/16](#/week/2/run/20260925T184512_insertion_policy_seed1_v5_lat0) (the layer started in 3), 2 mm
+[0/16](#/week/2/run/20260925T184540_insertion_policy_seed1_v5_lat2) (4), 4 mm [0/16](#/week/2/run/20260925T184608_insertion_policy_seed1_v5_lat4) (3);
+where it started, the tip stayed 7–23 mm short of the door with no contact force at all; approach 7–10°, roll 3.5–5.6°
+off. The untrained policy under the same gate ([2 mm](#/week/2/run/20260925T184637_insertion_policy_seed1_u17499_lat2)): the layer
+started in 3, all 3 searched, all 3 rammed the door hard enough to count as damage; 0 seated.
+
+The first frozen evaluations crashed (the launcher overwrote the plan's environment count with `--num_envs`, 16 for 96
+slots; fixed) and wrote no `run.json`: `logs/unifp_train/20260925T184350_*_lateral_v5`, `*184416_*_detent_v5`,
+`*184441_*_lateral_17499`.
+
+**The frozen evaluation** (training plant, 96 fixed slots each, `ins_eval`): v5 `model_19998` seated
+[0 of 96](#/week/2/run/20260925T184708_ins_eval_seed1_ins_eval_lateral_v5b) across the lateral-error set -- the layer started in 17,
+the key entered the mouth in 9, searched in 4, 6 damaged; the approach 9.5° off when the layer started, where the
+channel admits about 9°, so the keys that got in jammed -- and [0 of 96](#/week/2/run/20260925T184734_ins_eval_seed1_ins_eval_detent_v5b)
+across the detent set (12 started, 7 entered, 4 damaged). The untrained `model_17499`:
+[0 of 96](#/week/2/run/20260925T184800_ins_eval_seed1_ins_eval_lateral_17499b) (33 started, 5 entered, 26 searched, 12 damaged, 3 falls,
+approach 10.6° off).
+
+**A task-layer correction, tried last** (`run_demo.py --tip_correction 1.5`: the jaw goal placed so the key's *tip*
+lands on its goal given the hand's measured approach, plus an integral of the tip's remaining miss while it holds the
+pre-insertion pose, frozen once the layer starts). In PhysX, estimate 2 mm off: v5
+[0/16](#/week/2/run/20260925T184831_insertion_policy_seed1_v5_lat2_tipcorr) (the layer started in 6, searched in 5; was 4 and 1), the
+untrained policy [0/16](#/week/2/run/20260925T184900_insertion_policy_seed1_u17499_lat2_tipcorr) (started and searched in 10, contact
+13 N; was 3 and 3). It brings the key to the door; it does not get it in.
+
+**Why it did not learn it, as far as the traces say.** The key's tip is 70 mm beyond the jaw centre, so the 10–12° of
+approach error this policy starts with puts the tip 1.2–1.5 cm off before any position error; the slot admits 1 mm
+of clearance and about 9° of tilt, and the spiral covers 6 mm. The policy was built for centimetre reaching, and its
+own position reward cannot see the difference between 1.5 and 10 cm. The training asked it for millimetres and a few
+degrees from the first episode, so almost none of its episodes ever reached the part of the task that pays -- the
+curriculum had nothing to promote on. Four of the five runs also found a flaw in the plant or the layer first; the
+fifth ran on a plant that the unit tests and the traces now say is sound.
+
+**What next, if this is pursued.** Start where the policy can succeed and tighten: a curriculum on the pre-insertion
+precision (the layer starting at 5 cm and closing to 1 cm), and on the slot (wide clearance and chamfer first, 1 mm
+last), so episodes reach the part that pays; keep the tip correction in the loop in training as well as the demo; a
+compliant grip or wrist (remote-centre compliance) that lets a tilted key align, which is how insertion is usually
+made to work; and a much longer run. The demo, the plant, the layer and the frozen evaluation are ready for it.
+Finding: F-116.
+
+### 2026-09-25 — Training the mechanism policy on levers: the combiner's handle added to what it learns from
+
+**Why.** Lukas: "Can the current mech pulling policy be improved" and then "Yes, can we make these changes and train it".
+The combiner demo's weak link is turning the lever down (F-110, F-113), and the training never drew one: its hinges are
+15–45 cm doors and lids with a vertical axis or a level one across the opening, and a push goes down onto a top face in
+about 7.5% of mechanisms (`mech_cfg.OPENING_PROBS`, `PUSH_DOWN_PROB`). The D1's arm alone holds a median 9.4 N downward
+and at most 32.6 N in its best posture ([capacity](figures/direction_capacity.json)), so there is room, but not
+unlimited room.
+
+**The change** (`unifp_train/mechanism.py` `lever_axes`, `lever_opening`; `mech_cfg.LEVER_*`; `mech_env._draw`;
+`run_unifp_train.py --lever_fraction`, default 0 so every earlier command draws what it drew): a fraction of mechanisms
+become short levers. Each is a hinge 5–12 cm from the grasp, turned 40–75°, starting straight down (±20° for a lever
+resting raised or partly turned), about a level spindle pointing at the robot. The spindle is turned up to ±45° about
+the vertical for where the robot stands, on either side. Positive is the spindle's side, where the late turn draws the
+handle toward the robot, as at the combiner's latch side. Levers draw their peak force from 3–35 N (half in the top
+30%) instead of under the curriculum's ceiling, and never count at its frontier: a lever at 80 N is one nothing turns.
+5 CPU tests (`tests/test_mechanism.py` `LeverTest`). With 30% levers, about a third of mechanisms now start by
+moving down, against ~7.5% before.
+
+**A lever test, fixed before training** (`mech_cfg.EVAL_KINDS` `lever`, `lever_spindle_side`, `lever_tip_side`;
+levels `LEVER_EVAL_LEVELS_N` 5–40 N; the 15 development placements). The combiner's handle: grasped 8 cm out, turned
+down 60° against a preloaded return spring, square and with the robot 30° to the spindle's side and to the tip's side.
+
+- [Interface smoke](#/week/2/run/20260925T084901_smoke_seed1_lever_smoke) (`smoke --lever_fraction 1.0`, 64 envs, 400 steps,
+  zero actions): shapes and frames consistent, 13,481 held environment-steps, nothing torn.
+- The first scoring of the current policy crashed on its first grasp (the lever spec had no `hinge_side`; fixed with
+  `spec.get`). It wrote no `run.json`, so it is not on the dashboard: `logs/unifp_train/20260925T084954_mech_eval_seed1_mech_lever_17499`.
+- **The current policy** ([`model_17499`](#/week/2/run/20260925T085018_mech_eval_seed1_mech_lever_17499), law with the 1 s bleed as the
+  demo runs it), opened of 120 (capacity): square 32 (10 N), spindle side 26 (5 N), tip side 86 (20 N). The median
+  largest drive stalls at 16–18 N square and 13–15 N from the spindle side, but reaches 30 N from the tip side. The
+  stance that helps depends on height: from the tip side, handles at 0.2–0.4 m open to 30–40 N and those at 0.6 m to
+  15–20 N; at 0.6 m, the placement closest to the demo's 0.68 m, both side stances beat square (15 N against 5–10 N),
+  as they did in the demo (F-113). The demo found the spindle side best of the two and this test does not; the demo's
+  claw (a spring from the jaw centre plus the fingers on the bar), 95 mm hook and single high placement are the
+  differences.
+
+**Training** (the final checkpoint, named before any result: the last one the run writes):
+
+```bash
+./run_unifp_train.py train --task mechanism --force_law --lever_fraction 0.3 --num_envs 4096 --iterations 1500 --headless \
+    --peak_ceiling 80 --tool_point jaw_centre --resume_from checkpoints/unifp_go2d1_mech_law_model_17499.pt --run_name mech_law_lever
+```
+
+The run: [training](#/week/2/run/20260925T085153_train_seed1_mech_law_lever), 1,500 iterations (17,499 → 18,998), 2.8 s each,
+70 minutes; the ceiling stayed at 80 N. Training-time `Metrics` (sampled at reset, lenient: "opened" is 80% of a first
+target that is itself 60–100% of the travel; not the frozen evaluation), first 100 iterations → last 100: levers opened
+0.51 → 0.99, levers at 24.5–35 N 0.38 → 0.98, pulls 0.91 → 0.97, pushes 0.66 → 0.94, the curriculum's frontier 0.70 →
+0.89, torn under 1.5% throughout.
+
+**The frozen evaluations of `model_18998`**, the checkpoint named above (law with the 1 s bleed, as the demo runs it):
+
+| test | `model_17499` | `model_18998` |
+| --- | --- | --- |
+| lever, square, opened of 120 (capacity) | [32 (10 N)](#/week/2/run/20260925T085018_mech_eval_seed1_mech_lever_17499) | [**118 (40 N)**](#/week/2/run/20260925T100416_mech_eval_seed1_mech_lever_18998) |
+| lever, spindle side | 26 (5 N) | **99 (10 N)**; 10–12 of 15 at every level from 15 to 40 N |
+| lever, tip side | 86 (20 N) | **120 (40 N)** |
+| held-out test set, drawer / latch / door / button of 128 | [128 / 128 / 128 / 119](#/week/2/run/20260924T172551_mech_eval_seed1_mech_test_law_v1_17499_bleed) | [128 / 128 / 128 / **126**](#/week/2/run/20260925T100443_mech_eval_seed1_mech_test_law_lever_18998_bleed) |
+
+40 N is the top level tested, so it is a floor on the lever capacity, not the capacity. The held-out set has no
+regression (510 of 512 against 503); 80 N capacity on all four kinds, no falls, no tears. On the lever tests one fall
+(square) and one tear (tip side) in 360.
+
+How it turns a 40 N lever: it pitches 10–12° nose-down (the old policy −1 to +1.5°) and drives a median 46–48 N at the
+peak (the old one stalled at 15–25 N): it leans its weight onto the lever. The arm's motors are saturated either way
+(p95 load 1.0). The cost is the lunge when a heavy lever breaks free: the handle's peak
+speed at 40 N is 1.0–1.4 m/s (the old policy, which never broke them free, 0.15). At 20 N it is 0.2–0.6 m/s. The same
+kind of lunge F-108 recorded for latches and buttons, and the same thing a force limit in the task layer would have to
+bound (F-109).
+
+**The combiner demo with `model_18998`: worse, and not for want of force.** The same sweep as the stance entry below,
+`--checkpoint .../model_18998.pt`, run names `lvr_st<stance>_lev<T>_<claw>` (the old policy's runs are that entry's;
+[figure](figures/combiner_lever_policy.png), `mech_lever_training.py`). Opened of 16, old → new:
+
+| claw | lever | −30° | square | +15° | +30° |
+| --- | --- | --- | --- | --- | --- |
+| spring | 0.4 N·m | 16 → [13](#/week/2/run/20260925T100559_combiner_mech_law_spring_seed1_lvr_stm30_lev0.4_spring) | 16 → [7](#/week/2/run/20260925T100707_combiner_mech_law_spring_seed1_lvr_stp0_lev0.4_spring) | – → [2](#/week/2/run/20260925T100814_combiner_mech_law_spring_seed1_lvr_stp15_lev0.4_spring) | 15 → [2](#/week/2/run/20260925T100920_combiner_mech_law_spring_seed1_lvr_stp30_lev0.4_spring) |
+| spring | 0.8 N·m | 15 → [8](#/week/2/run/20260925T101027_combiner_mech_law_spring_seed1_lvr_stm30_lev0.8_spring) | 6 → [5](#/week/2/run/20260925T101133_combiner_mech_law_spring_seed1_lvr_stp0_lev0.8_spring) | – → [1](#/week/2/run/20260925T101241_combiner_mech_law_spring_seed1_lvr_stp15_lev0.8_spring) | 15 → [0](#/week/2/run/20260925T101347_combiner_mech_law_spring_seed1_lvr_stp30_lev0.8_spring) |
+| spring | 1.2 N·m | 8 → [3](#/week/2/run/20260925T101452_combiner_mech_law_spring_seed1_lvr_stm30_lev1.2_spring) | 0 → [4](#/week/2/run/20260925T101559_combiner_mech_law_spring_seed1_lvr_stp0_lev1.2_spring) | 4 → [0](#/week/2/run/20260925T101705_combiner_mech_law_spring_seed1_lvr_stp15_lev1.2_spring) | 14 → [1](#/week/2/run/20260925T101811_combiner_mech_law_spring_seed1_lvr_stp30_lev1.2_spring) |
+| spring | 1.6 N·m | 1 → [3](#/week/2/run/20260925T101917_combiner_mech_law_spring_seed1_lvr_stm30_lev1.6_spring) | 0 → [1](#/week/2/run/20260925T102022_combiner_mech_law_spring_seed1_lvr_stp0_lev1.6_spring) | 2 → [1](#/week/2/run/20260925T102128_combiner_mech_law_spring_seed1_lvr_stp15_lev1.6_spring) | 5 → [0](#/week/2/run/20260925T102236_combiner_mech_law_spring_seed1_lvr_stp30_lev1.6_spring) |
+| spring | 2.4 N·m | – → [0](#/week/2/run/20260925T102343_combiner_mech_law_spring_seed1_lvr_stm30_lev2.4_spring) | – → [0](#/week/2/run/20260925T102450_combiner_mech_law_spring_seed1_lvr_stp0_lev2.4_spring) | – → [0](#/week/2/run/20260925T102556_combiner_mech_law_spring_seed1_lvr_stp15_lev2.4_spring) | – → [0](#/week/2/run/20260925T102702_combiner_mech_law_spring_seed1_lvr_stp30_lev2.4_spring) |
+| lips | 0.4 N·m | 15 → [0](#/week/2/run/20260925T102808_combiner_mech_law_seed1_lvr_stm30_lev0.4_lips) | 16 → [8](#/week/2/run/20260925T102908_combiner_mech_law_seed1_lvr_stp0_lev0.4_lips) | – → [5](#/week/2/run/20260925T103009_combiner_mech_law_seed1_lvr_stp15_lev0.4_lips) | 12 → [0](#/week/2/run/20260925T103110_combiner_mech_law_seed1_lvr_stp30_lev0.4_lips) |
+| lips | 0.8 N·m | 11 → [0](#/week/2/run/20260925T103210_combiner_mech_law_seed1_lvr_stm30_lev0.8_lips) | 10 → [0](#/week/2/run/20260925T103309_combiner_mech_law_seed1_lvr_stp0_lev0.8_lips) | 15 → [0](#/week/2/run/20260925T103411_combiner_mech_law_seed1_lvr_stp15_lev0.8_lips) | 10 → [0](#/week/2/run/20260925T103512_combiner_mech_law_seed1_lvr_stp30_lev0.8_lips) |
+| lips | 1.2 N·m | 2 → [0](#/week/2/run/20260925T103613_combiner_mech_law_seed1_lvr_stm30_lev1.2_lips) | 2 → [0](#/week/2/run/20260925T103713_combiner_mech_law_seed1_lvr_stp0_lev1.2_lips) | 13 → [0](#/week/2/run/20260925T103813_combiner_mech_law_seed1_lvr_stp15_lev1.2_lips) | 10 → [0](#/week/2/run/20260925T103914_combiner_mech_law_seed1_lvr_stp30_lev1.2_lips) |
+| lips | 1.6 N·m | 0 → [0](#/week/2/run/20260925T104016_combiner_mech_law_seed1_lvr_stm30_lev1.6_lips) | 0 → [0](#/week/2/run/20260925T104116_combiner_mech_law_seed1_lvr_stp0_lev1.6_lips) | 3 → [0](#/week/2/run/20260925T104218_combiner_mech_law_seed1_lvr_stp15_lev1.6_lips) | 2 → [0](#/week/2/run/20260925T104319_combiner_mech_law_seed1_lvr_stp30_lev1.6_lips) |
+| lips | 2.4 N·m | – → [0](#/week/2/run/20260925T104421_combiner_mech_law_seed1_lvr_stm30_lev2.4_lips) | – → [0](#/week/2/run/20260925T104521_combiner_mech_law_seed1_lvr_stp0_lev2.4_lips) | – → [0](#/week/2/run/20260925T104623_combiner_mech_law_seed1_lvr_stp15_lev2.4_lips) | – → [0](#/week/2/run/20260925T104725_combiner_mech_law_seed1_lvr_stp30_lev2.4_lips) |
+
+Stiff doors, lip claw, lever 0.4 N·m, opened of 16, old → new: 
+
+| door closer | −30° | square |
+| --- | --- | --- |
+| 12 N·m | 15 → [0](#/week/2/run/20260925T104825_combiner_mech_law_seed1_lvr_stm30_door12_lips) | 16 → [0](#/week/2/run/20260925T104925_combiner_mech_law_seed1_lvr_stp0_door12_lips) |
+| 16 N·m | 15 → [0](#/week/2/run/20260925T105027_combiner_mech_law_seed1_lvr_stm30_door16_lips) | 16 → [0](#/week/2/run/20260925T105127_combiner_mech_law_seed1_lvr_stp0_door16_lips) |
+
+The failures come before any force is needed. With the lip claw the new policy hooks the lever in 0–1 of 16 at most
+settings (the old one 15–16). Its jaw centre arrives a median 36–42 mm off (the old one 2–5 mm, both with the goal
+correction), and at the lightest lever square-on with the spring claw the misses are bimodal: 6–14 mm or 36–39 mm, in
+the same placements at every lever torque. It is not the correction: at the standoff the miss is 2–3 mm. The hand then
+lags and drifts across its approach while the goal moves in (6–11 mm across during `enter`), the bar meets a lip tip
+(the fully open lip claw tolerates ~10 mm across), and the hand stops 31–38 mm short, the fingers in contact. What
+changed is the posture it reaches in: pitched ~7° nose-up with the base ~9 cm back through the settle, where the old
+policy stood level (pitch +0.6 to +1.7°). It sets itself for a pull before it has anything to pull. Where the spring
+claw does hook, the lever sometimes does not turn: in one square attempt the claw is loaded to 55–72 N and the law is at
+its 80 N cap, and the hand sits 7–12 cm across its approach from the arc while the lever stays at 0°.
+
+Neither the training's grasp nor the lever test can see this. Both close the claw wherever the tool has stopped, with no
+fingers, bar or door to collide with, so reach precision and posture before the grasp are never tested. That is also why
+the old policy arrived 5 cm off and needed the demo's goal correction (F-110).
+
+**High handles** (Lukas, 2026-09-25: "If the handle is above the robot height, it will need to pull rather than push").
+The lever test above stopped at 0.60 m, and training drew lever handles from the pull task's placements (at most ~0.74 m,
+most below 0.6 m); the combiner's handle is at 0.68 m. A second lever test, frozen before any policy was scored on it
+(`mech_eval --lever_high`: the same levers at 0.60/0.70/0.80/0.90 m, 0.35 m ahead of the goal sphere's centre, 3
+bearings), opened of 96 (capacity) for [`model_17499`](#/week/2/run/20260925T105243_mech_eval_seed1_mech_lever_high_17499) → [`model_18998`](#/week/2/run/20260925T105307_mech_eval_seed1_mech_lever_high_18998):
+square 24 (10 N) → 72 (20 N), spindle side 34 (10 N) → 79 (25 N), tip side 36 (10 N) → 72 (15 N). By height, the new
+policy, opened of 24 at 0.6/0.7/0.8/0.9 m: square 23/17/19/13, spindle side 17/17/23/22, tip side 24/24/14/10. Above
+about 0.7 m it falls off where the late turn is a push (square, tip side) and holds up where it is a pull toward the
+robot (spindle side, 22–23 of 24 at 0.8–0.9 m). That is Lukas's point in the numbers.
+
+**Correcting the goal through the entry** (`run_demo.py --correct_entry`, `mech_env.goal_correction_enter`: the goal
+correction also integrates during `enter`, across the approach only; off by default). The new policy's jaw centre then
+arrives 1.7–2.6 mm off and hooks the lever in 16 of 16 everywhere. Opened / bar out of the claw, of 16, old → new, both
+with the correction:
+
+| setting | old `model_17499` | new `model_18998` |
+| --- | --- | --- |
+| spring claw, square, 0.8 N·m | [6](#/week/2/run/20260925T105847_combiner_mech_law_spring_seed1_ce_old_stp0_lev0.8_spring) | [**9**](#/week/2/run/20260925T105332_combiner_mech_law_spring_seed1_ce_new_stp0_lev0.8_spring) |
+| lip claw, square, 0.4 N·m | [16 / 0](#/week/2/run/20260925T105956_combiner_mech_law_seed1_ce_old_stp0_lev0.4_lips) | [16 / **16**](#/week/2/run/20260925T105439_combiner_mech_law_seed1_ce_new_stp0_lev0.4_lips) |
+| lip claw, +15°, 0.8 N·m | [16 / 2](#/week/2/run/20260925T110059_combiner_mech_law_seed1_ce_old_stp15_lev0.8_lips) | [5 / 16](#/week/2/run/20260925T105540_combiner_mech_law_seed1_ce_new_stp15_lev0.8_lips) |
+| lip claw, −30°, 0.4 N·m | [16 / 0](#/week/2/run/20260925T110203_combiner_mech_law_seed1_ce_old_stm30_lev0.4_lips) | [16 / 16](#/week/2/run/20260925T105643_combiner_mech_law_seed1_ce_new_stm30_lev0.4_lips) |
+| lip claw, +15°, 1.2 N·m | [11 / 3](#/week/2/run/20260925T110306_combiner_mech_law_seed1_ce_old_stp15_lev1.2_lips) | [0 / 16](#/week/2/run/20260925T105745_combiner_mech_law_seed1_ce_new_stp15_lev1.2_lips) |
+| box raised (handle 0.83 m: `--post_top_m 0.53 --box_distance_m 0.56 0.60`), square, 0.4 N·m, spring / lip | [16](#/week/2/run/20260925T110410_combiner_mech_law_spring_seed1_high_old_stp0_lev0.4_spring) / [16 / 0](#/week/2/run/20260925T110517_combiner_mech_law_seed1_high_old_stp0_lev0.4_lips) | [16](#/week/2/run/20260925T110620_combiner_mech_law_spring_seed1_high_new_stp0_lev0.4_spring) / [16 / 16](#/week/2/run/20260925T110726_combiner_mech_law_seed1_high_new_stp0_lev0.4_lips) |
+
+The correction leaves the old policy as it was and fixes the new one's grasp. With the spring claw the new policy then
+turns more than the old (9 against 6 at 0.8 N·m). With the lip claw it loses the bar in every attempt, and at +15° it
+loses it during the turn, before the lever has moved: leaning back (pitch −10°, the old policy −5°), the bar pressed
+toward the lips (107 mm deep in the hand against 94) and 28° askew. The spring claw and the training's ball-joint
+grasp hold whatever direction the force takes; the lip claw does not. Where a light lever still opens (square and −30°
+at 0.4 N·m) the door is pulled open before the bar comes out.
+
+**The across-path force.** `fixture_force_tracking` counts force across the path at a quarter weight, by design ("the
+arm resting its weight on the handle is harmless", written for a hook). Re-scored from the saved traces with a new
+`mech_eval` field, `across_p95_n` (the 95th percentile of the grasp force across the path during the push), the old
+policy keeps it at 8–18 N at every lever level; the new one lets it grow with the lever, to 36–50 N at 30–40 N levers
+(dev and high sets). At the 5–10 N levels both are at 7–13 N, so the metric does not explain the losses at 0.4 N·m on
+its own; the lean back along the spindle does.
+
+**Training v2** (`--lever_high`: lever handles up to `mech_cfg.LEVER_HANDLE_PITCH_RANGE`, 36% of them above 0.6 m;
+`--offpath_weight 2.0`: `mech_rewards.mech_offpath`, the force across the path squared per (20 N)², 20 N costing 2 per
+second and 40 N 8, off by default). From `model_18998`; the checkpoint to be evaluated, named before any result, is the
+last the run writes, `model_20497`. Smoke first ([zero actions](#/week/2/run/20260925T111044_smoke_seed1_lever_high_smoke):
+shapes consistent, 13,450 held environment-steps, the term active); 1 CPU test for the term.
+
+```bash
+./run_unifp_train.py train --task mechanism --force_law --lever_fraction 0.3 --lever_high --offpath_weight 2.0 --num_envs 4096 \
+    --iterations 1500 --headless --peak_ceiling 80 --tool_point jaw_centre \
+    --resume_from logs/unifp_train/20260925T085153_train_seed1_mech_law_lever/model_18998.pt --run_name mech_law_lever_high
+```
+
+The run: [training](#/week/2/run/20260925T111115_train_seed1_mech_law_lever_high), 1,500 iterations (18,998 → 20,497), 72
+minutes. Training-time `Metrics` (at reset, lenient), first → last 100 iterations: levers opened 0.85 → 0.92 (high
+handles now among them), levers at 24.5–35 N 0.83 → 0.88, pulls 0.97 → 0.97, pushes 0.79 → 0.88, the off-path price's
+episode sum −0.44 → −0.31, none torn. A new log, `Mechanism/grasp_error_m`, says where the claw closes against where the
+handle was: 4.5–6 cm, all run. The training has never asked for a precise arrival.
+
+**The frozen evaluations of `model_20497`** (law with the 1 s bleed), against `model_17499` (v0) and `model_18998` (v1):
+
+| test | v0 | v1 | v2 |
+| --- | --- | --- | --- |
+| lever, ≤ 0.6 m, square / spindle side / tip side, of 120 | 32 / 26 / 86 | 118 / 99 / 120 | [98 / 89 / 117](#/week/2/run/20260925T122454_mech_eval_seed1_mech_lever_20497) |
+| capacity, N | 10 / 5 / 20 | 40 / 10 / 40 | 15 / 15 / 40 |
+| lever, 0.6–0.9 m, of 96 | 24 / 34 / 36 | 72 / 79 / 72 | [73 / 77 / 56](#/week/2/run/20260925T122521_mech_eval_seed1_mech_lever_high_20497) |
+| force across the path at 30–40 N levers, 0.6–0.9 m, N (`across_p95_n`, median) | 10–12 | 46–50 | 12–25 |
+| held-out test set: drawer / latch / door / button, of 128 | 128 / 128 / 128 / 119 | 128 / 128 / 128 / 126 | [127 / 128 / 126 / **88**](#/week/2/run/20260925T122546_mech_eval_seed1_mech_test_law_lever_high_20497_bleed) |
+
+The price did what it was for on high handles: the force across the path at heavy levers came back to about v0's
+level, and v1's gains there held. It cost part of v1's gain on the low levers, and the button: 88 of 128, capacity
+30 N (v0 and v1 80 N). Re-scored from the saved traces, the price cut the force across the path on every kind at the
+top levels (door 44 → 34 N, drawer 37 → 29, latch 33 → 22, button 38 → 16; v1 → v2), and the button's across force
+before was no larger than the door's, so why the button alone lost is not established. Drawers, latches and doors are
+unchanged.
+
+**The combiner demo with `model_20497`**, `--correct_entry` on (it left v0 as it was), the same placements; run names
+`v2_st<stance>_lev<T>_<claw>`; opened of 16, v0 → v2 ([figure](figures/combiner_lever_policy.png)):
+
+| claw | lever | −30° (hinge side) | square | +15° | +30° (latch side) |
+| --- | --- | --- | --- | --- | --- |
+| lips | 0.4 N·m | 15 → [16](#/week/2/run/20260925T122613_combiner_mech_law_seed1_v2_stm30_lev0.4_lips) | 16 → [16](#/week/2/run/20260925T122716_combiner_mech_law_seed1_v2_stp0_lev0.4_lips), lost 5 | – → [7](#/week/2/run/20260925T122819_combiner_mech_law_seed1_v2_stp15_lev0.4_lips), lost 12 | 12 → [0](#/week/2/run/20260925T122921_combiner_mech_law_seed1_v2_stp30_lev0.4_lips), lost 14, **2 fell** |
+| lips | 0.8 N·m | 11 → [16](#/week/2/run/20260925T123023_combiner_mech_law_seed1_v2_stm30_lev0.8_lips) | 10 → [11](#/week/2/run/20260925T123126_combiner_mech_law_seed1_v2_stp0_lev0.8_lips), lost 6 | 15 → [4](#/week/2/run/20260925T123228_combiner_mech_law_seed1_v2_stp15_lev0.8_lips), lost 12 | 10 → [0](#/week/2/run/20260925T123330_combiner_mech_law_seed1_v2_stp30_lev0.8_lips), lost 16 |
+| lips | 1.2 N·m | 2 → [12](#/week/2/run/20260925T123432_combiner_mech_law_seed1_v2_stm30_lev1.2_lips), lost 6 | 2 → [11](#/week/2/run/20260925T123534_combiner_mech_law_seed1_v2_stp0_lev1.2_lips), lost 5 | 13 → [4](#/week/2/run/20260925T123638_combiner_mech_law_seed1_v2_stp15_lev1.2_lips), lost 11 | 10 → [0](#/week/2/run/20260925T123741_combiner_mech_law_seed1_v2_stp30_lev1.2_lips), lost 16 |
+| lips | 1.6 N·m | 0 → [1](#/week/2/run/20260925T123844_combiner_mech_law_seed1_v2_stm30_lev1.6_lips), lost 9 | 0 → [0](#/week/2/run/20260925T123946_combiner_mech_law_seed1_v2_stp0_lev1.6_lips), lost 15, **1 fell** | 3 → [0](#/week/2/run/20260925T124049_combiner_mech_law_seed1_v2_stp15_lev1.6_lips), lost 16 | 2 → [0](#/week/2/run/20260925T124150_combiner_mech_law_seed1_v2_stp30_lev1.6_lips), lost 16 |
+| lips | 2.4 N·m | – → [0](#/week/2/run/20260925T124252_combiner_mech_law_seed1_v2_stm30_lev2.4_lips), lost 13 | – → [0](#/week/2/run/20260925T124354_combiner_mech_law_seed1_v2_stp0_lev2.4_lips), lost 8 | – → [0](#/week/2/run/20260925T124457_combiner_mech_law_seed1_v2_stp15_lev2.4_lips), lost 16 | – → [0](#/week/2/run/20260925T124558_combiner_mech_law_seed1_v2_stp30_lev2.4_lips), lost 16 |
+| spring | 0.4 N·m | 16 → [16](#/week/2/run/20260925T124701_combiner_mech_law_spring_seed1_v2_stm30_lev0.4_spring) | 16 → [15](#/week/2/run/20260925T124809_combiner_mech_law_spring_seed1_v2_stp0_lev0.4_spring) | – → [9](#/week/2/run/20260925T124916_combiner_mech_law_spring_seed1_v2_stp15_lev0.4_spring) | 15 → [1](#/week/2/run/20260925T125024_combiner_mech_law_spring_seed1_v2_stp30_lev0.4_spring) |
+| spring | 0.8 N·m | 15 → [13](#/week/2/run/20260925T125130_combiner_mech_law_spring_seed1_v2_stm30_lev0.8_spring) | 6 → [14](#/week/2/run/20260925T125238_combiner_mech_law_spring_seed1_v2_stp0_lev0.8_spring) | – → [9](#/week/2/run/20260925T125344_combiner_mech_law_spring_seed1_v2_stp15_lev0.8_spring) | 15 → [1](#/week/2/run/20260925T125452_combiner_mech_law_spring_seed1_v2_stp30_lev0.8_spring) |
+| spring | 1.2 N·m | 8 → [0](#/week/2/run/20260925T125559_combiner_mech_law_spring_seed1_v2_stm30_lev1.2_spring) | 0 → [13](#/week/2/run/20260925T125705_combiner_mech_law_spring_seed1_v2_stp0_lev1.2_spring) | 4 → [7](#/week/2/run/20260925T125812_combiner_mech_law_spring_seed1_v2_stp15_lev1.2_spring) | 14 → [0](#/week/2/run/20260925T125921_combiner_mech_law_spring_seed1_v2_stp30_lev1.2_spring) |
+| spring | 1.6 N·m | 1 → [0](#/week/2/run/20260925T130028_combiner_mech_law_spring_seed1_v2_stm30_lev1.6_spring) | 0 → [10](#/week/2/run/20260925T130134_combiner_mech_law_spring_seed1_v2_stp0_lev1.6_spring) | 2 → [4](#/week/2/run/20260925T130241_combiner_mech_law_spring_seed1_v2_stp15_lev1.6_spring) | 5 → [0](#/week/2/run/20260925T130348_combiner_mech_law_spring_seed1_v2_stp30_lev1.6_spring) |
+| spring | 2.4 N·m | – → [0](#/week/2/run/20260925T130455_combiner_mech_law_spring_seed1_v2_stm30_lev2.4_spring) | – → [0](#/week/2/run/20260925T130602_combiner_mech_law_spring_seed1_v2_stp0_lev2.4_spring) | – → [0](#/week/2/run/20260925T130709_combiner_mech_law_spring_seed1_v2_stp15_lev2.4_spring) | – → [0](#/week/2/run/20260925T130817_combiner_mech_law_spring_seed1_v2_stp30_lev2.4_spring) |
+
+Stiff doors, lip claw, lever 0.4 N·m, opened, v0 → v2:
+
+| door closer | −30° | square |
+| --- | --- | --- |
+| 12 N·m | 15 → [16](#/week/2/run/20260925T130924_combiner_mech_law_seed1_v2_stm30_door12_lips), lost 0 → 0 | 16 → [11](#/week/2/run/20260925T131026_combiner_mech_law_seed1_v2_stp0_door12_lips), lost 5 → 5 |
+| 16 N·m | 15 → [16](#/week/2/run/20260925T131130_combiner_mech_law_seed1_v2_stm30_door16_lips), lost 0 → 0 | 16 → [11](#/week/2/run/20260925T131233_combiner_mech_law_seed1_v2_stp0_door16_lips), lost 13 → 6 |
+
+The box raised so the handle is at 0.83 m (`--post_top_m 0.53 --box_distance_m 0.56 0.60`), v2, opened of 16: [lips square 0.4](#/week/2/run/20260925T131336_combiner_mech_law_seed1_v2high_stp0_lev0.4_lips) 10 · [lips +15° 0.4](#/week/2/run/20260925T131440_combiner_mech_law_seed1_v2high_stp15_lev0.4_lips) 6 · [lips square 1.2](#/week/2/run/20260925T131543_combiner_mech_law_seed1_v2high_stp0_lev1.2_lips) 9 · [lips +15° 1.2](#/week/2/run/20260925T131646_combiner_mech_law_seed1_v2high_stp15_lev1.2_lips) 6 · [spring square 0.4](#/week/2/run/20260925T131750_combiner_mech_law_spring_seed1_v2high_stp0_lev0.4_spring) 15 · [spring +15° 0.4](#/week/2/run/20260925T131856_combiner_mech_law_spring_seed1_v2high_stp15_lev0.4_spring) 13 · [spring square 1.2](#/week/2/run/20260925T132004_combiner_mech_law_spring_seed1_v2high_stp0_lev1.2_spring) 12 · [spring +15° 1.2](#/week/2/run/20260925T132113_combiner_mech_law_spring_seed1_v2high_stp15_lev1.2_spring) 12.
+v0 at 0.83 m, lever 0.4 N·m, square: 16 with either claw (above), so the raised box is a regression with the lip claw
+(10 against 16), whose grasp there arrives 11–18 mm off even with the entry corrected.
+
+A stiff lever **and** a stiff door together (lip claw, lever 1.2 N·m), opened of 16: [v2, −30°, door 12 N·m](#/week/2/run/20260925T132316_combiner_mech_law_seed1_both_v2_stm30_door12) 9 (lost 7) · [v2, −30°, door 16 N·m](#/week/2/run/20260925T132419_combiner_mech_law_seed1_both_v2_stm30_door16) 9 (lost 7) · [v0, +15°, door 16 N·m](#/week/2/run/20260925T132524_combiner_mech_law_seed1_both_v0_stp15_door16) 4 (lost 13) · [v0, −30°, door 16 N·m](#/week/2/run/20260925T132628_combiner_mech_law_seed1_both_v0_stm30_door16) 0 (lost 6).
+
+What v2 is: with the lip claw, better than v0 square to the box (11 against 2 at 1.2 N·m) and from the hinge side (16/16/12
+against 15/11/2 at 0.4/0.8/1.2 N·m, never losing the bar to 0.8 N·m), where the door is also best (F-113): the one stance
+that takes a stiff lever and a stiff door together, 9 of 16 at 1.2 N·m with a 16 N·m closer against v0's 4 at its best
+stance. With the spring claw square, 15/14/13/10 at 0.4–1.6 N·m against 16/6/0/0. What it is not: from the latch side it
+is worse than v0 with both claws (0–1 of 16 at +30° at every lever, against v0's 2–15); it fell 3 times in 864 attempts (+30° and square, lip claw)
+where v0 fell in none; the raised box and the held-out set's button got worse; it needs `--correct_entry`. The best
+stance moved from the latch side (v0) to the hinge side (v2). One seed; one lever geometry in the demo.
+
+The v2 checkpoint is in `checkpoints/unifp_go2d1_mech_lever_model_20497.pt` (SHA-256 in `SHA256SUMS`), documented in
+`checkpoints/README.md` and the demo's README; the demo's default stays `model_17499`. Findings: F-114, F-115.
+
 ### 2026-09-25 — Standing to the side of the box: the lever turn from the door's normal and from either side
 
 **Why.** Lukas: "The position of the dog relative to the task is important too. For opening the handle, could having the
@@ -2749,6 +3643,15 @@ the Isaac Gym manifest of the same task.
 
 ## Findings this week
 
+- [F-118](../findings.md): the reaching policy does not correct a shift of the arm's mount. Its settled tip error grows by about the whole shift (1.51 cm trained, **1.89 cm at the measured mount**, 5.5–6.0 cm at ±5 cm fore-aft, 0.85–1.1 cm per cm beyond 2 cm), because the actor observes joint angles, not its tip. The mechanism test cannot see this because it grasps wherever the hand settles (provisional, simulation, one policy).
+- [F-122](../findings.md): the recipe reproduces across three seeds once each is continued at a pinned learning rate: peaks of 61-75/96 frozen slots, each followed by a decline; the best (seed 3, `model_21200`) 75/96 lateral, 71/96 detent, 43/48 in PhysX on two draws, no damage -- evaluate every 400 iterations and keep the peak (provisional, simulation).
+- [F-121](../findings.md): continued with the learning rate pinned (rsl-rl's restart at 1e-3 threw a resumed run to 2/96) and a slower curriculum, v10 `model_21400` seats 71/96 frozen lateral and 71/96 detent slots, 40/48 and 36/48 in PhysX with no damage; every run peaks within a few hundred iterations and declines while its training rollouts hold, losing the push through a detent -- choose checkpoints by evaluation (provisional, simulation).
+- [F-120](../findings.md): with the task layer's outer loops on the measured key, a compliant grip (2 N·m/rad, ±10°) and the arm's training noise cut to 0.15, the insertion trains in 200 iterations: 55/96 frozen 1 mm slots (v5: 0), 13-14/16 in PhysX at 0-4 mm estimate error; a rigid key 5/16 in PhysX, 0/96 in the plant; the policy needs its loops (provisional, simulation, one seed, the grip not yet built).
+- [F-119](../findings.md): no starting policy holds its hand still (a ~10 Hz arm jitter, 0.23-0.44 m/s tool speed while holding), and the pull lineage trains its arm under 0.7-0.9 action noise; a millimetre task cannot be done or learned through them as they are (provisional, simulation).
+- [F-117](../findings.md): from Unitree's Go2-with-dock CAD, the D1 sits on the dock's rails 85.5 mm above `base_link` and, with its rear screws 1 cm ahead of the rails' rear screws, 20.5 mm behind it: mount (−0.0205, 0, 0.0855) m with the rear pair; Lukas chose the front pair, **(0.0025, 0, 0.0855) m**, now the weld everywhere (`mount.py`), G0 checks pass (provisional until checked on the robot).
+- [F-116](../findings.md): a force-aware key insertion was built end to end (slot model, force-law task layer with a spiral search, approach objective, PhysX demo `demos/insertion/`) and did not train in 2,500 iterations: the policy learned not to ram but arrives 9-10° and centimetres off, 90% of attempts never reach the slot, 0 of 192 frozen slots and 0 of 64 PhysX attempts seated (provisional, simulation, one seed).
+- [F-114](../findings.md): trained on short levers, the mechanism policy turns levers it could not (lever test 32 → 118 of 120 square); in the combiner demo that shows only with the entry corrected and force across the path priced (v2), and then from the hinge side: 16/16/12 at 0.4/0.8/1.2 N·m with the lip claw (v0 15/11/2), and a 1.2 N·m lever with a 16 N·m door 9 of 16 (v0 4 at its best); worse from the latch side, on the button, and 3 falls (provisional, simulation, one seed).
+- [F-115](../findings.md): the mechanism task's ball-joint grasp, closed wherever the hand stops, hides reach precision and force a claw cannot hold, the two things that decided the demo; training grasps close 4.5–6 cm from the handle (provisional).
 - [F-113](../findings.md): where the robot stands trades the lever against the door. 30° to the latch side the mechanism policy turns a stiffer lever (spring claw: 14/16 released at 1.2 N·m against 0 square, the force it holds on the lever up 36–50%; lip claw best at +15°, 13/16 opened against 2); 15–30° to the hinge side the lip claw holds a 16 N·m door with no late escapes (0/16 against 13); each side makes the other phase harder, and +45° puts the forearm on the box. The lean Lukas saw is the policy's pull posture following the lever's arc (provisional, simulation, one seed).
 - [F-112](../findings.md): with the lips modelled beyond the fingertips as Lukas specified (overbiting, full close), the L-lip claw opens the combiner box 16 of 16 against door closers to 16 N·m under the mechanism policy (also on untuned placements), within 5° of the lips-across model; the late losses from 12 N·m remain (5 and 13 of 16), and the full close grips the bar harder and keeps it nearer the jaw centre (provisional, simulation, modelled lips and gripper). Supersedes F-111.
 - [F-111](../findings.md) (superseded by F-112: the lips were modelled across the fingertips): modelled as geometry, the L-lip claw opens the combiner box 16 of 16 against door closers to 16 N·m under the mechanism policy (also on untuned placements), with the lever hooked at 80 mm and kept against its stop; from 12 N·m the lever comes out of the claw near the end of the pull, because the swinging door turns the pull along the lip face (provisional, simulation, modelled lips and gripper).

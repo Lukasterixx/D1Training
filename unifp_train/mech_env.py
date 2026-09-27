@@ -64,6 +64,15 @@ class Go2D1MechEnvCfg(Go2D1PosForceEnvCfg):
     law_variant: str = "v1"
     #: Which way training mechanisms open: pull, push, side, up (`mech_cfg.OPENING_NAMES`), summing to one.
     opening_probs: tuple[float, float, float, float] = mech_cfg.OPENING_PROBS
+    #: Of the mechanisms, the fraction that are short levers turned down (`mech_cfg.LEVER_*`); drawn after the
+    #: opening kind, which they replace.
+    lever_fraction: float = mech_cfg.LEVER_FRACTION
+    #: Weight of `mech_rewards.mech_offpath`, the price on force across the path (0: off, as every run before
+    #: `mech_law_lever_high`).
+    offpath_weight: float = 0.0
+    #: Where a lever's handle may be (pitch about the goal sphere's centre). The first lever run used the pull task's
+    #: `hook_cfg.HANDLE_PITCH_RANGE`; `--lever_high` training reaches `mech_cfg.LEVER_HANDLE_PITCH_RANGE`.
+    lever_handle_pitch_range: tuple[float, float] = hook_cfg.HANDLE_PITCH_RANGE
     force_law_gains: tuple[float, float, float] = (mech_cfg.FORCE_LAW_KP_N_PER_M, mech_cfg.FORCE_LAW_KI_N_PER_M_S,
                                                    mech_cfg.FORCE_LAW_MAX_N)
     #: The D1's own links, for the evaluator (see `hook_env.Go2D1HookEnvCfg.arm_contact_sensor`).
@@ -100,6 +109,11 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         self._peak_n = zeros(n)
         self._draw_ceiling = zeros(n)
         self._opening_kind = torch.zeros(n, dtype=torch.long, device=device)
+        self._lever = torch.zeros(n, dtype=torch.bool, device=device)
+        #: Decided at reset, so a lever's handle can be drawn higher (`mech_cfg.LEVER_HANDLE_PITCH_RANGE`).
+        self._lever_planned = torch.zeros(n, dtype=torch.bool, device=device)
+        #: How far the tool was from its goal (the handle placement) when the grasp was made, m.
+        self._grasp_error = zeros(n)
         self._max_s = zeros(n)
 
         self._ceiling = float(cfg.peak_ceiling_n)
@@ -130,6 +144,8 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
                        "v3": mech_cfg.LAW_V3_WEIGHT_CHANGES}[cfg.law_variant]
             self._weights.update(mech_cfg.scaled_weights(changes))
             self._terms["fixture_force_tracking"] = hook_rewards.fixture_force_tracking
+        if cfg.offpath_weight:
+            self._weights.update(mech_cfg.scaled_weights({"mech_offpath": -abs(cfg.offpath_weight)}))
         for name in self._weights:
             self._episode_sums.setdefault(name, zeros(n))
 
@@ -220,6 +236,7 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
             return
         ids = due.nonzero(as_tuple=False).flatten()
         point = self._tip_pos()[ids]
+        self._grasp_error[ids] = (point - self._goal_world()[ids]).norm(dim=-1)
         draw = self._draw_evaluation(ids, point) if self._evaluation is not None else self._draw(ids, point)
         self._mech.grasp(ids, point, **draw)
         if self._law_max_range is not None and self._evaluation is None:
@@ -233,7 +250,8 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
 
     def _directions(self, ids: torch.Tensor, point: torch.Tensor, noise: bool,
                     outward: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
-        """Unit opening directions of each kind at `point`: pull, push, side, up.
+        """Unit opening directions of each kind at `point`: pull, push, side, up; and down, and back (level,
+        toward the robot, no noise), which a lever is built from.
 
         "side" is left or right at random, unless `outward` (N,) bool gives it: True for the robot's
         left (+y of a robot facing the handle), which is outward for a handle on the left."""
@@ -249,7 +267,7 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         side = torch.cross(back, up, dim=-1)
         flip = torch.rand(len(ids), device=self.device) < 0.5 if outward is None else ~outward
         side = torch.where(flip.unsqueeze(-1), -side, side)
-        return {"pull": pull, "push": push, "side": side, "up": up}
+        return {"pull": pull, "push": push, "side": side, "up": up, "down": -up, "back": back}
 
     def _fit_travel(self, ids: torch.Tensor, point: torch.Tensor, geometry: dict,
                     travel: torch.Tensor) -> torch.Tensor:
@@ -292,18 +310,35 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         axis = mechanism.hinge_axes(opening, rand() < mech_cfg.HINGE_VERTICAL_PROB, rand() < 0.5)
         radius = span(mech_cfg.HINGE_RADIUS_M)
         travel = torch.where(hinge, radius * span(mech_cfg.HINGE_ANGLE_RAD), slide_travel)
+        # A short lever turned down about a spindle pointing at the robot, turned by where it stands.
+        lever = self._lever_planned[ids]
+        lever_axis = mechanism.lever_axes(directions["back"], (2.0 * rand() - 1.0) * mech_cfg.LEVER_STANCE_RAD,
+                                          rand() < 0.5)
+        lever_radius = span(mech_cfg.LEVER_RADIUS_M)
+        lever_travel = lever_radius * span(mech_cfg.LEVER_ANGLE_RAD)
+        hinge = hinge | lever
+        opening = torch.where(lever.unsqueeze(-1), mechanism.lever_opening(lever_axis, span(mech_cfg.LEVER_REST_RAD)),
+                              opening)
+        axis = torch.where(lever.unsqueeze(-1), lever_axis, axis)
+        radius = torch.where(lever, lever_radius, radius)
+        travel = torch.where(lever, lever_travel, travel)
         geometry = {"hinge": hinge, "opening": opening, "axis": axis, "radius": radius}
         travel = self._fit_travel(ids, point, geometry, travel)
 
         frontier = mech_cfg.FRONTIER_FRACTION + (1.0 - mech_cfg.FRONTIER_FRACTION) * rand()
         peak = (torch.where(rand() < mech_cfg.FRONTIER_PROB, frontier, rand()) * self._ceiling).clamp(
             min=mech_cfg.PEAK_MIN_N)
+        lever_frontier = mech_cfg.FRONTIER_FRACTION + (1.0 - mech_cfg.FRONTIER_FRACTION) * rand()
+        lever_peak = (torch.where(rand() < mech_cfg.FRONTIER_PROB, lever_frontier, rand())
+                      * mech_cfg.LEVER_PEAK_N[1]).clamp(min=mech_cfg.LEVER_PEAK_N[0])
+        peak = torch.where(lever, lever_peak, peak)
         profile = mechanism.resistance_profile(
             peak, latch=rand() < mech_cfg.LATCH_PROB, preload_fraction=span(mech_cfg.PRELOAD_FRACTION),
             kinetic_fraction=span(mech_cfg.KINETIC_FRACTION), weights=torch.rand(count, 3, device=device))
         self._peak_n[ids] = peak
         self._draw_ceiling[ids] = self._ceiling
-        self._opening_kind[ids] = kind
+        self._opening_kind[ids] = torch.where(lever, torch.full_like(kind, -1), kind)
+        self._lever[ids] = lever
         return {**geometry, "travel": travel, "mass": log_span(mech_cfg.MASS_KG),
                 "spring_n": profile["spring_closed_n"],
                 "spring_k": (profile["spring_open_n"] - profile["spring_closed_n"]) / travel,
@@ -324,14 +359,18 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
                "radius": full(1.0), "travel": full(0.0), "weights": torch.zeros(count, 3, device=device),
                "preload": full(0.0), "kinetic": full(0.0),
                "vertical": torch.ones(count, dtype=torch.bool, device=device),
-               "outward": torch.ones(count, dtype=torch.bool, device=device)}
+               "outward": torch.ones(count, dtype=torch.bool, device=device),
+               "lever": torch.zeros(count, dtype=torch.bool, device=device), "stance": full(0.0)}
         for index, spec in enumerate(mech_cfg.EVAL_KINDS.values()):
             mask = kinds == index
             out["hinge"] = torch.where(mask, torch.full_like(out["hinge"], spec["hinge"]), out["hinge"])
             out["opening"] = torch.where(mask.unsqueeze(-1), directions[spec["opening"]], out["opening"])
+            if spec.get("axis") == "lever":
+                out["lever"] |= mask
+                out["stance"] = torch.where(mask, full(math.radians(spec["stance_deg"])), out["stance"])
             if spec["hinge"]:
                 out["vertical"] &= ~mask | (spec["axis"] == "vertical")
-                out["outward"] &= ~mask | (spec["hinge_side"] == "outward")
+                out["outward"] &= ~mask | (spec.get("hinge_side") == "outward")
                 out["radius"] = torch.where(mask, full(spec["radius_m"]), out["radius"])
                 out["travel"] = torch.where(mask, full(spec["radius_m"] * spec["angle_rad"]), out["travel"])
             else:
@@ -342,11 +381,15 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         # A door swings outward, away from the robot's centreline: the hinge goes on the handle's side
         # (flipping a vertical axis moves it to the robot's left). A lid's level hinge stays beyond it.
         axis = mechanism.hinge_axes(out["opening"], out["vertical"], out["outward"] & (bearing >= 0.0))
+        # A lever's spindle points at the robot, turned by the kind's stance; the spindle on the robot's right.
+        lever_axis = mechanism.lever_axes(directions["back"], out["stance"], torch.zeros_like(out["lever"]))
+        axis = torch.where(out["lever"].unsqueeze(-1), lever_axis, axis)
         profile = mechanism.resistance_profile(levels, latch=out["weights"][:, 2] > 0.0,
                                                preload_fraction=out["preload"], kinetic_fraction=out["kinetic"],
                                                weights=out["weights"])
         self._peak_n[ids] = levels
         self._draw_ceiling[ids] = levels
+        self._lever[ids] = out["lever"]
         travel = out["travel"]
         return {"hinge": out["hinge"], "opening": out["opening"], "axis": axis, "radius": out["radius"],
                 "travel": travel, "mass": full(plan["conditions"]["mass_kg"]),
@@ -453,9 +496,13 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
             failed = self._mech.torn[grasped] | self._term_fallen[grasped]
             counted = (held_steps >= needed) | failed
             opened = (self._max_s[grasped] >= mech_cfg.OPENED_FRACTION * self._travel_goal.first_target[grasped]) & ~failed
-            frontier = self._peak_n[grasped] >= mech_cfg.FRONTIER_FRACTION * self._draw_ceiling[grasped]
+            # Levers are drawn to their own ceiling (`mech_cfg.LEVER_PEAK_N`) and never test the curriculum's.
+            frontier = ((self._peak_n[grasped] >= mech_cfg.FRONTIER_FRACTION * self._draw_ceiling[grasped])
+                        & ~self._lever[grasped])
             if bool(counted.any()):
                 log["Mechanism/opened_fraction"] = float(opened[counted].float().mean())
+                # Reach precision: where the claw closed against where the handle was (the demo's claw needs ~1 cm).
+                log["Mechanism/grasp_error_m"] = float(self._grasp_error[grasped][counted].mean())
                 log["Mechanism/torn_fraction"] = float(self._mech.torn[grasped][counted].float().mean())
                 log["Mechanism/latch_released_fraction"] = float(
                     self._mech.released[grasped][counted & (self._mech.latch_n[grasped] > 0)].float().mean()
@@ -464,9 +511,15 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
                     kind = counted & (self._opening_kind[grasped] == index)
                     if bool(kind.any()):
                         log[f"Mechanism/opened_{name}"] = float(opened[kind].float().mean())
-                hinge = counted & self._mech.hinge[grasped]
+                hinge = counted & self._mech.hinge[grasped] & ~self._lever[grasped]
                 if bool(hinge.any()):
                     log["Mechanism/opened_hinge"] = float(opened[hinge].float().mean())
+                lever = counted & self._lever[grasped]
+                if bool(lever.any()):
+                    log["Mechanism/opened_lever"] = float(opened[lever].float().mean())
+                    heavy = lever & (self._peak_n[grasped] >= mech_cfg.FRONTIER_FRACTION * mech_cfg.LEVER_PEAK_N[1])
+                    if bool(heavy.any()):
+                        log["Mechanism/opened_lever_heavy"] = float(opened[heavy].float().mean())
             front = counted & frontier
             if bool(front.any()):
                 rate = float(opened[front].float().mean())
@@ -510,6 +563,9 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         self._grasp_step[env_ids] = 0
         self._max_s[env_ids] = 0.0
         self._peak_n[env_ids] = 0.0
+        self._lever[env_ids] = False
+        self._lever_planned[env_ids] = False
+        self._grasp_error[env_ids] = 0.0
         self._goals.hold_mask[env_ids] = False
 
         ids = env_ids[self._mech_env[env_ids]]
@@ -519,7 +575,13 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
                 delay = torch.full((len(ids),), self._evaluation["engage_delay"], device=self.device)
                 roll = torch.zeros(len(ids), device=self.device)
             else:
+                lever = torch.rand(len(ids), device=self.device) < self.cfg.lever_fraction
+                self._lever_planned[ids] = lever
                 handles = fixture.sample_handles(len(ids), self.device)
+                if bool(lever.any()):
+                    high = fixture.sample_handles(int(lever.sum()), self.device,
+                                                  pitch_range=self.cfg.lever_handle_pitch_range)
+                    handles[lever] = high
                 low, high = hook_cfg.ENGAGE_DELAY_STEPS
                 delay = torch.randint(low, high + 1, (len(ids),), device=self.device)
                 roll_low, roll_high = task_cfg.EE_ROLL_RANGE_RAD

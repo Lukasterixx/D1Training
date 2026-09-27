@@ -1,0 +1,63 @@
+{
+  "id": "20260925T160135_train_seed1_ins_v1",
+  "title": "Insertion training v1: stopped at iteration ~17670 -- a task-layer bug let the hand hover short of the door (no contact in any episode)",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-26T02:10:56+10:00",
+  "started_utc": "2026-09-25T16:01:35+00:00",
+  "source_dir": "logs/unifp_train/20260925T160135_train_seed1_ins_v1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2500,
+  "steps": 100,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 17679,
+  "final_checkpoint": {
+    "file": "model_17679.pt",
+    "sha256": "a70481ef78663ff6853e161cf3872f227b99f233d1104969e11657800e2c3afe"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 206.27523803710938,
+      "last_step": 17679,
+      "mean_last_10": 204.150927734375,
+      "min": 2.3849010467529297,
+      "max": 210.24945068359375,
+      "points": 181
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 17679,
+      "mean_last_10": 998.7239990234375,
+      "min": 12.84000015258789,
+      "max": 999.0,
+      "points": 181
+    },
+    "Policy/mean_std": {
+      "last": 0.6845625638961792,
+      "last_step": 17679,
+      "mean_last_10": 0.6866307318210602,
+      "min": 0.6845625638961792,
+      "max": 0.7397352457046509,
+      "points": 181
+    },
+    "Perf/total_fps": {
+      "last": 35135.0,
+      "last_step": 17679,
+      "mean_last_10": 35263.5,
+      "min": 23227.0,
+      "max": 37223.0,
+      "points": 181
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

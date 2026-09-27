@@ -109,6 +109,10 @@ class MechDemoEnvCfg(UniFPDemoEnvCfg):
     goal_correction: bool = False
     goal_correction_gain: float = 1.5
     goal_correction_max_m: float = 0.10
+    #: Also integrate through `enter`, across the approach only (along it the goal is moving in and the bar may already
+    #: be against the fingers). For a policy whose miss drifts while the goal moves, which otherwise brings the bar onto a
+    #: lip tip (the lever-trained policy, 2026-09-25). Off by default.
+    goal_correction_enter: bool = False
 
 
 class MechDemoEnv(UniFPDemoEnv):
@@ -239,6 +243,14 @@ class MechDemoEnv(UniFPDemoEnv):
         centre, _ = self._jaw_centre_state()
         step = self.cfg.goal_correction_gain * interface.POLICY_DT * (target - centre)
         offset = torch.where(integrate.unsqueeze(-1), self.goal_offset + step, self.goal_offset)
+        if self.cfg.goal_correction_enter:
+            entering = torch.tensor([p == "enter" for p in phases], device=self.device)
+            approach = torch.as_tensor([c.approach if c is not None else (1.0, 0.0, 0.0) for c in self.commands],
+                                       dtype=torch.float32, device=self.device)
+            approach = interface.quat_apply(self._spawn_yaw_quat, approach)
+            approach = approach / approach.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+            across = step - (step * approach).sum(-1, keepdim=True) * approach
+            offset = torch.where(entering.unsqueeze(-1), self.goal_offset + across, offset)
         norm = offset.norm(dim=-1, keepdim=True)
         offset = offset * (self.cfg.goal_correction_max_m / norm.clamp(min=1e-9)).clamp(max=1.0)
         self.goal_offset = torch.where(keep.unsqueeze(-1), offset, torch.zeros_like(offset))

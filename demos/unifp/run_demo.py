@@ -172,6 +172,17 @@ def build_parser() -> argparse.ArgumentParser:
                              f"{GEOMETRY.handle_length:g} long). Further out needs less force for the same torque.")
     parser.add_argument("--door_torque_nm", type=float, default=0.0,
                         help="Combiner only: a door closer, the torque it needs at 45 degrees. 0 is a free door.")
+    parser.add_argument("--post_top_m", type=float, default=None,
+                        help=f"Combiner only: the post's height, m (default props.POST_TOP_M, {props.POST_TOP_M:g}). The "
+                             f"lever's spindle is {GEOMETRY.bottom + GEOMETRY.height / 2:g} m above it: raise it to put the "
+                             "handle above the robot, where turning it down is a pull. Pair with --box_distance_m.")
+    parser.add_argument("--box_distance_m", type=float, nargs=2, default=None, metavar=("NEAR", "FAR"),
+                        help="Combiner only: the range the box's root is placed at from the robot, m (default "
+                             f"props.BOX_DISTANCE_RANGE_M, {props.BOX_DISTANCE_RANGE_M[0]:g}-{props.BOX_DISTANCE_RANGE_M[1]:g}). "
+                             "A higher handle has to be nearer to stay inside the trained goal sphere.")
+    parser.add_argument("--correct_entry", action="store_true",
+                        help="With the goal correction: keep correcting through the entry, across the approach only "
+                             "(mech_env goal_correction_enter), for a policy whose miss drifts while the hand moves in.")
     parser.add_argument("--stance_deg", type=float, default=0.0,
                         help="Combiner only: stand this far off the door's normal, degrees -- the box turned about "
                              "the grasp point (props.side_stance), so the reach is unchanged. Positive is the latch "
@@ -304,14 +315,19 @@ def main() -> int:
         robot_usd = build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(claw_urdf), out_usd_path=str(ROOT / "generated/claw/go2_d1_claw.usd"),
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+            arm_mass_kg=3.152).usd_path
     else:
         robot_usd = args.robot_usd or build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
             out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+            arm_mass_kg=3.152).usd_path
 
+    if args.post_top_m is not None:
+        # Before the scene is configured: the post, the box's spawn and every placement read the module constants.
+        props.POST_TOP_M = args.post_top_m
+    if args.box_distance_m is not None:
+        props.BOX_DISTANCE_RANGE_M = tuple(args.box_distance_m)
     if args.lever_grasp_m is not None:
         # Before the phases are built: `props.BoxSite.grasp_point_m` reads the module constant, and so
         # does everything downstream of it (the script, the recorder, the law's Jacobian).
@@ -384,6 +400,7 @@ def main() -> int:
         cfg.claw_lips = lips
         cfg.force_law = force_law
         cfg.goal_correction = goal_correction
+        cfg.goal_correction_enter = goal_correction and args.correct_entry
         if args.force_law_gains:
             cfg.force_law_gains = tuple(args.force_law_gains)
         cfg.force_law_bleed_s = args.force_law_bleed or None
@@ -465,6 +482,8 @@ def main() -> int:
         "handle_torque_nm": torque if args.task == "combiner" else None,
         "door_torque_nm": args.door_torque_nm if args.task == "combiner" else None,
         "stance_deg": args.stance_deg if args.task == "combiner" else None,
+        "post_top_m": props.POST_TOP_M if args.task == "combiner" else None,
+        "box_distance_m": list(props.BOX_DISTANCE_RANGE_M) if args.task == "combiner" else None,
         "turn_deg": (args.turn_deg if args.turn_deg is not None else props.LEVER_TURN_DEG)
         if args.task == "combiner" else None,
         "lever_grasp_m": props.LEVER_GRASP_OFFSET_M if args.task == "combiner" else None,
@@ -476,7 +495,8 @@ def main() -> int:
         "claw": (_claw_record(cfg, lips) if claw else None),
         "force_law": ({"gains": list(cfg.force_law_gains), "bleed_s": cfg.force_law_bleed_s}
                       if force_law else None),
-        "goal_correction": ({"gain_per_s": cfg.goal_correction_gain, "max_m": cfg.goal_correction_max_m}
+        "goal_correction": ({"gain_per_s": cfg.goal_correction_gain, "max_m": cfg.goal_correction_max_m,
+                             "through_entry": cfg.goal_correction_enter}
                             if goal_correction else None),
         "jaw_compensation": not args.no_jaw_compensation,
         "forces": "scheduled pushes off; contact only",

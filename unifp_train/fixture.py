@@ -376,15 +376,19 @@ def press_axes(anchor_w: torch.Tensor, base_pos_w: torch.Tensor, *, yaw_noise_ra
     return torch.where((rand() < down_prob).unsqueeze(-1), down, away)
 
 
-def sample_handles(count: int, device, generator: torch.Generator | None = None) -> torch.Tensor:
-    """Handle placements in goal-sphere coordinates, clear of the robot's body (`hook_cfg`)."""
+def sample_handles(count: int, device, generator: torch.Generator | None = None,
+                   pitch_range: tuple[float, float] | None = None) -> torch.Tensor:
+    """Handle placements in goal-sphere coordinates, clear of the robot's body (`hook_cfg`).
+
+    `pitch_range` (rad about the goal sphere's centre) replaces `hook_cfg.HANDLE_PITCH_RANGE`, for handles higher up."""
     rand = lambda n: torch.rand(n, device=device, generator=generator)
     span = lambda r, n: r[0] + rand(n) * (r[1] - r[0])
+    pitch_range = hook_cfg.HANDLE_PITCH_RANGE if pitch_range is None else pitch_range
     out = torch.zeros(count, 3, device=device)
     pending = torch.arange(count, device=device)
     for _ in range(20):
         n = len(pending)
-        draw = torch.stack((span(hook_cfg.HANDLE_RADIUS_RANGE, n), span(hook_cfg.HANDLE_PITCH_RANGE, n),
+        draw = torch.stack((span(hook_cfg.HANDLE_RADIUS_RANGE, n), span(pitch_range, n),
                             span(hook_cfg.HANDLE_YAW_RANGE, n)), dim=-1)
         out[pending] = draw
         local = interface.sphere2cart(draw)

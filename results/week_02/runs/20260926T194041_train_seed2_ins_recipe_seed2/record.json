@@ -1,0 +1,63 @@
+{
+  "id": "20260926T194041_train_seed2_ins_recipe_seed2",
+  "title": "Insertion recipe from v5, seed 2 (400 iterations): the v7 recipe with the hold, wider clamps, stillness across the axis",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-27T06:03:45+10:00",
+  "started_utc": "2026-09-26T19:40:41+00:00",
+  "source_dir": "logs/unifp_train/20260926T194041_train_seed2_ins_recipe_seed2",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 20397,
+  "final_checkpoint": {
+    "file": "model_20397.pt",
+    "sha256": "e3cdb2cc2b2c431c9431010525aabc1328a7ce93e0acc1a35328600ab6f7e935"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 222.6928253173828,
+      "last_step": 20397,
+      "mean_last_10": 215.78347930908203,
+      "min": 3.243497610092163,
+      "max": 239.85899353027344,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 917.530029296875,
+      "last_step": 20397,
+      "mean_last_10": 897.3739990234375,
+      "min": 14.140000343322754,
+      "max": 995.9199829101562,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.404598593711853,
+      "last_step": 20397,
+      "mean_last_10": 0.4047185778617859,
+      "min": 0.404598593711853,
+      "max": 0.4155137240886688,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 27709.0,
+      "last_step": 20397,
+      "mean_last_10": 28376.9,
+      "min": 27527.0,
+      "max": 32925.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

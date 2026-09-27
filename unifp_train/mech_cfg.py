@@ -56,6 +56,29 @@ YAW_NOISE_RAD = hook_cfg.PULL_YAW_NOISE_RAD
 ELEVATION_RAD = hook_cfg.PULL_ELEVATION_RAD
 PUSH_DOWN_PROB = 0.3
 
+#: Short levers (2026-09-25, after F-110..F-113): a handle on a spindle, turned *down* about a level axis that
+#: points roughly at the robot, like a combiner box's door handle. The draw above never makes one: its hinges are
+#: 15-45 cm doors and lids, and a push goes down onto a top face in only ~7.5% of mechanisms. Off unless
+#: `--lever_fraction` asks for it, so earlier runs reproduce. A lever's radius and turn, how far it may already
+#: rest into its turn (negative: resting raised), and how far its spindle is turned from pointing at the robot
+#: either way -- where the robot stands against the box (`mechanism.lever_axes`).
+LEVER_FRACTION = 0.0
+LEVER_RADIUS_M = (0.05, 0.12)
+LEVER_ANGLE_RAD = (math.radians(40.0), math.radians(75.0))
+LEVER_REST_RAD = (math.radians(-20.0), math.radians(20.0))
+LEVER_STANCE_RAD = math.radians(45.0)
+#: Where a lever's handle may be, as a pitch about the goal sphere's centre (0.49 m up), rad. The pull task's placements
+#: stop at 0.45 rad (a handle at most ~0.74 m up, most below 0.6 m); a lever above the robot's shoulder is turned down
+#: by *pulling* -- the arm in tension, the body's weight hanging from it -- not by leaning onto it, so levers reach up
+#: to 0.95 rad (~0.96 m at the sphere's rim), inside UniFP's trained 60 degrees (Lukas, 2026-09-25). None before
+#: `mech_law_lever_high`: the first lever run drew the pull task's placements.
+LEVER_HANDLE_PITCH_RANGE = (-0.75, 0.95)
+#: A lever's peak force at the handle, N, drawn here rather than under the curriculum's ceiling, and never counted
+#: at its frontier: the D1's arm alone holds a median 9 N downward and at most ~33 N in its best posture
+#: (`results/week_02/figures/direction_capacity.json`), so a lever drawn at the 80 N frontier is one nothing turns.
+#: Half the draws land in the top 30%, as for the other mechanisms.
+LEVER_PEAK_N = (3.0, 35.0)
+
 #: The whole path has to stay where the robot can work, in the goal sphere's frame (about a centre
 #: 0.49 m above the ground under the base): this far from the centre, clear of the body (this far
 #: ahead of it or this far to the side, a little inside the handle placements' own margins so a pull
@@ -159,7 +182,13 @@ WEIGHTS = {
     "mech_effort": -1.0,
     # Only the hierarchical v2 variant weights this (`LAW_V2_WEIGHT_CHANGES`): drive past the force command.
     "mech_overforce": 0.0,
+    # Force across the path, squared, per (`OFFPATH_SCALE_N`)^2 (`mech_rewards.mech_offpath`). Off unless
+    # `--offpath_weight` sets it, so earlier runs reproduce.
+    "mech_offpath": 0.0,
 }
+#: `mech_offpath`'s scale: at weight -2, 20 N across the path costs 2 per second, 40 N costs 8 (being on the reference
+#: pays up to 4).
+OFFPATH_SCALE_N = 20.0
 PROGRESS_SIGMA_FINE_M = 0.02
 #: v3: for a short mechanism both widths are capped at these fractions of its travel
 #: (`mech_rewards._progress`): a 1.5 cm button gets 4.5 mm and 1.5 cm, a drawer keeps 2 and 8 cm.
@@ -261,7 +290,28 @@ EVAL_KINDS = {
     # A bolt: 6 cm sideways, outward, nearly all stiction.
     "bolt": {"hinge": False, "opening": "side", "travel_m": 0.06,
              "weights": (0.1, 0.9, 0.0), "preload": 0.5, "kinetic": 0.6},
+    # Opt-in (`--mech_kinds lever ...`), frozen 2026-09-25 before the lever training was scored: a combiner box's
+    # door handle. Grasped 8 cm out on a spindle that points at the robot, turned down 60 degrees against a return
+    # spring preloaded to a fifth of its force at the stop (the combiner's quarter-torque preload at 0 degrees of
+    # 60), a little stiction. Square to the box, then with the robot 30 degrees to the spindle's side (the late
+    # turn a pull) and to the tip's side (a push). Scored at `LEVER_EVAL_LEVELS_N`, not the 10-80 N levels.
+    "lever": {"hinge": True, "opening": "down", "radius_m": 0.08, "angle_rad": math.radians(60.0),
+              "axis": "lever", "stance_deg": 0.0, "weights": (0.85, 0.15, 0.0), "preload": 0.2, "kinetic": 0.7},
+    "lever_spindle_side": {"hinge": True, "opening": "down", "radius_m": 0.08, "angle_rad": math.radians(60.0),
+                           "axis": "lever", "stance_deg": 30.0, "weights": (0.85, 0.15, 0.0), "preload": 0.2,
+                           "kinetic": 0.7},
+    "lever_tip_side": {"hinge": True, "opening": "down", "radius_m": 0.08, "angle_rad": math.radians(60.0),
+                       "axis": "lever", "stance_deg": -30.0, "weights": (0.85, 0.15, 0.0), "preload": 0.2,
+                       "kinetic": 0.7},
 }
+LEVER_EVAL_KINDS = ("lever", "lever_spindle_side", "lever_tip_side")
+#: The high-handle lever test (`mech_eval --lever_high`), frozen 2026-09-25 before any policy was scored on it: the same
+#: levers with the handle at and above the combiner demo's 0.68 m, 0.35 m ahead of the goal sphere's centre (the reach
+#: that keeps 0.9 m inside its 0.58 m radius).
+LEVER_HIGH_HEIGHTS_M = (0.60, 0.70, 0.80, 0.90)
+LEVER_HIGH_BEARINGS_RAD = (-0.4, 0.0, 0.4)
+LEVER_HIGH_REACH_M = 0.35
+LEVER_EVAL_LEVELS_N = (5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0)
 #: What `mech_eval` runs unless told otherwise: the four the comparisons are made on.
 EVAL_DEFAULT_KINDS = ("drawer", "latch", "door", "button")
 
@@ -276,6 +326,16 @@ TEST_REACH_M = 0.42
 TEST_CONDITIONS = {"mass_kg": 2.0, "grasp_k": 1400.0, "speed_m_s": 0.15, "damping_n_s_m": 12.0}
 DEV_CONDITIONS = {"mass_kg": EVAL_MASS_KG, "grasp_k": GRASP_STIFFNESS, "speed_m_s": EVAL_SPEED_M_S,
                   "damping_n_s_m": EVAL_DAMPING_N_S_M}
+
+
+def lever_high_handle_spheres() -> list[tuple[float, float, float]]:
+    """(radius, pitch, yaw) about the goal-sphere centre for each high-handle lever placement."""
+    out = []
+    for height in LEVER_HIGH_HEIGHTS_M:
+        for bearing in LEVER_HIGH_BEARINGS_RAD:
+            dz = height - hook_cfg.GOAL_CENTRE_HEIGHT_M
+            out.append((math.hypot(LEVER_HIGH_REACH_M, dz), math.atan2(dz, LEVER_HIGH_REACH_M), bearing))
+    return out
 
 
 def test_handle_spheres() -> list[tuple[float, float, float]]:

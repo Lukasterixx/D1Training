@@ -65,6 +65,9 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
 
     #: Filled in by the launcher once the welded USD has been built.
     robot_usd: str = ""
+    #: Joints the articulation may carry beyond UniFP's 20, driven by nothing the policy sends (the insertion
+    #: demo's compliant key: `demos/insertion/key.py`). Named, so an unexpected joint still raises.
+    passive_joints: tuple[str, ...] = ()
 
     #: The controlled point, from `task_cfg` -- **not** `interface`'s, which records what the
     #: released checkpoints were trained against. See `task_cfg.TOOL_BODY` for why they differ.

@@ -1,0 +1,63 @@
+{
+  "id": "20260926T182654_train_seed1_ins_v11",
+  "title": "Insertion v11: from v10 21,400 with rewards on the true targets (stopped ~22,250: worse, 16/96 at 22,200)",
+  "notes": "",
+  "week": 2,
+  "recorded_at": "2026-09-27T05:16:36+10:00",
+  "started_utc": "2026-09-26T18:26:54+00:00",
+  "source_dir": "logs/unifp_train/20260926T182654_train_seed1_ins_v11",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2500,
+  "steps": 100,
+  "git_commit": "d699492540909056450c7a13d17df1a7372cf3da",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 22233,
+  "final_checkpoint": {
+    "file": "model_22233.pt",
+    "sha256": "1bada278eaa59a4114ac7518f196d83335dea5d992382921d1e74ee6981a4569"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 282.3804931640625,
+      "last_step": 22233,
+      "mean_last_10": 276.14337768554685,
+      "min": 2.830817699432373,
+      "max": 302.1827087402344,
+      "points": 834
+    },
+    "Train/mean_episode_length": {
+      "last": 956.2100219726562,
+      "last_step": 22233,
+      "mean_last_10": 944.0619934082031,
+      "min": 12.84000015258789,
+      "max": 994.9299926757812,
+      "points": 834
+    },
+    "Policy/mean_std": {
+      "last": 0.3569507598876953,
+      "last_step": 22233,
+      "mean_last_10": 0.35706462860107424,
+      "min": 0.3569507598876953,
+      "max": 0.3731539249420166,
+      "points": 834
+    },
+    "Perf/total_fps": {
+      "last": 21058.0,
+      "last_step": 22233,
+      "mean_last_10": 22702.8,
+      "min": 19501.0,
+      "max": 31300.0,
+      "points": 834
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

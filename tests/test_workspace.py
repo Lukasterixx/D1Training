@@ -3,7 +3,12 @@ import unittest
 
 import numpy as np
 
+from mount import ARM_MOUNT_POS_M, LEGACY_ARM_MOUNT_POS_M
 from position_only import workspace
+
+#: The zero-pose positions below were measured with the arm at the legacy mount; the arm is rigid on its base, so at
+#: the measured mount (F-117) they move by exactly the mount's shift.
+MOUNT_SHIFT = np.array(ARM_MOUNT_POS_M) - np.array(LEGACY_ARM_MOUNT_POS_M)
 
 
 class WorkspaceModelTests(unittest.TestCase):
@@ -18,9 +23,9 @@ class WorkspaceModelTests(unittest.TestCase):
         self.assertAlmostEqual(moving, 0.987, places=3)  # weld.py: "~1.0 kg of moving arm"
 
     def test_zero_pose_puts_link6_forward_at_the_target_box_height(self):
-        # Pinned to the value the simulator reproduced to 0.6 um in the Week 1 verify run.
+        # Pinned to the value the simulator reproduced to 0.6 um in the Week 1 verify run (at the legacy mount).
         frames, _, _ = workspace.forward(self.joints, np.zeros((1, 6)))
-        np.testing.assert_allclose(frames["Link6"][1][0], [0.2804, -0.0013, 0.4999], atol=1e-4)
+        np.testing.assert_allclose(frames["Link6"][1][0], np.array([0.2804, -0.0013, 0.4999]) + MOUNT_SHIFT, atol=1e-4)
 
     def test_gravity_torque_is_the_gradient_of_potential_energy(self):
         q = np.random.default_rng(3).uniform(-1.0, 1.0, size=(4, 6))
@@ -47,7 +52,8 @@ class WorkspaceModelTests(unittest.TestCase):
 
         np.testing.assert_allclose(workspace.pincer_tip(TOOL_BODY), TOOL_OFFSET_M, atol=6e-5)
         frames, _, _ = workspace.forward(self.joints, np.zeros((1, 6)))
-        np.testing.assert_allclose(workspace.tool_position(frames)[0], [0.4057, -0.0139, 0.4995], atol=1e-4)
+        np.testing.assert_allclose(workspace.tool_position(frames)[0], np.array([0.4057, -0.0139, 0.4995]) + MOUNT_SHIFT,
+                                   atol=1e-4)
 
     def test_opening_the_jaw_slides_each_pincer_outwards_along_link6_y(self):
         q = np.zeros((1, 6))

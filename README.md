@@ -175,7 +175,9 @@ mismatch here shows up as topics that simply never arrive.
 
 The robot model itself comes from `description/go2_d1.urdf`, a **generated** merge
 of P2Dingo's Go2 description and `d1_arm/d1.urdf`, joined at the same
-`ARM_MOUNT_Z` the weld uses, with the Go2's meshes copied in beside the arm's.
+mount the weld uses (`mount.py`, measured off Unitree's CAD: F-117), with the Go2's meshes copied in beside the arm's.
+The Go2 EDU's Jetson expansion dock and the rails the arm stands on are drawn on the trunk, from the same CAD
+(`dock.py`). They are visual only, in RViz and in the sim.
 See [description/README.md](description/README.md) — including how to regenerate
 it, and why the arm draws in orange.
 
@@ -350,7 +352,8 @@ error is small. Real per-link inertials would still be better.
 | --- | --- |
 | `main.py` | argument parsing, launches Isaac Sim, hands off to `sim.py` |
 | `sim.py` | teleop keybinds, the sim loop, and the `--selftest` harness |
-| `weld.py` | URDF import + the go2/D1 weld; mass and effort rescaling |
+| `weld.py` | URDF import + the go2/D1 weld; mass and effort rescaling; draws the expansion dock |
+| `mount.py`, `dock.py` | where the D1 sits on the Go2 (F-117), and the expansion dock and rails it sits on (visual) |
 | `ros2.py` | the L1 lidar, and the state publishers RViz needs |
 | `description/` | the URDF + meshes + RViz layout for `run_rviz.sh` |
 | `flat_env_cfg.py` | flat-plane scene, and the leg-scoped obs/action terms |

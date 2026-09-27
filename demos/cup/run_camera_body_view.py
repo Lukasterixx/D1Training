@@ -10,6 +10,7 @@ held in the pose the pick observes from.
     ./demos/cup/run_camera_body_view.sh --mount_pos -0.05 0.0 0.04 --mount_pitch_deg 25
     ./demos/cup/run_camera_body_view.sh --pose observe         # the arm where the pick looks from (default)
     ./demos/cup/run_camera_body_view.sh --pose zero            # every joint at zero, easiest to measure against
+    ./demos/cup/run_camera_body_view.sh --look_at dock         # the expansion dock and rails the arm stands on
 
 Each view is saved under its own name, and `run.json` records the mount that produced them, so a render
 can be compared with a later one after the mount is corrected -- and so `./dashboard.py record` takes it
@@ -24,6 +25,7 @@ from datetime import datetime, timezone
 import json
 import math
 from pathlib import Path
+import sys
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -45,6 +47,17 @@ VIEWS = (
     ("above", (0.02, 0.0, 0.20)),
     ("three_quarter", (0.13, -0.13, 0.10)),
 )
+
+# `--look_at dock`: where to stand relative to the middle of the Go2 EDU's expansion dock (`dock.py`), in the base
+# frame. Far enough back to see the dock whole, its rails and the D1's base on them.
+DOCK_VIEWS = (
+    ("dock_side", (0.0, -0.42, 0.10)),
+    ("dock_rear_three_quarter", (-0.32, -0.28, 0.22)),
+    ("dock_rear", (-0.42, 0.0, 0.08)),
+    ("dock_front_three_quarter", (0.30, 0.30, 0.20)),
+    ("dock_and_arm", (-0.55, -0.80, 0.55)),   # far enough to fit the whole arm above the dock
+)
+DOCK_CENTRE_M = (-0.025, 0.0, 0.072)   # the middle of its bounds, 57 to 85.5 mm up
 
 OBSERVE_POSE_RAD = (0.0, 0.10, 0.83, 0.0, 0.16, 0.0)   # the pick's first viewpoint, from a recorded run
 
@@ -111,7 +124,7 @@ def run(args) -> int:
         robot_usd = str(Path(args.robot_usd).resolve()) if args.robot_usd else build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"), out_usd_path=str(out_dir / "assets/go2_d1.usd"),
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+            arm_mass_kg=3.152).usd_path
         cup = build_cup_usd(args.cup_usdz, ROOT / "generated/pick_demo")
         body_info = None if args.no_camera_body else build_camera_usd(ROOT / "generated/pick_demo")
         cfg = make_pick_cfg(robot_usd, cup["usd_path"], model, mount, (0.42, 0.03), 0.0,
@@ -147,9 +160,10 @@ def run(args) -> int:
         print(f"[view] camera optical origin:          {np.round(optical[:3, 3], 4).tolist()} m", flush=True)
 
         overview = env.scene["overview_cam"]
-        centre_w = origin + base_pos + link6[:3, 3]
+        on_dock = args.look_at == "dock"
+        centre_w = origin + base_pos + (np.asarray(DOCK_CENTRE_M) if on_dock else link6[:3, 3])
         saved = []
-        for name, offset in VIEWS:
+        for name, offset in (DOCK_VIEWS if on_dock else VIEWS):
             eye = centre_w + np.asarray(offset, dtype=float)
             overview.set_world_poses_from_view(
                 torch.tensor([eye], device=env.device, dtype=torch.float32),
@@ -168,7 +182,8 @@ def run(args) -> int:
             "status": "complete", "mode": "camera_body_view", "seed": args.seed,
             "arguments": vars(args),
             "git_commit": git_output("rev-parse", "HEAD"), "git_status": git_output("status", "--short"),
-            "task": "wrist camera body render", "learning": None,
+            "task": "expansion dock render" if on_dock else "wrist camera body render", "learning": None,
+            "look_at": args.look_at,
             "captured_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "mount": mount_to_dict(mount, mount_source),
             "mount_file": mount_file,
@@ -214,6 +229,8 @@ def main() -> int:
                              "'none' forces --mount_pos/--mount_pitch_deg instead.")
     parser.add_argument("--no_camera_body", action="store_true", help="Render the wrist without the camera drawn.")
     parser.add_argument("--pose", choices=("observe", "zero"), default="observe")
+    parser.add_argument("--look_at", choices=("wrist", "dock"), default="wrist",
+                        help="Photograph the wrist (default) or the expansion dock and rails the arm stands on.")
     parser.add_argument("--settle_steps", type=int, default=120)
     parser.add_argument("--frames_per_view", type=int, default=4)
     parser.add_argument("--width", type=int, default=900)

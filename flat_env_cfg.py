@@ -49,9 +49,10 @@ LEG_JOINTS = [".*_hip_joint", ".*_thigh_joint", ".*_calf_joint"]
 D1_ARM_JOINTS = [f"Joint{i}" for i in range(1, 7)]
 D1_GRIPPER_JOINTS = ["Joint7_1", "Joint7_2"]
 
-# Arm base offset from the Go2's base link. Same value as Rescue's ARM_MOUNT_Z,
-# so the reach clamps and IK targets ported from there still mean what they say.
-ARM_MOUNT_Z = 0.08
+# Arm base offset from the Go2's base link: the measured mount on the expansion-dock rails (`mount.py`, F-117). Rescue's
+# was 0.08, which the reach clamps and IK targets ported from there were written against; the new height is 5.5 mm up.
+from mount import ARM_MOUNT_POS_M  # noqa: E402
+ARM_MOUNT_Z = ARM_MOUNT_POS_M[2]
 
 # Drive gains. Neither of these is Rescue's, and both changes are bug fixes.
 #

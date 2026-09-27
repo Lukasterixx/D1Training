@@ -392,11 +392,14 @@ class PivotSearchTests(unittest.TestCase):
         self.assertTrue(grasp.sightline_clear(self.survey.camera_pose_b[:3, 3], middle))
         self.assertTrue(self.in_view(self.survey.q, 0.42, 0.0))
         # The pose is described from the arm's mount alone: 20 cm ahead of it and 0.335 m above it, which
-        # with the Go2 settled lying is the 0.50 m above the floor the pose was chosen at.
+        # with the Go2 settled lying is the 0.50 m above the floor the pose was chosen at -- with the arm at the
+        # legacy mount. At the measured one (F-117) the whole pose rides the mount's shift up with it.
+        from mount import ARM_MOUNT_POS_M, LEGACY_ARM_MOUNT_POS_M
+        shift = (np.array(ARM_MOUNT_POS_M) - np.array(LEGACY_ARM_MOUNT_POS_M)) @ up
         cam = self.survey.camera_pose_b[:3, 3]
         self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ up), 0.335, delta=0.005)
         self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ self.heading), 0.20, delta=0.005)
-        self.assertAlmostEqual(float(cam @ up) + self.LYING_HEIGHT, 0.50, delta=0.005)
+        self.assertAlmostEqual(float(cam @ up) + self.LYING_HEIGHT, 0.50 + float(shift), delta=0.005)
 
     def run_search(self, azimuth_deg, sweep_deg, range_m=0.44, sweep_mode="stops", measurable=True):
         """A pick against a perception that sees the cup whenever `in_view` says so. `measurable=False` still

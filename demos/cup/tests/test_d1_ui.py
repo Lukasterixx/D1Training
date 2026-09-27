@@ -102,7 +102,8 @@ class ModelJsonTests(unittest.TestCase):
     def test_d1_chain_is_complete_and_mounted(self):
         d1 = self.model["d1"]
         self.assertEqual(d1["arm_joints"], [f"Joint{i}" for i in range(1, 7)])
-        self.assertEqual(d1["mount"], [0.0, 0.0, 0.08])
+        from mount import ARM_MOUNT_POS_M
+        self.assertEqual(d1["mount"], list(ARM_MOUNT_POS_M))
         names = {j["name"] for j in d1["joints"]}
         self.assertTrue({"Joint1", "Joint6", "Joint7_1", "Joint7_2"} <= names)
         for link in ("base_link", "Link1", "Link6", "Link7_1"):
