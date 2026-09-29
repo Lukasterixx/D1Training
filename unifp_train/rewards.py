@@ -102,6 +102,23 @@ class TaskState:
     ins_reach_error: torch.Tensor | None = None     # (N,) the jaw centre's miss: to its goal, or across the axis once in, m
     ins_active: torch.Tensor | None = None          # (N,) 1.0 in an episode with a slot
     ins_holding: torch.Tensor | None = None         # (N,) 1.0 while its goal is held: at the pre-insertion pose or inserting
+    # --- read only by the pressing task (`press_rewards.py`).
+    press_error: torch.Tensor | None = None         # (N,) the tool tip's depth minus the task layer's reference, m
+    press_pressing: torch.Tensor | None = None      # (N,) 1.0 while the layer presses (before its hold)
+    press_pressed: torch.Tensor | None = None       # (N,) 1.0 while the cap is at its full travel
+    press_contact_n: torch.Tensor | None = None     # (N,) every contact normal force on the tool, summed, N
+    press_lateral_n: torch.Tensor | None = None     # (N,) force on the tool across the estimated axis, N
+    press_reach_error: torch.Tensor | None = None   # (N,) the tool tip's miss: to its goal, or across the axis once started, m
+    press_active: torch.Tensor | None = None        # (N,) 1.0 in an episode with a button
+    press_holding: torch.Tensor | None = None       # (N,) 1.0 while its goal is held: at the pre-press pose or pressing
+    # --- read only by the wiping task (`wipe_rewards.py`).
+    wipe_track_error: torch.Tensor | None = None    # (N,) the pad centre's miss: to its goal, or in the plane once wiping, m
+    wipe_wiping: torch.Tensor | None = None         # (N,) 1.0 while the layer wipes along the path
+    wipe_contact: torch.Tensor | None = None        # (N,) 1.0 while the pad presses the surface with at least the contact force
+    wipe_normal_n: torch.Tensor | None = None       # (N,) the surface's normal force on the pad, N
+    wipe_vel_error_w: torch.Tensor | None = None    # (N, 3) the pad's velocity minus the path reference's, world
+    wipe_active: torch.Tensor | None = None         # (N,) 1.0 in an episode with a surface
+    wipe_holding: torch.Tensor | None = None        # (N,) 1.0 while its goal is held: at the pre-contact pose or wiping
     # --- the roll's true target where a task layer's loop shifts the command (insertion, `--ins_true_targets`).
     roll_true: torch.Tensor | None = None           # (N,) rad
     roll_true_mask: torch.Tensor | None = None      # (N,) bool: score against `roll_true` rather than the command

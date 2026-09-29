@@ -1,0 +1,63 @@
+{
+  "id": "20260929T012752_train_seed1_press_pilot",
+  "title": "Press pilot, stopped at 58 of 400 iterations",
+  "notes": "Aborted on a misread: Press/missed_fraction read 1.0 because no engaged episode had yet reset (runner's random initial lengths); not a defect",
+  "week": 3,
+  "recorded_at": "2026-09-29T11:40:24+10:00",
+  "started_utc": "2026-09-29T01:27:52+00:00",
+  "source_dir": "logs/unifp_train/20260929T012752_train_seed1_press_pilot",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "8e1d39fd3ab83da2ee524d6f88db2633e7b54349",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21258,
+  "final_checkpoint": {
+    "file": "model_21258.pt",
+    "sha256": "f51d94ac254f97207c499276401c24959533ba5869c7ec0d092659c7c8670403"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 150.28823852539062,
+      "last_step": 21258,
+      "mean_last_10": 146.53154449462892,
+      "min": 3.051115036010742,
+      "max": 150.28823852539062,
+      "points": 59
+    },
+    "Train/mean_episode_length": {
+      "last": 986.5900268554688,
+      "last_step": 21258,
+      "mean_last_10": 972.8970092773437,
+      "min": 13.934782981872559,
+      "max": 990.8800048828125,
+      "points": 59
+    },
+    "Policy/mean_std": {
+      "last": 0.3779122531414032,
+      "last_step": 21258,
+      "mean_last_10": 0.3783306568861008,
+      "min": 0.3779122531414032,
+      "max": 0.37921085953712463,
+      "points": 59
+    },
+    "Perf/total_fps": {
+      "last": 35112.0,
+      "last_step": 21258,
+      "mean_last_10": 34471.5,
+      "min": 32802.0,
+      "max": 38433.0,
+      "points": 59
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -9,6 +9,11 @@ working targets, not confirmed university submission dates. Numerical gates are
 **proposed engineering targets**; freeze task-specific values by Week 2 and
 contact calibration by Week 3, before substantive comparisons.
 
+Updated 29 September 2026 (Lukas): **key insertion is included as a thesis task**
+alongside pressing, the lever/box sequence and wiping. The
+[contact-task progression](#contact-task-progression) now says where each task is
+built in simulation and how far it has got.
+
 ## Immediate objective
 
 Deliver a repeatable, AprilTag-guided combiner-box demonstration on the physical
@@ -47,7 +52,9 @@ contains verified repositories, initial findings and reproduction experiments.
   force commands to the learned controller. Whole-body coordination may use
   stance/posture changes; long-distance autonomous navigation is outside B.
 - **Core experiments:** pressing as the force-calibration task, the box/lever
-  sequence as the application, and P0–P4 on declared applicable tasks. Aim for
+  sequence as the application, key insertion as the second way into a box (a
+  door with a key slot, into which a removable handle is pushed and then
+  turned, instead of a lever), and P0–P4 on declared applicable tasks. Aim for
   at least two tool configurations with held-out geometry/mass variations for
   P3/P4; different tools on different tasks alone do not demonstrate tool
   generalisation. Keep three training seeds for the reduced simulation matrix
@@ -282,12 +289,13 @@ fixture calibration. Use the same definitions for all policies.
 
 ## Contact-task progression
 
-| Task | Initial simulation | Thesis A success requirement to preserve |
-| --- | --- | --- |
-| Pressing, B calibration/comparison | Spring-loaded button with travel and spring/damping parameters; bare end effector, then rounded probe | Full button travel and engaged for 1 s; report force error/peak, time and failure reason |
-| Lever and box opening, B application | Measured latch/lever and door/lid articulation, resisting load and tool engagement; implement each phase before joining the sequence | Preserve Table 4's commanded angle with engagement. Additionally verify latch release, declared door/lid opening, tool withdrawal and final state for the box demonstration |
-| Wiping, B extension or C | Planar fixture with known normal; slow prescribed path; rigid pad initially | ≥90% path completion and ≥80% contact during motion |
-| Scraping, C unless core completes early | Prescribed tangential resistance and plastic tool model | ≥90% path completion with at most one brief contact loss |
+| Task | Initial simulation | Success requirement to preserve | Built in simulation (29 Sep) |
+| --- | --- | --- | --- |
+| Pressing, B calibration/comparison | Spring-loaded button with travel and spring/damping parameters; bare end effector, then rounded probe | Thesis A: full button travel and engaged for 1 s; report force error/peak, time and failure reason | `run_unifp_train.py --task press` (`unifp_train/pressing.py`, `press_*.py`): analytic button (preload, spring, damping, click, stop, recessed rim), bare jaws and 6 mm probe, task-layer force law; frozen `press_eval` sets `panel`, `force`, `recessed` (frozen 2026-09-29). A 400-iteration pilot only: panel 49/96, force 20/48, recessed 23/72 (F-123) |
+| Lever and box opening, B application | Measured latch/lever and door/lid articulation, resisting load and tool engagement; implement each phase before joining the sequence | Thesis A: preserve Table 4's commanded angle with engagement. Additionally verify latch release, declared door/lid opening, tool withdrawal and final state for the box demonstration | `--task mechanism` (`mechanism.py`, `mech_*.py`) and the combiner demos (`demos/combiner`, IK reference; `demos/unifp --mech`, learned). Trained: F-108–F-115 |
+| Key insertion, B application (a box with a key slot) | Keyed slot with chamfer, detent and seat on a door; held key, rigid or in a compliant grip; slot pose from an estimate with a declared error | Added in B, no Thesis A requirement: key seated through the keyed channel with no damage and no fall; report time to seat, peak contact and lateral force, whether the search was needed, and failure reason. The turn after the push is a later phase | `--task insertion` (`insertion.py`, `insert_*.py`) and a PhysX check (`demos/insertion`). Trained: F-116, F-119–F-122 |
+| Wiping, B extension or C | Planar fixture with known normal; slow prescribed path; rigid pad initially | Thesis A: ≥90% path completion and ≥80% contact during motion | `--task wipe` (`wiping.py`, `wipe_*.py`): rigid disc pad meeting the panel at nine points, straight and zigzag paths, task-layer force laws along the normal and the path; frozen `wipe_eval` set (frozen 2026-09-29). A 400-iteration pilot only: 16/36, limited by the rigid pad's tilt (F-124) |
+| Scraping, C unless core completes early | Prescribed tangential resistance and plastic tool model | Thesis A: ≥90% path completion with at most one brief contact loss | Not built |
 
 Pressing provides an early force experiment while the box fixture is developed
 in parallel. This changes the earlier pressing/wiping-first task selection to
@@ -297,6 +305,20 @@ bare-finger inability to engage a lever is an access limitation, not proof of
 inferior control. Use pressing for matched bare/tool comparisons and identical
 applicable tool distributions for P3/P4. If tool diversity is insufficient in B,
 label H3 evidence preliminary and complete the broader study in C.
+
+Key insertion is part of the box application: many combiner boxes have a key
+slot rather than a lever, and a removable handle is pushed into it and turned.
+Like the lever, it needs a tool (the key), so a bare-hand P0/P1 cannot attempt
+it. Declare it tool-only, as the lever is. The simulated push works (F-122).
+The turn, a real key's grip and a measured slot do not exist yet, and nothing
+has been attempted on hardware. The physical demonstration stays the lever box
+unless Lukas decides otherwise.
+
+The simulation builds in the table are analytic plants stepped at the physics
+rate, not PhysX contact. Their stiffnesses, forces and friction are invented,
+not measured (the key insertion alone has a PhysX check). They give each task a
+definition, frozen tests and a training environment. They are not calibration:
+G2's fixture calibration still needs measured buttons, panels and slots.
 
 ## Controlled training and testing
 

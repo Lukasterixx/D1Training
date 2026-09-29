@@ -1,0 +1,63 @@
+{
+  "id": "20260929T020153_train_seed1_press_pilot_c",
+  "title": "Press pilot, 400 iterations at a pinned 1e-5 rate, from insertion 21200",
+  "notes": "First-update KL 0.015 (vs 197 adaptive); reached full travel in 71%->94% of training episodes; curriculum never promoted (a continuous 1 s hold never logged under exploration noise)",
+  "week": 3,
+  "recorded_at": "2026-09-29T12:23:31+10:00",
+  "started_utc": "2026-09-29T02:01:53+00:00",
+  "source_dir": "logs/unifp_train/20260929T020153_train_seed1_press_pilot_c",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "8e1d39fd3ab83da2ee524d6f88db2633e7b54349",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21599,
+  "final_checkpoint": {
+    "file": "model_21599.pt",
+    "sha256": "b348792a3a994d142d8238beefabb409c0e3aebdc3ddb57fce865c210635964a"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 264.132080078125,
+      "last_step": 21599,
+      "mean_last_10": 258.56890258789065,
+      "min": 3.051115036010742,
+      "max": 264.31280517578125,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 21599,
+      "mean_last_10": 989.827001953125,
+      "min": 13.934782981872559,
+      "max": 999.0,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.35769888758659363,
+      "last_step": 21599,
+      "mean_last_10": 0.35802043676376344,
+      "min": 0.35769888758659363,
+      "max": 0.3779872953891754,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 33240.0,
+      "last_step": 21599,
+      "mean_last_10": 33064.2,
+      "min": 30720.0,
+      "max": 36413.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

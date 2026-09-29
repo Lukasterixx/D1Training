@@ -1,0 +1,30 @@
+{
+  "id": "20260929T013832_train_seed1_insertion_dbg_runner",
+  "title": "Insertion debug: runner policy vs eval loader (control)",
+  "notes": "Identical actions; deterministic 36 mm, sampled 47 mm: pressing behaves like insertion",
+  "week": 3,
+  "recorded_at": "2026-09-29T11:40:24+10:00",
+  "started_utc": "2026-09-29T01:38:32+00:00",
+  "source_dir": "/tmp/claude-1001/-home-victor-D1Training/c0e44f0a-a7d9-4381-8996-c4ef3063071a/scratchpad/dbg_runs/20260929T013832_train_seed1_insertion_dbg_runner",
+  "mode": "train",
+  "seed": 1,
+  "status": "running",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 5,
+  "steps": 100,
+  "git_commit": "8e1d39fd3ab83da2ee524d6f88db2633e7b54349",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": null,
+  "final_checkpoint": {
+    "file": "model_21200.pt",
+    "sha256": "0a0e23fae238ec07ae3fd42eb90a09d3f6c52c2886889d9cb3e86dc0c4f5bde4"
+  },
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

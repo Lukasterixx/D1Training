@@ -1,0 +1,63 @@
+{
+  "id": "20260929T013554_train_seed1_press_dbg64",
+  "title": "Press debug: 40-iteration training, 64 envs",
+  "notes": "Same missed_fraction 1.0 at 64 envs, so not the environment count",
+  "week": 3,
+  "recorded_at": "2026-09-29T11:40:24+10:00",
+  "started_utc": "2026-09-29T01:35:54+00:00",
+  "source_dir": "/tmp/claude-1001/-home-victor-D1Training/c0e44f0a-a7d9-4381-8996-c4ef3063071a/scratchpad/dbg_runs/20260929T013554_train_seed1_press_dbg64",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 40,
+  "steps": 100,
+  "git_commit": "8e1d39fd3ab83da2ee524d6f88db2633e7b54349",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21239,
+  "final_checkpoint": {
+    "file": "model_21239.pt",
+    "sha256": "51fd623e22d7fd983cecc817075581a7cf05cb0b7c0816dca0d1225174065859"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 28.556215286254883,
+      "last_step": 21239,
+      "mean_last_10": 24.679978370666504,
+      "min": 0.3123905658721924,
+      "max": 28.556215286254883,
+      "points": 40
+    },
+    "Train/mean_episode_length": {
+      "last": 208.89999389648438,
+      "last_step": 21239,
+      "mean_last_10": 184.64799957275392,
+      "min": 2.0,
+      "max": 208.89999389648438,
+      "points": 40
+    },
+    "Policy/mean_std": {
+      "last": 0.37888213992118835,
+      "last_step": 21239,
+      "mean_last_10": 0.37888667583465574,
+      "min": 0.37833887338638306,
+      "max": 0.3789204955101013,
+      "points": 40
+    },
+    "Perf/total_fps": {
+      "last": 2301.0,
+      "last_step": 21239,
+      "mean_last_10": 2352.3,
+      "min": 1791.0,
+      "max": 2566.0,
+      "points": 40
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

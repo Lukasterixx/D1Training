@@ -1,0 +1,63 @@
+{
+  "id": "20260929T022310_train_seed1_wipe_pilot_c",
+  "title": "Wipe pilot, 400 iterations at a pinned 1e-5 rate, from insertion 21200",
+  "notes": "First-update KL 0.016; training success 0 -> 56%, contact during motion 16% -> 68%, curriculum 0.2 -> ~0.4",
+  "week": 3,
+  "recorded_at": "2026-09-29T12:44:41+10:00",
+  "started_utc": "2026-09-29T02:23:10+00:00",
+  "source_dir": "logs/unifp_train/20260929T022310_train_seed1_wipe_pilot_c",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "8e1d39fd3ab83da2ee524d6f88db2633e7b54349",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21599,
+  "final_checkpoint": {
+    "file": "model_21599.pt",
+    "sha256": "c8487ca4a4b03e6a0d5f71dc7551acfb5e67ffee1d4d8790398658a8354df553"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 257.80682373046875,
+      "last_step": 21599,
+      "mean_last_10": 262.7055419921875,
+      "min": 2.7399094104766846,
+      "max": 274.9617614746094,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 969.9400024414062,
+      "last_step": 21599,
+      "mean_last_10": 994.6650024414063,
+      "min": 12.688172340393066,
+      "max": 999.0,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.34743809700012207,
+      "last_step": 21599,
+      "mean_last_10": 0.34774208068847656,
+      "min": 0.34743809700012207,
+      "max": 0.3780084252357483,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 32981.0,
+      "last_step": 21599,
+      "mean_last_10": 32796.3,
+      "min": 28868.0,
+      "max": 36346.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -21,6 +21,10 @@ simulators is not a reliable step.
     ./run_unifp_train.py train --task mechanism --resume_from <model.pt> --iterations 3000 --headless
     ./run_unifp_train.py smoke --task insertion --num_envs 64 --steps 600 --headless        # a key into a slot
     ./run_unifp_train.py ins_eval --task insertion --checkpoint <model.pt> --headless [--ins_set detent]
+    ./run_unifp_train.py smoke --task press --num_envs 64 --steps 600 --headless            # a spring-loaded button
+    ./run_unifp_train.py press_eval --task press --checkpoint <model.pt> --headless [--press_set force]
+    ./run_unifp_train.py smoke --task wipe --num_envs 64 --steps 900 --headless             # a pad along a path
+    ./run_unifp_train.py wipe_eval --task wipe --checkpoint <model.pt> --headless
 
 `smoke` and `play` step the environment directly and report shapes and reward scale. `train`
 builds the rsl-rl runner around it: `unifp_train.models.UniFPActor` for the adaptation-module
@@ -51,19 +55,35 @@ ROOT = Path(__file__).resolve().parent
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval", "ins_eval"),
+    parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval", "ins_eval",
+                                         "press_eval", "wipe_eval"),
                         help="'play' drives the new environment with an existing UniFP checkpoint, "
                              "which checks the whole loop -- observation, action mapping, reward -- "
                              "against a policy already known to work on this robot. 'train' runs "
                              "PPO with the adaptation module. 'manifest' freezes an "
                              "evaluation set; 'eval' scores a policy against one.")
-    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion"), default="unifp",
+    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion", "press", "wipe"), default="unifp",
                         help="'unifp' is UniFP's task as ported. 'hook' adds a fixture: a handle the "
                              "claw pulls or a button the pad presses, loaded with tens of newtons "
                              "(unifp_train/hook_env.py). 'mechanism' has the claw holding a drawer, "
                              "latch, door or button whose resistance is never observed, and commands "
-                             "only where the handle should go (unifp_train/mech_env.py). Same "
-                             "observation and action widths, so a UniFP checkpoint resumes into either.")
+                             "only where the handle should go (unifp_train/mech_env.py). 'insertion' pushes "
+                             "a held key into a keyed slot (insert_env.py); 'press' presses a spring-loaded "
+                             "button with the bare jaws or a probe (press_env.py); 'wipe' wipes a pad along a "
+                             "path on a panel at a set force (wipe_env.py). Same observation and action "
+                             "widths, so a UniFP checkpoint resumes into any of them.")
+    parser.add_argument("--button_fraction", type=float, default=None,
+                        help="'press' only: fraction of episodes with a button (default 0.8).")
+    parser.add_argument("--press_level", type=float, default=None,
+                        help="'press' training: the curriculum's starting level, 0-1 (default 0.2).")
+    parser.add_argument("--press_tools", nargs="+", choices=("bare", "probe"), default=None,
+                        help="'press' training: which tools to draw (default both, equally often).")
+    parser.add_argument("--press_set", choices=("panel", "force", "recessed"), default="panel",
+                        help="'press_eval': the frozen buttons to score (press_cfg.EVAL_*).")
+    parser.add_argument("--wipe_fraction", type=float, default=None,
+                        help="'wipe' only: fraction of episodes with a surface to wipe (default 0.8).")
+    parser.add_argument("--wipe_level", type=float, default=None,
+                        help="'wipe' training: the curriculum's starting level, 0-1 (default 0.2).")
     parser.add_argument("--insertion_fraction", type=float, default=None,
                         help="'insertion' only: fraction of episodes holding a key to a slot (default 0.8).")
     parser.add_argument("--ins_level", type=float, default=None,
@@ -301,6 +321,9 @@ def main() -> int:
     from unifp_train.mech_env import Go2D1MechEnv, Go2D1MechEnvCfg  # noqa: E402
     from unifp_train import insert_cfg  # noqa: E402
     from unifp_train.insert_env import Go2D1InsertEnv, Go2D1InsertEnvCfg  # noqa: E402
+    from unifp_train import press_cfg, wipe_cfg  # noqa: E402
+    from unifp_train.press_env import Go2D1PressEnv, Go2D1PressEnvCfg  # noqa: E402
+    from unifp_train.wipe_env import Go2D1WipeEnv, Go2D1WipeEnvCfg  # noqa: E402
 
     if args.mode == "hook_eval" and args.task != "hook":
         parser.error("hook_eval needs --task hook")
@@ -308,6 +331,10 @@ def main() -> int:
         parser.error("mech_eval needs --task mechanism")
     if args.mode == "ins_eval" and args.task != "insertion":
         parser.error("ins_eval needs --task insertion")
+    if args.mode == "press_eval" and args.task != "press":
+        parser.error("press_eval needs --task press")
+    if args.mode == "wipe_eval" and args.task != "wipe":
+        parser.error("wipe_eval needs --task wipe")
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     suffix = f"_{args.run_name}" if args.run_name else ""
@@ -325,8 +352,8 @@ def main() -> int:
             mount_pos=mount_pos, arm_mass_kg=3.152,
         ).usd_path
 
-    cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg,
-           "insertion": Go2D1InsertEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
+    cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg, "insertion": Go2D1InsertEnvCfg,
+           "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
     if args.task == "insertion":
         if args.insertion_fraction is not None:
             cfg.insertion_fraction = args.insertion_fraction
@@ -356,13 +383,38 @@ def main() -> int:
             cfg.roll_correction_max_rad = math.radians(args.ins_roll_max_deg)
         if args.no_curriculum:
             cfg.curriculum = False
-    ins_rows = None
+    if args.task == "press":
+        if args.button_fraction is not None:
+            cfg.button_fraction = args.button_fraction
+        if args.press_level is not None:
+            cfg.curriculum_level = args.press_level
+        if args.press_tools:
+            cfg.tools = tuple(args.press_tools)
+        if args.no_curriculum:
+            cfg.curriculum = False
+    if args.task == "wipe":
+        if args.wipe_fraction is not None:
+            cfg.wipe_fraction = args.wipe_fraction
+        if args.wipe_level is not None:
+            cfg.curriculum_level = args.wipe_level
+        if args.no_curriculum:
+            cfg.curriculum = False
+    # The frozen evaluations fix one episode per environment, so the plan sets the environment count.
+    ins_rows = eval_plan = eval_rows = None
     if args.mode == "ins_eval":
         from unifp_train import insert_eval
         ins_plan, ins_rows = insert_eval.build_plan(args.ins_set, "cpu")
-        cfg.scene.num_envs = len(ins_rows)
+        eval_rows = ins_rows
         cfg.episode_length_s = insert_cfg.EVAL_EPISODE_S
-    cfg.scene.num_envs = args.num_envs if ins_rows is None else len(ins_rows)
+    if args.mode == "press_eval":
+        from unifp_train import press_eval
+        eval_plan, eval_rows = press_eval.build_plan(args.press_set, "cpu")
+        cfg.episode_length_s = press_cfg.EVAL_EPISODE_S
+    if args.mode == "wipe_eval":
+        from unifp_train import wipe_eval
+        eval_plan, eval_rows = wipe_eval.build_plan("cpu")
+        cfg.episode_length_s = wipe_cfg.EVAL_EPISODE_S
+    cfg.scene.num_envs = args.num_envs if eval_rows is None else len(eval_rows)
     if args.task == "mechanism":
         for name, value in (("mechanism_fraction", args.mechanism_fraction),
                             ("peak_ceiling_n", args.peak_ceiling),
@@ -431,7 +483,7 @@ def main() -> int:
         cfg.roll_objective = args.roll_objective
     if args.tool_point == "fingertip":
         cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
-    if args.task in ("hook", "mechanism", "insertion"):
+    if args.task in ("hook", "mechanism", "insertion", "press", "wipe"):
         # F-102: the arm's explicit PD chatters at UniFP's 2e-4 armature; see hook_cfg.ARM_ARMATURE_KG_M2.
         armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18]
                            else robot_mod.ARM_ARMATURE) for name in interface.ISAACLAB_NAMES}
@@ -451,10 +503,12 @@ def main() -> int:
         cfg.viewer.eye = (1.6, -1.8, 0.9)
         cfg.viewer.lookat = (0.0, 0.0, 0.3)
 
-    env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv,
-           "insertion": Go2D1InsertEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
+    env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv, "insertion": Go2D1InsertEnv,
+           "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
     if args.mode == "ins_eval":
         env.set_evaluation(ins_plan)
+    if args.mode in ("press_eval", "wipe_eval"):
+        env.set_evaluation(eval_plan)
     if args.mode == "mech_eval":
         from unifp_train import mech_eval
 
@@ -497,7 +551,7 @@ def main() -> int:
         "force_start_iteration": cfg.force_start_step // task_cfg.NUM_STEPS_PER_ENV,
         "roll_objective": cfg.roll_objective,
         "task": args.task,
-        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion")
+        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion", "press", "wipe")
                                else robot_mod.ARM_ARMATURE),
         "fixture": ({name: getattr(cfg, name) for name in (
             "fixture_fraction", "press_fraction", "force_ceiling_n", "force_ceiling_max_n", "curriculum")}
@@ -517,6 +571,19 @@ def main() -> int:
                        "reward_true_targets": cfg.reward_true_targets,
                        "engage_attitude_rad": cfg.engage_attitude_rad, "approach_weight": cfg.approach_weight}
                       if args.task == "insertion" else None),
+        "press": ({"button_fraction": cfg.button_fraction, "tools": list(cfg.tools), "curriculum": cfg.curriculum,
+                   "curriculum_level": cfg.curriculum_level, "curriculum_min_iterations": cfg.curriculum_min_iterations,
+                   "outer_loops": {"tip_gain": cfg.tip_correction_gain, "tip_max_m": cfg.tip_correction_max_m,
+                                   "elevation_gain": cfg.elevation_correction_gain,
+                                   "elevation_max_rad": cfg.elevation_correction_max_rad}}
+                  if args.task == "press" else None),
+        "wipe": ({"wipe_fraction": cfg.wipe_fraction, "curriculum": cfg.curriculum,
+                  "curriculum_level": cfg.curriculum_level, "curriculum_min_iterations": cfg.curriculum_min_iterations,
+                  "pad": wipe_cfg.PAD,
+                  "outer_loops": {"tip_gain": cfg.tip_correction_gain, "tip_max_m": cfg.tip_correction_max_m,
+                                  "elevation_gain": cfg.elevation_correction_gain,
+                                  "elevation_max_rad": cfg.elevation_correction_max_rad}}
+                 if args.task == "wipe" else None),
         "tool_body": cfg.tool_body,
         "tool_offset_m": list(cfg.tool_offset_m),
         "mount_pos_m": (list(args.mount_pos) if args.mount_pos is not None else None) if args.robot_usd else
@@ -543,6 +610,10 @@ def main() -> int:
         report["run_dir"] = str(run_dir)
     elif args.mode == "ins_eval":
         status = ins_evaluate(args, env, obs, report, run_dir, ins_rows)
+        write_json(run_dir / "run.json", report)
+        report["run_dir"] = str(run_dir)
+    elif args.mode in ("press_eval", "wipe_eval"):
+        status = contact_evaluate(args, env, obs, report, run_dir, eval_rows)
         write_json(run_dir / "run.json", report)
         report["run_dir"] = str(run_dir)
     elif args.mode in ("manifest", "eval"):
@@ -599,7 +670,10 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
     hook = hasattr(env, "_fixture")
     mech = hasattr(env, "_mech")
     ins = hasattr(env, "_slot")
+    press = hasattr(env, "_button")
+    wipe = hasattr(env, "_surface")
     ins_engaged, ins_entered, ins_seated, ins_peak, ins_deepest, ins_approach = 0, 0, 0, 0.0, -1.0, []
+    contact_engaged, contact_touching, contact_done, contact_peak, contact_approach = 0, 0, 0, 0.0, []
     engaged_steps, lost, peak_force, peak_command = 0, 0, 0.0, 0.0
     held_steps, torn, peak_grasp, peak_speed, furthest = 0, 0, 0.0, 0.0, 0.0
     for _ in range(args.steps):
@@ -643,6 +717,20 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
                 approach = env._hand_frame_terms()["ee_approach_w"]
                 cos = (approach * env._approach_des_w).sum(-1).clamp(-1.0, 1.0)[env._ins_env]
                 ins_approach.append(torch.rad2deg(torch.acos(cos)))
+        if press or wipe:
+            active = env._press_env if press else env._wipe_env
+            contact_engaged += int(env._engaged.sum())
+            if press:
+                contact_touching += int(env._button.on_cap.sum())
+                contact_done += int(env._button.pressed().sum())
+            else:
+                contact_touching += int(env._surface.in_contact.sum())
+                contact_done += int((env._layer.phase >= 2).sum())
+            contact_peak = max(contact_peak, float(env._step_peak.max()))
+            if bool(active.any()):
+                approach = env._hand_frame_terms()["ee_approach_w"]
+                cos = (approach * env._approach_des_w).sum(-1).clamp(-1.0, 1.0)[active]
+                contact_approach.append(torch.rad2deg(torch.acos(cos)))
 
     report["steps"] = len(rewards_seen)
     report["mean_reward_per_step"] = round(sum(rewards_seen) / max(1, len(rewards_seen)), 5)
@@ -686,6 +774,18 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
                                "deepest_tip_m": round(ins_deepest, 4),
                                "approach_error_deg_median": round(float(stacked.median()), 2),
                                "curriculum_level": env._level}
+    if press or wipe:
+        # Sanity checks on the contact, not results: a peak far past the damage threshold means the penalty rang.
+        stacked = torch.cat(contact_approach) if contact_approach else torch.zeros(1)
+        report["press_rollout" if press else "wipe_rollout"] = {
+            "engaged_env_steps": contact_engaged,
+            ("on_cap_env_steps" if press else "in_contact_env_steps"): contact_touching,
+            ("pressed_env_steps" if press else "finished_env_steps"): contact_done,
+            "peak_contact_n": round(contact_peak, 2), "approach_error_deg_median": round(float(stacked.median()), 2),
+            "curriculum_level": env._level}
+        if wipe:
+            report["wipe_rollout"]["coverage_of_engaged_median"] = (
+                round(float(env.coverage()[env._engaged].median()), 3) if bool(env._engaged.any()) else None)
     report["reward_terms_per_step"] = {
         name: round(float(total.mean()) / max(1, len(rewards_seen)), 6)
         for name, total in env._episode_sums.items()}
@@ -945,6 +1045,62 @@ def ins_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) 
             print(f"  {key[3:]} {list(row.values())[0]}: seated {row['seated']}/{row['of']}  searched {row['searched']}  "
                   f"time {row['time_to_seat_s']}  contact {row['peak_contact_n']}  lateral {row['peak_lateral_n']}  "
                   f"approach {row['approach_err_start_deg']} deg", flush=True)
+    return 0
+
+
+def contact_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) -> int:
+    """Press every planned button or wipe every planned path once, and score it (`press_eval`, `wipe_eval`)."""
+    import numpy as np
+    import torch
+
+    from unifp_isaaclab import interface
+    from unifp_train import eval as evaluation, press_eval, wipe_eval
+
+    scorer, name = (press_eval, "press") if args.mode == "press_eval" else (wipe_eval, "wipe")
+    run_dir.mkdir(parents=True, exist_ok=True)
+    policy = None
+    if not args.zero_actions:
+        policy = evaluation.EvaluablePolicy(args.checkpoint, device=str(env.device))
+        report["checkpoint"] = os.path.abspath(args.checkpoint)
+        report["checkpoint_source"] = policy.source
+        report["checkpoint_iteration"] = policy.iteration
+    controller = "zero actions" if policy is None else os.path.basename(args.checkpoint)
+    report["controller"] = controller
+    report[f"{name}_set"] = args.press_set if name == "press" else "default"
+    report[f"{name}_rows"] = rows
+    report[f"{name}_conditions"] = env._evaluation["conditions"]
+    done = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    trace = {key: [] for key in scorer.FIELDS}
+    with torch.inference_mode():
+        for _ in range(int(env.max_episode_length) - 1):
+            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+                       if policy is None else policy.act(obs["policy"]))
+            obs, _, terminated, truncated, _ = env.step(actions)
+            ended = (terminated | truncated) & ~done
+            step = scorer.record_step(env, done, ended)
+            for key in scorer.FIELDS:
+                trace[key].append(step[key])
+            done |= ended
+            if bool(done.all()):
+                break
+    trace = {key: np.stack(values) for key, values in trace.items()}
+    np.savez_compressed(run_dir / f"{name}_trace.npz", **trace)
+    result = scorer.score(trace, rows)
+    write_json(run_dir / f"{name}_eval.json", result["summary"])
+    write_json(run_dir / f"{name}_eval_episodes.json", {"episodes": result["episodes"]})
+    report["summary"] = result["summary"]
+    report["status"] = "evaluated"
+    s = result["summary"]
+    print(f"\n[{name}_eval {report[f'{name}_set']}] {controller}  success {s['success']}/{s['episodes']}  "
+          f"started {s['started']}  fell {s['fell']}  damaged {s['damaged']}  reasons {s['reasons']}", flush=True)
+    groups = ("by_tool", "by_lateral", "by_force", "by_height") if name == "press" else (
+        "by_kind", "by_offset", "by_force", "by_height")
+    for key in groups:
+        for row in s[key]:
+            extra = (f"time {row['time_to_press_s']}" if name == "press"
+                     else f"completion {row['completion']}  contact {row['contact_fraction']}")
+            print(f"  {key[3:]} {list(row.values())[0]}: success {row['success']}/{row['of']}  {extra}  "
+                  f"force rmse {row['force_rmse_n']}  peak {row['peak_contact_n']}  {row['reasons']}", flush=True)
     return 0
 
 

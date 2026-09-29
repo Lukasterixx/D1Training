@@ -369,7 +369,7 @@ error is small. Real per-link inertials would still be better.
 | `demos/combiner/`, `demos/common/` | randomized combiner-box scene, procedural hinged asset with an AprilTag, the cup pick's wrist RealSense and reach console (`wrist_camera.py`), the tag-guided grip-and-pull, lever push and torque sweep (`apriltag.py`, `pull.py`, `press.py`, `sequence.py`, `turn_run.py`), and the resting robot setup shared with the cup demo |
 | `unifp_go2d1/` | UniFP's whole-body position/force task retargeted to this robot, on the legacy Isaac Gym stack |
 | `unifp_isaaclab/`, `run_unifp_isaaclab.py` | the policy that stack trains, run unchanged on the Isaac Lab model: the sim-to-sim check |
-| `unifp_train/`, `run_unifp_train.py` | that task rebuilt to train natively in Isaac Lab: environment, external forces, adaptation-module actor-critic and PPO. Trained to completion and **better than the ported policy** -- 1.5 cm against 3.9 cm on the same 50 frozen episodes (F-092) |
+| `unifp_train/`, `run_unifp_train.py` | that task rebuilt to train natively in Isaac Lab: environment, external forces, adaptation-module actor-critic and PPO. Trained to completion and **better than the ported policy** -- 1.5 cm against 3.9 cm on the same 50 frozen episodes (F-092). Also the thesis contact tasks on the same policy interface, each with a task layer and a frozen evaluation: `--task mechanism` (the combiner box's lever and door), `--task insertion` (a key into a keyed slot), `--task press` (a spring-loaded button, bare jaws or probe) and `--task wipe` (a pad along a path on a panel). See [its README](unifp_train/README.md) |
 | `checkpoints/` | the two trained policies, with the commands to run them on another machine |
 
 ## Despite the name

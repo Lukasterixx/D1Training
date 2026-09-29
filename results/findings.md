@@ -4411,3 +4411,85 @@ result that changes a conclusion gets a new entry, and the old one is marked
   80/96, then v9 `model_21000` 77, seed 2's `model_21200` 72; all with no damage and no falls (Week 2 log, "The final
   choice").
 
+
+### F-123 — Pressing is built as a thesis task, and the policies this work already has cannot do it: the insertion and mechanism policies hold 27 and 29 of 96 frozen panel buttons for a second, mostly with the probe, and fail by sliding off the cap; the bare jaws cannot reach a small recessed button at all, as declared
+
+- **Status:** provisional (simulation only; analytic button; untrained-for-the-task checkpoints; one frozen set each)
+- **Week:** 3
+- **Date:** 2026-09-29
+- **Evidence:** [Week 3 log, 2026-09-29](week_03/notes.md). `--task press` (`unifp_train/pressing.py`, `press_*.py`): a
+  spring-loaded button (preload, spring, damping, a tactile click, a stop, the rim of its hole) pressed with the bare
+  jaws (a 10 mm sphere 20 mm past the jaw centre) or a probe (a 6 mm ball 70 mm out). A task layer drives it from an
+  estimate and a datasheet; success is the plan's "full travel held 1 s". Frozen sets `panel`, `force` and `recessed`
+  were fixed before any policy was scored. Unchanged checkpoints:
+  - `panel`: [zero actions 0/96](#/week/3/run/20260929T012154_press_eval_seed1_press_panel_zero) (none started);
+    [insertion 21200 27/96](#/week/3/run/20260929T012129_press_eval_seed1_press_panel_ins21200_b) (probe 27/48,
+    bare 0/48; 47 slid off); [mechanism 17499 29/96](#/week/3/run/20260929T012218_press_eval_seed1_press_panel_mech17499)
+    (probe 18, bare 11; 66 slid off). Neither holds any button at 0.86 m (0/32 each).
+  - `force`: [insertion 10/48](#/week/3/run/20260929T012244_press_eval_seed1_press_force_ins21200), only at 5 and
+    10 N; [mechanism 7/48](#/week/3/run/20260929T012309_press_eval_seed1_press_force_mech17499) with **25 damaged**
+    past 100 N, every 20–30 N button among them.
+  - `recessed`: [insertion 15/72](#/week/3/run/20260929T012335_press_eval_seed1_press_recessed_ins21200): probe
+    15/36, bare 0/36, and every bare episode "missed" (never touched the cap).
+  - Why they slide: in the bare jaws' hold the tool carries about 8 N across the axis against 20 N along it. At the
+    friction limit (μ = 0.4) it slides onto the panel.
+- **Scope:**
+  - Simulation only, and the plant is analytic, not PhysX.
+  - The button, its forces and the friction are invented. The bare jaws are a sphere, where the real end faces are two
+    flat fingers.
+  - Neither checkpoint was trained on pressing; this is a baseline, not the task's capability.
+  - `recessed` measures the declared access limitation: the geometry, not the controller, decides the bare result.
+- **Implication:** the task needs its own training. Its first obstacle is the one F-104 met with a pad: the force has to
+  go along the button's axis while the hand holds still across it. The probe's longer reach helps rather than hurts.
+  The mechanism policy's 100 N+ presses on 20–30 N buttons are F-109's missing force limit showing up on a new
+  fixture.
+- **Note, 2026-09-29 (later): a 400-iteration pilot** from the insertion checkpoint at a pinned 1e-5 learning rate
+  ([run](#/week/3/run/20260929T020153_train_seed1_press_pilot_c)) roughly doubles every frozen set:
+  - [panel 49/96](#/week/3/run/20260929T022152_press_eval_seed1_press_panel_pilot_c) (bare 17, probe 32);
+  - [force 20/48](#/week/3/run/20260929T022219_press_eval_seed1_press_force_pilot_c) (5 N 12/12, 10 N 8/12, 20–30 N
+    0/24);
+  - [recessed 23/72](#/week/3/run/20260929T022244_press_eval_seed1_press_recessed_pilot_c) (probe 23/36 with 6
+    damaged; bare 0/36).
+
+  Sliding off the cap is still the main failure. One seed, and the curriculum never promoted. The same pilot at
+  rsl-rl's adaptive rate scored [0/96](#/week/3/run/20260929T020127_press_eval_seed1_press_panel_pilot_b): its first
+  update's KL was 197, the resume problem F-121's log records.
+
+### F-124 — Wiping is built as a thesis task; the insertion policy, untrained for it, keeps the pad on the panel for the whole motion but wipes 90% of the path in only 14 of 36 frozen episodes, because a rigid pad held 8° off the surface presses with its rim
+
+- **Status:** provisional (simulation only; analytic surface; an untrained-for-the-task checkpoint; one frozen set)
+- **Week:** 3
+- **Date:** 2026-09-29
+- **Evidence:** [Week 3 log, 2026-09-29](week_03/notes.md). `--task wipe` (`unifp_train/wiping.py`, `wipe_*.py`):
+  - The pad is a rigid 50 mm disc 45 mm past the jaw centre, meeting the panel at nine points. It follows a straight or
+    zigzag path at a set force on a panel that is nearer, further and tilted from its estimate.
+  - A task layer holds the force along the estimated normal and runs a reference along the path, with a force to push
+    through friction.
+  - Success is the plan's: ≥ 90% of the path wiped (the centre of pressure within 2 cm of it while pressing) and ≥ 80%
+    of the motion in contact. One frozen set of 36 was fixed before any policy was scored.
+  - Results: [zero actions 0/36](#/week/3/run/20260929T012401_wipe_eval_seed1_wipe_zero);
+    [insertion 21200 14/36](#/week/3/run/20260929T012439_wipe_eval_seed1_wipe_ins21200);
+    [mechanism 17499 9/36](#/week/3/run/20260929T012520_wipe_eval_seed1_wipe_mech17499).
+  - The insertion policy finished every path by the layer's measure and kept contact throughout. The normal force was
+    within 2.2 N RMS of the command, peaking at 13 N on 5–10 N commands. All 22 failures were "incomplete".
+  - Why, from the [diagnostic re-run](#/week/3/run/20260929T012649_wipe_eval_seed1_wipe_ins21200_diag): the pad is
+    tilted a median 8.2° (p90 15°) to the true panel while wiping, and the contact sits 9.6 mm (p90 21 mm) off the
+    path. Incomplete episodes average 9.2° against 5.6° for the successful ones.
+  - With an ideal hand the same layer and pad cover 97–100% of a 16 cm stroke on panels up to 4° off
+    (`tests/test_wiping.py`).
+- **Scope:**
+  - Simulation only, and the surface is analytic.
+  - The pad is rigid by the plan's choice. Its stiffness and friction are invented.
+  - The checkpoint was trained on keys, not wiping.
+  - The 2 cm wiping radius is a declared definition, not a measurement of what a real pad cleans.
+- **Implication:** on a fixed panel, the rigid pad's coverage is limited by the hand's attitude, and the command
+  channel cannot fix all of it. Only the approach's elevation is commanded; its azimuth follows the goal's bearing,
+  which swings as the goal runs along the stroke. A compliant or gimballed pad (the next tool the plan names, as the
+  key needed its compliant grip, F-120) should decouple coverage from attitude. It is also the natural second tool for
+  the P3/P4 tool comparison on wiping.
+- **Note, 2026-09-29 (later): a 400-iteration pilot** at a pinned 1e-5 rate
+  ([run](#/week/3/run/20260929T022310_train_seed1_wipe_pilot_c)) learns the training distribution: success from 0 to
+  56% of episodes, contact during motion from 16% to 68%. On the frozen set it scores
+  [16/36](#/week/3/run/20260929T024352_wipe_eval_seed1_wipe_pilot_c_eval) against 14, within noise. All 20 failures are
+  still incomplete, and the pad's median tilt is 6.8° against 7.4°. This is consistent with the implication above:
+  training the rigid-pad task does not remove the tilt.

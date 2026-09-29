@@ -357,3 +357,105 @@ is reachable (0.65-0.95 m up): over the whole goal sphere a commanded orientatio
 
 What it is not: the slot is a model -- a penalty contact, one friction coefficient, a key rigid or sprung in a rigid
 hand -- and the demo inserts the same key in PhysX to check it; the estimate's error is drawn, not measured.
+
+## The pressing task (`--task press`)
+
+The plan's force-calibration task (2026-09-29): a spring-loaded push button on a panel facing the robot, pressed with
+the bare jaws or a probe, from an estimate of where the button is and a datasheet of its force. The same hierarchical
+recipe as the key: a task layer (`pressing.PressTaskLayer`) drives the press, and the whole-body policy is trained with
+it in the loop.
+
+| file | |
+| --- | --- |
+| `pressing.py` | the tools (`TOOLS`: the closed jaws' end faces as a 10 mm sphere 20 mm past the jaw centre; a 6 mm ball 70 mm out), the button (a penalty contact on the tool's sphere: a cap on preload, spring, damping and a click, stopping at its travel; the panel beside it; the rim of its hole, which keeps a wide tip out of a small recessed cap), and the task layer (the tip to a standoff, a PI force law along the estimated axis capped light until something is touched, a steady hold at full travel, a release) -- plain torch, `tests/test_pressing.py` |
+| `press_cfg.py` | where buttons are, their sizes and forces, the curriculum on the estimate's error and the click, the task layer's margins, the rewards, the frozen evaluation |
+| `press_env.py` | `Go2D1PressEnv`: the goal to the pre-press pose with the approach commanded, the button placed off the estimate once the hand is there, the layer's goal and force each step, the insertion's outer loops on the tool's tip and the approach's elevation |
+| `press_rewards.py` | depth against the reference, the tip's precision, pressed, force across the axis, contact above a safe force, damage, the tool's speed while its goal is held |
+| `press_eval.py` | the frozen buttons (`--press_set panel`: three heights x four estimate errors x four directions x two tools; `force`: 5-30 N full-travel force; `recessed`: a small cap 2 mm below the panel) and their scoring |
+
+```bash
+./run_unifp_train.py smoke --task press --num_envs 64 --steps 600 --headless
+./run_unifp_train.py train --task press --num_envs 4096 --iterations 400 --headless --tool_point jaw_centre \
+    --resume_from checkpoints/unifp_go2d1_insertion_seed3_model_21200.pt --resume_arm_std 0.15 --entropy_coef 0.002 \
+    --fixed_learning_rate 1e-5                                   # the pilot of 2026-09-29
+./run_unifp_train.py press_eval --task press --headless --checkpoint <model.pt> [--press_set force|recessed]
+```
+
+**Success** is the plan's: the cap held at its full travel (within 0.5 mm) for 1 s without a break, no damage, no fall.
+Every episode also reports the force error (applied along the axis against the layer's command, RMS while it pushes),
+the physics-rate peak force, the time to full travel, and one failure reason: fell, damaged, not started, missed, slid
+off, short, not held (`press_eval`).
+
+**Where it stands (2026-09-29, F-123).** Before any training on it, the key's and the combiner's policies hold 27 and
+29 of 96 frozen `panel` buttons, sliding off the cap. A 400-iteration pilot from the key's policy (the command above)
+holds 49/96 `panel`, 20/48 `force` (none at 20-30 N) and 23/72 `recessed` (the probe; the bare jaws 0, as declared).
+It is a pilot, one seed, not a deliverable.
+
+**Resume at a pinned learning rate.** From another task's checkpoint, rsl-rl's adaptive rate restarts at 1e-3 and
+the first update replaces the policy (KL 197 here, 243-400 for the insertion recipe; Week 2 log, v8). An adaptive-rate
+pilot from the insertion checkpoint never got a hand to its pre-press pose for 300 iterations and ended at 0/96. At
+`--fixed_learning_rate 1e-5` the first update's KL is 0.015 and the policy keeps what it had (Week 3 log, 2026-09-29).
+
+**Reading the training log.** For the first ~40 iterations the only episodes that end are the ones rsl-rl started
+part-way through (`init_at_random_ep_len`). They end before their button engages, so `Press/missed_fraction` reads 1.0
+and `Press/success_fraction` is absent. That is not a defect. `Press/success_fraction` (a continuous 1 s hold) also
+stays near 0 in training while `Press/ever_pressed_fraction` climbs: the exploration noise makes the cap flicker at its
+stop. The curriculum promotes on the former, so as built it does not promote; the frozen evaluation (deterministic) is
+the measure.
+
+**What the layer knows.** The estimate of the cap's face and axis, and a datasheet: the travel exactly and the forces
+within a rating error. It sizes its press cap (1.6-2.4x the operating force, at most 60 N) and its hold (1.3-1.6x the
+full-travel force) from them. It finds the bottom two ways: at the estimated full travel, or stalled at the full cap
+(a button nearer than estimated). It never learns the button's stiffness, only where its tip is.
+
+**The recessed set is an access test, declared in advance.** A 10 mm tip cannot follow an 8 mm cap 2 mm into its hole
+(`pressing.reachable_front`), so the bare jaws are expected to fail every episode of it, and the probe is what makes
+the button pressable. That is the plan's "bare-finger inability is an access limitation", measured rather than argued.
+
+What it is not: the button, the panel and the tools are models. There is one penalty stiffness and one friction
+coefficient, the click is a ramp, and the tools are spheres, where the real closed jaws are two flat 12 mm fingers.
+Nothing is PhysX (a PhysX check, as `demos/insertion` is for the key, has not been built). The panel is always
+vertical-ish: a button pressed down onto a top face needs an approach pointing down, which the D1 mostly cannot command
+at this reach (F-099).
+
+## The wiping task (`--task wipe`)
+
+The plan's wiping task (2026-09-29): a pad held in the jaws, wiped along a slow path on a panel facing the robot at a
+set force, from an estimate of where the panel is.
+
+| file | |
+| --- | --- |
+| `wiping.py` | the pad (a rigid 50 mm disc 45 mm past the jaw centre, meeting the surface at its centre and eight rim points, so a tilted pad rides on its rim and the force acts at the centre of pressure), the surface (a penalty spring along its normal, damping, Coulomb friction per point, an edge), the paths (a straight stroke, a zigzag of strokes, resampled evenly by arc length), coverage, and the task layer (a PI force along the estimated normal capped at the wiping force; once the pad has stalled on the surface, a reference point along the path never more than 2 cm ahead of the pad's progress, and a PI force across the normal to push through friction; a lift at the end) -- plain torch, `tests/test_wiping.py` |
+| `wipe_cfg.py` | where panels and paths are, forces and speeds, the curriculum on the estimate's offset and tilt, the rewards, the frozen evaluation |
+| `wipe_env.py` | `Go2D1WipeEnv`: the goal to the pre-contact pose with the approach commanded into the panel, the true panel placed off the estimate once the hand is there, the layer's goal and force each step, coverage and contact bookkeeping |
+| `wipe_rewards.py` | the pad's precision (to its goal, then in the plane), in contact while wiping, force tracking along the normal, overforce, damage, the pad's velocity error against the path's |
+| `wipe_eval.py` | the frozen surfaces (three heights x a 16 cm stroke or a 3 x 12 cm zigzag x the surface 8 mm nearer, where estimated or 8 mm further x 5 N or 10 N, tilted 3 degrees from the estimate) and their scoring |
+
+```bash
+./run_unifp_train.py smoke --task wipe --num_envs 64 --steps 900 --headless
+./run_unifp_train.py train --task wipe --num_envs 4096 --iterations 400 --headless --tool_point jaw_centre \
+    --resume_from checkpoints/unifp_go2d1_insertion_seed3_model_21200.pt --resume_arm_std 0.15 --entropy_coef 0.002 \
+    --fixed_learning_rate 1e-5                                   # the pilot of 2026-09-29
+./run_unifp_train.py wipe_eval --task wipe --headless --checkpoint <model.pt>
+```
+
+**Success** is the plan's: at least 90% of the path wiped and contact during at least 80% of the motion, no damage,
+no fall. A path sample counts as wiped when the pad's centre of pressure passes within 2 cm of it while pressing with at
+least 1 N (`wiping.WIPE_RADIUS_M`, `CONTACT_MIN_N`). "The motion" runs from when the layer found the surface to the
+path's end. Every episode also reports the normal force's RMS error against the command and its physics-rate peak,
+the friction carried, contact-loss events (losses under 0.1 s do not count), the time to finish, and one failure
+reason: fell, damaged, not started, no contact, incomplete, contact lost (`wipe_eval`).
+
+**Where it stands (2026-09-29, F-124).** The key's policy, untrained for wiping, keeps contact for the whole motion
+and wipes 90% of the path in 14/36 frozen episodes. The pad is tilted ~8° to the panel and presses with its rim. A
+400-iteration pilot scores 16/36, with the tilt barely changed. It is a pilot, one seed.
+
+**Why the layer has a force along the path too.** UniFP's controller yields to the force it measures: its target is
+`goal + (measured + commanded) / 200 N/m`. A 4 N friction on a 10 N wipe puts the target 2 cm behind the goal. With
+the reference kept within 2 cm of the pad, the pad would then stop. The in-plane PI turns the pad's miss into the force
+that pushes through the friction, as the normal law turns a depth lag into the press.
+
+What it is not: the pad is rigid and flat (the plan's "rigid pad initially"). Tilted 4 degrees to the surface it wipes
+with its rim, and with an ideal hand that still covers 97-100% of a 16 cm stroke (`tests/test_wiping.py`). A sponge,
+or a pad on a gimbal as the key has its compliant grip, is the next tool. The surface is a model, and the panel faces
+the robot: wiping a table top needs the hand pointing down (F-099).
