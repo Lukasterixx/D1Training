@@ -138,8 +138,9 @@ def build_model(sphere_radius_m: float = 0.40) -> dict:
     joints_model, _ = d1_ik.load_urdf()
     lows, highs = d1_ik.servo_limits_deg(joints_model)
     mount = [float(v) for v in MOUNT_B]
-    # Shoulder height above the mount: Joint1 then Joint2 origins along the base z axis.
-    shoulder_z = 0.0533 + 0.0563
+    # Shoulder height above the mount: Joint1 then Joint2 origins along the base z axis (d1_arm/d1.urdf; Joint1 is
+    # at the measured base's 76.0 mm, not Unitree's 53.3, since 2026-09-30).
+    shoulder_z = 0.076 + 0.0563
     return {
         "d1": {"root": "base_link", "mount": mount, "joints": d1_joints, "links": d1_links,
                "arm_joints": d1_ik.ARM_JOINTS,

@@ -175,7 +175,8 @@ mismatch here shows up as topics that simply never arrive.
 
 The robot model itself comes from `description/go2_d1.urdf`, a **generated** merge
 of P2Dingo's Go2 description and `d1_arm/d1.urdf`, joined at the same
-`ARM_MOUNT_Z` the weld uses, with the Go2's meshes copied in beside the arm's.
+mount the weld uses (`weld.D1_MOUNT_POS`: on the rails' tops, midway between their screws), with the
+Go2's meshes copied in beside the arm's.
 See [description/README.md](description/README.md) — including how to regenerate
 it, and why the arm draws in orange.
 
@@ -234,6 +235,7 @@ How the URDF compares to [the published spec][spec]:
 | Claw stroke | 60 mm (2 × 30 mm fingers) | 0–65 mm | close enough |
 | Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | **Joint3 was ~2× too strong — fixed** |
 | Total mass | 0.719 kg | 3.152 kg | **too light — see below** |
+| Base (measured on the arm, 2026-09-30) | 105 mm across, Joint1 at 53.3 mm, holes 108 mm apart | 126 mm, 76 mm, 130 mm | **replaced** by `d1_arm/measured_base.py` (F-079) |
 
 Mapping uses the protocol's offset (`d1_protocol.py`: "Protocol id 0 is URDF
 Joint1"). All six ranges matching exactly is what confirms that offset. Whoever

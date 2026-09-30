@@ -3,7 +3,7 @@
     python -m position_only.workspace --out results/week_01/figures
 
 Forward kinematics come from `d1_arm/d1.urdf`, mounted as `weld.py` mounts it (identity rotation,
-0.08 m above the Go2 base origin). Link masses follow `weld.py`'s D1 mass model: shell inertials,
+at weld.D1_MOUNT_POS: 19 mm behind and 85.5 mm above the Go2 base origin). Link masses follow `weld.py`'s D1 mass model: shell inertials,
 plus a servo per moving link, with the rest on the welded base, so static gravity torques match
 what PhysX is given. The collision test is a proxy (joint-to-joint segments against a box around
 the Go2 body and the ground), not mesh collision. Nothing here runs the simulator, so torque
@@ -26,7 +26,7 @@ from .tool_point import TOOL_BODY, TOOL_OFFSET_M
 ROOT = Path(__file__).resolve().parents[1]
 URDF = ROOT / "d1_arm/d1.urdf"
 ARM_JOINTS = [f"Joint{i}" for i in range(1, 7)]
-MOUNT_B = np.array([0.0, 0.0, 0.08])  # weld.py mount_pos
+MOUNT_B = np.array([-0.019, 0.0, 0.0855])  # weld.D1_MOUNT_POS: on the rails' tops, midway between their screws
 ARM_MASS_KG = 3.152  # run_position_only.py arm_mass_kg
 SERVO_MASS_BY_LINK = {"Link1": 0.060, "Link2": 0.060, "Link3": 0.045, "Link4": 0.045, "Link5": 0.045, "Link6": 0.090}
 EFFORT_LIMIT_NM = np.array([3.3, 3.3, 1.7, 1.7, 1.7, 1.7])  # motor_model.D1_EFFORT_LIMIT_NM

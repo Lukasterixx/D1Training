@@ -1,0 +1,36 @@
+{
+  "id": "20260930T065528_498258Z_verify_seed42",
+  "title": "verify with the measured D1 base (Joint1 at 76 mm)",
+  "notes": "G0 re-check after replacing Unitree's base with the one measured on the arm; 25/25",
+  "week": 3,
+  "recorded_at": "2026-09-30T16:56:16+10:00",
+  "started_utc": "2026-09-30T06:55:28+00:00",
+  "source_dir": "logs/position_only/20260930T065528_498258Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_passed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "e93eef70a36ef32bf82f64bb2b52c7815bfcec10",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": true,
+    "passed": 25,
+    "total": 25,
+    "failed": [],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

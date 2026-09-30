@@ -274,7 +274,9 @@ class LevelAttitudeTests(unittest.TestCase):
         np.testing.assert_allclose(out[0] @ out[0].T, np.eye(3), atol=1e-9)
 
     def test_solve_level_reaches_the_point_and_finishes_level(self):
-        for target in ([0.25, 0.10, 0.35], [0.20, 0.18, 0.30], [0.30, 0.0, 0.28]):
+        # The third point was [0.30, 0.0, 0.28] until the measured base put the shoulder 22.7 mm higher
+        # (2026-09-30); level, the arm then stops 22.5 mm short of it. It is the same point relative to the shoulder.
+        for target in ([0.25, 0.10, 0.35], [0.20, 0.18, 0.30], [0.30, 0.0, 0.3027]):
             r = d1_ik.solve(self.joints, target, q0=self.seed, level=True, max_iterations=400)
             self.assertTrue(r.converged, f"{target} did not converge")
             self.assertLess(r.position_error_m, 1e-3)

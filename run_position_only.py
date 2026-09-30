@@ -248,7 +248,7 @@ def run(args, report):
         from position_only.env_cfg import (ARM_NAMES, CONTROLLED_NAMES, CRITIC_OBS_DIM, LEG_NAMES, POLICY_OBS_DIM,
                                            make_cfg)
         from motor_model import interface_timing
-        from weld import build_welded_robot_usd
+        from weld import D1_MOUNT_POS, build_welded_robot_usd
 
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
         run_dir = Path(args.output).resolve() / f"{stamp}_{args.mode}_seed{args.seed}"
@@ -275,8 +275,10 @@ def run(args, report):
                     go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
                     d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
                     out_usd_path=str(run_dir / "assets/go2_d1.usd"),
-                    mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152,
+                    mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152,
                 ).usd_path
+                # Which mount this run's arm was welded at: it moved on 2026-09-30, from (0, 0, 0.08).
+                metadata["arm_mount_m"] = list(D1_MOUNT_POS)
             metadata["robot_usd"] = robot_path
             metadata["robot_usd_sha256"] = hashlib.sha256(Path(robot_path).read_bytes()).hexdigest()
             spawn_kwargs = {} if args.spawn_height is None else {"spawn_height": args.spawn_height}

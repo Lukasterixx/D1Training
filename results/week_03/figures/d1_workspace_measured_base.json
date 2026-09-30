@@ -1,0 +1,366 @@
+{
+  "method": "URDF forward kinematics (CPU); uniform joint samples inside the 0.9 soft limits; a box point counts as reachable if a sampled controlled point lies within 1.5 cm",
+  "controlled_point": {
+    "body": "Link7_1",
+    "offset_m": [
+      0.0547,
+      0.006,
+      0.017
+    ],
+    "mesh_end_face_centre_m": [
+      0.0547,
+      0.006,
+      0.017
+    ]
+  },
+  "samples": 400000,
+  "seed": 0,
+  "target_box_relative_to_env_origin_m": [
+    [
+      0.36,
+      0.48
+    ],
+    [
+      -0.08,
+      0.08
+    ],
+    [
+      0.5,
+      0.62
+    ]
+  ],
+  "target_grid_points": 2873,
+  "collision_proxy": {
+    "body_box_base_frame_m": [
+      [
+        -0.3,
+        0.3
+      ],
+      [
+        -0.13,
+        0.13
+      ],
+      [
+        -0.2,
+        0.06
+      ]
+    ],
+    "link_radius_m": 0.03,
+    "note": "segments between joint origins and the 12.6 cm fingertip, not meshes"
+  },
+  "moving_arm_mass_kg": 0.9869029999999999,
+  "fraction_of_samples_holdable": 1.0,
+  "zero_pose": {
+    "pincer_tip_in_base_frame_m": [
+      0.3867,
+      -0.0139,
+      0.5277
+    ],
+    "link6_in_base_frame_m": [
+      0.2614,
+      -0.0013,
+      0.5281
+    ],
+    "gravity_torque_nm": [
+      0.0,
+      -1.072,
+      -1.071,
+      0.0,
+      -0.291,
+      0.0
+    ]
+  },
+  "tip_offsets_link6_frame": {
+    "approach_axis_link6": [
+      0.0051,
+      -0.0,
+      1.0
+    ],
+    "fingertip_centre_m": [
+      0.0007,
+      -0.0005,
+      0.1251
+    ],
+    "finger_pad_centre_m": [
+      0.0004,
+      -0.0,
+      0.1241
+    ],
+    "finger_length_along_approach_m": 0.0621
+  },
+  "by_base_height": [
+    {
+      "base_height_m": 0.22,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9881656804733728,
+        "box_fraction_clear": 0.9881656804733728,
+        "box_fraction_clear_and_holdable": 0.9881656804733728,
+        "zero_pose_to_box_m": {
+          "min": 0.12781541758444287,
+          "mean": 0.20105953137629587,
+          "max": 0.280876112410677
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9993038635572572,
+        "box_fraction_clear": 0.9993038635572572,
+        "box_fraction_clear_and_holdable": 0.9993038635572572,
+        "zero_pose_to_box_m": {
+          "min": 0.16168680672184324,
+          "mean": 0.2537519258033353,
+          "max": 0.3405374012075971
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.24,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9899060215802298,
+        "box_fraction_clear": 0.9899060215802298,
+        "box_fraction_clear_and_holdable": 0.9899060215802298,
+        "zero_pose_to_box_m": {
+          "min": 0.1478014318640536,
+          "mean": 0.21981815202503127,
+          "max": 0.2986634775323462
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9993038635572572,
+        "box_fraction_clear": 0.9993038635572572,
+        "box_fraction_clear_and_holdable": 0.9993038635572572,
+        "zero_pose_to_box_m": {
+          "min": 0.17795359591165205,
+          "mean": 0.2689075981159358,
+          "max": 0.3553738601124241
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.2736,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9899060215802298,
+        "box_fraction_clear": 0.9899060215802298,
+        "box_fraction_clear_and_holdable": 0.9899060215802298,
+        "zero_pose_to_box_m": {
+          "min": 0.18138487672960263,
+          "mean": 0.2517750618010186,
+          "max": 0.3291186458662938
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9986077271145144,
+        "box_fraction_clear": 0.9986077271145144,
+        "box_fraction_clear_and_holdable": 0.9986077271145144,
+        "zero_pose_to_box_m": {
+          "min": 0.20676122734268956,
+          "mean": 0.29567075580335084,
+          "max": 0.3813624303540828
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.28,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9902540898016011,
+        "box_fraction_clear": 0.9902540898016011,
+        "box_fraction_clear_and_holdable": 0.9902540898016011,
+        "zero_pose_to_box_m": {
+          "min": 0.1877823949112973,
+          "mean": 0.25791067686978136,
+          "max": 0.33498781677737505
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9986077271145144,
+        "box_fraction_clear": 0.9986077271145144,
+        "box_fraction_clear_and_holdable": 0.9986077271145144,
+        "zero_pose_to_box_m": {
+          "min": 0.21240809767485144,
+          "mean": 0.30092423633615584,
+          "max": 0.3864457246641066
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.3,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9899060215802298,
+        "box_fraction_clear": 0.9899060215802298,
+        "box_fraction_clear_and_holdable": 0.9899060215802298,
+        "zero_pose_to_box_m": {
+          "min": 0.20777562447842954,
+          "mean": 0.27716334313926033,
+          "max": 0.35344776088985363
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.998259658893143,
+        "box_fraction_clear": 0.998259658893143,
+        "box_fraction_clear_and_holdable": 0.998259658893143,
+        "zero_pose_to_box_m": {
+          "min": 0.23030861639945227,
+          "mean": 0.3176129142848904,
+          "max": 0.4025731696737219
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.32,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9888618169161155,
+        "box_fraction_clear": 0.9888618169161155,
+        "box_fraction_clear_and_holdable": 0.9888618169161155,
+        "zero_pose_to_box_m": {
+          "min": 0.22777004284185473,
+          "mean": 0.29651703676720575,
+          "max": 0.3720669321060797
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9975635224504003,
+        "box_fraction_clear": 0.9975635224504003,
+        "box_fraction_clear_and_holdable": 0.9975635224504003,
+        "zero_pose_to_box_m": {
+          "min": 0.24852951055721914,
+          "mean": 0.33466516777538274,
+          "max": 0.4190346235946717
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.34,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.98746954403063,
+        "box_fraction_clear": 0.98746954403063,
+        "box_fraction_clear_and_holdable": 0.98746954403063,
+        "zero_pose_to_box_m": {
+          "min": 0.24776536219770373,
+          "mean": 0.3159527647925846,
+          "max": 0.390822573881818
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9965193177862861,
+        "box_fraction_clear": 0.9965193177862861,
+        "box_fraction_clear_and_holdable": 0.9965193177862861,
+        "zero_pose_to_box_m": {
+          "min": 0.26700519928981115,
+          "mean": 0.3520281056561745,
+          "max": 0.4357922378853357
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.36,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.9867734075878872,
+        "box_fraction_clear": 0.9867734075878872,
+        "box_fraction_clear_and_holdable": 0.9867734075878872,
+        "zero_pose_to_box_m": {
+          "min": 0.2677613806988197,
+          "mean": 0.3354559676061274,
+          "max": 0.40969594401749704
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.9961712495649148,
+        "box_fraction_clear": 0.9961712495649148,
+        "box_fraction_clear_and_holdable": 0.9961712495649148,
+        "zero_pose_to_box_m": {
+          "min": 0.2856862532180584,
+          "mean": 0.36965791262059294,
+          "max": 0.4528131330152537
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    },
+    {
+      "base_height_m": 0.38,
+      "pincer_tip": {
+        "box_fraction_kinematic": 0.98746954403063,
+        "box_fraction_clear": 0.98746954403063,
+        "box_fraction_clear_and_holdable": 0.98746954403063,
+        "zero_pose_to_box_m": {
+          "min": 0.28775795259647863,
+          "mean": 0.3550153097615888,
+          "max": 0.4286714929093921
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      },
+      "link6": {
+        "box_fraction_kinematic": 0.993734772015315,
+        "box_fraction_clear": 0.993734772015315,
+        "box_fraction_clear_and_holdable": 0.993734772015315,
+        "zero_pose_to_box_m": {
+          "min": 0.30453488159446274,
+          "mean": 0.3875181402139591,
+          "max": 0.47006871014892143
+        },
+        "box_fraction_within_5cm_of_zero_pose": 0.0
+      }
+    }
+  ],
+  "measured_zero_action_stance": {
+    "base_offset_from_env_origin_m": [
+      -0.0571,
+      0.0,
+      0.2736
+    ],
+    "pincer_tip": {
+      "zero_pose_to_box_m": {
+        "min": 0.18388806731082202,
+        "mean": 0.2654123277128779,
+        "max": 0.3496235460875713
+      },
+      "box_fraction_within_5cm_of_zero_pose": 0.0,
+      "zero_pose_in_env_frame_m": [
+        0.3296,
+        -0.0139,
+        0.8013
+      ]
+    },
+    "link6": {
+      "zero_pose_to_box_m": {
+        "min": 0.23931777576948898,
+        "mean": 0.32983030620829223,
+        "max": 0.4167302436259849
+      },
+      "box_fraction_within_5cm_of_zero_pose": 0.0,
+      "zero_pose_in_env_frame_m": [
+        0.2043,
+        -0.0013,
+        0.8017
+      ]
+    },
+    "pincer_tip_measured": {
+      "tip_in_env_frame_m": [
+        0.3378,
+        -0.0141,
+        0.7906
+      ],
+      "source": "simulator, zero actions, settled (task_space.ZERO_ACTION_TIP_M)",
+      "model_error_m": 0.013503555947259748,
+      "zero_pose_to_box_m": {
+        "min": 0.1720872162596628,
+        "mean": 0.2529418155412938,
+        "max": 0.3369332426460767
+      },
+      "box_fraction_within_5cm_of_zero_pose": 0.0
+    }
+  }
+}

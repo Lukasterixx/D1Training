@@ -17,7 +17,7 @@ The arm's meshes are not duplicated here — the URDF points at the existing
 There is no single description of this robot to copy. The Go2 half comes from
 P2Dingo (`Isaac/go2_ws/src/go2_control_cpp/config/go2.urdf`), the D1 half from
 this repo's `d1_arm/d1.urdf`, and the joint between them is `weld.py`'s
-`arm_mount_joint` at `ARM_MOUNT_Z`. Merging by hand once would leave three
+`arm_mount_joint` at `weld.D1_MOUNT_POS`. Merging by hand once would leave three
 sources silently drifting apart; `build_go2_d1_urdf.py` makes the merge
 re-runnable and checks the result:
 
@@ -29,6 +29,12 @@ It prints the movable joint names, which **must** match what the sim publishes o
 `/joint_states` — `sim.py` prints the articulation's joints at startup, so the
 two lists can be diffed directly. A name that differs is not an error anywhere;
 the link just never moves in RViz.
+
+**The committed file predates P2Dingo's bolt-ons.** P2Dingo's `go2.urdf` has since gained
+`expansion_dock`, `heatshield` and `mid360` links, and the last two point at meshes this repo does
+not carry, so a regeneration now brings in all three. When the mount moved (2026-09-30, see
+`weld.D1_MOUNT_POS`) only `arm_mount_joint`'s origin was changed in the committed file, to exactly
+what the builder writes for it. Drop those links, or copy their meshes, before regenerating.
 
 Three deliberate edits along the way:
 

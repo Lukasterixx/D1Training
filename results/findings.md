@@ -2383,3 +2383,69 @@ result that changes a conclusion gets a new entry, and the old one is marked
   (F-073) and at most ~1.3× over the lying push (F-071). A much larger torque needs the force to go around the
   arm's motors: a longer moment arm (the plan's pre-attached lever tool) or the legs pushing directly.
 
+
+### F-078 — The D1 is bolted to the rails' own screw positions, 19 mm further back and 5.5 mm higher than modelled; its resting tip moves (−22.6, 0, +7.5) mm and the task still needs the arm to move
+
+- **Status:** superseded
+- **Superseded by:** F-079, below (2026-09-30: the arm's base is taller than the model's, so the stance and task
+  numbers here are replaced; the mount, x = -19 mm on the rail tops, stands)
+- **Week:** 3
+- **Date:** 2026-09-30
+- **Evidence:** [Week 3 log, 2026-09-30](week_03/notes.md);
+  [verify at the rail mount, 25/25](#/week/3/run/20260930T053155_769482Z_verify_seed42);
+  [`stance_probe.py`](week_03/figures/stance_probe.py) with its
+  [control](week_03/figures/stance_probe_old_mount.json) and [result](week_03/figures/stance_probe_rail_mount.json);
+  [workspace model at the rail mount](week_03/figures/d1_workspace_rail_mount.json).
+  - **Mount.** The real arm's holes are 13 cm apart along the rail (Lukas, measured). The rails' own screws are
+    131.0 mm apart in Unitree's rail CAD, at x = −84.5 and +46.6 mm, and the rail tops are at z = 85.5 mm. So the
+    base is centred at x = −19 mm and rests on the rail tops: `weld.D1_MOUNT_POS = (−0.019, 0, 0.0855)`,
+    replacing (0, 0, 0.08), which had no measurement behind it.
+  - **Stance.** Week 1's probe (16 envs, zero actions, 12 s, last 2 s) reproduced `task_space` exactly at the old
+    mount. At the new one the base settles at (−0.0571, 0, 0.2736) m, 1.6 mm further back, and 0.25° more level
+    (0.78°). The resting pincer tip is at (0.3375, −0.0141, 0.7679) m, (−22.6, 0, +7.5) mm from before. Peak tilt
+    at reset is 4.75° (was 5.11°), and the lowest base height is 0.2597 m (was 0.2602).
+  - **Task.** The target box is unchanged in the environment frame, so the frozen manifests keep their hashes.
+    It is now 15.2 cm from the resting tip (verify; 14.3 cm before), with 0 of 8 sampled targets within 5 cm.
+    The CPU model puts 98.92% of it reachable, clear and holdable at the settled height (99.06% before), and
+    misses the measured tip by 1.3 cm (1.6 cm in F-015).
+- **Scope:** simulation, zero actions, `run_position_only` defaults. Not validated: the mount on the robot itself
+  (a ruler reading of the hole spacing, and the assumption that the hole pattern is centred on the arm's base
+  origin), and the D1 model's base mesh, which has its holes 108 mm apart, not 130. The 256-env zero-action
+  baseline of F-016 was not re-run.
+- **Implication:** every checkpoint and result before 2026-09-30 is at the old mount, so an evaluation of one now
+  runs it on a slightly different robot; `run.json`'s `arm_mount_m` separates them from here on. The arm's reach
+  over the box is essentially unchanged, but scenes placed at fixed spots in the base frame (the cup and combiner
+  demos) are now 19 mm further from the arm, and four of their tests no longer hold (Week 3 log).
+
+### F-079 — The real D1 base is 22.7 mm taller and 21 mm wider than Unitree's model, so the whole arm sits 22.7 mm higher; the resting tip is now (0.3378, −0.0141, 0.7906) m and the box stays 98.99% reachable
+
+- **Status:** provisional (four dimensions measured by hand; the rest of the arm is taken as the model on one
+  check and the published reach)
+- **Week:** 3
+- **Date:** 2026-09-30
+- **Evidence:** [Week 3 log, 2026-09-30](week_03/notes.md), including Lukas's photograph of the base;
+  [verify with the measured base, 25/25](#/week/3/run/20260930T065528_498258Z_verify_seed42);
+  [stance probe](week_03/figures/stance_probe_measured_base.json);
+  [workspace model](week_03/figures/d1_workspace_measured_base.json); [`d1_arm/measured_base.py`](../d1_arm/measured_base.py).
+  - **Measured (Lukas).** The base is one continuous cylinder on a flange, 126 mm across (model 105.0), with
+    holes 130 mm apart along the rail (model 108). From its bottom to the rotating plate it is 76 mm (model 53.3).
+    The rotating plate to the shoulder pivot matches the model's 56.3 mm. The plan dimensions agree on one factor,
+    1.20, but the height does not (1.43), so the real base is a different part, not an enlarged copy.
+  - **The rest of the arm.** The model's chain reaches 554.9 mm from the shoulder to the wrist flange against
+    Unitree's published 550 mm (excluding the jaw), and every link mesh agrees with its joint offsets. A uniform
+    1.2 scale error would put the flange reach at about 458 mm.
+  - **Model.** `base_link_measured.STL` is Unitree's base scaled 1.20 in plan, with the cylinder stretched to
+    76.0 mm and the flange kept. Joint1 moves 53.3 -> 76.0 mm and the base's centre of mass is carried with it.
+    D1Training and Rescue share the files.
+  - **Sim.** The base settles as before, (-0.0571, 0, 0.2736) m, 0.78°. The resting tip is 22.7 mm higher, at
+    (0.3378, -0.0141, 0.7906) m. verify: 25/25, Link6 kinematics to 0.74 µm, resting tip 2.3 mm from the
+    recorded value, box 17.4 cm from the tip. The CPU model finds the box 98.99% reachable, clear and holdable.
+- **Scope:** the across-rail hole spacing and the flange's shape were not measured (the mesh scales them, to 69.6 mm
+  and 141.6 × 129.6 mm), nor where the real base's mass sits. The arm above the rotating plate was checked at one
+  dimension (the shoulder height) and against the published reach, not link by link.
+- **Implication:** on the real robot the arm, with every target and reach, is 22.7 mm higher than every simulation
+  before today had it. That comes on top of F-078's mount, (-19, 0, +5.5) mm, for a total of (-19.0, 0, +28.2) mm
+  at the shoulder. Low level poses close in are lost: level at 0.30 m out, the arm now stops 22.5 mm short of a
+  point 0.28 m above its base (`tests/test_d1_ik.py`). Every checkpoint trained earlier saw the smaller base as well
+  as the old mount.
+

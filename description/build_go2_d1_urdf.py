@@ -5,7 +5,7 @@ again if one of the sources changes. It needs P2Dingo checked out, since the Go2
 half comes from there (pass the path as argv[1] if it is not the default).
 
 The merge mirrors `weld.py`: the arm's base is fixed to the Go2's `base_link` at
-ARM_MOUNT_Z, so the URDF and the simulated articulation agree about where the D1
+ARM_MOUNT_XYZ, so the URDF and the simulated articulation agree about where the D1
 sits. Everything else the script does is about being a *drawing* rather than a
 second source of truth -- see description/README.md.
 
@@ -25,8 +25,8 @@ GO2_URDF = os.path.join(P2DINGO, "Isaac/go2_ws/src/go2_control_cpp/config/go2.ur
 D1_URDF = os.path.join(REPO, "d1_arm", "d1.urdf")
 OUT = os.path.join(HERE, "go2_d1.urdf")
 
-# Must match flat_env_cfg.ARM_MOUNT_Z, which is where weld.py actually puts it.
-ARM_MOUNT_Z = 0.08
+# Must match weld.D1_MOUNT_POS, which is where weld.py actually puts it.
+ARM_MOUNT_XYZ = (-0.019, 0.0, 0.0855)
 
 # One named material for the whole arm; see the comment where it is applied.
 ARM_MATERIAL = "d1_arm"
@@ -82,7 +82,7 @@ def main() -> None:
     mount = ET.SubElement(go2, "joint", {"name": "arm_mount_joint", "type": "fixed"})
     ET.SubElement(mount, "parent", {"link": "base_link"})
     ET.SubElement(mount, "child", {"link": "d1_base_link"})
-    ET.SubElement(mount, "origin", {"xyz": f"0 0 {ARM_MOUNT_Z}", "rpy": "0 0 0"})
+    ET.SubElement(mount, "origin", {"xyz": " ".join(f"{v:g}" for v in ARM_MOUNT_XYZ), "rpy": "0 0 0"})
 
     for child in list(d1):
         go2.append(child)

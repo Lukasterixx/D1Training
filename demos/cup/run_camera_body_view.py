@@ -66,7 +66,7 @@ def run(args) -> int:
         from demos.cup.pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
         from demos.cup.pick_demo.scene import make_pick_cfg
         from position_only.workspace import load_urdf
-        from weld import build_welded_robot_usd
+        from weld import D1_MOUNT_POS, build_welded_robot_usd
         from isaaclab_assets import ISAACLAB_NUCLEUS_DIR
         import imageio.v3 as iio
 
@@ -111,7 +111,7 @@ def run(args) -> int:
         robot_usd = str(Path(args.robot_usd).resolve()) if args.robot_usd else build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"), out_usd_path=str(out_dir / "assets/go2_d1.usd"),
-            mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+            mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152).usd_path
         cup = build_cup_usd(args.cup_usdz, ROOT / "generated/pick_demo")
         body_info = None if args.no_camera_body else build_camera_usd(ROOT / "generated/pick_demo")
         cfg = make_pick_cfg(robot_usd, cup["usd_path"], model, mount, (0.42, 0.03), 0.0,

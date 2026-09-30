@@ -206,7 +206,7 @@ def run(args):
         from demos.cup.pick_demo.sequence import PickSequence, Timing
         from position_only.env_cfg import ARM_NAMES
         from position_only.workspace import load_urdf
-        from weld import build_welded_robot_usd
+        from weld import D1_MOUNT_POS, build_welded_robot_usd
 
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
         run_dir = Path(args.output).resolve() / f"{stamp}_pick_seed{args.seed}"
@@ -263,7 +263,7 @@ def run(args):
             robot_usd = str(Path(args.robot_usd).resolve()) if args.robot_usd else build_welded_robot_usd(
                 go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
                 d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"), out_usd_path=str(run_dir / "assets/go2_d1.usd"),
-                mount_pos=(0.0, 0.0, 0.08), arm_mass_kg=3.152).usd_path
+                mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152).usd_path
             metadata["robot_usd"], metadata["robot_usd_sha256"] = robot_usd, sha256(robot_usd)
             cup_info = build_cup_usd(args.cup_usdz, ROOT / "generated/pick_demo", diameter_m=args.cup_diameter,
                                      height_m=args.cup_height, mass_kg=args.cup_mass, wall_m=args.cup_wall)
