@@ -68,6 +68,12 @@ def main() -> None:
     for child in list(go2):
         if child.get("name") in ("radar", "radar_joint"):
             go2.remove(child)
+    # P2Dingo's go2.urdf draws the dock too (since 2026-09-27, from these same meshes). It is added below from
+    # `dock.py` with this package's mesh paths, so a copy in the source would be a second link of the same name.
+    for child in list(go2):
+        if child.get("name") in (DOCK_LINK, f"{DOCK_LINK}_joint") or (
+                child.tag == "material" and child.get("name") in {m for _, m, _ in DOCK_VISUALS}):
+            go2.remove(child)
 
     # `package://go2_control_cpp/meshes/base.dae` in P2Dingo's, `file:///.../go2/meshes/base.dae` in
     # Go2RemoteConnection's: the file names are what they share, and what meshes/go2/ holds.

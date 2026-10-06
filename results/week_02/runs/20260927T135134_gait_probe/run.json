@@ -1,0 +1,20 @@
+{
+  "mode": "unifp_gait_probe",
+  "status": "finished",
+  "seed": 1,
+  "error": null,
+  "started_utc": "20260927T135134",
+  "git_commit": "8e1d39fd3ab83da2ee524d6f88db2633e7b54349",
+  "git_status": "M description/build_go2_d1_urdf.py\n?? demos/unifp/gait_probe.py\n?? logs/unifp_gait_probe/",
+  "arguments": {
+    "num_envs": 16,
+    "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+    "settle_s": 2.0,
+    "measure_s": 8.0,
+    "mount_pos": [
+      0.0,
+      0.0,
+      0.08
+    ]
+  }
+}

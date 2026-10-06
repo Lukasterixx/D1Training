@@ -1,0 +1,773 @@
+{
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_model_56000.pt",
+  "policy_source": "isaaclab",
+  "policy_iteration": 56000,
+  "num_envs": 16,
+  "settle_s": 2.0,
+  "measure_s": 8.0,
+  "seed": 1,
+  "sample_rate_hz": 200.0,
+  "contact_threshold_n": 5.0,
+  "mount_pos_m": [
+    0.0,
+    0.0,
+    0.08
+  ],
+  "robot_usd": "/home/victor/D1Training/logs/unifp_gait_probe/20260927T135134_gait_probe/usd/go2_d1_probe.usd",
+  "arm_goal": "opening sweep to (r 0.50 m, pitch 0, yaw 0) in 1 s, then held; no external forces",
+  "gait_clock_period_s": 0.64,
+  "results": {
+    "stand": {
+      "command": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "command_in_env": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "falls": 0,
+      "envs_used": 16,
+      "samples_per_env": 1600,
+      "per_foot": {
+        "legs": [
+          "FL",
+          "FR",
+          "RL",
+          "RR"
+        ],
+        "stance_abs_y_yawframe_cm": [
+          17.69,
+          16.84,
+          17.54,
+          17.44
+        ],
+        "stance_abs_y_yawframe_sd_over_envs_cm": [
+          0.82,
+          0.83,
+          0.3,
+          0.25
+        ],
+        "stance_signed_y_yawframe_cm": [
+          17.69,
+          -16.84,
+          17.54,
+          -17.44
+        ],
+        "stance_abs_y_bodyframe_cm": [
+          17.23,
+          17.29,
+          17.09,
+          17.88
+        ],
+        "stance_y_outward_of_thigh_cm": [
+          3.56,
+          2.68,
+          3.4,
+          3.3
+        ],
+        "thigh_origin_outward_y_cm": [
+          14.13,
+          14.16,
+          14.14,
+          14.14
+        ],
+        "stance_x_rel_thigh_cm": [
+          1.64,
+          2.81,
+          -6.2,
+          -3.38
+        ],
+        "stance_x_yawframe_cm": [
+          20.96,
+          22.15,
+          -25.54,
+          -22.72
+        ],
+        "thigh_origin_x_cm": [
+          19.32,
+          19.34,
+          -19.34,
+          -19.34
+        ],
+        "touchdown_x_rel_thigh_cm": [
+          NaN,
+          NaN,
+          NaN,
+          NaN
+        ],
+        "liftoff_x_rel_thigh_cm": [
+          NaN,
+          NaN,
+          NaN,
+          NaN
+        ],
+        "touchdown_y_outward_of_thigh_cm": [
+          NaN,
+          NaN,
+          NaN,
+          NaN
+        ],
+        "hip_abduction_outward_deg_all": [
+          5.715,
+          6.001,
+          5.544,
+          7.16
+        ],
+        "hip_abduction_outward_deg_stance": [
+          5.715,
+          6.001,
+          5.544,
+          7.16
+        ],
+        "hip_abduction_sd_within_env_deg": [
+          0.486,
+          0.488,
+          1.046,
+          1.04
+        ],
+        "duty_factor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "stride_freq_hz_median_td_interval": [
+          NaN,
+          NaN,
+          NaN,
+          NaN
+        ],
+        "touchdowns_per_s": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "raw_undebounced_touchdowns_per_s": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mean_swing_duration_s": [
+          NaN,
+          NaN,
+          NaN,
+          NaN
+        ],
+        "swing_apex_above_stance_cm": [
+          NaN,
+          NaN,
+          NaN,
+          NaN
+        ],
+        "stance_foot_origin_z_cm": [
+          2.35,
+          2.35,
+          2.3,
+          2.32
+        ],
+        "contact_matches_gait_clock_fraction": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "stance_width_cm": {
+        "front_FL_minus_FR": 34.53,
+        "front_sd_over_envs": 0.02,
+        "rear_RL_minus_RR": 34.98,
+        "rear_sd_over_envs": 0.06
+      },
+      "front_to_rear_foot_x_spread_cm": 45.69,
+      "base": {
+        "height_m_mean": 0.315,
+        "height_m_sd": 0.0057,
+        "roll_deg_mean": 0.88,
+        "roll_deg_sd": 0.94,
+        "pitch_deg_mean": -0.42,
+        "pitch_deg_sd": 1.25
+      },
+      "velocity": {
+        "cmd_vx_vy_wz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "achieved_vx_m_s": -0.001,
+        "achieved_vy_m_s": -0.001,
+        "achieved_wz_rad_s": -0.003,
+        "vx_sd_over_envs": 0.001,
+        "wz_sd_over_envs": 0.003
+      }
+    },
+    "walk_0.3": {
+      "command": [
+        0.3,
+        0.0,
+        0.0
+      ],
+      "command_in_env": [
+        0.30000001192092896,
+        0.0,
+        0.0
+      ],
+      "falls": 0,
+      "envs_used": 16,
+      "samples_per_env": 1600,
+      "per_foot": {
+        "legs": [
+          "FL",
+          "FR",
+          "RL",
+          "RR"
+        ],
+        "stance_abs_y_yawframe_cm": [
+          16.59,
+          15.93,
+          17.1,
+          17.34
+        ],
+        "stance_abs_y_yawframe_sd_over_envs_cm": [
+          0.03,
+          0.05,
+          0.06,
+          0.04
+        ],
+        "stance_signed_y_yawframe_cm": [
+          16.59,
+          -15.93,
+          17.1,
+          -17.34
+        ],
+        "stance_abs_y_bodyframe_cm": [
+          16.25,
+          16.93,
+          16.14,
+          17.67
+        ],
+        "stance_y_outward_of_thigh_cm": [
+          2.42,
+          1.75,
+          2.95,
+          3.2
+        ],
+        "thigh_origin_outward_y_cm": [
+          14.17,
+          14.18,
+          14.15,
+          14.15
+        ],
+        "stance_x_rel_thigh_cm": [
+          -0.24,
+          -0.38,
+          -2.96,
+          -4.17
+        ],
+        "stance_x_yawframe_cm": [
+          19.05,
+          18.93,
+          -22.32,
+          -23.53
+        ],
+        "thigh_origin_x_cm": [
+          19.29,
+          19.3,
+          -19.37,
+          -19.36
+        ],
+        "touchdown_x_rel_thigh_cm": [
+          5.66,
+          5.07,
+          2.35,
+          1.56
+        ],
+        "liftoff_x_rel_thigh_cm": [
+          -5.86,
+          -6.05,
+          -8.52,
+          -9.76
+        ],
+        "touchdown_y_outward_of_thigh_cm": [
+          2.55,
+          1.85,
+          2.76,
+          3.05
+        ],
+        "hip_abduction_outward_deg_all": [
+          4.618,
+          5.607,
+          4.281,
+          6.495
+        ],
+        "hip_abduction_outward_deg_stance": [
+          3.635,
+          4.966,
+          3.627,
+          6.519
+        ],
+        "hip_abduction_sd_within_env_deg": [
+          1.89,
+          1.274,
+          1.296,
+          0.921
+        ],
+        "duty_factor": [
+          0.657,
+          0.634,
+          0.631,
+          0.658
+        ],
+        "stride_freq_hz_median_td_interval": [
+          1.562,
+          1.562,
+          1.562,
+          1.562
+        ],
+        "touchdowns_per_s": [
+          1.5,
+          1.625,
+          1.625,
+          1.5
+        ],
+        "raw_undebounced_touchdowns_per_s": [
+          1.5,
+          1.625,
+          1.625,
+          1.5
+        ],
+        "mean_swing_duration_s": [
+          0.226,
+          0.228,
+          0.23,
+          0.225
+        ],
+        "swing_apex_above_stance_cm": [
+          7.63,
+          7.86,
+          4.0,
+          3.27
+        ],
+        "stance_foot_origin_z_cm": [
+          2.32,
+          2.33,
+          2.32,
+          2.31
+        ],
+        "contact_matches_gait_clock_fraction": [
+          0.962,
+          0.966,
+          0.969,
+          0.961
+        ]
+      },
+      "stance_width_cm": {
+        "front_FL_minus_FR": 32.52,
+        "front_sd_over_envs": 0.06,
+        "rear_RL_minus_RR": 34.44,
+        "rear_sd_over_envs": 0.08
+      },
+      "front_to_rear_foot_x_spread_cm": 41.92,
+      "base": {
+        "height_m_mean": 0.3327,
+        "height_m_sd": 0.0033,
+        "roll_deg_mean": 1.2,
+        "roll_deg_sd": 1.05,
+        "pitch_deg_mean": -2.52,
+        "pitch_deg_sd": 0.47
+      },
+      "velocity": {
+        "cmd_vx_vy_wz": [
+          0.3,
+          0.0,
+          0.0
+        ],
+        "achieved_vx_m_s": 0.294,
+        "achieved_vy_m_s": -0.002,
+        "achieved_wz_rad_s": 0.0,
+        "vx_sd_over_envs": 0.001,
+        "wz_sd_over_envs": 0.001
+      }
+    },
+    "walk_0.6": {
+      "command": [
+        0.6,
+        0.0,
+        0.0
+      ],
+      "command_in_env": [
+        0.6000000238418579,
+        0.0,
+        0.0
+      ],
+      "falls": 0,
+      "envs_used": 16,
+      "samples_per_env": 1600,
+      "per_foot": {
+        "legs": [
+          "FL",
+          "FR",
+          "RL",
+          "RR"
+        ],
+        "stance_abs_y_yawframe_cm": [
+          16.37,
+          16.16,
+          17.26,
+          17.11
+        ],
+        "stance_abs_y_yawframe_sd_over_envs_cm": [
+          0.05,
+          0.05,
+          0.07,
+          0.04
+        ],
+        "stance_signed_y_yawframe_cm": [
+          16.37,
+          -16.16,
+          17.26,
+          -17.11
+        ],
+        "stance_abs_y_bodyframe_cm": [
+          16.02,
+          17.17,
+          16.29,
+          17.44
+        ],
+        "stance_y_outward_of_thigh_cm": [
+          2.19,
+          1.98,
+          3.12,
+          2.96
+        ],
+        "thigh_origin_outward_y_cm": [
+          14.18,
+          14.18,
+          14.15,
+          14.16
+        ],
+        "stance_x_rel_thigh_cm": [
+          -1.01,
+          -0.87,
+          -3.07,
+          -4.63
+        ],
+        "stance_x_yawframe_cm": [
+          18.3,
+          18.44,
+          -22.44,
+          -23.99
+        ],
+        "thigh_origin_x_cm": [
+          19.31,
+          19.31,
+          -19.37,
+          -19.36
+        ],
+        "touchdown_x_rel_thigh_cm": [
+          10.42,
+          9.86,
+          7.44,
+          6.49
+        ],
+        "liftoff_x_rel_thigh_cm": [
+          -11.81,
+          -11.86,
+          -13.96,
+          -15.38
+        ],
+        "touchdown_y_outward_of_thigh_cm": [
+          2.24,
+          2.21,
+          2.75,
+          2.83
+        ],
+        "hip_abduction_outward_deg_all": [
+          4.463,
+          6.051,
+          4.48,
+          5.989
+        ],
+        "hip_abduction_outward_deg_stance": [
+          3.288,
+          5.486,
+          3.935,
+          6.13
+        ],
+        "hip_abduction_sd_within_env_deg": [
+          2.205,
+          1.217,
+          1.249,
+          1.187
+        ],
+        "duty_factor": [
+          0.651,
+          0.631,
+          0.631,
+          0.651
+        ],
+        "stride_freq_hz_median_td_interval": [
+          1.562,
+          1.562,
+          1.562,
+          1.562
+        ],
+        "touchdowns_per_s": [
+          1.5,
+          1.625,
+          1.625,
+          1.5
+        ],
+        "raw_undebounced_touchdowns_per_s": [
+          1.5,
+          1.625,
+          1.625,
+          1.5
+        ],
+        "mean_swing_duration_s": [
+          0.23,
+          0.23,
+          0.23,
+          0.23
+        ],
+        "swing_apex_above_stance_cm": [
+          8.26,
+          7.74,
+          3.93,
+          3.53
+        ],
+        "stance_foot_origin_z_cm": [
+          2.32,
+          2.32,
+          2.31,
+          2.3
+        ],
+        "contact_matches_gait_clock_fraction": [
+          0.968,
+          0.969,
+          0.969,
+          0.968
+        ]
+      },
+      "stance_width_cm": {
+        "front_FL_minus_FR": 32.52,
+        "front_sd_over_envs": 0.08,
+        "rear_RL_minus_RR": 34.37,
+        "rear_sd_over_envs": 0.09
+      },
+      "front_to_rear_foot_x_spread_cm": 41.58,
+      "base": {
+        "height_m_mean": 0.3288,
+        "height_m_sd": 0.0035,
+        "roll_deg_mean": 1.25,
+        "roll_deg_sd": 1.14,
+        "pitch_deg_mean": -2.16,
+        "pitch_deg_sd": 0.81
+      },
+      "velocity": {
+        "cmd_vx_vy_wz": [
+          0.6,
+          0.0,
+          0.0
+        ],
+        "achieved_vx_m_s": 0.576,
+        "achieved_vy_m_s": -0.007,
+        "achieved_wz_rad_s": 0.001,
+        "vx_sd_over_envs": 0.001,
+        "wz_sd_over_envs": 0.001
+      }
+    },
+    "turn_0.5": {
+      "command": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "command_in_env": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "falls": 0,
+      "envs_used": 16,
+      "samples_per_env": 1600,
+      "per_foot": {
+        "legs": [
+          "FL",
+          "FR",
+          "RL",
+          "RR"
+        ],
+        "stance_abs_y_yawframe_cm": [
+          16.06,
+          16.39,
+          17.63,
+          17.14
+        ],
+        "stance_abs_y_yawframe_sd_over_envs_cm": [
+          0.04,
+          0.05,
+          0.05,
+          0.04
+        ],
+        "stance_signed_y_yawframe_cm": [
+          16.06,
+          -16.39,
+          17.63,
+          -17.14
+        ],
+        "stance_abs_y_bodyframe_cm": [
+          15.86,
+          17.14,
+          16.92,
+          17.32
+        ],
+        "stance_y_outward_of_thigh_cm": [
+          1.88,
+          2.22,
+          3.5,
+          2.99
+        ],
+        "thigh_origin_outward_y_cm": [
+          14.18,
+          14.17,
+          14.13,
+          14.15
+        ],
+        "stance_x_rel_thigh_cm": [
+          0.65,
+          -0.95,
+          -0.82,
+          -3.02
+        ],
+        "stance_x_yawframe_cm": [
+          19.94,
+          18.33,
+          -20.2,
+          -22.38
+        ],
+        "thigh_origin_x_cm": [
+          19.29,
+          19.29,
+          -19.38,
+          -19.36
+        ],
+        "touchdown_x_rel_thigh_cm": [
+          -0.78,
+          0.4,
+          -2.56,
+          -1.27
+        ],
+        "liftoff_x_rel_thigh_cm": [
+          2.06,
+          -2.6,
+          0.94,
+          -4.59
+        ],
+        "touchdown_y_outward_of_thigh_cm": [
+          3.89,
+          0.59,
+          1.32,
+          4.99
+        ],
+        "hip_abduction_outward_deg_all": [
+          4.325,
+          5.314,
+          4.923,
+          6.504
+        ],
+        "hip_abduction_outward_deg_stance": [
+          2.97,
+          5.289,
+          5.08,
+          5.914
+        ],
+        "hip_abduction_sd_within_env_deg": [
+          3.153,
+          1.641,
+          2.016,
+          2.455
+        ],
+        "duty_factor": [
+          0.658,
+          0.635,
+          0.637,
+          0.658
+        ],
+        "stride_freq_hz_median_td_interval": [
+          1.562,
+          1.562,
+          1.562,
+          1.562
+        ],
+        "touchdowns_per_s": [
+          1.5,
+          1.625,
+          1.625,
+          1.5
+        ],
+        "raw_undebounced_touchdowns_per_s": [
+          1.5,
+          1.625,
+          1.625,
+          1.5
+        ],
+        "mean_swing_duration_s": [
+          0.225,
+          0.227,
+          0.226,
+          0.225
+        ],
+        "swing_apex_above_stance_cm": [
+          7.13,
+          7.54,
+          3.93,
+          3.55
+        ],
+        "stance_foot_origin_z_cm": [
+          2.33,
+          2.33,
+          2.33,
+          2.32
+        ],
+        "contact_matches_gait_clock_fraction": [
+          0.961,
+          0.965,
+          0.963,
+          0.961
+        ]
+      },
+      "stance_width_cm": {
+        "front_FL_minus_FR": 32.45,
+        "front_sd_over_envs": 0.09,
+        "rear_RL_minus_RR": 34.77,
+        "rear_sd_over_envs": 0.08
+      },
+      "front_to_rear_foot_x_spread_cm": 40.43,
+      "base": {
+        "height_m_mean": 0.3314,
+        "height_m_sd": 0.0027,
+        "roll_deg_mean": 0.81,
+        "roll_deg_sd": 0.86,
+        "pitch_deg_mean": -2.75,
+        "pitch_deg_sd": 0.49
+      },
+      "velocity": {
+        "cmd_vx_vy_wz": [
+          0.0,
+          0.0,
+          0.5
+        ],
+        "achieved_vx_m_s": 0.0,
+        "achieved_vy_m_s": 0.01,
+        "achieved_wz_rad_s": 0.494,
+        "vx_sd_over_envs": 0.002,
+        "wz_sd_over_envs": 0.001
+      }
+    }
+  }
+}

@@ -26,6 +26,44 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 
 ## Log
 
+### 2026-09-27 — How the UniFP policy walks, measured (for P2Dingo's Go2 walking policy); the dock in P2Dingo
+
+Lukas asked for P2Dingo's Go2 walking policy to be retrained to look like the UniFP walking. To give that
+work a target in numbers, `demos/unifp/gait_probe.py` (new) holds a velocity command on
+`checkpoints/unifp_go2d1_isaaclab_model_56000.pt` and records the legs at the physics rate:
+
+```
+./demos/unifp/gait_probe.py --headless
+```
+
+Run [UniFP 56000 gait probe](#/week/2/run/20260927T135134_gait_probe): 16 envs, 2 s settle then 8 s measured
+per command, legacy weld (0, 0, 0.08) as trained, arm goal held at its home (r 0.50 m), no external forces,
+flat plane; 0 falls in 64 robot-runs.
+
+| | stand | walk 0.3 | walk 0.6 | turn 0.5 |
+| --- | --- | --- | --- | --- |
+| stance width, front / rear (cm) | 34.5 / 35.0 | 32.5 / 34.4 | 32.5 / 34.4 | 32.5 / 34.8 |
+| foot outward of its thigh in stance (cm, FL/FR/RL/RR) | 3.6/2.7/3.4/3.3 | 2.4/1.8/3.0/3.2 | 2.2/2.0/3.1/3.0 | 1.9/2.2/3.5/3.0 |
+| hip abduction outward (deg, mean of legs) | 6.1 | 5.3 | 5.3 | 5.3 |
+| stride frequency (Hz) / duty | — | 1.56 / 0.65 | 1.56 / 0.64 | 1.56 / 0.65 |
+| swing apex above stance, front / rear (cm) | — | 7.8 / 3.7 | 8.0 / 3.7 | 7.3 / 3.7 |
+| base height (m) | 0.315 | 0.333 | 0.329 | 0.331 |
+| achieved (vx m/s or wz rad/s) | 0.00 | 0.294 | 0.576 | 0.494 |
+
+What it shows: the stride is locked to UniFP's 0.64 s clock at every command (speed changes only the
+stride length), contact agrees with the clock's stance mask on 96–97 % of samples, and the feet land 2–3.5 cm
+outside the thigh origins, i.e. hips about 5° out, as its `hip_pos` and `ref_dof_leg` terms defend (default
+0.1 rad). What it does not show: anything about the bare Go2 — the 3.15 kg arm is on the robot and plausibly
+causes the front/rear asymmetries (front swing twice the rear's, 2.5° nose-up); one seed, simulation only,
+commands only up to its 0.6 m/s training edge. The scratch version of this script, run first by a subagent,
+gave the same numbers to the digit.
+
+**Dock in P2Dingo.** The same two dock meshes are now drawn in P2Dingo's RViz URDF, sim and phone model.
+Because `description/build_go2_d1_urdf.py` reads P2Dingo's `go2.urdf`, it now drops a dock link and its
+materials found in the source before adding its own (otherwise the link would be declared twice); rebuilt
+from the updated P2Dingo file, `description/go2_d1.urdf` is byte-identical to the committed one, and
+`tests/test_dock.py` passes (9).
+
 ### 2026-09-27 — Insertion, continued: why the policy could not learn it, and what made keys seat
 
 **Why.** Lukas: "Can [you] continue trying to improve the key insertion task? You have an entire day of gpu". Where
