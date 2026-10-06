@@ -31,6 +31,11 @@ from pxr import Gf, PhysxSchema, Usd, UsdGeom, UsdPhysics, Vt
 from dock import DOCK_MESHES, MESH_DIR, read_binary_stl
 from mount import ARM_MOUNT_POS_M
 
+# Where the arm's base_link (the centre of its base's bottom face) sits in the Go2's base_link frame, metres: on the
+# rails' tops, midway between the rails' screws, which the real arm's holes sit over (F-125). `mount.py` holds the
+# number and says where it comes from; this is the name main's launchers import it by (de1442c).
+D1_MOUNT_POS = ARM_MOUNT_POS_M
+
 
 @dataclass
 class WeldResult:
@@ -284,7 +289,8 @@ def build_welded_robot_usd(
     """Compose go2.usd + d1.usd into one articulation.
 
     `mount_pos` is the arm base's offset from the Go2's base link, in metres: by default the measured mount on the
-    Go2 EDU's expansion-dock rails (`mount.ARM_MOUNT_POS_M`, F-117). Before 2026-09-26 it was Rescue's (0, 0, 0.08).
+    Go2 EDU's expansion-dock rails, midway between their screws (`mount.ARM_MOUNT_POS_M`, F-117, F-125). Before
+    2026-09-26 it was Rescue's (0, 0, 0.08).
     `dock_visual` draws the dock and its rails on the trunk (visual only, `dock.py`).
     """
     os.makedirs(os.path.dirname(out_usd_path), exist_ok=True)

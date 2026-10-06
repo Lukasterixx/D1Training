@@ -43,12 +43,15 @@ class DockMeshTests(unittest.TestCase):
         self.assertLess(hi[0], 0.075)
         self.assertLess(max(-lo[1], hi[1]), 0.06)
 
-    def test_the_d1s_rear_screws_are_over_the_rails(self):
-        # Its four M4 holes at (+/-54, +/-29) mm in its base frame (F-117). The front pair is not tested: in the CAD
-        # it lands just past the rails' end, which is F-117's open question for the robot.
+    def test_the_d1s_holes_are_over_the_rail_screws_fore_and_aft(self):
+        # The real arm's holes are 130 mm apart along the rail (F-126) and sit over the rails' four screws, at
+        # x = -84.5 and +46.6 mm in Unitree's CAD (F-125). Across, the rails' screws are at y = +/-29 mm; the measured
+        # base's mesh scales Unitree's 58 mm to 69.6 there, which nobody measured (F-126), so across is not tested.
+        for screw_x, side in ((-0.0845, -1.0), (0.0466, 1.0)):
+            self.assertAlmostEqual(ARM_MOUNT_POS_M[0] + side * 0.065, screw_x, delta=0.0015)
         lo, hi = self.bounds["expansion_dock_rails"]
-        rear_x = ARM_MOUNT_POS_M[0] - 0.054
-        self.assertTrue(lo[0] < rear_x < hi[0])
+        for side in (-1.0, 1.0):
+            self.assertTrue(lo[0] < ARM_MOUNT_POS_M[0] + side * 0.065 < hi[0])
 
     def test_a_truncated_stl_is_refused(self):
         data = (dock.MESH_DIR / dock.DOCK_MESHES[1][1]).read_bytes()

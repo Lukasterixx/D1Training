@@ -27,15 +27,13 @@ from d1_ik_controller import D1CartesianController, IsaacKinematics
 from flat_env_cfg import (
     ARM_BASE_DAMPING,
     ARM_BASE_STIFFNESS,
-    ARM_MOUNT_POS_M,
-    ARM_MOUNT_Z,
     D1_ARM_JOINTS,
     D1_GRIPPER_JOINTS,
     GRIPPER_BASE_DAMPING,
     GRIPPER_BASE_STIFFNESS,
     make_env_cfg,
 )
-from weld import build_welded_robot_usd
+from weld import D1_MOUNT_POS, build_welded_robot_usd
 
 # Orientation of the D1's Link6 frame at the arm's zero pose: a 90 deg rotation
 # about Y, which points the gripper's approach axis along base +X. This is NOT
@@ -221,20 +219,20 @@ def sub_keyboard_event(event, *args, **kwargs) -> bool:
                 ARM_TELEOP_POS[2] = 0.05
 
             # 2. Bounding box around the arm's own base.
-            if -0.15 < ARM_TELEOP_POS[0] < 0.15 and -0.15 < ARM_TELEOP_POS[1] < 0.15:
+            mx, my, mz = D1_MOUNT_POS
+            if -0.15 < ARM_TELEOP_POS[0] - mx < 0.15 and -0.15 < ARM_TELEOP_POS[1] - my < 0.15:
                 if ARM_TELEOP_POS[2] < 0.2:
                     ARM_TELEOP_POS[2] = 0.2
 
-            # 3. Max reach, measured from the arm's own base -- which sits
-            #    ARM_MOUNT_Z above the robot root, not at it.
-            dx, dy = ARM_TELEOP_POS[0], ARM_TELEOP_POS[1]
-            dz = ARM_TELEOP_POS[2] - ARM_MOUNT_Z
+            # 3. Max reach, measured from the arm's own base -- which sits at
+            #    D1_MOUNT_POS on the robot root, not at it.
+            dx, dy, dz = ARM_TELEOP_POS[0] - mx, ARM_TELEOP_POS[1] - my, ARM_TELEOP_POS[2] - mz
             dist = float(np.sqrt(dx * dx + dy * dy + dz * dz))
             if dist > ARM_MAX_REACH:
                 scale = ARM_MAX_REACH / dist
-                ARM_TELEOP_POS[0] = dx * scale
-                ARM_TELEOP_POS[1] = dy * scale
-                ARM_TELEOP_POS[2] = ARM_MOUNT_Z + dz * scale
+                ARM_TELEOP_POS[0] = mx + dx * scale
+                ARM_TELEOP_POS[1] = my + dy * scale
+                ARM_TELEOP_POS[2] = mz + dz * scale
 
             print(f"[TELEOP] Arm target: X={ARM_TELEOP_POS[0]:.3f} Y={ARM_TELEOP_POS[1]:.3f} "
                   f"Z={ARM_TELEOP_POS[2]:.3f} | Yaw: {np.degrees(ARM_TELEOP_YAW):.1f} deg")
@@ -519,7 +517,7 @@ def run(args_cli, simulation_app):
             go2_usd_path=_resolve_go2_usd(),
             d1_urdf_path=os.path.join(os.path.dirname(__file__), "d1_arm", "d1.urdf"),
             out_usd_path=os.path.join(os.path.dirname(__file__), "generated", "go2_d1.usd"),
-            mount_pos=ARM_MOUNT_POS_M,
+            mount_pos=D1_MOUNT_POS,
             arm_mass_kg=args_cli.arm_mass,
         )
         robot_usd = weld.usd_path

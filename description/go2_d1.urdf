@@ -552,20 +552,20 @@
   <joint name="arm_mount_joint" type="fixed">
     <parent link="base_link" />
     <child link="d1_base_link" />
-    <origin xyz="0.0025 0 0.0855" rpy="0 0 0" />
+    <origin xyz="-0.019 0 0.0855" rpy="0 0 0" />
   </joint>
   <link name="d1_base_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://d1_training/d1_arm/meshes/base_link.STL" />
+        <mesh filename="package://d1_training/d1_arm/meshes/base_link_measured.STL" />
       </geometry>
       <material name="d1_arm" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://d1_training/d1_arm/meshes/base_link.STL" />
+        <mesh filename="package://d1_training/d1_arm/meshes/base_link_measured.STL" />
       </geometry>
     </collision>
   </link>
@@ -585,7 +585,7 @@
     </collision>
   </link>
   <joint name="Joint1" type="revolute">
-    <origin xyz="0 0 0.0533" rpy="0 0 -3.1416" />
+    <origin xyz="0 0 0.076" rpy="0 0 -3.1416" />
     <parent link="d1_base_link" />
     <child link="Link1" />
     <axis xyz="0 0 1" />

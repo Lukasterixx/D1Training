@@ -23,8 +23,8 @@ P2Dingo (`Isaac/go2_ws/src/go2_control_cpp/config/go2.urdf`), or the same file a
 Go2RemoteConnection carries it (`~/go2_ws/Go2RemoteConnection/description/go2/go2.urdf`,
 whose mesh paths differ; only the file names are kept). The D1 half comes from
 this repo's `d1_arm/d1.urdf`, and the joint between them is `weld.py`'s
-`arm_mount_joint` at `mount.ARM_MOUNT_POS_M` (the measured mount on the expansion
-dock's rails, F-117). On 2026-09-26 the file was regenerated from the
+`arm_mount_joint` at `mount.ARM_MOUNT_POS_M` (on the expansion dock's rails, midway
+between their screws: F-117, F-125). On 2026-09-26 the file was regenerated from the
 Go2RemoteConnection copy. Before the dock was added, that gave output byte-identical
 to the committed file, so the two sources are the same file. Merging by hand once would
 leave the sources silently drifting apart; `build_go2_d1_urdf.py` makes the merge
@@ -38,6 +38,12 @@ It prints the movable joint names, which **must** match what the sim publishes o
 `/joint_states` — `sim.py` prints the articulation's joints at startup, so the
 two lists can be diffed directly. A name that differs is not an error anywhere;
 the link just never moves in RViz.
+
+**The committed file predates P2Dingo's bolt-ons.** P2Dingo's `go2.urdf` has since gained
+`expansion_dock`, `heatshield` and `mid360` links, and the last two point at meshes this repo does
+not carry, so a regeneration now brings in all three. When the mount moved (2026-09-30, see
+`weld.D1_MOUNT_POS`) only `arm_mount_joint`'s origin was changed in the committed file, to exactly
+what the builder writes for it. Drop those links, or copy their meshes, before regenerating.
 
 Three deliberate edits along the way:
 

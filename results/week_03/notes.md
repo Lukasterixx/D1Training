@@ -29,6 +29,206 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 <!-- Dated entries (### YYYY-MM-DD · topic). For each: the exact command or change, the outcome in numbers,
      and what it does and does not show. Record runs with ./dashboard.py record. -->
 
+### 2026-10-03 — The real D1's base is not the model's: holes over the rail screws, 1.2× the diameter; its height estimated from Unitree's renders
+
+**Lukas** (2026-10-03): on the real robot the D1's four holes line up with the four rail screws, and its base is 1.2× the
+model's diameter. He did not remember the height. He had written the dimensions in a Claude chat on 2026-09-30, but
+they are in none of the 17 Claude Code sessions on this PC (typed, queued, subagent or file-history records, searched
+from 2026-09-27). If that chat was on claude.ai, it is not stored locally.
+
+**What it changes.**
+- The model's holes are 108 mm apart fore-aft (F-117). Over the rail screws they are 131 mm apart, a scale of
+  131/108 = **1.213**, which agrees with "1.2×". In the model the fore-aft holes sit at the base's lip radius (±54 mm).
+- With the holes on the screws, the D1's origin is midway between them: x = (−84.5 + 46.5)/2 = **−19.0 mm**. That is
+  21.5 mm further back than the applied (0.0025, 0, 0.0855) m. This assumes the base still sits on the rail tops
+  (85.5 mm), with no plate under it.
+- Neither has been measured by me. The new mount has not been applied.
+
+**Online.**
+- Unitree publishes no dimensioned drawing that a script can reach: its document centre answers automated requests
+  with an access-restricted page.
+- Retailer listings give the D1-T's 670 × 150 × 100 mm and M6 mounts, which are not this arm's numbers.
+- `yuhanliu0121/unitree_arm` on GitHub carries the same `base_link.STL` (same sha256) and the same 53.3 mm to Joint1.
+  Its Go2 mount is a by-eye Blender placement, so it says nothing about the real height.
+
+**An estimate from Unitree's product renders.** Two renders were used, the arm-upright diagram and a three-quarter
+view, from the Shopify CDN of two retailers; they are not committed. The base was profiled down its centreline and
+compared with the model's base sliced in height:
+- The model's base: a 5 mm flange (118 × 108 mm, corner tabs), a 2 mm lip at r 54, a 105 mm cylinder to 52.5 mm,
+  and Joint1 at 53.3 mm.
+- The camera elevation is 20° and 22°, from each top rim's ellipse.
+- The lip-to-body width ratio matches the model: 174/170 px against 108/105 mm.
+- The cylinder side plus lip is 8% and 11% taller for its diameter than the model's: 51.3 and 52.7 model-mm against
+  47.5. The flange matches.
+- Scaled by 1.213, that puts the real rim, and Joint1 just above it, at about **69 mm**. The range is 64–73 mm: 64 if
+  the renders are uniformly the model, 73 at the larger of the two readings.
+
+This is not a measurement. The renders may not be the arm Lukas has, the pixel edges are ±2–3 px, and F-118 makes
+every millimetre of shoulder height a millimetre at the tip. A ruler on the real base replaces it.
+
+### 2026-10-01 — Before the retrain: the D1's four holes cannot all line up with the dock's four rail screws
+
+**Why.** Lukas asked for the demos to be retrained with the D1's new dimensions ("taller base cylinder"), and before
+starting: "verify that the d1 model has its screw holes aligned with the 4 go2 dock screws".
+
+**The taller base is not in the repository yet.** `d1_arm/d1.urdf` and `d1_arm/meshes/base_link.STL` are unchanged since
+2026-07-17: the base mesh is 57.8 mm tall over a 118 × 108 mm footprint, and Joint1 is 53.3 mm above its bottom face.
+There is nothing newer on another branch, in the stash, in P2Dingo or in Downloads. The new numbers were asked of
+Lukas. Nothing has been retrained, and no simulator was launched for this entry.
+
+**The check.** Two independent sources, and every model of the robot:
+
+```
+python3 description/mount_from_cad.py <GO2简化-带拓展坞-0911.stp>   # re-downloaded; sha256 348cf13b…a407855, as in NOTICE.md
+python3 results/week_03/figures/d1_dock_holes.py                     # the committed meshes only
+```
+
+- **The dock.** In the STEP, every vertical hole of radius 1–4 mm over the dock was listed. The only four-hole
+  pattern on the rails is the M3 screws that fasten them (r 1.7 mm, heads in r 3.25 mm counterbores below the rail
+  tops): x = −84.5 and +46.5 mm, y = ±29.0 mm. The committed `expansion_dock_rails.stl` gives the same centres to 0.1 mm.
+- **The D1.** Four M4 clearance holes (r 2.25 mm) through a 2.9 mm flange, at (±54, ±29) mm in its base frame. The
+  mesh's other 20 round holes are internal: they start 1.8 mm up and do not open on the bottom face.
+- **Every model welds the D1 at the same place, square to the dog.** The place is `mount.ARM_MOUNT_POS_M` =
+  (0.0025, 0, 0.0855) m, and it appears in:
+  - `generated/go2_d1.usd` and both insertion USDs (read with `usd-core`, not the simulator);
+  - `description/go2_d1.urdf`;
+  - `position_only.workspace.MOUNT_B` and `unifp_train/pose_feasibility.py`.
+
+  `generated/claw/go2_d1_claw.usd` still holds (0, 0, 0.08). It dates from 2026-09-25, and `demos/unifp/run_demo.py`
+  rebuilds it from the default mount on every claw run, so it is stale but never used. P2Dingo has no D1.
+
+**Result** ([d1_dock_holes.py](figures/d1_dock_holes.py)):
+
+| | rail screws, x (mm) | D1 holes at the weld, x (mm) | D1 hole − screw |
+| --- | --- | --- | --- |
+| front pair | +46.5 | +56.5 | **+10.0 mm** |
+| rear pair | −84.5 | −51.5 | **+33.0 mm** |
+| across (both pairs) | y = ±29.0 | y = ±29.0 | 0.0 mm |
+
+![D1 holes against the dock's rail screws](figures/d1_dock_holes.png)
+
+What it shows:
+
+- **No placement can line up all four.** The D1's holes are 108 mm apart fore-aft and the rail screws 131 mm apart.
+  Across the rails the two patterns coincide. Fore-aft, only one pair can be put anywhere in particular.
+- **The model follows Lukas's 2026-09-26 choice** (F-117): front pair 1 cm ahead of the rails' front screws. In
+  Unitree's CAD that puts the front D1 holes at +56.5 mm, which is 3.5 mm past the rails' ends at +53.0. In the model,
+  those two screws have no rail under them.
+
+What it does not show: anything measured on the robot. The CAD is Unitree's "simplified" Go2, and the D1 mesh is
+Unitree's model of the base this repository has always used. If the taller base has a different hole pattern, this
+check has to be redone with its geometry.
+
+### 2026-09-30 · The arm moved onto the rails' screw positions (F-125)
+
+**Why.** Lukas measured the real D1's mounting holes at 13 cm apart along the rail, the same spacing as the
+screws that hold the Go2 EDU's two rails down. In Unitree's rail CAD (P2Dingo's
+`meshes/expansion_dock_rails.stl`) those screws are 131.0 mm apart, at x = −84.5 and +46.6 mm in the Go2's
+`base_link`, both rails at y = ±29.0 mm, and the rails' tops are at z = 85.5 mm. So the arm's base is centred at
+their midpoint, x = −19 mm, and rests on the rail tops. The weld had it at (0, 0, 0.08), Rescue's `ARM_MOUNT_Z`,
+which had no measurement behind it and left the base 5.5 mm inside the rails.
+
+**Change.** `weld.D1_MOUNT_POS = (−0.019, 0.0, 0.0855)` is now the one mount. `sim.py`, `run_position_only.py`
+and the three demo launchers take it from there. The CPU copies must match it: `position_only/workspace.MOUNT_B` and
+`description/build_go2_d1_urdf.py`, whose committed `go2_d1.urdf` had only `arm_mount_joint`'s origin changed. A
+full regeneration would now pull in P2Dingo's newer links; see `description/README.md`. `flat_env_cfg.ARM_MOUNT_Z`
+is gone. `sim.py`'s teleop reach clamp now measures from the mount's x as well as its z. `run.json` records
+`arm_mount_m` for every run from now on. Rescue carries the same change (`arm_weld.D1_MOUNT_POS`).
+
+**Stance, re-measured.** The Week 1 method: 16 envs, zero actions, 12 s with no time limit, mean over the last
+2 s ([`stance_probe.py`](figures/stance_probe.py), a scratchpad probe like Week 1's, not a run folder:
+`python stance_probe.py <x> <y> <z> <out.json>` in the Isaac env). As a control it was run at the old mount
+first. That run reproduced `task_space` exactly, so the two rows compare like for like:
+
+| Mount | Base offset | Tilt | Resting pincer tip (env frame) | Peak tilt | Lowest base |
+| --- | --- | --- | --- | --- | --- |
+| (0, 0, 0.08), control | (−0.0555, 0, 0.2737) m | 1.03° | (0.3601, −0.0141, 0.7604) m | 5.11° | 0.2602 m |
+| (−0.019, 0, 0.0855) | (−0.0571, 0, 0.2736) m | 0.78° | (0.3375, −0.0141, 0.7679) m | 4.75° | 0.2597 m |
+
+The tip moved (−22.6, 0, +7.5) mm. That is the mount's (−19.0, 0, +5.5) plus a base that settles 1.6 mm further
+back and 0.25° more level. `task_space.ZERO_ACTION_BASE_OFFSET_M` and `ZERO_ACTION_TIP_M` now hold the new values.
+The first one's height also feeds the base-height reward. `TARGET_RANGES` is unchanged: the frozen manifests hold
+targets in the environment frame, and their `content_sha256` does not depend on the mount.
+
+**Checks.**
+- CPU workspace model ([json](figures/d1_workspace_rail_mount.json), [png](figures/d1_workspace_rail_mount.png),
+  `python -m position_only.workspace --out …`): at the settled height, 98.92% of the box is reachable, clear
+  and holdable by the pincer tip. The Week 1 figure at the old mount was 99.06%. 0% of the box is within 5 cm of
+  the resting tip, and the model now misses the measured tip by 1.3 cm (1.6 cm at the old mount, F-015).
+- [verify, 8 envs](#/week/3/run/20260930T053155_769482Z_verify_seed42)
+  (`python run_position_only.py verify --headless --num_envs 8`): **25/25**. Link6 and the tool point match URDF
+  kinematics at the simulator's angles to 0.35 and 0.60 µm, which also confirms `workspace.MOUNT_B` equals the
+  weld. The resting tip after the check's 5 s settle is 2.4 mm from the new `ZERO_ACTION_TIP_M`. The box is
+  15.2 cm from the tip, and 0 of 8 sampled targets are within 5 cm.
+- Unit tests: 383 of 387 pass (4 skipped as before). `tests/test_workspace.py` pinned the zero-pose Link6 and
+  tool point in the base frame; both moved by exactly the mount's shift and are re-pinned. `test_d1_ui` pinned
+  the mount itself.
+
+**Four demo tests now fail and are left failing for Lukas to decide.** Each pins behaviour of a scene placed at a
+fixed spot in the base frame, and the arm is now 19 mm further from it:
+- `test_the_survey_on_the_dog_looks_past_its_head`: the survey camera now stands 0.25 m ahead of the mount, not
+  0.20. The head did not move, so the arm needs the next offset to see past it.
+- `test_a_pivot_turns_joint1_alone_and_puts_the_view_where_asked`: the pivoted view's height now differs by
+  11.8 mm against a 10 mm tolerance. It follows from the survey standing further out on the lying dog's tilted
+  axis.
+- `test_a_cup_too_wide_for_the_jaws_is_taken_from_inside`: the inside-out grasp is 3.5 mm off the cup's axis. With
+  the cup moved 19 mm with the arm the test passes again, so the planner is unchanged: it is a tilt, because the
+  cup is further away.
+- `test_finds_the_tag_plans_on_the_close_look_and_pushes_through_the_arc`: the box pose from the tag is 15.4 mm
+  out against 5 mm. With the box moved 19 mm with the arm it is 6.9 mm, and the arm's extra 5.5 mm of height is
+  the likely remainder.
+
+**Does not show.** The mount is inferred from a ruler reading of the hole spacing plus the rails' CAD, not
+measured on the robot. The D1 model's own base mesh has its holes 108 mm apart along the rail, not 130, so the
+model's base is not the real one there. Nothing trained before today saw this mount: every earlier checkpoint
+and the Week 1–2 results are at (0, 0, 0.08). The 256-env zero-action baseline (F-016) was not re-run; `verify`
+samples 8 targets.
+
+### 2026-09-30 · The arm's base, measured: 22.7 mm taller and 21 mm wider than Unitree's model (F-126)
+
+**Measured (Lukas).** The real base's cylinder is 126 mm across, and 76 mm from the base's bottom to the rotating
+top plate. The rotating plate to the shoulder pivot is right as modelled (56.3 mm).
+[`screenshots/d1_base_real.jpg`](screenshots/d1_base_real.jpg), Lukas's photograph of the arm on a desk, shows
+one continuous black cylinder on a square flange with cut corners. There is a screw in each corner, a flat top
+plate on the cylinder, and the shoulder servo and bracket standing on it. There is no step or spacer partway up.
+
+| | Unitree's `base_link.STL` | Real | Ratio |
+| --- | --- | --- | --- |
+| Cylinder diameter | 105.0 mm | 126 mm | 1.20 |
+| Holes along the rail | 108 mm | 130 mm | 1.20 |
+| Bottom to rotating plate (Joint1) | 53.3 mm | 76 mm | 1.43 |
+| Rotating plate to shoulder (Joint2) | 56.3 mm | 56.3 mm | 1.00 |
+
+It is the base alone. The model's chain reaches 554.9 mm from the shoulder to the wrist flange, against
+Unitree's published 550 mm excluding the jaw, and 680.5 mm to the jaw tip. Every link mesh agrees with its joint
+offsets.
+
+**Change.** `d1_arm/measured_base.py` writes `meshes/base_link_measured.STL`: Unitree's base scaled 1.20 in plan,
+the cylinder stretched from the 5.0 mm flange top to end at 76.0 mm, and anything above moved up 22.7 mm.
+`d1.urdf` uses that mesh for visual and collision, carries the base's centre of mass the same way (z 17.1 ->
+22.8 mm), and puts Joint1 at 76.0 mm. Unitree's mesh is kept beside it. `description/go2_d1.urdf` got the same
+two edits, and `demos/cup/d1_ui/server.py`'s hard-coded shoulder height too. Rescue's `d1_arm/` takes the same
+three files, byte for byte.
+
+**Re-measured.** The same stance probe at the rail mount ([json](figures/stance_probe_measured_base.json)): base
+(-0.0571, 0, 0.2736) m, 0.78°, unchanged to 0.1 mm. The resting pincer tip is **(0.3378, -0.0141, 0.7906) m**,
+22.7 mm above the morning's value. `task_space.ZERO_ACTION_TIP_M` holds it.
+- [verify, 8 envs](#/week/3/run/20260930T065528_498258Z_verify_seed42): **25/25**. Link6 and the tool point
+  match URDF kinematics to 0.74 and 1.3 µm. The resting tip is 2.3 mm from the recorded value, and the box is
+  17.4 cm from it, with 0 of 8 sampled targets within 5 cm.
+- CPU workspace model ([json](figures/d1_workspace_measured_base.json),
+  [png](figures/d1_workspace_measured_base.png)): 98.99% of the box is reachable, clear and holdable at the settled
+  height, and the model misses the measured tip by 13.5 mm.
+- Unit tests: 383 of 387, the same four demo failures as this morning (4 skipped). The combiner's tag pose is now
+  12.1 mm out, not 15.4; the other three are unchanged. `tests/test_workspace.py` is re-pinned (Link6 and the tool
+  point, +22.7 mm in z). `tests/test_d1_ik.py`'s level-attitude point [0.30, 0, 0.28] no longer solves level: the
+  arm stops 22.5 mm short. It moved up with the shoulder to 0.3027, where it solves to 0.03 mm. That is a real
+  loss of low level reach close in, not a solver fault.
+
+**Does not show.** The across-rail hole spacing and the flange's shape were not measured. The mesh scales them
+to 69.6 mm and 141.6 x 129.6 mm, and that is an assumption. Where the real base's mass sits was not measured
+either. The arm above the plate was checked at one dimension and against the published reach, not link by link.
+
 ### 2026-09-29 — The thesis contact tasks: pressing and wiping built in simulation, the key task written into the plan
 
 **The request.** Lukas: only the combiner box existed as a thesis task for the arm. He asked for the wiping and
@@ -212,6 +412,10 @@ deliverables.
   sliding off the cap; the bare jaws cannot reach the recessed button, as declared. Pilot: 49/96 after 400 iterations.
 - [F-124](../findings.md): wiping built; the insertion policy keeps contact throughout but wipes 90% of the path in
   14/36, because a rigid pad held ~8° off the panel wipes with its rim. Pilot: 16/36.
+- [F-125](../findings.md): the D1 is bolted to the rails' screw positions, 19 mm further back and 5.5 mm higher
+  than modelled (superseded by F-126 for its stance numbers; the mount stands).
+- [F-126](../findings.md): the real base is 22.7 mm taller and 21 mm wider than Unitree's model, so the whole arm sits
+  22.7 mm higher; the resting tip is (0.3378, −0.0141, 0.7906) m (provisional: hand measurements).
 
 ## Issues and risks
 
@@ -223,6 +427,13 @@ deliverables.
   pad. G2's calibration needs real buttons and panels and a force instrument.
 - **Resume at a pinned rate.** Resuming another task's checkpoint at rsl-rl's adaptive rate replaces the policy on the
   first update (F-121's note; again today). Every P0–P4 variant will resume from a checkpoint.
+- Four demo tests fail at the rail mount on the measured base: the pick survey, pivot and wide-cup tests, and the
+  combiner tag pose. The scenes were tuned with the arm at x = 0 on Unitree's smaller base, and each was listed in
+  the 2026-09-30 logs. They need Lukas's call:
+  re-place the demo scenes relative to the new mount, or accept the new behaviour and re-pin.
+- Every checkpoint trained before 2026-09-30 carried the arm at (0, 0, 0.08) on Unitree's smaller base: its shoulder
+  was (+19.0, 0, -28.2) mm from where the real one is. Evaluating one now runs it on a
+  different robot; `run.json`'s `arm_mount_m` tells the two apart from here on.
 
 ## Next week
 

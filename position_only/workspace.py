@@ -3,7 +3,7 @@
     python -m position_only.workspace --out results/week_01/figures
 
 Forward kinematics come from `d1_arm/d1.urdf`, mounted as `weld.py` mounts it (identity rotation,
-at `mount.ARM_MOUNT_POS_M`, on the expansion dock's rails: F-117). Link masses follow `weld.py`'s D1 mass model: shell inertials,
+at `mount.ARM_MOUNT_POS_M`, on the expansion dock's rails midway between their screws: F-117, F-125). Link masses follow `weld.py`'s D1 mass model: shell inertials,
 plus a servo per moving link, with the rest on the welded base, so static gravity torques match
 what PhysX is given. The collision test is a proxy (joint-to-joint segments against a box around
 the Go2 body and the ground), not mesh collision. Nothing here runs the simulator, so torque
