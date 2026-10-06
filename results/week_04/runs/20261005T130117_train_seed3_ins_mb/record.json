@@ -1,0 +1,63 @@
+{
+  "id": "20261005T130117_train_seed3_ins_mb",
+  "title": "Fine-tune: insertion seed3 model_21200, 800 iterations on the measured robot (pinned 1e-5, compliant grip)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-06T00:47:09+11:00",
+  "started_utc": "2026-10-05T13:01:17+00:00",
+  "source_dir": "logs/unifp_train/20261005T130117_train_seed3_ins_mb",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21999,
+  "final_checkpoint": {
+    "file": "model_21999.pt",
+    "sha256": "725138d7163dd84b22a79d1ac75d72b743a5279cc8c928f9394cc2793a40f3aa"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 266.84271240234375,
+      "last_step": 21999,
+      "mean_last_10": 259.881591796875,
+      "min": 2.2953131198883057,
+      "max": 282.4783935546875,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 967.02001953125,
+      "last_step": 21999,
+      "mean_last_10": 953.4469970703125,
+      "min": 11.36734676361084,
+      "max": 993.3499755859375,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.35516202449798584,
+      "last_step": 21999,
+      "mean_last_10": 0.35522998571395875,
+      "min": 0.355158269405365,
+      "max": 0.37798696756362915,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 28787.0,
+      "last_step": 21999,
+      "mean_last_10": 28800.2,
+      "min": 27443.0,
+      "max": 33562.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

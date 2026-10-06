@@ -39,6 +39,7 @@ import math
 import numpy as np
 
 import d1_ik
+from mount import JOINT1_HEIGHT_M, LEGACY_JOINT1_HEIGHT_M
 from position_only.workspace import (BODY_BOX_B, EFFORT_LIMIT_NM, LINK_RADIUS_M, MOUNT_B, SOFT_LIMIT_FACTOR,
                                      clear_of_body, forward, gravity_torques)
 
@@ -782,7 +783,14 @@ def view_point(joints, q, mount, range_m: float):
 # base 0.0851 m up and 7.3 deg nose-up, so its mount is 0.0794 m along gravity from the base frame's origin),
 # carried over here as heights above the mount so that nothing has to know the floor. On a dog that settles
 # differently, they stay where they are relative to the arm and the frame moves over the floor instead.
-SURVEY_PAST_THE_HEAD = {"pitches_deg": (60.0, 55.0, 65.0), "heights_m": (0.335, 0.285, 0.235),
+#
+# They were chosen on Unitree's base. The measured one stands the shoulder 22.7 mm higher on the mount (F-126), so
+# the heights ride up with it and the pose stays where it was relative to the arm (Week 4, 2026-10-06). That also
+# keeps it past the dog's head, which the mount's 19 mm move back brought nearer: at 0.335 m above the measured
+# mount the sightline to 0.40 m out crosses the trunk proxy, and from 0.345 m up it is clear.
+_SHOULDER_RISE_M = JOINT1_HEIGHT_M - LEGACY_JOINT1_HEIGHT_M
+SURVEY_PAST_THE_HEAD = {"pitches_deg": (60.0, 55.0, 65.0),
+                        "heights_m": tuple(round(h + _SHOULDER_RISE_M, 4) for h in (0.335, 0.285, 0.235)),
                         "offsets_m": (0.20, 0.25), "see_past_body_m": 0.40, "sight_height_m": -0.115}
 
 

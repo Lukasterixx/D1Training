@@ -4576,4 +4576,97 @@ result that changes a conclusion gets a new entry, and the old one is marked
   at the shoulder. Low level poses close in are lost: level at 0.30 m out, the arm now stops 22.5 mm short of a
   point 0.28 m above its base (`tests/test_d1_ik.py`). Every checkpoint trained earlier saw the smaller base as well
   as the old mount.
+- **Note, 2026-10-06 (across the rail, measured):**
+  - Lukas: on the real arm the holes are 58 mm apart across the rail, as on Unitree's, not the 69.6 mm the mesh
+    scaled them to.
+  - `measured_base.py` now keeps Unitree's across-rail size in the flange and its lip at the mounting tabs (scale 1.0
+    beyond |x| = 51.5 mm on Unitree's base, blended from 1.20 inside 48 mm). The holes are at (±64.8, ±29.0) mm and
+    sit over the rails' four screws: 0.0 mm across, 0.7 mm along (`week_04` log, `d1_dock_holes.png`).
+  - Side effects: the holes are drawn 5.4 × 4.5 mm ovals (their size was never measured), and four internal bolt holes
+    in the blend are drawn as teardrops.
+  - The cylinder, its 76 mm and the centre of mass are unchanged. [G0](#/week/4/run/20261006T005827_176584Z_verify_seed42)
+    is 25/25 and identical to the digit to the run before (resting tip, box distance, Link6 to 0.74 µm), so F-127's
+    policies stand. Only the flange's outline is still unmeasured.
 
+
+### F-127 — On the measured robot the released policies miss by the shoulder's move (reach 4.35 cm, insertion 33/96); fine-tuned there, reach is back to 1.70 cm and insertion and the lever demo beat their old-robot scores, but continuing the mechanism policy made it worse, and the UniFP cup and box demos fail with either policy
+
+- **Status:** provisional (simulation; one seed per fine-tune; no control continued on the old robot)
+- **Week:** 4
+- **Date:** 2026-10-06
+- **Evidence:** [Week 4 log, 2026-10-05](week_04/notes.md), "Retraining the demos' policies on the measured robot",
+  every run linked there. The robot is F-125's mount and F-126's base. Each released checkpoint was scored on the
+  measured robot, fine-tuned there with its own lineage's recipe, and re-scored on the same frozen sets and PhysX
+  demos. The rows below give frozen sets first, then PhysX demos.
+  - **Reach** (`56000` → `57499`, 1,500 iterations, fingertip). Frozen sets: settled error median/p90 4.35/4.86 →
+    **1.70/2.16 cm** (on its own robot 1.51/2.17); 0 falls. PhysX, cup / box with wrist roll: 5/16, 0/16 →
+    2/16, 1/16 (on its own robot 12/16, 11/16).
+  - **Mechanism** (`17499`, 1,000 iterations). Frozen sets: held-out test 498/512 → 481, 474, 443 at
+    18000/18400/18498. PhysX, combiner at a 16 N·m door: **15/16** unretrained; 12/16 at 18000 (16/16 on its own
+    robot).
+  - **Lever** (`20497` → `21496`, 1,000 iterations). Frozen sets: levers 280/360 → **343/360** (304 on its own robot);
+    held-out test 505/512. PhysX, lever demo (−30°, 1.2 N·m, 16 N·m door): 10/16 → **16/16** (9/16 on its own robot).
+  - **Insertion** (`21200` → `21400`, 200 iterations, pinned 1e-5). Frozen sets: lateral 33 → **73**/96, detent 29 →
+    **68**/96 (75, 71 on its own robot); then down to 33/32 by 21999. PhysX at 2 mm: 39/48, 40/48, 78/96 → **46/48,
+    45/48, 85/96** (43, 43, 80 on its own robot).
+  - **Press and wipe pilots** (400 iterations from `21200`, as 2026-09-29). Frozen sets: press panel 63/96, force
+    19/48, recessed 31/72; wipe 23/36 (old-robot pilots: 49, 20, 23; 16).
+- **Scope:**
+  - Simulation only, one seed per fine-tune.
+  - There is no control continued on the old robot, so "better than on its own robot" is not shown to be the robot
+    rather than more training. The mechanism and lever results especially move in opposite directions under the same
+    adaptive-rate recipe.
+  - The cup and box failures were read from their summaries. In the box, the jaws arrive 1.7 cm off and the latch
+    releases 7 times in 16, but the door does not move (median 0.5°, against 45° on the old robot). In the cup, 7 are
+    picked and 5 spilt. They were not traced further. The cause given below, scenes tuned for the old arm, is an
+    inference shared with the four failing scripted-demo tests.
+- **Implication:**
+  - For the measured robot use `checkpoints/..._isaaclab_measured_model_57499.pt`, `..._mech_lever_measured_model_21496.pt`
+    and `..._insertion_seed3_measured_model_21400.pt`. Keep `..._mech_law_model_17499.pt` for the combiner.
+  - Every result before 2026-09-30 was on a different robot. F-118 holds: the policies cannot correct a moved
+    shoulder themselves, so the real arm's geometry has to be right in the model before any transfer.
+  - The UniFP cup and box demos need their scenes re-placed relative to the arm before they say anything about the
+    policy.
+  - A mechanism fine-tune should try the insertion lineage's pinned rate (F-121) before concluding the policy cannot
+    be adapted.
+- **Note, 2026-10-06 (scenes re-placed, F-128):** "the scenes, not the policy" holds only in part. With the cup's
+  table moved with the arm, `57499` picks 7/16 (2 before; 12 on the old robot). The box fails with its post re-placed
+  too (0–6/16), with the door not moving after the latch releases: that failure is not the placement.
+
+### F-128 — Re-placed with the arm, the scripted demos come back to their old-robot results (lying cup pick 11/11, lying combiner 8/9 and 8/8, standing combiner 16/16), and three of the four failing tests pass; the fourth's 5 mm limit is inside the tag estimator's noise, and the UniFP box demo fails for a reason that is not its placement
+
+- **Status:** provisional (simulation; one seed per demo)
+- **Week:** 4
+- **Date:** 2026-10-06
+- **Evidence:** [Week 4 log, 2026-10-06](week_04/notes.md), "The scripted scenes re-placed with the arm", every run
+  linked there.
+  - **The rule.** Every scene was set against the legacy arm. The measured arm's shoulder stands (−19.0, 0, +28.2) mm
+    from it (`mount.ARM_SHIFT_FROM_LEGACY_M`; Link6 moves by exactly that under forward kinematics).
+  - **Where it went.**
+    - Scene objects moved by it; ones standing on the real floor, horizontally only.
+    - The arm's pose grids above the mount (the cup survey, the combiner search stops) rose 22.7 mm with the base.
+    - UniFP's furniture moved as far as its goal sphere, which is fixed to the base, allows: the cup's table the whole
+      way, the box's post in height only.
+  - **PhysX on the measured robot, re-placed** (old-robot result in brackets):
+    - lying cup pick 11/11 (11/11, F-069);
+    - lying combiner grip-and-pull 8/9 and 8/8 (9/9, 8/8, F-075);
+    - standing combiner, mechanism `17499`, 16/16 (16/16; 15/16 before re-placing);
+    - lever `21496` 16/16;
+    - UniFP cup 7/16 (12/16; 2/16 before);
+    - UniFP box 0/16 (11/16; 1/16 before).
+  - **Tests:** 647 of 648. The survey, pivot and wall-grasp tests pass again.
+  - **The tag-pose test** fails at 5.18 mm against 5.0. Over 24 placements around it the same sequence gives median
+    2.9 mm, p90 6.4–6.7 mm, max 8–9 mm, the same with the box at the old arm-relative height and on the floor. The
+    error follows the tag's estimated rotation (1.9° → 12.1 mm, 0.15° → 0.8 mm) over the 0.35 m from tag to box origin.
+- **Scope:**
+  - Simulation, one seed per demo.
+  - The lying combiner's plans note the door is opened only to 44–48° where the arm stops reaching: the taller arm
+    reaches a floor box less far, which no re-placement gives back.
+  - The UniFP box's failure was characterised (arrival within ~2 cm, latch 0–8 of 16, door median 0.5°), not
+    diagnosed. Placements within 4 mm gave 3/16 and 0/16.
+- **Implication:**
+  - The scripted demos are usable on the measured robot.
+  - The combiner tag test's limit should follow the estimator (about 10 mm), or the close look should be improved.
+    Either way it is a statement about the estimator, not the robot.
+  - The UniFP box with the position-only policy needs its own investigation. The mechanism controller opens the same
+    box 16/16 and is the one to demonstrate with.

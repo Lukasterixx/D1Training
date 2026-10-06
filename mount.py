@@ -24,3 +24,16 @@ DOCK_CAD_ARM_MOUNT_POS_M = (0.0025, 0.0, 0.0855)
 
 #: The weld every run before 2026-09-26 used (Rescue's), kept to name what older results were built on.
 LEGACY_ARM_MOUNT_POS_M = (0.0, 0.0, 0.08)
+
+#: Joint1 above the D1 base's bottom face, m: the base Lukas measured (F-126, `d1_arm/d1.urdf`), and Unitree's model
+#: of it, which every scene before 2026-09-30 was set against. `tests/test_workspace.py` checks the first against the URDF.
+JOINT1_HEIGHT_M = 0.0760
+LEGACY_JOINT1_HEIGHT_M = 0.0533
+
+#: How far the arm moved in the Go2's `base_link` from the arm the scripted scenes were set against (the legacy mount
+#: on Unitree's base) to the measured one: (-0.019, 0, +0.0282) m. The arm is rigid above its base, so everything
+#: from the shoulder up moved by exactly this. A scene re-placed by it is where it was relative to the arm (Week 4,
+#: 2026-10-06); one standing on the real floor takes only the horizontal part.
+ARM_SHIFT_FROM_LEGACY_M = (ARM_MOUNT_POS_M[0] - LEGACY_ARM_MOUNT_POS_M[0],
+                           ARM_MOUNT_POS_M[1] - LEGACY_ARM_MOUNT_POS_M[1],
+                           ARM_MOUNT_POS_M[2] - LEGACY_ARM_MOUNT_POS_M[2] + JOINT1_HEIGHT_M - LEGACY_JOINT1_HEIGHT_M)

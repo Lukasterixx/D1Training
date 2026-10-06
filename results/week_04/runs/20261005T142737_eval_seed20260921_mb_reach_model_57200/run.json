@@ -1,0 +1,270 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    50,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "logs/unifp_train/20261005T101948_train_seed1_reach_mb/model_57200.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": "results/manifests/unifp_isaaclab_validation.json",
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "mb_reach_model_57200",
+    "seed": 20260921,
+    "std_type": null,
+    "steps": 100,
+    "task": "unifp",
+    "tool_point": "fingertip",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.0002,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261005T101948_train_seed1_reach_mb/model_57200.pt",
+  "checkpoint_iteration": 57200,
+  "checkpoint_source": "isaaclab",
+  "conditions": {
+    "action_scale": 0.25,
+    "arm_armature": 0.0002,
+    "domain_randomisation": false,
+    "ee_force_range_n": [
+      -8.0,
+      8.0
+    ],
+    "episode_length_s": 20.0,
+    "force_start_step": 0,
+    "goal_sphere_centre_m": [
+      0.0,
+      0.0,
+      0.49
+    ],
+    "gripper_force_kp": 200.0,
+    "noise": false,
+    "num_envs": 50,
+    "policy_hz": 50.0,
+    "roll_objective": false,
+    "simulator": "isaaclab",
+    "solver_iterations": [
+      4,
+      0
+    ],
+    "task": "go2d1_pos_force",
+    "terrain": "flat plane",
+    "tool_body": "Link7_1",
+    "tool_offset_m": [
+      0.0547,
+      0.006,
+      0.017
+    ]
+  },
+  "critic_obs": [
+    50,
+    459
+  ],
+  "episode_length_steps": 1000,
+  "estimate_obs": [
+    50,
+    12
+  ],
+  "expected_actor": [
+    50,
+    2432
+  ],
+  "expected_critic": [
+    50,
+    459
+  ],
+  "expected_estimates": [
+    50,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_status": "M  README.md\nM  d1_arm/d1.urdf\nA  d1_arm/measured_base.py\nA  d1_arm/meshes/base_link_measured.STL\nM  demos/combiner/run_combiner_demo.py\nM  demos/cup/d1_ui/server.py\nM  demos/cup/run_camera_body_view.py\nM  demos/cup/run_pick_demo.py\nM  description/README.md\n M description/build_go2_d1_urdf.py\nM  description/go2_d1.urdf\nM  flat_env_cfg.py\nM  mount.py\nM  position_only/task_space.py\nM  position_only/workspace.py\nM  results/findings.md\n M results/week_02/notes.md\nA  results/week_03/figures/d1_workspace_measured_base.json\nA  results/week_03/figures/d1_workspace_measured_base.png\nA  results/week_03/figures/d1_workspace_rail_mount.json\nA  results/week_03/figures/d1_workspace_rail_mount.png\nA  results/week_03/figures/stance_probe.py\nA  results/week_03/figures/stance_probe_measured_base.json\nA  results/week_03/figures/stance_probe_old_mount.json\nA  results/week_03/figures/stance_probe_rail_mount.json\nMM results/week_03/notes.md\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/agent.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/env.yaml\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/params_deploy.yaml\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/record.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/run.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/verify.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/agent.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/env.yaml\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/params_deploy.yaml\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/record.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/run.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/verify.json\nA  results/week_03/screenshots/d1_base_real.jpg\n M results/week_04/notes.md\nM  run_position_only.py\nM  sim.py\nM  tests/test_d1_ik.py\nM  tests/test_dock.py\nM  tests/test_workspace.py\nM  weld.py\n?? demos/unifp/gait_probe.py\n?? logs/unifp_gait_probe/\n?? results/week_02/runs/20260927T135134_gait_probe/\n?? results/week_03/figures/d1_dock_holes.png\n?? results/week_03/figures/d1_dock_holes.py\n?? results/week_04/runs/",
+  "insertion": null,
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 50,
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": false,
+  "seed": 20260921,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "base_vel_err_m_s": {
+      "max": 0.07405576482415199,
+      "mean": 0.04137831065803766,
+      "median": 0.041277747601270676,
+      "n": 50,
+      "p90": 0.05570090934634209
+    },
+    "base_z_m": {
+      "max": 0.33302783966064453,
+      "mean": 0.32326345771551135,
+      "median": 0.32487235963344574,
+      "n": 50,
+      "p90": 0.33037814497947693
+    },
+    "condition_mismatches": [],
+    "controller": "model_57200.pt (isaaclab)",
+    "episodes": 50,
+    "estimator_err_n": {
+      "max": 1.126171350479126,
+      "mean": 0.7715013739466667,
+      "median": 0.7819273173809052,
+      "n": 50,
+      "p90": 0.9954321980476379
+    },
+    "falls": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "force_cmd_n": {
+      "max": 6.080713929455788,
+      "mean": 3.2859447654589697,
+      "median": 3.4240933512102973,
+      "n": 50,
+      "p90": 4.945986518086096
+    },
+    "force_realised_n": {
+      "max": 21.04913038117139,
+      "mean": 2.60271887553999,
+      "median": 2.577380031983134,
+      "n": 50,
+      "p90": 6.656912522437148
+    },
+    "goal_tracking_quiet_m": {
+      "max": 0.02701013721525669,
+      "mean": 0.017908783229067922,
+      "median": 0.01767623145133257,
+      "n": 50,
+      "p90": 0.02120070904493332
+    },
+    "manifest_role": "validation",
+    "manifest_sha256": "94e576a6221007bcfa0bb1f7bb6ea28832866481a3ea7f50f94446e99f6cf495",
+    "roll_err_deg": {
+      "max": 78.84416580200195,
+      "mean": 69.43229793548583,
+      "median": 70.78743934631348,
+      "n": 50,
+      "p90": 76.76958847045898
+    },
+    "schedule_mismatches": [],
+    "simulator": "isaaclab",
+    "survived_to_time_limit": 50,
+    "unified_tracking_m": {
+      "max": 0.07438259571790695,
+      "mean": 0.025210772780701517,
+      "median": 0.023965976666659117,
+      "n": 50,
+      "p90": 0.030932117253541946
+    },
+    "unified_tracking_pushed_m": {
+      "max": 0.1259966790676117,
+      "mean": 0.03413011533208191,
+      "median": 0.02955749211832881,
+      "n": 50,
+      "p90": 0.04555031657218933
+    }
+  },
+  "task": "unifp",
+  "tool_body": "Link7_1",
+  "tool_offset_m": [
+    0.0547,
+    0.006,
+    0.017
+  ],
+  "wipe": null
+}

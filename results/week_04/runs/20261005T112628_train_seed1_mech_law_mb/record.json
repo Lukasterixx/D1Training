@@ -1,0 +1,63 @@
+{
+  "id": "20261005T112628_train_seed1_mech_law_mb",
+  "title": "Fine-tune: mechanism model_17499, 1,000 iterations on the measured robot (force law, peak 60 N)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-05T23:13:46+11:00",
+  "started_utc": "2026-10-05T11:26:28+00:00",
+  "source_dir": "logs/unifp_train/20261005T112628_train_seed1_mech_law_mb",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 18498,
+  "final_checkpoint": {
+    "file": "model_18498.pt",
+    "sha256": "6c46d6bff0633cd547c8f583d3e2a50cd3b99aba958833f65f93a8357f7d66ef"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 189.31590270996094,
+      "last_step": 18498,
+      "mean_last_10": 190.82079467773437,
+      "min": 2.555196762084961,
+      "max": 200.43316650390625,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 18498,
+      "mean_last_10": 995.2919982910156,
+      "min": 14.569999694824219,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.7467349171638489,
+      "last_step": 18498,
+      "mean_last_10": 0.7470927357673645,
+      "min": 0.7288394570350647,
+      "max": 0.7486178278923035,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 34552.0,
+      "last_step": 18498,
+      "mean_last_10": 35476.5,
+      "min": 32679.0,
+      "max": 38069.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

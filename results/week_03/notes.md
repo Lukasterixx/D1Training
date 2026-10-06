@@ -31,6 +31,11 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 
 ### 2026-10-03 — The real D1's base is not the model's: holes over the rail screws, 1.2× the diameter; its height estimated from Unitree's renders
 
+> **Superseded (2026-10-05, [Week 4](../week_04/notes.md)).** The measurements existed: `de1442c` on `origin/main`
+> (2026-09-30, from another machine). They show **76 mm** from the base's bottom to the rotating plate. The render
+> estimate below (about 69 mm, range 64–73) was 7 mm low and outside its own range. Do not use it. Comparing
+> proportions between Unitree's renders and its own model was not evidence of the real part.
+
 **Lukas** (2026-10-03): on the real robot the D1's four holes line up with the four rail screws, and its base is 1.2× the
 model's diameter. He did not remember the height. He had written the dimensions in a Claude chat on 2026-09-30, but
 they are in none of the 17 Claude Code sessions on this PC (typed, queued, subagent or file-history records, searched
@@ -67,6 +72,10 @@ This is not a measurement. The renders may not be the arm Lukas has, the pixel e
 every millimetre of shoulder height a millimetre at the tip. A ruler on the real base replaces it.
 
 ### 2026-10-01 — Before the retrain: the D1's four holes cannot all line up with the dock's four rail screws
+
+> **Superseded (2026-10-05, [Week 4](../week_04/notes.md)).** This is right about Unitree's base mesh: its 108 mm holes
+> cannot line up with 131 mm screws. It is wrong about the arm. Lukas measured the real holes 130 mm apart, over the
+> screws (F-125, F-126, measured 2026-09-30 and committed on main as `de1442c`, which this branch did not have yet).
 
 **Why.** Lukas asked for the demos to be retrained with the D1's new dimensions ("taller base cylinder"), and before
 starting: "verify that the d1 model has its screw holes aligned with the 4 go2 dock screws".

@@ -53,6 +53,21 @@ class DockMeshTests(unittest.TestCase):
         for side in (-1.0, 1.0):
             self.assertTrue(lo[0] < ARM_MOUNT_POS_M[0] + side * 0.065 < hi[0])
 
+    def test_the_measured_bases_holes_are_over_the_rail_screws_across_too(self):
+        # Across the rail the real holes are 58 mm apart, as Unitree's, over the screws at y = +/-29 mm (Lukas,
+        # 2026-10-06). Found in the mesh itself: the vertical walls through the flange's bottom 3 mm, past the cylinder.
+        tri = dock.read_binary_stl(Path(__file__).resolve().parent.parent / "d1_arm" / "meshes" / "base_link_measured.STL")
+        normal = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+        walls = tri[(np.abs(normal[:, 2]) < 0.05 * np.linalg.norm(normal, axis=1)) & (tri[:, :, 2].max(1) <= 0.0031)]
+        xy = walls.reshape(-1, 3)[:, :2]
+        for sx in (-1.0, 1.0):
+            for sy in (-1.0, 1.0):
+                hole = xy[(np.sign(xy[:, 0]) == sx) & (np.sign(xy[:, 1]) == sy) & (np.abs(xy[:, 0]) > 0.06)]
+                centre = (hole.max(0) + hole.min(0)) / 2
+                screw = np.array([ARM_MOUNT_POS_M[0] + centre[0], sy * 0.029])
+                self.assertAlmostEqual(centre[1], screw[1], delta=0.0005)
+                self.assertAlmostEqual(screw[0], -0.0845 if sx < 0 else 0.0466, delta=0.0015)
+
     def test_a_truncated_stl_is_refused(self):
         data = (dock.MESH_DIR / dock.DOCK_MESHES[1][1]).read_bytes()
         with tempfile.NamedTemporaryFile(suffix=".stl") as handle:

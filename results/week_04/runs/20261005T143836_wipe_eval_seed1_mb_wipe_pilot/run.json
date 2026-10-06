@@ -1,0 +1,706 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    36,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "logs/unifp_train/20261005T140645_train_seed1_wipe_pilot_mb/model_21599.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "wipe_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "mb_wipe_pilot",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "task": "wipe",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261005T140645_train_seed1_wipe_pilot_mb/model_21599.pt",
+  "checkpoint_iteration": 21599,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_21599.pt",
+  "critic_obs": [
+    36,
+    459
+  ],
+  "episode_length_steps": 1600,
+  "estimate_obs": [
+    36,
+    12
+  ],
+  "expected_actor": [
+    36,
+    2432
+  ],
+  "expected_critic": [
+    36,
+    459
+  ],
+  "expected_estimates": [
+    36,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_status": "M  README.md\nM  d1_arm/d1.urdf\nA  d1_arm/measured_base.py\nA  d1_arm/meshes/base_link_measured.STL\nM  demos/combiner/run_combiner_demo.py\nM  demos/cup/d1_ui/server.py\nM  demos/cup/run_camera_body_view.py\nM  demos/cup/run_pick_demo.py\nM  description/README.md\n M description/build_go2_d1_urdf.py\nM  description/go2_d1.urdf\nM  flat_env_cfg.py\nM  mount.py\nM  position_only/task_space.py\nM  position_only/workspace.py\nM  results/findings.md\n M results/week_02/notes.md\nA  results/week_03/figures/d1_workspace_measured_base.json\nA  results/week_03/figures/d1_workspace_measured_base.png\nA  results/week_03/figures/d1_workspace_rail_mount.json\nA  results/week_03/figures/d1_workspace_rail_mount.png\nA  results/week_03/figures/stance_probe.py\nA  results/week_03/figures/stance_probe_measured_base.json\nA  results/week_03/figures/stance_probe_old_mount.json\nA  results/week_03/figures/stance_probe_rail_mount.json\nMM results/week_03/notes.md\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/agent.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/env.yaml\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/params_deploy.yaml\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/record.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/run.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/verify.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/agent.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/env.yaml\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/params_deploy.yaml\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/record.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/run.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/verify.json\nA  results/week_03/screenshots/d1_base_real.jpg\n M results/week_04/notes.md\nM  run_position_only.py\nM  sim.py\nM  tests/test_d1_ik.py\nM  tests/test_dock.py\nM  tests/test_workspace.py\nM  weld.py\n?? demos/unifp/gait_probe.py\n?? logs/unifp_gait_probe/\n?? results/week_02/runs/20260927T135134_gait_probe/\n?? results/week_03/figures/d1_dock_holes.png\n?? results/week_03/figures/d1_dock_holes.py\n?? results/week_04/runs/",
+  "insertion": null,
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "wipe_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 36,
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": true,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_force": [
+      {
+        "completion": 0.93,
+        "contact_fraction": 1.0,
+        "force_n": 10.0,
+        "force_rmse_n": 5.658,
+        "of": 18,
+        "peak_contact_n": 20.28,
+        "reasons": {
+          "incomplete": 7,
+          "success": 11
+        },
+        "success": 11
+      },
+      {
+        "completion": 0.953,
+        "contact_fraction": 1.0,
+        "force_n": 5.0,
+        "force_rmse_n": 4.736,
+        "of": 18,
+        "peak_contact_n": 15.68,
+        "reasons": {
+          "incomplete": 6,
+          "success": 12
+        },
+        "success": 12
+      }
+    ],
+    "by_height": [
+      {
+        "completion": 0.953,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 7.683,
+        "height_m": 0.7,
+        "of": 12,
+        "peak_contact_n": 20.8,
+        "reasons": {
+          "success": 12
+        },
+        "success": 12
+      },
+      {
+        "completion": 0.969,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 4.845,
+        "height_m": 0.78,
+        "of": 12,
+        "peak_contact_n": 23.69,
+        "reasons": {
+          "incomplete": 1,
+          "success": 11
+        },
+        "success": 11
+      },
+      {
+        "completion": 0.633,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 1.675,
+        "height_m": 0.86,
+        "of": 12,
+        "peak_contact_n": 14.055,
+        "reasons": {
+          "incomplete": 12
+        },
+        "success": 0
+      }
+    ],
+    "by_kind": [
+      {
+        "completion": 0.953,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.45,
+        "kind": "line",
+        "of": 18,
+        "peak_contact_n": 16.81,
+        "reasons": {
+          "incomplete": 6,
+          "success": 12
+        },
+        "success": 12
+      },
+      {
+        "completion": 0.938,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 4.845,
+        "kind": "zigzag",
+        "of": 18,
+        "peak_contact_n": 21.125,
+        "reasons": {
+          "incomplete": 7,
+          "success": 11
+        },
+        "success": 11
+      }
+    ],
+    "by_offset": [
+      {
+        "completion": 0.946,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.462,
+        "of": 12,
+        "offset_m": -0.008,
+        "peak_contact_n": 19.165,
+        "reasons": {
+          "incomplete": 5,
+          "success": 7
+        },
+        "success": 7
+      },
+      {
+        "completion": 0.938,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 4.934,
+        "of": 12,
+        "offset_m": 0.0,
+        "peak_contact_n": 19.795,
+        "reasons": {
+          "incomplete": 4,
+          "success": 8
+        },
+        "success": 8
+      },
+      {
+        "completion": 0.946,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 4.604,
+        "of": 12,
+        "offset_m": 0.008,
+        "peak_contact_n": 18.55,
+        "reasons": {
+          "incomplete": 4,
+          "success": 8
+        },
+        "success": 8
+      }
+    ],
+    "completion": 0.938,
+    "contact_fraction": 1.0,
+    "damaged": 0,
+    "engage_tip_miss_mm": 1.945,
+    "episodes": 36,
+    "fell": 0,
+    "finished": 34,
+    "force_rmse_n": 4.845,
+    "loss_events": 0.0,
+    "pad_tilt_median_deg": 9.255,
+    "path_error_p90_mm": 14.36,
+    "peak_contact_n": 19.615,
+    "reasons": {
+      "contact lost": 0,
+      "damaged": 0,
+      "fell": 0,
+      "incomplete": 13,
+      "no contact": 0,
+      "not started": 0,
+      "success": 23
+    },
+    "started": 36,
+    "success": 23,
+    "touched": 36
+  },
+  "task": "wipe",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": {
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "pad": {
+      "length_m": 0.045,
+      "points": 9,
+      "radius_m": 0.025
+    },
+    "wipe_fraction": 0.8
+  },
+  "wipe_conditions": {
+    "mu": 0.4,
+    "speed_m_s": 0.03,
+    "standoff_m": 0.015
+  },
+  "wipe_rows": [
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    }
+  ],
+  "wipe_set": "default"
+}

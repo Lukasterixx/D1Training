@@ -1,0 +1,63 @@
+{
+  "id": "20261005T134706_train_seed1_press_pilot_mb",
+  "title": "Press pilot on the measured robot: 400 iterations from insertion 21200 (pinned 1e-5), as pilot_c",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-06T01:06:46+11:00",
+  "started_utc": "2026-10-05T13:47:06+00:00",
+  "source_dir": "logs/unifp_train/20261005T134706_train_seed1_press_pilot_mb",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21599,
+  "final_checkpoint": {
+    "file": "model_21599.pt",
+    "sha256": "7950284f025ba009f34cd31aa701755c83470551c866914cd4138b7ac09b101b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 249.17019653320312,
+      "last_step": 21599,
+      "mean_last_10": 243.76180114746094,
+      "min": 2.8708438873291016,
+      "max": 256.2936096191406,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 991.6599731445312,
+      "last_step": 21599,
+      "mean_last_10": 984.1359985351562,
+      "min": 13.934782981872559,
+      "max": 999.0,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.35937830805778503,
+      "last_step": 21599,
+      "mean_last_10": 0.35958021581172944,
+      "min": 0.35937830805778503,
+      "max": 0.3779893219470978,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 33219.0,
+      "last_step": 21599,
+      "mean_last_10": 33127.8,
+      "min": 31796.0,
+      "max": 36672.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

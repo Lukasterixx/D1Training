@@ -8,6 +8,42 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## On the measured robot (since 2026-10-06)
+
+Since 2026-09-30 the simulated D1 has the base Lukas measured on the real arm: Joint1 at 76.0 mm, not Unitree's
+53.3 mm. Its mount is on the dock's rails midway between their screws, at (−0.019, 0, 0.0855) m (F-125, F-126). Every
+checkpoint below this section was trained on Unitree's base, at (0, 0, 0.08) or F-117's (0.0025, 0, 0.0855). On the
+measured robot the shoulder is 2–3 cm from where those policies learnt it, and they miss by about that much (F-118).
+
+Three were fine-tuned on the measured robot and beat their originals there. They are the ones to use (F-127; Week 4
+log, 2026-10-05/06):
+
+| file | from | fine-tune | measured robot, frozen sets | measured robot, PhysX demo |
+| --- | --- | --- | --- | --- |
+| `unifp_go2d1_isaaclab_measured_model_57499.pt` | `..._isaaclab_model_56000.pt` | 1,500 iterations, UniFP recipe, fingertip | 1.70 / 2.16 cm median / p90 (56000: 4.35 / 4.86; on its own robot 1.51 / 2.17) | cup 2/16, box 1/16: the scenes, not the policy (below) |
+| `unifp_go2d1_mech_lever_measured_model_21496.pt` | `..._mech_lever_model_20497.pt` | 1,000 iterations, lever recipe | levers 343/360 (20497: 280); held-out test 505/512 | lever demo **16/16** (20497: 10/16; on its own robot 9/16) |
+| `unifp_go2d1_insertion_seed3_measured_model_21400.pt` | `..._insertion_seed3_model_21200.pt` | 200 of 800 iterations, pinned 1e-5 | lateral 73/96, detent 68/96 (21200: 33, 29) | **46/48, 45/48, 85/96** at 2 mm (21200: 39, 40, 78; on its own robot 43, 43, 80) |
+
+- **The mechanism controller stays `unifp_go2d1_mech_law_model_17499.pt`.** Unretrained, it opens the combiner box 15/16
+  at a 16 N·m door on the measured robot (16/16 on its own). Its 1,000-iteration fine-tune scored worse on every saved
+  checkpoint: 481–443 of 512 against 498, and 12/16 in the demo.
+- **`demos/unifp/run_demo.py`'s reach default is now the measured-robot checkpoint.** With the scenes re-placed with
+  the arm (F-128), its cup demo picks 7/16 (12/16 on the old robot). The box demo still fails (0–6/16): the latch
+  releases and the door does not move, which is not the placement. Use the mechanism controller for the box (16/16).
+- Lever `21496` still needs `--correct_entry`; without it, it misses the bar (0/16), as `20497` did (F-114).
+
+```bash
+./demos/unifp/run_demo.py --task combiner --mech --attempts 16 --headless --correct_entry --stance_deg -30 \
+    --handle_torque_nm 1.2 --door_torque_nm 16 --checkpoint checkpoints/unifp_go2d1_mech_lever_measured_model_21496.pt
+./demos/insertion/run_demo.py --checkpoint checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt \
+    --compliant_key --attempts 48 --num_envs 16 --headless --lateral_mm 2
+```
+
+One seed each, simulation only. None of the three was checked against a control continued on the old robot, so the
+part of each gain due to extra training, rather than the robot, is not known.
+
+## On Unitree's base (before 2026-09-30)
+
 | file | trained on | best measured | falls |
 | --- | --- | --- | --- |
 | `unifp_go2d1_isaaclab_model_56000.pt` | Isaac Lab 0.54.3 / Isaac Sim 5.1, this repository's `unifp_train` | **1.5 cm** median tool-tip error | 0/50 |

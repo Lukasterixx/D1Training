@@ -105,10 +105,15 @@ RANDOM_HANDLE_BAND_DEG = 45.0
 # it: the arm plans a grasp from about 0.35 m to 0.50 m of the mount, and the near end is where it reaches
 # lowest, so a run that never goes there never tests the part of the workspace closest to the floor.
 SWEEP_CUP_RANGE_M = (0.40, 0.48)
+# All of these were set with the arm at the legacy mount on Unitree's base. The cup stands on the floor, so it moves
+# with the arm horizontally only (`mount.ARM_SHIFT_FROM_LEGACY_M`, Week 4, 2026-10-06): 19 mm back, where the arm went.
+from mount import ARM_SHIFT_FROM_LEGACY_M  # noqa: E402
+SCENE_SHIFT_XY_M = (float(ARM_SHIFT_FROM_LEGACY_M[0]), float(ARM_SHIFT_FROM_LEGACY_M[1]))
+DEFAULT_CUP_XY = (0.42 + SCENE_SHIFT_XY_M[0], 0.03 + SCENE_SHIFT_XY_M[1])
 
 
 def random_cup(rng, region: str = "ahead", sweep_deg: float = 45.0, range_m=SWEEP_CUP_RANGE_M):
-    """(x, y) and a handle yaw in degrees for the next episode."""
+    """(x, y) and a handle yaw in degrees for the next episode, the region moved with the arm (`SCENE_SHIFT_XY_M`)."""
     if region == "sweep":
         reach = float(rng.uniform(*range_m))
         bearing = math.radians(float(rng.uniform(-sweep_deg, sweep_deg)))
@@ -117,7 +122,7 @@ def random_cup(rng, region: str = "ahead", sweep_deg: float = 45.0, range_m=SWEE
         x, y = float(rng.uniform(*RANDOM_CUP_X)), float(rng.uniform(*RANDOM_CUP_Y))
     away = math.degrees(math.atan2(y, x))
     offset = float(rng.uniform(-RANDOM_HANDLE_BAND_DEG, RANDOM_HANDLE_BAND_DEG))
-    return (x, y), away + offset + (180.0 if rng.random() < 0.5 else 0.0)
+    return (x + SCENE_SHIFT_XY_M[0], y + SCENE_SHIFT_XY_M[1]), away + offset + (180.0 if rng.random() < 0.5 else 0.0)
 
 
 class RestartKey:
@@ -664,6 +669,7 @@ def run(args):
                 metadata["episodes"] = {"count": len(episodes), "completed": len(completed), "succeeded": wins,
                                         "cup_region": args.cup_region,
                                         "random_cup_x_env_m": list(RANDOM_CUP_X), "random_cup_y_env_m": list(RANDOM_CUP_Y),
+                                        "scene_shift_xy_m": list(SCENE_SHIFT_XY_M),
                                         "sweep_cup_range_env_m": [float(v) for v in args.cup_range],
                                         "random_handle_band_deg": RANDOM_HANDLE_BAND_DEG}
                 write_json(run_dir / "run.json", metadata)
@@ -768,8 +774,9 @@ def main():
                              "arm's (F-063), so the modelled pads close past the URDF's stop to match it. "
                              "Pass 0.0172 to hold the simulator to the URDF's own limit, where no pinch is "
                              "possible and a wide cup is taken from inside instead.")
-    parser.add_argument("--cup_xy", type=float, nargs=2, default=(0.42, 0.03), metavar=("X", "Y"),
-                        help="Cup position on the floor relative to the robot's spawn point (m).")
+    parser.add_argument("--cup_xy", type=float, nargs=2, default=DEFAULT_CUP_XY, metavar=("X", "Y"),
+                        help="Cup position on the floor relative to the robot's spawn point (m). The default is "
+                             "(0.42, 0.03) moved 19 mm back with the arm (SCENE_SHIFT_XY_M).")
     parser.add_argument("--cup_yaw_deg", type=float, default=0.0,
                         help="Cup yaw; 0 points the handle along +x, away from the robot.")
     parser.add_argument("--sweep_deg", type=float, default=45.0,

@@ -78,7 +78,9 @@ sys.path.insert(0, str(ROOT))
 from demos.combiner.geometry import DEFAULT_HANDLE_TORQUE_NM, GEOMETRY  # noqa: E402
 from demos.unifp import props, script as demo_script  # noqa: E402
 
-DEFAULT_CHECKPOINT = "checkpoints/unifp_go2d1_isaaclab_model_56000.pt"
+#: The reaching policy for the measured robot (F-125, F-126): `model_56000` fine-tuned 1,500 iterations on it (F-127).
+#: `checkpoints/unifp_go2d1_isaaclab_model_56000.pt` is the same policy on Unitree's base at the old mount.
+DEFAULT_CHECKPOINT = "checkpoints/unifp_go2d1_isaaclab_measured_model_57499.pt"
 #: The mechanism-trained policy of F-108, law-trained, final checkpoint (`mech_law_v1` `model_17499`),
 #: copied out of the gitignored `logs/` so the demo runs on another machine (`checkpoints/README.md`).
 MECH_CHECKPOINT = "checkpoints/unifp_go2d1_mech_law_model_17499.pt"

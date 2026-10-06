@@ -23,6 +23,18 @@ from dataclasses import dataclass
 import math
 
 from demos.combiner.geometry import GEOMETRY
+from mount import ARM_SHIFT_FROM_LEGACY_M
+
+#: Every placement below was set with the arm at the legacy mount on Unitree's base. The measured arm stands
+#: (-0.019, 0, +0.0282) m from there (F-125, F-126). Each piece of furniture moves with the arm as far as UniFP's goal
+#: sphere allows, which is fixed to the robot's base, not the arm (Week 4, 2026-10-06):
+#:   - the cup's table moves the whole way. Raised but not moved in, the far cups' grasp points leave the sphere's
+#:     0.58 m radius (`CommandedGoalsStayInsideTheTrainedWorkspace.test_cup_phases`);
+#:   - the box's post rises with the arm but keeps its distance. Moved 19 mm in as well, the door's pull leaves the
+#:     sphere at the side stances (`SideStance.test_stances_the_demo_measures_keep_the_goals_in_the_sphere`).
+#: The heights matter most: they were chosen for where the arm's hand arrives level.
+CUP_SCENE_SHIFT_M = tuple(float(v) for v in ARM_SHIFT_FROM_LEGACY_M)
+BOX_SCENE_SHIFT_M = (0.0, 0.0, float(ARM_SHIFT_FROM_LEGACY_M[2]))
 
 # --- the cup on its table ---------------------------------------------------------------------
 
@@ -38,13 +50,13 @@ from demos.combiner.geometry import GEOMETRY
 #:
 #: 0.60 m is also an ordinary table. The grasp point is 7.5 cm up a 10 cm cup, so the jaw centre
 #: lands at 0.675 m: radius 0.547, pitch 19.8 degrees, which the probe measured at 0.9 cm.
-TABLE_TOP_M = 0.60
+TABLE_TOP_M = 0.60 + CUP_SCENE_SHIFT_M[2]
 #: Depth (x), width (y) of the top. Spawned as a solid pedestal rather than a top on legs: legs
 #: are four more colliders for the dog's feet to find and nothing in either demo touches them.
 TABLE_SIZE_M = (0.36, 0.50)
 #: Distance from the robot to the *near face* of the table. The Go2's front feet stand at about
 #: x = 0.19 m and its body reaches x = 0.22, so this leaves 0.22 m of clearance in front of it.
-TABLE_NEAR_FACE_M = 0.44
+TABLE_NEAR_FACE_M = 0.44 + CUP_SCENE_SHIFT_M[0]
 
 #: The cup, as `pick_demo.cup_asset.build_cup_usd` builds it. 55 mm across against the jaws' 77.2 mm
 #: open gap (`grasp.OPEN_GAP_M`), so this is an *outside* grasp -- the jaws close across the cup --
@@ -53,7 +65,7 @@ CUP_DIAMETER_M = 0.055
 CUP_HEIGHT_M = 0.10
 CUP_MASS_KG = 0.12
 #: Nominal cup centre, on the table top, in the robot's yaw frame.
-CUP_NOMINAL_XY_M = (0.515, 0.0)
+CUP_NOMINAL_XY_M = (0.515 + CUP_SCENE_SHIFT_M[0], 0.0 + CUP_SCENE_SHIFT_M[1])
 #: Height of the grasp up the cup from its base: below the rim, on the wall, where an outside grasp
 #: has the most material either side of the jaws.
 CUP_GRASP_UP_M = 0.075
@@ -71,7 +83,7 @@ CUP_SUCCESS_LIFT_M = 0.05
 #: so a 0.38 m post puts the grasp point at 0.68 m: radius 0.53, pitch 21 degrees. Same reasoning
 #: as the table -- that is where the hand arrives level, and a lever is gripped across a
 #: horizontal bar, which wants the jaws above and below it and so the approach flat.
-POST_TOP_M = 0.38
+POST_TOP_M = 0.38 + BOX_SCENE_SHIFT_M[2]
 POST_SIZE_M = (0.22, 0.32)
 #: Distance from the robot to the box's root. The scripted demo samples 0.62-0.70 m
 #: (`geometry.sample_placement`); the handle stands 0.151 m proud of the root toward the robot, so
@@ -122,7 +134,7 @@ class CupSite:
         have the jaws closing onto the rim, and a cup is a cylinder -- there is nothing to hold
         there. The jaws must straddle the wall.
         """
-        x, y = self.cup_xy_m
+        x, y = self.cup_xy_m[0] - CUP_SCENE_SHIFT_M[0], self.cup_xy_m[1] - CUP_SCENE_SHIFT_M[1]   # from the arm, as set
         norm = math.hypot(x, y) or 1.0
         return (x / norm, y / norm, 0.0)
 
@@ -142,7 +154,8 @@ class BoxSite:
     @property
     def root_m(self) -> tuple[float, float, float]:
         angle = math.radians(self.bearing_deg)
-        return (self.distance_m * math.cos(angle), self.distance_m * math.sin(angle), POST_TOP_M)
+        return (self.distance_m * math.cos(angle) + BOX_SCENE_SHIFT_M[0], self.distance_m * math.sin(angle) + BOX_SCENE_SHIFT_M[1],
+                POST_TOP_M)
 
     @property
     def quaternion(self) -> tuple[float, float, float, float]:
@@ -247,6 +260,7 @@ def side_stance(site: BoxSite, stance_deg: float) -> BoxSite:
     moved = turned.grasp_point_m()
     root = site.root_m
     x, y = root[0] + grasp[0] - moved[0], root[1] + grasp[1] - moved[1]
+    x, y = x - BOX_SCENE_SHIFT_M[0], y - BOX_SCENE_SHIFT_M[1]      # a site's distance and bearing are taken before the shift
     return BoxSite(math.hypot(x, y), math.degrees(math.atan2(y, x)), turned.yaw_deg)
 
 

@@ -1,0 +1,63 @@
+{
+  "id": "20261005T121345_train_seed1_mech_lever_mb",
+  "title": "Fine-tune: lever model_20497, 1,000 iterations on the measured robot (levers 30%, high, off-path price)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-06T00:01:17+11:00",
+  "started_utc": "2026-10-05T12:13:45+00:00",
+  "source_dir": "logs/unifp_train/20261005T121345_train_seed1_mech_lever_mb",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21496,
+  "final_checkpoint": {
+    "file": "model_21496.pt",
+    "sha256": "0249348b3ddc3f34c45d43938f14072affbd7f6dff66ffb829ad2421b440e788"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 190.39627075195312,
+      "last_step": 21496,
+      "mean_last_10": 183.22213897705078,
+      "min": 1.8451807498931885,
+      "max": 191.05941772460938,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 21496,
+      "mean_last_10": 995.3940063476563,
+      "min": 11.043478012084961,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.8232623934745789,
+      "last_step": 21496,
+      "mean_last_10": 0.8231977105140686,
+      "min": 0.818721354007721,
+      "max": 0.8254421353340149,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 33967.0,
+      "last_step": 21496,
+      "mean_last_10": 34884.0,
+      "min": 32032.0,
+      "max": 38461.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

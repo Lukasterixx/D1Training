@@ -19,8 +19,11 @@ from position_only.workspace import clear_of_body, forward, load_urdf, tip_offse
 UP = np.array([0.0, 0.0, 1.0])
 # Where the test scene's floor is, as a height below the base frame's origin. Nothing passes it to the
 # planner any more -- it places the cups, and the planner is told only what the camera would measure.
-BASE_HEIGHT = 0.12
-CUP_XY = np.array([0.42, 0.03])
+# The scene was set against the arm at the legacy mount on Unitree's base; it moves with the arm
+# (`mount.ARM_SHIFT_FROM_LEGACY_M`, Week 4, 2026-10-06), so every cup stands where it did relative to the arm.
+from mount import ARM_SHIFT_FROM_LEGACY_M  # noqa: E402
+BASE_HEIGHT = 0.12 - ARM_SHIFT_FROM_LEGACY_M[2]
+CUP_XY = np.array([0.42, 0.03]) + np.array(ARM_SHIFT_FROM_LEGACY_M[:2])
 CUP_RADIUS, CUP_HEIGHT = 0.0275, 0.10
 
 
@@ -391,13 +394,15 @@ class PivotSearchTests(unittest.TestCase):
         self.assertFalse(grasp.sightline_clear(over_the_back, middle))
         self.assertTrue(grasp.sightline_clear(self.survey.camera_pose_b[:3, 3], middle))
         self.assertTrue(self.in_view(self.survey.q, 0.42, 0.0))
-        # The pose is described from the arm's mount alone: 20 cm ahead of it and 0.335 m above it, which
-        # with the Go2 settled lying is the 0.50 m above the floor the pose was chosen at -- with the arm at the
-        # legacy mount. At the measured one (F-117) the whole pose rides the mount's shift up with it.
-        from mount import ARM_MOUNT_POS_M, LEGACY_ARM_MOUNT_POS_M
-        shift = (np.array(ARM_MOUNT_POS_M) - np.array(LEGACY_ARM_MOUNT_POS_M)) @ up
+        # The pose is described from the arm alone: 20 cm ahead of its mount and 0.335 m above it as chosen,
+        # which with the Go2 settled lying is the 0.50 m above the floor the pose was chosen at -- with the arm at
+        # the legacy mount on Unitree's base. The measured arm stands its shoulder 22.7 mm higher on a mount 5.5 mm
+        # higher (F-125, F-126), and the whole pose rides that shift up with it (Week 4, 2026-10-06).
+        from mount import ARM_SHIFT_FROM_LEGACY_M, JOINT1_HEIGHT_M, LEGACY_JOINT1_HEIGHT_M
+        shift = np.array(ARM_SHIFT_FROM_LEGACY_M) @ up
         cam = self.survey.camera_pose_b[:3, 3]
-        self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ up), 0.335, delta=0.005)
+        self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ up), 0.335 + JOINT1_HEIGHT_M - LEGACY_JOINT1_HEIGHT_M,
+                               delta=0.005)
         self.assertAlmostEqual(float((cam - grasp.MOUNT_B) @ self.heading), 0.20, delta=0.005)
         self.assertAlmostEqual(float(cam @ up) + self.LYING_HEIGHT, 0.50 + float(shift), delta=0.005)
 
@@ -500,12 +505,25 @@ class PivotSearchTests(unittest.TestCase):
 
 
 class RandomCupTests(unittest.TestCase):
+    """The regions are as they were set against the arm; the cups stand moved with it (`SCENE_SHIFT_XY_M`)."""
+
+    @staticmethod
+    def as_set(x, y):
+        from demos.cup import run_pick_demo
+        return x - run_pick_demo.SCENE_SHIFT_XY_M[0], y - run_pick_demo.SCENE_SHIFT_XY_M[1]
+
+    def test_the_cups_move_with_the_arm(self):
+        from demos.cup import run_pick_demo
+        from mount import ARM_SHIFT_FROM_LEGACY_M
+        self.assertEqual(run_pick_demo.SCENE_SHIFT_XY_M, tuple(float(v) for v in ARM_SHIFT_FROM_LEGACY_M[:2]))
+        self.assertAlmostEqual(run_pick_demo.DEFAULT_CUP_XY[0], 0.42 + ARM_SHIFT_FROM_LEGACY_M[0])
+
     def test_restart_positions_stay_in_the_picked_region_with_the_handle_off_the_jaw_axis(self):
         from demos.cup import run_pick_demo  # stdlib-only at import; Isaac is imported inside run()
 
         rng = np.random.default_rng(0)
         for _ in range(500):
-            (x, y), yaw = run_pick_demo.random_cup(rng)
+            (x, y), yaw = self.as_set(*(cup := run_pick_demo.random_cup(rng))[0]), cup[1]
             self.assertTrue(run_pick_demo.RANDOM_CUP_X[0] <= x <= run_pick_demo.RANDOM_CUP_X[1])
             self.assertTrue(run_pick_demo.RANDOM_CUP_Y[0] <= y <= run_pick_demo.RANDOM_CUP_Y[1])
             # Handle relative to pointing straight away from the robot: within the band of 0 or of 180 deg.
@@ -519,7 +537,7 @@ class RandomCupTests(unittest.TestCase):
         rng = np.random.default_rng(0)
         bearings = []
         for _ in range(500):
-            (x, y), _ = run_pick_demo.random_cup(rng, "sweep", 45.0)
+            x, y = self.as_set(*run_pick_demo.random_cup(rng, "sweep", 45.0)[0])
             low, high = run_pick_demo.SWEEP_CUP_RANGE_M
             self.assertTrue(low - 1e-9 <= math.hypot(x, y) <= high + 1e-9)
             bearings.append(math.degrees(math.atan2(y, x)))
@@ -534,7 +552,7 @@ class RandomCupTests(unittest.TestCase):
         rng = np.random.default_rng(0)
         reaches = []
         for _ in range(500):
-            (x, y), _ = run_pick_demo.random_cup(rng, "sweep", 45.0, (0.34, 0.52))
+            x, y = self.as_set(*run_pick_demo.random_cup(rng, "sweep", 45.0, (0.34, 0.52))[0])
             reaches.append(math.hypot(x, y))
         self.assertTrue(0.34 - 1e-9 <= min(reaches) and max(reaches) <= 0.52 + 1e-9)
         self.assertLess(min(reaches), run_pick_demo.SWEEP_CUP_RANGE_M[0])     # nearer than the default band

@@ -11,6 +11,14 @@ class WorkspaceModelTests(unittest.TestCase):
     def setUpClass(cls):
         cls.joints, cls.links = workspace.load_urdf()
 
+    def test_the_scenes_shift_is_the_arms_move_from_the_legacy_one(self):
+        # mount.JOINT1_HEIGHT_M is the URDF's, and the shift is what forward kinematics moves Link6 by (Week 4, 2026-10-06).
+        import mount
+        self.assertAlmostEqual(float(self.joints["Joint1"]["xyz"][2]), mount.JOINT1_HEIGHT_M, places=9)
+        frames, _, _ = workspace.forward(self.joints, np.zeros((1, 6)))
+        legacy_link6 = np.array([0.2804, -0.0013, 0.4999])   # the Week 1 verify run's, at the legacy arm
+        np.testing.assert_allclose(frames["Link6"][1][0] - legacy_link6, mount.ARM_SHIFT_FROM_LEGACY_M, atol=1e-4)
+
     def test_mass_model_totals_the_published_arm_mass(self):
         masses = workspace.simulated_masses(self.links)
         self.assertAlmostEqual(sum(masses.values()), workspace.ARM_MASS_KG, places=9)

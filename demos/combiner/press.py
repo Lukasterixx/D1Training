@@ -30,6 +30,7 @@ import numpy as np
 
 import d1_ik
 from position_only.workspace import EFFORT_LIMIT_NM, MOUNT_B, forward, gravity_torques
+from mount import JOINT1_HEIGHT_M, LEGACY_JOINT1_HEIGHT_M
 from demos.cup.pick_demo.camera import invert, transform
 from demos.cup.pick_demo.grasp import (FINGER_X_RANGE_M, FINGERTIP_Z_M, SEEDS, PlanningError, optical_rotation,
                                        path_clear, solve_link6)
@@ -193,6 +194,9 @@ def plan_press(joints, links, box_pose_b, q_start, params: PressParams | None = 
 
 # ------------------------------------------------------------------ looking for the tag
 
+_SHOULDER_RISE_M = JOINT1_HEIGHT_M - LEGACY_JOINT1_HEIGHT_M
+
+
 @dataclass(frozen=True)
 class SearchParams:
     """Camera stops for finding the tag, placed from the arm's mount like the cup's survey.
@@ -206,9 +210,11 @@ class SearchParams:
     # between them: 200 deg to reach -40 against 40 this way, about 2 s less on average over the six side stops.
     headings_deg: tuple = (0.0, -20.0, -40.0, -60.0, 20.0, 40.0, 60.0)
     camera_ahead_m: float = 0.20
-    camera_above_m: float = 0.30
+    # Above the mount as set on Unitree's base; the measured base stands the shoulder 22.7 mm higher on it (F-126), and
+    # the stops ride up with it, so each sits where it was relative to the arm (Week 4, 2026-10-06).
+    camera_above_m: float = 0.30 + _SHOULDER_RISE_M
     target_range_m: float = 0.55
-    target_above_m: float = 0.24
+    target_above_m: float = 0.24 + _SHOULDER_RISE_M
     # The second look, straight in front of the tag: the first of these (range, height above it) that solves.
     close_views_m: tuple = ((0.25, 0.03), (0.30, 0.03), (0.25, 0.08), (0.22, 0.0), (0.35, 0.06))
     # The tag reads the same at any image rotation, so the close look may turn the camera about its view to

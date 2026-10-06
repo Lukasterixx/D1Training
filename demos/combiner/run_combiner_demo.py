@@ -25,7 +25,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from demos.combiner import wrist_camera
-from demos.combiner.geometry import DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, sample_placement, validate_region
+from demos.combiner.geometry import (DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, Placement, sample_placement,
+                                    validate_region)
+from mount import ARM_SHIFT_FROM_LEGACY_M
 
 
 def write_json(path, value):
@@ -88,7 +90,11 @@ def run(args):
         rng = random.Random(args.seed)
 
         def next_placement():
-            return sample_placement(rng, tuple(args.box_range), args.sweep_deg, args.yaw_jitter_deg)
+            # The sector was set with the arm at the legacy mount on Unitree's base. The box stands on the floor, so
+            # it moves with the arm horizontally only: 19 mm back (mount.ARM_SHIFT_FROM_LEGACY_M, Week 4, 2026-10-06).
+            p = sample_placement(rng, tuple(args.box_range), args.sweep_deg, args.yaw_jitter_deg)
+            return Placement((p.position[0] + ARM_SHIFT_FROM_LEGACY_M[0], p.position[1] + ARM_SHIFT_FROM_LEGACY_M[1],
+                              p.position[2]), p.yaw_deg)
 
         placement = next_placement()
         torques = list(args.handle_torque_nm)

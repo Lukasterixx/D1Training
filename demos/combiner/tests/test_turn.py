@@ -13,6 +13,7 @@ from demos.combiner.press import (Lever, PressParams, SearchParams, plan_close_l
 from demos.combiner.pull import Handle, PullParams, arc_times, is_proven, plan_pull
 from demos.cup.pick_demo.camera import CAMERAS, camera_pose, link6_pose, project, resolve_mount, transform
 from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6, optical_rotation
+from mount import ARM_SHIFT_FROM_LEGACY_M
 from position_only.workspace import load_urdf
 
 try:
@@ -32,11 +33,18 @@ UP_B = BASE_W[:3, :3].T @ np.array([0.0, 0.0, 1.0])
 
 
 def box_in_base(placement) -> np.ndarray:
+    """The box in the base frame, where it was relative to the arm these scenes were set against.
+
+    They were placed with the arm at the legacy mount on Unitree's base. The scene moves with the arm
+    (`mount.ARM_SHIFT_FROM_LEGACY_M`, Week 4, 2026-10-06), in the base frame, so the arm sees each box as it did.
+    """
     pose = np.eye(4)
     yaw = math.radians(placement.yaw_deg)
     pose[:3, :3] = [[math.cos(yaw), -math.sin(yaw), 0], [math.sin(yaw), math.cos(yaw), 0], [0, 0, 1]]
     pose[:3, 3] = placement.position
-    return invert(BASE_W) @ pose
+    pose = invert(BASE_W) @ pose
+    pose[:3, 3] += ARM_SHIFT_FROM_LEGACY_M
+    return pose
 
 
 def render(camera_b, box_b, pixels_per_cell=24):

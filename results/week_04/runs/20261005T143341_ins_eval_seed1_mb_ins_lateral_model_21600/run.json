@@ -1,0 +1,1007 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    96,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "logs/unifp_train/20261005T130117_train_seed3_ins_mb/model_21600.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": true,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "ins_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "mb_ins_lateral_model_21600",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "task": "insertion",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261005T130117_train_seed3_ins_mb/model_21600.pt",
+  "checkpoint_iteration": 21600,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_21600.pt",
+  "critic_obs": [
+    96,
+    459
+  ],
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    96,
+    12
+  ],
+  "expected_actor": [
+    96,
+    2432
+  ],
+  "expected_critic": [
+    96,
+    459
+  ],
+  "expected_estimates": [
+    96,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "9b403c627a8d493cc3b6cb3db14764e96e6f000f",
+  "git_status": "M  README.md\nM  d1_arm/d1.urdf\nA  d1_arm/measured_base.py\nA  d1_arm/meshes/base_link_measured.STL\nM  demos/combiner/run_combiner_demo.py\nM  demos/cup/d1_ui/server.py\nM  demos/cup/run_camera_body_view.py\nM  demos/cup/run_pick_demo.py\nM  description/README.md\n M description/build_go2_d1_urdf.py\nM  description/go2_d1.urdf\nM  flat_env_cfg.py\nM  mount.py\nM  position_only/task_space.py\nM  position_only/workspace.py\nM  results/findings.md\n M results/week_02/notes.md\nA  results/week_03/figures/d1_workspace_measured_base.json\nA  results/week_03/figures/d1_workspace_measured_base.png\nA  results/week_03/figures/d1_workspace_rail_mount.json\nA  results/week_03/figures/d1_workspace_rail_mount.png\nA  results/week_03/figures/stance_probe.py\nA  results/week_03/figures/stance_probe_measured_base.json\nA  results/week_03/figures/stance_probe_old_mount.json\nA  results/week_03/figures/stance_probe_rail_mount.json\nMM results/week_03/notes.md\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/agent.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/env.yaml\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/params_deploy.yaml\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/record.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/run.json\nA  results/week_03/runs/20260930T053155_769482Z_verify_seed42/verify.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/agent.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/env.yaml\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/params_deploy.yaml\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/record.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/run.json\nA  results/week_03/runs/20260930T065528_498258Z_verify_seed42/verify.json\nA  results/week_03/screenshots/d1_base_real.jpg\n M results/week_04/notes.md\nM  run_position_only.py\nM  sim.py\nM  tests/test_d1_ik.py\nM  tests/test_dock.py\nM  tests/test_workspace.py\nM  weld.py\n?? demos/unifp/gait_probe.py\n?? logs/unifp_gait_probe/\n?? results/week_02/runs/20260927T135134_gait_probe/\n?? results/week_03/figures/d1_dock_holes.png\n?? results/week_03/figures/d1_dock_holes.py\n?? results/week_04/runs/",
+  "ins_conditions": {
+    "chamfer_m": 0.002,
+    "clearance_m": 0.001,
+    "depth_m": 0.018,
+    "detent_fraction": 0.65,
+    "max_n": 30.0,
+    "mu": 0.3,
+    "search_n": 6.0,
+    "speed_m_s": 0.02,
+    "standoff_m": 0.012
+  },
+  "ins_rows": [
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.003,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 12.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0045,
+      "roll_rad": 1.5707963267948966
+    }
+  ],
+  "ins_set": "lateral",
+  "insertion": {
+    "approach_weight": null,
+    "compliant_grip": true,
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "engage_attitude_rad": null,
+    "hold_home": true,
+    "insertion_fraction": 0.8,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "roll_gain": 1.5,
+      "roll_max_rad": 0.6981317007977318,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "reward_true_targets": false
+  },
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "ins_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 96,
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": true,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "at_start_median_abs": {
+      "azimuth_deg": 2.695,
+      "elevation_deg": 5.88,
+      "roll_deg": 0.325,
+      "tip_miss_mm": 4.845
+    },
+    "by_detent": [
+      {
+        "approach_err_start_deg": 6.195,
+        "damaged": 1,
+        "detent_n": 12.0,
+        "fell": 0,
+        "of": 96,
+        "peak_contact_n": 17.0,
+        "peak_lateral_n": 9.06,
+        "searched": 25,
+        "seated": 73,
+        "time_to_seat_s": 2.48
+      }
+    ],
+    "by_height": [
+      {
+        "approach_err_start_deg": 6.195,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.7,
+        "of": 32,
+        "peak_contact_n": 18.895,
+        "peak_lateral_n": 7.455,
+        "searched": 11,
+        "seated": 25,
+        "time_to_seat_s": 4.12
+      },
+      {
+        "approach_err_start_deg": 3.025,
+        "damaged": 1,
+        "fell": 0,
+        "height_m": 0.78,
+        "of": 32,
+        "peak_contact_n": 16.14,
+        "peak_lateral_n": 12.075,
+        "searched": 4,
+        "seated": 26,
+        "time_to_seat_s": 1.68
+      },
+      {
+        "approach_err_start_deg": 8.57,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.86,
+        "of": 32,
+        "peak_contact_n": 16.93,
+        "peak_lateral_n": 8.68,
+        "searched": 10,
+        "seated": 22,
+        "time_to_seat_s": 2.83
+      }
+    ],
+    "by_lateral": [
+      {
+        "approach_err_start_deg": 6.26,
+        "damaged": 0,
+        "fell": 0,
+        "lateral_m": 0.0,
+        "of": 24,
+        "peak_contact_n": 16.75,
+        "peak_lateral_n": 9.255,
+        "searched": 2,
+        "seated": 22,
+        "time_to_seat_s": 2.45
+      },
+      {
+        "approach_err_start_deg": 6.2,
+        "damaged": 0,
+        "fell": 0,
+        "lateral_m": 0.0015,
+        "of": 24,
+        "peak_contact_n": 17.73,
+        "peak_lateral_n": 11.075,
+        "searched": 6,
+        "seated": 20,
+        "time_to_seat_s": 2.45
+      },
+      {
+        "approach_err_start_deg": 6.165,
+        "damaged": 0,
+        "fell": 0,
+        "lateral_m": 0.003,
+        "of": 24,
+        "peak_contact_n": 15.735,
+        "peak_lateral_n": 8.08,
+        "searched": 6,
+        "seated": 18,
+        "time_to_seat_s": 2.32
+      },
+      {
+        "approach_err_start_deg": 6.195,
+        "damaged": 1,
+        "fell": 0,
+        "lateral_m": 0.0045,
+        "of": 24,
+        "peak_contact_n": 17.97,
+        "peak_lateral_n": 7.14,
+        "searched": 11,
+        "seated": 13,
+        "time_to_seat_s": 2.54
+      }
+    ],
+    "by_roll": [
+      {
+        "approach_err_start_deg": 5.48,
+        "damaged": 1,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 16.815,
+        "peak_lateral_n": 9.25,
+        "roll_rad": 0.0,
+        "searched": 16,
+        "seated": 37,
+        "time_to_seat_s": 2.54
+      },
+      {
+        "approach_err_start_deg": 6.915,
+        "damaged": 0,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 17.0,
+        "peak_lateral_n": 8.915,
+        "roll_rad": 1.5707963267948966,
+        "searched": 9,
+        "seated": 36,
+        "time_to_seat_s": 1.82
+      }
+    ],
+    "damaged": 1,
+    "entered": 79,
+    "episodes": 96,
+    "ever_seated": 73,
+    "fell": 0,
+    "seated": 73,
+    "started": 96
+  },
+  "task": "insertion",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}
