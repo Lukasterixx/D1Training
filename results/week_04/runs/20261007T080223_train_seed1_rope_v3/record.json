@@ -1,0 +1,63 @@
+{
+  "id": "20261007T080223_train_seed1_rope_v3",
+  "title": "Rope task v3: from hook v4 13000, noise cut, wobble priced; 2000 iterations (checkpoint 14400 chosen)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-07T20:51:05+11:00",
+  "started_utc": "2026-10-07T08:02:23+00:00",
+  "source_dir": "logs/unifp_train/20261007T080223_train_seed1_rope_v3",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "cdff24285f14fd8c6fddebdcd71f4d25861e3611",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 14999,
+  "final_checkpoint": {
+    "file": "model_14999.pt",
+    "sha256": "9ed9a9309f04f73f8076b8788a0160a2cc24473629a8bb48925c1840bdfdc365"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 148.35333251953125,
+      "last_step": 14999,
+      "mean_last_10": 148.58777465820313,
+      "min": 2.40731143951416,
+      "max": 167.22177124023438,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 14999,
+      "mean_last_10": 999.0,
+      "min": 12.729166984558105,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 0.2889411151409149,
+      "last_step": 14999,
+      "mean_last_10": 0.28900644183158875,
+      "min": 0.2889411151409149,
+      "max": 0.3702721893787384,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 34325.0,
+      "last_step": 14999,
+      "mean_last_10": 34530.5,
+      "min": 22743.0,
+      "max": 37821.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

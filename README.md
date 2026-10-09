@@ -237,6 +237,7 @@ How the URDF compares to [the published spec][spec]:
 | Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | **Joint3 was ~2× too strong — fixed** |
 | Total mass | 0.719 kg | 3.152 kg | **too light — see below** |
 | Base (measured on the arm, 2026-09-30) | 105 mm across, Joint1 at 53.3 mm, holes 108 mm apart | 126 mm, 76 mm, 130 mm | **replaced** by `d1_arm/measured_base.py` (F-126) |
+| Link lengths (Unitree's CAD, 2026-10-08) | upper arm 269.3, forearm (Joint3 → Joint5) 197.9, Joint5 → fingertips 208.1 mm | CAD and Unitree's D1-550 URDF: 270.0, **204.7**, 206.4 mm | **not yet changed**: the forearm is 6.8 mm short, the jaw centre ~6 mm off (F-137, `d1_arm/compare_cad.py`) |
 
 Mapping uses the protocol's offset (`d1_protocol.py`: "Protocol id 0 is URDF
 Joint1"). All six ranges matching exactly is what confirms that offset. Whoever

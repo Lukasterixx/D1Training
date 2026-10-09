@@ -7,7 +7,9 @@
   <!-- base_link is the base Lukas measured on the real arm (2026-09-30): 126 mm across, 76 mm from its bottom
        to the rotating plate, holes 130 mm apart along the rail and 58 mm across (2026-10-06). Unitree's base_link.STL is
        105 mm, 53.3 mm, 108 x 58 mm.
-       The mesh, its centre of mass and Joint1's height all come from d1_arm/measured_base.py. -->
+       The mesh, its centre of mass and Joint1's height all come from d1_arm/measured_base.py.
+       Above the base the arm is Unitree's older d1_description. Unitree's CAD and its D1-550 URDF make the forearm
+       (Joint3 to Joint5) 6.8 mm longer and the hand 1.7 mm shorter (F-137, d1_arm/compare_cad.py); not yet changed here. -->
   <link
     name="base_link">
     <inertial>

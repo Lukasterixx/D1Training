@@ -1,0 +1,291 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    60,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "logs/unifp_train/20260924T080558_train_seed1_hook_pull_v4/model_13000.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "hook_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "run_name": "ring_v4_13000_measured",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "task": "hook",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_contact_bodies": [
+    "base_link",
+    "Link1",
+    "Link2",
+    "Link3",
+    "Link4",
+    "Link5",
+    "Link6",
+    "Link7_1",
+    "Link7_2"
+  ],
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20260924T080558_train_seed1_hook_pull_v4/model_13000.pt",
+  "checkpoint_iteration": 13000,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_13000.pt",
+  "critic_obs": [
+    60,
+    459
+  ],
+  "episode_length_steps": 1250,
+  "estimate_obs": [
+    60,
+    12
+  ],
+  "expected_actor": [
+    60,
+    2432
+  ],
+  "expected_critic": [
+    60,
+    459
+  ],
+  "expected_estimates": [
+    60,
+    12
+  ],
+  "fixture": {
+    "curriculum": false,
+    "fixture_fraction": 0.75,
+    "force_ceiling_max_n": 60.0,
+    "force_ceiling_n": 15.0,
+    "press_fraction": 0.0
+  },
+  "fixture_kind": "ring",
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "cdff24285f14fd8c6fddebdcd71f4d25861e3611",
+  "git_status": "M checkpoints/README.md\n M results/findings.md\n M results/week_04/notes.md\n?? logs/unifp_gait_probe/\n?? results/week_04/runs/20261006T091950_combiner_unifp_wrist_corr_seed1_mb_pull_gc/\n?? results/week_04/runs/20261006T092050_combiner_unifp_wrist_seed1_mb_pull_t60/\n?? results/week_04/runs/20261006T092150_combiner_unifp_wrist_corr_seed1_mb_pull_t60gc/\n?? results/week_04/runs/20261006T092254_combiner_unifp_wrist_seed1_mb_pull_ts4/\n?? results/week_04/runs/20261006T092359_combiner_unifp_wrist_corr_seed1_mb_pull_t60gcts4/\n?? results/week_04/runs/20261006T092548_combiner_unifp_wrist_corr_seed1_mb_pull_t60gc_w56/\n?? results/week_04/runs/20261006T092650_combiner_unifp_wrist_corr_seed1_mb_pull_t60gc_in/\n?? results/week_04/runs/20261006T092753_combiner_unifp_wrist_corr_seed1_mb_pull_t60gc_w56_in/\n?? results/week_04/runs/20261006T092855_combiner_unifp_wrist_seed1_mb_pull_w56/\n?? results/week_04/runs/20261006T093041_combiner_unifp_wrist_corr_seed1_mb_pull_t55gc_w56/\n?? results/week_04/runs/20261006T093144_combiner_unifp_wrist_corr_seed1_mb_pull_t52gc_w56/\n?? results/week_04/runs/20261006T093246_combiner_unifp_wrist_corr_seed1_mb_pull_t55gc_w56_e30/\n?? results/week_04/runs/20261006T093349_combiner_unifp_wrist_corr_seed1_mb_pull_t55gc_w56_in/\n?? results/week_04/runs/20261006T093505_combiner_unifp_wrist_corr_seed1_mb_pull_t55gc_w56_e40/\n?? results/week_04/runs/20261006T093608_combiner_unifp_wrist_corr_seed1_mb_pull_t55gc_w56_e55/\n?? results/week_04/runs/20261006T093711_combiner_unifp_wrist_corr_seed1_mb_pull_t60gc_w56_e30/\n?? results/week_04/runs/20261006T093814_combiner_unifp_wrist_corr_seed2_mb_pull_t55gc_w56_e30_s2/\n?? results/week_04/runs/20261006T093916_combiner_unifp_wrist_corr_seed2_mb_pull_t55gc_w56_e40_s2/\n?? results/week_04/runs/20261006T094052_combiner_unifp_wrist_seed1_oldrobot_box_s1/\n?? results/week_04/runs/20261006T094154_combiner_unifp_wrist_seed2_oldrobot_box_s2/\n?? results/week_04/runs/20261006T094334_combiner_unifp_wrist_corr_seed1_mb_pull_best_post0.43_s1/\n?? results/week_04/runs/20261006T094436_combiner_unifp_wrist_corr_seed2_mb_pull_best_post0.43_s2/\n?? results/week_04/runs/20261006T094539_combiner_unifp_wrist_corr_seed1_mb_pull_best_post0.45_s1/\n?? results/week_04/runs/20261006T094642_combiner_unifp_wrist_corr_seed2_mb_pull_best_post0.45_s2/\n?? results/week_04/runs/20261006T094816_combiner_unifp_wrist_corr_seed1_mb_pull_best_ck56400_s1/\n?? results/week_04/runs/20261006T094919_combiner_unifp_wrist_corr_seed2_mb_pull_best_ck56400_s2/\n?? results/week_04/runs/20261006T095021_combiner_unifp_wrist_corr_seed1_mb_pull_best_ck56800_s1/\n?? results/week_04/runs/20261006T095125_combiner_unifp_wrist_corr_seed2_mb_pull_best_ck56800_s2/\n?? results/week_04/runs/20261006T095227_combiner_unifp_wrist_corr_seed1_mb_pull_best_ck57200_s1/\n?? results/week_04/runs/20261006T095329_combiner_unifp_wrist_corr_seed2_mb_pull_best_ck57200_s2/\n?? results/week_04/runs/20261006T095524_combiner_unifp_wrist_corr_hold_seed1_mb_pull_best_hold_s1/\n?? results/week_04/runs/20261006T095626_combiner_unifp_wrist_corr_hold_seed2_mb_pull_best_hold_s2/\n?? results/week_04/runs/20261006T095729_combiner_unifp_wrist_corr_follow_seed1_mb_pull_best_follow_s1/\n?? results/week_04/runs/20261006T095831_combiner_unifp_wrist_corr_follow_seed2_mb_pull_best_follow_s2/\n?? results/week_04/runs/20261006T100000_combiner_unifp_wrist_seed2_mb_pull_default_s2/",
+  "insertion": null,
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "hook_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 60,
+  "press": false,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": true,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_height": [
+      {
+        "episodes": 12,
+        "handle_height_m": 0.2,
+        "sustained_n_median": 60.0
+      },
+      {
+        "episodes": 12,
+        "handle_height_m": 0.3,
+        "sustained_n_median": 60.0
+      },
+      {
+        "episodes": 12,
+        "handle_height_m": 0.4,
+        "sustained_n_median": 60.0
+      },
+      {
+        "episodes": 12,
+        "handle_height_m": 0.5,
+        "sustained_n_median": 60.0
+      },
+      {
+        "episodes": 12,
+        "handle_height_m": 0.6,
+        "sustained_n_median": 60.0
+      }
+    ],
+    "by_level": [
+      {
+        "applied_n": 15.22,
+        "arm_load_max": 1.0,
+        "error_n": 9.27,
+        "estimate_err_n": 4.695,
+        "estimate_n": 11.585,
+        "height_m": 0.339,
+        "held": 60,
+        "level_n": 10.0,
+        "of": 60,
+        "pitch_deg": 5.665
+      },
+      {
+        "applied_n": 26.18,
+        "arm_load_max": 1.0,
+        "error_n": 10.56,
+        "estimate_err_n": 1.94,
+        "estimate_n": 26.69,
+        "height_m": 0.323,
+        "held": 60,
+        "level_n": 20.0,
+        "of": 60,
+        "pitch_deg": 9.09
+      },
+      {
+        "applied_n": 34.72,
+        "arm_load_max": 1.0,
+        "error_n": 12.33,
+        "estimate_err_n": 1.93,
+        "estimate_n": 35.415,
+        "height_m": 0.314,
+        "held": 60,
+        "level_n": 30.0,
+        "of": 60,
+        "pitch_deg": 8.205
+      },
+      {
+        "applied_n": 43.455,
+        "arm_load_max": 1.0,
+        "error_n": 15.165,
+        "estimate_err_n": 2.31,
+        "estimate_n": 43.16,
+        "height_m": 0.312,
+        "held": 60,
+        "level_n": 40.0,
+        "of": 60,
+        "pitch_deg": 5.47
+      },
+      {
+        "applied_n": 52.245,
+        "arm_load_max": 1.0,
+        "error_n": 18.245,
+        "estimate_err_n": 3.465,
+        "estimate_n": 51.085,
+        "height_m": 0.311,
+        "held": 60,
+        "level_n": 50.0,
+        "of": 60,
+        "pitch_deg": 2.34
+      },
+      {
+        "applied_n": 60.355,
+        "arm_load_max": 1.0,
+        "error_n": 22.455,
+        "estimate_err_n": 5.405,
+        "estimate_n": 57.905,
+        "height_m": 0.308,
+        "held": 59,
+        "level_n": 60.0,
+        "of": 60,
+        "pitch_deg": -0.315
+      }
+    ],
+    "engaged": 60,
+    "episodes": 60,
+    "fell": 0,
+    "lost": 0,
+    "sustained_n": {
+      "max": 60.0,
+      "median": 60.0,
+      "p10": 60.0,
+      "p90": 60.0
+    }
+  },
+  "task": "hook",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

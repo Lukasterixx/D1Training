@@ -1,0 +1,63 @@
+{
+  "id": "20261007T063306_train_seed1_rope_v1",
+  "title": "Rope task v1: from hook v4 13000, 852 of 1500 iterations (stopped: force collapsing to ~20 N)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-07T18:15:54+11:00",
+  "started_utc": "2026-10-07T06:33:06+00:00",
+  "source_dir": "logs/unifp_train/20261007T063306_train_seed1_rope_v1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "cdff24285f14fd8c6fddebdcd71f4d25861e3611",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 13852,
+  "final_checkpoint": {
+    "file": "model_13852.pt",
+    "sha256": "64a6c4a13e31193c90d38394df34257c611210040f8dd7ee1ab9a05f8ad1f301"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 84.49868774414062,
+      "last_step": 13852,
+      "mean_last_10": 84.02735595703125,
+      "min": 1.9076671600341797,
+      "max": 104.89087677001953,
+      "points": 853
+    },
+    "Train/mean_episode_length": {
+      "last": 979.280029296875,
+      "last_step": 13852,
+      "mean_last_10": 969.6299987792969,
+      "min": 12.729166984558105,
+      "max": 999.0,
+      "points": 853
+    },
+    "Policy/mean_std": {
+      "last": 0.9833011031150818,
+      "last_step": 13852,
+      "mean_last_10": 0.981737345457077,
+      "min": 0.9172032475471497,
+      "max": 0.9833011031150818,
+      "points": 853
+    },
+    "Perf/total_fps": {
+      "last": 34272.0,
+      "last_step": 13852,
+      "mean_last_10": 34094.8,
+      "min": 22654.0,
+      "max": 38153.0,
+      "points": 853
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

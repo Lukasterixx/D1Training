@@ -25,6 +25,8 @@ simulators is not a reliable step.
     ./run_unifp_train.py press_eval --task press --checkpoint <model.pt> --headless [--press_set force]
     ./run_unifp_train.py smoke --task wipe --num_envs 64 --steps 900 --headless             # a pad along a path
     ./run_unifp_train.py wipe_eval --task wipe --checkpoint <model.pt> --headless
+    ./run_unifp_train.py smoke --task rope --num_envs 64 --steps 900 --headless             # a taut rope that can let go
+    ./run_unifp_train.py rope_eval --task rope --checkpoint <model.pt> --headless
 
 `smoke` and `play` step the environment directly and report shapes and reward scale. `train`
 builds the rsl-rl runner around it: `unifp_train.models.UniFPActor` for the adaptation-module
@@ -56,13 +58,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval", "ins_eval",
-                                         "press_eval", "wipe_eval"),
+                                         "press_eval", "wipe_eval", "rope_eval"),
                         help="'play' drives the new environment with an existing UniFP checkpoint, "
                              "which checks the whole loop -- observation, action mapping, reward -- "
                              "against a policy already known to work on this robot. 'train' runs "
                              "PPO with the adaptation module. 'manifest' freezes an "
                              "evaluation set; 'eval' scores a policy against one.")
-    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion", "press", "wipe"), default="unifp",
+    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion", "press", "wipe", "rope"), default="unifp",
                         help="'unifp' is UniFP's task as ported. 'hook' adds a fixture: a handle the "
                              "claw pulls or a button the pad presses, loaded with tens of newtons "
                              "(unifp_train/hook_env.py). 'mechanism' has the claw holding a drawer, "
@@ -70,8 +72,49 @@ def build_parser() -> argparse.ArgumentParser:
                              "only where the handle should go (unifp_train/mech_env.py). 'insertion' pushes "
                              "a held key into a keyed slot (insert_env.py); 'press' presses a spring-loaded "
                              "button with the bare jaws or a probe (press_env.py); 'wipe' wipes a pad along a "
-                             "path on a panel at a set force (wipe_env.py). Same observation and action "
+                             "path on a panel at a set force (wipe_env.py); 'rope' holds a steady pull on a "
+                             "rope whose anchor may let go (rope_env.py). Same observation and action "
                              "widths, so a UniFP checkpoint resumes into any of them.")
+    parser.add_argument("--rope_fraction", type=float, default=None,
+                        help="'rope': fraction of episodes with a rope (rope_cfg default 0.8).")
+    parser.add_argument("--release_prob", type=float, default=None,
+                        help="'rope': of those, the fraction whose anchor lets go mid-pull (default 0.5).")
+    parser.add_argument("--detect_never_prob", type=float, default=None,
+                        help="'rope': of the releases, the fraction the task layer never notices (default 0.2).")
+    parser.add_argument("--rope_stiffness_range", type=float, nargs=2, default=None, metavar=("LOW", "HIGH"),
+                        help="'rope': rope stiffness drawn log-uniformly in training, N/m (default 500 6000).")
+    parser.add_argument("--rope_length_range", type=float, nargs=2, default=None, metavar=("LOW", "HIGH"),
+                        help="'rope': rope rest length drawn log-uniformly in training, m (default 0.3 2.0).")
+    parser.add_argument("--rope_weight", nargs=2, action="append", default=None, metavar=("TERM", "WEIGHT"),
+                        help="'rope': replace one of rope_cfg.WEIGHTS, repeatable (e.g. --rope_weight rope_ripple -2).")
+    parser.add_argument("--curriculum_rule", choices=("window", "ema"), default=None,
+                        help="'rope': how the force curriculum judges the frontier (default window; ema reproduces v1-v3).")
+    parser.add_argument("--rope_stiffness", type=float, nargs="+", default=None,
+                        help="'rope_eval': the stiffnesses evaluated, N/m (default rope_cfg.EVAL_STIFFNESS). A "
+                             "sensitivity run, not the frozen set.")
+    parser.add_argument("--rope_set", choices=("dev", "test"), default="dev",
+                        help="'rope_eval': the development set (rope_cfg.EVAL_*, used to choose checkpoints) or the "
+                             "held-out test set (rope_cfg.TEST_*, frozen 2026-10-07 for the final checkpoint only).")
+    parser.add_argument("--freeze_legs", action="store_true",
+                        help="'rope_eval': replace the policy's twelve leg actions with zeros, so the legs hold the default "
+                             "stance under their PD while the arm acts: how much of the pull is the whole body's. "
+                             "A diagnosis, never the frozen measurement.")
+    parser.add_argument("--rope_ramp", type=float, default=None, metavar="N_PER_S",
+                        help="'rope_eval': the command's ramp between levels, N/s (rope_cfg.LEVEL_RAMP_N_PER_S, 25). A "
+                             "sensitivity condition, not the frozen set.")
+    parser.add_argument("--rope_demo", action="store_true",
+                        help="'play' with --task rope: the frozen evaluation's episodes at the 0.40 m grip and 4,000 N/m "
+                             "(20 / 35 / 50 N, then the rope letting go three ways), one per environment, on a loop, "
+                             "the viewer following environment 0 from the side: what results/week_04/figures/rope_pull.png "
+                             "plots.")
+    parser.add_argument("--real_time", action="store_true",
+                        help="'play': hold each policy step to the policy's 20 ms, so a viewer shows real time.")
+    parser.add_argument("--stochastic", action="store_true",
+                        help="'rope_eval': sample actions with the checkpoint's own noise, as in training, instead of "
+                             "the mean. A diagnosis, never the frozen measurement.")
+    parser.add_argument("--ground_friction", type=float, default=None,
+                        help="Static and dynamic friction of the ground and the default material (UniFP's is 1.0). "
+                             "A sensitivity condition: say so when quoting a result made with it.")
     parser.add_argument("--button_fraction", type=float, default=None,
                         help="'press' only: fraction of episodes with a button (default 0.8).")
     parser.add_argument("--press_level", type=float, default=None,
@@ -263,6 +306,10 @@ def build_parser() -> argparse.ArgumentParser:
                              "units; x 0.25 rad). Checkpoints from the pull lineage carry 0.7-0.9 there -- ~0.2 rad "
                              "of random arm target every step -- which no millimetre task can succeed under in "
                              "training (the insertion, 2026-09-27). The legs keep theirs.")
+    parser.add_argument("--resume_leg_std", type=float, default=None,
+                        help="On a resume, set the twelve leg actions' noise std to this, as --resume_arm_std does for the "
+                             "arm. The rope task's deterministic policy pulled 27%% over its command while the noisy one "
+                             "tracked to 11-15%% (2026-10-07): noise the policy learns to compensate for.")
     parser.add_argument("--entropy_coef", type=float, default=None,
                         help="Entropy bonus. UniFP's is 0.01, and it is the term pushing the "
                              "action noise back up once the learning rate is floored.")
@@ -324,6 +371,8 @@ def main() -> int:
     from unifp_train import press_cfg, wipe_cfg  # noqa: E402
     from unifp_train.press_env import Go2D1PressEnv, Go2D1PressEnvCfg  # noqa: E402
     from unifp_train.wipe_env import Go2D1WipeEnv, Go2D1WipeEnvCfg  # noqa: E402
+    from unifp_train import rope_cfg  # noqa: E402
+    from unifp_train.rope_env import Go2D1RopeEnv, Go2D1RopeEnvCfg  # noqa: E402
 
     if args.mode == "hook_eval" and args.task != "hook":
         parser.error("hook_eval needs --task hook")
@@ -335,6 +384,8 @@ def main() -> int:
         parser.error("press_eval needs --task press")
     if args.mode == "wipe_eval" and args.task != "wipe":
         parser.error("wipe_eval needs --task wipe")
+    if args.mode == "rope_eval" and args.task != "rope":
+        parser.error("rope_eval needs --task rope")
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     suffix = f"_{args.run_name}" if args.run_name else ""
@@ -353,7 +404,7 @@ def main() -> int:
         ).usd_path
 
     cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg, "insertion": Go2D1InsertEnvCfg,
-           "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
+           "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg, "rope": Go2D1RopeEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
     if args.task == "insertion":
         if args.insertion_fraction is not None:
             cfg.insertion_fraction = args.insertion_fraction
@@ -456,6 +507,52 @@ def main() -> int:
                 setattr(cfg, name, value)
         if args.no_curriculum:
             cfg.curriculum = False
+    if args.task == "rope":
+        for name, value in (("rope_fraction", args.rope_fraction), ("release_prob", args.release_prob),
+                            ("detect_never_prob", args.detect_never_prob),
+                            ("force_ceiling_n", args.force_ceiling), ("force_ceiling_max_n", args.force_ceiling_max)):
+            if value is not None:
+                setattr(cfg, name, value)
+        if args.rope_stiffness_range is not None:
+            cfg.stiffness_range = tuple(args.rope_stiffness_range)
+        if args.rope_length_range is not None:
+            cfg.length_range = tuple(args.rope_length_range)
+        if args.rope_weight:
+            cfg.weight_overrides = tuple((name, float(value)) for name, value in args.rope_weight)
+        if args.curriculum_rule is not None:
+            cfg.curriculum_rule = args.curriculum_rule
+        if args.no_curriculum:
+            cfg.curriculum = False
+    rope_rows = None
+    if args.mode == "play" and args.task == "rope" and args.rope_demo:
+        # The figure's episode first (straight ahead, snap noticed), so the viewer, which follows environment 0, shows
+        # it; then the other two releases at the same grip, then the same three at the grips 0.3 rad either side.
+        grip = lambda r: round(rope_cfg.GOAL_CENTRE_HEIGHT_M + r["sphere"][0] * math.sin(r["sphere"][1]), 6)
+        rope_rows = [r for r in rope_cfg.eval_plan() if grip(r) == 0.40 and r["stiffness"] == rope_cfg.EVAL_STIFFNESS[1]]
+        rope_rows.sort(key=lambda r: (abs(r["sphere"][2]) > 1e-9, r["sphere"][2]))
+        cfg.scene.num_envs = len(rope_rows)
+        cfg.episode_length_s = 6.0 + rope_cfg.EVAL_HOLD_S * len(rope_cfg.EVAL_LEVELS_N) + rope_cfg.EVAL_RECOVERY_S + 1.0
+    if args.mode == "rope_eval":
+        rope_rows = rope_cfg.test_plan() if args.rope_set == "test" else rope_cfg.eval_plan()
+        if args.rope_set == "test" and args.eval_levels is None:
+            args.eval_levels = list(rope_cfg.TEST_LEVELS_N)
+        if args.rope_stiffness:
+            rope_rows = [dict(r, stiffness=k) for k in args.rope_stiffness
+                         for r in rope_rows if r["stiffness"] == rope_cfg.EVAL_STIFFNESS[0]]
+        rope_rows = rope_rows * args.repeats
+        cfg.scene.num_envs = len(rope_rows)
+        levels = args.eval_levels or list(rope_cfg.EVAL_LEVELS_N)
+        # Room for the reach and engagement (~5 s), every level's hold, and the recovery.
+        cfg.episode_length_s = 6.0 + rope_cfg.EVAL_HOLD_S * len(levels) + rope_cfg.EVAL_RECOVERY_S + 1.0
+    if args.ground_friction is not None:
+        import isaaclab.sim as sim_utils
+        from isaaclab.assets import AssetBaseCfg
+
+        material = dict(static_friction=args.ground_friction, dynamic_friction=args.ground_friction,
+                        restitution=robot_mod.GROUND_RESTITUTION)
+        cfg.sim.physics_material = sim_utils.RigidBodyMaterialCfg(**material)
+        cfg.terrain = AssetBaseCfg(prim_path="/World/ground", spawn=sim_utils.GroundPlaneCfg(
+            physics_material=sim_utils.RigidBodyMaterialCfg(**material)))
     if args.mode == "hook_eval":
         # One episode per environment, long enough for the whole staircase; the placements fix
         # the environment count.
@@ -483,7 +580,7 @@ def main() -> int:
         cfg.roll_objective = args.roll_objective
     if args.tool_point == "fingertip":
         cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
-    if args.task in ("hook", "mechanism", "insertion", "press", "wipe"):
+    if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope"):
         # F-102: the arm's explicit PD chatters at UniFP's 2e-4 armature; see hook_cfg.ARM_ARMATURE_KG_M2.
         armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18]
                            else robot_mod.ARM_ARMATURE) for name in interface.ISAACLAB_NAMES}
@@ -502,9 +599,13 @@ def main() -> int:
         cfg.viewer.env_index = 0
         cfg.viewer.eye = (1.6, -1.8, 0.9)
         cfg.viewer.lookat = (0.0, 0.0, 0.3)
+        if rope_rows is not None:
+            # From the side, back far enough to hold the robot, the rope and its post 1.5 m ahead: the lean shows.
+            cfg.viewer.eye = (0.75, -2.9, 0.75)
+            cfg.viewer.lookat = (0.75, 0.0, 0.3)
 
     env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv, "insertion": Go2D1InsertEnv,
-           "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
+           "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv, "rope": Go2D1RopeEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
     if args.mode == "ins_eval":
         env.set_evaluation(ins_plan)
     if args.mode in ("press_eval", "wipe_eval"):
@@ -517,6 +618,11 @@ def main() -> int:
         if args.force_law:
             env.set_force_law(*(args.force_law_gains or (mech_cfg.FORCE_LAW_KP_N_PER_M, mech_cfg.FORCE_LAW_KI_N_PER_M_S,
                                                          mech_cfg.FORCE_LAW_MAX_N)), bleed_s=args.force_law_bleed)
+    if args.mode == "rope_eval" or (args.mode == "play" and rope_rows is not None):
+        env.set_evaluation(rope_rows, levels=args.eval_levels or rope_cfg.EVAL_LEVELS_N,
+                           hold_steps=round(rope_cfg.EVAL_HOLD_S / interface.POLICY_DT))
+        if args.rope_ramp is not None:
+            env._levels.ramp_per_step = args.rope_ramp * interface.POLICY_DT
     if args.mode == "hook_eval":
         from unifp_train import hook_eval
 
@@ -551,7 +657,7 @@ def main() -> int:
         "force_start_iteration": cfg.force_start_step // task_cfg.NUM_STEPS_PER_ENV,
         "roll_objective": cfg.roll_objective,
         "task": args.task,
-        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion", "press", "wipe")
+        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope")
                                else robot_mod.ARM_ARMATURE),
         "fixture": ({name: getattr(cfg, name) for name in (
             "fixture_fraction", "press_fraction", "force_ceiling_n", "force_ceiling_max_n", "curriculum")}
@@ -584,6 +690,18 @@ def main() -> int:
                                   "elevation_gain": cfg.elevation_correction_gain,
                                   "elevation_max_rad": cfg.elevation_correction_max_rad}}
                  if args.task == "wipe" else None),
+        "rope": ({"rope_fraction": cfg.rope_fraction, "release_prob": cfg.release_prob,
+                  "detect_never_prob": cfg.detect_never_prob, "stiffness_range": list(cfg.stiffness_range),
+                  "length_range": list(cfg.length_range), "force_ceiling_n": cfg.force_ceiling_n,
+                  "force_ceiling_max_n": cfg.force_ceiling_max_n, "curriculum": cfg.curriculum,
+                  "weights": env._rope_weights,
+                  "curriculum_rule": {"rule": cfg.curriculum_rule, "promote_rel_err": rope_cfg.CURRICULUM_PROMOTE_REL_ERR,
+                                      "ema": rope_cfg.CURRICULUM_EMA, "step_n": rope_cfg.CURRICULUM_STEP_N,
+                                      "min_iterations": rope_cfg.CURRICULUM_MIN_ITERATIONS},
+                  "force_term": {"sigmas_n": [rope_cfg.FORCE_SIGMA_FINE_N, rope_cfg.FORCE_SIGMA_COARSE_N,
+                                              rope_cfg.FORCE_SIGMA_BROAD_N], "shares": list(rope_cfg.FORCE_SHARES)}}
+                 if args.task == "rope" else None),
+        "ground_friction": args.ground_friction if args.ground_friction is not None else robot_mod.GROUND_STATIC_FRICTION,
         "tool_body": cfg.tool_body,
         "tool_offset_m": list(cfg.tool_offset_m),
         "mount_pos_m": (list(args.mount_pos) if args.mount_pos is not None else None) if args.robot_usd else
@@ -610,6 +728,10 @@ def main() -> int:
         report["run_dir"] = str(run_dir)
     elif args.mode == "ins_eval":
         status = ins_evaluate(args, env, obs, report, run_dir, ins_rows)
+        write_json(run_dir / "run.json", report)
+        report["run_dir"] = str(run_dir)
+    elif args.mode == "rope_eval":
+        status = rope_evaluate(args, env, obs, report, run_dir, rope_rows)
         write_json(run_dir / "run.json", report)
         report["run_dir"] = str(run_dir)
     elif args.mode in ("press_eval", "wipe_eval"):
@@ -672,13 +794,21 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
     ins = hasattr(env, "_slot")
     press = hasattr(env, "_button")
     wipe = hasattr(env, "_surface")
+    roped = hasattr(env, "_rope")
+    rope_held, rope_slack, rope_released, rope_fell, rope_peak, rope_peak_cmd = 0, 0, 0, 0, 0.0, 0.0
     ins_engaged, ins_entered, ins_seated, ins_peak, ins_deepest, ins_approach = 0, 0, 0, 0.0, -1.0, []
     contact_engaged, contact_touching, contact_done, contact_peak, contact_approach = 0, 0, 0, 0.0, []
     engaged_steps, lost, peak_force, peak_command = 0, 0, 0.0, 0.0
     held_steps, torn, peak_grasp, peak_speed, furthest = 0, 0, 0.0, 0.0, 0.0
+    import time
+
+    paced = time.monotonic()
     for _ in range(args.steps):
         if not simulation_app.is_running():
             break
+        if args.real_time:
+            paced += interface.POLICY_DT
+            time.sleep(max(0.0, paced - time.monotonic()))
         if policy is None:
             actions = torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
         else:
@@ -696,6 +826,13 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
             lost += int(env._term_lost.sum())
             peak_force = max(peak_force, float(env._fixture.applied_by_robot().norm(dim=-1).max()))
             peak_command = max(peak_command, float(env._fixture_command_w().norm(dim=-1).max()))
+        if roped:
+            rope_held += int(env._rope.engaged.sum())
+            rope_slack += int(env._rope.slack.sum())
+            rope_released += int(env._rope.released.sum())
+            rope_fell += int((env._term_fallen & env._rope_env).sum())
+            rope_peak = max(rope_peak, float(env._tension_sub.max()))
+            rope_peak_cmd = max(rope_peak_cmd, float(env._cmd_level.max()))
         if mech:
             held_steps += int(env._mech.grasped.sum())
             torn += int(env._term_torn.sum())
@@ -758,6 +895,12 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
                              "peak_applied_n": round(peak_force, 2),
                              "peak_commanded_n": round(peak_command, 2),
                              "force_ceiling_n": env._ceiling}
+    if roped:
+        # Sanity checks on the rope rather than results: a peak tension far past any command means the spring rang.
+        report["rope_rollout"] = {"held_env_steps": rope_held, "slack_env_steps": rope_slack,
+                                  "released_env_steps": rope_released, "rope_episodes_fell": rope_fell,
+                                  "peak_tension_n": round(rope_peak, 2), "peak_command_n": round(rope_peak_cmd, 2),
+                                  "force_ceiling_n": env._ceiling}
     if mech:
         # Sanity checks on the plant rather than results: a grasp force far past any peak drawn, or
         # a handle moving metres per second, means the explicit spring rang.
@@ -945,6 +1088,87 @@ def hook_evaluate(args, env, obs, report: dict, run_dir: Path) -> int:
     for row in summary["by_height"]:
         print(f"  handle {row['handle_height_m']:.2f} m: sustained median {row['sustained_n_median']:.0f} N",
               flush=True)
+    return 0
+
+
+def rope_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) -> int:
+    """Climb the tension staircase on every placement, let the anchor go, and score it (`unifp_train.rope_eval`)."""
+    import numpy as np
+    import torch
+
+    from unifp_isaaclab import interface
+    from unifp_train import eval as evaluation, rope_cfg, rope_eval
+
+    run_dir.mkdir(parents=True, exist_ok=True)
+    policy = None
+    if not args.zero_actions:
+        policy = evaluation.EvaluablePolicy(args.checkpoint, device=str(env.device))
+        report["checkpoint"] = os.path.abspath(args.checkpoint)
+        report["checkpoint_source"] = policy.source
+        report["checkpoint_iteration"] = policy.iteration
+    controller = "zero actions" if policy is None else os.path.basename(args.checkpoint)
+    if args.stochastic and policy is not None:
+        controller += " (stochastic)"
+    if args.freeze_legs and policy is not None:
+        controller += " (legs frozen)"
+    report["legs_frozen"] = bool(args.freeze_legs)
+    report["ramp_n_per_s"] = args.rope_ramp if args.rope_ramp is not None else rope_cfg.LEVEL_RAMP_N_PER_S
+    report["controller"] = controller
+    report["stochastic_actions"] = bool(args.stochastic)
+    report["eval_plan"] = {"rows": len(rows), "levels_n": list(args.eval_levels or rope_cfg.EVAL_LEVELS_N),
+                           "hold_s": rope_cfg.EVAL_HOLD_S, "window_s": rope_cfg.EVAL_WINDOW_S,
+                           "recovery_s": rope_cfg.EVAL_RECOVERY_S, "stiffness": sorted({r["stiffness"] for r in rows}),
+                           "releases": list(dict.fromkeys(r["release"] for r in rows)),
+                           "rope_set": args.rope_set,
+                           "frozen_set": args.rope_stiffness is None
+                           and (args.eval_levels is None or args.rope_set == "test")
+                           and args.ground_friction is None and not args.stochastic and not args.freeze_legs
+                           and args.rope_ramp is None}
+
+    done = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    trace = {key: [] for key in rope_eval.FIELDS}
+    with torch.inference_mode():
+        for _ in range(int(env.max_episode_length) - 1):
+            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device) if policy is None
+                       else policy.sample(obs["policy"]) if args.stochastic else policy.act(obs["policy"]))
+            if args.freeze_legs:
+                actions[:, :12] = 0.0
+            obs, _, terminated, truncated, _ = env.step(actions)
+            estimate = None if policy is None else policy.estimate(obs["policy"])
+            ended = (terminated | truncated) & ~done
+            step = rope_eval.record_step(env, estimate, done, ended)
+            for key in rope_eval.FIELDS:
+                trace[key].append(step[key])
+            done |= ended
+            if bool(done.all()):
+                break
+    trace = {key: np.stack(values) for key, values in trace.items()}
+    np.savez_compressed(run_dir / "rope_trace.npz", **trace)
+    result = rope_eval.score(trace, rows, levels=tuple(args.eval_levels or rope_cfg.EVAL_LEVELS_N))
+    write_json(run_dir / "rope_eval.json", result["summary"])
+    write_json(run_dir / "rope_eval_episodes.json", {"episodes": result["episodes"]})
+    report["summary"] = result["summary"]
+    report["status"] = "evaluated"
+
+    summary = result["summary"]
+    med = lambda entry, key: (entry.get(key) or {}).get("median", float("nan"))
+    p90 = lambda entry, key: (entry.get(key) or {}).get("p90", float("nan"))
+    print(f"\n[rope_eval] {controller}: {summary['episodes']} episodes, engaged {summary['engaged']}, "
+          f"fell before release {summary['fell_before_release']}", flush=True)
+    for row in summary["by_level"]:
+        print(f"  {row['level_n']:4.0f} N: held {row['held']:3d}/{row['of']}  mean {med(row, 'mean_n'):5.1f}  "
+              f"std {med(row, 'std_n'):4.2f} (p90 {p90(row, 'std_n'):4.2f})  shake {med(row, 'hf_rms_n'):4.2f}  "
+              f"tugs over the hold in {row['with_hold_tugs']} ({row['hold_tugs_total']}), last 2 s in {row['with_tugs']}  "
+              f"peak {med(row, 'hold_peak_n'):5.1f}  "
+              f"slack {med(row, 'slack_fraction'):4.2f}  {med(row, 'dominant_hz'):4.1f} Hz  "
+              f"pitch {med(row, 'pitch_deg'):+5.1f}  arm {med(row, 'arm_load_max'):4.2f}  align {med(row, 'align_deg'):4.1f} deg",
+              flush=True)
+    for row in summary["recovery"]:
+        print(f"  release {row['release']:15s}: fell {row['fell']}/{row['released']}  excursion "
+              f"{med(row, 'base_excursion_max_m'):4.2f} m (p90 {p90(row, 'base_excursion_max_m'):4.2f})  base speed "
+              f"{med(row, 'base_speed_max_m_s'):4.2f}  pitch change {med(row, 'pitch_change_max_deg'):4.1f} deg  lunge "
+              f"{med(row, 'tool_lunge_max_m'):4.2f} m  lift-offs {med(row, 'foot_liftoffs'):3.0f}  settle "
+              f"{med(row, 'settle_s'):4.2f} s ({row['never_settled']} never)", flush=True)
     return 0
 
 
@@ -1261,6 +1485,16 @@ def train(args, env, report: dict, run_dir: Path) -> int:
                 std.data[12:18] = args.resume_arm_std
             print(f"[unifp] arm action-noise std set to {args.resume_arm_std} (was "
                   f"{report['departures_from_unifp']['resume_arm_std']['from']})", flush=True)
+            write_json(run_dir / "run.json", report)
+        if args.resume_leg_std is not None:
+            import torch
+
+            std = runner.alg.actor.distribution.std_param
+            report["departures_from_unifp"]["resume_leg_std"] = {
+                "from": [round(float(v), 4) for v in std.data[0:12]], "to": args.resume_leg_std}
+            with torch.no_grad():
+                std.data[0:12] = args.resume_leg_std
+            print(f"[unifp] leg action-noise std set to {args.resume_leg_std}", flush=True)
             write_json(run_dir / "run.json", report)
         report["forces_active_at_resume"] = bool(
             env.common_step_counter > env.cfg.force_start_step)

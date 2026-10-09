@@ -28,8 +28,10 @@ log, 2026-10-05/06):
   at a 16 N·m door on the measured robot (16/16 on its own). Its 1,000-iteration fine-tune scored worse on every saved
   checkpoint: 481–443 of 512 against 498, and 12/16 in the demo.
 - **`demos/unifp/run_demo.py`'s reach default is now the measured-robot checkpoint.** With the scenes re-placed with
-  the arm (F-128), its cup demo picks 7/16 (12/16 on the old robot). The box demo still fails (0–6/16): the latch
-  releases and the door does not move, which is not the placement. Use the mechanism controller for the box (16/16).
+  the arm (F-128), its cup demo picks 7/16 (12/16 on the old robot). Its box demo opens 0–1/16 as it was. With
+  `--wrist_joints 56 --goal_correction --turn_deg 55 --ease_deg 30` it opens 9/16 and 3/16 at seeds 1 and 2, against
+  11 and 9 on the old robot (F-129). That is a different controller from plain `--wrist`. Use the mechanism
+  controller for the box (16/16).
 - Lever `21496` still needs `--correct_entry`; without it, it misses the bar (0/16), as `20497` did (F-114).
 
 ```bash
@@ -180,6 +182,33 @@ seats 5 of 16. The grip it assumes is 2 N·m/rad about the jaw centre, ±10°: a
 ./demos/insertion/run_demo.py --checkpoint checkpoints/unifp_go2d1_insertion_seed3_model_21200.pt --compliant_key \
     --num_envs 1 --attempts 1 --lateral_mm 2
 ```
+
+## The rope-pull policies
+
+**Use `unifp_go2d1_rope_v3_polish_model_14600.pt`** (F-136): `unifp_go2d1_rope_v3_model_14400.pt`, below, continued 200
+iterations at half the exploration noise. It is `logs/unifp_train/20261007T152825_train_seed1_rope_v3_polish/model_14600.pt`,
+byte for byte. On the held-out rope set it pulls 17.4 / 30.0 / 44.3 N for 15 / 30 / 45 N (std 0.04–0.11 N, no tug at 30
+or 45 N) and falls in none of 96 releases. Same commands as below, with this file.
+
+### `unifp_go2d1_rope_v3_model_14400.pt`
+
+Trained on the measured robot (2026-10-07) for Lukas's question: a steady pull on a rope with the arm taut along it and
+the legs making the force, and no fall when the rope suddenly gives. It is
+`logs/unifp_train/20261007T080223_train_seed1_rope_v3/model_14400.pt`, byte for byte: hook v4 `model_13000` (F-103)
+continued 1,400 iterations on `--task rope` with the v3 recipe (`unifp_train/README.md`, "The rope-pull task"), chosen
+by a rule written before the last checkpoints were scored (F-133). Run it with `--task rope`, which also sets the arm's
+0.01 kg·m² armature (F-102).
+
+```bash
+./run_unifp_train.py rope_eval --task rope --headless --repeats 2 --checkpoint checkpoints/unifp_go2d1_rope_v3_model_14400.pt
+./run_unifp_train.py rope_eval --task rope --headless --rope_set test --checkpoint checkpoints/unifp_go2d1_rope_v3_model_14400.pt
+./run_unifp_train.py play --task rope --num_envs 4 --steps 3000 --checkpoint checkpoints/unifp_go2d1_rope_v3_model_14400.pt
+```
+
+On the held-out rope set it holds 15 / 30 / 45 N in 96 of 96 episodes each, with the tension's std 0.03–0.28 N, and
+no fall in 96 releases. It pulls 5–7 N over the command and still snatches once as the rope comes taut (less on a
+10 N/s ramp). It runs Joint2 and Joint3 at their torque limits, as every pull policy here has: what a real D1 does
+under that is unmeasured. Simulation only.
 
 ## Provenance
 

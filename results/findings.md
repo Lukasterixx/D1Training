@@ -4670,3 +4670,280 @@ result that changes a conclusion gets a new entry, and the old one is marked
     Either way it is a statement about the estimator, not the robot.
   - The UniFP box with the position-only policy needs its own investigation. The mechanism controller opens the same
     box 16/16 and is the one to demonstrate with.
+
+### F-129 — On the measured robot the UniFP box demo fails at the lever, not the door: the turn stalls short of the latch and the jaws slide off the bar; servoing the wrist's pitch, with goal correction, a 55° turn and the lever eased only to 30°, opens 12 of 32 doors against 1 as it was and 20 on the old robot
+
+- **Status:** provisional (simulation; two seeds of 16)
+- **Week:** 4
+- **Date:** 2026-10-06
+- **Evidence:** [Week 4 log, 2026-10-06](week_04/notes.md), "The UniFP box demo's door pull on the measured robot",
+  35 runs linked there.
+  - **The old robot, reproduced** at `9b403c6` with the legacy mount and `56000`: 11/16 and 9/16 at seeds 1 and 2.
+    Seed 1 matches the recorded run to its latch count and median door.
+  - **The measured robot,** `57499` with the roll servoed: 0/16 and 1/16.
+  - **Where it fails.** In the turn the lever stalls at a median 32.5° (latch at 45°), the hand's pitch swings 54°
+    against 25°, and the jaws drift 3.1 cm sideways against 1.7. Held there, the grip slides along the bar and the
+    lever springs back.
+  - **The recipe** `--turn_deg 55 --goal_correction --wrist_joints 56 --ease_deg 30`: 9/16 and 3/16, no falls.
+    - The pitch servo with correction and a 60° turn releases the latch 15 of 16.
+    - Easing the lever only to 30° instead of 0° keeps the bar in the jaws: 3 → 9 at seed 1.
+  - **Did not help:**
+    - a slower turn;
+    - the box moved 19 mm in;
+    - a higher post;
+    - the earlier fine-tune checkpoints;
+    - keeping the goal correction through the lever phases (worse).
+- **Scope:**
+  - Simulation, two seeds.
+  - The recipe is a different controller from the `--wrist` baseline: the pitch servoed too, and the goal corrected.
+    It is not made the default.
+  - At seed 2 the lever still stalls at 30–44° in about half the attempts. Nothing tried in the script moves it.
+- **Implication:**
+  - The UniFP box demo can be shown on the measured robot only with the recipe, at about half the old robot's rate.
+  - Closing the rest needs the policy to push the lever harder: a fine-tune for it, or the force channel the reach
+    policy was trained with (±8 N, F-080), which the demo does not drive.
+  - The mechanism controller (16/16 on the same box) is the demo for opening it.
+
+### F-130 — On a rope, the hook task's 60 N pull policy holds a settled pull steadily, but snatches the rope about three times every time it is tied on, pulls 7–10 N over its command, and falls over backward in 104 of 108 releases
+
+- **Status:** provisional (simulation; one checkpoint on a rope-task evaluation set frozen the same day, 108 episodes)
+- **Week:** 4
+- **Date:** 2026-10-07
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), "A steady pull on a rope, and the rope letting go".
+  - **The task** (`--task rope`, `unifp_train/rope*.py`, `tests/test_rope.py`): the claw holds a rope at the jaw
+    centre for the whole episode. The rope is tension-only along its own line (nothing across it: a 1 m rope at 40 N
+    holds the tool sideways at 40 N/m, against the hook task's ring at 2,000), stepped at 200 Hz. Its anchor can give
+    way (snap, slip to a residual, fade), and a task layer may notice and stop pulling.
+  - **The frozen set** (`rope_cfg.EVAL_*`): 9 grips × 1,000 / 4,000 N/m × 3 releases (snap noticed after 0.3 s, snap
+    never noticed, slip to 20% noticed), a 1 m rope pulled straight back at 20 / 35 / 50 N for 4 s each, released at
+    the end of the 50 N hold. Two scoring changes, both made before any trained policy was scored (log): the whole
+    hold is scored as well as its last 2 s, and a *tug* is a tension peak standing 25% of the command (≥ 3 N) above
+    the troughs either side.
+  - **Hook v4 `model_13000`** ([run](#/week/4/run/20261007T062950_rope_eval_seed1_rope_eval_v4_13000)), which on the
+    measured robot still holds 60 N on a ring ([run](#/week/4/run/20261007T060919_hook_eval_seed1_ring_v4_13000_measured)):
+    - holds 108 / 108 / 108 at 20 / 35 / 50 N, at **29.9 / 43.4 / 56.9 N**;
+    - settled, the tension's std is 0.6 / 0.2 / 0.2 N (median, 200 Hz);
+    - but **tugs in 107 of 108 first holds** (321 tugs; peak 36.9 N on a 20 N command), in 17 at 35 N and 5 at 50 N.
+      The snatches come as the rope is tied on and the command ramps;
+    - Joint1–3 at their torque limits at every level; the arm 8–12° off the rope's line; the front feet carrying
+      57–73% of the vertical load, rising with force;
+    - **falls in 36 / 33 / 35 of 36 releases** (snap noticed / unnoticed / slip). The base runs back at up to 0.8 m/s,
+      the rear sinks 10 cm, and the robot pitches nose-up over 1 rad and goes over on its back 0.7 s after the snap.
+  - **Zero actions** ([run](#/week/4/run/20261007T063225_rope_eval_seed1_rope_eval_zero)): holds none (0.3–0.4 N, the
+    arm resting on the rope), so nothing to recover from; 0 falls.
+- **Scope:**
+  - Simulation only. The rope is a spring with no mass, sag or wave along it, at 1,000–4,000 N/m where a real 1 m
+    rope is ~10⁵ N/m. The anchor is a model, and the floor is μ = 1.0.
+  - One checkpoint, trained on Unitree's base, evaluated on the measured one (F-126).
+  - "Tug" is a definition made here; the log has the reasoning and the first definition it replaced.
+- **Implication:**
+  - Steadiness and recovery have to be trained for: the pull the hook task taught is steady once settled, but snatches
+    while loading up, and the robot cannot survive the rope letting go.
+  - At 50 N the feet push about 50 N back against the ground. A snap leaves that push unopposed, so the base
+    accelerates backward at ~2.7 m/s² and rotates nose-up until the legs react. The policy has to react within a few
+    hundred milliseconds or fall.
+
+### F-131 — Trained against the rope letting go, the pull policy learns not to fall within 400 iterations; but if the first update is allowed to throw away its straight-arm posture, it gets there by no longer pulling
+
+- **Status:** provisional (simulation; one seed per variant; the development rope set)
+- **Week:** 4
+- **Date:** 2026-10-07
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), v1 and v2.
+  - **v1** ([run](#/week/4/run/20261007T063306_train_seed1_rope_v1)): hook v4 `13000` resumed on the rope task, half the
+    rope episodes releasing, rsl-rl's adaptive learning rate.
+    - The first update's KL was 0.93: the rate starts at 1e-3 on a resume and is cut to its floor within the update,
+      after the first minibatches have already moved the policy. The elbow (Joint3) went from −0.64 to −1.03 rad to
+      +0.83.
+    - At 400 iterations ([run](#/week/4/run/20261007T065244_rope_eval_seed1_rope_eval_v1_13400)) **0 of 108 releases fell** (baseline 104),
+      but the tension capped at 24–25 N whatever was commanded (35 N held 13 of 108, 50 N none). The arm sat 35° off
+      the rope with the base 15° nose-up. At 800 ([run](#/week/4/run/20261007T071226_rope_eval_seed1_rope_eval_v1_13800)) the cap was ~19 N.
+    - The tension-ripple term (−1.0 on the total variation within each 20 ms) was the largest penalty in training,
+      −1.3 to −1.4 per episode-second. Mostly it was exploration noise, which an arm drawn along the rope turns into
+      tension and a bent one does not.
+  - **v2** ([run](#/week/4/run/20261007T071643_train_seed1_rope_v2)): the same start with the rate scaled by 0.1
+    (first-update KL 0.012), the ripple term at −0.2, and a term paying for the arm lying along the rope. At 200
+    iterations ([run](#/week/4/run/20261007T072651_rope_eval_seed1_rope_eval_v2_13200)) it pulled 20.5 / 32.0 / 44.6 N for 20 / 35 / 50 N
+    with the arm 4–7° off the rope.
+- **Scope:** one seed each, and v1 and v2 differ in several things at once, so the share each change had is not
+  separated (the matched controls on v3 are in F-133). Simulation only.
+- **Implication:** on a resume to a new task, protect what the starting policy already does (a scaled or pinned rate,
+  as F-121 found for insertion). A recovery objective added to a force objective can otherwise be met by giving up the
+  force: an easy way out that looks like success on a falls count alone. Score both together.
+
+### F-132 — The rope policy's deterministic over-pull is learnt compensation for its own exploration noise: with the training noise on it meets the command to 1–4 N, without it pulls up to 27% over
+
+- **Status:** provisional (simulation; measured on one checkpoint, consistent with three others)
+- **Week:** 4
+- **Date:** 2026-10-07
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), "Why it over-pulls".
+  - v2 `13600` on the development set, deterministic ([run](#/week/4/run/20261007T074726_rope_eval_seed1_rope_eval_v2_13600)): **25.6 / 43.0 /
+    63.6 N** for 20 / 35 / 50 N. With actions sampled at its own noise, as in training
+    ([run](#/week/4/run/20261007T075125_rope_eval_seed1_rope_eval_v2_13600_stochastic)): **23.6 / 36.9 / 51.3 N**. Its force estimate agrees
+    with the tension both ways (26.1 / 40.5 / 59.0 and 23.9 / 37.9 / 52.7 N), so it is not misreading the force.
+  - In training the frontier's relative error read 0.11–0.15 while the deterministic policy was 27% over at 50 N.
+  - The noise had grown back by entropy, from the 0.6 set on the arm to 0.77–1.01, with the legs at 0.6–1.2. With
+    the noise on, the tension's std is 5–7 N and the feet lift ~100 times in 4 s.
+  - Hook v4 `13000`, trained with an arm noise of ~1.6, over-pulls by 50% at 20 N, which fits.
+  - Cutting the noise (arm 0.3, legs 0.4, entropy coefficient 0.002; v3) brings the deterministic pull to within 2–5 N
+    of 20 / 35 / 50 N ([`14000`](#/week/4/run/20261007T085326_rope_eval_seed1_rope_eval_v3_14000)).
+- **Scope:** the mechanism is inferred from the stochastic/deterministic contrast on one checkpoint. v3 also added a
+  term against wobble, so its accuracy is not the noise cut's alone.
+- **Implication:** for a force-commanded policy deployed deterministically, the training noise is part of the force
+  calibration. Train force-tracking fine-tunes at the noise they will be judged without (0.3–0.4 here), or the
+  deployed policy will push harder than told, by an amount that drifts as entropy grows the noise.
+
+### F-133 — The whole-body policy can be trained to hold a steady pull on a rope and to survive the rope letting go: in three seeds it holds 20–50 N with no repeated tugging and falls in none of 972 releases, by crouching and leaning into the rope with the arm drawn straight along it; the legs make about two-thirds of the force
+
+- **Status:** provisional (simulation only; three seeds of one recipe; the held-out set run once, on one checkpoint)
+- **Week:** 4
+- **Date:** 2026-10-07
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), v3 onward; [figure](week_04/figures/rope_pull.png).
+  - **The recipe** (v3; `unifp_train/README.md`, "The rope-pull task"): hook v4 `13000` continued on `--task rope`, the
+    learning rate scaled 0.1, the exploration noise cut (arm 0.3, legs 0.4, entropy 0.002), and three terms added to
+    the hook task's force objective: the arm along the rope, the force error's wobble about its own 0.3 s mean, and a
+    broad third width on the force term (F-131 and F-132 for why).
+  - **Seed 1, the chosen checkpoint `14400`** (picked by a rule written before the last checkpoints were scored):
+    - on the development set ([run](#/week/4/run/20261007T091308_rope_eval_seed1_rope_eval_v3_14400)): 20 / 35 / 50 N held in 108 / 108 / 108,
+      at 26.1 / 40.4 / 55.2 N, tension std 0.49 / 0.06 / 0.02 N, no tug at 35 or 50 N, tie-on tugs in 39 of 108 first
+      holds (hook v4: 107 of 108, about three each); **0 of 108 releases fallen** (hook v4: 104);
+    - on the **held-out test set, run once** ([run](#/week/4/run/20261007T095046_rope_eval_seed1_rope_eval_v3_14400_test)): other grips, ropes
+      of 0.5 and 1.5 m at 2,000 and 6,000 N/m, pulls tilted ±0.15 rad, 15 / 30 / 45 N, and three releases never trained
+      or tuned on. All 288 holds held at 22.3 / 34.6 / 50.4 N, std 0.28 / 0.09 / 0.03 N, no tug at 45 N, 18 at 30 N.
+      **0 of 96 releases fallen**, the base moving 7–8 cm and settling in 0.7–1.2 s, no foot lifted.
+  - **Seeds 2 and 3, the same recipe:** 0 falls at every checkpoint scored (400, 600 and 1,000 iterations); at 600
+    iterations all 324 holds held in all three seeds, at 1,000 iterations 322–324; no tug at 50 N. Across the three seeds' nine checkpoints at 400 iterations or more,
+    **0 of 972 releases fallen**. Seed 3 is slower to the posture (20 / 31 / 41 N at 400 iterations).
+  - **How:** crouched 4–9 cm and pitched about 15° nose-down into the rope, the arm 3–7° off its line, Joint2 and
+    Joint3 at their torque limits. When the rope goes, the release spends the lean bringing the body back to level
+    (pitch to −0.4° / −1.1°, two seeds) instead of past it (hook v4 pulled level and went to −56°).
+  - **The legs' share:** with its leg actions zeroed ([run](#/week/4/run/20261007T095241_rope_eval_seed1_rope_eval_v3_14400_legsfrozen)) the
+    same policy pulls 17–20 N whatever is asked, against 55 N with them.
+  - **Further:** 70 N held as steadily (74.9 N, std 0.12 N) and survived when it snaps, 108 / 108
+    ([run](#/week/4/run/20261007T100020_rope_eval_seed1_rope_eval_v3_14400_to70)).
+- **Scope:**
+  - **Not perfect.**
+    - It pulls 5–7 N over the command.
+    - It still snatches once as the rope comes taut on a 25 N/s ramp (7 of 108 first holds on a 10 N/s ramp,
+      [run](#/week/4/run/20261007T095827_rope_eval_seed1_rope_eval_v3_14400_ramp10)).
+    - At 20,000 N/m a minority of holds oscillate (20 of 108 at 35–50 N).
+    - On μ = 0.5, unnoticed snaps take it below the strict 0.15 m line in 22 of 36, upright, none tipped
+      ([run](#/week/4/run/20261007T095631_rope_eval_seed1_rope_eval_v3_14400_mu05)).
+    - Training on past 1,400 iterations, seed 1's last checkpoint showed the same crouch in 8 of 36 unnoticed snaps
+      on μ = 1.0.
+  - **The model.** The rope is a massless spring at 500–6,000 N/m in training, against a real rope's ~10⁵, and the
+    anchor is a model. The force is the plant's, not a measurement. "Tug" is a definition made here.
+  - **The arm.** It runs two joints at their published torque limits for the whole pull, which a real D1 may not
+    tolerate (F-103).
+  - **The development set** chose the checkpoint and guided three recipe versions; the test set was run once.
+  - Simulation only. Nothing here has been on hardware.
+- **Implication:**
+  - Lukas's question has a yes, in simulation. A whole-body policy can hold a steady rope pull with the body making
+    the force and survive the resistance vanishing. The behaviour that makes both possible is one posture, crouched
+    and leaning in with the arm in line with the rope, and three seeds find it.
+  - Before hardware:
+    - measure the D1 servos' stall and continuous torque, and retrain with a heavier arm margin (queued overnight);
+    - put a compliant element in the rope;
+    - have the task layer ramp at ≤ 10 N/s and drop its command when the force estimate collapses, since unnoticed
+      releases are the weak case.
+
+### F-134 — In the rope-pull recipe, the releases teach the recovery, the cut in exploration noise removes the repeated tugging, the wobble term halves the snatch as the rope comes taut, and the term paying for a taut arm adds little once the starting posture is kept
+
+- **Status:** provisional (simulation; one seed per control, 600 iterations, development set)
+- **Week:** 4
+- **Date:** 2026-10-07
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), "Controls". Each control is the v3 recipe (F-133) minus one
+  thing, seed 1, scored at `13599` against v3's `13600`. 108 releases each.
+  - **No releases in training** ([run](#/week/4/run/20261007T115601_rope_eval_seed1_rope_eval_rope_v3_ctl_norelease_13599)): the pull is as
+    steady and accurate (24.3 / 36.2 / 50.7 N, no tug at 35 or 50 N), but **46 of 108 releases fall** (snaps 24 and
+    22 of 36, slips 0), against 0 for v3 and 104 for the hook v4 start.
+  - **No taut-arm term** ([run](#/week/4/run/20261007T122545_rope_eval_seed1_rope_eval_rope_v3_ctl_notaut_13599)): 0 falls, 322 of 324 held,
+    the arm 5–9° off the rope against v3's 2–6°.
+  - **No wobble term** ([run](#/week/4/run/20261007T125525_rope_eval_seed1_rope_eval_rope_v3_ctl_nowobble_13599)): 0 falls, but tugs as the
+    rope is tied on in **108 of 108** first holds (v3: 61), 6 of 108 50 N holds missed. At 35 and 50 N one tug in 216
+    holds, where v2 at the same iteration ([run](#/week/4/run/20261007T074726_rope_eval_seed1_rope_eval_v2_13600)) had repeated tugging at 35 N
+    in 38 of 108. That control differs from v2 mainly in the exploration noise (0.3 / 0.4 against ~1).
+- **Scope:** one seed per control, so differences of a few degrees or a few episodes are within seed variation; the
+  large ones (46 against 0 falls, 108 against 61 snatches, 38 against 1 tug trains) are not. v2 differs from the
+  no-wobble control in its noise and in being stopped early, so the noise attribution rests on that pair.
+- **Implication:** for this task the levers are the disturbance in training (releases), the action noise the policy
+  is trained at (for steadiness, and for accuracy, F-132), and protecting the starting posture on a resume. A reward
+  term for the posture itself was not needed. The tie-on snatch is the part training only halved; the command's ramp
+  (10 N/s) does more for it.
+
+### F-135 — Three variants of the rope recipe aimed at hardware do not improve it: a heavier price on arm torque does not unload the arm's shoulder and elbow, it only lowers the pull; training on ropes to 20,000 N/m fixes the oscillation there but costs force and brings back sideways falls; a corrected curriculum changes nothing consistent
+
+- **Status:** provisional (simulation; one seed each, 1,000 iterations from hook v4 `13000`)
+- **Week:** 4
+- **Date:** 2026-10-08
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), "Overnight". Each is the v3 recipe (F-133) with one change.
+  - **Arm margin ×3** (`arm_torque_margin` −12; [run](#/week/4/run/20261007T134620_rope_eval_seed1_rope_eval_rope_v3_margin12_13999)):
+    Joint2 and Joint3 at 100% of their limits at every level, as in v3. The pull falls to 21.4 / 30.6 / 41.3 N for
+    20 / 35 / 50 N, 242 of 324 held; 0 falls.
+  - **Ropes of 500–20,000 N/m in training** ([run](#/week/4/run/20261007T143650_rope_eval_seed1_rope_eval_rope_v3_stiff20k_13999_k10k20k)): on
+    20,000 N/m the worst-case std drops to 0.9 / 4.8 N at 35 / 50 N (v3: 6.4 / 19.7). On the development set 291 of
+    324 held (v3: 323), and unnoticed snaps from low grips now tip sideways (roll 43–46°) in 1 of 108 there and 2 of 108
+    on the stiff ropes.
+  - **Windowed curriculum** ([run](#/week/4/run/20261007T152706_rope_eval_seed1_rope_eval_rope_v3_window_13999)): at 600 iterations as v3 (0
+    falls, mean error 1.3 N); at 1,000 fewer tie-on tugs (24 of 108) but 301 of 324 held and one 35° roll.
+- **Scope:** one seed and 1,000 iterations each; longer training might reconcile the stiff-rope trade. Joint torque is
+  the simulator's PD clipped at the published limits, and the real servos' behaviour at the limit is unmeasured.
+- **Implication:**
+  - The saturated shoulder and elbow are a property of holding tens of newtons on a rope with this arm, not of the
+    reward. With the rope's line 3–6° off the arm's, ~50 N puts ~2 N·m on Joint2 (limit 3.3) before the arm's own
+    weight, and Joint3's limit is 1.7. Whether that is acceptable is a bench measurement (stall and continuous torque,
+    heating, F-028's dropped arm), not a training question.
+  - A stiff tether is better met with compliance in the line than by training for it.
+
+### F-136 — A short polish of the rope policy at half the exploration noise brings its pull onto the command, held-out included, with no loss of recovery, as F-132 predicted
+
+- **Status:** provisional (simulation; one seed, one polish run; the held-out set run once on the polished checkpoint)
+- **Week:** 4
+- **Date:** 2026-10-08
+- **Evidence:** [Week 4 log, 2026-10-07](week_04/notes.md), "A low-noise polish". F-133's `14400` continued 400 iterations
+  with the arm's noise at 0.15 and the legs' at 0.2 (from 0.3 / 0.4), otherwise the same recipe
+  ([run](#/week/4/run/20261007T152825_train_seed1_rope_v3_polish)).
+  - **Development set, `14600`** ([run](#/week/4/run/20261007T153901_rope_eval_seed1_rope_eval_rope_v3_polish_14600)): 22.0 / 34.7 / 50.1 N for
+    20 / 35 / 50 N (`14400`: 26.1 / 40.4 / 55.2), tie-on tugs in 19 of 108 first holds (39), 0 of 108 releases fallen,
+    324 of 324 held. First by the selection rule on every count.
+  - **Held-out set, run once on `14600`** ([run](#/week/4/run/20261007T155042_rope_eval_seed1_rope_eval_rope_v3_polish_14600_test)): 17.4 / 30.0 /
+    44.3 N for 15 / 30 / 45 N (`14400`: 22.3 / 34.6 / 50.4), std 0.04 / 0.11 / 0.07 N, no tug at 30 or 45 N, tie-on
+    tugs in 75 of 96 first holds (61) but smaller (peak 19.7 N on 15 N, against 24.1), **0 of 96 releases fallen**.
+  - At `14799` the pull drifts back up (24.6 / 39.6 / 54.6 N) and one unnoticed snap crouches to 0.1496 m (upright).
+- **Scope:** one seed; the polish was chosen and stopped on the development set. The held-out set has now been used once
+  for each of two checkpoints, never to choose between them. The arm's Joint2 and Joint3 are still at their limits.
+- **Implication:** the deliverable rope policy is `checkpoints/unifp_go2d1_rope_v3_polish_model_14600.pt`. For force
+  tracking judged deterministically, train the last stretch at the noise it will run without. A short low-noise polish
+  removes most of the bias F-132 found, and continuing it lets the bias creep back.
+
+### F-137 — Unitree's D1 CAD agrees with its D1-550 URDF and with the base Lukas measured, not with `d1.urdf`, whose arm is the older `d1_description`'s: the forearm is 6.8 mm short, and the jaw centre sits 6.0 mm from where the CAD's lengths put it (median of random poses; max 8.6)
+
+- **Status:** provisional (Unitree's CAD and URDFs compared with each other; the real arm's links not measured)
+- **Week:** 4
+- **Date:** 2026-10-08
+- **Evidence:** [Week 4 log, 2026-10-08](week_04/notes.md), "Unitree's D1 CAD against the URDF";
+  `python3 d1_arm/compare_cad.py <D1-550 .stp> <d1_550_description.urdf>`, the files listed with their hashes in
+  `third_party/unitree_d1_cad/NOTICE.md` (from support.unitree.com's D1 page, read through the API it loads from).
+  - Unitree links two URDFs (`d1_description`, from which `d1.urdf` descends, and `d1_550_description`) and two STEP
+    models, which are the same arm. The page names the arm the D1-550.
+  - From the CAD, joint axes as lines of coaxial cylindrical faces: Joint2 130.80 mm above the base's bottom face;
+    upper arm 270.00; elbow offset 41.32; forearm (Joint3 → Joint5 along the roll line) 204.67; Joint5 → fingertips
+    206.38. The D1-550 URDF matches every arm length to 0.1 mm (the shoulder +0.8).
+  - `d1.urdf`: shoulder +1.50 (the measured 76 mm base under `d1_description`'s 56.3), upper arm −0.70, elbow offset
+    +0.68, **forearm −6.79**, Joint5 → fingertips +1.72.
+  - The CAD's base: holes 130 × 58 mm, housing ~126 mm across, the rotating plate 74.0–75.5 mm above the bottom. That is
+    what Lukas measured (F-126: 130 × 58, 126, 76).
+  - The jaw centre (`Link6 + (0, 0, 0.1051)`), `d1.urdf` against a copy with the CAD's lengths in its own frames, over
+    20,000 random configurations within the joint limits: median 6.0 mm apart, p90 7.3, max 8.6. At q = 0, 5.1 mm short
+    along the forearm and 1.5 mm high.
+  - The shoulder and elbow servos have identical coaxial cylinders in the CAD, and the D1-550 URDF gives the elbow
+    3.33 N·m; Unitree's spec table on the same page gives it 1.7, as `d1.urdf` does.
+- **Scope:** the CAD is Unitree's simplified model. Only its base has been checked against the real arm, and agrees.
+  No link of the real arm was measured here. Masses are not compared: neither URDF carries the motors, and the STEP has
+  no materials. The elbow torque is unresolved: an identical housing does not prove an identical gearbox.
+- **Implication:**
+  - Every result that rests on `d1.urdf`'s arm carries a model error of about 6 mm at the controlled point: the
+    simulation, the trained policies, the scripted demos and `d1_ik.py`'s IK on the real arm.
+  - Before correcting it, measure the real forearm between the Joint3 and Joint5 axes (CAD 204.7 mm, `d1.urdf` 197.9).
+    Then patch `d1.urdf`'s five origins, or adopt `d1_550_description`, and retrain as after F-126 (F-127).
+  - Weigh the elbow's torque on the bench as well: if it is 3.3 N·m, the rope pull's saturated elbow (F-135) is half
+    the constraint the simulation says.

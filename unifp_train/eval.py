@@ -358,6 +358,15 @@ class EvaluablePolicy:
         """Deterministic action: the distribution mean, as both stacks' play paths use."""
         return self.actor(self._wrap(stacked))
 
+    def sample(self, stacked: torch.Tensor) -> torch.Tensor:
+        """A training-time action: the mean plus the checkpoint's own Gaussian noise (`std_type` scalar).
+
+        For diagnosis only -- every frozen evaluation scores `act`. It shows what the policy did while it learnt, which
+        is where a bias the deterministic policy carries (one learnt to compensate for its noise) comes from.
+        """
+        mean = self.act(stacked)
+        return mean + self.actor.distribution.std_param * torch.randn_like(mean)
+
     def estimate(self, stacked: torch.Tensor) -> torch.Tensor:
         """The adaptation module's prediction, in the scaled units the decoder outputs."""
         return self.actor.estimate(self._wrap(stacked))

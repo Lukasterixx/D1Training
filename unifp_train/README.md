@@ -459,3 +459,77 @@ What it is not: the pad is rigid and flat (the plan's "rigid pad initially"). Ti
 with its rim, and with an ideal hand that still covers 97-100% of a 16 cm stroke (`tests/test_wiping.py`). A sponge,
 or a pad on a gimbal as the key has its compliant grip, is the next tool. The surface is a model, and the panel faces
 the robot: wiping a table top needs the hand pointing down (F-099).
+
+## The rope-pull task (`--task rope`)
+
+Lukas's question of 2026-10-07: can the whole-body policy hold a *steady* pull on a rope, the arm taut along it and the
+legs making the force, and recover when the thing it pulls on suddenly gives? The hook task (F-103) pulled 60 N through
+a ring, but scored only a 1 s mean, and its fixture never let go.
+
+| file | |
+| --- | --- |
+| `rope.py` | the plant: a tension-only tether from the jaw centre to an anchor (`k * stretch + c * rate` while stretched, never negative, nothing across its line), held by the claw's teeth for the whole episode; an anchor whose capacity can fall to a residual (snap, slip, fade) and that pays out rope while the rope would carry more -- plain torch, `tests/test_rope.py` |
+| `rope_cfg.py` | rope lengths and stiffnesses, the release plan, the task layer's detection delay, the rewards, the frozen evaluation |
+| `rope_env.py` | `Go2D1RopeEnv`: the goal to a grip placement, the rope tied once the tool settles, the goal held on the grip and the command ramped between levels; the release, the task layer noticing it (or not), and the goal sliding back to the grip placement in the body frame |
+| `rope_rewards.py` | the hook task's force tracking (until the anchor lets go), arm margin and tool speed; tension ripple at the physics rate, slack, the base's upset after a release, falling |
+| `rope_eval.py` | the frozen set (9 grips x 2 stiffnesses x 3 releases; 20/35/50 N held 4 s, then the release) and its scoring: steadiness at 200 Hz, how the force is made, recovery |
+| `rope_vis.py` | the viewer's rope, post and load, drawn beside UniFP's overlay when a viewer is open |
+
+```bash
+./run_unifp_train.py smoke --task rope --num_envs 64 --steps 900 --headless
+# the v3 recipe (2026-10-07): from the hook task's pull policy, noise cut, wobble priced
+./run_unifp_train.py train --task rope --num_envs 4096 --iterations 1000 --headless \
+    --resume_from logs/unifp_train/20260924T080558_train_seed1_hook_pull_v4/model_13000.pt \
+    --resume_arm_std 0.3 --resume_leg_std 0.4 --entropy_coef 0.002 --learning_rate_scale 0.1 \
+    --rope_weight rope_wobble -1.0 --curriculum_rule ema
+./run_unifp_train.py rope_eval --task rope --headless --repeats 2 --checkpoint <model.pt>   # development set
+./run_unifp_train.py rope_eval --task rope --headless --rope_set test --checkpoint <model.pt>  # held out: once
+./run_unifp_train.py rope_eval --task rope --headless --repeats 2 --checkpoint <model.pt> \
+    [--rope_stiffness 20000] [--ground_friction 0.5] [--stochastic]   # sensitivity and diagnosis, not frozen sets
+python -m unifp_train.rope_eval <rope_eval run dir>                   # rescore a saved trace
+# watch it: the frozen episodes on a loop, the rope drawn (orange taut, grey slack, red once the anchor lets go)
+./run_unifp_train.py play --task rope --rope_demo --real_time --steps 200000 \
+    --checkpoint checkpoints/unifp_go2d1_rope_v3_polish_model_14600.pt
+```
+
+**What the recipe needed** (Week 4 log, 2026-10-07; each version from hook v4 `model_13000`):
+
+| | change | what it showed |
+| --- | --- | --- |
+| v1 | the task as first built, `--resume_arm_std 0.6`, adaptive learning rate | recovery learnt (0 falls in 108 releases at 400 iterations), but the first update (KL 0.93) threw away the straight-arm posture; the pull collapsed to 20-25 N with the arm 33-35 degrees off the rope |
+| v2 | `--learning_rate_scale 0.1`, `rope_ripple` -1 -> -0.2, `rope_taut_arm` 1.0, a broad third exponential in the force term | the posture kept and the pull back (arm 2-7 degrees off the rope); but a 3.8 Hz tug train at 35-50 N from Joint1 cycling at its limit, and a deterministic over-pull of up to 27% that is learnt compensation for the policy's own exploration noise (`--stochastic` meets the command to 1-4 N) |
+| v3 | `--resume_arm_std 0.3 --resume_leg_std 0.4 --entropy_coef 0.002`, `--rope_weight rope_wobble -1.0` | no tug in any 35 or 50 N hold, the tension's std 0.05-0.5 N, within 2-5 N of the command, and no fall in 432 releases over four checkpoints (400-1,000 iterations) |
+| polish | v3 `14400` continued 200 iterations at `--resume_arm_std 0.15 --resume_leg_std 0.2` | the pull onto the command (held out: 17.4 / 30.0 / 44.3 N for 15 / 30 / 45), no fall in 96 held-out releases (F-136): **the policy to use**, `checkpoints/unifp_go2d1_rope_v3_polish_model_14600.pt` |
+
+**Where it stands (2026-10-07, F-133).** Three seeds of the v3 recipe fall in none of 972 development-set releases
+from 400 iterations on, and from 600 iterations hold 20 / 35 / 50 N with the tension's std 0.04-0.65 N and no tug at
+50 N. The chosen checkpoint (`checkpoints/unifp_go2d1_rope_v3_model_14400.pt`) holds every level of the held-out set,
+run once, with 0 of 96 releases fallen, but pulls 5-7 N over the command. A 200-iteration polish at half the noise
+(`unifp_go2d1_rope_v3_polish_model_14600.pt`, F-136) brings it onto the command, held-out included, still with no fall.
+Both snatch once as the rope comes taut (much less on a 10 N/s ramp) and run Joint2 and Joint3 at their torque limits;
+a heavier arm-margin price does not change that, only lowers the pull (F-135). With its legs held still the policy
+pulls only 17-20 N. Simulation only.
+
+**Two scoring lessons.** A last-2-s window never sees the snatch as the rope is tied on, so each hold is also scored
+whole; and a tug is a *prominent peak* of the tension (25% of the command above the troughs either side), since the
+snatches go above the command as often as below it.
+
+**The curriculum.** v1-v3 judge the frontier on an average restarted from one reset batch after each promotion, which
+promoted on noise (v1 to 50 N while it pulled 20; v3 30 -> 55 N in 239 iterations). `--curriculum_rule window` (the
+default since) sums the error over the window since the last promotion; `ema` reproduces v1-v3.
+
+**Steadiness** is read off the tension at the physics rate over the last 2 s of each hold: its std, what is left after a
+0.2 s running mean (shake, not drift), the slack fraction, *tugs* (drops below 75% of the command after being above
+90%), and the dominant frequency. **Recovery** is scored over 4 s after the release against a strict fall (tilt past
+34 degrees, base under 0.15 m, or the trunk touching), with the base's excursion and speed, the pitch change, the tool's
+lunge relative to the body, the feet lifted and the time to settle.
+
+**What the task layer does after a release.** It notices 0.1-0.6 s later (or, in 20% of training releases and one of the
+three evaluation releases, never), ramps the command to zero at 200 N/s and lets the goal slide back to where the grip
+was relative to the body. Until it notices, the policy is still told to pull, and UniFP's target is then `goal + command
+/ 200 N/m`: at 50 N a give of 25 cm back toward the robot. That is UniFP's force semantics, kept on purpose; the
+evaluation reports the lunge it produces.
+
+What it is not: the rope is a spring, not a cable model (no sag, no mass, no wave along it), and its stiffness tops out at
+6,000 N/m in training where a real 1 m rope is ~10^5 N/m. The release is an anchor model; nothing is attached to the far
+end. The floor is UniFP's μ = 1.0 unless `--ground_friction` says otherwise. Simulation only.
