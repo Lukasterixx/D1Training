@@ -12,6 +12,15 @@ unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
 ./demos/insertion/run_demo.py --checkpoint <model.pt> --compliant_key --attempts 16 --headless --lateral_mm 3                     # measure
 ```
 
+To watch it on a loop, `./demos/insertion/run_demo.sh`. It sets up the environment itself and runs the measured-robot
+policy with the compliant key, one robot in the viewer, in real time, at a 2 mm estimate error. A seated key is held for
+3 s, then the next attempt is drawn, until the window is closed. Arguments are appended (`--lateral_mm 4`,
+`--blade level`, ...). In the viewer the lock is drawn in a door: a wooden door in a wall, with its casing, an escutcheon
+round the keyway and a lever handle (`--no-scenery` leaves it out). The wrist RealSense and its bracket are drawn at
+the saved mount (`--no-camera_body`). Both are visual only, and both are off headless, so measuring runs spawn what
+they always have. It is for watching: the attempts are written after each one, but a cut-short hold changes the
+peak force and final depth, so measure with `run_demo.py` as above.
+
 Then `./dashboard.py record <out dir> --title "..."`; runs go to `logs/insertion_demo/`. The insertion-trained policy to
 use is `checkpoints/unifp_go2d1_insertion_seed3_model_21200.pt`, with `--compliant_key` (it was trained holding the key
 compliantly; with a rigid key it seats far fewer, see `checkpoints/README.md`).
@@ -20,7 +29,7 @@ compliantly; with a rigid key it seats far fewer, see `checkpoints/README.md`).
 
 | piece | what it is |
 | --- | --- |
-| the key | a flat blade, 10 × 3 mm, its tip 70 mm beyond the jaw centre along the approach, its long side along the jaw axis (`key.py`, a copy of the D1 URDF, the robot welded into `generated/insertion/`). Rigid (a collider on `Link6`), or with `--compliant_key` on its own link hung from the jaw centre by two sprung revolute joints, 2 N·m/rad, ±10° -- the PhysX form of the training's `insertion.CompliantGrip` |
+| the key | a flat blade, 10 × 3 mm, its tip 70 mm beyond the jaw centre along the approach, its long side along the jaw axis (`key.py`, a copy of the D1 URDF, the robot welded into `generated/insertion/`). Rigid (a collider on `Link6`), or with `--compliant_key` on its own link hung from the jaw centre by two sprung revolute joints, 2 N·m/rad, ±10° -- the PhysX form of the training's `insertion.CompliantGrip`. Drawn as a brass key, a ring bow between the fingers and bitting on the blade, which past the fingertips stays inside the collider |
 | the slot | a channel 1 mm wider than the blade each side, 18 mm deep to a seat, a 2 mm 45° chamfer round the mouth, in a lock body set in a door panel (`asset.py`, all box and convex colliders, 1 mm contact offsets); placed per attempt, kinematic |
 | the estimate | what the task layer believes: the true slot moved `--lateral_mm` across its axis in a random direction, its axis tilted `--tilt_deg`, its roll off `--roll_error_deg` -- the error a tag seen from the approach might leave |
 | the task layer | `unifp_train.insertion.InsertionTaskLayer`, shared with training: the hand to the pre-insertion pose (key tip 12 mm short of the estimated mouth, approach along the estimated axis, roll the blade's); then a PI force law along the axis on how far the tip lags a reference depth, capped at `--search_n` while the key is on the door's face and spiralling across it if it stalls, at `--max_n` once it is in; across the axis the goal yields to the tip once it has touched. Its outer loops (`insertion.PoseCorrection`, `--tip_correction`, `--attitude_correction`; on by default) integrate the measured miss of the tip, the approach's elevation and the roll into the commands |
@@ -70,9 +79,10 @@ The slot's sizes are the middle of the training's ranges, not a measured lock.
 | file | |
 | --- | --- |
 | `run_demo.py` | the launcher: builds the key robot and the door, draws the attempts, runs the policy, writes `run.json` / `summary.json` / `trace.csv` |
+| `run_demo.sh` | the looping viewer: `run_demo.py --loop --hold_s 3` with the measured-robot policy and the compliant key, in the Isaac environment |
 | `env.py` | the training's insertion environment with the door and key in PhysX |
-| `asset.py` | the door panel and lock body with the keyed slot, as USD |
-| `key.py` | the D1 URDF with the key's blade on `Link6`, or on its own sprung link (`compliant=True`) |
+| `asset.py` | the door panel and lock body with the keyed slot, as USD; and the door around it, drawn only (`build_scenery_usd`) |
+| `key.py` | the D1 URDF with the key's blade on `Link6`, or on its own sprung link (`compliant=True`); the key drawn as a mesh (a bow, bitting) that stays inside the blade's collider |
 | `geometry.py` | the sizes, shared with the training's plant, and the door's placement |
 | `tests/` | `python -m unittest discover -s demos/insertion/tests -t .` |
 

@@ -214,7 +214,11 @@ class SearchParams:
     # the stops ride up with it, so each sits where it was relative to the arm (Week 4, 2026-10-06).
     camera_above_m: float = 0.30 + _SHOULDER_RISE_M
     target_range_m: float = 0.55
-    target_above_m: float = 0.24 + _SHOULDER_RISE_M
+    # Each stop looks 20 deg down, not at the tag's own height (0.24 m above the mount, 10 deg down) as it did
+    # with the camera pointing along the gripper. The bracket holds it 30 deg down from the approach axis, so a
+    # level look needs the gripper pitched up, and from this height the D1 reaches no stop at all looking less
+    # than about 19 deg down (Week 4, 2026-10-09). The tag then sits in the upper half of the image.
+    target_above_m: float = 0.17 + _SHOULDER_RISE_M
     # The second look, straight in front of the tag: the first of these (range, height above it) that solves.
     close_views_m: tuple = ((0.25, 0.03), (0.30, 0.03), (0.25, 0.08), (0.22, 0.0), (0.35, 0.06))
     # The tag reads the same at any image rotation, so the close look may turn the camera about its view to
@@ -278,6 +282,11 @@ def plan_close_look(joints, links, mount, box_pose_b, up_b, q_start, params: Sea
         if solved:
             if toward is None:
                 return solved[0]
+            # Turning is there to save the wrist a swing, never to cost one. The upright look may solve only from a
+            # later view than some turned one, so it stays a candidate in its own right.
+            upright = plan_close_look(joints, links, mount, box_pose_b, up_b, q_start, params)
+            if upright is not None:
+                solved.append(upright)
             travel = lambda q: float(np.max(np.abs(q - q_start)) + np.max(np.abs(np.asarray(toward) - q)))
             return min(solved, key=travel)
     return None

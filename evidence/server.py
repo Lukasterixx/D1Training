@@ -34,7 +34,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _json(self, value, status: int = 200):
-        self._send(status, json.dumps(value).encode(), "application/json")
+        # Strict JSON: a NaN anywhere in a record would otherwise reach the page as `NaN` and fail to parse.
+        self._send(status, json.dumps(store.json_safe(value), allow_nan=False).encode(), "application/json")
 
     def _file(self, path: Path, cache: bool = False):
         if path.suffix.lower() in TEXT_SUFFIXES:
@@ -106,6 +107,8 @@ class Handler(BaseHTTPRequestHandler):
                                    "html": store.render_file(self.root, path)})
         if name == "live":
             return self._json({"runs": store.live_runs(self.root, cfg)})
+        if name == "screenshots":
+            return self._json({"weeks": store.screenshots(self.root, cfg)})
         if name == "scalars":
             return self._scalars(cfg, query)
         return self._json({"error": f"Unknown endpoint {name}"}, 404)

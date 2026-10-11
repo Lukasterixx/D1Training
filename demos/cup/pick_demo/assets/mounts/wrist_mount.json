@@ -1,36 +1,36 @@
 {
   "schema": "d1training.wrist_mount/1",
-  "created_utc": "2026-09-17T08:39:40+00:00",
+  "created_utc": "2026-10-09T06:42:10+00:00",
   "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
   "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
   "xyz_m": [
-    -0.061,
-    0.034,
-    0.067
+    -0.04905,
+    0.032815,
+    0.061332
   ],
   "rpy_deg": [
-    0.0,
-    0.0,
+    -30.0,
+    -0.0,
     -90.0
   ],
   "pose_link6": [
     [
       0.0,
-      1.0,
-      0.0,
-      -0.061
+      0.866025404,
+      0.5,
+      -0.049049512
     ],
     [
       -1.0,
       0.0,
-      -0.0,
-      0.034
+      0.0,
+      0.032814543
     ],
     [
-      -0.0,
       0.0,
-      1.0,
-      0.067
+      -0.5,
+      0.866025404,
+      0.061331667
     ],
     [
       0.0,
@@ -40,7 +40,7 @@
     ]
   ],
   "measured": false,
-  "method": "the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence",
-  "source": "d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI",
-  "camera": "calibration d435i_238222076237_640x480.json"
+  "method": "cad: Lukas's bracket (Fusion 360, 2026-10-09) on Unitree's D1-550 CAD. Link6 from the wrist flange's roll axis, the jaw axis and a fit of d1.urdf's Link6 mesh; the camera as Intel's D435 case with its back on the bracket's plate and its M3 holes on the plate's (demos/cup/pick_demo/bracket.py)",
+  "source": "the bracket's CAD (bracket.py)",
+  "camera": "D435i"
 }

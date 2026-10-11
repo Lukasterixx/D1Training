@@ -9,7 +9,7 @@ from isaaclab.utils import configclass
 
 from demos.combiner.geometry import DEFAULT_HANDLE_TORQUE_NM, GEOMETRY
 from demos.common.resting import make_resting_cfg
-from demos.cup.pick_demo.scene import camera_body_cfg, wrist_camera_cfg
+from demos.cup.pick_demo.scene import bracket_cfg, camera_body_cfg, wrist_camera_cfg
 from flat_env_cfg import FlatSceneCfg
 from position_only.env_cfg import ReachSceneCfg
 
@@ -38,11 +38,13 @@ class CombinerSceneCfg(ReachSceneCfg):
     # The cup pick's wrist RealSense and its housing (`demos.cup.pick_demo.scene`).
     wrist_cam: CameraCfg = None
     rs_body: AssetBaseCfg = None
+    rs_bracket: AssetBaseCfg = None
 
 
 def make_combiner_cfg(robot_usd, box_usd, placement, seed=42, device="cuda:0",
                       door_angle_deg=0.0, handle_angle_deg=0.0, capture=False,
-                      camera=None, mount=None, camera_usd=None, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
+                      camera=None, mount=None, camera_usd=None, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM,
+                      bracket_usd=None):
     cfg = make_resting_cfg(robot_usd, seed=seed, device=device)
     # This is a scene setup, not a reaching episode. Resets are owned by the runner.
     cfg.terminations.time_out = None
@@ -79,6 +81,8 @@ def make_combiner_cfg(robot_usd, box_usd, placement, seed=42, device="cuda:0",
         scene.wrist_cam = wrist_camera_cfg(camera, mount)
         if camera_usd is not None:
             scene.rs_body = camera_body_cfg(mount, camera_usd)
+            if bracket_usd is not None:
+                scene.rs_bracket = bracket_cfg(bracket_usd)
     cfg.scene = scene
     cfg.sim.physics_material = scene.terrain.physics_material
     cfg.viewer.eye, cfg.viewer.lookat = overview_view(placement)

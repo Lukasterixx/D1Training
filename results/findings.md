@@ -4947,3 +4947,40 @@ result that changes a conclusion gets a new entry, and the old one is marked
     Then patch `d1.urdf`'s five origins, or adopt `d1_550_description`, and retrain as after F-126 (F-127).
   - Weigh the elbow's torque on the bench as well: if it is 3.3 N·m, the rope pull's saturated elbow (F-135) is half
     the constraint the simulation says.
+
+### F-138 — From Lukas's bracket CAD, the wrist camera looks 30° down from the gripper's approach axis, its colour optical frame at (−49.1, 32.8, 61.3) mm in Link6: 13.3 mm and 30° from the mount aligned by eye; with it the D1 cannot point the camera within ~19° of level from the tag search's height
+
+- **Status:** provisional (the bracket's design, registered to Unitree's CAD and Intel's case; not measured on the arm)
+- **Week:** 4
+- **Date:** 2026-10-09
+- **Evidence:** [Week 4 log, 2026-10-09](week_04/notes.md), "The wrist camera's bracket from its CAD";
+  `python -m demos.cup.pick_demo.bracket <mount_only.stl> <d435i_with_mount.stl> <d435i_with_mount_and_arm.stl> --write`
+  on Lukas's Fusion 360 export (checksums in `demos/cup/pick_demo/assets/bracket/registration.json`).
+  - Link6 in the CAD: the wrist roll line from 6 rings of the wrist flange (centres within 0.11 mm), the roll fixed by
+    the jaw axis, the origin along the roll line by fitting `d1.urdf`'s Link6 mesh to the CAD's gripper (median 1.38 mm,
+    a shallow minimum: +3–4% cost at ±1 mm).
+  - The camera: the D435i case's front normal is 30.003° below the approach axis, yaw −0.004°. The bracket's plate lies
+    on the case's back and has two 3.0 mm holes 45.000 mm apart, the D435's M3 mounting holes (Intel's: 45.000 mm).
+    Intel's case placed there sits on the export's case back to 0.14 mm (median).
+  - The mount, colour optical frame in Link6: xyz (−49.05, 32.81, 61.33) mm, rpy (−30, 0, −90)°; the optical axis is
+    (0.500, 0, 0.866). The saved default it replaced (2026-09-17, aligned by eye): (−61, 34, 67) mm, (0, 0, −90)°.
+  - Clearances: the case is 3.0 mm from `d1.urdf`'s Link6 mesh and 2.8 mm from the CAD's own hand; the bracket is 1.6 mm
+    clear of the Link6 mesh (it rests on the CAD's D1-550 hand, which that mesh is not). The case and the bracket stay
+    out of the colour view; the closed fingertips enter its right edge (u ≈ 580 of 640) and the jaw centre sits just
+    outside (u ≈ 642).
+  - The combiner's tag search (`press.plan_search`): looking 10° down at the tag's height, as with the camera along the
+    gripper, no stop solves; 19° or more down from 0.32 m above the mount, they do. Re-aimed 20° down, the combiner's
+    scripted sequence tests pass (20 of 21 at once, the close-look roll test re-pinned: it saves at most 0.18 rad now,
+    against > 0.5). The cup pick's 78 geometry tests pass with the new mount unchanged.
+  - [Render](#/week/4/run/20261009T065528_402141Z) (`./demos/cup/run_camera_body_view.sh`): the bracket drawn on Link6
+    and Intel's case at the mount, as in the CAD.
+- **Scope:** the design, not the part. The printed bracket's tolerances, how the camera seats in it and where the
+  slide is clamped are not measured; nor is Link6's origin along the roll axis on the real arm (`d1.urdf`'s hand is not
+  the D1-550's, F-137). A hand-eye calibration on the real arm is what would measure the extrinsics. The D435i model in
+  the export is not Intel's (0.8 mm longer, 1 mm shallower) and was used only for orientation and handedness.
+- **Implication:**
+  - Every simulated wrist-camera run from 2026-10-09 uses this mount (`wrist_mount.json`, loaded by default); runs
+    before it used the one aligned by eye, which pointed the camera along the gripper.
+  - With the camera pitched 30° down, looks have to be planned at least ~20° down from the D1's reach at a lying dog's
+    height; a level look at a target is out of reach.
+  - Check the printed bracket on the bench with a hand-eye calibration before trusting millimetres from the camera.

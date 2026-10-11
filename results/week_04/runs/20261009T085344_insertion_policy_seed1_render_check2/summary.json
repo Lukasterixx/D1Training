@@ -1,0 +1,62 @@
+{
+  "summary": {
+    "attempts": 2,
+    "successes": 1,
+    "falls": 0,
+    "damaged": 0,
+    "engaged": 2,
+    "searched": 2,
+    "time_to_seat_s_median": 1.46,
+    "peak_force_n_median": 13.029,
+    "peak_lateral_n_median": 2.666,
+    "approach_err_deg_median": 8.09,
+    "roll_err_deg_median": 0.71,
+    "final_depth_mm_median": 17.86
+  },
+  "attempts": [
+    {
+      "attempt": 0,
+      "success": false,
+      "height_m": 0.8283624097869093,
+      "side_m": -0.03495145424898326,
+      "roll_rad": 0.0,
+      "direction_rad": 3.5764134230726126,
+      "tilt_direction_rad": 0.7409050663476744,
+      "roll_error_sign": 1.0,
+      "engage_step": 155,
+      "seated_step": null,
+      "searched": true,
+      "inserted": false,
+      "peak_force_n": 8.572654724121094,
+      "peak_lateral_n": 0.8202683925628662,
+      "approach_err_deg": 8.09,
+      "fell": false,
+      "damaged": false,
+      "final_depth_mm": -0.26,
+      "roll_err_deg": 0.71,
+      "time_to_seat_s": null
+    },
+    {
+      "attempt": 1,
+      "success": true,
+      "height_m": 0.8261957361816821,
+      "side_m": -0.03249123305806121,
+      "roll_rad": 1.5707963267948966,
+      "direction_rad": 4.094079392473133,
+      "tilt_direction_rad": 0.17811244797868833,
+      "roll_error_sign": 1.0,
+      "engage_step": 250,
+      "seated_step": 323,
+      "searched": true,
+      "inserted": true,
+      "peak_force_n": 13.02892780303955,
+      "peak_lateral_n": 2.666128396987915,
+      "approach_err_deg": 6.49,
+      "fell": false,
+      "damaged": false,
+      "final_depth_mm": 17.86,
+      "roll_err_deg": 0.58,
+      "time_to_seat_s": 1.46
+    }
+  ]
+}

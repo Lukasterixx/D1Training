@@ -1,0 +1,336 @@
+{
+  "status": "complete",
+  "mode": "camera_body_view",
+  "seed": 42,
+  "arguments": {
+    "device": "cuda:0",
+    "seed": 42,
+    "camera": "d435",
+    "calibration": null,
+    "mount_pos": [
+      -0.055,
+      0.0,
+      0.035
+    ],
+    "mount_pitch_deg": 20.0,
+    "mount": null,
+    "no_camera_body": false,
+    "pose": "observe",
+    "look_at": "wrist",
+    "settle_steps": 120,
+    "frames_per_view": 4,
+    "width": 900,
+    "height": 700,
+    "cup_usdz": "/home/lukas/D1Training/demos/cup/pick_demo/assets/High-Resolution_3D_Cup_Model_FBX.usdz",
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/camera_body"
+  },
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_status": "M demos/combiner/press.py\n M demos/combiner/run_combiner_demo.py\n M demos/combiner/scene.py\n M demos/combiner/tests/test_turn.py\n M demos/combiner/wrist_camera.py\n M demos/cup/pick_demo/assets/mounts/wrist_mount.json\n M demos/cup/pick_demo/camera.py\n M demos/cup/pick_demo/camera_asset.py\n M demos/cup/pick_demo/scene.py\n M demos/cup/run_camera_body_view.py\n M demos/cup/run_pick_demo.py\n M results/week_03/notes.md\n M results/week_04/notes.md\n?? demos/cup/pick_demo/assets/bracket/\n?? demos/cup/pick_demo/bracket.py\n?? demos/cup/tests/test_bracket.py\n?? reports/\n?? research_notes/\n?? results/week_03/figures/d1_base_model_vs_measured.png\n?? results/week_03/figures/force_gain_literature.png\n?? results/week_03/figures/weekly_update_figures.py\n?? results/week_04/figures/weekly_update_figures.py\n?? results/week_04/figures/weekly_update_rope_pull.png",
+  "task": "wrist camera body render",
+  "learning": null,
+  "look_at": "wrist",
+  "captured_utc": "2026-10-09T06:55:36+00:00",
+  "mount": {
+    "schema": "d1training.wrist_mount/1",
+    "created_utc": "2026-10-09T06:55:36+00:00",
+    "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+    "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+    "xyz_m": [
+      -0.04905,
+      0.032815,
+      0.061332
+    ],
+    "rpy_deg": [
+      -30.0,
+      -0.0,
+      -90.0
+    ],
+    "pose_link6": [
+      [
+        0.0,
+        0.866025404,
+        0.5,
+        -0.049049512
+      ],
+      [
+        -1.0,
+        0.0,
+        0.0,
+        0.032814543
+      ],
+      [
+        0.0,
+        -0.5,
+        0.866025404,
+        0.061331667
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "measured": false,
+    "method": "unstated",
+    "source": "wrist_mount.json (the saved default): the bracket's CAD (bracket.py) (from CAD, not measured: cad: Lukas's bracket (Fusion 360, 2026-10-09) on Unitree's D1-550 CAD. Link6 from the wrist flange's roll axis, the jaw axis and a fit of d1.urdf's Link6 mesh; the camera as Intel's D435 case with its back on the bracket's plate and its M3 holes on the plate's (demos/cup/pick_demo/bracket.py))",
+    "camera": ""
+  },
+  "mount_file": "/home/lukas/D1Training/demos/cup/pick_demo/assets/mounts/wrist_mount.json",
+  "camera_model": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration"
+  },
+  "arm_pose_rad": [
+    0.0,
+    0.1046,
+    0.83045,
+    -0.00014,
+    0.16099,
+    -2e-05
+  ],
+  "pose": "observe",
+  "link6_origin_base_m": [
+    0.19724,
+    -0.00128,
+    0.27754
+  ],
+  "optical_origin_base_m": [
+    0.2689,
+    0.03154,
+    0.24541
+  ],
+  "body_clearance": {
+    "housing_x_link6_m": [
+      -0.0703,
+      -0.0361
+    ],
+    "housing_y_link6_m": [
+      -0.0446,
+      0.0453
+    ],
+    "housing_z_link6_m": [
+      0.0371,
+      0.0713
+    ],
+    "y_checked": false,
+    "shell_x_link6_m": [
+      -0.038,
+      0.019
+    ],
+    "shell_z_link6_m": [
+      0.0,
+      0.076
+    ],
+    "intersects_shell": true,
+    "overlap_m": [
+      0.0019,
+      0.0342
+    ]
+  },
+  "view_obstruction": {
+    "model_eye": [],
+    "rendered_eye_f052": [
+      {
+        "part": "housing",
+        "triangles": 1367,
+        "of": 229148,
+        "eye_offset_mm": [
+          0.9,
+          8.85,
+          -6.23
+        ],
+        "depth_range_m": [
+          0.0034,
+          0.01053
+        ],
+        "x_range_m": [
+          -0.00747,
+          0.0641
+        ],
+        "y_range_m": [
+          -0.00512,
+          0.00212
+        ]
+      }
+    ]
+  },
+  "body": {
+    "asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "source": "/home/lukas/D1Training/pick_demo/assets/realsense/d435_housing.ply",
+      "source_sha256": "a1a4abe241d5d55ebdb55ac544944da4b8fa76942c24b50c2e94da6785251641",
+      "colour": [
+        0.62,
+        0.63,
+        0.65
+      ],
+      "roughness": 0.35,
+      "clearance_tan": 0.9,
+      "transform": [
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.0325
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0043
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "builder": 1,
+      "triangles": 229148,
+      "triangles_removed": 2038,
+      "vertices": 154149,
+      "bounds_optical_m": [
+        [
+          -0.0125,
+          -0.0125,
+          -0.020755
+        ],
+        [
+          0.077414,
+          0.0125,
+          0.0043
+        ]
+      ],
+      "frame": "colour optical: x right, y down, z forward, origin at the colour sensor",
+      "note": "Intel's d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro's offsets, with the colour lens element removed so a pinhole camera at the sensor plane has a clear aperture. Visual only."
+    },
+    "size_m": [
+      0.089914,
+      0.025,
+      0.025055
+    ],
+    "bounds_optical_m": [
+      [
+        -0.0125,
+        -0.0125,
+        -0.020755
+      ],
+      [
+        0.077414,
+        0.0125,
+        0.0043
+      ]
+    ],
+    "imagers_optical_m": {
+      "left_ir": [
+        0.014857,
+        0.0,
+        0.0042
+      ],
+      "colour": [
+        0.0,
+        0.0,
+        0.0042
+      ],
+      "right_ir": [
+        0.064904,
+        0.0,
+        0.0042
+      ]
+    },
+    "tripod_optical_m": [
+      0.0325,
+      0.0125,
+      -0.0106
+    ],
+    "source": "Intel d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro"
+  },
+  "bracket": {
+    "asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/wrist_bracket_2020061f6a14.usd",
+      "source": "/home/lukas/D1Training/demos/cup/pick_demo/assets/bracket/wrist_bracket_link6.stl",
+      "source_sha256": "a78eed56c53a0d686422bde2aa3baac1d1a68e902146e800bdcb2ba9859943af",
+      "colour": [
+        0.17,
+        0.17,
+        0.18
+      ],
+      "roughness": 0.6,
+      "builder": 1,
+      "triangles": 2648,
+      "bounds_link6_m": [
+        [
+          -0.064757,
+          -0.027514,
+          0.000576
+        ],
+        [
+          -0.032407,
+          0.027812,
+          0.045858
+        ]
+      ],
+      "frame": "Link6 (d1.urdf)",
+      "note": "Lukas's wrist camera bracket, from its CAD, registered to Link6 by bracket.py. Visual only."
+    },
+    "source": "Lukas's bracket CAD in the Link6 frame (demos/cup/pick_demo/bracket.py)"
+  },
+  "views": [
+    {
+      "view": "front",
+      "eye_offset_m": [
+        0.16,
+        0.0,
+        0.05
+      ],
+      "file": "front.png"
+    },
+    {
+      "view": "side",
+      "eye_offset_m": [
+        0.0,
+        -0.18,
+        0.04
+      ],
+      "file": "side.png"
+    },
+    {
+      "view": "above",
+      "eye_offset_m": [
+        0.02,
+        0.0,
+        0.2
+      ],
+      "file": "above.png"
+    },
+    {
+      "view": "three_quarter",
+      "eye_offset_m": [
+        0.13,
+        -0.13,
+        0.1
+      ],
+      "file": "three_quarter.png"
+    }
+  ]
+}

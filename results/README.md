@@ -23,7 +23,10 @@ View it with `./dashboard.py` from the repository root (it opens
 | `week_NN/external/<name>/` | Evidence from outside this repo (another project's experiments): copied outputs, configs, source snapshots, a provenance README and any script that summarises them | Claude |
 
 Screenshots are optional in any week. They appear in name order, captioned from
-the filename: `03_arm_self_collision.png` shows as "arm self collision".
+the filename: `03_arm_self_collision.png` shows as "arm self collision". The dashboard's
+**Screenshots** tab gathers every week's in one gallery, newest week first, with each week's `figures/` (Claude's
+plots and simulator renders) beside them, tagged by source and filterable; each image (there and on the week pages)
+has **Download** and **Copy** (the image, as PNG, to the clipboard).
 
 ## Recording a run
 

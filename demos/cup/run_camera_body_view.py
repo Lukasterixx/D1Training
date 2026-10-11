@@ -74,7 +74,7 @@ def run(args) -> int:
 
         from demos.cup.pick_demo import camera_body
         from demos.cup.pick_demo.camera import CAMERAS, WristMount, camera_pose, link6_pose, mount_to_dict
-        from demos.cup.pick_demo.camera_asset import build_camera_usd
+        from demos.cup.pick_demo.camera_asset import build_bracket_usd, build_camera_usd
         from demos.cup.pick_demo.cup_asset import build_cup_usd
         from demos.cup.pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
         from demos.cup.pick_demo.scene import make_pick_cfg
@@ -127,10 +127,12 @@ def run(args) -> int:
             mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152).usd_path
         cup = build_cup_usd(args.cup_usdz, ROOT / "generated/pick_demo")
         body_info = None if args.no_camera_body else build_camera_usd(ROOT / "generated/pick_demo")
+        bracket_info = None if args.no_camera_body else build_bracket_usd(ROOT / "generated/pick_demo")
         cfg = make_pick_cfg(robot_usd, cup["usd_path"], model, mount, (0.42, 0.03), 0.0,
                             args.seed, args.device, episode_s=600.0, overview_size=(args.width, args.height),
                             show_camera_body=not args.no_camera_body,
-                            camera_usd=None if body_info is None else body_info["usd_path"])
+                            camera_usd=None if body_info is None else body_info["usd_path"],
+                            bracket_usd=None if bracket_info is None else bracket_info["usd_path"])
         env = ManagerBasedRLEnv(cfg=cfg)
         env.reset()
 
@@ -204,6 +206,8 @@ def run(args) -> int:
                 "tripod_optical_m": [round(float(v), 6) for v in camera_body.tripod_thread_m()],
                 "source": "Intel d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro",
             },
+            "bracket": {"asset": bracket_info,
+                        "source": "Lukas's bracket CAD in the Link6 frame (demos/cup/pick_demo/bracket.py)"},
             "views": saved,
         }, indent=2) + "\n")
         print(f"[view] wrote {out_dir}", flush=True)

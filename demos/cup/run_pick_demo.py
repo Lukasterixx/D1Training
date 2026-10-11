@@ -274,15 +274,18 @@ def run(args):
                                      height_m=args.cup_height, mass_kg=args.cup_mass, wall_m=args.cup_wall)
             metadata["cup"] = {**cup_info, "spawn_xy_env_m": list(args.cup_xy), "yaw_deg": args.cup_yaw_deg}
 
-            camera_usd = None
+            camera_usd = bracket_usd = None
             if args.camera_body:
                 from demos.cup.pick_demo import camera_body as camera_body_geom
-                from demos.cup.pick_demo.camera_asset import build_camera_usd, carve_lens
+                from demos.cup.pick_demo.camera_asset import build_bracket_usd, build_camera_usd, carve_lens
                 from demos.cup.pick_demo.grasp import PALM_X_RANGE_M, PALM_Z_M
 
                 body_info = build_camera_usd(ROOT / "generated/pick_demo")
                 camera_usd = body_info["usd_path"]
                 metadata["camera"]["body_asset"] = body_info
+                bracket_info = build_bracket_usd(ROOT / "generated/pick_demo")
+                bracket_usd = None if bracket_info is None else bracket_info["usd_path"]
+                metadata["camera"]["bracket_asset"] = bracket_info
                 for line in camera_body_geom.describe(mount):
                     print(f"[pick] {line}", flush=True)
                 clearance = camera_body_geom.clearance_report(mount, PALM_Z_M, PALM_X_RANGE_M)
@@ -308,7 +311,7 @@ def run(args):
 
             cfg = make_pick_cfg(robot_usd, cup_info["usd_path"], model, mount, tuple(args.cup_xy), args.cup_yaw_deg,
                                 args.seed, args.device, episode_s=args.max_time + (3600.0 if args.linger else 30.0),
-                                show_camera_body=args.camera_body, camera_usd=camera_usd)
+                                show_camera_body=args.camera_body, camera_usd=camera_usd, bracket_usd=bracket_usd)
             grasp_params = GraspParams(wall_grasp=args.wall_grasp, pinch_closed_gap_m=args.pinch_closed_gap)
             metadata["grasp"] = {"wall_grasp": grasp_params.wall_grasp,
                                  "pinch_closed_gap_m": grasp_params.pinch_closed_gap_m,

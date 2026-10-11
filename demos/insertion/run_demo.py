@@ -8,6 +8,8 @@
     ./demos/insertion/run_demo.py --num_envs 1 --attempts 1 --lateral_mm 2
     # measure: sixteen attempts, headless
     ./demos/insertion/run_demo.py --attempts 16 --headless --lateral_mm 3
+    # watch attempt after attempt until the window is closed (what demos/insertion/run_demo.sh runs)
+    ./demos/insertion/run_demo.py --num_envs 1 --loop --hold_s 3
 
 Then, as for every run: `./dashboard.py record <out dir> --title "..."`.
 
@@ -30,6 +32,7 @@ import math
 import os
 import random
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -74,6 +77,21 @@ def build_parser() -> argparse.ArgumentParser:
                              "training's insertion.CompliantGrip) instead of fixing it to Link6.")
     parser.add_argument("--attitude_correction", type=float, default=None, metavar="GAIN_PER_S",
                         help="The approach-elevation and blade-roll loops' gain. Default insert_cfg's; 0: off.")
+    parser.add_argument("--loop", action="store_true",
+                        help="Keep drawing new attempts until the window is closed; --attempts is ignored. The results "
+                             "are written after every batch.")
+    parser.add_argument("--hold_s", type=float, default=None,
+                        help="End an attempt this long after its key is seated, instead of at --episode_s: for watching. "
+                             "Its peak force and final depth then stop there.")
+    parser.add_argument("--realtime", action=argparse.BooleanOptionalAction, default=None,
+                        help="Hold each policy step to its 20 ms of wall time (default: in the viewer, not headless).")
+    parser.add_argument("--scenery", action=argparse.BooleanOptionalAction, default=None,
+                        help="Draw the door the lock is in: a wooden door in a wall, its casing, an escutcheon and a "
+                             "lever handle (asset.build_scenery_usd), and a floor of boards; the viewer then looks at it "
+                             "from behind the robot. Visual only. Default: in the viewer, not headless.")
+    parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=None,
+                        help="Draw the wrist RealSense and its bracket at the saved mount (demos/cup/pick_demo). Visual "
+                             "only, with no mass and no camera rendering. Default: in the viewer, not headless.")
     parser.add_argument("--run_name", default=None)
     parser.add_argument("--output", default=str(ROOT / "logs/insertion_demo"))
     return parser
@@ -89,6 +107,24 @@ def draw_plan(args, count: int, rng: random.Random) -> list[dict]:
                      "tilt_direction_rad": rng.uniform(0.0, 2 * math.pi),
                      "roll_error_sign": rng.choice((-1.0, 1.0))})
     return rows
+
+
+def median(values):
+    present = sorted(v for v in values if v is not None)
+    return round(present[len(present) // 2], 3) if present else None
+
+
+def summarise(attempts: list[dict]) -> dict:
+    return {"attempts": len(attempts), "successes": sum(a["success"] for a in attempts),
+            "falls": sum(a["fell"] for a in attempts), "damaged": sum(a["damaged"] for a in attempts),
+            "engaged": sum(a["engage_step"] is not None for a in attempts),
+            "searched": sum(a["searched"] for a in attempts),
+            "time_to_seat_s_median": median([a["time_to_seat_s"] for a in attempts]),
+            "peak_force_n_median": median([a["peak_force_n"] for a in attempts]),
+            "peak_lateral_n_median": median([a["peak_lateral_n"] for a in attempts]),
+            "approach_err_deg_median": median([a["approach_err_deg"] for a in attempts]),
+            "roll_err_deg_median": median([a.get("roll_err_deg") for a in attempts]),
+            "final_depth_mm_median": median([a["final_depth_mm"] for a in attempts])}
 
 
 def plan_tensors(args, rows, device, geometry) -> dict:
@@ -119,6 +155,9 @@ def main() -> int:
     args = parser.parse_args()
     if args.checkpoint is None and not args.zero_actions:
         parser.error("--checkpoint is required (or --zero_actions)")
+    for name in ("realtime", "scenery", "camera_body"):
+        if getattr(args, name) is None:
+            setattr(args, name, not args.headless)
     simulation_app = AppLauncher(args).app
 
     import torch
@@ -127,7 +166,7 @@ def main() -> int:
     from isaaclab.assets import RigidObjectCfg
     from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
 
-    from demos.insertion.asset import build_slot_usd
+    from demos.insertion.asset import FLOOR_BEHIND_M, build_floor_usd, build_key_usd, build_scenery_usd, build_slot_usd
     from demos.insertion.env import InsertionDemoEnv, InsertionDemoEnvCfg
     from demos.insertion.geometry import GEOMETRY
     from demos.insertion.key import write_key_urdf
@@ -146,6 +185,23 @@ def main() -> int:
         out_usd_path=str(ROOT / f"generated/insertion/go2_d1_key{variant}.usd"),
         arm_mass_kg=3.152).usd_path
     slot_usd = build_slot_usd(ROOT / "generated/insertion/slot_door.usd")
+    drawn = {"key_usd": str(build_key_usd(ROOT / f"generated/insertion/key{variant}.usd", compliant=args.compliant_key)),
+             "scenery_usd": (str(build_scenery_usd(ROOT / "generated/insertion/scenery.usd",
+                                                   room_depth_m=args.ahead_m + FLOOR_BEHIND_M)) if args.scenery else None),
+             "floor_usd": (str(build_floor_usd(ROOT / "generated/insertion/floor.usd", wall_m=args.ahead_m))
+                           if args.scenery else None),
+             "camera_body": None}
+    if args.camera_body:
+        from demos.cup.pick_demo.camera import resolve_mount
+        from demos.cup.pick_demo.camera_asset import build_bracket_usd, build_camera_usd
+
+        mount, mount_source, mount_file = resolve_mount()
+        body, bracket = build_camera_usd(ROOT / "generated/pick_demo"), build_bracket_usd(ROOT / "generated/pick_demo")
+        drawn["camera_body"] = {"mount_source": mount_source, "mount_file": mount_file,
+                                "pos_link6_m": [float(v) for v in mount.pos_link6],
+                                "quat_wxyz": [float(v) for v in mount.quat_wxyz()],
+                                "body_usd": body["usd_path"], "bracket_usd": bracket and bracket["usd_path"]}
+        print(f"[insertion demo] wrist RealSense drawn at {mount_source}", flush=True)
 
     num_envs = args.num_envs or args.attempts
     cfg = InsertionDemoEnvCfg()
@@ -158,6 +214,13 @@ def main() -> int:
     if args.elevation_max_deg is not None:
         cfg.elevation_correction_max_rad = math.radians(args.elevation_max_deg)
     cfg.scene.num_envs = num_envs
+    cfg.key_usd, cfg.scenery_usd, cfg.floor_usd = drawn["key_usd"], drawn["scenery_usd"], drawn["floor_usd"]
+    if args.scenery and num_envs > 1:
+        cfg.scene.env_spacing = max(cfg.scene.env_spacing, 4.0)      # room for each robot's wall and floor
+    if drawn["camera_body"]:
+        cfg.camera_body_usd = drawn["camera_body"]["body_usd"]
+        cfg.camera_body_pose = (tuple(drawn["camera_body"]["pos_link6_m"]), tuple(drawn["camera_body"]["quat_wxyz"]))
+        cfg.bracket_usd = drawn["camera_body"]["bracket_usd"]
     cfg.episode_length_s = args.episode_s
     armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18] else robot_mod.ARM_ARMATURE)
                 for name in interface.ISAACLAB_NAMES}
@@ -182,11 +245,18 @@ def main() -> int:
                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=True)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(1.0, 0.0, 0.7)))
     if not args.headless:
-        cfg.viewer.origin_type = "asset_root"
-        cfg.viewer.asset_name = "robot"
         cfg.viewer.env_index = 0
-        cfg.viewer.eye = (0.35, -1.0, 0.95)
-        cfg.viewer.lookat = (0.45, 0.0, 0.7)
+        if args.scenery:
+            # From behind the robot's right, on the door: fixed in environment 0, so it can be moved with the mouse.
+            mouth = (args.ahead_m, sum(args.side_m) / 2, sum(args.height_m) / 2)
+            cfg.viewer.origin_type = "env"
+            cfg.viewer.eye = (mouth[0] - 0.95, mouth[1] - 1.25, mouth[2] + 0.35)
+            cfg.viewer.lookat = (mouth[0] - 0.25, mouth[1], mouth[2] - 0.15)
+        else:
+            cfg.viewer.origin_type = "asset_root"
+            cfg.viewer.asset_name = "robot"
+            cfg.viewer.eye = (0.35, -1.0, 0.95)
+            cfg.viewer.lookat = (0.45, 0.0, 0.7)
     env = InsertionDemoEnv(cfg)
     policy = None if args.zero_actions else EvaluablePolicy(args.checkpoint, device=str(env.device))
     controller = "zero actions" if policy is None else os.path.basename(args.checkpoint)
@@ -203,6 +273,7 @@ def main() -> int:
               "geometry": {k: getattr(GEOMETRY, k) for k in ("key_half_u", "key_half_w", "key_length", "clearance",
                                                              "chamfer", "depth", "friction")},
               "num_envs": num_envs, "attempts": args.attempts, "robot_usd": robot_usd, "slot_usd": str(slot_usd),
+              "drawn_only": drawn,
               "outer_loops": {"tip_gain": cfg.tip_correction_gain, "elevation_gain": cfg.elevation_correction_gain,
                               "roll_gain": cfg.roll_correction_gain, "tip_max_m": cfg.tip_correction_max_m,
                               "elevation_max_rad": cfg.elevation_correction_max_rad,
@@ -217,10 +288,18 @@ def main() -> int:
     fields = ["attempt", "step", "time_s", "engaged", "inserted", "searching", "theta", "s_mm", "ref_mm", "depth_mm",
               "across_u_mm", "across_w_mm", "force_cmd_n", "key_force_n", "key_axial_n", "key_lateral_n",
               "approach_err_deg", "roll_err_deg", "base_pitch_deg", "fell"]
-    rows_out, attempts = [], []
-    remaining, batch = args.attempts, 0
-    while remaining > 0 and simulation_app.is_running():
-        count = min(remaining, num_envs)
+    attempts = []
+    hold_steps = None if args.hold_s is None else max(1, round(args.hold_s / env.step_dt))
+    trace_file = open(out_dir / "trace.csv", "w", newline="")
+    trace = csv.DictWriter(trace_file, fieldnames=fields)
+    trace.writeheader()
+    remaining, batch, closed = args.attempts, 0, False
+    while args.loop or remaining > 0:
+        if not simulation_app.is_running():
+            closed = True
+            break
+        count = num_envs if args.loop else min(remaining, num_envs)
+        rows_out = []
         rows = draw_plan(args, num_envs, rng)
         env.set_evaluation(plan_tensors(args, rows, env.device, GEOMETRY))
         # Inside inference mode, as the steps are: a second batch's reset writes into buffers the first batch's steps
@@ -228,11 +307,15 @@ def main() -> int:
         with torch.inference_mode():
             obs, _ = env.reset()
         done = torch.zeros(num_envs, dtype=torch.bool, device=env.device)
+        deadline = time.perf_counter()
         best = [{"engage_step": None, "seated_step": None, "searched": False, "inserted": False, "peak_force_n": 0.0,
                  "peak_lateral_n": 0.0, "approach_err_deg": None, "fell": False, "damaged": False, "final_depth_mm": None}
                 for _ in range(num_envs)]
         with torch.inference_mode():
             for step in range(int(env.max_episode_length) - 1):
+                if not simulation_app.is_running():
+                    closed = True
+                    break
                 actions = (torch.zeros(num_envs, interface.NUM_ACTIONS, device=env.device) if policy is None
                            else policy.act(obs["policy"]))
                 obs, _, terminated, truncated, _ = env.step(actions)
@@ -285,8 +368,21 @@ def main() -> int:
                                      "roll_err_deg": round(float(roll_err[i]), 2),
                                      "base_pitch_deg": round(float(pitch[i]), 2), "fell": int(bool(ended[i] and env._term_fallen[i]))})
                 done |= ended
+                if hold_steps is not None:
+                    for i in range(count):
+                        if best[i]["seated_step"] is not None and step - best[i]["seated_step"] >= hold_steps:
+                            done[i] = True
                 if bool(done[:count].all()):
                     break
+                if args.realtime:
+                    # Never a backlog: a slow stretch is not made up by running fast afterwards.
+                    deadline = max(deadline + env.step_dt, time.perf_counter())
+                    time.sleep(max(0.0, deadline - time.perf_counter()))
+        trace.writerows(rows_out)
+        trace_file.flush()
+        if closed:
+            # The window closed mid-batch: its attempts did not finish and are left out of the summary.
+            break
         for i in range(count):
             b = best[i]
             row = rows[i]
@@ -294,27 +390,25 @@ def main() -> int:
             attempts.append({"attempt": batch * num_envs + i, "success": seated, **row, **b,
                              "time_to_seat_s": (round((b["seated_step"] - b["engage_step"]) * interface.POLICY_DT, 3)
                                                 if b["seated_step"] is not None and b["engage_step"] is not None else None)})
+            a = attempts[-1]
+            outcome = (f"seated in {a['time_to_seat_s']} s" if a["success"]
+                       else "fell" if a["fell"] else "damaged" if a["damaged"]
+                       else f"not seated, the tip {a['final_depth_mm']} mm past the face"
+                       if a["engage_step"] is not None else "never engaged")
+            print(f"[insertion demo] attempt {a['attempt']}: {outcome}  (running: seated "
+                  f"{sum(x['success'] for x in attempts)}/{len(attempts)})", flush=True)
         remaining -= count
         batch += 1
+        # After every batch, so a loop closed from the window still leaves its finished attempts.
+        summary = summarise(attempts)
+        (out_dir / "summary.json").write_text(json.dumps({"summary": summary, "attempts": attempts}, indent=2))
+        report["summary"] = summary
+        (out_dir / "run.json").write_text(json.dumps(report, indent=2))
 
-    median = lambda values: round(sorted(v for v in values if v is not None)[len([v for v in values if v is not None]) // 2], 3) \
-        if any(v is not None for v in values) else None
-    summary = {"attempts": len(attempts), "successes": sum(a["success"] for a in attempts),
-               "falls": sum(a["fell"] for a in attempts), "damaged": sum(a["damaged"] for a in attempts),
-               "engaged": sum(a["engage_step"] is not None for a in attempts),
-               "searched": sum(a["searched"] for a in attempts),
-               "time_to_seat_s_median": median([a["time_to_seat_s"] for a in attempts]),
-               "peak_force_n_median": median([a["peak_force_n"] for a in attempts]),
-               "peak_lateral_n_median": median([a["peak_lateral_n"] for a in attempts]),
-               "approach_err_deg_median": median([a["approach_err_deg"] for a in attempts]),
-               "roll_err_deg_median": median([a.get("roll_err_deg") for a in attempts]),
-               "final_depth_mm_median": median([a["final_depth_mm"] for a in attempts])}
+    trace_file.close()
+    summary = summarise(attempts)
     (out_dir / "summary.json").write_text(json.dumps({"summary": summary, "attempts": attempts}, indent=2))
-    with open(out_dir / "trace.csv", "w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
-        writer.writeheader()
-        writer.writerows(rows_out)
-    report["status"] = "finished"
+    report["status"] = "closed" if closed else "finished"
     report["summary"] = summary
     (out_dir / "run.json").write_text(json.dumps(report, indent=2))
     print(f"\n[insertion demo] {controller}: seated {summary['successes']}/{summary['attempts']}  "

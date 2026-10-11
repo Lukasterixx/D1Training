@@ -173,9 +173,11 @@ an initially open door starts unlatched, and the lever spring still returns it t
 The wrist carries the cup pick's RealSense, set up the same way (`wrist_camera.py`, and
 `wrist_camera_cfg`/`camera_body_cfg` from `demos/cup/pick_demo/scene.py`): the D435
 preset's colour intrinsics (datasheet-derived, not a calibration) at the saved wrist mount
-(`demos/cup/pick_demo/assets/mounts/wrist_mount.json`, aligned by eye, not measured). It renders
-RGB and ideal depth with the 20 mm near clip, and Intel's D435 case is drawn at the mount
-(visual only). The flags match the pick's: `--camera`, `--calibration FILE`,
+(`demos/cup/pick_demo/assets/mounts/wrist_mount.json`: since 2026-10-09 the bracket's CAD,
+30 deg down from the gripper, `demos/cup/pick_demo/bracket.py`; from CAD, not measured). It renders
+RGB and ideal depth with the 20 mm near clip, and Intel's D435 case is drawn at the mount and the
+bracket on Link6 (visual only). The tag search's stops look 20 deg down because of that pitch
+(`press.SearchParams`). The flags match the pick's: `--camera`, `--calibration FILE`,
 `--mount FILE|none`, `--no_camera_body`. `run.json` `camera` records the model, the mount
 and its provenance, and the model's intrinsics beside the rendered ones (F-070).
 

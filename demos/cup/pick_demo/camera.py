@@ -253,7 +253,9 @@ def realsense_depth(model: CameraModel, depth_true, rng: np.random.Generator | N
 #
 # **A file written by the console's mount editor is an alignment, not a measurement.** It says where an
 # operator judged the camera to sit by matching the CAD against the bracket in a 3D view. `measured`
-# says which kind it is, and nothing here sets it true: only a calibration procedure should.
+# says which kind it is, and nothing here sets it true: only a calibration procedure should. The saved
+# default since 2026-10-09 is neither: `bracket.py` derives it from the bracket's CAD, and its `method`
+# starts "cad" so the loader can say so.
 
 MOUNT_SCHEMA = "d1training.wrist_mount/1"
 
@@ -345,7 +347,13 @@ def load_mount(path) -> MeasuredMount:
     if not np.allclose(rebuilt, pose, atol=1e-6):
         raise ValueError(f"{path}: xyz_m/rpy_deg and pose_link6 disagree; the file was edited in one place only")
     detail = data.get("method") or "unstated"
-    kind = "measured" if data.get("measured") else "aligned by eye, not measured"
+    # Three kinds, none of them silent: a calibration, the bracket's CAD (`bracket.py`), or the console's editor.
+    if data.get("measured"):
+        kind = "measured"
+    elif detail.lower().startswith("cad"):
+        kind = "from CAD, not measured"
+    else:
+        kind = "aligned by eye, not measured"
     return MeasuredMount.from_pose(pose, f"{data.get('source', path)} ({kind}: {detail})")
 
 

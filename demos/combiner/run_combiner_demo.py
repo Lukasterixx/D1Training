@@ -110,10 +110,11 @@ def run(args):
         print(f"[combiner] wrist camera: {metadata['camera']['model_source']}; mount: "
               f"{metadata['camera']['mount_source']}", flush=True)
         camera_usd = wrist_camera.build_body(metadata["camera"]) if args.camera_body else None
+        bracket_usd = wrist_camera.build_bracket(metadata["camera"]) if args.camera_body else None
         cfg = make_combiner_cfg(robot_usd, asset["usd_path"], placement, args.seed, args.device,
                                 door_angle_deg=args.door_angle_deg, handle_angle_deg=args.handle_angle_deg,
                                 capture=args.capture, camera=camera, mount=mount, camera_usd=camera_usd,
-                                handle_torque_nm=torques[0])
+                                handle_torque_nm=torques[0], bracket_usd=bracket_usd)
         dump_yaml(str(run_dir / "env.yaml"), cfg)
         env = ManagerBasedRLEnv(cfg=cfg)
         robot, box = env.scene["robot"], env.scene["combiner"]

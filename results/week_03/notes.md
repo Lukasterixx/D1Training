@@ -411,6 +411,62 @@ deliverables.
 [gates.md](../gates.md), findings [F-123 and F-124](../findings.md). Tests: `python -m unittest discover -s . -p
 "test_*.py"` runs 645 and passes (5 skipped); `tests/test_evidence.py` passes on the system Python.
 
+### 2026-10-01 · Literature check: can the body amplify the D1's force, and is it a paper?
+
+**Why.** Lukas's supervisor asked whether there is published work on the body amplifying a weak arm's force (the
+direction F-071, F-073 and F-077 opened), and whether it could make a publication. No run; a literature search.
+
+**Method.** Web and arXiv searches on four angles (whole-body force exertion, force-capability theory, weak arms
+and ways around them, novelty and venues), then a full-text read of the closest papers. About 40 papers. Notes in
+`research_notes/Body force amplification for weak arms/`, the report in
+[`reports/`](../../reports/Body%20force%20amplification%20for%20weak%20arms.md), and a shareable summary doc,
+"Body force amplification for weak arms", on claude.ai.
+
+**What it shows.**
+- **The general claim is taken.** Measured body-on vs body-off gains are ~1.3× (RoLoMa, ANYmal + Kinova, force
+  gauge ~45 → 60 N) and 1.4–1.6× (Thor, G1 humanoid). Portela et al. (ICRA 2024) pulled 90 N with a Z1 rated at
+  36 N, but against a payload rating, not an arm-only pull. F-077's best-stance ~1.3× lands in the same range.
+- **What no paper read does.** Name the arm's joint torque as the binding limit; explain the posture cap as a load
+  path in series with the arm; compare arm-only, posture and arm-bypassing paths on one quadruped task; report
+  lever or door torque in N·m; use an arm as weak as the D1. The published gains are credited to balance.
+- **Closest scoop risks, all September 2026 preprints.** CTCS (arXiv 2609.30140: Go2 + NERO arm + a body brace
+  frame, contact chosen by residual wrench; its brace is in parallel with the legs, not the arm), "Brace Yourself"
+  (arXiv 2609.25486, G1; its 13.5 N "unbraced" baseline is a different controller and stance) and FORTE (arXiv
+  2609.21497, force polytope from arm torques only, wheeled base).
+- **Venues.** ICRA 2027 has passed (16 Sep). RSS 2027's two-stage format fits: Stage 1 abstract 4 Dec 2026
+  (simulation allowed), Stage 2 16 Apr 2027. IROS and CASE 2027 are 1 Mar 2027; CoRL 2026 workshops ~9 Oct 2026.
+
+**Does not show.** Novelty is "not found in these searches", not proven absent; Wolfslag et al. (IROS 2020,
+body–ground prongs) and Natarajan et al. (ICRA 2023, bracing a torque-limited arm) were not read in full. Venue
+dates marked estimated in the report are from earlier years. Nothing here changes a finding or a doc. It does say
+the thesis plan's pre-attached lever tool only adds force if it couples to the handle so the spindle takes the
+moment; held in the gripper, it moves the limit to the 1.7 N·m wrist.
+
+### 2026-10-02 · Weekly update 3, and two figures for it
+
+**What.** `Weekly_Update_Lukas_3_20261002.docx`, the weekly supervisor update (kept outside the repo), was filled in from
+this week's log: the rail mount and measured base (F-125, F-126), the literature check, and the bench driver
+containers (VIP-Rescue `309716d`: the D1 and D435i driver images built for a PC, checked without the hardware).
+Week 2's three planned tasks were marked as follows. Force investigation: done, as the literature check. Pose
+measurement: done for the arm, not yet for the camera. The force-aware policy with commandable end-effector roll:
+**not done**, because no run for it exists in this repo this week. (2026-10-09: merging `mechanism-demo` brought in
+Week 2's roll run, [F-100](../findings.md): 11,000 of 60,000 iterations on the old geometry, which the update
+did not mention. "Not done" still holds for Week 3; the next-week item is a retrain, not a first attempt.)
+
+**Figures** (`python3 results/week_03/figures/weekly_update_figures.py`, CPU, system Python):
+- [force_gain_literature.png](figures/force_gain_literature.png): force with the body helping divided by force
+  without. RoLoMa 1.33× (gauge, 45 → 60 N), Thor 1.40× forward and 1.60× backward (G1, 20 trials each), and F-077's
+  best static crouch against F-071's simulated lying push, 1.31× (1.51 / 1.15 N·m). Two headline numbers are drawn
+  hollow as not like-for-like: Portela's 90 N pull against the Z1's 36 N payload rating (2.50×) and Brace Yourself's
+  60 N against a different unbraced controller's 13.5 N (4.44×). Every value is from the report's table.
+- [d1_base_model_vs_measured.png](figures/d1_base_model_vs_measured.png): side silhouettes of `base_link.STL` and
+  `base_link_measured.STL`. Joint1 is at 53.3 and 76.0 mm and the shoulder at 109.6 and 132.3 mm (+22.7). The
+  cylinder is 105 and 126 mm.
+
+**Does not show.** The gain chart mixes N ratios with an N·m ratio, and the "mine" point compares a static model
+with a simulation; neither is measured on the robot. Both base silhouettes are meshes. The measured one is
+Unitree's, scaled to four hand dimensions (F-126), not a scan of the real base.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
@@ -443,8 +499,24 @@ deliverables.
 - Every checkpoint trained before 2026-09-30 carried the arm at (0, 0, 0.08) on Unitree's smaller base: its shoulder
   was (+19.0, 0, -28.2) mm from where the real one is. Evaluating one now runs it on a
   different robot; `run.json`'s `arm_mount_m` tells the two apart from here on.
+- The D1's joint torques (3.3 / 1.7 N·m, from the D1-550 README) are on no current Unitree page, and a 2025 Caltech
+  student report says Unitree had stopped selling the D1 by March 2025 and its unit's servos ran hot and failed.
+  Any force-amplification claim rests on a bench measurement of the stall torques (2026-10-01 literature check).
 
 ## Next week
+
+As proposed in Weekly Update 3:
+
+- Bench-measure the D1's joint stall torques and the combiner handle's torque. Every force number so far rests on
+  the D1-550 README's unverified 3.3 / 1.7 N·m.
+- Train the force-aware policy with commandable end-effector roll on the F-126 geometry (carried over from Week 2's
+  plan).
+- Measure the wrist camera's extrinsics and start running camera-derived targets through the IK reference on the
+  bench arm.
+- Choose between a CoRL 2026 workshop paper (~9 Oct, date unconfirmed) and an RSS 2027 Stage 1 abstract (4 Dec) for
+  the series-versus-parallel force-path analysis.
+
+From the 2026-09-29 contact tasks (merged from `mechanism-demo` after the update was sent):
 
 - Pressing: a real training run at the pinned rate with the curriculum fixed to promote on time held, evaluated every
   200 iterations on all three frozen sets; a second seed; then a PhysX check of the button, as `demos/insertion` is

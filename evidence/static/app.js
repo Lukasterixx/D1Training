@@ -21,6 +21,10 @@
   let overview = null;
   let stamp = null;
   const openRuns = new Set();
+  // The gallery's filter, kept per browser; storage can be missing or refuse, so it only ever falls back to "all".
+  const SOURCES = { screenshot: "Lukas's screenshot", figure: "Claude's figure" };
+  let shotFilter = "all";
+  try { shotFilter = localStorage.getItem("shotFilter") || "all"; } catch (error) { /* keep "all" */ }
 
   // Helpers ------------------------------------------------------------------
   function h(tag, props, ...children) {
@@ -128,13 +132,56 @@
   lightbox.addEventListener("click", (e) => { if (e.target === lightbox || e.target.closest(".lightbox-close")) closeLightbox(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !lightbox.hidden) closeLightbox(); });
 
+  // Clipboards take images as PNG only, so a JPEG is redrawn as one first.
+  async function asPng(blob) {
+    if (blob.type === "image/png") return blob;
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0);
+    return new Promise((resolve, reject) =>
+      canvas.toBlob((png) => (png ? resolve(png) : reject(new Error("could not encode a PNG"))), "image/png"));
+  }
+
+  function flash(button, text, detail) {
+    clearTimeout(button._flash);
+    button.textContent = text;
+    button.title = detail || "";
+    button._flash = setTimeout(() => { button.textContent = "Copy"; button.title = ""; }, 1800);
+  }
+
+  async function copyMedia(item, button) {
+    const link = new URL(item.url, location.href).href;
+    try {
+      if (item.kind !== "image" || !navigator.clipboard || !window.ClipboardItem) throw new Error("this browser cannot copy images");
+      // The blob is handed over as a promise so the write stays inside the click, as Safari requires.
+      const png = fetch(item.url).then((r) => { if (!r.ok) throw new Error(r.statusText); return r.blob(); }).then(asPng);
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
+      flash(button, "Copied");
+    } catch (error) {
+      try {
+        await navigator.clipboard.writeText(link);
+        flash(button, "Link copied", `The image itself could not be copied (${error.message || error}); its address was.`);
+      } catch (inner) {
+        flash(button, "Copy failed", String(inner.message || inner));
+      }
+    }
+  }
+
   function gallery(items, emptyMessage) {
     if (!items.length) return h("div", { class: "empty" }, ...emptyMessage);
     return h("div", { class: "gallery" }, items.map((item) => h("figure", { class: "card shot" },
-      h("button", { type: "button", "aria-label": `Open ${item.caption}`, onclick: () => openLightbox(item) },
+      h("button", { type: "button", class: "shot-open", "aria-label": `Open ${item.caption}`, onclick: () => openLightbox(item) },
         item.kind === "video" ? h("video", { src: item.url, muted: true, preload: "metadata" })
           : h("img", { src: item.url, alt: item.caption, loading: "lazy" })),
-      h("figcaption", { title: item.path, text: item.caption }))));
+      h("figcaption", { title: item.path }, item.caption,
+        item.source ? h("span", { class: `shot-source ${item.source}`, text: SOURCES[item.source] || item.source }) : null),
+      h("div", { class: "shot-actions" },
+        h("a", { class: "shot-action", href: item.url, download: item.name, title: `Download ${item.name}`, text: "Download" }),
+        h("button", { type: "button", class: "shot-action", title: item.kind === "image" ? "Copy the image to the clipboard" : "Copy its address",
+          onclick: (event) => copyMedia(item, event.currentTarget), text: "Copy" }),
+        h("span", { class: "shot-name", title: item.path, text: item.name })))));
   }
 
   // Charts --------------------------------------------------------------------
@@ -167,9 +214,11 @@
     const link = (href, label, sub, dot) => h("a", { href, class: active(href) ? "active" : "" },
       dot || null, label, sub ? h("span", { class: "nav-sub", text: sub }) : null);
     const findings = overview.findings.length;
+    const shots = overview.weeks.reduce((sum, w) => sum + w.screenshots + w.figures, 0);
     document.getElementById("nav-main").replaceChildren(
       link("#/", "Overview"),
       link("#/findings", "Findings", findings ? String(findings) : ""),
+      link("#/screenshots", "Screenshots", shots ? String(shots) : ""),
       link("#/live", "Live runs"));
     document.getElementById("nav-weeks").replaceChildren(...overview.weeks.map((w) => {
       const tone = (STATUS[w.status] || ["neutral"])[0];
@@ -188,7 +237,7 @@
     const shots = d.weeks.reduce((sum, w) => sum + w.screenshots, 0);
     const byStatus = (s) => d.findings.filter((f) => f.status.startsWith(s)).length;
     const gatesPassed = d.gates.filter((g) => g.status === "passed").length;
-    const tile = (label, value, note) => h("div", { class: "card tile" },
+    const tile = (label, value, note, href) => h(href ? "a" : "div", { class: "card tile", href },
       h("div", { class: "tile-label", text: label }), h("div", { class: "tile-value", text: String(value) }),
       note ? h("div", { class: "tile-note", text: note }) : null);
 
@@ -204,7 +253,7 @@
         tile("Runs recorded", runs, "copied into results/"),
         tile("Findings", d.findings.length, `${byStatus("confirmed")} confirmed · ${byStatus("provisional")} provisional`),
         tile("Gates passed", `${gatesPassed} of ${d.gates.length}`),
-        tile("Screenshots", shots)),
+        tile("Screenshots", shots, "all in one gallery", "#/screenshots")),
       section("gates", "Decision gates", undefined, prose(d.gates_html)),
       section("findings", "Findings", d.findings.length,
         d.findings.length ? h("div", { class: "card table-wrap" }, h("table", {},
@@ -332,6 +381,38 @@
       h("div", { class: "pager" }, nav(n - 1, `← Week ${n - 1}`), nav(n + 1, `Week ${n + 1} →`)));
   }
 
+  async function screenshotsView() {
+    const data = await api("/api/screenshots");
+    const all = data.weeks.flatMap((w) => w.items);
+    const count = (source) => all.filter((item) => source === "all" || item.source === source).length;
+    if (!["all", ...Object.keys(SOURCES)].includes(shotFilter)) shotFilter = "all";
+    const weeks = data.weeks.map((w) => ({ ...w, items: w.items.filter((item) => shotFilter === "all" || item.source === shotFilter) }))
+      .filter((w) => w.items.length);
+    const choose = (value) => {
+      shotFilter = value;
+      try { localStorage.setItem("shotFilter", value); } catch (error) { /* per-visit only */ }
+      route(true);
+    };
+    const filters = [["all", "All"], ["screenshot", "Lukas's screenshots"], ["figure", "Claude's figures and renders"]];
+    return h("div", {},
+      h("p", { class: "eyebrow", text: "results/week_NN/screenshots/ and figures/" }),
+      h("h1", { class: "page-title", text: "Screenshots" }),
+      h("p", { class: "page-sub", text: all.length
+        ? "Newest week first. Click one to see it full size; Download saves the file, Copy puts the image on the clipboard."
+        : "None yet." }),
+      all.length ? h("div", { class: "filter-row", role: "group", "aria-label": "Show" }, filters.map(([value, label]) =>
+        h("button", { type: "button", class: `filter${shotFilter === value ? " on" : ""}`, "aria-pressed": String(shotFilter === value),
+          onclick: () => choose(value) }, label, h("span", { class: "count", text: String(count(value)) })))) : null,
+      weeks.length ? h("nav", { class: "jump", "aria-label": "Weeks" },
+        weeks.map((w) => h("a", { href: `#shots-week-${w.n}`, text: `Week ${w.n} · ${w.items.length}` }))) : null,
+      weeks.length
+        ? weeks.map((w) => section(`shots-week-${w.n}`,
+          h("a", { href: `#/week/${w.n}`, text: `Week ${w.n}` }), undefined,
+          h("p", { class: "hint", text: w.dates }), gallery(w.items, [])))
+        : h("div", { class: "empty" }, "Nothing here yet. Screenshots go in ", h("code", { text: "results/week_NN/screenshots/" }),
+          ", generated figures and renders in ", h("code", { text: "results/week_NN/figures/" }), "."));
+  }
+
   async function findingsView(anchor) {
     const data = await api("/api/findings");
     return { node: h("div", {}, h("p", { class: "eyebrow", text: "results/findings.md" }), prose(data.html)), anchor };
@@ -387,6 +468,7 @@
       }
       else if ((match = hash.match(/^#\/findings(?:\/(.+))?$/))) result = await findingsView(match[1]);
       else if ((match = hash.match(/^#\/doc\/(.+)$/))) result = await docView(decodeURIComponent(match[1]));
+      else if (hash === "#/screenshots") result = await screenshotsView();
       else if (hash === "#/live") result = await liveView();
       else if ((match = hash.match(/^#\/live\/(.+)$/))) result = await liveRunView(decodeURIComponent(match[1]));
       else result = overviewView();

@@ -15,11 +15,17 @@ law, the policy's observation -- with three differences:
 The training's analytic `Slot` is still stepped, on the true geometry, but only for its bookkeeping -- the tip's depth
 past the true face, and whether it is seated -- never for a force. Depth is a fact of the geometry, and the key can
 only be that deep through the channel.
+
+Drawn, and taking no part in the physics: the key in the hand (`asset.build_key_usd`, on the blade's link); for
+watching, the door the lock is in (`asset.build_scenery_usd`, placed upright at the true slot each attempt) and a floor
+(`asset.build_floor_usd`); and the wrist RealSense and its bracket on Link6 (`demos/cup/pick_demo`'s assets, at the
+saved mount). They add no mass: the policy was trained, and is run here, without the camera's weight.
 """
 from __future__ import annotations
 
 import torch
 
+import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObject, RigidObjectCfg
 from isaaclab.utils import configclass
 
@@ -29,6 +35,7 @@ from unifp_train.env import Go2D1PosForceEnv
 from unifp_train.insert_env import Go2D1InsertEnv, Go2D1InsertEnvCfg
 
 from .geometry import frame_quat
+from .key import key_link
 
 
 @configclass
@@ -38,6 +45,16 @@ class InsertionDemoEnvCfg(Go2D1InsertEnvCfg):
     door: RigidObjectCfg | None = None
     #: The blade on its own sprung link (`key.write_key_urdf(compliant=True)`) rather than rigid on Link6.
     compliant_key: bool = False
+    #: Drawn only, each None to leave it out: the key (`asset.build_key_usd`, for the same `compliant_key`); the door
+    #: around the lock (`asset.build_scenery_usd`) and the floor (`asset.build_floor_usd`); the RealSense's case
+    #: (`camera_asset.build_camera_usd`) at `camera_body_pose`, ((x, y, z), (w, x, y, z)) in Link6; its bracket
+    #: (`camera_asset.build_bracket_usd`), authored in Link6.
+    key_usd: str | None = None
+    scenery_usd: str | None = None
+    floor_usd: str | None = None
+    camera_body_usd: str | None = None
+    camera_body_pose: tuple | None = None
+    bracket_usd: str | None = None
 
 
 class InsertionDemoEnv(Go2D1InsertEnv):
@@ -52,11 +69,32 @@ class InsertionDemoEnv(Go2D1InsertEnv):
         self._est_mouth = torch.zeros(n, 3, device=device)
         self._est_axis = torch.zeros(n, 3, device=device)
         self._key_force_w = torch.zeros(n, 3, device=device)
+        self._scenery = None
+        if cfg.scenery_usd:
+            from isaaclab.sim.views import XformPrimView
+
+            self._scenery = XformPrimView("/World/envs/env_.*/Scenery", device=str(device), sync_usd_on_fabric_write=True)
 
     def _setup_scene(self):
         super()._setup_scene()
         self._door = RigidObject(self.cfg.door)
         self.scene.rigid_objects["door"] = self._door
+        # The visual-only pieces, spawned into every environment (the spawner clones over the regex).
+        for name, usd in (("Scenery", self.cfg.scenery_usd), ("Floor", self.cfg.floor_usd)):
+            if usd:
+                spawn = sim_utils.UsdFileCfg(usd_path=usd)
+                spawn.func(f"/World/envs/env_.*/{name}", spawn)
+        if self.cfg.key_usd:
+            spawn = sim_utils.UsdFileCfg(usd_path=self.cfg.key_usd)
+            spawn.func(f"{self.cfg.robot.prim_path}/D1/{key_link(self.cfg.compliant_key)[0]}/KeyVisual", spawn)
+        link6 = f"{self.cfg.robot.prim_path}/D1/Link6"
+        if self.cfg.camera_body_usd:
+            pos, rot = self.cfg.camera_body_pose
+            spawn = sim_utils.UsdFileCfg(usd_path=self.cfg.camera_body_usd)
+            spawn.func(f"{link6}/rs_body", spawn, translation=tuple(pos), orientation=tuple(rot))
+        if self.cfg.bracket_usd:
+            spawn = sim_utils.UsdFileCfg(usd_path=self.cfg.bracket_usd)
+            spawn.func(f"{link6}/rs_bracket", spawn)
 
     # --- the key's contact is PhysX's --------------------------------------------------------------------------
 
@@ -114,3 +152,11 @@ class InsertionDemoEnv(Go2D1InsertEnv):
         pose = torch.cat((true_mouth + self.scene.env_origins[env_ids], frame_quat(true_axis, true_u, true_w)), dim=-1)
         self._door.write_root_pose_to_sim(pose, env_ids=env_ids)
         self._door.write_root_velocity_to_sim(torch.zeros(len(env_ids), 6, device=self.device), env_ids=env_ids)
+        if self._scenery is not None:
+            # The door at the same mouth and axis, but upright: its z is the world's up, square to the axis.
+            up = torch.zeros_like(true_axis)
+            up[:, 2] = 1.0
+            z = insertion.unit(up - (up * true_axis).sum(-1, keepdim=True) * true_axis)
+            y = torch.cross(z, true_axis, dim=-1)
+            self._scenery.set_world_poses(true_mouth + self.scene.env_origins[env_ids], frame_quat(true_axis, y, z),
+                                          indices=env_ids.tolist())

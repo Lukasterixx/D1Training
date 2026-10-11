@@ -1,0 +1,125 @@
+{
+  "mode": "insertion_demo",
+  "status": "finished",
+  "seed": 1,
+  "controller": "unifp_go2d1_insertion_seed3_measured_model_21400.pt",
+  "checkpoint": "/home/lukas/D1Training/checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt",
+  "checkpoint_iteration": 21400,
+  "arguments": {
+    "checkpoint": "checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt",
+    "zero_actions": false,
+    "attempts": 2,
+    "num_envs": 1,
+    "seed": 1,
+    "lateral_mm": 2.0,
+    "tilt_deg": 1.5,
+    "roll_error_deg": 3.0,
+    "height_m": [
+      0.7,
+      0.86
+    ],
+    "side_m": [
+      -0.04,
+      0.04
+    ],
+    "ahead_m": 0.52,
+    "blade": "random",
+    "elevation_deg": 0.0,
+    "speed_m_s": 0.02,
+    "search_n": 6.0,
+    "max_n": 30.0,
+    "episode_s": 16.0,
+    "tip_correction": null,
+    "roll_max_deg": null,
+    "elevation_max_deg": null,
+    "compliant_key": true,
+    "attitude_correction": null,
+    "loop": false,
+    "hold_s": 1.5,
+    "realtime": false,
+    "scenery": true,
+    "camera_body": true,
+    "run_name": "render_check2",
+    "output": "/home/lukas/D1Training/logs/insertion_demo",
+    "enable_cameras": true,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "geometry": {
+    "key_half_u": 0.005,
+    "key_half_w": 0.0015,
+    "key_length": 0.07,
+    "clearance": 0.001,
+    "chamfer": 0.002,
+    "depth": 0.018,
+    "friction": 0.3
+  },
+  "num_envs": 1,
+  "attempts": 2,
+  "robot_usd": "/home/lukas/D1Training/generated/insertion/go2_d1_key_compliant.usd",
+  "slot_usd": "/home/lukas/D1Training/generated/insertion/slot_door.usd",
+  "drawn_only": {
+    "key_usd": "/home/lukas/D1Training/generated/insertion/key_compliant.usd",
+    "scenery_usd": "/home/lukas/D1Training/generated/insertion/scenery.usd",
+    "floor_usd": "/home/lukas/D1Training/generated/insertion/floor.usd",
+    "camera_body": {
+      "mount_source": "wrist_mount.json (the saved default): the bracket's CAD (bracket.py) (from CAD, not measured: cad: Lukas's bracket (Fusion 360, 2026-10-09) on Unitree's D1-550 CAD. Link6 from the wrist flange's roll axis, the jaw axis and a fit of d1.urdf's Link6 mesh; the camera as Intel's D435 case with its back on the bracket's plate and its M3 holes on the plate's (demos/cup/pick_demo/bracket.py))",
+      "mount_file": "/home/lukas/D1Training/demos/cup/pick_demo/assets/mounts/wrist_mount.json",
+      "pos_link6_m": [
+        -0.049049512,
+        0.032814543,
+        0.061331667
+      ],
+      "quat_wxyz": [
+        0.6830127018975048,
+        -0.1830127018724941,
+        0.1830127018724941,
+        -0.6830127018975047
+      ],
+      "body_usd": "/home/lukas/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "bracket_usd": "/home/lukas/D1Training/generated/pick_demo/wrist_bracket_2020061f6a14.usd"
+    }
+  },
+  "outer_loops": {
+    "tip_gain": 1.5,
+    "elevation_gain": 1.5,
+    "roll_gain": 1.5,
+    "tip_max_m": 0.05,
+    "elevation_max_rad": 0.5235987755982988,
+    "roll_max_rad": 0.6981317007977318
+  },
+  "compliant_key": {
+    "stiffness_nm_per_rad": 2.0,
+    "damping_nms_per_rad": 0.02,
+    "max_rad": 0.17453292519943295
+  },
+  "command": "run_demo.py --checkpoint checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt --compliant_key --num_envs 1 --attempts 2 --lateral_mm 2 --hold_s 1.5 --headless --enable_cameras --scenery --camera_body --run_name render_check2",
+  "out_dir": "/home/lukas/D1Training/logs/insertion_demo/20261009T085344_insertion_policy_seed1_render_check2",
+  "summary": {
+    "attempts": 2,
+    "successes": 1,
+    "falls": 0,
+    "damaged": 0,
+    "engaged": 2,
+    "searched": 2,
+    "time_to_seat_s_median": 1.46,
+    "peak_force_n_median": 13.029,
+    "peak_lateral_n_median": 2.666,
+    "approach_err_deg_median": 8.09,
+    "roll_err_deg_median": 0.71,
+    "final_depth_mm_median": 17.86
+  }
+}

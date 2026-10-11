@@ -60,6 +60,28 @@ class KeyTest(unittest.TestCase):
             z = float(box.find("origin").get("xyz").split()[2])
             length = float(box.find("geometry/box").get("size").split()[2])
             self.assertAlmostEqual(z + length / 2, insertion.KEY_LENGTH_M, places=6)
+            # The URDF draws no key: the env hangs `asset.build_key_usd` on the blade's link, so it tilts as one piece.
+            self.assertEqual(root.find("link[@name='key']").findall("visual"), [])
+            self.assertEqual(key.key_link(True), ("key", -geometry.JAW_CENTRE_Z_M))
+            self.assertEqual(key.key_link(False), ("Link6", 0.0))
+
+    def test_the_drawn_key_is_a_closed_mesh_inside_the_collider_past_the_fingers(self):
+        tris = key.key_mesh()
+        (_, _, cz), (sx, sy, sz) = key.blade_box()
+        for x, y, z in (p for tri in tris for p in tri):
+            if z > geometry.KEY_ROOT_Z_M + 1e-9:
+                self.assertLessEqual(abs(x), sx / 2 + 1e-9)
+                self.assertLessEqual(abs(y), sy / 2 + 1e-9)
+                self.assertLessEqual(z, cz + sz / 2 + 1e-9)
+        # Outward-facing and closed: the signed volume is the ring's plus the extruded profile's.
+        volume = sum(a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0])
+                     + a[2] * (b[0] * c[1] - b[1] * c[0]) for a, b, c in tris) / 6
+        thickness = 2 * geometry.GEOMETRY.key_half_w
+        ring = math.pi * (key.BOW_OUTER_R_M ** 2 - key.BOW_INNER_R_M ** 2) * thickness
+        top = key._top_edge()
+        strip = sum((z1 - z0) * ((y0 + y1) / 2 + geometry.GEOMETRY.key_half_u)
+                    for (z0, y0), (z1, y1) in zip(top, top[1:])) * thickness
+        self.assertAlmostEqual(volume, ring + strip, delta=0.02 * (ring + strip))
 
 
 class SlotTest(unittest.TestCase):
@@ -101,6 +123,29 @@ class SlotTest(unittest.TestCase):
             names = {p.GetName() for p in colliders}
             self.assertEqual(len(colliders), 5 + 4 + 4 + 4)
             self.assertTrue({"Seat", "ChamferTop", "WallLeft", "FaceRight", "PanelBottom"} <= names)
+
+    def test_the_scenery_floor_and_key_are_visual_only(self):
+        try:
+            from pxr import Usd, UsdPhysics
+        except ImportError:
+            self.skipTest("needs pxr (the Isaac environment)")
+        from demos.insertion import asset
+        with tempfile.TemporaryDirectory() as tmp:
+            stage = Usd.Stage.Open(str(asset.build_scenery_usd(Path(tmp) / "scenery.usd")))
+            stages = [stage, Usd.Stage.Open(str(asset.build_floor_usd(Path(tmp) / "floor.usd", wall_m=0.52))),
+                      Usd.Stage.Open(str(asset.build_key_usd(Path(tmp) / "key.usd", compliant=True)))]
+            for prim in (p for st in stages for p in st.Traverse()):
+                for api in (UsdPhysics.CollisionAPI, UsdPhysics.RigidBodyAPI, UsdPhysics.MassAPI):
+                    self.assertFalse(prim.HasAPI(api), prim.GetPath())
+
+    def test_the_escutcheon_frames_the_keyway_and_hides_the_doors_hole(self):
+        from demos.insertion import asset
+        # The escutcheon's opening takes the whole mouth, chamfer and all, across any roll; the door's square hole is
+        # inside the escutcheon's rim, so no edge of it shows.
+        g = geometry.GEOMETRY
+        self.assertGreater(asset.ESCUTCHEON_INNER_R_M, math.hypot(g.half_u + g.chamfer, g.half_w + g.chamfer) + 0.004)
+        self.assertLess(asset.ESCUTCHEON_INNER_R_M, 0.95 * asset.ESCUTCHEON_OUTER_R_M / math.sqrt(2))
+        self.assertLess(asset.ESCUTCHEON_OUTER_R_M, g.half_u + g.margin)       # the lock's face fills the opening
 
 
 if __name__ == "__main__":

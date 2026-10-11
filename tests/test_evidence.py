@@ -257,6 +257,42 @@ class ServerTests(RecordFixture):
         self.assertEqual(self.get("/files/results/week_01/screenshots/01_arm_pose.png"), (200, b"\x89PNG"))
         self.assertEqual(self.get("/")[0], 200)
 
+    def test_a_nan_anywhere_still_serves_strict_json(self):
+        """A logged NaN (an empty batch's fraction) once broke whole week pages: `NaN` is not JSON."""
+        dest = record.record_run(self.run, title="Pilot", root=self.root)
+        data = json.loads((dest / "record.json").read_text())
+        data["scalar_summary"]["Train/mean_reward"]["last"] = float("nan")
+        (dest / "record.json").write_text(json.dumps(data))
+        (dest / "scalars.csv").write_text("step,wall_time,Train/mean_reward,Mechanism/fraction\n"
+                                          "0,1.0,0.5,nan\n1,2.0,nan,nan\n2,3.0,1.5,0.25\n")
+
+        def strict(body):
+            return json.loads(body, parse_constant=lambda name: self.fail(f"{name} in the response"))
+
+        status, body = self.get("/api/week/1")
+        self.assertEqual(status, 200)
+        run = strict(body)["run_list"][0]
+        self.assertIsNone(run["scalar_summary"]["Train/mean_reward"]["last"])
+        status, body = self.get(f"/api/scalars?week=1&run={self.run.name}")
+        self.assertEqual(strict(body)["tags"], {"Train/mean_reward": [[0, 0.5], [2, 1.5]],
+                                                "Mechanism/fraction": [[2, 0.25]]})
+
+    def test_screenshots_and_figures_are_gathered_by_week(self):
+        (self.root / "results/week_03/screenshots").mkdir(parents=True)
+        (self.root / "results/week_03/screenshots/01_bracket.jpg").write_bytes(b"\xff\xd8")
+        (self.root / "results/week_01/figures").mkdir(parents=True)
+        (self.root / "results/week_01/figures/wrist_render.png").write_bytes(b"\x89PNG")
+        status, body = self.get("/api/screenshots")
+        self.assertEqual(status, 200)
+        weeks = json.loads(body)["weeks"]
+        self.assertEqual([w["n"] for w in weeks], [3, 1])     # newest first; weeks without any left out
+        self.assertEqual([i["caption"] for i in weeks[0]["items"]], ["bracket"])
+        # Lukas's screenshots first, then Claude's figures, each saying which it is.
+        self.assertEqual([(i["source"], i["url"]) for i in weeks[1]["items"]],
+                         [("screenshot", "/files/results/week_01/screenshots/01_arm_pose.png"),
+                          ("figure", "/files/results/week_01/figures/wrist_render.png")])
+        self.assertEqual(store.json_safe({"a": float("inf"), "b": (1.0, float("nan"))}), {"a": None, "b": [1.0, None]})
+
     def test_rejects_traversal_foreign_hosts_and_unlisted_log_paths(self):
         self.assertEqual(self.get("/files/../etc/passwd")[0], 404)
         self.assertEqual(self.get("/files/%2e%2e/etc/passwd")[0], 404)

@@ -14,6 +14,7 @@ from __future__ import annotations
 import csv
 from datetime import date, datetime, timedelta
 import json
+import math
 from pathlib import Path
 import re
 import time
@@ -141,16 +142,30 @@ def scalars_from_csv(path: Path) -> dict[str, list[list[float]]]:
         for row in reader:
             step = int(float(row[0]))
             for name, value in zip(names, row[2:]):
-                if value != "":
-                    tags.setdefault(name, []).append([step, float(value)])
+                # A logged NaN (a fraction over an empty batch) is a gap, not a point: it cannot be drawn, and
+                # `NaN` is not JSON, so one would break the whole page that loads the run.
+                if value != "" and math.isfinite(number := float(value)):
+                    tags.setdefault(name, []).append([step, number])
     return tags
 
 
 def scalars_from_events(run_dir: Path) -> dict[str, list[list[float]]]:
     return {
-        tag: [[step, value] for step, _, value in points]
+        tag: [[step, value] for step, _, value in points if math.isfinite(value)]
         for tag, points in tfevents.read_scalars(run_dir).items() if not tag.endswith("/time")
     }
+
+
+def json_safe(value):
+    """`value` with every NaN and infinity replaced by None. Records keep what a run logged, NaN included, and
+    Python writes it out as `NaN`, which a browser's JSON parser rejects; null is what JSON has for "no number"."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    return value
 
 
 def run_entry(root: Path, folder: Path) -> dict:
@@ -202,6 +217,20 @@ def week_detail(root: Path, cfg: dict, n: int, today: date) -> dict:
         "figure_list": media(root, [folder / "figures"]),
         "screenshot_list": media(root, [folder / "screenshots", folder]),
     }
+
+
+def screenshots(root: Path, cfg: dict) -> list[dict]:
+    """Every week's images for the gallery, newest week first: Lukas's screenshots (`screenshots/`, and loose images
+    in the week folder), then Claude's figures and renders (`figures/`), each tagged with its `source`. Weeks with
+    neither are left out."""
+    weeks = []
+    for n in range(cfg["weeks"], 0, -1):
+        folder = week_dir(root, n)
+        items = ([{**item, "source": "screenshot"} for item in media(root, [folder / "screenshots", folder])]
+                 + [{**item, "source": "figure"} for item in media(root, [folder / "figures"])])
+        if items:
+            weeks.append({"n": n, "dates": format_range(*week_range(cfg, n)), "items": items})
+    return weeks
 
 
 def parse_findings(text: str) -> list[dict]:

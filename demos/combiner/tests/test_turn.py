@@ -197,7 +197,10 @@ class PressPlanTests(unittest.TestCase):
             self.assertLessEqual(travel(turned), travel(upright) + 1e-9)
             saved.append(travel(upright) - travel(turned))
         self.assertGreaterEqual(len(saved), 4)
-        self.assertGreater(max(saved), 0.5, saved)
+        # With the camera pointing along the gripper (the mount aligned by eye) turning saved over 0.5 rad here. With
+        # the bracket's camera, 30 deg down from the approach axis, it saves at most 0.18 rad over these placements
+        # (Week 4, 2026-10-09): still a saving, a smaller one.
+        self.assertGreater(max(saved), 0.1, saved)
 
     @staticmethod
     def _tag_in_view(q, box, margin=20):

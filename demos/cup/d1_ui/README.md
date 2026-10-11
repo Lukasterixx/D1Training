@@ -78,8 +78,9 @@ plans a top-down grasp, and the arm is driven through it. What it is not:
   the endpoints assumed. Nobody has measured what a unit is in *millimetres of jaw gap*, and nobody has
   yet watched which end is open, so a run records the units it asked for and claims no width.
   `--pick-no-gripper` goes back to reach-descend-lift with the jaw untouched.
-- **Not calibrated.** The wrist mount is assumed until the bracket is measured, so the cup's position
-  carries whatever error the mount does. The page says so under the button.
+- **Not calibrated.** The wrist mount comes from the bracket's CAD (2026-10-09), not a measurement of the
+  camera on the arm, so the cup's position carries whatever error the printed bracket does. The page says
+  so under the button.
 - **Not accurate in any measured sense.** There is no ground truth on a bench, so a run reports what it
   did and saw, never how close it got.
 
@@ -123,8 +124,10 @@ without depth cannot place a cup. Those say so in the panel.
 
 ## The wrist mount editor
 
-Where the camera sits on the wrist is a guess until someone measures the bracket, and that guess is
-what turns a pixel into a point in the base frame. The **Wrist mount** panel moves it.
+Where the camera sits on the wrist is what turns a pixel into a point in the base frame. Since
+2026-10-09 the saved default comes from the bracket's own CAD (`pick_demo/bracket.py`), not from this
+editor; the **Wrist mount** panel still moves it, for trying another pose. The 3D view draws the camera
+case, not the bracket.
 
 The RealSense's CAD (Intel's own D435 case, `third_party/realsense2_description`) hangs off the Link6
 node in the 3D view, so it follows the arm as the real camera does. The small axes at its origin are the
@@ -150,7 +153,8 @@ the console started with. A mount cannot move while a pick is running.
 
 `demos/cup/pick_demo/assets/mounts/wrist_mount.json` is **the default everywhere**: save under that name and the
 console, the pick and the body renders all load it on the next launch with nothing to pass, so the 3D
-scene, the perception and the simulator agree. Any other name is kept but has to be named explicitly.
+scene, the perception and the simulator agree. **Saving under that name replaces the bracket's CAD mount**
+with an alignment by eye; `python -m demos.cup.pick_demo.bracket ... --write` puts it back from the CAD export. Any other name is kept but has to be named explicitly.
 Every launch prints which mount it resolved, and `--pick-mount none` forces the four-number placeholder
 back for a run that means to use it.
 
@@ -165,8 +169,8 @@ python demos/cup/run_camera_body_view.py --mount demos/cup/pick_demo/assets/moun
 **What it is not.** Dragging a model until it looks right is an *alignment*, not a calibration. The
 file records `"measured": false` and says in `method` exactly how it was arrived at, and
 `pick_demo.camera.load_mount` carries that into the mount's own `source` string, so a run log that
-cites it says "aligned by eye, not measured". A real extrinsic needs a hand-eye procedure against a
-target; nothing here sets `measured` true. Treat the saved numbers as the bracket you *intended*,
+cites it says "aligned by eye, not measured" (or "from CAD, not measured" for the bracket's). A real
+extrinsic needs a hand-eye procedure against a target; nothing here sets `measured` true. Treat the saved numbers as the bracket you *intended*,
 good enough to stop the simulator and the controller disagreeing, and not as evidence about the
 camera's true pose.
 

@@ -137,4 +137,65 @@ def build_camera_usd(out_dir, source=None, colour=(0.62, 0.63, 0.65), roughness:
     return info
 
 
-__all__ = ["build_camera_usd", "carve_lens", "LENS_CLEARANCE_TAN"]
+def build_bracket_usd(out_dir, source=None, colour=(0.17, 0.17, 0.18), roughness: float = 0.6) -> dict | None:
+    """Write (or reuse) the visual USD of the camera's bracket. Returns its path and numbers, or None when there
+    is no bracket asset to build from.
+
+    The asset's frame **is** Link6's (`bracket.BRACKET_MESH_PATH` is already in it), so it spawns at the Link6
+    prim's origin with no offset. Dark grey, as printed. Visual only, like the camera: no collider, no mass.
+    """
+    from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade, Vt
+
+    from . import bracket
+
+    source = Path(source or bracket.BRACKET_MESH_PATH).resolve()
+    if not source.is_file():
+        return None
+    params = {"source_sha256": _sha256(source), "colour": list(colour), "roughness": roughness,
+              "builder": BUILDER_VERSION}
+    key = hashlib.sha256(json.dumps(params, sort_keys=True).encode()).hexdigest()[:12]
+    out_dir = Path(out_dir).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"wrist_bracket_{key}.usd"
+    info_path = out_dir / f"wrist_bracket_{key}.json"
+    if out_path.is_file() and info_path.is_file():
+        return json.loads(info_path.read_text())
+
+    import trimesh
+
+    mesh = trimesh.load(str(source), force="mesh")
+    points, faces = np.asarray(mesh.vertices, dtype=np.float32), np.asarray(mesh.faces, dtype=np.int32)
+    if out_path.exists():
+        out_path.unlink()
+    stage = Usd.Stage.CreateNew(str(out_path))
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    root = UsdGeom.Xform.Define(stage, "/WristBracket")
+    stage.SetDefaultPrim(root.GetPrim())
+    look = UsdShade.Material.Define(stage, "/WristBracket/Looks/Plastic")
+    shader = UsdShade.Shader.Define(stage, "/WristBracket/Looks/Plastic/Shader")
+    shader.CreateIdAttr("UsdPreviewSurface")
+    shader.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(Gf.Vec3f(*colour))
+    shader.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(roughness)
+    shader.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.0)
+    look.CreateSurfaceOutput().ConnectToSource(shader.ConnectableAPI(), "surface")
+    usd_mesh = UsdGeom.Mesh.Define(stage, "/WristBracket/Visual")
+    usd_mesh.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(points))
+    usd_mesh.CreateFaceVertexCountsAttr(Vt.IntArray.FromNumpy(np.full(len(faces), 3, dtype=np.int32)))
+    usd_mesh.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(faces.ravel()))
+    usd_mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
+    usd_mesh.CreateDoubleSidedAttr(True)
+    usd_mesh.CreateExtentAttr(Vt.Vec3fArray.FromNumpy(np.array([points.min(axis=0), points.max(axis=0)])))
+    UsdShade.MaterialBindingAPI.Apply(usd_mesh.GetPrim()).Bind(look)
+    stage.GetRootLayer().Save()
+
+    info = {"usd_path": str(out_path), "source": str(source), **params, "triangles": int(len(faces)),
+            "bounds_link6_m": [[round(float(v), 6) for v in points.min(axis=0)],
+                               [round(float(v), 6) for v in points.max(axis=0)]],
+            "frame": "Link6 (d1.urdf)",
+            "note": "Lukas's wrist camera bracket, from its CAD, registered to Link6 by bracket.py. Visual only."}
+    info_path.write_text(json.dumps(info, indent=2) + "\n")
+    return info
+
+
+__all__ = ["build_camera_usd", "build_bracket_usd", "carve_lens", "LENS_CLEARANCE_TAN"]

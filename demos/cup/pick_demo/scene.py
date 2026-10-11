@@ -15,7 +15,8 @@ sampled at the D1's 9 Hz. What changes, and why:
 - **Scene.** A rigid cup (`cup_asset`), a pinhole camera on Link6 with a RealSense preset's colour
   intrinsics, a fixed overview camera for the video, and the playback scene's distant light.
 - **Camera body.** Intel's own D435 case mesh, drawn at the mount so the assumed pose can be checked
-  against the real bracket (`camera_body` for the geometry, `camera_asset` for the USD). Visual only
+  against the real bracket (`camera_body` for the geometry, `camera_asset` for the USD), and the bracket
+  itself from its CAD, fixed to Link6 (`bracket`). Visual only
   -- no collider, no mass -- so it cannot change the physics the pick was measured against. It *can*
   occlude the wrist camera, whose rendered eye sits ~11 mm from the modelled one (F-052), inside the
   case. The camera's near clip (`camera_body.NEAR_CLIP_PAST_HOUSING_M`, 20 mm) keeps the case out of its
@@ -55,6 +56,9 @@ class PickSceneCfg(ReachSceneCfg):
     # Intel's D435 case mesh at the wrist, as one visual prim (`camera_asset`). None when
     # `--no_camera_body` is passed; the scene skips None entries.
     rs_body: AssetBaseCfg = None
+    # The camera's bracket, from its CAD, fixed to Link6 (`bracket`, `camera_asset.build_bracket_usd`). Drawn with
+    # the camera body.
+    rs_bracket: AssetBaseCfg = None
 
 
 def camera_body_cfg(mount: WristMount, usd_path: str,
@@ -71,6 +75,17 @@ def camera_body_cfg(mount: WristMount, usd_path: str,
         init_state=AssetBaseCfg.InitialStateCfg(
             pos=tuple(float(v) for v in mount.pos_link6),
             rot=tuple(float(v) for v in mount.quat_wxyz())),
+    )
+
+
+def bracket_cfg(usd_path: str, link6_path: str = "{ENV_REGEX_NS}/Robot/D1/Link6") -> AssetBaseCfg:
+    """The `AssetBaseCfg` drawing the camera's bracket. Its asset is authored in the Link6 frame, so it sits at
+    the Link6 prim's origin: it belongs to the gripper, not to the mount, and does not move when the mount does.
+    Visual only, as the camera body is."""
+    return AssetBaseCfg(
+        prim_path=f"{link6_path}/rs_bracket",
+        spawn=sim_utils.UsdFileCfg(usd_path=usd_path),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0), rot=(1.0, 0.0, 0.0, 0.0)),
     )
 
 
@@ -101,7 +116,8 @@ def yaw_quat_wxyz(yaw_deg: float) -> tuple[float, float, float, float]:
 
 def make_pick_cfg(robot_usd: str, cup_usd: str, camera: CameraModel, mount: WristMount, cup_xy=(0.42, 0.03),
                   cup_yaw_deg: float = 0.0, seed: int = 42, device: str = "cuda:0", episode_s: float = 120.0,
-                  overview_size=(640, 480), show_camera_body: bool = True, camera_usd: str = None):
+                  overview_size=(640, 480), show_camera_body: bool = True, camera_usd: str = None,
+                  bracket_usd: str = None):
     cfg = make_resting_cfg(robot_usd, seed=seed, device=device, episode_s=episode_s)
     robot = cfg.scene.robot
 
@@ -120,6 +136,8 @@ def make_pick_cfg(robot_usd: str, cup_usd: str, camera: CameraModel, mount: Wris
             raise ValueError("show_camera_body needs camera_usd: build it with "
                              "pick_demo.camera_asset.build_camera_usd, which needs the Isaac app.")
         scene.rs_body = camera_body_cfg(mount, camera_usd)
+        if bracket_usd is not None:
+            scene.rs_bracket = bracket_cfg(bracket_usd)
     scene.overview_cam = CameraCfg(
         prim_path="{ENV_REGEX_NS}/OverviewCam",
         update_period=0.0,

@@ -1,7 +1,7 @@
 """The cup pick's wrist RealSense on the combiner scene's arm, and the feed that shows it in the reach console.
 
 The camera is the pick's own (`demos/cup/pick_demo`): the same preset or calibration, the same saved wrist
-mount, the same D435 housing drawn at it, and `scene.wrist_camera_cfg`'s render settings. The reach console
+mount, the same D435 housing drawn at it and its bracket on Link6, and `scene.wrist_camera_cfg`'s render settings. The reach console
 (`demos/cup/d1_ui/server.py --mode sim`, started by `run_combiner_demo.sh`) follows this run's feed exactly
 as it follows the pick's: the arm and legs from the joints, the wrist view from the camera. Nothing here
 acts on the image; it is for looking at the box from the wrist.
@@ -31,7 +31,8 @@ def add_arguments(parser):
                             "demos/cup/pick_demo/assets/mounts/wrist_mount.json, when it exists; "
                             "'none' forces the assumed placeholder mount.")
     group.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=True,
-                       help="Draw the RealSense housing at the mount. Visual only: no collider and no mass.")
+                       help="Draw the RealSense housing at the mount, and its bracket on Link6. Visual only: no "
+                            "collider and no mass.")
     group.add_argument("--no_camera_body", dest="camera_body", action="store_false", help=argparse.SUPPRESS)
     group.add_argument("--ui_feed_port", type=int, default=8765,
                        help="Publish joints and the wrist camera here for the reach console's sim mode; "
@@ -76,6 +77,14 @@ def build_body(record):
 
     record["body_asset"] = build_camera_usd(BODY_DIR)
     return record["body_asset"]["usd_path"]
+
+
+def build_bracket(record):
+    """Write (or reuse) the bracket's USD and return its path, or None without a bracket asset. Needs the Isaac app."""
+    from demos.cup.pick_demo.camera_asset import build_bracket_usd
+
+    record["bracket_asset"] = build_bracket_usd(BODY_DIR)
+    return None if record["bracket_asset"] is None else record["bracket_asset"]["usd_path"]
 
 
 def note_rendered(record, model, wrist):

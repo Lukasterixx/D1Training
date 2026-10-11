@@ -28,6 +28,241 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 <!-- Dated entries (### YYYY-MM-DD · topic). For each: the exact command or change, the outcome in numbers,
      and what it does and does not show. Record runs with ./dashboard.py record. -->
 
+### 2026-10-09 · The insertion demo dressed as a door, with the wrist RealSense on its bracket
+
+**Lukas:** "can you decorate the scene to look like its putting a key into a door? also add in the realsense and its
+mount".
+
+**What was added** (`demos/insertion/`; all of it is drawn only, and none of it is in the physics):
+- *A door in a room* (`asset.build_scenery_usd`, `build_floor_usd`):
+  - the scene: a 0.90 m wooden door with its keyway 75 mm from the free edge, in a wall with white casing and three
+    hinges, a side wall making a corner, and a floor of boards;
+  - the lock: a matte-black escutcheon round the keyway and a lever handle 92 mm above it. Through the escutcheon's
+    16 mm opening shows the physical lock's face, now brass, with its channel dark: a lock cylinder and its keyway.
+  - how it is placed: each attempt at the true slot's mouth and axis, but upright. The lock turns with the blade's
+    roll, and the door must not, so the scenery is posed apart from it (`env.py`, an `XformPrimView`). The door's
+    face stands 2 mm proud of the lock's face.
+- *The key* (`key.key_mesh`, `asset.build_key_usd`): a brass key with a ring bow between the fingers, a neck, and
+  bitting cut into the blade's top edge, hung on the blade's link so a compliant key tilts as one piece. Past the
+  fingertips it lies inside the 10 × 3 mm collider (tested), so the drawn key never goes where the collider does not.
+  The URDF now draws no key and no black grip box: the importer dropped the mesh's URDF colour and drew it white
+  (first render, below).
+- *The wrist RealSense and its bracket*: `demos/cup/pick_demo`'s D435 case and the bracket from Lukas's CAD (F-138),
+  under Link6 at the saved mount (`wrist_mount.json`, "from CAD, not measured").
+- *Flags*: `run_demo.py --scenery` and `--camera_body`, on by default in the viewer and off headless, so a measuring
+  run spawns what it always has; the key is drawn in both. With the scenery on, the viewer looks from behind the
+  robot's right at the door, fixed in environment 0 so the mouse can move it (it followed the robot before). With
+  more than one robot and the scenery on, the environments are spread 4 m apart, not 2.5, to make room for each wall.
+  `run_demo.sh` gets all of it by default.
+
+**Checks:** 9 insertion tests (2 more need pxr and skip outside Kit). The scenery, floor and key USDs carry no
+collider, rigid body or mass. The escutcheon's opening clears the mouth and chamfer by 4 mm at any roll. The full
+suite passes, 686 tests. Three headless renders of the same two attempts, through
+`figures/insertion_scene_renders.py`, which wraps `run_demo.py` and adds four offscreen cameras:
+`... --checkpoint checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt --compliant_key --num_envs 1
+--attempts 2 --lateral_mm 2 --hold_s 1.5 --headless --enable_cameras --scenery --camera_body`. Lukas's P2Dingo sim
+(`main.py --robot go2 --enable_cameras`) was on the GPU for the first, and Lukas agreed to running alongside it.
+
+| run | what changed | attempt 0 (level blade, 0.83 m) | attempt 1 (upright) |
+| --- | --- | --- | --- |
+| [render 1](#/week/4/run/20261009T084853_insertion_policy_seed1_render_check) | door, key mesh in the URDF, RealSense | not seated, tip −0.07 mm, engaged at step 202 | seated in 1.60 s |
+| [render 2](#/week/4/run/20261009T085344_insertion_policy_seed1_render_check2) | key as its own brass USD, floor, half-metallic metals | not seated, −0.26 mm, step 155 | seated in 1.46 s |
+| [render 3](#/week/4/run/20261009T085600_insertion_policy_seed1_render_check3) | side wall, longer right wall: the figures | not seated, −0.16 mm, step 183 | seated in 1.56 s |
+
+The same plan without any of it, in the [loop launcher's check](#/week/4/run/20261009T075231_insertion_policy_seed1_loop_check),
+gave attempt 0 not seated at −0.12 mm, engaged at step 194, and attempt 1 seated. The runs differ step to step because
+the demo never seeds its environment (Isaac Lab warns "Seed not set for the environment"). `--seed` fixes the slot
+draws and nothing else. So whether the decoration leaves the physics alone could not be checked by comparing runs.
+That rests on the drawn pieces having no physics APIs (tested), and on the camera, bracket and key being children of
+links whose inertia the URDF gives.
+
+**First render, before the fixes:** the key drawn white, and the escutcheon and handle black on one side and grey on
+the other. A fully metallic surface here has nothing to reflect but the sky and the black ground. Metals are now half
+metallic, and the hardware is matte black on purpose.
+
+![First render: the key's bitting and bow are right, but it is white, and the hardware reflects the black ground](figures/insertion_door_first_render_key_white.png)
+
+**The figures** (render 3):
+
+![The room: Go2 + D1 in front of a wooden door in a white wall, its arm out to the lock under a black lever handle, on a floor of boards](figures/insertion_door_room.png)
+
+![The key seated: the brass key upright in the brass cylinder inside the black escutcheon, its ring bow between the D1's fingers](figures/insertion_door_key_seated.png)
+
+![The wrist from the left, attempt 0 (a level blade): the RealSense on its dark bracket above the gripper, the key at the lock, clear of the handle and the casing](figures/insertion_door_wrist_camera.png)
+
+- *What they show.* The scene reads as a robot putting a key into a door. The key goes into the cylinder through
+  the escutcheon's opening, its bow held between the fingers. The RealSense and its bracket clear the lever and the
+  casing in both blade orientations rendered. The camera sits above the gripper with a level blade and beside it with
+  an upright one, since it turns with the roll.
+- *What they do not show.* The viewer itself: these are offscreen renders from the same scene, and the viewer's
+  default view is the room figure's, not checked in a window. The wrist camera's own image was not rendered: its case
+  is drawn, but there is no camera sensor. The camera and bracket add no mass, and the policy was trained without
+  them, so how the real arm carries them is not shown. The door, handle and floor are decoration, not a measured
+  door. The lock behind the escutcheon is still the training's slot sizes. The handle does nothing.
+
+### 2026-10-09 · Watching the key insertion on a loop: a launcher
+
+**Lukas:** "can you add a .sh launch file that opens looping visualisation of the insertion demo".
+
+**What was added.**
+- *`demos/insertion/run_demo.sh`*: the Isaac environment (as `demos/cup/run_pick_demo.sh` sets it up, with the same
+  GPU note), then `run_demo.py --checkpoint checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt
+  --compliant_key --num_envs 1 --lateral_mm 2 --loop --hold_s 3`, with any arguments appended.
+- *`run_demo.py --loop`*: a new batch of attempts is drawn after each one ends, until the window is closed.
+  `summary.json`, `run.json` and `trace.csv` are now written after every batch, not once at the end, for loop and
+  fixed runs alike. If the window closes mid-attempt, that attempt is left out and the run's status is `closed`.
+- *`--hold_s`*: an attempt ends this long after its key seats, instead of running the whole 16 s episode. It cuts the
+  record short: peak force and final depth stop at the hold. That is why the README says to measure without it.
+- *`--realtime`* (on by default in the viewer, `--no-realtime` turns it off): each policy step is held to its 20 ms
+  of wall time, with no catching up after a slow stretch. Headless runs are not paced, as before.
+
+**Check:** `timeout -s INT 420 ./demos/insertion/run_demo.sh --headless --no-realtime --run_name loop_check`
+([Insertion loop launcher: headless check](#/week/4/run/20261009T075231_insertion_policy_seed1_loop_check)). It
+looped through 44 attempts in about 6 minutes after start-up and was stopped from outside. `SIGINT` ended the
+process without leaving the loop, so its `run.json` was set to "interrupted" by hand. The 44 finished attempts were
+all in `summary.json`. Seated 38/44, no falls, no damage, median time to seat 1.6 s; attempts with a seated key ended
+3 s after the seat (attempt 43 at step 513 of 800). All six misses were level blades at 0.77–0.84 m, the tip resting
+on the face (−0.12 to −0.35 mm). That is the case F-120–F-122 name as the one still failing, a level blade high up.
+
+**What it does not show.** The viewer itself. The launcher was not opened on the display, so real-time pacing and the
+window-close exit (status `closed`) were not run. It is also not a measurement: it uses one seed, `--hold_s` cuts each
+record short, and the 38/44 is from draws no other run uses. It stands beside the frozen-set and 48-attempt numbers in
+`checkpoints/README.md` (46/48 at 2 mm), not in place of them.
+
+### 2026-10-09 · The wrist camera's bracket from its CAD: the simulator's extrinsics, and the bracket drawn (F-138)
+
+**Lukas:** "there are 3 stl files in my downloads folder in meter units. they describe the mount that I will be using
+to put the realsense on the d1 arm. can you add this into the sim so that the sim now uses the correct extrinsics and
+shows the mount visually too". The files, exported from Fusion 360 the same day, are in the frame of Unitree's D1-550
+STEP (the arm lying along −y): `mount_only.stl` (the bracket, 3 bodies), `d435i_with_mount.stl` (+ a D435i, 4 bodies)
+and `d435i_with_mount_and_arm.stl` (+ Unitree's arm, 279 bodies). Not committed: the last two carry Unitree's and a
+third-party camera's geometry. Their sha256 are in `demos/cup/pick_demo/assets/bracket/registration.json`.
+
+**Lukas's screenshot** (`screenshots/03_fusion_wrist_camera_bracket.png`, Fusion 360): the bracket on the D1-550's
+gripper, from above and to the side. The D435i sits on top of the gripper's housing, pitched down towards the jaws,
+held by its back on a plate with two screw lugs. The plate is on an angled piece ("angled" in the browser) on a part
+that clamps to the housing ("slide"). The arm's upper links and the wrist are behind it.
+
+![The bracket in Fusion 360](screenshots/03_fusion_wrist_camera_bracket.png)
+
+**How the mount was found** (`python -m demos.cup.pick_demo.bracket <the three files> --write`; the method is in
+`bracket.py`'s docstring):
+- *Link6 in the CAD:*
+  - The z axis is the wrist roll line, from 6 rings of the wrist flange (centres within 0.11 mm).
+  - The roll is fixed by the jaw axis: the fingers sit level either side of the roll line, along CAD x.
+  - The origin along the line comes from fitting `d1.urdf`'s own Link6 mesh to the CAD's gripper: y = 10.56 mm, median
+    1.38 mm, 42% within 1 mm.
+  - That minimum is shallow: the cost rises only 3–4% at ±1 mm. That mesh is the older `d1_description` hand, not the
+    D1-550's (F-137).
+  - An unconstrained fit tilted the roll axis 0.65° and rolled it 1°. The cost barely changes with either, so both are
+    the meshes' differences, not the bracket.
+- *The camera:*
+  - The export's D435i faces are planes. The front normal is 30.003° below the approach axis, yaw −0.004°.
+  - The bracket holds the case by its back. Its plate is flush with the case's back face (to 0.001 mm) and has two
+    3.0 mm holes 45.000 mm apart: the D435's two M3 mounting holes, 45.000 mm apart on Intel's case too.
+  - Intel's case (the mesh the simulator draws) is put there, back on the plate and holes on holes. It sits on the
+    export's case back to 0.14 mm median. `camera_body.MESH_TO_OPTICAL` then gives the colour optical frame.
+  - The export's D435i is not Intel's: 90.74 × 24.74 × 24.10 mm against 89.91 × 25.00 × 25.05. Its lens marks are 1–2 mm
+    out. It is used for the orientation and the handedness only: its projector and left imager sit at −11 and +18 mm
+    along the case, Intel's at −11.5 and +17.5, so the colour lens is at the same end.
+  - A first attempt, ICP of the whole case, found a 14° pitch. It was a local minimum on a near-symmetric box (all four
+    flips scored 0.86–0.95 mm), which is why the faces and holes are used instead.
+- *The result,* colour optical frame in Link6: **xyz (−49.05, 32.81, 61.33) mm, rpy (−30, 0, −90)°**, optical axis
+  (0.500, 0, 0.866). The saved default it replaces (2026-09-17, aligned by eye in the console) was (−61, 34, 67) mm,
+  (0, 0, −90)°: **13.3 mm and 30° away.** That one pointed the camera straight along the gripper.
+
+**What changed in the code:**
+- `wrist_mount.json` is now this mount, `measured: false`, its `method` starting "cad". `camera.load_mount` labels such
+  a file "from CAD, not measured" rather than "aligned by eye".
+- `assets/bracket/wrist_bracket_link6.stl` is the bracket in Link6. It is spawned visual-only under the Link6 prim
+  (`camera_asset.build_bracket_usd`, `scene.bracket_cfg`) wherever the camera body is drawn: the pick, the combiner and
+  the body renders. It is fixed to Link6, not to the mount, as the real bracket is bolted to the gripper.
+- `demos/cup/tests/test_bracket.py` (7 tests) checks the committed results against one another, without the export:
+  - the mount's 30°;
+  - Intel's M3 holes on the bracket's holes (to 0.05 mm);
+  - the case's back on the plate (to 0.02 mm);
+  - the bracket out of the view and on top of the gripper.
+
+**Checks** (`bracket.py`'s registration, in Link6):
+- The case is 3.0 mm clear of `d1.urdf`'s Link6 mesh and 2.8 mm clear of the CAD's own hand.
+- The bracket is 1.6 mm clear of the Link6 mesh. In the CAD it rests on the D1-550's hand, which that mesh is not, so
+  in the simulator it floats 1.6 mm.
+- The pick's coarse shell test (`camera_body.clearance_report`, bounding corners against a box) reports an "OVERLAPS"
+  of 1.9 mm. The meshes do not touch, so that warning is the box's.
+- Neither the case nor the bracket enters the colour view at the model's eye. At F-052's rendered eye, the case parts
+  in front are 3–11 mm away, inside the 20 mm near clip.
+- The closed fingertips enter the colour image's right edge (u ≈ 580 of 640). The jaw centre sits just outside
+  (u ≈ 642, preset and bench calibration alike), because the colour lens is at the case's end, 33 mm to the side.
+
+**Render** (`./demos/cup/run_camera_body_view.sh`, headless, alongside Lukas's P2Dingo simulation with his OK;
+[run](#/week/4/run/20261009T065528_402141Z)): the arm in the pick's observe pose, four views. The grey bracket is on
+the gripper's top face, and the D435 hangs from its plate with its vented back up and its front towards the jaws, as in
+the CAD.
+
+![Three-quarter view of the wrist: the bracket on the gripper and the D435 on the bracket](figures/wrist_bracket_three_quarter.png)
+
+![Side view: the gripper pointing down, the bracket on its back and the camera beyond it](figures/wrist_bracket_side.png)
+
+**What it broke, and what was done:**
+- *The combiner's tag search.* `press.plan_search` asks for a camera pose looking at a point at the tag's height, 10°
+  down from 0.32 m above the mount. With the camera pitched 30° from the gripper, that needs the gripper 20° up there,
+  and **no stop solved** (from 7 of 7 with the old mount). Six `test_turn` tests failed.
+  - A grid at heading 0: the stops solve only looking ≥ 19° down from 0.32 m, or ≥ 27° from 0.28 m. From lower down,
+    none does.
+  - `SearchParams.target_above_m` is now 0.17 m (+ the shoulder rise), from 0.24, so the stops look 20.4° down. The tag
+    sits in the upper half of the image.
+  - The full scripted sequence (find the tag, the close look, grip, turn, pull the door) passes again. So does
+    `test_finds_the_tag_plans_on_the_close_look_and_pushes_through_the_arc`, failing since 2026-10-06 at 5.18 mm
+    against 5.0.
+- *The close look's image roll* (`plan_close_look(toward=...)`). It picked the least-travel roll at the first view any
+  roll solved. Upright may solve only at a later view, and once a turned look cost 0.016 rad more than upright. The
+  upright look is now a candidate too, so turning never costs travel.
+  - The saving is smaller with this camera: at most 0.18 rad over the test's placements, against > 0.5.
+  - Lukas chose to re-pin the test at > 0.1 rad, with a comment saying why.
+- *The cup pick:* unaffected. Its 78 geometry tests pass with the new mount swapped in (scratch copy; the committed tests
+  pin the 2026-09-17 mount on purpose). Its survey looks 60° down, which a camera pitched 30° makes easier.
+
+**Tests:** `python -m unittest discover -s . -p "test_*.py"` in the Isaac env: 681 run, all pass (13 skipped).
+
+**What it does not show:**
+- The printed part. Its tolerances, how the camera seats in it, and where the slide is clamped along the housing are
+  the design's, not measured. So is Link6's origin on the real arm.
+- A hand-eye calibration on the bench is what measures the extrinsics, and it has not been done.
+- No pick or combiner run in PhysX with the new mount: the planning was tested on the CPU model only.
+- The reach console's 3D view draws the camera case at the mount, but not the bracket.
+
+### 2026-10-09 · Weekly update 4, and a figure for it
+
+**What.** `Weekly_Update_Lukas_4_20261009.docx`, the weekly supervisor update (kept outside the repo, in Downloads
+beside Update 3), was built on Update 3's own document, so its layout carries over. It was written from this week's
+log. Update 3's four planned tasks were marked as follows:
+- Bench stall torques: **not done**.
+- The roll policy on the corrected arm: **not done**. The demos' policies were fine-tuned onto the measured arm first
+  (F-127).
+- Wrist camera extrinsics: **not done**. *Revised the same evening, at Lukas's request, to done (green), after the
+  bracket (F-138, the entry above). The update says they come from the bracket's design, not a measurement, and that
+  the other half of the item, camera targets through IK on the bench arm, carries over. Next week's plan now reads
+  "print the camera mount and check its extrinsics on the real arm with a hand-eye calibration". The row shows
+  Lukas's Fusion screenshot (cropped to the model) and the three-quarter render.*
+- CoRL workshop against RSS Stage 1: **not decided**. The update says the CoRL deadline came up without a paper, so
+  RSS Stage 1 (4 Dec) is the realistic option. That is an inference from this log, for Lukas to confirm.
+
+The extras are the rope pull (F-130 to F-136), the policies and scenes moved to the measured arm (F-127 to F-129), and
+Unitree's CAD against `d1.urdf` (F-137) with the 58 mm holes. Next week's six items come from this week's Next week
+and the three carried over.
+
+**Figure** (`python3 results/week_04/figures/weekly_update_figures.py`, CPU, system Python):
+- [weekly_update_rope_pull.png](figures/weekly_update_rope_pull.png) is `rope_pull.png`'s episode 27 redrawn with plain
+  labels for the update's 3.7-inch column.
+- It is drawn from `rope_pull.json`, which is at the policy rate (50 Hz, four-substep means). The 200 Hz traces in
+  `logs/` are on the training machine, not this one, so the tie-on spikes are softer than in `rope_pull.png`.
+- Its trained line is v3 `14400`, not the polished `14600`. The update says so: that is why it pulls 5–7 N over.
+- The two screenshots go into the update cropped to the nearest robots. The crops are not committed.
+
+**Does not show.** Nothing new. The update's scope is the findings it summarises: simulation only. The legs-frozen
+17–20 N is the same policy with its leg actions zeroed, not an arm-only policy, and the update says so. The 6 mm jaw
+offset is against Unitree's CAD, not a measurement of the arm.
+
 ### 2026-10-09 · Watching the rope pull: a viewer demo, with the rope drawn
 
 **Lukas:** "can you spin up visualisation of the rope pulling from earlier", then, after watching, "you can close the
@@ -903,6 +1138,10 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
 
 ## Findings this week
 
+- [F-138](../findings.md): from Lukas's bracket CAD, the wrist camera looks 30° down from the gripper, its colour
+  optical frame at (−49.1, 32.8, 61.3) mm in Link6, 13.3 mm and 30° from the mount aligned by eye; the combiner's
+  tag search had to look 20° down to stay reachable. The design, not a measurement of the printed part.
+
 - [F-137](../findings.md): Unitree's D1 CAD matches its D1-550 URDF and Lukas's measured base, not `d1.urdf`, whose
   arm is the older `d1_description`'s: the forearm 6.8 mm short, the hand 1.7 mm long, the jaw centre 6.0 mm off at the
   median of random poses (max 8.6). The elbow's torque (1.7 or 3.33 N·m) is in question.
@@ -947,6 +1186,19 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
 
 ## Issues and risks
 
+- **The insertion demo's environment is unseeded:** `--seed` fixes only the slot draws. Two runs of the same plan
+  engaged 47 steps apart (2026-10-09), so a demo run cannot be repeated step for step, and an A/B on the same draws
+  (a code change against none) is confounded by run-to-run noise. Setting `cfg.seed` would fix the torch draws.
+  Whether GPU PhysX then repeats exactly is untested.
+
+- **The wrist camera's extrinsics are the bracket's design** (F-138), not a measurement: the printed part, the camera's
+  seat in it and the slide's position along the housing are unmeasured, and so is Link6's origin on the real arm
+  (`d1.urdf`'s hand is not the D1-550's). A hand-eye calibration on the bench is what would measure them.
+- **The colour image barely sees the jaws:** the colour lens is at the case's end, 33 mm to the side, so the jaw centre
+  sits just past the right edge at 640 × 480. Fine for looking before a grasp; not for watching one.
+- **A saved mount from the console replaces the CAD one** if saved as `wrist_mount.json`;
+  `python -m demos.cup.pick_demo.bracket <export> --write` restores it.
+
 - **The rope-pull policy runs Joint2 and Joint3 at their torque limits while it pulls** (Joint5 too at 70 N), as every
   pull policy here has (F-103). The arm-margin term prices it and does not stop it. What a real D1 does at stall for
   seconds (trip, heat, F-028's dropped arm) is unmeasured. Before any physical pull: measure the servos' stall and
@@ -969,6 +1221,8 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
 
 ## Next week
 
+- The wrist camera on the real bracket: a hand-eye calibration against a target, compared with F-138's CAD mount; then
+  camera-derived targets through the IK reference on the bench arm (Week 3's item, still open).
 - **The rope pull, toward hardware** (F-133): measure the D1 servos' stall and continuous torque under a held pull
   (luggage scale on the straightened arm, F-101's suggestion); a compliant element in the line; a task layer that ramps
   at ≤ 10 N/s and drops the command when the force estimate collapses. Whether the rope pull becomes a thesis task

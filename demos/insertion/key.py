@@ -1,8 +1,11 @@
-"""The key in the hand: a copy of `d1_arm/d1.urdf` with the key's blade as a collider (and visual).
+"""The key in the hand: a copy of `d1_arm/d1.urdf` with the key's blade as a collider.
 
 The blade's long side lies along `Link6`'s +y (the jaw axis, so the roll command turns it), its thin side along +x,
-running along the approach (+z) from just past the fingertips to the tip at the jaw centre plus the key's length. A
-visual-only handle between the fingers shows what they would be holding. Two ways to hold it:
+running along the approach (+z) from just past the fingertips to the tip at the jaw centre plus the key's length.
+The URDF draws nothing of the key. What is drawn is `key_mesh`, a key in brass: a ring bow between the fingers, a neck,
+and a blade with bitting cut into its +y edge and its tip ramped. `asset.build_key_usd` makes it a USD and `env.py`
+hangs it on the blade's link (the importer drops a mesh visual's URDF colour). Beyond the fingertips it lies inside the
+collider box, so the drawn key never goes where the collider does not. Two ways to hold it:
 
   * rigid (the default): the blade is a collider on `Link6`, as the training's plant had it until 2026-09-27;
   * compliant (`compliant=True`): the blade is its own link, `key`, hung from the jaw centre on two sprung revolute
@@ -29,6 +32,77 @@ def blade_box() -> tuple[tuple[float, float, float], tuple[float, float, float]]
     """(centre, size) of the blade in `Link6`."""
     tip = JAW_CENTRE_Z_M + GEOMETRY.key_length
     return (0.0, 0.0, (KEY_ROOT_Z_M + tip) / 2), (2 * GEOMETRY.key_half_w, 2 * GEOMETRY.key_half_u, tip - KEY_ROOT_Z_M)
+
+
+#: The drawn key, in Link6 (m). The bow is a ring between the fingers, its centre a little behind the jaw centre so a
+#: compliant key's tilt about that point keeps it there; the neck joins it to the blade at the collider's root.
+BOW_CENTRE_Z_M = 0.0985
+BOW_OUTER_R_M = 0.0105
+BOW_INNER_R_M = 0.0042
+#: The bitting, from the blade's root towards its tip: how deep each cut goes into the +y edge (m), one per 5 mm, and
+#: the ramp that brings the top edge down to the tip.
+BITTING_M = (0.0008, 0.0022, 0.0010, 0.0026, 0.0006, 0.0018, 0.0012, 0.0024)
+BITTING_PITCH_M = 0.005
+TIP_RAMP_M = 0.004
+TIP_HEIGHT_M = 0.0045
+
+
+def _top_edge() -> list[tuple[float, float]]:
+    """(z, y) of the key's top (+y) edge from the neck to the tip, in Link6: flat along the neck, V cuts along the
+    blade, then the ramp down to the tip."""
+    half_u = GEOMETRY.key_half_u
+    tip = JAW_CENTRE_Z_M + GEOMETRY.key_length
+    neck = BOW_CENTRE_Z_M + 0.5 * (BOW_INNER_R_M + BOW_OUTER_R_M)        # inside the ring, so the join is hidden
+    points = [(neck, half_u), (KEY_ROOT_Z_M + 0.002, half_u)]
+    z = KEY_ROOT_Z_M + 0.002
+    for depth in BITTING_M:
+        if z + BITTING_PITCH_M > tip - TIP_RAMP_M:
+            break
+        points += [(z + 0.5 * BITTING_PITCH_M, half_u - depth), (z + BITTING_PITCH_M, half_u)]
+        z += BITTING_PITCH_M
+    points += [(tip - TIP_RAMP_M, half_u), (tip, -half_u + TIP_HEIGHT_M)]
+    return points
+
+
+def key_link(compliant: bool) -> tuple[str, float]:
+    """(the link the blade is on, the height along it of Link6's origin): where the drawn key hangs, so that a compliant
+    key tilts as one piece, bow and all."""
+    return ("key", -JAW_CENTRE_Z_M) if compliant else ("Link6", 0.0)
+
+
+def key_mesh() -> list[tuple[tuple[float, float, float], ...]]:
+    """The drawn key's triangles in Link6, outward-facing: the ring bow, and the neck and blade as one extruded
+    profile between the straight -y edge and `_top_edge`, both `2 * key_half_w` thick along x."""
+    import math
+
+    t, half_u = GEOMETRY.key_half_w, GEOMETRY.key_half_u
+    tris = []
+
+    def quad(a, b, c, d):
+        """Corners listed clockwise seen from outside."""
+        tris.extend(((a, c, b), (a, d, c)))
+
+    # The neck and blade: a strip of trapezoids between the bottom edge and the top edge, at the top edge's breaks.
+    top = _top_edge()
+    for (z0, y0), (z1, y1) in zip(top, top[1:]):
+        quad((t, -half_u, z0), (t, -half_u, z1), (t, y1, z1), (t, y0, z0))              # +x face
+        quad((-t, -half_u, z0), (-t, y0, z0), (-t, y1, z1), (-t, -half_u, z1))          # -x face
+        quad((t, y0, z0), (t, y1, z1), (-t, y1, z1), (-t, y0, z0))                      # top edge
+        quad((-t, -half_u, z0), (-t, -half_u, z1), (t, -half_u, z1), (t, -half_u, z0))  # bottom edge
+    (za, ya), (zb, yb) = top[0], top[-1]
+    quad((t, -half_u, za), (t, ya, za), (-t, ya, za), (-t, -half_u, za))                # neck end, in the bow
+    quad((t, -half_u, zb), (-t, -half_u, zb), (-t, yb, zb), (t, yb, zb))                # tip end
+    # The bow: a ring in the y-z plane.
+    n = 32
+    for k in range(n):
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+        ring = lambda r, a, x: (x, r * math.cos(a), BOW_CENTRE_Z_M + r * math.sin(a))
+        ro, ri = BOW_OUTER_R_M, BOW_INNER_R_M
+        quad(ring(ro, a0, t), ring(ri, a0, t), ring(ri, a1, t), ring(ro, a1, t))       # +x face
+        quad(ring(ro, a0, -t), ring(ro, a1, -t), ring(ri, a1, -t), ring(ri, a0, -t))   # -x face
+        quad(ring(ro, a0, t), ring(ro, a1, t), ring(ro, a1, -t), ring(ro, a0, -t))     # outside
+        quad(ring(ri, a0, t), ring(ri, a0, -t), ring(ri, a1, -t), ring(ri, a1, t))     # the hole
+    return tris
 
 
 def _inertial(link: ET.Element, mass: float, size: tuple[float, float, float], centre: tuple[float, float, float]):
@@ -73,19 +147,9 @@ def write_key_urdf(source: str | Path, destination: str | Path, compliant: bool 
             ET.SubElement(joint, "axis", {"xyz": axis})
             ET.SubElement(joint, "limit", {"lower": f"{-GRIP_MAX_RAD:.6f}", "upper": f"{GRIP_MAX_RAD:.6f}",
                                            "effort": "5", "velocity": "20"})
-    for tag in ("collision", "visual"):
-        element = ET.SubElement(blade_link, tag, {"name": "key_blade"})
-        ET.SubElement(element, "origin", {"xyz": fmt(centre), "rpy": "0 0 0"})
-        ET.SubElement(ET.SubElement(element, "geometry"), "box", {"size": fmt(size)})
-        if tag == "visual":
-            material = ET.SubElement(element, "material", {"name": "key_steel"})
-            ET.SubElement(material, "color", {"rgba": "0.78 0.62 0.20 1"})
-    # The handle the fingers hold: visual only, so it cannot fight the fingers.
-    grip = ET.SubElement(link, "visual", {"name": "key_grip"})
-    ET.SubElement(grip, "origin", {"xyz": fmt((0.0, 0.0, 0.103)), "rpy": "0 0 0"})
-    ET.SubElement(ET.SubElement(grip, "geometry"), "box", {"size": fmt((0.012, 0.016, 0.045))})
-    material = ET.SubElement(grip, "material", {"name": "key_grip"})
-    ET.SubElement(material, "color", {"rgba": "0.10 0.10 0.12 1"})
+    collision = ET.SubElement(blade_link, "collision", {"name": "key_blade"})
+    ET.SubElement(collision, "origin", {"xyz": fmt(centre), "rpy": "0 0 0"})
+    ET.SubElement(ET.SubElement(collision, "geometry"), "box", {"size": fmt(size)})
     destination.parent.mkdir(parents=True, exist_ok=True)
     tree.write(destination, xml_declaration=True, encoding="utf-8")
     return destination

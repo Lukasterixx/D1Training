@@ -1,0 +1,224 @@
+{
+  "what": "the wrist camera's bracket registered to Link6 and Intel's D435 case; see bracket.py",
+  "inputs": {
+    "mount_only.stl": {
+      "sha256": "cae77fcf59b19a057da0597b8088dde493463326e0144eda7b86158905d5f928",
+      "bytes": 132484
+    },
+    "d435i_with_mount.stl": {
+      "sha256": "ce591e1c34c077f362e862bd4bd7f2604f70947da047cff1fd64ade3588e15eb",
+      "bytes": 956084
+    },
+    "d435i_with_mount_and_arm.stl": {
+      "sha256": "11fce447524043db8aa44f69a0a8a6993190fee997f2c5301f5c2499fef238d0",
+      "bytes": 6981784
+    }
+  },
+  "bodies": {
+    "bracket": 3,
+    "camera": 4,
+    "arm": 279
+  },
+  "link6_in_cad": {
+    "T_cad_link6": [
+      [
+        0.0,
+        -1.0,
+        0.0,
+        0.000389723
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.010558961
+      ],
+      [
+        -1.0,
+        0.0,
+        0.0,
+        0.166505179
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "roll_line_xz_m": [
+      0.000389723,
+      0.166505179
+    ],
+    "flange_rings": 6,
+    "ring_centre_spread_m": 0.00011171514700450413,
+    "origin_along_roll_m": 0.010558961012581794,
+    "fit_median_m": 0.0013772839300024264,
+    "fit_within_1mm": 0.418775,
+    "cost_ratio_at_pm1mm": [
+      1.029,
+      1.04
+    ]
+  },
+  "camera_in_cad": {
+    "T_cad_optical": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        -0.032424821
+      ],
+      [
+        0.0,
+        -0.5,
+        0.866025404,
+        0.071890628
+      ],
+      [
+        0.0,
+        -0.866025404,
+        -0.5,
+        0.215554691
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "T_cad_case_mesh": [
+      [
+        -1.0,
+        0.0,
+        0.0,
+        7.5179e-05
+      ],
+      [
+        0.0,
+        0.5,
+        0.866025404,
+        0.075614537
+      ],
+      [
+        0.0,
+        0.866025404,
+        -0.5,
+        0.213404691
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "front_pitch_deg": 30.003035991379672,
+    "front_yaw_deg": -0.004108300862819731,
+    "case_back_plane_m": -0.06627294548815134,
+    "plate_face_m": -0.0662729365164742,
+    "bracket_hole_spacing_m": 0.04500000010151228,
+    "bracket_hole_radius_m": [
+      0.0015,
+      0.0015
+    ],
+    "intel_hole_spacing_m": 0.045000000032064356,
+    "export_case_size_m": [
+      0.090739869,
+      0.024741996,
+      0.024100011
+    ],
+    "intel_case_size_m": [
+      0.0899143,
+      0.025,
+      0.025054701
+    ]
+  },
+  "mount_pose_link6": [
+    [
+      0.0,
+      0.866025404,
+      0.5,
+      -0.049049512
+    ],
+    [
+      -1.0,
+      0.0,
+      0.0,
+      0.032814543
+    ],
+    [
+      0.0,
+      -0.5,
+      0.866025404,
+      0.061331667
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "mount_xyz_m": [
+    -0.04905,
+    0.032815,
+    0.061332
+  ],
+  "mount_rpy_deg": [
+    -30.0,
+    -0.0,
+    -90.0
+  ],
+  "bracket_mesh": {
+    "path": "demos/cup/pick_demo/assets/bracket/wrist_bracket_link6.stl",
+    "sha256": "a78eed56c53a0d686422bde2aa3baac1d1a68e902146e800bdcb2ba9859943af",
+    "frame": "Link6 (d1.urdf), metres"
+  },
+  "replaced": {
+    "schema": "d1training.wrist_mount/1",
+    "created_utc": "2026-09-17T08:39:40+00:00",
+    "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+    "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+    "xyz_m": [
+      -0.061,
+      0.034,
+      0.067
+    ],
+    "rpy_deg": [
+      0.0,
+      0.0,
+      -90.0
+    ],
+    "pose_link6": [
+      [
+        0.0,
+        1.0,
+        0.0,
+        -0.061
+      ],
+      [
+        -1.0,
+        0.0,
+        -0.0,
+        0.034
+      ],
+      [
+        -0.0,
+        0.0,
+        1.0,
+        0.067
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "measured": false,
+    "method": "the operator aligned the CAD camera against the wrist in the console's 3D view; no target, no hand-eye procedure, no image evidence",
+    "source": "d1_ui mount editor on lukas-ROG-Zephyrus-G16-GA605WI-GA605WI",
+    "camera": "calibration d435i_238222076237_640x480.json"
+  }
+}
