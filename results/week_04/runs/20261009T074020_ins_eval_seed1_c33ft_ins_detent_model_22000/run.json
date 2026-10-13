@@ -1,0 +1,1033 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    96,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261009T065159_train_seed3_ins_c33ft/model_22000.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": true,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "detent",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "ins_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "c33ft_ins_detent_model_22000",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "insertion",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261009T065159_train_seed3_ins_c33ft/model_22000.pt",
+  "checkpoint_iteration": 22000,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_22000.pt",
+  "critic_obs": [
+    96,
+    459
+  ],
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    96,
+    12
+  ],
+  "expected_actor": [
+    96,
+    2432
+  ],
+  "expected_critic": [
+    96,
+    459
+  ],
+  "expected_estimates": [
+    96,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_status": "M README.md\n M d1_arm/d1.urdf\n M d1_arm/measured_base.py\n M demos/cup/d1_ui/server.py\n M description/go2_d1.urdf\n M motor_model.py\n M mount.py\n M position_only/task_space.py\n M position_only/workspace.py\n M results/findings.md\n M results/gates.md\n M results/week_04/notes.md\n M run_unifp_train.py\n M tests/test_force_transmission.py\n M tests/test_sim2real.py\n M tests/test_unifp_interface.py\n M tests/test_unifp_train.py\n M tests/test_workspace.py\n M unifp_isaaclab/interface.py\n?? results/week_04/figures/d1_workspace_cad_arm.json\n?? results/week_04/figures/d1_workspace_cad_arm.png\n?? results/week_04/figures/direction_capacity_cad_arm.json\n?? results/week_04/figures/direction_capacity_cad_arm_elbow333.json\n?? results/week_04/figures/force_transmission_study_cad_arm.json\n?? results/week_04/figures/force_transmission_study_cad_arm_elbow333.json\n?? results/week_04/figures/stance_probe_cad_arm.json\n?? results/week_04/runs/20261009T044449_261854Z_verify_seed42/\n?? results/week_04/runs/20261009T044740_eval_seed20260921_cad_base_reach57499/\n?? results/week_04/runs/20261009T044810_mech_eval_seed1_cad_base_mech_test_17499/\n?? results/week_04/runs/20261009T044848_mech_eval_seed1_cad_base_lever_21496/\n?? results/week_04/runs/20261009T044918_mech_eval_seed1_cad_base_lever_test_21496/\n?? results/week_04/runs/20261009T044948_ins_eval_seed1_cad_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T045028_ins_eval_seed1_cad_base_ins_detent_21400/\n?? results/week_04/runs/20261009T045111_rope_eval_seed1_cad_base_rope_dev_14600/\n?? results/week_04/runs/20261009T045152_rope_eval_seed1_cad_base_rope_test_14600/\n?? results/week_04/runs/20261009T045247_press_eval_seed1_cad_base_press_panel_pilot/\n?? results/week_04/runs/20261009T045320_press_eval_seed1_cad_base_press_force_pilot/\n?? results/week_04/runs/20261009T045351_press_eval_seed1_cad_base_press_recessed_pilot/\n?? results/week_04/runs/20261009T045422_wipe_eval_seed1_cad_base_wipe_pilot/\n?? results/week_04/runs/20261009T045509_eval_seed20260921_old_base_reach57499/\n?? results/week_04/runs/20261009T045537_mech_eval_seed1_old_base_mech_test_17499/\n?? results/week_04/runs/20261009T045607_mech_eval_seed1_old_base_lever_21496/\n?? results/week_04/runs/20261009T045637_mech_eval_seed1_old_base_lever_test_21496/\n?? results/week_04/runs/20261009T045707_ins_eval_seed1_old_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T045748_ins_eval_seed1_old_base_ins_detent_21400/\n?? results/week_04/runs/20261009T045829_rope_eval_seed1_old_base_rope_dev_14600/\n?? results/week_04/runs/20261009T045905_rope_eval_seed1_old_base_rope_test_14600/\n?? results/week_04/runs/20261009T045944_press_eval_seed1_old_base_press_panel_pilot/\n?? results/week_04/runs/20261009T050012_press_eval_seed1_old_base_press_force_pilot/\n?? results/week_04/runs/20261009T050040_press_eval_seed1_old_base_press_recessed_pilot/\n?? results/week_04/runs/20261009T050109_wipe_eval_seed1_old_base_wipe_pilot/\n?? results/week_04/runs/20261009T050209_cup_unifp_wrist_seed1_cad_cup_57499/\n?? results/week_04/runs/20261009T050235_combiner_unifp_wrist_seed1_cad_box_57499/\n?? results/week_04/runs/20261009T050336_combiner_unifp_wrist_corr_seed1_cad_boxfix_s1/\n?? results/week_04/runs/20261009T050439_combiner_unifp_wrist_corr_seed2_cad_boxfix_s2/\n?? results/week_04/runs/20261009T050542_combiner_mech_law_seed1_cad_door16_17499/\n?? results/week_04/runs/20261009T050646_combiner_mech_law_seed1_cad_lever_21496/\n?? results/week_04/runs/20261009T050755_insertion_policy_seed2_cad_ins_21400_s2/\n?? results/week_04/runs/20261009T050910_insertion_policy_seed3_cad_ins_21400_s3/\n?? results/week_04/runs/20261009T051023_insertion_policy_seed4_cad_ins_21400_s4/\n?? results/week_04/runs/20261009T051242_847159Z_pick_seed42/\n?? results/week_04/runs/20261009T052042_706021Z_combiner_seed42/\n?? results/week_04/runs/20261009T052551_047380Z_combiner_seed2026/\n?? results/week_04/runs/20261009T053144_cup_unifp_wrist_seed1_old_cup_57499/\n?? results/week_04/runs/20261009T053210_combiner_unifp_wrist_seed1_old_box_57499/\n?? results/week_04/runs/20261009T053311_combiner_unifp_wrist_corr_seed1_old_boxfix_s1/\n?? results/week_04/runs/20261009T053413_combiner_unifp_wrist_corr_seed2_old_boxfix_s2/\n?? results/week_04/runs/20261009T053515_combiner_mech_law_seed1_old_door16_17499/\n?? results/week_04/runs/20261009T053620_combiner_mech_law_seed1_old_lever_21496/\n?? results/week_04/runs/20261009T053729_insertion_policy_seed2_old_ins_21400_s2/\n?? results/week_04/runs/20261009T053843_insertion_policy_seed3_old_ins_21400_s3/\n?? results/week_04/runs/20261009T053959_insertion_policy_seed4_old_ins_21400_s4/\n?? results/week_04/runs/20261009T054226_035077Z_pick_seed42/\n?? results/week_04/runs/20261009T055042_283323Z_combiner_seed42/\n?? results/week_04/runs/20261009T055823_450019Z_combiner_seed2026/\n?? results/week_04/runs/20261009T060518_586613Z_combiner_seed42/\n?? results/week_04/runs/20261009T060723_680696Z_playback_arm_+1.0_+0.0_+0.0/\n?? results/week_04/runs/20261009T060740_637696Z_playback_arm_+0.0_+0.5_+0.0/\n?? results/week_04/runs/20261009T060757_497285Z_playback_arm_+0.0_+0.0_+1.0/\n?? results/week_04/runs/20261009T060814_409239Z_playback_arm_+1.0_+0.0_+0.0/\n?? results/week_04/runs/20261009T060830_978830Z_playback_arm_+0.0_+0.5_+0.0/\n?? results/week_04/runs/20261009T060848_356722Z_playback_arm_+0.0_+0.0_+1.0/\n?? results/week_04/runs/20261009T060853_train_seed3_ins_cadft/\n?? results/week_04/runs/20261009T061304_980982Z_verify_seed42/\n?? results/week_04/runs/20261009T061339_eval_seed20260921_c33_base_reach57499/\n?? results/week_04/runs/20261009T061417_mech_eval_seed1_c33_base_mech_test_17499/\n?? results/week_04/runs/20261009T061453_mech_eval_seed1_c33_base_lever_21496/\n?? results/week_04/runs/20261009T061525_mech_eval_seed1_c33_base_lever_test_21496/\n?? results/week_04/runs/20261009T061557_ins_eval_seed1_c33_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T061638_ins_eval_seed1_c33_base_ins_detent_21400/\n?? results/week_04/runs/20261009T061718_rope_eval_seed1_c33_base_rope_dev_14600/\n?? results/week_04/runs/20261009T061753_rope_eval_seed1_c33_base_rope_test_14600/\n?? results/week_04/runs/20261009T061828_press_eval_seed1_c33_base_press_panel_pilot/\n?? results/week_04/runs/20261009T061856_press_eval_seed1_c33_base_press_force_pilot/\n?? results/week_04/runs/20261009T061929_press_eval_seed1_c33_base_press_recessed_pilot/\n?? results/week_04/runs/20261009T062001_wipe_eval_seed1_c33_base_wipe_pilot/\n?? results/week_04/runs/20261009T062109_cup_unifp_wrist_seed1_c33_cup_57499/\n?? results/week_04/runs/20261009T062138_combiner_unifp_wrist_seed1_c33_box_57499/\n?? results/week_04/runs/20261009T062244_combiner_unifp_wrist_corr_seed1_c33_boxfix_s1/\n?? results/week_04/runs/20261009T062347_combiner_unifp_wrist_corr_seed2_c33_boxfix_s2/\n?? results/week_04/runs/20261009T062450_combiner_mech_law_seed1_c33_door16_17499/\n?? results/week_04/runs/20261009T062555_combiner_mech_law_seed1_c33_lever_21496/\n?? results/week_04/runs/20261009T062704_insertion_policy_seed2_c33_ins_21400_s2/\n?? results/week_04/runs/20261009T062818_insertion_policy_seed3_c33_ins_21400_s3/\n?? results/week_04/runs/20261009T062932_insertion_policy_seed4_c33_ins_21400_s4/\n?? results/week_04/runs/20261009T063153_608379Z_pick_seed42/\n?? results/week_04/runs/20261009T063959_157314Z_combiner_seed42/\n?? results/week_04/runs/20261009T064508_850577Z_combiner_seed2026/\n?? results/week_04/runs/20261009T065120_500492Z_playback_arm_+1.0_+0.0_+0.0/\n?? results/week_04/runs/20261009T065137_298237Z_playback_arm_+0.0_+0.5_+0.0/\n?? results/week_04/runs/20261009T065154_222992Z_playback_arm_+0.0_+0.0_+1.0/\n?? results/week_04/runs/20261009T065159_train_seed3_ins_c33ft/\n?? results/week_04/runs/20261009T073714_ins_eval_seed1_c33ft_ins_lateral_model_21600/\n?? results/week_04/runs/20261009T073752_ins_eval_seed1_c33ft_ins_detent_model_21600/\n?? results/week_04/runs/20261009T073829_ins_eval_seed1_c33ft_ins_lateral_model_21800/\n?? results/week_04/runs/20261009T073906_ins_eval_seed1_c33ft_ins_detent_model_21800/\n?? results/week_04/runs/20261009T073943_ins_eval_seed1_c33ft_ins_lateral_model_22000/",
+  "ground_friction": 1.0,
+  "ins_conditions": {
+    "chamfer_m": 0.002,
+    "clearance_m": 0.001,
+    "depth_m": 0.018,
+    "detent_fraction": 0.65,
+    "max_n": 30.0,
+    "mu": 0.3,
+    "search_n": 6.0,
+    "speed_m_s": 0.02,
+    "standoff_m": 0.012
+  },
+  "ins_rows": [
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    }
+  ],
+  "ins_set": "detent",
+  "insertion": {
+    "approach_weight": null,
+    "compliant_grip": true,
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "engage_attitude_rad": null,
+    "hold_home": true,
+    "insertion_fraction": 0.8,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "roll_gain": 1.5,
+      "roll_max_rad": 0.6981317007977318,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "reward_true_targets": false
+  },
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "ins_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 96,
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": true,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "at_start_median_abs": {
+      "azimuth_deg": 2.11,
+      "elevation_deg": 2.4,
+      "roll_deg": 1.015,
+      "tip_miss_mm": 6.57
+    },
+    "by_detent": [
+      {
+        "approach_err_start_deg": 3.365,
+        "damaged": 0,
+        "detent_n": 0.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 12.14,
+        "peak_lateral_n": 6.3,
+        "searched": 8,
+        "seated": 19,
+        "time_to_seat_s": 1.48
+      },
+      {
+        "approach_err_start_deg": 3.145,
+        "damaged": 1,
+        "detent_n": 10.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 13.395,
+        "peak_lateral_n": 4.77,
+        "searched": 8,
+        "seated": 18,
+        "time_to_seat_s": 1.56
+      },
+      {
+        "approach_err_start_deg": 3.21,
+        "damaged": 0,
+        "detent_n": 20.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 10.41,
+        "peak_lateral_n": 6.955,
+        "searched": 8,
+        "seated": 5,
+        "time_to_seat_s": 1.58
+      },
+      {
+        "approach_err_start_deg": 3.36,
+        "damaged": 3,
+        "detent_n": 30.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 20.335,
+        "peak_lateral_n": 10.66,
+        "searched": 8,
+        "seated": 2,
+        "time_to_seat_s": 1.6
+      }
+    ],
+    "by_height": [
+      {
+        "approach_err_start_deg": 2.12,
+        "damaged": 2,
+        "fell": 0,
+        "height_m": 0.7,
+        "of": 32,
+        "peak_contact_n": 10.54,
+        "peak_lateral_n": 3.25,
+        "searched": 32,
+        "seated": 5,
+        "time_to_seat_s": 1.94
+      },
+      {
+        "approach_err_start_deg": 2.92,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.78,
+        "of": 32,
+        "peak_contact_n": 9.495,
+        "peak_lateral_n": 4.585,
+        "searched": 0,
+        "seated": 18,
+        "time_to_seat_s": 1.5
+      },
+      {
+        "approach_err_start_deg": 4.185,
+        "damaged": 2,
+        "fell": 0,
+        "height_m": 0.86,
+        "of": 32,
+        "peak_contact_n": 22.165,
+        "peak_lateral_n": 15.725,
+        "searched": 0,
+        "seated": 21,
+        "time_to_seat_s": 1.54
+      }
+    ],
+    "by_lateral": [
+      {
+        "approach_err_start_deg": 3.33,
+        "damaged": 4,
+        "fell": 0,
+        "lateral_m": 0.0015,
+        "of": 96,
+        "peak_contact_n": 12.22,
+        "peak_lateral_n": 5.435,
+        "searched": 32,
+        "seated": 44,
+        "time_to_seat_s": 1.52
+      }
+    ],
+    "by_roll": [
+      {
+        "approach_err_start_deg": 2.97,
+        "damaged": 4,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 14.77,
+        "peak_lateral_n": 9.765,
+        "roll_rad": 0.0,
+        "searched": 16,
+        "seated": 22,
+        "time_to_seat_s": 1.56
+      },
+      {
+        "approach_err_start_deg": 3.37,
+        "damaged": 0,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 10.595,
+        "peak_lateral_n": 3.45,
+        "roll_rad": 1.5707963267948966,
+        "searched": 16,
+        "seated": 22,
+        "time_to_seat_s": 1.5
+      }
+    ],
+    "damaged": 4,
+    "entered": 76,
+    "episodes": 96,
+    "ever_seated": 44,
+    "fell": 0,
+    "seated": 44,
+    "started": 96
+  },
+  "task": "insertion",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

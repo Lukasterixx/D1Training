@@ -59,8 +59,25 @@ class InterfaceTimingTests(unittest.TestCase):
             interface_timing("measured", 50.0, "unitree")
 
     def test_d1_limits_cover_the_six_arm_joints(self):
-        self.assertEqual(list(D1_EFFORT_LIMIT_NM.values()), [3.3, 3.3, 1.7, 1.7, 1.7, 1.7])
+        self.assertEqual(list(D1_EFFORT_LIMIT_NM.values()), [3.3, 3.33, 3.33, 1.7, 1.7, 1.7])  # Joint2-3 3.33: 2026-10-09
         self.assertEqual(list(D1_VELOCITY_LIMIT_RAD_S), [f"Joint{i}" for i in range(1, 7)])
+
+    def test_the_arm_effort_limits_agree_everywhere(self):
+        # Four copies: the URDF (the import's drives, the RViz model), motor_model (the force drives), the UniFP
+        # interface (its actuator and rewards) and the CPU workspace model (holdability). Joint3 went 1.7 -> 3.33 on
+        # 2026-10-09 in all four at once.
+        import xml.etree.ElementTree as ET
+        from pathlib import Path
+
+        from position_only.workspace import EFFORT_LIMIT_NM
+        from unifp_isaaclab.interface import TORQUE_LIMITS
+
+        root = ET.parse(Path(__file__).resolve().parent.parent / "d1_arm" / "d1.urdf").getroot()
+        urdf = {j.get("name"): float(j.find("limit").get("effort")) for j in root.findall("joint")}
+        ours = list(D1_EFFORT_LIMIT_NM.values())
+        self.assertEqual([urdf[name] for name in D1_EFFORT_LIMIT_NM], ours)
+        self.assertEqual(list(EFFORT_LIMIT_NM), ours)
+        self.assertEqual(list(TORQUE_LIMITS[12:18]), ours)
 
 
 class SampleAndHoldTests(unittest.TestCase):

@@ -708,6 +708,10 @@ def main() -> int:
                        list(args.mount_pos if args.mount_pos is not None else __import__("mount").ARM_MOUNT_POS_M),
         "robot_usd": robot_usd,
         "robot_usd_sha256": hashlib.sha256(Path(robot_usd).read_bytes()).hexdigest(),
+        # The D1's Joint1-6 effort limits the actuator clips at: Joint3 was 1.7 N·m until 2026-10-09, 3.33 since.
+        "arm_effort_limits_nm": list(interface.TORQUE_LIMITS[12:18]),
+        # The welded USD only references the imported arm, so its hash does not change with the arm; this one does.
+        "d1_urdf_sha256": hashlib.sha256((ROOT / "d1_arm/d1.urdf").read_bytes()).hexdigest(),
         "stack": stack_versions(),
         "git_commit": git_output("rev-parse", "HEAD"),
         "git_status": git_output("status", "--short"),

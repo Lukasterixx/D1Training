@@ -76,8 +76,11 @@ def dc_motor_effort_bounds(joint_vel, saturation_effort, effort_limit, velocity_
 
 D1_ARM_JOINTS = [f"Joint{i}" for i in range(1, 7)]
 
-# Unitree D1-550 published joint torques (README, "The arm's mass"): first two joints 3.3 N·m, last four 1.7.
-D1_EFFORT_LIMIT_NM = dict(zip(D1_ARM_JOINTS, (3.3, 3.3, 1.7, 1.7, 1.7, 1.7)))
+# Joint1 and Joint4-6: Unitree D1-550 published joint torques (README, "The arm's mass"): 3.3 N·m, then 1.7.
+# Joint2 and Joint3: 3.33 N·m, URDF-unverified. Unitree's D1-550 URDF gives both 3.33, and in Unitree's CAD the shoulder
+# and elbow servos have identical housings (F-137), so Lukas took them for the same motor (2026-10-09). The published
+# table gives Joint3 1.7, which this used until then. An identical housing does not prove an identical gearbox: not measured.
+D1_EFFORT_LIMIT_NM = dict(zip(D1_ARM_JOINTS, (3.3, 3.33, 3.33, 1.7, 1.7, 1.7)))
 
 # MEASURED on the arm, 2026-09-16 (F-033): a 30 deg step on each joint in turn, commanded through
 # funcode 2 mode 0 (the fast path -- mode 1 slews at a fifth of this, F-031), peak rate taken from

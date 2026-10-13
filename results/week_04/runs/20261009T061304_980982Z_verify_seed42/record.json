@@ -1,0 +1,36 @@
+{
+  "id": "20261009T061304_980982Z_verify_seed42",
+  "title": "G0 verify, CAD lengths, Joint2-3 3.33 N m",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-09T17:13:34+11:00",
+  "started_utc": "2026-10-09T06:13:04+00:00",
+  "source_dir": "logs/position_only/20261009T061304_980982Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_passed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": true,
+    "passed": 25,
+    "total": 25,
+    "failed": [],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

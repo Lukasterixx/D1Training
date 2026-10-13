@@ -28,6 +28,451 @@ From the [revised Thesis B plan](../../docs/thesis_b_plan.md#thesis-b-weekly-sch
 <!-- Dated entries (### YYYY-MM-DD · topic). For each: the exact command or change, the outcome in numbers,
      and what it does and does not show. Record runs with ./dashboard.py record. -->
 
+### 2026-10-09 · The D1 given Unitree's CAD lengths (F-139) and a 3.33 N·m shoulder and elbow (F-140), and everything that reads them re-run
+
+**Lukas:** "can you modify the urdf to match the cad file, and then rerun all the tests that this change would affect.
+you have over a day of gpu for this". This follows F-137 (2026-10-08).
+
+**Numbering (2026-10-13):** written as F-138–F-140, renumbered F-139–F-141 when `origin/main`'s 81b3a13 was merged in:
+its F-138 (the wrist camera's bracket, below) took the number first.
+
+**The change: five joint origins in `d1_arm/d1.urdf`.** The rule: every joint axis sits at q = 0 where the CAD puts it.
+Each origin's component along its own joint's axis is kept, so `d1_description`'s meshes stay where they sit on their
+axes. `python3 d1_arm/compare_cad.py <D1-550 .stp> <d1_550_description.urdf>` prints the result against both.
+
+| origin | before | after | what it sets | CAD |
+| --- | --- | --- | --- | --- |
+| Joint2 z | 0.0563 | 0.0548 | shoulder above the base's bottom face | 130.80 mm |
+| Joint3 y | 0.2693 | 0.27 | upper arm, Joint2 → Joint3 | 270.00 |
+| Joint3 z | 0.0009 | 0 | the forearm's roll line off Joint1's axis (was 1.40 mm) | 0.50 |
+| Joint4 y | 0.042 | 0.041325 | elbow offset, Joint3 axis → roll line | 41.32 |
+| Joint5 z | 0.14018 | 0.146973 | forearm, Joint3 → Joint5 along the roll line | 204.67 |
+| Joint6 x | 0.0825 | 0.080781 | Joint5 → the closed fingertips | 206.38 |
+
+- **Matched.** Every row of `compare_cad.py` now matches the CAD to 0.01 mm, and the wrist roll's line sits 0.38 mm off
+  Joint1's axis, as in the CAD.
+- **One residual.** The wrist roll line sits 0.98 mm below the forearm's, against the CAD's 0.62. Unitree's D1-550 URDF
+  has 0.97 too; left as it was.
+- **Joint3 z** is beyond F-137's five lengths. The CAD's 0.50 mm comes from the coaxial-cylinder fit, with its sign
+  mapped through the elbow's geometry. The D1-550 URDF has −0.50 mm, the same.
+
+What was kept, and why:
+- **The hand: `d1_description`'s.**
+  - The controlled point and everything fixed in the hand's frames sit on it: `TOOL_OFFSET_M`, the jaw centre
+    (`Link6 + 0.1051`), the L-claw lips, `grasp.py`'s finger measurements and the key.
+  - It is not the CAD's hand. The D1-550 URDF's jaws are 67 mm long against 62, and its gripper housing starts ~6 mm
+    nearer the wrist. Its jaws close to a 0 mm gap and open to 66 mm; `d1.urdf`'s go from 17.2 mm to 77.2 mm.
+  - Placing the tips on the CAD's puts this hand's housing ~6 mm further out than the CAD's. None of it was measured
+    on the arm.
+- **The link meshes: `d1_description`'s, each on its CAD axis.** They still overlap at every joint. The forearm tube now
+  reaches 6.5 mm into the wrist housing, where it reached 13.3.
+- **The inertials: unchanged in their link frames.** They are shells, which the weld scales to 3.152 kg.
+- **The effort limits, at first: Unitree's spec table**, Joint3 1.7 N·m, since the CAD does not settle it (F-137).
+  Lukas then set the shoulder and elbow to 3.33 N·m (below).
+
+**One measurement disagrees with the CAD.** Lukas's ruler (2026-09-30, F-126) put the shoulder 76 + 56.3 = 132.3 mm above
+the base's bottom face. The CAD has 130.8: its rotating plate's top at 75.5, then 55.3 to the shoulder axis. The URDF
+follows the CAD, as asked. A caliper reading from the bottom face to the shoulder axis settles the 1.5 mm.
+`measured_base.py`'s docstring now says so; its table of what was measured is unchanged.
+
+**Also changed:**
+- **`description/go2_d1.urdf`, rebuilt:**
+  `python3 description/build_go2_d1_urdf.py ~/go2_ws/Go2RemoteConnection/description/go2/go2.urdf`.
+  - The diff is the five origins and nothing else.
+  - The script's default source, P2Dingo's `go2.urdf`, now draws a heatshield whose meshes are not in this repository,
+    so it was not used.
+- **`demos/cup/d1_ui/server.py`** reads the shoulder height off `d1.urdf`. It had `0.076 + 0.0563` written in, which
+  went stale for the second time.
+- **`mount.ARM_SHIFT_FROM_LEGACY_M`: unchanged.** It is the base's move, and the scenes were not moved again for a
+  1.5 mm shoulder. Its comment says the arm above the base changed.
+- **`task_space.ZERO_ACTION_TIP_M`: re-measured** (below).
+- **The README's table row and `d1.urdf`'s header** say what changed.
+
+**Not changed:**
+- The Isaac Gym asset (`~/thesis_b_legacy/UniFP/resources/robots/go2d1/go2d1.urdf`, from
+  `unifp_go2d1/build_asset.py`). It has been stale since 2026-09-20: it was not rebuilt after F-125 or F-126 either,
+  and nothing current uses it.
+- **The real arm.** `d1_ik.py` and `d1_hardware.py` read `d1.urdf` at import, and `demos/cup/run_ui.sh` copies it to the
+  dog on deploy. The next deploy plans with the CAD lengths. Nothing was run on hardware.
+
+**Tests** (`python -m unittest discover -s . -p "test_*.py"`, Isaac env):
+- **Old arm**, HEAD `054983a` in a scratch worktree: 674 run, 1 fail. It is the combiner tag-pose test, at 5.18 mm
+  against 5.0, as since 2026-10-06.
+- **Corrected arm**, before re-pinning: 3 fail, all in `tests/test_workspace.py`, all forward-kinematics pins.
+  - Link6 at the zero pose: (0.2614, −0.0013, 0.5281) → (0.2665, −0.0004, 0.5266) m.
+  - The tool point: (0.3867, −0.0139, 0.5277) → (0.3918, −0.0130, 0.5262) m.
+  - The scenes' shift as the move of the whole arm. That was true only while the arm above its base was
+    `d1_description`'s. Now renamed `test_the_scenes_shift_is_the_arms_base_move_from_the_legacy_one`. It checks
+    Link1's move from the legacy arm against the shift exactly. It checks Link6's against the shift plus the arm's own
+    change at the zero pose, (+5.07, +0.90, −1.48) mm.
+- **After re-pinning: 674 run, all pass** (5 skipped). `tests/test_evidence.py` passes on the system Python.
+- **The tag-pose test now passes, at 3.94 mm.** Take that as chance, not a fix: F-128 put the estimator's p90 at
+  ~6.5 mm over placements.
+
+**G0** (`python run_position_only.py verify --headless --num_envs 8`):
+[**25/25**](#/week/4/run/20261009T044449_261854Z_verify_seed42).
+- Link6 matches URDF kinematics to 0.64 µm and the tool point to 0.72 µm.
+- The resting tip is (0.3435, −0.0131, 0.7913) m, 5.8 mm from the recorded one (2.3 mm before).
+- The box is 17.2 cm from it, against 17.4.
+
+**Stance probe** (Week 3's `stance_probe.py`, run from a copy with its `/home/lukas` paths changed;
+[json](figures/stance_probe_cad_arm.json)):
+- The base settles at (−0.0570, 0, 0.2736) m, unchanged to 0.1 mm.
+- The resting tip is **(0.3430, −0.0131, 0.7890) m**: +5.2, +1.0 and −1.6 mm from before. `task_space.ZERO_ACTION_TIP_M`
+  holds it.
+
+**The CPU models on both arms:**
+- **Workspace** (`python -m position_only.workspace --out …`; [json](figures/d1_workspace_cad_arm.json),
+  [png](figures/d1_workspace_cad_arm.png)). At the settled height the pincer tip reaches 98.71% of the target box, all
+  of it clear and holdable (old arm 98.99%). The model misses the measured resting tip by 13.7 mm (13.5).
+- **F-101's force study and the direction capacities.** The Week 2 scripts were run on copies, so their records stand
+  ([json](figures/force_transmission_study_cad_arm.json), [json](figures/direction_capacity_cad_arm.json)).
+  - The arm-alone capacities agree to 1%. The typical horizontal pull's median is 9.43 N against 9.44; down 9.1
+    against 9.2; up 2.5 against 2.6. So `mech_cfg.LEVER_PEAK_N`'s basis stands.
+  - The best robust standing pull is 45.0 N against 49.2. The search's best posture moved from a 0.45 m handle to
+    0.40 m.
+  - Pulling stays the stable direction. At the level 0.35 m posture no pull destabilises the pinned arm at any
+    stiffness scale; a push does at 36–360 N.
+
+**Then the shoulder and elbow: 3.33 N·m.** Mid-session Lukas wrote: "Actually, I'm pretty convinced the shoulder and
+elbow motors are the same so we should retrain assuming 3.33 for both".
+- **Changed, all four copies at once.** Joint2 3.3 → 3.33 and Joint3 1.7 → 3.33 N·m in:
+  - `d1.urdf`'s `<limit effort>` (rebuilt into `description/go2_d1.urdf`);
+  - `motor_model.D1_EFFORT_LIMIT_NM` (the force drives), labelled URDF-unverified with its source: the D1-550 URDF, the
+    CAD's identical housings (F-137), Lukas's call;
+  - `unifp_isaaclab/interface.TORQUE_LIMITS` (the UniFP actuator, the torque-limit reward, the arm-margin terms);
+  - `position_only/workspace.EFFORT_LIMIT_NM` (holdability in the scripted planners).
+- **Unchanged.** Joint1 stays at the table's 3.3 and Joint4–6 at 1.7: Lukas named only the shoulder and elbow.
+- **Recorded.** `run_unifp_train.py` writes `arm_effort_limits_nm` into every run's `run.json`, so a run says which elbow
+  it had.
+- **Docs that stated the old limits:** `docs/position_only_environment.md` (the torque limits) and
+  `unifp_train/README.md` (which rope policy goes with which elbow) now say both.
+- **The insertion fine-tune that had just started** on the 1.7 N·m elbow was stopped after 10 iterations and recorded as
+  interrupted ([run](#/week/4/run/20261009T060853_train_seed3_ins_cadft)).
+- **Tests.**
+  - New: `test_the_arm_effort_limits_agree_everywhere` (the four copies).
+  - The arm-margin test now takes Joint3's limit from `interface`; it had 1.7 written in.
+  - The two Isaac Gym fidelity tests keep comparing against their recordings, now with the departure stated.
+    - `test_control_constants` checks the recording's 3.3 and 1.7, then expects 3.33.
+    - The reward replay patches the recording's own limits in for its run.
+  - **675 run, all pass** (5 skipped). `test_evidence` passes on the system Python.
+- **Position-only manifests now report a condition mismatch.** They record the effort limits in their conditions, so a
+  position-only frozen evaluation on this robot is flagged as a different robot, which it is. The UniFP manifests
+  record no limits.
+- **G0** ([verify](#/week/4/run/20261009T061304_980982Z_verify_seed42)): **25/25**.
+  - Link6 0.71 µm, the tool point 0.84 µm.
+  - The resting tip is 2.3 mm from the re-measured one: the elbow's limit does not move the rest pose.
+- **The CPU models with the 3.33 N·m elbow** ([json](figures/direction_capacity_cad_arm_elbow333.json),
+  [json](figures/force_transmission_study_cad_arm_elbow333.json)). Medians, the arm alone:
+
+  | | 1.7 N·m elbow | 3.33 N·m elbow |
+  | --- | --- | --- |
+  | lift (up) | 2.5 N | 5.8 N |
+  | push down | 9.1 N | 12.3 N |
+  | pull back | 9.4 N | 10.4 N |
+  | typical horizontal pull | 9.43 N | 10.47 N |
+  | best robust standing pull | 45.0 N | 64.6 N |
+
+  - The joint that binds first moves from Joint3 to Joint1 and Joint2.
+  - `mech_cfg.LEVER_PEAK_N` (3–35 N) was drawn against the 1.7 N·m capacities ("median 9 N downward") and is not
+    changed, so the mechanism tasks stay as they were.
+  - The target box stays 98.71% reachable, clear and holdable: at the settled height reach limits it, not torque.
+
+**The checkpoints in use, on their frozen sets, on all three robots.**
+- Every evaluation ran today with the same code on the same GPU. The two corrected robots ran from this tree; the old
+  arm ran from the worktree at `054983a`.
+- The old-arm numbers reproduce F-127's and F-136's exactly. So these evaluations are deterministic here, and every
+  difference below comes from the robot.
+
+| policy | frozen set | old arm | CAD lengths, elbow 1.7 | CAD lengths, elbow 3.33 |
+| --- | --- | --- | --- | --- |
+| reach `57499` | 50 episodes, fingertip, settled median / p90 | [1.70 / 2.16 cm](#/week/4/run/20261009T045509_eval_seed20260921_old_base_reach57499) | [1.71 / 2.16 cm](#/week/4/run/20261009T044740_eval_seed20260921_cad_base_reach57499) | [1.78 / 2.19 cm](#/week/4/run/20261009T061339_eval_seed20260921_c33_base_reach57499) |
+| mechanism `17499` | held-out test, of 512 | [498](#/week/4/run/20261009T045537_mech_eval_seed1_old_base_mech_test_17499) (button 114) | [497](#/week/4/run/20261009T044810_mech_eval_seed1_cad_base_mech_test_17499) (button 113) | [491](#/week/4/run/20261009T061417_mech_eval_seed1_c33_base_mech_test_17499) (button 107), **4 falls** |
+| lever `21496` | levers ≤ 0.6 m, of 360 | [343](#/week/4/run/20261009T045607_mech_eval_seed1_old_base_lever_21496) | [344](#/week/4/run/20261009T044848_mech_eval_seed1_cad_base_lever_21496) | [336](#/week/4/run/20261009T061453_mech_eval_seed1_c33_base_lever_21496) |
+| lever `21496` | held-out test, of 512 | [505](#/week/4/run/20261009T045637_mech_eval_seed1_old_base_lever_test_21496) (button 123) | [502](#/week/4/run/20261009T044918_mech_eval_seed1_cad_base_lever_test_21496) (button 119) | [492](#/week/4/run/20261009T061525_mech_eval_seed1_c33_base_lever_test_21496) (button 108) |
+| insertion `21400` | 96 lateral, seated (damaged) | [73 (1)](#/week/4/run/20261009T045707_ins_eval_seed1_old_base_ins_lateral_21400) | [77 (1)](#/week/4/run/20261009T044948_ins_eval_seed1_cad_base_ins_lateral_21400) | [76 (1)](#/week/4/run/20261009T061557_ins_eval_seed1_c33_base_ins_lateral_21400) |
+| insertion `21400` | 96 detent, seated (damaged) | [68 (4)](#/week/4/run/20261009T045748_ins_eval_seed1_old_base_ins_detent_21400) | [67 (**8**)](#/week/4/run/20261009T045028_ins_eval_seed1_cad_base_ins_detent_21400) | [79 (2)](#/week/4/run/20261009T061638_ins_eval_seed1_c33_base_ins_detent_21400) |
+| rope `14600` | development, mean at 20 / 35 / 50 N; falls | [22.0 / 34.7 / 50.1 N; 0 of 108](#/week/4/run/20261009T045829_rope_eval_seed1_old_base_rope_dev_14600) | [21.7 / 34.3 / 49.8 N; 0 of 108](#/week/4/run/20261009T045111_rope_eval_seed1_cad_base_rope_dev_14600) | [**26.8 / 40.3 / 56.0 N**; 0 of 108](#/week/4/run/20261009T061718_rope_eval_seed1_c33_base_rope_dev_14600) |
+| rope `14600` | held out, mean at 15 / 30 / 45 N; falls | [17.4 / 30.0 / 44.3 N; 0 of 192](#/week/4/run/20261009T045905_rope_eval_seed1_old_base_rope_test_14600) | [16.8 / 29.6 / 43.9 N; 0 of 192](#/week/4/run/20261009T045152_rope_eval_seed1_cad_base_rope_test_14600) | [**21.3 / 35.6 / 51.1 N**; 0 of 192](#/week/4/run/20261009T061753_rope_eval_seed1_c33_base_rope_test_14600) |
+| press pilot `21599` | panel / force / recessed | [63/96](#/week/4/run/20261009T045944_press_eval_seed1_old_base_press_panel_pilot) / [19/48](#/week/4/run/20261009T050012_press_eval_seed1_old_base_press_force_pilot) / [31/72](#/week/4/run/20261009T050040_press_eval_seed1_old_base_press_recessed_pilot) (3 damaged) | [64/96](#/week/4/run/20261009T045247_press_eval_seed1_cad_base_press_panel_pilot) / [21/48](#/week/4/run/20261009T045320_press_eval_seed1_cad_base_press_force_pilot) (2 damaged) / [30/72](#/week/4/run/20261009T045351_press_eval_seed1_cad_base_press_recessed_pilot) (3) | [57/96](#/week/4/run/20261009T061828_press_eval_seed1_c33_base_press_panel_pilot) / [20/48](#/week/4/run/20261009T061856_press_eval_seed1_c33_base_press_force_pilot) / [30/72](#/week/4/run/20261009T061929_press_eval_seed1_c33_base_press_recessed_pilot) (1) |
+| wipe pilot `21599` | 36 paths | [23/36](#/week/4/run/20261009T050109_wipe_eval_seed1_old_base_wipe_pilot), pad tilt 9.3° | [22/36](#/week/4/run/20261009T045422_wipe_eval_seed1_cad_base_wipe_pilot), 8.7° | [21/36](#/week/4/run/20261009T062001_wipe_eval_seed1_c33_base_wipe_pilot), 8.6° |
+
+What it shows:
+- **The lengths alone: the closed-loop policies hardly notice the 6 mm.**
+  - The reach policy's error is unchanged: it tracks the measured tool point, wherever the kinematics put it.
+  - The mechanism and lever policies move by 1–4 episodes of 360–512.
+  - The rope pull holds every level with no fall, about 0.4 N lower than before.
+  - Insertion, the millimetre task, moves most: 4 more lateral slots seated, but 8 detent slots damaged against 4.
+  - None of this is a loss the size of F-127's. The base change cost the unretrained reach policy 1.51 → 4.35 cm, and
+    insertion (`21200`) 75 → 33 lateral slots.
+- **The 3.33 N·m elbow matters more than the lengths.**
+  - **The rope policy over-pulls by ~6 N** at every level (held out 21.3 / 35.6 / 51.1 N for 15 / 30 / 45). It learnt
+    to pull against an elbow that saturated at 1.7 N·m (F-135), and a stronger elbow adds force the policy did not
+    expect. Still no fall in 300 releases.
+  - **The mechanism controller falls for the first time:** 4 times, all on the button's two highest levels, and it
+    opens 491 of 512. The lever policy loses 8 levers and 10 of the test.
+  - **Insertion's detent damage drops back** (2, seating 79). Whether that is the elbow or chance is not separable on
+    one set.
+  - Reach and wipe barely move. The press panel loses 6.
+
+What it does not show: anything at hardware scale (nothing ran on the arm), or a second seed. Each difference holds for
+these sets on this GPU. Differences of 1–4 episodes are within what any small perturbation moves.
+
+**The PhysX demos on all three robots.** Each demo was run on each today, with the commands of
+2026-10-06 (F-127–F-129) and the checkpoints in use.
+
+| demo | old arm | CAD lengths, elbow 1.7 | CAD lengths, elbow 3.33 |
+| --- | --- | --- | --- |
+| UniFP cup, `57499`, `--wrist` | [7/16](#/week/4/run/20261009T053144_cup_unifp_wrist_seed1_old_cup_57499) (10 picked, 3 spilt, 1 knocked over) | [10/16](#/week/4/run/20261009T050209_cup_unifp_wrist_seed1_cad_cup_57499) (13 picked, 3 spilt) | [6/16](#/week/4/run/20261009T062109_cup_unifp_wrist_seed1_c33_cup_57499) (9 picked, 3 spilt, 1 knocked over) |
+| UniFP box, `57499`, `--wrist` | [0/16](#/week/4/run/20261009T053210_combiner_unifp_wrist_seed1_old_box_57499) | [1/16](#/week/4/run/20261009T050235_combiner_unifp_wrist_seed1_cad_box_57499) | [3/16](#/week/4/run/20261009T062138_combiner_unifp_wrist_seed1_c33_box_57499) |
+| UniFP box, scripted fix, seeds 1 + 2 | [9](#/week/4/run/20261009T053311_combiner_unifp_wrist_corr_seed1_old_boxfix_s1) + [3](#/week/4/run/20261009T053413_combiner_unifp_wrist_corr_seed2_old_boxfix_s2) = 12/32 | [7](#/week/4/run/20261009T050336_combiner_unifp_wrist_corr_seed1_cad_boxfix_s1) + [4](#/week/4/run/20261009T050439_combiner_unifp_wrist_corr_seed2_cad_boxfix_s2) = 11/32 | [2](#/week/4/run/20261009T062244_combiner_unifp_wrist_corr_seed1_c33_boxfix_s1) + [3](#/week/4/run/20261009T062347_combiner_unifp_wrist_corr_seed2_c33_boxfix_s2) = **5/32** |
+| standing combiner, mechanism `17499`, 16 N·m door | [16/16](#/week/4/run/20261009T053515_combiner_mech_law_seed1_old_door16_17499) | [16/16](#/week/4/run/20261009T050542_combiner_mech_law_seed1_cad_door16_17499) | [16/16](#/week/4/run/20261009T062450_combiner_mech_law_seed1_c33_door16_17499) |
+| lever demo, `21496` | [16/16](#/week/4/run/20261009T053620_combiner_mech_law_seed1_old_lever_21496) | [16/16](#/week/4/run/20261009T050646_combiner_mech_law_seed1_cad_lever_21496) | [**9/16, 2 falls**](#/week/4/run/20261009T062555_combiner_mech_law_seed1_c33_lever_21496) |
+| insertion, `21400`, seeds 2 / 3 / 4 | [46/48](#/week/4/run/20261009T053729_insertion_policy_seed2_old_ins_21400_s2), [45/48](#/week/4/run/20261009T053843_insertion_policy_seed3_old_ins_21400_s3), [88/96](#/week/4/run/20261009T053959_insertion_policy_seed4_old_ins_21400_s4) | [47/48](#/week/4/run/20261009T050755_insertion_policy_seed2_cad_ins_21400_s2), [46/48](#/week/4/run/20261009T050910_insertion_policy_seed3_cad_ins_21400_s3), [88/96](#/week/4/run/20261009T051023_insertion_policy_seed4_cad_ins_21400_s4); no damage, no falls in either | [44/48](#/week/4/run/20261009T062704_insertion_policy_seed2_c33_ins_21400_s2), [44/48](#/week/4/run/20261009T062818_insertion_policy_seed3_c33_ins_21400_s3), [89/96](#/week/4/run/20261009T062932_insertion_policy_seed4_c33_ins_21400_s4); no damage, no falls |
+| lying cup pick, 11 sweep stops | [11/11](#/week/4/run/20261009T054226_035077Z_pick_seed42) | [11/11](#/week/4/run/20261009T051242_847159Z_pick_seed42), lift 0.117–0.119 m in both | [11/11](#/week/4/run/20261009T063153_608379Z_pick_seed42) |
+| lying combiner, 0.3 N·m, seeds 42 / 2026 | [8/9](#/week/4/run/20261009T055042_283323Z_combiner_seed42), [8/8](#/week/4/run/20261009T055823_450019Z_combiner_seed2026) | [**4/9**](#/week/4/run/20261009T052042_706021Z_combiner_seed42), [**6/8**](#/week/4/run/20261009T052551_047380Z_combiner_seed2026) | [4/9](#/week/4/run/20261009T063959_157314Z_combiner_seed42), [6/8](#/week/4/run/20261009T064508_850577Z_combiner_seed2026), the same −40° stop |
+
+**The lying combiner's regression is a tolerance, not a plan.**
+- **Every failure is the same.** The sequence never arrives at its −40° search stop: "no arrival (worst joint error
+  0.031 rad; per joint [0.007, 0.008, 0.007, 0.031, 0.006, 0.027])".
+- **The success/failure split is exact.** Every attempt that saw the tag at +0° or −20° opened its door. Every one
+  that needed the −40° stop failed.
+- **The old arm was on the edge already.** It arrived at that stop with a 0.0291 rad error, inside the 0.03 rad
+  `Timing.arrive_tolerance_rad` by 0.0009. The new geometry settles at 0.031, just outside.
+- **What holds the joints off target.** Joint4's drive target is the command (−0.3194 rad) but the joint rests at
+  −0.3501, under a projected joint force of 0.023 N·m; Joint6 holds 0.026 rad off on 0.0002 N·m.
+- **Not a contact.** The arm's links stay ≥ 30 mm apart at both poses. A run with the articulation's self-collisions
+  off fails identically, to the third decimal
+  ([diagnostic](#/week/4/run/20261009T060518_586613Z_combiner_seed42)).
+- **A loose end in the servo model.** These torques read like weak, inertia-scaled drives rather than the 4000 N·m/rad
+  force drive `d1_servo` sets: Joint6 sits 0.027 rad off on 0.0002 N·m, while Joint3 needs 1.07 N·m for 0.0066 rad.
+  Both arms are the same here, and this change does not cause it; worth checking against F-010 separately.
+- **Not changed.** The 0.03 rad tolerance is shared with the real arm's pick sequence (`demos/cup/pick_demo/sequence.py`),
+  so loosening it is Lukas's call. A probe with 0.035 rad, in memory only, is queued.
+
+**The walking playback's self-test** (`./run_sim.sh --headless --no_ros2 --selftest 10 --selftest_command …`, Week 1's
+command; the import's acceleration drives on the arm, as playback keeps them):
+
+| command | old arm | CAD lengths, elbow 1.7 | CAD lengths, elbow 3.33 |
+| --- | --- | --- | --- |
+| forward 1.0 m/s | [94.9%](#/week/4/run/20261009T060814_409239Z_playback_arm_+1.0_+0.0_+0.0), tilt 6.8°, arm 3.2 cm off its teleop target | [95.6%](#/week/4/run/20261009T060723_680696Z_playback_arm_+1.0_+0.0_+0.0), 6.9°, 3.6 cm | [94.6%](#/week/4/run/20261009T065120_500492Z_playback_arm_+1.0_+0.0_+0.0), 7.1°, 3.3 cm |
+| sideways 0.5 m/s | [87.9%](#/week/4/run/20261009T060830_978830Z_playback_arm_+0.0_+0.5_+0.0), 7.0°, 3.4 cm | [87.8%](#/week/4/run/20261009T060740_637696Z_playback_arm_+0.0_+0.5_+0.0), 7.7°, 3.3 cm | [88.2%](#/week/4/run/20261009T065137_298237Z_playback_arm_+0.0_+0.5_+0.0), 7.9°, 3.4 cm |
+| turning 1.0 rad/s | [96.3%](#/week/4/run/20261009T060848_356722Z_playback_arm_+0.0_+0.0_+1.0), 25.3°, 2.8 cm | [102.1%](#/week/4/run/20261009T060757_497285Z_playback_arm_+0.0_+0.0_+1.0), 23.8°, 3.2 cm | [100.7%](#/week/4/run/20261009T065154_222992Z_playback_arm_+0.0_+0.0_+1.0), 27.1°, 3.4 cm |
+
+No falls; the walking policy notices neither the arm's lengths nor its elbow.
+
+What the demos show:
+- **The lengths alone cost one demo.** The lying combiner fails on a tolerance (above); every other demo is within an
+  attempt or two, or better.
+- **The 3.33 N·m elbow costs the force demos, unretrained.**
+  - The lever demo falls from 16/16 to 9/16, with 2 falls.
+  - The UniFP box's scripted fix falls from 11/32 to 5/32.
+  - The standing combiner keeps 16/16, as do insertion (44/44/89) and the lying cup pick (11/11).
+  - The elbow changes nothing in the lying combiner: the same −40° stop fails.
+
+**The fine-tunes on the 3.33 N·m robot, each with its control.** Each lineage was continued with its own recipe from
+the checkpoint in use, once on this robot and once, identically, on the old arm (the worktree). The control is the one
+F-127 lacked: it separates what the robot does from what more training does. Every saved checkpoint was scored on the
+same frozen sets.
+
+*Insertion* (`21400`, 800 iterations at the pinned 1e-5 rate, curriculum from level 0.8, arm noise 0.15, seed 3: F-127's
+recipe). Runs: [3.33 N·m](#/week/4/run/20261009T065159_train_seed3_ins_c33ft), [old arm](#/week/4/run/20261009T074210_train_seed3_ins_oldft).
+
+| checkpoint | 3.33 N·m: lateral / detent seated (damaged) | old arm: lateral / detent seated (damaged) |
+| --- | --- | --- |
+| `21400`, as it is | 76 (1) / 79 (2) | 73 (1) / 68 (4) |
+| 21600 | [46 (0)](#/week/4/run/20261009T073714_ins_eval_seed1_c33ft_ins_lateral_model_21600) / [50 (1)](#/week/4/run/20261009T073752_ins_eval_seed1_c33ft_ins_detent_model_21600) | [49 (0)](#/week/4/run/20261009T082847_ins_eval_seed1_oldft_ins_lateral_model_21600) / [49 (0)](#/week/4/run/20261009T082924_ins_eval_seed1_oldft_ins_detent_model_21600) |
+| 21800 | [54 (0)](#/week/4/run/20261009T073829_ins_eval_seed1_c33ft_ins_lateral_model_21800) / [45 (2)](#/week/4/run/20261009T073906_ins_eval_seed1_c33ft_ins_detent_model_21800) | [38 (11)](#/week/4/run/20261009T083002_ins_eval_seed1_oldft_ins_lateral_model_21800) / [32 (14)](#/week/4/run/20261009T083039_ins_eval_seed1_oldft_ins_detent_model_21800) |
+| 22000 | [59 (0)](#/week/4/run/20261009T073943_ins_eval_seed1_c33ft_ins_lateral_model_22000) / [44 (4)](#/week/4/run/20261009T074020_ins_eval_seed1_c33ft_ins_detent_model_22000) | [48 (6)](#/week/4/run/20261009T083116_ins_eval_seed1_oldft_ins_lateral_model_22000) / [48 (4)](#/week/4/run/20261009T083153_ins_eval_seed1_oldft_ins_detent_model_22000) |
+| 22199 | [31 (0)](#/week/4/run/20261009T074057_ins_eval_seed1_c33ft_ins_lateral_model_22199) / [25 (0)](#/week/4/run/20261009T074134_ins_eval_seed1_c33ft_ins_detent_model_22199) | [41 (15)](#/week/4/run/20261009T083230_ins_eval_seed1_oldft_ins_lateral_model_22199) / [41 (14)](#/week/4/run/20261009T083307_ins_eval_seed1_oldft_ins_detent_model_22199) |
+
+What it shows:
+- **Every checkpoint of both runs is worse than where it started.** The control falls the same way, so it is the
+  recipe, not the robot.
+- **This is F-121's decline.** `21400` was already the best, 200 iterations into F-127's run of this recipe.
+  Restarting the recipe from there (its curriculum back at level 0.8, its noise reset) goes straight downhill.
+- **Insertion keeps `21400`.** On the 3.33 N·m robot it seats 76 and 79, with 1 and 2 damaged, as well as or better
+  than on the old arm.
+
+Not shown: whether a gentler continuation (fewer iterations, no curriculum restart) would help; nothing here asked for
+one.
+
+*Reach* (`57499`, 1,500 iterations, UniFP's recipe at the fingertip: F-127's). Runs:
+[3.33 N·m](#/week/4/run/20261009T083344_train_seed1_reach_c33ft), [old arm](#/week/4/run/20261009T094213_train_seed1_reach_oldft).
+Settled tool-tip error on the frozen 50 episodes, median / p90, no falls anywhere:
+
+| checkpoint | 3.33 N·m | old arm |
+| --- | --- | --- |
+| `57499`, as it is | 1.78 / 2.19 cm | 1.70 / 2.16 cm |
+| 58000 | [1.54 / 2.10](#/week/4/run/20261009T094034_eval_seed20260921_c33ft_reach_model_58000) | [1.84 / 2.72](#/week/4/run/20261009T104855_eval_seed20260921_oldft_reach_model_58000) |
+| 58400 | [**1.40 / 1.93**](#/week/4/run/20261009T094059_eval_seed20260921_c33ft_reach_model_58400) | [1.67 / 2.24](#/week/4/run/20261009T104920_eval_seed20260921_oldft_reach_model_58400) |
+| 58800 | [1.60 / 2.02](#/week/4/run/20261009T094124_eval_seed20260921_c33ft_reach_model_58800) | [1.57 / 2.29](#/week/4/run/20261009T104945_eval_seed20260921_oldft_reach_model_58800) |
+| 58998 | [1.85 / 2.90](#/week/4/run/20261009T094149_eval_seed20260921_c33ft_reach_model_58998) | [1.65 / 2.41](#/week/4/run/20261009T105009_eval_seed20260921_oldft_reach_model_58998) |
+
+What it shows:
+- **On the 3.33 N·m robot the fine-tune helps.** `58400` reaches 1.40 / 1.93 cm, the best this reach policy has
+  scored on any robot (F-118: 1.51 / 2.17 on its own). Three of the four checkpoints beat `57499` on both numbers.
+- **On the old arm the same training helps less.** The median falls to 1.57 cm at best, but every p90 is worse than
+  `57499`'s 2.16.
+- **The checkpoints swing by 0.3–0.5 cm.** So the gap between the arms is about the size of that swing.
+- **Candidate: `58400`**, re-scored in the demos below.
+
+Not shown: a second seed. `58400` was chosen on the set it is scored on, as F-127 chose `57499`, so its number is the
+optimistic one.
+
+*Lever* (`21496`, 1,000 iterations, the lever recipe: F-114's, as in F-127). Runs:
+[3.33 N·m](#/week/4/run/20261009T105034_train_seed1_lever_c33ft), [old arm](#/week/4/run/20261009T114145_train_seed1_lever_oldft).
+
+| checkpoint | 3.33 N·m: levers of 360 (falls) / test of 512 | old arm: levers (falls) / test |
+| --- | --- | --- |
+| `21496`, as it is | 336 (0) / 492 | 343 (0) / 505 |
+| 22000 | [344 (3)](#/week/4/run/20261009T113901_mech_eval_seed1_c33ft_lever_model_22000) / [474](#/week/4/run/20261009T113928_mech_eval_seed1_c33ft_lever_test_model_22000) | [354 (1)](#/week/4/run/20261009T122955_mech_eval_seed1_oldft_lever_model_22000) / [506](#/week/4/run/20261009T123022_mech_eval_seed1_oldft_lever_test_model_22000) |
+| 22400 | [344 (**12**)](#/week/4/run/20261009T113956_mech_eval_seed1_c33ft_lever_model_22400) / [494](#/week/4/run/20261009T114022_mech_eval_seed1_c33ft_lever_test_model_22400) | [332 (0)](#/week/4/run/20261009T123050_mech_eval_seed1_oldft_lever_model_22400) / [441](#/week/4/run/20261009T123117_mech_eval_seed1_oldft_lever_test_model_22400) |
+| 22495 | [352 (7)](#/week/4/run/20261009T114050_mech_eval_seed1_c33ft_lever_model_22495) / [479](#/week/4/run/20261009T114117_mech_eval_seed1_c33ft_lever_test_model_22495) | [349 (4)](#/week/4/run/20261009T123144_mech_eval_seed1_oldft_lever_model_22495) / [429](#/week/4/run/20261009T123211_mech_eval_seed1_oldft_lever_test_model_22495) |
+
+What it shows:
+- **On the 3.33 N·m robot the fine-tune opens more levers but starts falling.** It reaches 344–352 of 360 against
+  336, but with 3–12 falls where `21496` had none. No checkpoint beats `21496` on the held-out test (474–494 against
+  492).
+- **The control shows the same churn.** It swings 332–354 and 429–506, with up to 4 falls.
+- **The robot cannot be credited with any of it.** No checkpoint is a clear choice; the lever demo below decides
+  between them.
+
+*Mechanism* (`17499`, 1,000 iterations, its recipe at a pinned 1e-5 rate: new here). F-127's run at the adaptive rate
+made it worse, and its log asked for this. Runs: [3.33 N·m](#/week/4/run/20261009T123239_train_seed1_mech_c33ft),
+[old arm](#/week/4/run/20261009T132139_train_seed1_mech_oldft). Held-out mechanism test, of 512:
+
+| checkpoint | 3.33 N·m | old arm |
+| --- | --- | --- |
+| `17499`, as it is | 491 (button 107), 4 falls | 498 (button 114), 0 falls |
+| 18000 | [**497** (button 116), 0 falls](#/week/4/run/20261009T132016_mech_eval_seed1_c33ft_mech_test_model_18000) | [437 (button 70)](#/week/4/run/20261009T140933_mech_eval_seed1_oldft_mech_test_model_18000) |
+| 18400 | [465 (button 83)](#/week/4/run/20261009T132044_mech_eval_seed1_c33ft_mech_test_model_18400) | [483 (button 103)](#/week/4/run/20261009T141001_mech_eval_seed1_oldft_mech_test_model_18400) |
+| 18498 | [493 (button 119; door 118)](#/week/4/run/20261009T132112_mech_eval_seed1_c33ft_mech_test_model_18498) | [437 (button 65)](#/week/4/run/20261009T141028_mech_eval_seed1_oldft_mech_test_model_18498) |
+
+What it shows:
+- **On the 3.33 N·m robot the pinned fine-tune repairs what the elbow broke.** `18000` opens 497 with no fall
+  (`17499` on this robot: 491 with 4); `18498` opens 493.
+- **On the old arm the same training makes it worse.** Every checkpoint scores 437–483 against 498, mostly losing the
+  button, as F-127's adaptive-rate fine-tune did.
+- **So this gain is the robot's, not the training's.** The control rules out "more training helps". The pinned rate
+  alone does not stop continued training from eroding the button on the robot it was trained on.
+- **Candidate: `18000`**, re-scored in the standing-combiner demo below.
+
+*Rope* (`14600`, 400 iterations, F-136's polish recipe again). Runs:
+[3.33 N·m](#/week/4/run/20261009T141056_train_seed1_rope_c33ft), [old arm](#/week/4/run/20261009T143121_train_seed1_rope_oldft).
+Development set: mean tension at 20 / 35 / 50 N; tie-on tugs (episodes); falls after a release, of 108:
+
+| checkpoint | 3.33 N·m | old arm |
+| --- | --- | --- |
+| `14600`, as it is | 26.8 / 40.3 / 56.0 N; 32; 0 | 22.0 / 34.7 / 50.1 N; 19; 0 |
+| 14800 | [24.3 / 35.5 / 48.8 N; 52; **2**](#/week/4/run/20261009T143014_rope_eval_seed1_c33ft_rope_dev_model_14800) | [21.1 / 34.1 / 49.2 N; 25; 0](#/week/4/run/20261009T145037_rope_eval_seed1_oldft_rope_dev_model_14800) |
+| 14999 | [25.0 / 35.2 / 48.2 N; 29; **15**](#/week/4/run/20261009T143048_rope_eval_seed1_c33ft_rope_dev_model_14999) (one 50 N hold lost) | [22.7 / 35.9 / 50.6 N; 25; 9](#/week/4/run/20261009T145111_rope_eval_seed1_oldft_rope_dev_model_14999) |
+
+What it shows:
+- **The polish pulls the 3.33 N·m robot's over-pull back onto the command at 35 and 50 N.** At 20 N it stays 4–5 N over.
+- **It brings the sinking back.** Every "fall" here is an unnoticed snap, and none terminated: upright crouches below
+  the strict 0.15 m line, as F-133 traced. There are 2 of 36 at +200 and 15 of 36 at +400. The control sinks too
+  (9 at +400): continuing the polish past +200 erodes it on either robot, as F-136 saw.
+- **By the rope's selection rule** (falls, then tugged episodes, then force error, then holds; Week 4, 2026-10-07),
+  `14600` is still first on this robot: 0 falls, 6 N over at every level. `14800` is second.
+- **Two more seeds of the same polish** (3.33 N·m robot), so the rule has more to choose from. Development set, mean
+  tension at 20 / 35 / 50 N, and falls after a release, of 108:
+  - seed 2 ([run](#/week/4/run/20261009T163108_train_seed2_rope_c33ft_s2)): `14800` 25.3 / 35.6 / 48.6 N, 9 falls; `14999`
+    26.2 / 35.2 / 48.4 N, 7.
+  - seed 3 ([run](#/week/4/run/20261009T165205_train_seed3_rope_c33ft_s3)): `14800` 23.0 / 32.3 / 43.9 N, 6 falls (6 holds lost);
+    `14999` 26.7 / 36.5 / 49.6 N, 19.
+- **No polished checkpoint, of six, keeps the recovery.** Every one sinks in 2–19 unnoticed snaps, and none
+  terminates. By the rule `14600` stays first: on this robot it holds 21.3 / 35.6 / 51.1 N for 15 / 30 / 45 on the
+  held-out set, with no fall in 192 releases (above), 6 N over.
+- **So the polish cannot retune this policy for the stronger elbow without losing its recovery.** F-133's whole v3
+  recipe is being re-run on this robot from hook v4 `13000` (below).
+
+*Press and wipe pilots* (400 iterations each from insertion `21200`, the pilots of 2026-09-29 and F-127). Runs: press
+[3.33 N·m](#/week/4/run/20261009T145145_train_seed1_press_c33pilot) / [old arm](#/week/4/run/20261009T153354_train_seed1_press_oldpilot), wipe
+[3.33 N·m](#/week/4/run/20261009T151257_train_seed1_wipe_c33pilot) / [old arm](#/week/4/run/20261009T155509_train_seed1_wipe_oldpilot).
+
+| set | 3.33 N·m | old arm, today | old arm, F-127 (2026-10-05) |
+| --- | --- | --- | --- |
+| press panel, of 96 | [69](#/week/4/run/20261009T151140_press_eval_seed1_c33pilot_press_panel) | [34](#/week/4/run/20261009T155350_press_eval_seed1_oldpilot_press_panel) | 63 |
+| press force, of 48 (damaged) | [19 (1)](#/week/4/run/20261009T151206_press_eval_seed1_c33pilot_press_force) | [10 (1)](#/week/4/run/20261009T155417_press_eval_seed1_oldpilot_press_force) | 19 |
+| press recessed, of 72 (damaged) | [30 (0)](#/week/4/run/20261009T151232_press_eval_seed1_c33pilot_press_recessed) | [16 (5)](#/week/4/run/20261009T155442_press_eval_seed1_oldpilot_press_recessed) | 31 (3) |
+| wipe, of 36 | [23](#/week/4/run/20261009T153312_wipe_eval_seed1_c33pilot_wipe), pad tilt 7.3° | [24](#/week/4/run/20261009T161526_wipe_eval_seed1_oldpilot_wipe), 7.9° | 23, 9.3° |
+
+What it shows:
+- **The old-arm pilot is not reproducible.** Today's repeat scores 34 panels against F-127's 63, with the same robot,
+  recipe, start and seed. The 3.33 N·m robot's 69 therefore says nothing about the robot.
+  - Training is not bit-reproducible here, though the evaluations are.
+  - At 400 iterations the press pilot's spread between runs is ~30 of 96.
+- **The wipe pilot repeats** (23, 24, 23).
+- **Use.** The pilots are 400-iteration probes, not deliverables. The 3.33 N·m robot's press and wipe pilots are as
+  good as any.
+
+**The lying combiner's tolerance, tested** (`probe_tolerance.py`: the motions' `arrive_tolerance_rad` 0.035 rad instead
+of 0.03, in memory only, nothing in the repository changed; 3.33 N·m robot):
+[**9/9**](#/week/4/run/20261009T161606_199334Z_combiner_seed42) and [**8/8**](#/week/4/run/20261009T162341_457877Z_combiner_seed2026).
+Every attempt that went to the −40° stop arrived there at 0.0309 rad and opened its door. So the tolerance is the only
+thing between this demo and 17/17 (old arm 16/17). Changing it is Lukas's call: the real arm's pick sequence uses the
+same `Timing` and its 0.03 rad arrival criterion.
+
+**The candidates in the PhysX demos, on the 3.33 N·m robot**, against the checkpoints in use on the same robot (above):
+
+| demo | in use | fine-tuned candidate |
+| --- | --- | --- |
+| UniFP cup, `--wrist` | `57499`: 6/16 (9 picked, 3 spilt) | `58400`: [**10/16**](#/week/4/run/20261009T171259_cup_unifp_wrist_seed1_c33_cup_58400) (11 picked, 1 spilt), jaws 1.9 cm off on arrival against 3.4 |
+| UniFP box, `--wrist` | `57499`: 3/16 | `58400`: [1/16](#/week/4/run/20261009T171325_combiner_unifp_wrist_seed1_c33_box_58400) |
+| UniFP box, scripted fix, seeds 1 + 2 | `57499`: 2 + 3 = 5/32 | `58400`: [0](#/week/4/run/20261009T171427_combiner_unifp_wrist_corr_seed1_c33_boxfix_58400_s1) + [0](#/week/4/run/20261009T171527_combiner_unifp_wrist_corr_seed2_c33_boxfix_58400_s2) = **0/32**; the lever turned to ~25° |
+| standing combiner, 16 N·m door | `17499`: 16/16 | `18000`: [13/16](#/week/4/run/20261009T171628_combiner_mech_law_seed1_c33_door16_18000) |
+| lever demo, −30°, 1.2 N·m lever | `21496`: 9/16, 2 falls | [`22000`](#/week/4/run/20261009T171732_combiner_mech_law_seed1_c33_lever_22000), [`22400`](#/week/4/run/20261009T171835_combiner_mech_law_seed1_c33_lever_22400), [`22495`](#/week/4/run/20261009T171938_combiner_mech_law_seed1_c33_lever_22495): **0/16 each**, the claw lost on the bar every time |
+
+What it shows:
+- **Mechanism: the frozen-set gain does not reach the demo.** `18000` opens 13/16 against `17499`'s 16/16, as F-127's
+  fine-tune did (12/16). `17499` stays the mechanism controller.
+- **Lever: the fine-tunes cannot hold the bar.** Their frozen sets close the grasp wherever the hand stops (F-115), so
+  they never test the L-claw's entry; the demo does, and all three lose the bar in every attempt. `21496` stays. On
+  this robot that is 9/16 with 2 falls, where it was 16/16 on the 1.7 N·m elbow: **a regression the retraining did not
+  repair.**
+- **Reach: `58400` is better where it reaches, worse where it pushes.** It wins the frozen set (1.40 against
+  1.78 cm) and the cup (10/16 against 6/16, a third of the spills). It loses the box: its scripted fix was tuned on
+  `57499` (F-129) and now turns the lever only ~25°. The box's demo controller is the mechanism one (16/16).
+
+*Rope, retrained.* The polish could not retune `14600` for the stronger elbow without bringing back the sinking. So F-133's
+whole v3 recipe was re-run on the 3.33 N·m robot, from hook v4 `13000`: 2,000 iterations, `--curriculum_rule ema`
+(v3's rule), arm noise 0.3, legs 0.4, learning rate scaled 0.1, `rope_wobble` −1, seed 1
+([run](#/week/4/run/20261009T172054_train_seed1_rope_v3_c33)). Every saved checkpoint was scored on the development set:
+
+| checkpoint | mean at 20 / 35 / 50 N | falls of 108 | episodes with a tug | mean force error | held |
+| --- | --- | --- | --- | --- | --- |
+| `14600` polish, as it is | 26.8 / 40.3 / 56.0 N | 0 | 32 | 6.0 N | 324 / 324 |
+| [`13200`](#/week/4/run/20261009T185653_rope_eval_seed1_c33_rope_v3_dev_model_13200) | 24.2 / 28.1 / 32.8 N | 0 | 49 | 9.4 N | 165 / 324 |
+| [`13400`](#/week/4/run/20261009T185727_rope_eval_seed1_c33_rope_v3_dev_model_13400) | 27.4 / 38.6 / 49.0 N | 0 | 93 | 4.0 N | 311 / 324 |
+| [`13600`](#/week/4/run/20261009T185800_rope_eval_seed1_c33_rope_v3_dev_model_13600) | 22.5 / 37.6 / 49.5 N | 0 | 96 | 1.9 N | 324 / 324 |
+| [`13800`](#/week/4/run/20261009T185833_rope_eval_seed1_c33_rope_v3_dev_model_13800) | 24.6 / 33.2 / 44.3 N | 0 | 19 | 4.0 N | 323 / 324 |
+| [`14000`](#/week/4/run/20261009T185907_rope_eval_seed1_c33_rope_v3_dev_model_14000) | 24.5 / 35.0 / 47.3 N | 0 | 13 | 2.4 N | 324 / 324 |
+| [`14200`](#/week/4/run/20261009T185939_rope_eval_seed1_c33_rope_v3_dev_model_14200) | 26.5 / 35.8 / 48.7 N | 0 | 1 | 2.9 N | 324 / 324 |
+| [`14400`](#/week/4/run/20261009T190012_rope_eval_seed1_c33_rope_v3_dev_model_14400) | 25.0 / 34.4 / 48.6 N | 0 | 0 | 2.3 N | 324 / 324 |
+| [**`14600`**](#/week/4/run/20261009T190045_rope_eval_seed1_c33_rope_v3_dev_model_14600) | 25.1 / 35.0 / 48.9 N | 0 | 0 | 2.1 N | 324 / 324 |
+| [`14800`](#/week/4/run/20261009T190118_rope_eval_seed1_c33_rope_v3_dev_model_14800) | 25.2 / 35.6 / 49.8 N | 0 | 1 | 2.0 N | 324 / 324 |
+| [`14999`](#/week/4/run/20261009T190151_rope_eval_seed1_c33_rope_v3_dev_model_14999) | 25.1 / 36.0 / 50.7 N | 0 | 0 | 2.3 N | 324 / 324 |
+
+- **By the rope's rule, `14600` is first.** No fall anywhere, so the rule falls through to the tugs, and three
+  checkpoints have none. Of those, `14600` has the smallest force error.
+- **The held-out set, run once on it** ([run](#/week/4/run/20261009T190302_rope_eval_seed1_c33_rope_v3_test_14600)):
+  **21.9 / 31.9 / 45.2 N** for 15 / 30 / 45 N, std 0.06–0.21 N, all 576 holds held, no fall in 192 releases.
+  - The unretrained polish on this robot: 21.3 / 35.6 / 51.1 N.
+  - Tie-on tugs in 28 and 20 of 192 first holds at 15 and 30 N (147 at 15 N before), none at 45 N.
+  - 15 N stays ~7 N over, as it was.
+- **It pulls with a different posture.** It leans 3.6–5.4° nose-down at 15–45 N, where every earlier rope policy
+  leaned 20–24°. The front feet's share of the weight is 0.58–0.64. Joint2 and Joint3 sit at their 3.33 N·m limits
+  through the pull. With twice the elbow, the policy found it cheaper to pull with the arm than to lean. If the real
+  elbow is 1.7 N·m, that is exactly the wrong policy for it.
+
+**Delivered.**
+- **Added to `checkpoints/`**, with SHA256 sums and a new top section in `checkpoints/README.md`:
+  - `unifp_go2d1_isaaclab_cad333_model_58400.pt` (reach), now `demos/unifp/run_demo.py`'s reach default;
+  - `unifp_go2d1_rope_cad333_model_14600.pt` (rope).
+- **Unchanged:** mechanism `17499`, lever `21496`, insertion `21400`.
+- **Not changed:** the lying combiner's tolerance, which is Lukas's call.
+
 ### 2026-10-09 · The insertion demo dressed as a door, with the wrist RealSense on its bracket
 
 **Lukas:** "can you decorate the scene to look like its putting a key into a door? also add in the realsense and its
@@ -1138,6 +1583,21 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
 
 ## Findings this week
 
+- [F-141](../findings.md): retrained for the 3.33 N·m elbow (v3 recipe from hook v4), the rope policy holds 30 and 45 N
+  on the command with no fall in 192 held-out releases. It does so by pulling with the arm, leaning 4–5° instead of
+  20–24°; if the real elbow is 1.7 N·m that is the wrong policy for it.
+
+- [F-140](../findings.md): with the shoulder and elbow at 3.33 N·m (Lukas's call), the policies trained against a
+  1.7 N·m elbow push harder than told. The rope policy over-pulls by ~6 N, the mechanism controller falls 4 times in 512
+  and the lever demo drops to 9/16 with 2 falls.
+  - Fine-tuned on this robot, with old-arm controls, reach improves (`58400`, 1.40 cm).
+  - The mechanism's frozen score recovers (`18000`), but its demo does not.
+  - The lever, insertion and polish fine-tunes do not beat what is in use.
+
+- [F-139](../findings.md): `d1.urdf` given the CAD's lengths (five joint origins) moves the controlled point a median
+  6 mm. The policies in use, scored on both arms the same day, move by at most 4 episodes on their frozen sets. The
+  reach not at all, and insertion's detent damage goes 4 → 8. G0 25/25, 674/674 unit tests after three FK re-pins.
+
 - [F-138](../findings.md): from Lukas's bracket CAD, the wrist camera looks 30° down from the gripper, its colour
   optical frame at (−49.1, 32.8, 61.3) mm in Link6, 13.3 mm and 30° from the mount aligned by eye; the combiner's
   tag search had to look 20° down to stay reachable. The design, not a measurement of the printed part.
@@ -1186,6 +1646,24 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
 
 ## Issues and risks
 
+- **The simulated D1 rests on two unmeasured choices from 2026-10-09** (F-139, F-140). On the next hardware session:
+  - the shoulder's height, base bottom face → Joint2 axis: CAD 130.8 mm, Lukas's ruler 132.3;
+  - the forearm, Joint3 → Joint5 axes: CAD 204.7 mm, the old model 197.9;
+  - **the elbow's stall torque: 3.33 N·m (now modelled) or 1.7 (Unitree's table).**
+
+  The rope policy for this model pulls with Joint2 and Joint3 at 3.33 N·m (F-141). The grasp, pull and press planners'
+  holdability checks now allow 3.33 at the elbow, and `d1_ik.py` and `d1_hardware.py` read the same `d1.urdf`. So the
+  next deploy plans with the CAD lengths, and a planned hold could ask the elbow for more than a 1.7 N·m servo gives.
+- **The lever demo on the 3.33 N·m robot: 9/16 with 2 falls** (16/16 at 1.7 N·m). None of three lever fine-tunes
+  holds the bar in the demo (0/16 each). Its frozen sets cannot see the claw's entry, so they cannot pick a fix.
+- **The lying combiner stops at one search stop on the CAD lengths** (10/17 against 16/17). A 0.035 rad arrival
+  tolerance gives 17/17. It is shared with the real arm's pick: Lukas's call.
+- **Training is not reproducible run to run** (the old-arm press pilot: 34 panels today, 63 on 2026-10-05, same
+  everything). One-seed fine-tune comparisons of a few episodes say little; the controls helped only where the gaps
+  were large (reach, mechanism).
+- `robot_usd_sha256` in a run's `run.json` does not identify the arm: the welded USD only references the imported arm.
+  Runs since 2026-10-09 also record `d1_urdf_sha256` and `arm_effort_limits_nm`.
+
 - **The insertion demo's environment is unseeded:** `--seed` fixes only the slot draws. Two runs of the same plan
   engaged 47 steps apart (2026-10-09), so a demo run cannot be repeated step for step, and an A/B on the same draws
   (a code change against none) is confounded by run-to-run noise. Setting `cfg.seed` would fix the torch draws.
@@ -1200,7 +1678,7 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
   `python -m demos.cup.pick_demo.bracket <export> --write` restores it.
 
 - **The rope-pull policy runs Joint2 and Joint3 at their torque limits while it pulls** (Joint5 too at 70 N), as every
-  pull policy here has (F-103). The arm-margin term prices it and does not stop it. What a real D1 does at stall for
+  pull policy here has (F-103), and the 3.33 N·m retrain does too (F-141). The arm-margin term prices it and does not stop it. What a real D1 does at stall for
   seconds (trip, heat, F-028's dropped arm) is unmeasured. Before any physical pull: measure the servos' stall and
   continuous torque, and train with a heavier margin to see what force survives.
 - **The rope task's rope is a 500–6,000 N/m spring; a real 1 m rope is ~10⁵ N/m.** At 20,000 N/m a minority of
@@ -1230,6 +1708,11 @@ lever `21496`, insertion `21400`. `demos/unifp/run_demo.py`'s reach default is n
 
 - The UniFP box demo's remaining gap (12 of 32 against 20): the reach policy's push on the lever. Lukas's call whether
   that is worth a fine-tune, or the mechanism controller is the demo.
-- The combiner tag test: widen its limit to the estimator's noise, or improve the close look (Lukas's call).
-- A mechanism fine-tune at the pinned rate (F-121) before concluding `17499` cannot be adapted; and an old-robot
-  control for one fine-tune, to separate the robot from the extra training.
+- The combiner tag test: widen its limit to the estimator's noise, or improve the close look (Lukas's call). On the
+  CAD lengths it passes at 3.94 mm, by chance (F-139).
+- ~~A mechanism fine-tune at the pinned rate, with an old-robot control~~ Done 2026-10-09 (F-140). On the 3.33 N·m
+  robot it repairs the frozen test (497, no fall), but loses the standing demo (13/16 against 16/16). On the old arm
+  it erodes the button as F-127's did.
+- **Calipers and a bench torque test for the D1** (F-139, F-140): the shoulder's height, the forearm, the elbow's stall
+  torque. Each one decides which model, and which rope policy, is right.
+- The lever demo on the 3.33 N·m robot (9/16, 2 falls), and the lying combiner's arrival tolerance (Lukas's call).

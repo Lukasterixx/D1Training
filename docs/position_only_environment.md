@@ -36,8 +36,9 @@ contact-task benchmark.
   sagged 0.11 rad at rest inside its torque limits (F-010), so `d1_servo` sets
   the drive type to force and `implicit` keeps the import for comparison. An explicit PD that stiff is
   not stable at 200 Hz, and Unitree publishes no D1 torque–speed curve for an
-  envelope. Torque limits are set explicitly to Unitree's published 3.3/3.3/
-  1.7/1.7/1.7/1.7 N·m. Speed limits are set to the URDF's 1.05 rad/s (Joints 1–3)
+  envelope. Torque limits are set explicitly (`motor_model.D1_EFFORT_LIMIT_NM`): Unitree's published
+  3.3/3.3/1.7/1.7/1.7/1.7 N·m until 2026-10-09, since then 3.3/**3.33/3.33**/1.7/1.7/1.7, the shoulder and elbow
+  as Unitree's D1-550 URDF has them (Lukas's call, F-140; not measured). Speed limits are set to the URDF's 1.05 rad/s (Joints 1–3)
   and 1.73 rad/s (Joints 4–6); these are **unverified**. Unitree's own URDF has
   zeros, and the values were filled in during the Rescue port with no source.
   `run.json` records the limits PhysX actually applies (`arm_limits_in_physx`,

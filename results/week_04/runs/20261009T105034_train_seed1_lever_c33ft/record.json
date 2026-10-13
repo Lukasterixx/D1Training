@@ -1,0 +1,63 @@
+{
+  "id": "20261009T105034_train_seed1_lever_c33ft",
+  "title": "Lever 21496 fine-tuned 1,000 iterations, lever recipe, CAD lengths, Joint2-3 3.33 N m",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-09T22:38:57+11:00",
+  "started_utc": "2026-10-09T10:50:34+00:00",
+  "source_dir": "logs/unifp_train/20261009T105034_train_seed1_lever_c33ft",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 22495,
+  "final_checkpoint": {
+    "file": "model_22495.pt",
+    "sha256": "e5979b4af88e2157e00d3c03e0eaf837bbbc89bfd0a4ae5286f8e993eb56b48d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 188.555419921875,
+      "last_step": 22495,
+      "mean_last_10": 187.96825561523437,
+      "min": 1.8590813875198364,
+      "max": 194.0532684326172,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 992.030029296875,
+      "last_step": 22495,
+      "mean_last_10": 996.7230041503906,
+      "min": 11.043478012084961,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.7948188781738281,
+      "last_step": 22495,
+      "mean_last_10": 0.7949178576469421,
+      "min": 0.7947708964347839,
+      "max": 0.8339142799377441,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 34001.0,
+      "last_step": 22495,
+      "mean_last_10": 34557.3,
+      "min": 32276.0,
+      "max": 37618.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

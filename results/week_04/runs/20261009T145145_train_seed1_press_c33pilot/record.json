@@ -1,0 +1,63 @@
+{
+  "id": "20261009T145145_train_seed1_press_c33pilot",
+  "title": "Press pilot from insertion 21200, 400 iterations, CAD lengths, Joint2-3 3.33 N m",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-10T02:11:36+11:00",
+  "started_utc": "2026-10-09T14:51:45+00:00",
+  "source_dir": "logs/unifp_train/20261009T145145_train_seed1_press_c33pilot",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 21599,
+  "final_checkpoint": {
+    "file": "model_21599.pt",
+    "sha256": "ba5a3c762915870685891c01fe498c0964fbeff418308a4f419ae4e3a01bcac2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 257.4378967285156,
+      "last_step": 21599,
+      "mean_last_10": 255.85144958496093,
+      "min": 2.8754496574401855,
+      "max": 265.4119873046875,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 980.7000122070312,
+      "last_step": 21599,
+      "mean_last_10": 979.577001953125,
+      "min": 13.934782981872559,
+      "max": 999.0,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.36021605134010315,
+      "last_step": 21599,
+      "mean_last_10": 0.36041688919067383,
+      "min": 0.36021605134010315,
+      "max": 0.3779904544353485,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 32967.0,
+      "last_step": 21599,
+      "mean_last_10": 33066.7,
+      "min": 31630.0,
+      "max": 37093.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

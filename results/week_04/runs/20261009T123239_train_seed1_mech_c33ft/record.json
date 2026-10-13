@@ -1,0 +1,63 @@
+{
+  "id": "20261009T123239_train_seed1_mech_c33ft",
+  "title": "Mechanism 17499 fine-tuned 1,000 iterations at a pinned 1e-5 rate, CAD lengths, Joint2-3 3.33 N m",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-10T00:20:13+11:00",
+  "started_utc": "2026-10-09T12:32:39+00:00",
+  "source_dir": "logs/unifp_train/20261009T123239_train_seed1_mech_c33ft",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 18498,
+  "final_checkpoint": {
+    "file": "model_18498.pt",
+    "sha256": "33ed1850a0efc6210e7c9f568cf81fb6c6eb4dd0ed27ffb0c93a6276c7e416a0"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 193.3627471923828,
+      "last_step": 18498,
+      "mean_last_10": 194.93461151123046,
+      "min": 2.5545341968536377,
+      "max": 202.50515747070312,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 18498,
+      "mean_last_10": 998.952001953125,
+      "min": 14.569999694824219,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.7094165086746216,
+      "last_step": 18498,
+      "mean_last_10": 0.7095712780952453,
+      "min": 0.7094165086746216,
+      "max": 0.7280195951461792,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 35015.0,
+      "last_step": 18498,
+      "mean_last_10": 34843.1,
+      "min": 32268.0,
+      "max": 38384.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

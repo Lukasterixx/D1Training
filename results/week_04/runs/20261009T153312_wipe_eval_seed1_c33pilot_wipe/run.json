@@ -1,0 +1,734 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    36,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261009T151257_train_seed1_wipe_c33pilot/model_21599.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "wipe_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "c33pilot_wipe",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "wipe",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261009T151257_train_seed1_wipe_c33pilot/model_21599.pt",
+  "checkpoint_iteration": 21599,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_21599.pt",
+  "critic_obs": [
+    36,
+    459
+  ],
+  "d1_urdf_sha256": "1509b0bc4f98cbad540c5ee1c9eca8896fa89fe805e9961cb7cdf2c976a8a74a",
+  "episode_length_steps": 1600,
+  "estimate_obs": [
+    36,
+    12
+  ],
+  "expected_actor": [
+    36,
+    2432
+  ],
+  "expected_critic": [
+    36,
+    459
+  ],
+  "expected_estimates": [
+    36,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_status": "M README.md\n M d1_arm/d1.urdf\n M d1_arm/measured_base.py\n M demos/cup/d1_ui/server.py\n M description/go2_d1.urdf\n M motor_model.py\n M mount.py\n M position_only/task_space.py\n M position_only/workspace.py\n M results/findings.md\n M results/gates.md\n M results/week_04/notes.md\n M run_unifp_train.py\n M tests/test_force_transmission.py\n M tests/test_sim2real.py\n M tests/test_unifp_interface.py\n M tests/test_unifp_train.py\n M tests/test_workspace.py\n M unifp_isaaclab/interface.py\n?? results/week_04/figures/d1_workspace_cad_arm.json\n?? results/week_04/figures/d1_workspace_cad_arm.png\n?? results/week_04/figures/direction_capacity_cad_arm.json\n?? results/week_04/figures/direction_capacity_cad_arm_elbow333.json\n?? results/week_04/figures/force_transmission_study_cad_arm.json\n?? results/week_04/figures/force_transmission_study_cad_arm_elbow333.json\n?? results/week_04/figures/stance_probe_cad_arm.json\n?? results/week_04/runs/20261009T044449_261854Z_verify_seed42/\n?? results/week_04/runs/20261009T044740_eval_seed20260921_cad_base_reach57499/\n?? results/week_04/runs/20261009T044810_mech_eval_seed1_cad_base_mech_test_17499/\n?? results/week_04/runs/20261009T044848_mech_eval_seed1_cad_base_lever_21496/\n?? results/week_04/runs/20261009T044918_mech_eval_seed1_cad_base_lever_test_21496/\n?? results/week_04/runs/20261009T044948_ins_eval_seed1_cad_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T045028_ins_eval_seed1_cad_base_ins_detent_21400/\n?? results/week_04/runs/20261009T045111_rope_eval_seed1_cad_base_rope_dev_14600/\n?? results/week_04/runs/20261009T045152_rope_eval_seed1_cad_base_rope_test_14600/\n?? results/week_04/runs/20261009T045247_press_eval_seed1_cad_base_press_panel_pilot/\n?? results/week_04/runs/20261009T045320_press_eval_seed1_cad_base_press_force_pilot/\n?? results/week_04/runs/20261009T045351_press_eval_seed1_cad_base_press_recessed_pilot/\n?? results/week_04/runs/20261009T045422_wipe_eval_seed1_cad_base_wipe_pilot/\n?? results/week_04/runs/20261009T045509_eval_seed20260921_old_base_reach57499/\n?? results/week_04/runs/20261009T045537_mech_eval_seed1_old_base_mech_test_17499/\n?? results/week_04/runs/20261009T045607_mech_eval_seed1_old_base_lever_21496/\n?? results/week_04/runs/20261009T045637_mech_eval_seed1_old_base_lever_test_21496/\n?? results/week_04/runs/20261009T045707_ins_eval_seed1_old_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T045748_ins_eval_seed1_old_base_ins_detent_21400/\n?? results/week_04/runs/20261009T045829_rope_eval_seed1_old_base_rope_dev_14600/\n?? results/week_04/runs/20261009T045905_rope_eval_seed1_old_base_rope_test_14600/\n?? results/week_04/runs/20261009T045944_press_eval_seed1_old_base_press_panel_pilot/\n?? results/week_04/runs/20261009T050012_press_eval_seed1_old_base_press_force_pilot/\n?? results/week_04/runs/20261009T050040_press_eval_seed1_old_base_press_recessed_pilot/\n?? results/week_04/runs/20261009T050109_wipe_eval_seed1_old_base_wipe_pilot/\n?? results/week_04/runs/20261009T050209_cup_unifp_wrist_seed1_cad_cup_57499/\n?? results/week_04/runs/20261009T050235_combiner_unifp_wrist_seed1_cad_box_57499/\n?? results/week_04/runs/20261009T050336_combiner_unifp_wrist_corr_seed1_cad_boxfix_s1/\n?? results/week_04/runs/20261009T050439_combiner_unifp_wrist_corr_seed2_cad_boxfix_s2/\n?? results/week_04/runs/20261009T050542_combiner_mech_law_seed1_cad_door16_17499/\n?? results/week_04/runs/20261009T050646_combiner_mech_law_seed1_cad_lever_21496/\n?? results/week_04/runs/20261009T050755_insertion_policy_seed2_cad_ins_21400_s2/\n?? results/week_04/runs/20261009T050910_insertion_policy_seed3_cad_ins_21400_s3/\n?? results/week_04/runs/20261009T051023_insertion_policy_seed4_cad_ins_21400_s4/\n?? results/week_04/runs/20261009T051242_847159Z_pick_seed42/\n?? results/week_04/runs/20261009T052042_706021Z_combiner_seed42/\n?? results/week_04/runs/20261009T052551_047380Z_combiner_seed2026/\n?? results/week_04/runs/20261009T053144_cup_unifp_wrist_seed1_old_cup_57499/\n?? results/week_04/runs/20261009T053210_combiner_unifp_wrist_seed1_old_box_57499/\n?? results/week_04/runs/20261009T053311_combiner_unifp_wrist_corr_seed1_old_boxfix_s1/\n?? results/week_04/runs/20261009T053413_combiner_unifp_wrist_corr_seed2_old_boxfix_s2/\n?? results/week_04/runs/20261009T053515_combiner_mech_law_seed1_old_door16_17499/\n?? results/week_04/runs/20261009T053620_combiner_mech_law_seed1_old_lever_21496/\n?? results/week_04/runs/20261009T053729_insertion_policy_seed2_old_ins_21400_s2/\n?? results/week_04/runs/20261009T053843_insertion_policy_seed3_old_ins_21400_s3/\n?? results/week_04/runs/20261009T053959_insertion_policy_seed4_old_ins_21400_s4/\n?? results/week_04/runs/20261009T054226_035077Z_pick_seed42/\n?? results/week_04/runs/20261009T055042_283323Z_combiner_seed42/\n?? results/week_04/runs/20261009T055823_450019Z_combiner_seed2026/\n?? results/week_04/runs/20261009T060518_586613Z_combiner_seed42/\n?? results/week_04/runs/20261009T060723_680696Z_playback_arm_+1.0_+0.0_+0.0/\n?? results/week_04/runs/20261009T060740_637696Z_playback_arm_+0.0_+0.5_+0.0/\n?? results/week_04/runs/20261009T060757_497285Z_playback_arm_+0.0_+0.0_+1.0/\n?? results/week_04/runs/20261009T060814_409239Z_playback_arm_+1.0_+0.0_+0.0/\n?? results/week_04/runs/20261009T060830_978830Z_playback_arm_+0.0_+0.5_+0.0/\n?? results/week_04/runs/20261009T060848_356722Z_playback_arm_+0.0_+0.0_+1.0/\n?? results/week_04/runs/20261009T060853_train_seed3_ins_cadft/\n?? results/week_04/runs/20261009T061304_980982Z_verify_seed42/\n?? results/week_04/runs/20261009T061339_eval_seed20260921_c33_base_reach57499/\n?? results/week_04/runs/20261009T061417_mech_eval_seed1_c33_base_mech_test_17499/\n?? results/week_04/runs/20261009T061453_mech_eval_seed1_c33_base_lever_21496/\n?? results/week_04/runs/20261009T061525_mech_eval_seed1_c33_base_lever_test_21496/\n?? results/week_04/runs/20261009T061557_ins_eval_seed1_c33_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T061638_ins_eval_seed1_c33_base_ins_detent_21400/\n?? results/week_04/runs/20261009T061718_rope_eval_seed1_c33_base_rope_dev_14600/\n?? results/week_04/runs/20261009T061753_rope_eval_seed1_c33_base_rope_test_14600/\n?? results/week_04/runs/20261009T061828_press_eval_seed1_c33_base_press_panel_pilot/\n?? results/week_04/runs/20261009T061856_press_eval_seed1_c33_base_press_force_pilot/\n?? results/week_04/runs/20261009T061929_press_eval_seed1_c33_base_press_recessed_pilot/\n?? results/week_04/runs/20261009T062001_wipe_eval_seed1_c33_base_wipe_pilot/\n?? results/week_04/runs/20261009T062109_cup_unifp_wrist_seed1_c33_cup_57499/\n?? results/week_04/runs/20261009T062138_combiner_unifp_wrist_seed1_c33_box_57499/\n?? results/week_04/runs/20261009T062244_combiner_unifp_wrist_corr_seed1_c33_boxfix_s1/\n?? results/week_04/runs/20261009T062347_combiner_unifp_wrist_corr_seed2_c33_boxfix_s2/\n?? results/week_04/runs/20261009T062450_combiner_mech_law_seed1_c33_door16_17499/\n?? results/week_04/runs/20261009T062555_combiner_mech_law_seed1_c33_lever_21496/\n?? results/week_04/runs/20261009T062704_insertion_policy_seed2_c33_ins_21400_s2/\n?? results/week_04/runs/20261009T062818_insertion_policy_seed3_c33_ins_21400_s3/\n?? results/week_04/runs/20261009T062932_insertion_policy_seed4_c33_ins_21400_s4/\n?? results/week_04/runs/20261009T063153_608379Z_pick_seed42/\n?? results/week_04/runs/20261009T063959_157314Z_combiner_seed42/\n?? results/week_04/runs/20261009T064508_850577Z_combiner_seed2026/\n?? results/week_04/runs/20261009T065120_500492Z_playback_arm_+1.0_+0.0_+0.0/\n?? results/week_04/runs/20261009T065137_298237Z_playback_arm_+0.0_+0.5_+0.0/\n?? results/week_04/runs/20261009T065154_222992Z_playback_arm_+0.0_+0.0_+1.0/\n?? results/week_04/runs/20261009T065159_train_seed3_ins_c33ft/\n?? results/week_04/runs/20261009T073714_ins_eval_seed1_c33ft_ins_lateral_model_21600/\n?? results/week_04/runs/20261009T073752_ins_eval_seed1_c33ft_ins_detent_model_21600/\n?? results/week_04/runs/20261009T073829_ins_eval_seed1_c33ft_ins_lateral_model_21800/\n?? results/week_04/runs/20261009T073906_ins_eval_seed1_c33ft_ins_detent_model_21800/\n?? results/week_04/runs/20261009T073943_ins_eval_seed1_c33ft_ins_lateral_model_22000/\n?? results/week_04/runs/20261009T074020_ins_eval_seed1_c33ft_ins_detent_model_22000/\n?? results/week_04/runs/20261009T074057_ins_eval_seed1_c33ft_ins_lateral_model_22199/\n?? results/week_04/runs/20261009T074134_ins_eval_seed1_c33ft_ins_detent_model_22199/\n?? results/week_04/runs/20261009T074210_train_seed3_ins_oldft/\n?? results/week_04/runs/20261009T082847_ins_eval_seed1_oldft_ins_lateral_model_21600/\n?? results/week_04/runs/20261009T082924_ins_eval_seed1_oldft_ins_detent_model_21600/\n?? results/week_04/runs/20261009T083002_ins_eval_seed1_oldft_ins_lateral_model_21800/\n?? results/week_04/runs/20261009T083039_ins_eval_seed1_oldft_ins_detent_model_21800/\n?? results/week_04/runs/20261009T083116_ins_eval_seed1_oldft_ins_lateral_model_22000/\n?? results/week_04/runs/20261009T083153_ins_eval_seed1_oldft_ins_detent_model_22000/\n?? results/week_04/runs/20261009T083230_ins_eval_seed1_oldft_ins_lateral_model_22199/\n?? results/week_04/runs/20261009T083307_ins_eval_seed1_oldft_ins_detent_model_22199/\n?? results/week_04/runs/20261009T083344_train_seed1_reach_c33ft/\n?? results/week_04/runs/20261009T094034_eval_seed20260921_c33ft_reach_model_58000/\n?? results/week_04/runs/20261009T094059_eval_seed20260921_c33ft_reach_model_58400/\n?? results/week_04/runs/20261009T094124_eval_seed20260921_c33ft_reach_model_58800/\n?? results/week_04/runs/20261009T094149_eval_seed20260921_c33ft_reach_model_58998/\n?? results/week_04/runs/20261009T094213_train_seed1_reach_oldft/\n?? results/week_04/runs/20261009T104855_eval_seed20260921_oldft_reach_model_58000/\n?? results/week_04/runs/20261009T104920_eval_seed20260921_oldft_reach_model_58400/\n?? results/week_04/runs/20261009T104945_eval_seed20260921_oldft_reach_model_58800/\n?? results/week_04/runs/20261009T105009_eval_seed20260921_oldft_reach_model_58998/\n?? results/week_04/runs/20261009T105034_train_seed1_lever_c33ft/\n?? results/week_04/runs/20261009T113901_mech_eval_seed1_c33ft_lever_model_22000/\n?? results/week_04/runs/20261009T113928_mech_eval_seed1_c33ft_lever_test_model_22000/\n?? results/week_04/runs/20261009T113956_mech_eval_seed1_c33ft_lever_model_22400/\n?? results/week_04/runs/20261009T114022_mech_eval_seed1_c33ft_lever_test_model_22400/\n?? results/week_04/runs/20261009T114050_mech_eval_seed1_c33ft_lever_model_22495/\n?? results/week_04/runs/20261009T114117_mech_eval_seed1_c33ft_lever_test_model_22495/\n?? results/week_04/runs/20261009T114145_train_seed1_lever_oldft/\n?? results/week_04/runs/20261009T122955_mech_eval_seed1_oldft_lever_model_22000/\n?? results/week_04/runs/20261009T123022_mech_eval_seed1_oldft_lever_test_model_22000/\n?? results/week_04/runs/20261009T123050_mech_eval_seed1_oldft_lever_model_22400/\n?? results/week_04/runs/20261009T123117_mech_eval_seed1_oldft_lever_test_model_22400/\n?? results/week_04/runs/20261009T123144_mech_eval_seed1_oldft_lever_model_22495/\n?? results/week_04/runs/20261009T123211_mech_eval_seed1_oldft_lever_test_model_22495/\n?? results/week_04/runs/20261009T123239_train_seed1_mech_c33ft/\n?? results/week_04/runs/20261009T132016_mech_eval_seed1_c33ft_mech_test_model_18000/\n?? results/week_04/runs/20261009T132044_mech_eval_seed1_c33ft_mech_test_model_18400/\n?? results/week_04/runs/20261009T132112_mech_eval_seed1_c33ft_mech_test_model_18498/\n?? results/week_04/runs/20261009T132139_train_seed1_mech_oldft/\n?? results/week_04/runs/20261009T140933_mech_eval_seed1_oldft_mech_test_model_18000/\n?? results/week_04/runs/20261009T141001_mech_eval_seed1_oldft_mech_test_model_18400/\n?? results/week_04/runs/20261009T141028_mech_eval_seed1_oldft_mech_test_model_18498/\n?? results/week_04/runs/20261009T141056_train_seed1_rope_c33ft/\n?? results/week_04/runs/20261009T143014_rope_eval_seed1_c33ft_rope_dev_model_14800/\n?? results/week_04/runs/20261009T143048_rope_eval_seed1_c33ft_rope_dev_model_14999/\n?? results/week_04/runs/20261009T143121_train_seed1_rope_oldft/\n?? results/week_04/runs/20261009T145037_rope_eval_seed1_oldft_rope_dev_model_14800/\n?? results/week_04/runs/20261009T145111_rope_eval_seed1_oldft_rope_dev_model_14999/\n?? results/week_04/runs/20261009T145145_train_seed1_press_c33pilot/\n?? results/week_04/runs/20261009T151140_press_eval_seed1_c33pilot_press_panel/\n?? results/week_04/runs/20261009T151206_press_eval_seed1_c33pilot_press_force/\n?? results/week_04/runs/20261009T151232_press_eval_seed1_c33pilot_press_recessed/\n?? results/week_04/runs/20261009T151257_train_seed1_wipe_c33pilot/",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "wipe_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 36,
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": true,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_force": [
+      {
+        "completion": 0.953,
+        "contact_fraction": 1.0,
+        "force_n": 10.0,
+        "force_rmse_n": 4.943,
+        "of": 18,
+        "peak_contact_n": 17.245,
+        "reasons": {
+          "incomplete": 8,
+          "success": 10
+        },
+        "success": 10
+      },
+      {
+        "completion": 0.961,
+        "contact_fraction": 1.0,
+        "force_n": 5.0,
+        "force_rmse_n": 6.59,
+        "of": 18,
+        "peak_contact_n": 15.09,
+        "reasons": {
+          "incomplete": 5,
+          "success": 13
+        },
+        "success": 13
+      }
+    ],
+    "by_height": [
+      {
+        "completion": 0.969,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 7.148,
+        "height_m": 0.7,
+        "of": 12,
+        "peak_contact_n": 16.64,
+        "reasons": {
+          "success": 12
+        },
+        "success": 12
+      },
+      {
+        "completion": 0.976,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.83,
+        "height_m": 0.78,
+        "of": 12,
+        "peak_contact_n": 17.815,
+        "reasons": {
+          "incomplete": 2,
+          "success": 10
+        },
+        "success": 10
+      },
+      {
+        "completion": 0.633,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 2.617,
+        "height_m": 0.86,
+        "of": 12,
+        "peak_contact_n": 14.92,
+        "reasons": {
+          "incomplete": 11,
+          "success": 1
+        },
+        "success": 1
+      }
+    ],
+    "by_kind": [
+      {
+        "completion": 0.953,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.32,
+        "kind": "line",
+        "of": 18,
+        "peak_contact_n": 16.16,
+        "reasons": {
+          "incomplete": 6,
+          "success": 12
+        },
+        "success": 12
+      },
+      {
+        "completion": 0.969,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.848,
+        "kind": "zigzag",
+        "of": 18,
+        "peak_contact_n": 16.61,
+        "reasons": {
+          "incomplete": 7,
+          "success": 11
+        },
+        "success": 11
+      }
+    ],
+    "by_offset": [
+      {
+        "completion": 0.961,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.638,
+        "of": 12,
+        "offset_m": -0.008,
+        "peak_contact_n": 16.745,
+        "reasons": {
+          "incomplete": 5,
+          "success": 7
+        },
+        "success": 7
+      },
+      {
+        "completion": 0.953,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.813,
+        "of": 12,
+        "offset_m": 0.0,
+        "peak_contact_n": 15.55,
+        "reasons": {
+          "incomplete": 3,
+          "success": 9
+        },
+        "success": 9
+      },
+      {
+        "completion": 0.961,
+        "contact_fraction": 1.0,
+        "force_rmse_n": 5.221,
+        "of": 12,
+        "offset_m": 0.008,
+        "peak_contact_n": 16.565,
+        "reasons": {
+          "incomplete": 5,
+          "success": 7
+        },
+        "success": 7
+      }
+    ],
+    "completion": 0.953,
+    "contact_fraction": 1.0,
+    "damaged": 0,
+    "engage_tip_miss_mm": 2.76,
+    "episodes": 36,
+    "fell": 0,
+    "finished": 33,
+    "force_rmse_n": 5.612,
+    "loss_events": 0.0,
+    "pad_tilt_median_deg": 7.285,
+    "path_error_p90_mm": 14.52,
+    "peak_contact_n": 16.525,
+    "reasons": {
+      "contact lost": 0,
+      "damaged": 0,
+      "fell": 0,
+      "incomplete": 13,
+      "no contact": 0,
+      "not started": 0,
+      "success": 23
+    },
+    "started": 36,
+    "success": 23,
+    "touched": 36
+  },
+  "task": "wipe",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": {
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "pad": {
+      "length_m": 0.045,
+      "points": 9,
+      "radius_m": 0.025
+    },
+    "wipe_fraction": 0.8
+  },
+  "wipe_conditions": {
+    "mu": 0.4,
+    "speed_m_s": 0.03,
+    "standoff_m": 0.015
+  },
+  "wipe_rows": [
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "line",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": -0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.0,
+      "tilt_deg": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        -3.0,
+        0.0
+      ]
+    },
+    {
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "kind": "zigzag",
+      "offset_m": 0.008,
+      "tilt_deg": [
+        0.0,
+        -3.0
+      ]
+    }
+  ],
+  "wipe_set": "default"
+}

@@ -1,0 +1,1247 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    96,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/logs/unifp_train/20261009T153354_train_seed1_press_oldpilot/model_21599.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "press_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "oldpilot_press_panel",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "press",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "checkpoint": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/logs/unifp_train/20261009T153354_train_seed1_press_oldpilot/model_21599.pt",
+  "checkpoint_iteration": 21599,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_21599.pt",
+  "critic_obs": [
+    96,
+    459
+  ],
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    96,
+    12
+  ],
+  "expected_actor": [
+    96,
+    2432
+  ],
+  "expected_critic": [
+    96,
+    459
+  ],
+  "expected_estimates": [
+    96,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_status": "",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "press_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 96,
+  "press": {
+    "button_fraction": 0.8,
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "tools": [
+      "bare",
+      "probe"
+    ]
+  },
+  "press_conditions": {
+    "hold_margin": 1.4,
+    "max_margin": 2.0,
+    "speed_m_s": 0.02,
+    "standoff_m": 0.012
+  },
+  "press_rows": [
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.7,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.78,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.004,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 1.5707963267948966,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 4.71238898038469,
+      "force_n": 9.0,
+      "height_m": 0.86,
+      "lateral_m": 0.006,
+      "set": "panel",
+      "tool": "probe"
+    }
+  ],
+  "press_set": "panel",
+  "robot_usd": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/generated/go2_d1.usd",
+  "robot_usd_sha256": "dceba5e04756361cd4fe63dffd65cbb340919bcfcec5a21e076cb6cb761e9bbe",
+  "roll_objective": true,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_force": [
+      {
+        "approach_err_start_deg": 10.7,
+        "force_n": 9.0,
+        "force_rmse_n": 3.439,
+        "of": 96,
+        "peak_contact_n": 35.025,
+        "reasons": {
+          "missed": 1,
+          "not held": 15,
+          "short": 6,
+          "slid off": 40,
+          "success": 34
+        },
+        "success": 34,
+        "time_to_press_s": 1.51
+      }
+    ],
+    "by_height": [
+      {
+        "approach_err_start_deg": 2.67,
+        "force_rmse_n": 3.88,
+        "height_m": 0.7,
+        "of": 32,
+        "peak_contact_n": 40.1,
+        "reasons": {
+          "not held": 7,
+          "slid off": 14,
+          "success": 11
+        },
+        "success": 11,
+        "time_to_press_s": 1.48
+      },
+      {
+        "approach_err_start_deg": 10.7,
+        "force_rmse_n": 2.866,
+        "height_m": 0.78,
+        "of": 32,
+        "peak_contact_n": 35.02,
+        "reasons": {
+          "not held": 7,
+          "slid off": 11,
+          "success": 14
+        },
+        "success": 14,
+        "time_to_press_s": 1.58
+      },
+      {
+        "approach_err_start_deg": 20.465,
+        "force_rmse_n": 3.442,
+        "height_m": 0.86,
+        "of": 32,
+        "peak_contact_n": 21.52,
+        "reasons": {
+          "missed": 1,
+          "not held": 1,
+          "short": 6,
+          "slid off": 15,
+          "success": 9
+        },
+        "success": 9,
+        "time_to_press_s": 1.7
+      }
+    ],
+    "by_lateral": [
+      {
+        "approach_err_start_deg": 10.73,
+        "force_rmse_n": 3.433,
+        "lateral_m": 0.0,
+        "of": 24,
+        "peak_contact_n": 36.195,
+        "reasons": {
+          "not held": 7,
+          "short": 1,
+          "slid off": 7,
+          "success": 9
+        },
+        "success": 9,
+        "time_to_press_s": 1.54
+      },
+      {
+        "approach_err_start_deg": 10.76,
+        "force_rmse_n": 3.452,
+        "lateral_m": 0.002,
+        "of": 24,
+        "peak_contact_n": 33.87,
+        "reasons": {
+          "not held": 2,
+          "short": 2,
+          "slid off": 10,
+          "success": 10
+        },
+        "success": 10,
+        "time_to_press_s": 1.49
+      },
+      {
+        "approach_err_start_deg": 10.645,
+        "force_rmse_n": 3.535,
+        "lateral_m": 0.004,
+        "of": 24,
+        "peak_contact_n": 33.685,
+        "reasons": {
+          "not held": 4,
+          "short": 2,
+          "slid off": 12,
+          "success": 6
+        },
+        "success": 6,
+        "time_to_press_s": 1.54
+      },
+      {
+        "approach_err_start_deg": 10.68,
+        "force_rmse_n": 3.273,
+        "lateral_m": 0.006,
+        "of": 24,
+        "peak_contact_n": 35.13,
+        "reasons": {
+          "missed": 1,
+          "not held": 2,
+          "short": 1,
+          "slid off": 11,
+          "success": 9
+        },
+        "success": 9,
+        "time_to_press_s": 1.44
+      }
+    ],
+    "by_tool": [
+      {
+        "approach_err_start_deg": 11.85,
+        "force_rmse_n": 3.312,
+        "of": 48,
+        "peak_contact_n": 34.7,
+        "reasons": {
+          "missed": 1,
+          "not held": 11,
+          "short": 6,
+          "slid off": 18,
+          "success": 12
+        },
+        "success": 12,
+        "time_to_press_s": 1.61,
+        "tool": "bare"
+      },
+      {
+        "approach_err_start_deg": 9.685,
+        "force_rmse_n": 3.734,
+        "of": 48,
+        "peak_contact_n": 35.81,
+        "reasons": {
+          "not held": 4,
+          "slid off": 22,
+          "success": 22
+        },
+        "success": 22,
+        "time_to_press_s": 1.48,
+        "tool": "probe"
+      }
+    ],
+    "damaged": 0,
+    "engage_tip_miss_mm": 2.97,
+    "episodes": 96,
+    "fell": 0,
+    "force_rmse_n": 3.439,
+    "peak_contact_n": 35.025,
+    "reasons": {
+      "damaged": 0,
+      "fell": 0,
+      "missed": 1,
+      "not held": 15,
+      "not started": 0,
+      "short": 6,
+      "slid off": 40,
+      "success": 34
+    },
+    "released": 71,
+    "started": 96,
+    "success": 34,
+    "time_to_press_s": 1.51
+  },
+  "task": "press",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20261009T155509_train_seed1_wipe_oldpilot",
+  "title": "Wipe pilot from insertion 21200, 400 iterations, old arm (control)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-10T03:15:21+11:00",
+  "started_utc": "2026-10-09T15:55:09+00:00",
+  "source_dir": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/logs/unifp_train/20261009T155509_train_seed1_wipe_oldpilot",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": false,
+  "articulation_mass_kg": null,
+  "last_iteration": 21599,
+  "final_checkpoint": {
+    "file": "model_21599.pt",
+    "sha256": "609d8defa4f273575fe8a1bf55209494d6c7b59f46aec15eb2a2f2adf06cfd74"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 262.7876892089844,
+      "last_step": 21599,
+      "mean_last_10": 261.5210845947266,
+      "min": 2.5775668621063232,
+      "max": 271.0636291503906,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 991.760009765625,
+      "last_step": 21599,
+      "mean_last_10": 994.6509948730469,
+      "min": 12.688172340393066,
+      "max": 999.0,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.34816423058509827,
+      "last_step": 21599,
+      "mean_last_10": 0.3485073626041412,
+      "min": 0.34816423058509827,
+      "max": 0.37799909710884094,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 32221.0,
+      "last_step": 21599,
+      "mean_last_10": 31788.3,
+      "min": 29244.0,
+      "max": 37148.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

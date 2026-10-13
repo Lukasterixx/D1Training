@@ -11,13 +11,18 @@ class WorkspaceModelTests(unittest.TestCase):
     def setUpClass(cls):
         cls.joints, cls.links = workspace.load_urdf()
 
-    def test_the_scenes_shift_is_the_arms_move_from_the_legacy_one(self):
-        # mount.JOINT1_HEIGHT_M is the URDF's, and the shift is what forward kinematics moves Link6 by (Week 4, 2026-10-06).
+    def test_the_scenes_shift_is_the_arms_base_move_from_the_legacy_one(self):
+        # mount.JOINT1_HEIGHT_M is the URDF's, and the shift is what forward kinematics moves the arm's base by (Week 4,
+        # 2026-10-06). Above its base the arm itself changed on 2026-10-09, to the CAD's link lengths (F-139): at the
+        # zero pose Link6 moved a further (+5.07, +0.90, -1.48) mm, and the scenes were not moved for that.
         import mount
         self.assertAlmostEqual(float(self.joints["Joint1"]["xyz"][2]), mount.JOINT1_HEIGHT_M, places=9)
         frames, _, _ = workspace.forward(self.joints, np.zeros((1, 6)))
+        legacy_link1 = np.array(mount.LEGACY_ARM_MOUNT_POS_M) + [0.0, 0.0, mount.LEGACY_JOINT1_HEIGHT_M]
+        np.testing.assert_allclose(frames["Link1"][1][0] - legacy_link1, mount.ARM_SHIFT_FROM_LEGACY_M, atol=1e-9)
         legacy_link6 = np.array([0.2804, -0.0013, 0.4999])   # the Week 1 verify run's, at the legacy arm
-        np.testing.assert_allclose(frames["Link6"][1][0] - legacy_link6, mount.ARM_SHIFT_FROM_LEGACY_M, atol=1e-4)
+        np.testing.assert_allclose(frames["Link6"][1][0] - legacy_link6,
+                                   np.array(mount.ARM_SHIFT_FROM_LEGACY_M) + [0.00507, 0.00090, -0.00148], atol=1e-4)
 
     def test_mass_model_totals_the_published_arm_mass(self):
         masses = workspace.simulated_masses(self.links)
@@ -28,9 +33,10 @@ class WorkspaceModelTests(unittest.TestCase):
     def test_zero_pose_puts_link6_forward_at_the_target_box_height(self):
         # Pinned to the value the simulator reproduced to 0.6 um in the Week 1 verify run, then moved on 2026-09-30:
         # by (-19.0, 0, +5.5) mm with the mount, and up another 22.7 mm with the measured base (Joint1 at 76.0 mm).
-        # The Week 3 verify run reproduced forward kinematics at the simulator's angles to 0.74 um there.
+        # The Week 3 verify run reproduced forward kinematics at the simulator's angles to 0.74 um there. On 2026-10-09
+        # the CAD's link lengths (F-139) moved it from (0.2614, -0.0013, 0.5281); that day's verify run, to 0.64 um.
         frames, _, _ = workspace.forward(self.joints, np.zeros((1, 6)))
-        np.testing.assert_allclose(frames["Link6"][1][0], [0.2614, -0.0013, 0.5281], atol=1e-4)
+        np.testing.assert_allclose(frames["Link6"][1][0], [0.2665, -0.0004, 0.5266], atol=1e-4)
 
     def test_gravity_torque_is_the_gradient_of_potential_energy(self):
         q = np.random.default_rng(3).uniform(-1.0, 1.0, size=(4, 6))
@@ -57,7 +63,8 @@ class WorkspaceModelTests(unittest.TestCase):
 
         np.testing.assert_allclose(workspace.pincer_tip(TOOL_BODY), TOOL_OFFSET_M, atol=6e-5)
         frames, _, _ = workspace.forward(self.joints, np.zeros((1, 6)))
-        np.testing.assert_allclose(workspace.tool_position(frames)[0], [0.3867, -0.0139, 0.5277], atol=1e-4)
+        # (0.3867, -0.0139, 0.5277) before the CAD's link lengths (F-139).
+        np.testing.assert_allclose(workspace.tool_position(frames)[0], [0.3918, -0.0130, 0.5262], atol=1e-4)
 
     def test_opening_the_jaw_slides_each_pincer_outwards_along_link6_y(self):
         q = np.zeros((1, 6))

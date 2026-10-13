@@ -294,8 +294,9 @@ class RewardTermsTest(unittest.TestCase):
 
     def test_torque_margin_charges_only_past_seventy_percent(self):
         torques = torch.zeros(1, 20)
-        torques[0, 14] = 1.7          # Joint3 at its limit
-        torques[0, 12] = 0.5 * 3.3    # Joint1 at half
+        limits = interface.TORQUE_LIMITS
+        torques[0, 14] = limits[14]          # Joint3 at its limit (3.33 N·m since 2026-10-09)
+        torques[0, 12] = 0.5 * limits[12]    # Joint1 at half
         cost = hook_rewards.arm_torque_margin(self.state(at(), at(), torques=torques))
         self.assertAlmostEqual(float(cost[0]), 0.09, places=5)
 

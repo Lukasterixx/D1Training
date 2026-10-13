@@ -1,0 +1,63 @@
+{
+  "id": "20261009T143121_train_seed1_rope_oldft",
+  "title": "Rope 14600 fine-tuned 400 iterations, polish recipe, old arm (control)",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-10T01:50:33+11:00",
+  "started_utc": "2026-10-09T14:31:21+00:00",
+  "source_dir": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/logs/unifp_train/20261009T143121_train_seed1_rope_oldft",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": false,
+  "articulation_mass_kg": null,
+  "last_iteration": 14999,
+  "final_checkpoint": {
+    "file": "model_14999.pt",
+    "sha256": "dc5381ce9399b698d32c781f2876fed9d3ea993e8f1d119f81ecf3ecae2282cf"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 164.9964141845703,
+      "last_step": 14999,
+      "mean_last_10": 163.6097610473633,
+      "min": 2.4161717891693115,
+      "max": 177.8680419921875,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 14999,
+      "mean_last_10": 999.0,
+      "min": 12.729166984558105,
+      "max": 999.0,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.18121585249900818,
+      "last_step": 14999,
+      "mean_last_10": 0.1812186434864998,
+      "min": 0.18121574819087982,
+      "max": 0.1833806335926056,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 34201.0,
+      "last_step": 14999,
+      "mean_last_10": 34342.3,
+      "min": 32215.0,
+      "max": 38518.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

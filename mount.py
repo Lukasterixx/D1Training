@@ -30,10 +30,11 @@ LEGACY_ARM_MOUNT_POS_M = (0.0, 0.0, 0.08)
 JOINT1_HEIGHT_M = 0.0760
 LEGACY_JOINT1_HEIGHT_M = 0.0533
 
-#: How far the arm moved in the Go2's `base_link` from the arm the scripted scenes were set against (the legacy mount
-#: on Unitree's base) to the measured one: (-0.019, 0, +0.0282) m. The arm is rigid above its base, so everything
-#: from the shoulder up moved by exactly this. A scene re-placed by it is where it was relative to the arm (Week 4,
-#: 2026-10-06); one standing on the real floor takes only the horizontal part.
+#: How far the arm's base moved in the Go2's `base_link` from the arm the scripted scenes were set against (the legacy
+#: mount on Unitree's base) to the measured one: (-0.019, 0, +0.0282) m. A scene re-placed by it is where it was
+#: relative to the arm (Week 4, 2026-10-06); one standing on the real floor takes only the horizontal part. The arm
+#: above its base then took the CAD's link lengths (2026-10-09, F-139): the shoulder 1.5 mm lower, the forearm 6.8 mm
+#: longer, Link6 (+5.1, +0.9, -1.5) mm off at the zero pose. The scenes were not moved again for that.
 ARM_SHIFT_FROM_LEGACY_M = (ARM_MOUNT_POS_M[0] - LEGACY_ARM_MOUNT_POS_M[0],
                            ARM_MOUNT_POS_M[1] - LEGACY_ARM_MOUNT_POS_M[1],
                            ARM_MOUNT_POS_M[2] - LEGACY_ARM_MOUNT_POS_M[2] + JOINT1_HEIGHT_M - LEGACY_JOINT1_HEIGHT_M)

@@ -23,6 +23,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import unittest
+from unittest import mock
 
 import numpy as np
 import torch
@@ -116,6 +117,12 @@ class TestRewardTerms(unittest.TestCase):
         air = at("feet_air_time", low)
         contacts = at("last_contacts", low).bool()
         predicted = {name: [] for name in task_cfg.REWARD_WEIGHTS}
+        # Replayed with the recording's own effort limits: the D1's Joint2 and Joint3 are 3.33 N·m in `interface` since
+        # 2026-10-09, where the Isaac Gym run had 3.3 and 1.7 (`unifp_interface_48800.npz`).
+        limits = np.load(FIXTURE.parent / "unifp_interface_48800.npz")["torque_limits"]
+        patch = mock.patch.object(interface, "TORQUE_LIMITS", tuple(float(v) for v in limits))
+        patch.start()
+        cls.addClassCleanup(patch.stop)
         for step in range(low, high):
             phase = torch.as_tensor(data["gait_indices"][step + 1:step + 2], dtype=torch.float32)
             quat = data["base_yaw_quat"][step + 1]      # Isaac Gym stores w last

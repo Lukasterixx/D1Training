@@ -32,7 +32,7 @@ from mount import ARM_MOUNT_POS_M  # noqa: E402
 MOUNT_B = np.array(ARM_MOUNT_POS_M)  # weld.py mount_pos (F-117)
 ARM_MASS_KG = 3.152  # run_position_only.py arm_mass_kg
 SERVO_MASS_BY_LINK = {"Link1": 0.060, "Link2": 0.060, "Link3": 0.045, "Link4": 0.045, "Link5": 0.045, "Link6": 0.090}
-EFFORT_LIMIT_NM = np.array([3.3, 3.3, 1.7, 1.7, 1.7, 1.7])  # motor_model.D1_EFFORT_LIMIT_NM
+EFFORT_LIMIT_NM = np.array([3.3, 3.33, 3.33, 1.7, 1.7, 1.7])  # motor_model.D1_EFFORT_LIMIT_NM (Joint2-3 3.33 since 2026-10-09)
 SOFT_LIMIT_FACTOR = 0.9  # UNITREE_GO2_CFG soft_joint_pos_limit_factor; actions are clamped to it
 GRAVITY = np.array([0.0, 0.0, -9.81])
 # Collision proxy in the Go2 base frame: the trunk and hips, and the ground below the base.

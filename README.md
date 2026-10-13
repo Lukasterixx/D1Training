@@ -234,16 +234,17 @@ How the URDF compares to [the published spec][spec]:
 | Joint ranges | ±134.6°, ±90°, ±90°, ±134.6°, ±90°, ±134.6° | J0 ±135°, J1 ±90°, J2 ±90°, J3 ±135°, J4 ±90°, J5 ±135° | matches |
 | Reach | — | 550 mm excl. jaw | matches `ARM_MAX_REACH` |
 | Claw stroke | 60 mm (2 × 30 mm fingers) | 0–65 mm | close enough |
-| Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | **Joint3 was ~2× too strong — fixed** |
+| Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | set to the table in Week 1 ("Joint3 ~2× too strong"); since 2026-10-09 Joint2 and Joint3 are **3.33** again, Lukas's call: the CAD's shoulder and elbow servos are the same housing (F-137, F-139). Not measured |
 | Total mass | 0.719 kg | 3.152 kg | **too light — see below** |
 | Base (measured on the arm, 2026-09-30) | 105 mm across, Joint1 at 53.3 mm, holes 108 mm apart | 126 mm, 76 mm, 130 mm | **replaced** by `d1_arm/measured_base.py` (F-126) |
-| Link lengths (Unitree's CAD, 2026-10-08) | upper arm 269.3, forearm (Joint3 → Joint5) 197.9, Joint5 → fingertips 208.1 mm | CAD and Unitree's D1-550 URDF: 270.0, **204.7**, 206.4 mm | **not yet changed**: the forearm is 6.8 mm short, the jaw centre ~6 mm off (F-137, `d1_arm/compare_cad.py`) |
+| Link lengths (Unitree's CAD, 2026-10-08) | upper arm 269.3, forearm (Joint3 → Joint5) 197.9, Joint5 → fingertips 208.1 mm, shoulder 132.3 mm above the base's bottom | CAD and Unitree's D1-550 URDF: 270.0, **204.7**, 206.4 mm, 130.8 | **changed to the CAD's** on 2026-10-09 (F-139): five joint origins, `d1_description`'s links and hand kept; `d1_arm/compare_cad.py` prints both. Not measured on the arm |
 
 Mapping uses the protocol's offset (`d1_protocol.py`: "Protocol id 0 is URDF
 Joint1"). All six ranges matching exactly is what confirms that offset. Whoever
 filled in the zeros assumed "first three joints strong, last three weak"; the D1
 is first *two* strong, last *four* weak, so `Joint3` carried double its real
-torque. Now corrected in the URDF.
+torque. Now corrected in the URDF. (2026-10-09: reversed for Joint3, on Lukas's reading of Unitree's CAD, whose
+elbow servo is the shoulder's; see the table.)
 
 [spec]: https://support.unitree.com/home/en/developer/D1Arm_services
 

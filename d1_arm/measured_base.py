@@ -29,6 +29,10 @@ lip meets the cylinder, at the tabs, the two differ by up to 1.8 mm. The cylinde
 
 Not measured: the flange's outline (the tabs' length along the rail is scaled 1.20 with the holes; their width
 across is Unitree's), and where the real base's mass sits.
+
+Since 2026-10-09 the arm above Joint1 has Unitree's D1-550 CAD lengths (F-139), which put the shoulder pivot 54.8 mm
+above Joint1 (130.8 mm above the base's bottom face; the CAD's plate top is at 75.5). That is 1.5 mm under the
+2026-09-30 reading in the table above (76 + 56.3 = 132.3 mm). This script and its mesh are unchanged by it.
 """
 from __future__ import annotations
 

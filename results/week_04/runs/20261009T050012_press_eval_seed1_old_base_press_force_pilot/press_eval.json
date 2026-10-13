@@ -1,0 +1,162 @@
+{
+  "by_force": [
+    {
+      "approach_err_start_deg": 4.95,
+      "force_n": 10.0,
+      "force_rmse_n": 3.418,
+      "of": 12,
+      "peak_contact_n": 28.025,
+      "reasons": {
+        "not held": 2,
+        "slid off": 3,
+        "success": 7
+      },
+      "success": 7,
+      "time_to_press_s": 1.36
+    },
+    {
+      "approach_err_start_deg": 5.185,
+      "force_n": 20.0,
+      "force_rmse_n": 12.344,
+      "of": 12,
+      "peak_contact_n": 67.64,
+      "reasons": {
+        "slid off": 12
+      },
+      "success": 0,
+      "time_to_press_s": null
+    },
+    {
+      "approach_err_start_deg": 4.99,
+      "force_n": 30.0,
+      "force_rmse_n": 20.195,
+      "of": 12,
+      "peak_contact_n": 29.97,
+      "reasons": {
+        "slid off": 12
+      },
+      "success": 0,
+      "time_to_press_s": null
+    },
+    {
+      "approach_err_start_deg": 4.985,
+      "force_n": 5.0,
+      "force_rmse_n": 4.659,
+      "of": 12,
+      "peak_contact_n": 18.815,
+      "reasons": {
+        "success": 12
+      },
+      "success": 12,
+      "time_to_press_s": 1.09
+    }
+  ],
+  "by_height": [
+    {
+      "approach_err_start_deg": 4.95,
+      "force_rmse_n": 8.157,
+      "height_m": 0.7,
+      "of": 16,
+      "peak_contact_n": 26.81,
+      "reasons": {
+        "slid off": 10,
+        "success": 6
+      },
+      "success": 6,
+      "time_to_press_s": 1.15
+    },
+    {
+      "approach_err_start_deg": 3.915,
+      "force_rmse_n": 9.922,
+      "height_m": 0.78,
+      "of": 16,
+      "peak_contact_n": 35.035,
+      "reasons": {
+        "slid off": 8,
+        "success": 8
+      },
+      "success": 8,
+      "time_to_press_s": 1.13
+    },
+    {
+      "approach_err_start_deg": 12.83,
+      "force_rmse_n": 8.64,
+      "height_m": 0.86,
+      "of": 16,
+      "peak_contact_n": 26.53,
+      "reasons": {
+        "not held": 2,
+        "slid off": 9,
+        "success": 5
+      },
+      "success": 5,
+      "time_to_press_s": 1.36
+    }
+  ],
+  "by_lateral": [
+    {
+      "approach_err_start_deg": 4.95,
+      "force_rmse_n": 9.055,
+      "lateral_m": 0.002,
+      "of": 48,
+      "peak_contact_n": 30.4,
+      "reasons": {
+        "not held": 2,
+        "slid off": 27,
+        "success": 19
+      },
+      "success": 19,
+      "time_to_press_s": 1.16
+    }
+  ],
+  "by_tool": [
+    {
+      "approach_err_start_deg": 5.23,
+      "force_rmse_n": 8.692,
+      "of": 24,
+      "peak_contact_n": 27.03,
+      "reasons": {
+        "not held": 1,
+        "slid off": 13,
+        "success": 10
+      },
+      "success": 10,
+      "time_to_press_s": 1.28,
+      "tool": "bare"
+    },
+    {
+      "approach_err_start_deg": 4.89,
+      "force_rmse_n": 9.119,
+      "of": 24,
+      "peak_contact_n": 33.435,
+      "reasons": {
+        "not held": 1,
+        "slid off": 14,
+        "success": 9
+      },
+      "success": 9,
+      "time_to_press_s": 1.08,
+      "tool": "probe"
+    }
+  ],
+  "damaged": 0,
+  "engage_tip_miss_mm": 2.99,
+  "episodes": 48,
+  "fell": 0,
+  "force_rmse_n": 9.055,
+  "peak_contact_n": 30.4,
+  "reasons": {
+    "damaged": 0,
+    "fell": 0,
+    "missed": 0,
+    "not held": 2,
+    "not started": 0,
+    "short": 0,
+    "slid off": 27,
+    "success": 19
+  },
+  "released": 35,
+  "started": 48,
+  "success": 19,
+  "time_to_press_s": 1.16
+}

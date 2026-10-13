@@ -1,0 +1,80 @@
+{
+ "postures": 87115,
+ "directions": {
+  "back toward the robot (-x)": {
+   "p10": 5.75,
+   "p50": 9.42,
+   "p90": 14.72,
+   "p99": 22.69,
+   "max": 91.04,
+   "binding_joint_share": {
+    "Joint1": 0.334,
+    "Joint2": 0.188,
+    "Joint3": 0.297,
+    "Joint4": 0.046,
+    "Joint5": 0.135,
+    "Joint6": 0.0
+   }
+  },
+  "away from the robot (+x)": {
+   "p10": 4.71,
+   "p50": 9.19,
+   "p90": 15.32,
+   "p99": 24.25,
+   "max": 104.95,
+   "binding_joint_share": {
+    "Joint1": 0.282,
+    "Joint2": 0.232,
+    "Joint3": 0.301,
+    "Joint4": 0.047,
+    "Joint5": 0.138,
+    "Joint6": 0.0
+   }
+  },
+  "up (+z)": {
+   "p10": 1.55,
+   "p50": 2.54,
+   "p90": 5.77,
+   "p99": 10.69,
+   "max": 19.13,
+   "binding_joint_share": {
+    "Joint1": 0.0,
+    "Joint2": 0.342,
+    "Joint3": 0.633,
+    "Joint4": 0.0,
+    "Joint5": 0.025,
+    "Joint6": 0.0
+   }
+  },
+  "down (-z)": {
+   "p10": 7.46,
+   "p50": 9.09,
+   "p90": 13.62,
+   "p99": 20.15,
+   "max": 30.0,
+   "binding_joint_share": {
+    "Joint1": 0.0,
+    "Joint2": 0.053,
+    "Joint3": 0.85,
+    "Joint4": 0.007,
+    "Joint5": 0.09,
+    "Joint6": 0.0
+   }
+  },
+  "sideways (+y)": {
+   "p10": 4.55,
+   "p50": 8.52,
+   "p90": 14.15,
+   "p99": 22.21,
+   "max": 71.06,
+   "binding_joint_share": {
+    "Joint1": 0.301,
+    "Joint2": 0.211,
+    "Joint3": 0.336,
+    "Joint4": 0.034,
+    "Joint5": 0.118,
+    "Joint6": 0.0
+   }
+  }
+ }
+}

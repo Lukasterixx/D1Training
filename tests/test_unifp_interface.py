@@ -64,11 +64,16 @@ class TestConstants(unittest.TestCase):
         self.assertEqual(len(set(interface.ISAACLAB_NAMES)), interface.NUM_DOF)
 
     def test_control_constants(self):
+        # One deliberate departure from the Isaac Gym recording: the D1's Joint2 and Joint3 at 3.33 N·m since
+        # 2026-10-09 (`motor_model.D1_EFFORT_LIMIT_NM`), where the recording has 3.3 and 1.7.
+        recorded_limits = np.array(self.data["torque_limits"], dtype=float)
+        np.testing.assert_allclose(recorded_limits[13:15], [3.3, 1.7], atol=1e-5)
+        recorded_limits[13:15] = 3.33
         for name, recorded, ours in (
             ("default_dof_pos", self.data["default_dof_pos"], interface.DEFAULT_DOF_POS),
             ("p_gains", self.data["p_gains"], interface.P_GAINS),
             ("d_gains", self.data["d_gains"], interface.D_GAINS),
-            ("torque_limits", self.data["torque_limits"], interface.TORQUE_LIMITS),
+            ("torque_limits", recorded_limits, interface.TORQUE_LIMITS),
             ("commands_scale", self.data["commands_scale"], interface.COMMANDS_SCALE),
         ):
             with self.subTest(constant=name):

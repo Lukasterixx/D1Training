@@ -8,6 +8,37 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## On the CAD-length robot with a 3.33 N·m shoulder and elbow (since 2026-10-09)
+
+The simulated D1 changed again on 2026-10-09:
+- **Lengths** (F-139): its arm took Unitree's D1-550 CAD lengths, so the forearm is 6.8 mm longer and the controlled
+  point moves a median 6 mm.
+- **Torque** (F-140): Joint2 and Joint3 are 3.33 N·m, where Joint3 was 1.7. That is Lukas's call from the CAD's
+  identical servo housings, and it is not measured.
+
+Every checkpoint was scored on its frozen sets on the new robot, and each lineage was fine-tuned on it, with an
+identical run on the previous robot as the control (Week 4 log, 2026-10-09). What to use:
+
+| use | file | on the new robot | why |
+| --- | --- | --- | --- |
+| reach (UniFP demos' default) | **`unifp_go2d1_isaaclab_cad333_model_58400.pt`** (new) | 1.40 / 1.93 cm median / p90 (`57499` here: 1.78 / 2.19); cup demo 10/16 (`57499`: 6/16) | `57499` fine-tuned 900 iterations on this robot; its control never got the p90 below 2.24 |
+| rope pull | **`unifp_go2d1_rope_cad333_model_14600.pt`** (new) | held out: 21.9 / 31.9 / 45.2 N for 15 / 30 / 45 N, 0 of 192 releases fallen (`..._polish_14600` here: 21.3 / 35.6 / 51.1 N) | F-133's v3 recipe re-run on this robot from hook v4 `13000`, chosen by the rope rule |
+| mechanism controller | `unifp_go2d1_mech_law_model_17499.pt` (unchanged) | 491 of 512, 4 falls; standing combiner demo 16/16 | its pinned-rate fine-tune `18000` scores 497 with no fall but opens 13/16 in the demo |
+| lever | `unifp_go2d1_mech_lever_measured_model_21496.pt` (unchanged) | levers 336, test 492; **lever demo 9/16 with 2 falls** (16/16 at 1.7 N·m) | every fine-tune lost the claw's bar in all 16 demo attempts |
+| insertion | `unifp_go2d1_insertion_seed3_measured_model_21400.pt` (unchanged) | lateral 76 (1 damaged), detent 79 (2); demo 44/48, 44/48, 89/96 | every fine-tuned checkpoint scored lower (F-121's decline, on both robots) |
+
+The new rope policy pulls differently from every earlier one. It leans 3.6–5.4° rather than ~20–24°, so the arm
+makes more of the force, with Joint2 and Joint3 at their 3.33 N·m limits. If the real elbow is 1.7 N·m, it
+will ask for torque the arm does not have. Measure the elbow before running it on hardware.
+
+```bash
+./run_unifp_train.py rope_eval --task rope --headless --rope_set test --checkpoint checkpoints/unifp_go2d1_rope_cad333_model_14600.pt
+./run_unifp_train.py eval --headless --tool_point fingertip --manifest results/manifests/unifp_isaaclab_validation.json \
+    --checkpoint checkpoints/unifp_go2d1_isaaclab_cad333_model_58400.pt
+```
+
+One seed each, simulation only. The sections below describe each checkpoint on the robot it was trained on.
+
 ## On the measured robot (since 2026-10-06)
 
 Since 2026-09-30 the simulated D1 has the base Lukas measured on the real arm: Joint1 at 76.0 mm, not Unitree's
@@ -184,6 +215,21 @@ seats 5 of 16. The grip it assumes is 2 N·m/rad about the jaw centre, ±10°: a
 ```
 
 ## The rope-pull policies
+
+### `unifp_go2d1_rope_cad333_model_14600.pt`
+
+For the robot as modelled since 2026-10-09 (CAD lengths, a 3.33 N·m shoulder and elbow). It is
+`logs/unifp_train/20261009T172054_train_seed1_rope_v3_c33/model_14600.pt`, byte for byte: hook v4 `model_13000`
+continued 1,600 iterations on `--task rope` with the v3 recipe and `--curriculum_rule ema`, on that robot. It was chosen
+by the rope rule (falls, then episodes with any tug, then force error, then holds) over all ten saved checkpoints on the
+development set: no falls in any checkpoint, no tug in 108 episodes, 25.1 / 35.0 / 48.9 N for 20 / 35 / 50.
+
+On the held-out set, run once: 21.9 / 31.9 / 45.2 N for 15 / 30 / 45 N, all 576 holds held, and no fall in 192 releases.
+The polish below, unretrained on this robot, over-pulls by ~6 N at every level. Polishing it on this robot brought the
+sinking after unnoticed snaps back (2–19 of 36, three seeds), so it was not used. See the CAD-robot section above for the
+posture and the hardware caveat.
+
+### On the measured robot, 1.7 N·m elbow
 
 **Use `unifp_go2d1_rope_v3_polish_model_14600.pt`** (F-136): `unifp_go2d1_rope_v3_model_14400.pt`, below, continued 200
 iterations at half the exploration noise. It is `logs/unifp_train/20261007T152825_train_seed1_rope_v3_polish/model_14600.pt`,

@@ -510,6 +510,12 @@ Both snatch once as the rope comes taut (much less on a 10 N/s ramp) and run Joi
 a heavier arm-margin price does not change that, only lowers the pull (F-135). With its legs held still the policy
 pulls only 17-20 N. Simulation only.
 
+**On the 3.33 N·m shoulder and elbow (2026-10-09, F-140, F-141).** The policies above over-pull there by ~6 N, and a
+polish there brings back sinking after unnoticed snaps. The v3 recipe re-run on that robot from hook v4 `13000` gives
+`checkpoints/unifp_go2d1_rope_cad333_model_14600.pt`. It holds 21.9 / 31.9 / 45.2 N for 15 / 30 / 45 held out, with no
+fall in 192 releases. It leans 4-5 degrees rather than 20-24, pulling with the arm at its new limits. Use it with the
+model as it now is, and the polish with a 1.7 N·m elbow.
+
 **Two scoring lessons.** A last-2-s window never sees the snatch as the rope is tied on, so each hold is also scored
 whole; and a tug is a *prominent peak* of the tension (25% of the command above the troughs either side), since the
 snatches go above the command as often as below it.

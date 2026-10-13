@@ -69,12 +69,14 @@ GRIPPER_DAMPING = 8.0
 
 #: Per-DOF effort limit, from the URDF. PhysX clips at this, so stiffness buys tracking, never
 #: strength. Note the calf's 45.43 N·m -- it is geared, and is not the hip/thigh's 23.7.
+#: The D1's Joint2 and Joint3 are 3.33 N·m since 2026-10-09 (`motor_model.D1_EFFORT_LIMIT_NM`): a departure from
+#: the Isaac Gym recording, which had 3.3 and 1.7 (`tests/test_unifp_interface.py`).
 TORQUE_LIMITS = (
     23.7, 23.7, 45.43,
     23.7, 23.7, 45.43,
     23.7, 23.7, 45.43,
     23.7, 23.7, 45.43,
-    3.3, 3.3, 1.7, 1.7, 1.7, 1.7,
+    3.3, 3.33, 3.33, 1.7, 1.7, 1.7,
     15.0, 15.0,
 )
 

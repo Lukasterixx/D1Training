@@ -1,0 +1,54 @@
+{
+  "id": "20261009T060723_680696Z_playback_arm_+1.0_+0.0_+0.0",
+  "title": "Playback self-test with the arm, command 1.0 0.0 0.0, CAD-length arm",
+  "notes": "",
+  "week": 4,
+  "recorded_at": "2026-10-09T17:07:24+11:00",
+  "started_utc": "2026-10-09T06:07:23+00:00",
+  "source_dir": "logs/playback/20261009T060723_680696Z_playback_arm_+1.0_+0.0_+0.0",
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "error": null,
+  "num_envs": 1,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "run.json",
+    "selftest.json"
+  ],
+  "smoke_summary": {
+    "command": {
+      "count": 3,
+      "mean": 0.3333333333333333,
+      "min": 0.0,
+      "median": 0.0,
+      "max": 1.0
+    },
+    "duration_s": 10.0,
+    "settle_s": 1.0,
+    "mean_base_velocity.vx_m_s": 0.9560289999712704,
+    "mean_base_velocity.vy_m_s": 0.04767411553122925,
+    "mean_base_velocity.wz_rad_s": 0.050719336853799465,
+    "tracking_pct.vx": 95.60289999712704,
+    "travelled_xy_m": {
+      "count": 2,
+      "mean": 5.821469783782959,
+      "min": 2.553400993347168,
+      "median": 9.08953857421875,
+      "max": 9.08953857421875
+    },
+    "planar_speed_m_s": 0.9441375732421875,
+    "min_base_height_m": 0.3268418312072754,
+    "max_tilt_deg": 6.878571843988599,
+    "fell": false,
+    "arm_ee_error_m": 0.03571895836705438,
+    "gripper_measured_mm": 58.98270383477211
+  }
+}

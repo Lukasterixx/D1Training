@@ -1,0 +1,796 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    48,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261005T134706_train_seed1_press_pilot_mb/model_21599.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "press_eval",
+    "mount_pos": null,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "force",
+    "press_tools": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "cad_base_press_force_pilot",
+    "seed": 1,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "press",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261005T134706_train_seed1_press_pilot_mb/model_21599.pt",
+  "checkpoint_iteration": 21599,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_21599.pt",
+  "critic_obs": [
+    48,
+    459
+  ],
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    48,
+    12
+  ],
+  "expected_actor": [
+    48,
+    2432
+  ],
+  "expected_critic": [
+    48,
+    459
+  ],
+  "expected_estimates": [
+    48,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_status": "M README.md\n M d1_arm/d1.urdf\n M d1_arm/measured_base.py\n M demos/cup/d1_ui/server.py\n M description/go2_d1.urdf\n M mount.py\n M position_only/task_space.py\n M tests/test_workspace.py\n?? results/week_04/figures/stance_probe_cad_arm.json\n?? results/week_04/runs/20261009T044449_261854Z_verify_seed42/\n?? results/week_04/runs/20261009T044740_eval_seed20260921_cad_base_reach57499/\n?? results/week_04/runs/20261009T044810_mech_eval_seed1_cad_base_mech_test_17499/\n?? results/week_04/runs/20261009T044848_mech_eval_seed1_cad_base_lever_21496/\n?? results/week_04/runs/20261009T044918_mech_eval_seed1_cad_base_lever_test_21496/\n?? results/week_04/runs/20261009T044948_ins_eval_seed1_cad_base_ins_lateral_21400/\n?? results/week_04/runs/20261009T045028_ins_eval_seed1_cad_base_ins_detent_21400/\n?? results/week_04/runs/20261009T045111_rope_eval_seed1_cad_base_rope_dev_14600/\n?? results/week_04/runs/20261009T045152_rope_eval_seed1_cad_base_rope_test_14600/\n?? results/week_04/runs/20261009T045247_press_eval_seed1_cad_base_press_panel_pilot/",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "mechanism": null,
+  "mode": "press_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 48,
+  "press": {
+    "button_fraction": 0.8,
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "tools": [
+      "bare",
+      "probe"
+    ]
+  },
+  "press_conditions": {
+    "hold_margin": 1.4,
+    "max_margin": 2.0,
+    "speed_m_s": 0.02,
+    "standoff_m": 0.012
+  },
+  "press_rows": [
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 20.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 30.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 20.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 30.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 20.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 30.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 5.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 10.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 20.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 30.0,
+      "height_m": 0.7,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 20.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 30.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 20.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 30.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 20.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 30.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 5.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 10.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 20.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 30.0,
+      "height_m": 0.78,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 20.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 30.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 20.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 0.0,
+      "force_n": 30.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 20.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 30.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "bare"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 5.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 10.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 20.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    },
+    {
+      "cap_radius_m": 0.01,
+      "direction_rad": 3.141592653589793,
+      "force_n": 30.0,
+      "height_m": 0.86,
+      "lateral_m": 0.002,
+      "set": "force",
+      "tool": "probe"
+    }
+  ],
+  "press_set": "force",
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "robot_usd_sha256": "c6f6f5775b4aad24e47e72ff40171bf7cf576a06aadc7c12fa1cf9175696e350",
+  "roll_objective": true,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_force": [
+      {
+        "approach_err_start_deg": 4.89,
+        "force_n": 10.0,
+        "force_rmse_n": 4.301,
+        "of": 12,
+        "peak_contact_n": 28.025,
+        "reasons": {
+          "slid off": 3,
+          "success": 9
+        },
+        "success": 9,
+        "time_to_press_s": 1.22
+      },
+      {
+        "approach_err_start_deg": 4.99,
+        "force_n": 20.0,
+        "force_rmse_n": 12.627,
+        "of": 12,
+        "peak_contact_n": 62.705,
+        "reasons": {
+          "damaged": 1,
+          "slid off": 11
+        },
+        "success": 0,
+        "time_to_press_s": null
+      },
+      {
+        "approach_err_start_deg": 4.82,
+        "force_n": 30.0,
+        "force_rmse_n": 19.902,
+        "of": 12,
+        "peak_contact_n": 30.58,
+        "reasons": {
+          "damaged": 1,
+          "slid off": 11
+        },
+        "success": 0,
+        "time_to_press_s": null
+      },
+      {
+        "approach_err_start_deg": 4.925,
+        "force_n": 5.0,
+        "force_rmse_n": 6.009,
+        "of": 12,
+        "peak_contact_n": 12.455,
+        "reasons": {
+          "success": 12
+        },
+        "success": 12,
+        "time_to_press_s": 1.09
+      }
+    ],
+    "by_height": [
+      {
+        "approach_err_start_deg": 4.835,
+        "force_rmse_n": 6.009,
+        "height_m": 0.7,
+        "of": 16,
+        "peak_contact_n": 26.6,
+        "reasons": {
+          "damaged": 2,
+          "slid off": 9,
+          "success": 5
+        },
+        "success": 5,
+        "time_to_press_s": 1.2
+      },
+      {
+        "approach_err_start_deg": 3.965,
+        "force_rmse_n": 10.089,
+        "height_m": 0.78,
+        "of": 16,
+        "peak_contact_n": 34.57,
+        "reasons": {
+          "slid off": 8,
+          "success": 8
+        },
+        "success": 8,
+        "time_to_press_s": 1.05
+      },
+      {
+        "approach_err_start_deg": 12.88,
+        "force_rmse_n": 9.602,
+        "height_m": 0.86,
+        "of": 16,
+        "peak_contact_n": 29.005,
+        "reasons": {
+          "slid off": 8,
+          "success": 8
+        },
+        "success": 8,
+        "time_to_press_s": 1.57
+      }
+    ],
+    "by_lateral": [
+      {
+        "approach_err_start_deg": 4.915,
+        "force_rmse_n": 7.553,
+        "lateral_m": 0.002,
+        "of": 48,
+        "peak_contact_n": 28.265,
+        "reasons": {
+          "damaged": 2,
+          "slid off": 25,
+          "success": 21
+        },
+        "success": 21,
+        "time_to_press_s": 1.1
+      }
+    ],
+    "by_tool": [
+      {
+        "approach_err_start_deg": 5.06,
+        "force_rmse_n": 6.94,
+        "of": 24,
+        "peak_contact_n": 26.91,
+        "reasons": {
+          "damaged": 2,
+          "slid off": 11,
+          "success": 11
+        },
+        "success": 11,
+        "time_to_press_s": 1.22,
+        "tool": "bare"
+      },
+      {
+        "approach_err_start_deg": 4.745,
+        "force_rmse_n": 8.771,
+        "of": 24,
+        "peak_contact_n": 35.03,
+        "reasons": {
+          "slid off": 14,
+          "success": 10
+        },
+        "success": 10,
+        "time_to_press_s": 1.09,
+        "tool": "probe"
+      }
+    ],
+    "damaged": 2,
+    "engage_tip_miss_mm": 2.995,
+    "episodes": 48,
+    "fell": 0,
+    "force_rmse_n": 7.553,
+    "peak_contact_n": 28.265,
+    "reasons": {
+      "damaged": 2,
+      "fell": 0,
+      "missed": 0,
+      "not held": 0,
+      "not started": 0,
+      "short": 0,
+      "slid off": 25,
+      "success": 21
+    },
+    "released": 31,
+    "started": 48,
+    "success": 21,
+    "time_to_press_s": 1.1
+  },
+  "task": "press",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

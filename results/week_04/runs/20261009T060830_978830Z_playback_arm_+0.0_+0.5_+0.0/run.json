@@ -1,0 +1,26 @@
+{
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "arguments": {
+    "num_envs": 1,
+    "selftest": 10.0,
+    "selftest_command": [
+      0.0,
+      0.5,
+      0.0
+    ],
+    "no_arm": false,
+    "arm_mass": 3.152
+  },
+  "git_commit": "054983a2bd947a0ce974f52ec0270d22d52a45d5",
+  "git_status": "",
+  "articulation_mass_kg": 18.17099952697754,
+  "policy": {
+    "checkpoint": "/tmp/claude-1001/-home-victor-D1Training/4d0e461c-da23-4334-95a3-13afb6718108/scratchpad/old_arm/logs/rsl_rl/unitree_go2_rough/2024-04-06_02-37-07/model_7850.pt",
+    "sha256": "7e684601ac6a0906954fcd5a84153a1bbc13f5a24ee9af7ef556eb3f4f5abef4",
+    "actions": "12 legs",
+    "legs": "DCMotor"
+  },
+  "arm_drives": "URDF import (acceleration)"
+}

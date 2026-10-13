@@ -18,14 +18,16 @@ SPAWN_HEIGHT_M = 0.30
 # 5.7 cm back from where it spawns and is settled by 3.6 s (Week 1's criterion).
 # Re-measured 2026-09-30 (Week 3) when the arm moved to the rails, weld.D1_MOUNT_POS; at the old
 # mount, (0, 0, 0.08), it was (-0.0555, 0.0, 0.2737), which the same probe reproduced exactly.
-# Unchanged, to 0.1 mm, when the arm's base became the measured one (d1_arm/measured_base.py).
+# Unchanged, to 0.1 mm, when the arm's base became the measured one (d1_arm/measured_base.py), and
+# again when the arm took the CAD's link lengths (2026-10-09, F-139: -0.0570).
 ZERO_ACTION_BASE_OFFSET_M = (-0.0571, 0.0, 0.2736)
 
 # Where the pincer tip rests when the episode starts and nothing moves. The target box is placed
-# against this point, so it is measured rather than taken from forward kinematics. Same probe and
-# date as above, with the measured base (Joint1 at 76.0 mm, not 53.3): (0.3375, -0.0141, 0.7679) at
-# the rail mount on Unitree's base, (0.3601, -0.0141, 0.7604) at the old mount.
-ZERO_ACTION_TIP_M = (0.3378, -0.0141, 0.7906)
+# against this point, so it is measured rather than taken from forward kinematics. Same probe,
+# re-run 2026-10-09 when the arm took Unitree's CAD lengths (F-139). Before that, with d1_description's
+# lengths: (0.3378, -0.0141, 0.7906) on the measured base (Joint1 at 76.0 mm, not 53.3), (0.3375,
+# -0.0141, 0.7679) at the rail mount on Unitree's base, (0.3601, -0.0141, 0.7604) at the old mount.
+ZERO_ACTION_TIP_M = (0.3430, -0.0131, 0.7890)
 
 # The reaching target box, relative to the environment origin (uniform, one fixed target per
 # episode). Placed so that no target is within G1a's 5 cm of ZERO_ACTION_TIP_M: zero actions score

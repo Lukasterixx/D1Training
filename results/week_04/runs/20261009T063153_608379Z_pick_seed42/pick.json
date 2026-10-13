@@ -1,0 +1,125 @@
+{
+  "success": true,
+  "criterion": "sequence finished, cup base raised >= 5 cm, and the cup axis within 3 cm of where the plan put the jaw centre relative to it (on the axis for an outside or inside-out grasp, a wall's radius away for a pinch)",
+  "episode": 0,
+  "settled": {
+    "base_height_m": 0.0849,
+    "base_xy_env_m": [
+      -0.017,
+      -0.0001
+    ],
+    "cup_start_env_m": [
+      0.401,
+      0.03,
+      -0.0
+    ],
+    "cup_yaw_deg": 0.0,
+    "settle_s": 3.0
+  },
+  "final_state": "done",
+  "failure": null,
+  "sim_time_s": 13.92,
+  "wall_time_s": 34.1,
+  "cup_lift_m": 0.1191,
+  "cup_axis_to_jaw_centre_m": 0.0112,
+  "planned_jaw_offset_from_axis_m": 0.0048,
+  "axis_error_m": 0.0064,
+  "cup_tilt_deg_end": 0.22,
+  "base_height_m": 0.0849,
+  "first_look_errors_mm": [
+    {
+      "horizontal": 4.48,
+      "height": -8.13,
+      "method": "silhouette"
+    },
+    {
+      "horizontal": 4.39,
+      "height": -7.54,
+      "method": "silhouette"
+    },
+    {
+      "horizontal": 4.44,
+      "height": -8.05,
+      "method": "silhouette"
+    }
+  ],
+  "refine_errors_mm": [],
+  "found_by": "survey",
+  "looks_tried": [
+    "survey"
+  ],
+  "frames_looked_at": 7,
+  "frames_with_cup_detection": 3,
+  "grasp_plan": {
+    "mode": "outside",
+    "heading_b": [
+      0.9894,
+      0.0689,
+      -0.1276
+    ],
+    "tilt_deg": 10.0,
+    "jaw_pregrasp_b": [
+      0.399,
+      0.0283,
+      0.1232
+    ],
+    "jaw_grasp_b": [
+      0.4073,
+      0.0304,
+      -0.0566
+    ],
+    "jaw_lift_b": [
+      0.4226,
+      0.0305,
+      0.0624
+    ],
+    "q_pregrasp": [
+      0.0647,
+      0.9207,
+      -0.3751,
+      0.0104,
+      0.9787,
+      0.0091
+    ],
+    "approach_waypoints": 1,
+    "descend_waypoints": 18,
+    "lift_waypoints": 6,
+    "gripper_descend_m": 0.03,
+    "gripper_grasp_m": 0.0134,
+    "notes": [
+      "fingertips 30 mm below the rim; 14.6 mm a side beside the cup",
+      "descent held to 6.0 mm over 18 waypoints"
+    ]
+  },
+  "cup_estimate_used": {
+    "top_centre_b": [
+      0.41205,
+      0.03065,
+      -0.04676
+    ],
+    "radius_m": 0.02403,
+    "top_height_m": 0.00635,
+    "bottom_height_m": -0.09729,
+    "height_m": 0.10364,
+    "points": 4703,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 0.0
+  },
+  "first_cup_estimate": {
+    "top_centre_b": [
+      0.41205,
+      0.03065,
+      -0.04676
+    ],
+    "radius_m": 0.02403,
+    "top_height_m": 0.00635,
+    "bottom_height_m": -0.09729,
+    "height_m": 0.10364,
+    "points": 4703,
+    "method": "median of 3",
+    "residual_rms_m": null,
+    "rim_coverage_deg": 0.0
+  },
+  "interpretation": "Simulation only: ideal rendering, depth with range limits and best-case stereo noise, CAD gripper, primitive cup collider, assumed camera mount. Not evidence about the real arm."
+}

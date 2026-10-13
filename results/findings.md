@@ -4947,6 +4947,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
     Then patch `d1.urdf`'s five origins, or adopt `d1_550_description`, and retrain as after F-126 (F-127).
   - Weigh the elbow's torque on the bench as well: if it is 3.3 N·m, the rope pull's saturated elbow (F-135) is half
     the constraint the simulation says.
+- **Followed by:** F-139 (2026-10-09): Lukas asked for `d1.urdf` to be patched to the CAD without the caliper reading;
+  done, and the policies re-scored.
 
 ### F-138 — From Lukas's bracket CAD, the wrist camera looks 30° down from the gripper's approach axis, its colour optical frame at (−49.1, 32.8, 61.3) mm in Link6: 13.3 mm and 30° from the mount aligned by eye; with it the D1 cannot point the camera within ~19° of level from the tag search's height
 
@@ -4984,3 +4986,126 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - With the camera pitched 30° down, looks have to be planned at least ~20° down from the D1's reach at a lying dog's
     height; a level look at a target is out of reach.
   - Check the printed bracket on the bench with a hand-eye calibration before trusting millimetres from the camera.
+
+### F-139 — Given Unitree's CAD lengths, the D1's controlled point moves 6 mm and the policies in use barely notice: the frozen sets move by at most 4 episodes, the closed-loop reach not at all; one scripted demo, already on the edge of a tolerance, falls off it
+
+- **Status:** provisional (simulation; the CAD's lengths, not the real arm's; one seed per policy)
+- **Week:** 4
+- **Date:** 2026-10-09
+- **Evidence:** [Week 4 log, 2026-10-09](week_04/notes.md), "The D1 given Unitree's CAD lengths".
+  - `d1_arm/d1.urdf`: five joint origins (Joint2 z, Joint3 y and z, Joint4 y, Joint5 z, Joint6 x) put every joint axis at
+    q = 0 where F-137's CAD has it. `compare_cad.py` rows match to 0.01 mm. The forearm's roll line is now 0.50 mm off
+    Joint1's axis, where it was 1.40. The closed fingertips are 206.38 mm past Joint5. `d1_description`'s links, meshes,
+    inertials, limits and hand are kept.
+  - The jaw centre moves a median 6.0 mm over 20,000 random configurations within the limits (p90 7.4, max 8.8). At
+    q = 0 it moves (+5.07, +0.90, −1.48) mm. G0 passes 25/25, with Link6 and the tool point on URDF kinematics to 0.64
+    and 0.72 µm. The resting tip moved 5.4 mm and was re-measured. All 674 unit tests pass after three
+    forward-kinematics pins were updated.
+  - The checkpoints in use, on their frozen sets, on the old arm and the corrected one the same day. The old-arm runs
+    reproduce F-127 and F-136 exactly, so the evaluations are deterministic and the differences are the arm's:
+    - reach `57499`: 1.70 / 2.16 → 1.71 / 2.16 cm;
+    - mechanism `17499`: 498 → 497 of 512;
+    - lever `21496`: 343 → 344 of 360 levers, 505 → 502 of 512 on the test;
+    - insertion `21400`: lateral 73 → 77, detent 68 → 67, with detent damage 4 → 8;
+    - rope `14600`: held out 17.4 / 30.0 / 44.3 → 16.8 / 29.6 / 43.9 N, no fall in either;
+    - press pilot: 63 / 19 / 31 → 64 / 21 / 30; wipe pilot: 23 → 22 of 36.
+  - The CPU models: the target box is 98.71% reachable, clear and holdable (98.99%). The arm-alone force capacities
+    agree to 1%. The best robust standing pull is 45.0 N against 49.2.
+  - The PhysX demos, on both arms the same day (checkpoints in use, 2026-10-06's commands): UniFP cup 7 → 10/16, UniFP
+    box 0 → 1/16, its scripted fix 12 → 11/32, standing combiner 16 → 16/16, lever demo 16 → 16/16, insertion 46/45/88 →
+    47/46/88, lying cup pick 11 → 11/11. The walking self-test does not change (forward 94.9 → 95.6%, no falls).
+  - **One regression: the lying combiner, 16/17 → 10/17.** Every failure is the −40° search stop never arriving. The arm
+    settles there 0.031 rad off on Joint4, where the old arm settled 0.0291, and the sequence's arrival tolerance is
+    0.03 rad. Every attempt that saw the tag earlier opened its door. Self-collisions off fail identically.
+- **Scope:** the lengths are Unitree's simplified CAD, not the real arm's, and the hand is still `d1_description`'s, whose
+  jaws are 5 mm shorter than the D1-550 URDF's. Its tips are placed on the CAD's. The shoulder height disagrees by 1.5 mm
+  with Lukas's 2026-09-30 ruler reading, and the URDF follows the CAD. One seed per policy; nothing on hardware.
+- **Implication:**
+  - Unlike F-126's base, this correction does not need the policies retrained to keep them working. They close the
+    loop on the measured tool point, and 6 mm is inside what they absorb.
+  - Insertion is the one to watch. Its detent damage doubles, which a millimetre task can show from a 6 mm model
+    change.
+  - The lying combiner's 0.03 rad arrival tolerance was 0.0009 rad from failing at one search stop on the old arm. Any
+    small change in the arm tips it. At 0.035 rad (patched in memory, on the 3.33 N·m robot) the demo opens 17/17.
+    Loosening it, for search stops or for all motions, or moving the stop, is a choice for the demo; it shares the
+    tolerance with the real arm's pick.
+  - Before the next hardware session, settle the shoulder height (base bottom → shoulder axis: CAD 130.8 mm, ruler
+    132.3) and the forearm (Joint3 → Joint5: CAD 204.7, old model 197.9) with calipers. `d1_ik.py` now plans with the
+    CAD's.
+
+### F-140 — With the shoulder and elbow at 3.33 N·m, the policies trained against a 1.7 N·m elbow over-pull: the rope policy by ~6 N at every level, and the mechanism controller falls for the first time
+
+- **Status:** provisional (simulation; the 3.33 N·m is Unitree's D1-550 URDF and Lukas's call, not measured; one seed per
+  fine-tune, each with an old-arm control)
+- **Week:** 4
+- **Date:** 2026-10-09
+- **Evidence:** [Week 4 log, 2026-10-09](week_04/notes.md), "Then the shoulder and elbow: 3.33 N·m".
+  - The change: Joint2 3.3 → 3.33 and Joint3 1.7 → 3.33 N·m, in the URDF, `motor_model`, the UniFP interface and the
+    CPU workspace model at once, on top of F-139's lengths. A test keeps the four in agreement. G0 25/25. All 675 unit
+    tests pass. Two Isaac Gym fidelity tests now state the departure.
+  - The checkpoints in use, unretrained, against the same lengths at 1.7 N·m:
+    - rope `14600`: held out 16.8 / 29.6 / 43.9 → **21.3 / 35.6 / 51.1 N** for 15 / 30 / 45 N, development
+      21.7 / 34.3 / 49.8 → 26.8 / 40.3 / 56.0; no fall in either;
+    - mechanism `17499`: 497 → 491 of 512, **4 falls** (none before), all on the button's two highest levels;
+    - lever `21496`: 344 → 336 levers, 502 → 492 on the test;
+    - insertion `21400`: lateral 77 → 76, detent 67 → 79 with damage 8 → 2;
+    - reach `57499`: 1.71 → 1.78 cm median; press panel 64 → 57; wipe 22 → 21.
+  - The arm-alone static capacities rise: lift median 2.5 → 5.8 N, push down 9.1 → 12.3, best robust standing pull 45 →
+    65 N. The binding joint moves from Joint3 to Joint1 and Joint2.
+  - The PhysX demos, unretrained, against the same lengths at 1.7 N·m: lever demo 16/16 → **9/16 with 2 falls**, UniFP
+    box's scripted fix 11/32 → 5/32, UniFP cup 10 → 6/16; standing combiner 16/16, insertion 47/46/88 → 44/44/89 and
+    the lying cup pick 11/11 hold. The walking self-test does not change.
+  - Each lineage was fine-tuned on this robot with its own recipe, and identically on the old arm as a control. Every
+    saved checkpoint was scored on the frozen sets, the candidates in the demos:
+    - **reach:** `58400` reaches 1.40 / 1.93 cm (`57499` here 1.78 / 2.19; the control at best 1.57 / 2.24). Cup demo
+      10/16 against 6/16; the UniFP box's scripted fix 0/32 against 5/32. Adopted.
+    - **mechanism (pinned 1e-5 rate):** `18000` opens 497 of 512 with no fall (`17499` here 491 with 4), while the
+      control degrades (437–483 against 498). The standing combiner demo opens 13/16 against `17499`'s 16/16. Not
+      adopted.
+    - **lever:** the fine-tunes open up to 352 of 360 levers against 336 but fall 3–12 times. They lose the L-claw's
+      bar in every lever-demo attempt (0/16 each, `21496` 9/16 with 2 falls). Not adopted.
+    - **insertion:** every checkpoint of both runs is below `21400` (here 76 / 79 seated). F-121's decline, not the
+      robot. Not adopted.
+    - **rope (polish, three seeds):** the pull comes back onto the command at 35 and 50 N. But every one of six
+      checkpoints sinks in 2–19 unnoticed snaps (`14600`: none), so by the rule `14600` stays. F-133's full v3 recipe,
+      re-run on this robot, does better (F-141).
+    - **press and wipe pilots:** 69 / 19 / 30 and 23. The old-arm repeat scored 34 / 10 / 16 against F-127's 63 / 19 /
+      31 for the same run, so pilot training varies more between runs than the robots do.
+- **Scope:** one seed per policy; the motor's real limit is unmeasured. An identical housing does not prove an identical
+  gearbox (F-137).
+- **Implication:**
+  - A policy that leans on a saturating joint learns the saturation. Raise the limit and it pushes harder than it was
+    told to.
+  - Fine-tuning recovers reach, and the mechanism controller's frozen score; the controls show both gains are the
+    robot's. But the lever demo stays at 9/16 with 2 falls, which no fine-tune repaired. A frozen set that closes the
+    grasp wherever the hand stops cannot select for a claw's entry.
+  - `mech_cfg.LEVER_PEAK_N` was drawn against the 1.7 N·m capacities and now understates what the arm can turn.
+  - If the bench later shows 1.7 N·m, F-135's saturated elbow stands, and these policies would under-pull on the real arm.
+
+### F-141 — Retrained for the 3.33 N·m shoulder and elbow, the rope policy holds 30 and 45 N on the command with no fall in 192 releases, by pulling with the arm: it leans 4–5° where every earlier rope policy leaned 20–24°
+
+- **Status:** provisional (simulation; one seed; the 3.33 N·m is not measured)
+- **Week:** 4
+- **Date:** 2026-10-10
+- **Evidence:** [Week 4 log, 2026-10-09](week_04/notes.md), "Rope, retrained".
+  - The run: F-133's v3 recipe re-run from hook v4 `13000` on the CAD-length, 3.33 N·m robot
+    ([run](#/week/4/run/20261009T172054_train_seed1_rope_v3_c33)), 2,000 iterations.
+  - All ten saved checkpoints were scored on the development set: no fall in any. From `14400` on, at most one
+    episode of 108 with a tug.
+  - The rope rule chose `14600`: 25.1 / 35.0 / 48.9 N for 20 / 35 / 50, no tug.
+  - On the held-out set, run once ([run](#/week/4/run/20261009T190302_rope_eval_seed1_c33_rope_v3_test_14600)): 21.9 /
+    31.9 / 45.2 N for 15 / 30 / 45 N, all 576 holds held, 0 of 192 releases fallen. Tie-on tugs in 28 / 20 / 0 first
+    holds.
+  - The policy it replaces, on the same robot: 21.3 / 35.6 / 51.1 N, tugs in 147 first holds at 15 N.
+  - Its posture: pitch 3.6–5.4° nose-down, the front feet carrying 0.58–0.64 of the weight, Joint2 and Joint3 at their
+    3.33 N·m limits. F-136's polish on the 1.7 N·m robot, on the same set: 20–24°, 0.51–0.53.
+- **Scope:** one seed. No polish was tried on it: on this robot polishing brought back sinking after unnoticed snaps
+  (F-140). The legs' share of the force was not measured here.
+- **Implication:**
+  - How the policy splits the pull between arm and legs follows the arm's torque limit. Here the cheaper solution was
+    the arm, at its new limit.
+  - So the elbow's real limit decides which rope policy is right for hardware. If it is 1.7 N·m, this one would demand
+    twice the elbow torque the arm has, and lean too little to make up the force. Measure the elbow before a physical
+    pull.
+  - Use `checkpoints/unifp_go2d1_rope_cad333_model_14600.pt` on the 3.33 N·m model, and
+    `unifp_go2d1_rope_v3_polish_model_14600.pt` on the 1.7 N·m one.
