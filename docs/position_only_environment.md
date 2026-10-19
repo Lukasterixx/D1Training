@@ -11,6 +11,9 @@ contact-task benchmark.
 
 - Flat-ground, floating-base Go2 with welded D1; existing robot factory and
   mass model reused. Training assets rebuild inside each run directory.
+- Since 2026-10-19 the robot carries what the real one does (`payload.py`, `--payload physical`, the default): the
+  MID-360 and its mount on the trunk (+0.42 kg) and the RealSense and its bracket on Link6 (+0.099 kg), with box
+  colliders. `--payload visual` is the robot every earlier run used. G0 verify passes on both (F-147).
 - Eighteen policy actions: 12 named leg joints followed by `Joint1`–`Joint6`.
   Jaw joints remain at their closed initial target. No IK controller overwrites
   policy actions. Targets are clipped to soft joint limits.
@@ -36,11 +39,13 @@ contact-task benchmark.
   sagged 0.11 rad at rest inside its torque limits (F-010), so `d1_servo` sets
   the drive type to force and `implicit` keeps the import for comparison. An explicit PD that stiff is
   not stable at 200 Hz, and Unitree publishes no D1 torque–speed curve for an
-  envelope. Torque limits are set explicitly (`motor_model.D1_EFFORT_LIMIT_NM`): Unitree's published
+  envelope (Fashion Star's datasheet has one for the Joint2–3 servo at 12 V, F-142; not used). Torque limits are set explicitly (`motor_model.D1_EFFORT_LIMIT_NM`): Unitree's published
   3.3/3.3/1.7/1.7/1.7/1.7 N·m until 2026-10-09, since then 3.3/**3.33/3.33**/1.7/1.7/1.7, the shoulder and elbow
-  as Unitree's D1-550 URDF has them (Lukas's call, F-140; not measured). Speed limits are set to the URDF's 1.05 rad/s (Joints 1–3)
-  and 1.73 rad/s (Joints 4–6); these are **unverified**. Unitree's own URDF has
-  zeros, and the values were filled in during the Rescue port with no source.
+  as Unitree's D1-550 URDF has them (Lukas's call, F-140). Both are a Fashion Star RX18-U100H-M, published at
+  3.14 N·m rated and 4.90 continuous (F-142); the limit on the arm is not measured. Speed limits are
+  `motor_model.D1_VELOCITY_LIMIT_RAD_S`, 1.25/1.29/1.23/1.21/1.25/1.25 rad/s, measured on the arm (F-033) as lower
+  bounds. They replaced the URDF's 1.05 (Joints 1–3) and 1.73 (Joints 4–6), which had no source: Unitree's own URDF
+  has zeros.
   `run.json` records the limits PhysX actually applies (`arm_limits_in_physx`,
   `leg_limits_in_physx`) and the drive types on the stage (`drive_type_in_usd`).
 - Interface timing (`--latency estimated`, default; `none` for exact 50 Hz

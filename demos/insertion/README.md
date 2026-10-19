@@ -16,9 +16,10 @@ To watch it on a loop, `./demos/insertion/run_demo.sh`. It sets up the environme
 policy with the compliant key, one robot in the viewer, in real time, at a 2 mm estimate error. A seated key is held for
 3 s, then the next attempt is drawn, until the window is closed. Arguments are appended (`--lateral_mm 4`,
 `--blade level`, ...). In the viewer the lock is drawn in a door: a wooden door in a wall, with its casing, an escutcheon
-round the keyway and a lever handle (`--no-scenery` leaves it out). The wrist RealSense and its bracket are drawn at
-the saved mount (`--no-camera_body`). Both are visual only, and both are off headless, so measuring runs spawn what
-they always have. It is for watching: the attempts are written after each one, but a cut-short hold changes the
+round the keyway and a lever handle (`--no-scenery` leaves it out). The wrist RealSense in its printed bracket, as
+fitted to the real arm, is drawn at the saved mount in every run (`--no-camera_body` leaves it out). Both are visual
+only: the scenery is off headless, and the camera adds no mass or collider, so measuring runs simulate what they always
+have. It is for watching: the attempts are written after each one, but a cut-short hold changes the
 peak force and final depth, so measure with `run_demo.py` as above.
 
 Then `./dashboard.py record <out dir> --title "..."`; runs go to `logs/insertion_demo/`. The insertion-trained policy to

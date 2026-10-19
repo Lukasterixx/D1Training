@@ -37,6 +37,8 @@ SOFT_LIMIT_FACTOR = 0.9  # UNITREE_GO2_CFG soft_joint_pos_limit_factor; actions 
 GRAVITY = np.array([0.0, 0.0, -9.81])
 # Collision proxy in the Go2 base frame: the trunk and hips, and the ground below the base.
 BODY_BOX_B = ((-0.30, 0.30), (-0.13, 0.13), (-0.20, 0.06))
+#: The lidar's mount plate and the box round the lidar and its cage, on the trunk (`payload.py`).
+from payload import CLEARANCE_BOXES_B  # noqa: E402
 LINK_RADIUS_M = 0.03
 SUCCESS_RADIUS_M = 0.05  # G1a reach criterion
 ZERO_ACTION_BASE_HEIGHT_M = ZERO_ACTION_BASE_OFFSET_M[2]
@@ -80,11 +82,31 @@ def load_urdf(path=URDF):
     return joints, links
 
 
-def simulated_masses(links):
-    """weld.py's D1 mass model: shell + servo per moving link, the remainder on base_link."""
+def simulated_masses(links, wrist_payload=False):
+    """weld.py's D1 mass model: shell + servo per moving link, the remainder on base_link. With `wrist_payload`, the
+    RealSense and its bracket on Link6 as well (`payload.wrist_parts`, weld's `payload_physics`), on top of the arm's
+    3.152 kg rather than inside it."""
     masses = {name: link["mass"] + SERVO_MASS_BY_LINK.get(name, 0.0) for name, link in links.items()}
     masses["base_link"] += ARM_MASS_KG - sum(masses.values())
+    if wrist_payload:
+        import payload
+
+        masses["Link6"] += sum(part.mass_kg for part in payload.wrist_parts())
     return masses
+
+
+def simulated_coms(links, wrist_payload=False):
+    """Each link's centre of mass in its own frame: the URDF's, and for Link6 with `wrist_payload` the camera's and the
+    bracket's folded in (as `weld._add_payload_physics` does)."""
+    coms = {name: np.asarray(link["com"], float) for name, link in links.items()}
+    if wrist_payload:
+        import payload
+
+        base = simulated_masses(links)["Link6"]
+        parts = payload.wrist_parts()
+        total = base + sum(p.mass_kg for p in parts)
+        coms["Link6"] = (base * coms["Link6"] + sum(p.mass_kg * np.asarray(p.com) for p in parts)) / total
+    return coms
 
 
 def forward(joints, q, gripper=None):
@@ -199,7 +221,8 @@ def sample_configs(joints, count, rng):
 
 
 def clear_of_body(joints, q, base_height):
-    """Collision proxy: joint-to-joint segments (and the gripper) keep LINK_RADIUS_M from the body box and ground."""
+    """Collision proxy: joint-to-joint segments (and the gripper) keep LINK_RADIUS_M from the body box, the MID-360 and
+    its mount (`payload.CLEARANCE_BOXES_B`, on the real robot since 2026-10-19), and the ground."""
     frames, _, origins = forward(joints, q)
     tip = frames["Link6"][1] + np.einsum("nij,j->ni", frames["Link6"][0], np.array([0.0, 0.0, 0.126]))
     chain = np.concatenate([origins[:, 1:], frames["Link6"][1][:, None], tip[:, None]], axis=1)  # from Joint2 on
@@ -207,10 +230,12 @@ def clear_of_body(joints, q, base_height):
     for a, b in zip(range(chain.shape[1] - 1), range(1, chain.shape[1])):
         for t in np.linspace(0.0, 1.0, 5):
             point = chain[:, a] * (1 - t) + chain[:, b] * t
-            inside = np.ones(q.shape[0], dtype=bool)
-            for axis, (low, high) in enumerate(BODY_BOX_B):
-                inside &= (point[:, axis] > low - LINK_RADIUS_M) & (point[:, axis] < high + LINK_RADIUS_M)
-            clear &= ~inside & (point[:, 2] > -base_height + LINK_RADIUS_M)
+            for box in (BODY_BOX_B, *CLEARANCE_BOXES_B):
+                inside = np.ones(q.shape[0], dtype=bool)
+                for axis, (low, high) in enumerate(box):
+                    inside &= (point[:, axis] > low - LINK_RADIUS_M) & (point[:, axis] < high + LINK_RADIUS_M)
+                clear &= ~inside
+            clear &= point[:, 2] > -base_height + LINK_RADIUS_M
     return clear
 
 

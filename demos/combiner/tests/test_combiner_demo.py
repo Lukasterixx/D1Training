@@ -48,7 +48,7 @@ class PlacementTests(unittest.TestCase):
             self.assertAlmostEqual(sum(v * v for v in pose.quaternion), 1)
             handle = pose.world_point(GEOMETRY.handle)
             self.assertLess(math.hypot(*handle[:2]), radius)
-            self.assertAlmostEqual(handle[2], 0.30)
+            self.assertAlmostEqual(handle[2], 0.67)
         self.assertLess(min(bearings), -44)
         self.assertGreater(max(bearings), 44)
 
@@ -64,8 +64,8 @@ class PlacementTests(unittest.TestCase):
         pose = sample_placement(random.Random(1), distance=(0.65, 0.65), sweep_deg=0, yaw_jitter_deg=0)
         self.assertEqual(pose, Placement((0.65, 0.0, 0.0), 180.0))
         handle = pose.world_point(GEOMETRY.handle)
-        self.assertAlmostEqual(handle[0], 0.489)
-        self.assertAlmostEqual(handle[1], -0.055)
+        self.assertAlmostEqual(handle[0], 0.427)
+        self.assertAlmostEqual(handle[1], -0.070)
 
     def test_bad_sampling_bounds_are_rejected(self):
         for distance, sweep, jitter in (((0.5, 0.7), 45, 10), ((0.8, 0.6), 45, 10),
@@ -158,6 +158,15 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(cfg.actions.arm.scale, math.pi)
         self.assertEqual(cfg.episode_length_s, 99)
         self.assertIsNone(cfg.terminations.low_base)
+        # The combiner stands: the task's spawn height, and the robot config's own leg pose left alone.
+        from position_only.task_space import SPAWN_HEIGHT_M
+        cfg.scene.robot.init_state = types.SimpleNamespace()
+        with patch.dict("sys.modules", {"position_only.env_cfg": module}):
+            make_resting_cfg("robot.usd", posture="standing")
+            with self.assertRaises(ValueError):
+                make_resting_cfg("robot.usd", posture="sitting")
+        self.assertEqual(calls[-1][1]["spawn_height"], SPAWN_HEIGHT_M)
+        self.assertFalse(hasattr(cfg.scene.robot.init_state, "joint_pos"))
         self.assertEqual(cfg.terminations.time_out, "unchanged")
 
 
@@ -194,12 +203,18 @@ class AssetTests(unittest.TestCase):
         self.assertEqual(hinge.GetUpperLimitAttr().Get(), 110)
         self.assertFalse(hinge.GetCollisionEnabledAttr().Get())
         self.assertEqual(UsdPhysics.DriveAPI(hinge.GetPrim(), "angular").GetStiffnessAttr().Get(), 0)
-        axis = Gf.Rotation(hinge.GetLocalRot0Attr().Get()).TransformDir(Gf.Vec3d(0, 0, 1))
-        self.assertVectorNear(axis, (0, 0, -1))
+        # The door opens outward: about +Z with the hinge on the right (+Y), as on the real box.
+        self.assertEqual(GEOMETRY.hinge_side, 1)
+        self.assertGreater(GEOMETRY.hinge[1], 0)
+        for rot in (hinge.GetLocalRot0Attr().Get(), hinge.GetLocalRot1Attr().Get()):
+            self.assertVectorNear(Gf.Rotation(rot).TransformDir(Gf.Vec3d(0, 0, 1)), (0, 0, GEOMETRY.hinge_axis_z))
         for target in (hinge.GetBody0Rel(), hinge.GetBody1Rel()):
             self.assertTrue(self.stage.GetPrimAtPath(target.GetTargets()[0]).HasAPI(UsdPhysics.RigidBodyAPI))
         handle_joint = UsdPhysics.RevoluteJoint.Get(self.stage, "/CombinerBox/HandleJoint")
         self.assertEqual(handle_joint.GetAxisAttr().Get(), "X")
+        # Positive lever angles lower it: about the door's -X while it points toward the hinge on +Y.
+        for rot in (handle_joint.GetLocalRot0Attr().Get(), handle_joint.GetLocalRot1Attr().Get()):
+            self.assertVectorNear(Gf.Rotation(rot).TransformDir(Gf.Vec3d(1, 0, 0)), (GEOMETRY.lever_axis_x, 0, 0))
         self.assertEqual(handle_joint.GetLowerLimitAttr().Get(), 0)
         self.assertEqual(handle_joint.GetUpperLimitAttr().Get(), 60)
         self.assertEqual(str(handle_joint.GetBody0Rel().GetTargets()[0]), "/CombinerBox/Door")
@@ -222,9 +237,11 @@ class AssetTests(unittest.TestCase):
         # USD bodies are siblings; evaluate the joint chain just as a physics solver
         # does, using the authored joint frames rather than assuming prim parenting.
         for door_angle in (0, 30, 90, 110):
-            door.GetOrderedXformOps()[1].Set(Gf.Quatf(Gf.Rotation(Gf.Vec3d(0, 0, -1), door_angle).GetQuat()))
+            door.GetOrderedXformOps()[1].Set(Gf.Quatf(Gf.Rotation(Gf.Vec3d(0, 0, GEOMETRY.hinge_axis_z),
+                                                                  door_angle).GetQuat()))
             for lever_angle in (0, 30, 60):
-                lever_rotation = Gf.Matrix4d(1).SetRotate(Gf.Rotation(Gf.Vec3d(1, 0, 0), lever_angle))
+                lever_rotation = Gf.Matrix4d(1).SetRotate(Gf.Rotation(Gf.Vec3d(GEOMETRY.lever_axis_x, 0, 0),
+                                                                      lever_angle))
                 door_world = UsdGeom.XformCache().GetLocalToWorldTransform(door.GetPrim())
                 pose_op.Set(lever_rotation * anchor * door_world)
                 cache = UsdGeom.XformCache()
@@ -233,6 +250,22 @@ class AssetTests(unittest.TestCase):
                 self.assertVectorNear(door_world.ExtractTranslation(), GEOMETRY.hinge)
         self.assertGreater(GEOMETRY.handle_at_angle(90)[0], GEOMETRY.handle[0])
         self.assertLess(GEOMETRY.handle_at_angle(0, 30)[2], GEOMETRY.handle[2] - 0.03)
+        # The bar points from the spindle toward the hinge, as the isolator's does in the photo.
+        self.assertGreater(GEOMETRY.handle[1], GEOMETRY.spindle[1])
+
+    def test_measured_outline_handle_tag_and_lock(self):
+        g = GEOMETRY
+        front = g.door_x + g.door_thickness / 2
+        self.assertAlmostEqual(front + g.depth / 2, 0.300)               # 300 mm deep with the door
+        self.assertAlmostEqual(g.width, 0.630)
+        self.assertAlmostEqual(g.top, 0.830)
+        self.assertAlmostEqual(g.top - g.spindle[2], 0.160)             # handle centre 160 mm below the top
+        self.assertAlmostEqual(g.lock[1], -(g.width / 2 - 0.064))       # lock 64 mm in from the free (left) edge
+        self.assertAlmostEqual(g.lock[2], g.bottom + g.height / 2)      # midway up it
+        cache = UsdGeom.XformCache()
+        for path, point in (("Door/HandleRosette", g.spindle), ("Door/LockBezel", g.lock)):
+            centre = cache.GetLocalToWorldTransform(self.stage.GetPrimAtPath(f"/CombinerBox/{path}")).ExtractTranslation()
+            self.assertVectorNear(centre[1:], point[1:])
 
     def test_hollow_shell_and_handle_gap_are_not_filled_by_colliders(self):
         self.assertFalse(self.stage.GetPrimAtPath("/CombinerBox/Enclosure").HasAPI(UsdPhysics.CollisionAPI))
@@ -324,6 +357,14 @@ class LatchTests(unittest.TestCase):
         self.assertFalse(latch.latched)
         latch.reset()
         self.assertTrue(latch.latched)
+
+    def test_an_unlocked_box_never_latches(self):
+        latch = DoorLatch(locked=False)
+        latch.reset()
+        self.assertFalse(latch.latched)
+        for door, handle in ((0, 0), (0.2, 0), (0, 50), (90, 0), (0, 0)):
+            self.assertFalse(latch.update(door, handle))
+            self.assertEqual(latch.door_upper_limit_deg, GEOMETRY.open_limit_deg)
 
     def test_nonfinite_feedback_is_an_error(self):
         for angles in ((math.nan, 0), (0, math.inf)):

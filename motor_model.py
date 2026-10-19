@@ -79,7 +79,9 @@ D1_ARM_JOINTS = [f"Joint{i}" for i in range(1, 7)]
 # Joint1 and Joint4-6: Unitree D1-550 published joint torques (README, "The arm's mass"): 3.3 N·m, then 1.7.
 # Joint2 and Joint3: 3.33 N·m, URDF-unverified. Unitree's D1-550 URDF gives both 3.33, and in Unitree's CAD the shoulder
 # and elbow servos have identical housings (F-137), so Lukas took them for the same motor (2026-10-09). The published
-# table gives Joint3 1.7, which this used until then. An identical housing does not prove an identical gearbox: not measured.
+# table gives Joint3 1.7, which this used until then. Lukas confirmed on the arm (2026-10-18) that both are a Fashion Star
+# RX18-U100H-M, published at 3.14 N·m rated, 4.90 continuous, 9.80 stall at 12 V (F-142). What the firmware lets the
+# servo deliver on the arm is not measured.
 D1_EFFORT_LIMIT_NM = dict(zip(D1_ARM_JOINTS, (3.3, 3.33, 3.33, 1.7, 1.7, 1.7)))
 
 # MEASURED on the arm, 2026-09-16 (F-033): a 30 deg step on each joint in turn, commanded through

@@ -122,23 +122,28 @@ success says nothing yet about the real arm.
 
 ## Solar combiner-box scene
 
-The [combiner demo](demos/combiner/README.md) uses the cup demo's same resting dog
-pose beside a randomized light-grey enclosure with a hinged door and a rotating
-lever handle replacing the keyhole. Turning the lever 45° releases a latch; closing
+The [combiner demo](demos/combiner/README.md) stands the dog still (legs held at zero action)
+beside Lukas's real combiner box, modelled to his measurements (830 × 630 × 300 mm, door hinged
+on the right, rotary isolator handle 160 mm below the top, a 100 mm AprilTag under it, the cam
+lock on the left edge), randomly placed. Turning the handle 45° releases a latch; closing
 the door with the handle released latches it again. The first placement and each
 `R` reset are seeded. `H` turns/releases the handle and `O`/`C` pull the door
 open/closed for inspection. With `--turn` the arm finds the door's AprilTag with the
-wrist camera, grips the lever, turns it 45° and pulls the door open. In simulation that
-works against springs up to 0.4 N·m at 45° (F-073), with two grasps that hold (F-075), in
-18–25 s from the start of an attempt to letting go (F-076). `--method press` only pushes the lever
-down, which turned up to 1.15 N·m (F-071). Several `--handle_torque_nm` values sweep the
+wrist camera, grips the lever, turns it 45° and pulls the door open. On the earlier proxy box
+with the dog lying, that worked in simulation against springs up to 0.4 N·m at 45° (F-073), with two
+grasps that hold (F-075), in 18–25 s from the start of an attempt to letting go (F-076), and
+`--method press` turned up to 1.15 N·m (F-071); none of that is re-measured on the real box. Several `--handle_torque_nm` values sweep the
 spring. The console's camera window outlines the tag with its range.
 
 The wrist carries the cup pick's RealSense (same preset, saved mount and D435 case), and the
 launcher brings up the reach console beside the simulator exactly as the pick's does
 (`demos/cup/d1_ui/beside_sim.sh`, http://localhost:8090), with YOLO off since there is no cup.
-From the resting pose the camera looks level over the box and does not see it; `--turn` moves the
-arm to search poses that do.
+From the zero pose the standing dog's camera sees part of the door but not the whole tag; `--turn`
+moves the arm to search poses that do.
+
+A second box demo, the **door pull** (`./demos/unifp/run_demo.py --task door --wrist`), takes the box unlocked:
+UniFP grips the handle without turning it and walks round the hinge with the door until it is 90° open. In
+simulation nothing fell in 116 attempts, and the grip held in about half (F-146, [its README](demos/unifp/README.md)).
 
 ```bash
 ./demos/combiner/run_combiner_demo.sh                  # no arguments: grips the lever and pulls the door, 0.3 N·m spring
@@ -178,6 +183,13 @@ of P2Dingo's Go2 description and `d1_arm/d1.urdf`, joined at the same
 mount the weld uses (`mount.py`: on the rails' tops, midway between their screws, where the real arm's holes are: F-117,
 F-125), with the Go2's meshes copied in beside the arm's. The Go2 EDU's Jetson expansion dock and the rails the arm
 stands on are drawn on the trunk, from Unitree's CAD (`dock.py`). They are visual only, in RViz and in the sim.
+
+What the real robot also carries (`payload.py`, since 2026-10-19): a Livox MID-360 in Lukas's mount on the front of
+the trunk (`description/mid360_from_cad.py`), and the wrist RealSense D435i in its printed bracket on the gripper. Every
+demo draws them, visual only, because the policies they run were trained without them. The training setups
+(`run_position_only.py`, `run_unifp_train.py`) also give them box colliders and fold their masses into the Go2's
+trunk (+0.42 kg) and the D1's Link6 (+0.099 kg). `--payload visual` builds the robot every checkpoint before 2026-10-19
+was trained on. The CPU planners' clearance check keeps the arm out of the lidar's mount and cage.
 See [description/README.md](description/README.md) — including how to regenerate
 it, and why the arm draws in orange.
 
@@ -234,7 +246,7 @@ How the URDF compares to [the published spec][spec]:
 | Joint ranges | ±134.6°, ±90°, ±90°, ±134.6°, ±90°, ±134.6° | J0 ±135°, J1 ±90°, J2 ±90°, J3 ±135°, J4 ±90°, J5 ±135° | matches |
 | Reach | — | 550 mm excl. jaw | matches `ARM_MAX_REACH` |
 | Claw stroke | 60 mm (2 × 30 mm fingers) | 0–65 mm | close enough |
-| Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | set to the table in Week 1 ("Joint3 ~2× too strong"); since 2026-10-09 Joint2 and Joint3 are **3.33** again, Lukas's call: the CAD's shoulder and elbow servos are the same housing (F-137, F-139). Not measured |
+| Joint effort | 3.33, 3.33, **3.33**, 1.67, 1.67, 1.67 Nm | 3.3, 3.3, **1.7**, 1.7, 1.7, 1.7 Nm | set to the table in Week 1 ("Joint3 ~2× too strong"); since 2026-10-09 Joint2 and Joint3 are **3.33** again, Lukas's call: the CAD's shoulder and elbow servos are the same housing (F-137, F-139), and on the arm the same motor, a Fashion Star RX18-U100H-M (3.14 N·m rated, 4.90 continuous; F-142). Not measured on the arm |
 | Total mass | 0.719 kg | 3.152 kg | **too light — see below** |
 | Base (measured on the arm, 2026-09-30) | 105 mm across, Joint1 at 53.3 mm, holes 108 mm apart | 126 mm, 76 mm, 130 mm | **replaced** by `d1_arm/measured_base.py` (F-126) |
 | Link lengths (Unitree's CAD, 2026-10-08) | upper arm 269.3, forearm (Joint3 → Joint5) 197.9, Joint5 → fingertips 208.1 mm, shoulder 132.3 mm above the base's bottom | CAD and Unitree's D1-550 URDF: 270.0, **204.7**, 206.4 mm, 130.8 | **changed to the CAD's** on 2026-10-09 (F-139): five joint origins, `d1_description`'s links and hand kept; `d1_arm/compare_cad.py` prints both. Not measured on the arm |
@@ -355,7 +367,8 @@ error is small. Real per-link inertials would still be better.
 | --- | --- |
 | `main.py` | argument parsing, launches Isaac Sim, hands off to `sim.py` |
 | `sim.py` | teleop keybinds, the sim loop, and the `--selftest` harness |
-| `weld.py` | URDF import + the go2/D1 weld; mass and effort rescaling; draws the expansion dock |
+| `weld.py` | URDF import + the go2/D1 weld; mass and effort rescaling; draws the expansion dock and the MID-360; the payload's colliders and mass for training |
+| `payload.py` | the MID-360, its mount, the wrist D435i and its bracket: meshes, colliders, masses (with sources) |
 | `mount.py`, `dock.py` | where the D1 sits on the Go2 (F-117), and the expansion dock and rails it sits on (visual) |
 | `ros2.py` | the L1 lidar, and the state publishers RViz needs |
 | `description/` | the URDF + meshes + RViz layout for `run_rviz.sh` |

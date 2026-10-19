@@ -1,9 +1,12 @@
 # The cup and combiner demos on UniFP's trained whole-body policy
 
 The scripted demos in [`demos/cup/`](../cup) and [`demos/combiner/`](../combiner) drive the arm with
-an IK reference while the dog lies on the floor. These run the same two tasks under the trained
-UniFP position/force policy (`checkpoints/unifp_go2d1_isaaclab_model_56000.pt`) with the dog
-**standing**, the cup on a table and the box on a post.
+an IK reference while the dog lies on the floor (the cup) or stands still (the combiner, since
+2026-10-19). These run the same two tasks under the trained UniFP position/force policy
+(`checkpoints/unifp_go2d1_isaaclab_model_56000.pt`) with the dog **standing**, the cup on a table and
+the box on a 10 mm plinth. Since 2026-10-19 the box is Lukas's real one (830 × 630 × 300 mm, handle
+0.67 m up, hinged on the right; `demos/combiner/README.md`); every result below was measured on the
+earlier proxy box (lever 0.30 m up on a 0.38 m post, hinged on the left) and has not been re-run.
 
 ```bash
 source ~/miniconda3/etc/profile.d/conda.sh && conda activate env_isaaclab
@@ -61,8 +64,11 @@ detail** — see F-098 and the warning below.
    error with the jaws shut, 3.50 cm fully open. The launcher puts the measured travel back into the
    commanded goal, which recovers all of it (0.73 cm). `--no_jaw_compensation` measures the cost.
 3. **The furniture heights are measured, not chosen.** The hand arrives 40–47° nose-down at goals near
-   the middle of the goal sphere and level only at pitch 20–45°, so the table is 0.60 m and the post
-   0.38 m — the grasp points land where the probe says the approach is flat and tracking is 0.9 cm.
+   the middle of the goal sphere and level only at pitch 20–45°, so the table is 0.60 m and the box's
+   handle 0.68 m up (plus the arm's rise) — the grasp points land where the probe says the approach is
+   flat and tracking is 0.9 cm. The proxy box stood on a 0.38 m post for that; the real box's handle is
+   already 0.67 m up, so it stands on a 10 mm plinth. On the real box, a 45° latch-side
+   `--stance_deg` carries the door's pull out to a 0.61 m radius, past the trained 0.58.
    `props.py` carries the reasoning.
 
 ## What a result here does and does not show
@@ -153,12 +159,90 @@ rigid) and the gripper's drives (the URDF's 15 N) are models of parts not yet ma
 the latch are models, the lever is still only 0.4 N·m — pushing it down is the limit, not pulling the door — and
 nothing here has run on the robot.
 
+## The door pull (`--task door`)
+
+```bash
+./demos/unifp/run_demo.py --task door --wrist --num_envs 1 --attempts 1        # watch one
+./demos/unifp/run_demo.py --task door --wrist --attempts 16 --headless         # measure
+```
+
+The combiner box with its door **unlocked** and the handle never turned: the hand grips the handle and
+the robot **walks the door open to 90°** (`--door_deg`). The reach onto the bar is the combiner's. Then
+`script.door_phases` runs the door's angle up on the clock (7 s, `--pull_s`) and moves two things with
+it: the jaw centre along the handle's arc, and the base round the hinge with the door
+(`props.BoxSite.base_pose_m`). Robot and door turn as one body, so the handle stays put in the robot's
+frame and the goal never moves in the goal sphere. The robot also stays out of the door's sweep: the
+footprint keeps at least 0.19 m from the door and the box on the planned path (`test_unifp_demos.DoorPull`).
+On the real box (hinge on the robot's right) the base steps right while turning left, ending 0.88 m
+right, 0.25 m forward and turned 90°, facing the open door's outer face.
+
+The walk is UniFP's own base command, which the other demos hold at zero. Each policy step, `env.py`
+turns the script's base pose into (vx, vy, yaw rate) with `script.base_velocity_command`: the path's
+rate fed forward, the base's measured pose error fed back at 1.5/s, clipped to the trained ranges. Over
+the swing the command is a steady 0.07 m/s back, 0.13 m/s right and 0.22 rad/s left. Those are just
+outside the dead zones (0.1 m/s, 0.2 rad/s) inside which UniFP is told to stand, so a much slower
+`--pull_s` would stall the gait. The latch is `LatchController(locked=False)`; the lever's spring still acts.
+
+**Results (2026-10-19, `--wrist`, 16 environments).** No falls in 116 attempts. The base's peak error
+from its path is 3–11 cm (median 5.5) and up to 11° of yaw, and it ends turned 87–95°. When the grip holds,
+the door is at 87–105° when the hold ends. **The grip holds about half the time:** 8 of 16 and 7 of 16 on
+seeds 1 and 2. Of the 17 failures, 4 doors barely moved (under 6°), 12 lost the handle at 15–39°, and
+one swung past 108° and back to 65°. Reach misses play a part (the failures' median miss at arrive was
+12 mm, against 5 mm for the successes, on a bar the open jaws clear by 11.5 mm a side). Others began
+while the jaws closed on a well-placed bar (attempt 1, seed 1: 3 mm off, then the hand pitched up 30° and
+backed 24 mm off the bar during the grip). It is a friction pinch on an 18 mm bar, pulled out along the jaws. Tried,
+on the same placements: `--goal_correction` 8/16; a 2 s grip 10/16 and 7/16; `--wrist_joints 56` 3/16;
+the lip claw (`--claw`, without the mechanism policy's goal correction and roll) 2/16. Outcomes flip
+between settings at the same placement, as F-098 found for the combiner, so quote rates, not
+placements. F-146.
+
+### The non-UniFP baseline (`--controller decoupled`)
+
+```bash
+./demos/unifp/run_demo.py --task door --controller decoupled --attempts 16 --headless
+./demos/unifp/run_demo.py --task door --controller decoupled --attempts 16 --headless --no_object --free_space --park_arm   # the walk alone
+```
+
+The same scene, placements, script, walk feedback, latch, jaws and success criterion, with a conventional stack in
+place of UniFP (`decoupled.py`, `decoupled_arm.py`):
+- **Legs:** the walking checkpoint `sim.py` plays back (go2_omniverse's rough-terrain policy, trained on a bare Go2).
+  It gets its own 235-wide observation (height scan included), its DCMotor legs, self-collision off and the foot
+  friction it trained on. With UniFP's self-collision and friction it tracked a third of its command and fell.
+- **Arm:** IK on the jaw centre and the scripted grip's hand orientation, nearest-level grasp, re-solved every
+  10 Hz command in the base's current frame. It runs through the D1 firmware planner into the measured servo model.
+- **Jaws:** UniFP's drive.
+
+Neither half knows about the other. `trace.csv` carries the IK's outcome (`ik_status`), and `summary.json` per-attempt
+counts and the chosen grasp.
+
+**Results (2026-10-19, 16 environments):** 3/16 and 6/16 doors open on seeds 1 and 2 (9 of 32), against UniFP's 8/16
+and 7/16 with `--wrist` (15 of 32), with no falls. The arm IK is bounded to run at 10 Hz (≤ 7 ms a command). Its first
+version re-ran a seeded search on every miss, up to 486 ms a command, which stalled the viewer. That version opened 15
+of 32 and is kept as `--seeded_ik_loop` for comparison (F-152).
+- **Arm:** the jaw centre arrives within 3 mm.
+- **Legs:** the base trails its path by up to 0.27–0.72 m (median 0.39), as badly with no box and the arm parked.
+- **How it fails:** the door is pulled past 66° in 14 of 16, but the grip goes when the base lags out of the arm's
+  reach, and the free door swings back.
+
+It is a naive, untuned stack on its own plant (legs and arm both differ from UniFP's), not a same-plant comparison.
+F-151, F-152.
+
+## The wrist camera
+
+Every run draws the wrist RealSense in its printed bracket on the gripper, as fitted to the real arm (Lukas,
+2026-10-19), at the saved mount (`demos/cup/pick_demo/assets/mounts/wrist_mount.json`, from the bracket's CAD).
+`--no-camera_body` leaves it out. It is visual only, with no mass, no collider and no rendering, so results are
+unchanged: the door pull's seed-1 run with it reproduced the one without, door angle for door angle. The policies were
+trained without its weight. Nothing in the simulator would show it hitting the box, so
+`demos/combiner/tests/test_turn.py` checks it: at every grasp the planner can choose it stays 30 mm off the door
+and 25 mm off the lever, spindle and rosette (proxy lever shape).
+
 ## The pieces
 
 | file | |
 | --- | --- |
 | `run_demo.py` | the launcher: builds the scene, loads the checkpoint, runs the attempts, writes `run.json`/`trace.csv`/`summary.json` |
-| `env.py` | `UniFPDemoEnv`, a subclass of the trained `Go2D1PosForceEnv` — furniture, scripted goal, commanded jaws, standing by command |
+| `env.py` | `UniFPDemoEnv`, a subclass of the trained `Go2D1PosForceEnv` — furniture, scripted goal, commanded jaws, standing by command, or walking where the script names a base pose |
 | `script.py` | the demos as clock-driven phase lists. Every arc runs on a clock, not on arrival, and the sequence never reads the thing it is working (both from the scripted demos) |
 | `props.py` | table, post, placements, and where the grasp points land in UniFP's goal sphere |
 | `wrist.py` | the roll servo, and why it takes the joint it takes |
@@ -181,3 +265,8 @@ diagnose it:
 | `--command_tip` | the tool point commanded at the target instead of the jaw centre |
 | `--zero_actions` | no policy at all: how much of any result is the script |
 | `--speed_scale`, `--hold_scale` | every phase, or just the two holds, scaled on the clock |
+
+With the viewer (no `--headless`), the run defaults to **one environment**, and further attempts follow one after
+another. Headless runs default to `--attempts` at once, which is how the rates above were measured. The count changes
+results (F-098), so state it with any rate. The goal overlay (yellow goal, magenta scored goal, blue tool point, cyan
+sphere centre) is off by default since 2026-10-19 so the hand can be seen; `--markers` draws it.

@@ -43,7 +43,8 @@ leave it is remembered in this browser). It shows the wrist camera with YOLO's b
   cups are boxed by default: `--detect cup,bottle`, `--detect all`, or `--detect none` for frames only.
 - AprilTags: `--apriltag` outlines tag36h11 tags in magenta with their id, and their range when the camera's
   intrinsics are known (the RealSense's reported profile, or the rendered K a simulator publishes, as the
-  combiner does). `--apriltag-size` is the black square's edge (default 60 mm, the combiner door's tag). The
+  combiner does). `--apriltag-size` is the black square's edge (default 100 mm, the combiner door's tag, printed
+  from `dock_tag_id0_100mm_A4.pdf`). The
   detector is `demos/combiner/apriltag.py`, which the dog deploy copies.
   `--camera none` turns the window off; `--camera-fps` caps the rate (15).
 - It degrades rather than fails, and says why in the window: no pyrealsense2 or no camera, no frames; no

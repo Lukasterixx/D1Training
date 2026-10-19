@@ -1,0 +1,26 @@
+{
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "arguments": {
+    "num_envs": 1,
+    "selftest": 6.0,
+    "selftest_command": [
+      -0.2,
+      -0.33,
+      0.2
+    ],
+    "no_arm": false,
+    "arm_mass": 3.152
+  },
+  "git_commit": "ab7752c848d6900b4b6c4e1bc8c9f83829e4012e",
+  "git_status": "M README.md\n M checkpoints/README.md\n M demos/combiner/README.md\n M demos/combiner/asset.py\n M demos/combiner/geometry.py\n M demos/combiner/latch.py\n M demos/combiner/press.py\n M demos/combiner/pull.py\n M demos/combiner/run_combiner_demo.py\n M demos/combiner/scene.py\n M demos/combiner/tests/test_combiner_demo.py\n M demos/combiner/tests/test_turn.py\n M demos/combiner/turn_run.py\n M demos/common/resting.py\n M demos/cup/d1_ui/README.md\n M demos/cup/d1_ui/camera_feed.py\n M demos/cup/d1_ui/server.py\n M demos/cup/pick_demo/grasp.py\n M demos/insertion/README.md\n M demos/insertion/run_demo.py\n M demos/unifp/README.md\n M demos/unifp/env.py\n M demos/unifp/mech_env.py\n M demos/unifp/props.py\n M demos/unifp/run_demo.py\n M demos/unifp/script.py\n M demos/unifp/tests/test_unifp_demos.py\n M description/README.md\n M docs/position_only_environment.md\n M motor_model.py\n M position_only/verify.py\n M position_only/workspace.py\n M results/findings.md\n M results/week_05/notes.md\n M results/week_06/notes.md\n M run_position_only.py\n M run_unifp_train.py\n M unifp_train/README.md\n M weld.py\n?? demos/unifp/decoupled.py\n?? demos/unifp/decoupled_arm.py\n?? demos/unifp/folded_start_probe.py\n?? demos/unifp/tests/test_decoupled.py\n?? description/meshes/go2/mid360.stl\n?? description/meshes/go2/mid360_mount.stl\n?? description/mid360_from_cad.py\n?? dock_tag_id0_100mm_A4.pdf\n?? payload.py\n?? results/week_06/figures/mid360_mesh_before_after.png\n?? results/week_06/figures/unifp_folded_start.png\n?? results/week_06/runs/\n?? tests/test_payload.py",
+  "articulation_mass_kg": 18.17099952697754,
+  "policy": {
+    "checkpoint": "/home/lukas/D1Training/logs/rsl_rl/unitree_go2_rough/2024-04-06_02-37-07/model_7850.pt",
+    "sha256": "7e684601ac6a0906954fcd5a84153a1bbc13f5a24ee9af7ef556eb3f4f5abef4",
+    "actions": "12 legs",
+    "legs": "DCMotor"
+  },
+  "arm_drives": "URDF import (acceleration)"
+}

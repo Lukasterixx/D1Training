@@ -1,11 +1,12 @@
-"""Build a USD combiner-box proxy with a hinged door and rotating lever handle.
+"""Build a USD model of Lukas's combiner box with a hinged door and rotating isolator handle.
 
-Original procedural geometry based on the user's reference photo. No downloaded
-meshes or textures. The lever is a separate rigid body. The demo's LatchController
-couples its rotation to the door constraint. Requires USD, but not a running Kit.
+Original procedural geometry to the measured dimensions in `geometry` and the photos of
+2026-10-19. No downloaded meshes or textures. The lever is a separate rigid body. The demo's
+LatchController couples its rotation to the door constraint. Requires USD, but not a running Kit.
 
-The door carries a tag36h11 AprilTag above the handle (`apriltag`), drawn as flat
-cells the way the label's letters are, so it renders crisply without a texture.
+The door carries a tag36h11 AprilTag below the handle (`apriltag`), drawn as flat
+cells the way the label's letters are, so it renders crisply without a texture. The cam lock on
+the free edge is drawn, not simulated: the latch it stands for is `latch.py`'s joint limit.
 """
 import math
 from pathlib import Path
@@ -26,7 +27,8 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
     root = UsdGeom.Xform.Define(stage, "/CombinerBox").GetPrim()
     stage.SetDefaultPrim(root)
     UsdPhysics.ArticulationRootAPI.Apply(root)
-    root.SetCustomDataByKey("description", "Solar combiner proxy; rotating lever; runtime latch in demos.combiner.latch")
+    root.SetCustomDataByKey("description", "PV combiner box (measured outline); rotating isolator handle; "
+                                           "runtime latch in demos.combiner.latch")
 
     def material(name, colour, metallic=0.0, roughness=0.5):
         mat = UsdShade.Material.Define(stage, f"/CombinerBox/Looks/{name}")
@@ -42,8 +44,10 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
     inner = material("Interior", (0.55, 0.57, 0.58), 0.2)
     dark = material("BlackPlastic", (0.025, 0.028, 0.032))
     steel = material("HandleSteel", (0.48, 0.50, 0.52), 0.85, 0.22)
+    chrome = material("LockChrome", (0.78, 0.79, 0.80), 0.95, 0.15)
     yellow = material("WarningYellow", (1.0, 0.76, 0.015))
     red = material("WarningRed", (0.75, 0.035, 0.02))
+    handle_black = material("HandleBlack", (0.03, 0.03, 0.035), 0.0, 0.45)
     friction = UsdShade.Material.Define(stage, "/CombinerBox/Looks/Contact")
     contact = UsdPhysics.MaterialAPI.Apply(friction.GetPrim())
     contact.CreateStaticFrictionAttr(0.9)
@@ -103,24 +107,20 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
         cube(f"{body_path}/{name}", (0, y, z), (g.depth, g.wall, g.height), grey)
     for name, height in (("Bottom", g.bottom + g.wall / 2), ("Top", g.bottom + g.height - g.wall / 2)):
         cube(f"{body_path}/{name}", (0, 0, height), (g.depth, g.width, g.wall), grey)
-    # Short mounting stand holds the glands above the floor and fixes the box in space.
-    for i, y in enumerate((-0.13, 0.13)):
-        cube(f"{body_path}/Stand{i}", (-0.06, y, g.bottom / 2), (0.025, 0.025, g.bottom), steel)
-        cube(f"{body_path}/Foot{i}", (-0.04, y, 0.0075), (0.15, 0.055, 0.015), steel)
-    for i in range(6):
-        y = (i - 2.5) * 0.05
-        cylinder(f"{body_path}/GlandNut{i}", (0.02, y, g.bottom - 0.012), 0.016, 0.025, dark)
-        cylinder(f"{body_path}/Gland{i}", (0.02, y, g.bottom - 0.039), 0.011, 0.035, dark)
-    cube(f"{body_path}/MountPlate", (-0.062, 0, z), (0.008, 0.30, 0.33), inner)
-    for row, height in enumerate((z - 0.08, z + 0.08)):
-        cube(f"{body_path}/Rail{row}", (-0.046, 0, height), (0.018, 0.28, 0.02), steel)
-        for i in range(6):
-            y = (i - 2.5) * 0.043
-            cube(f"{body_path}/Fuse{row}_{i}", (-0.02, y, height), (0.036, 0.03, 0.065), grey)
-            cube(f"{body_path}/Switch{row}_{i}", (0.001, y, height), (0.009, 0.018, 0.022), dark)
-    for i, height in enumerate((z - 0.13, z + 0.13)):
-        cylinder(f"{body_path}/HingeBarrel{i}", (g.door_x, -g.width / 2, height),
-                 0.009, 0.05, steel, collides=False)
+    # The real box stands on the floor (fixed in space by WorldMount); inside, a mounting plate with
+    # two DIN rails of fuse-holder proxies, scaled to the enclosure. Not the real box's interior.
+    plate_x = -g.depth / 2 + g.wall + 0.004
+    cube(f"{body_path}/MountPlate", (plate_x, 0, z), (0.008, g.width - 0.08, g.height - 0.12), inner)
+    for row, height in enumerate((z - 0.14, z + 0.10)):
+        cube(f"{body_path}/Rail{row}", (plate_x + 0.013, 0, height), (0.018, g.width - 0.12, 0.035), steel)
+        for i in range(8):
+            y = (i - 3.5) * 0.06
+            cube(f"{body_path}/Fuse{row}_{i}", (plate_x + 0.04, y, height), (0.036, 0.045, 0.09), grey)
+            cube(f"{body_path}/Switch{row}_{i}", (plate_x + 0.061, y, height), (0.009, 0.02, 0.03), dark)
+    # Two hinges on the right edge, as in the photo (positions by eye, visual only).
+    for i, height in enumerate((g.bottom + 0.16 * g.height, g.bottom + 0.80 * g.height)):
+        cylinder(f"{body_path}/HingeBarrel{i}", (g.door_x, g.hinge[1], height),
+                 0.009, 0.07, steel, collides=False)
 
     door = UsdGeom.Xform.Define(stage, "/CombinerBox/Door")
     door.AddTranslateOp().Set(Gf.Vec3d(*g.hinge))
@@ -128,27 +128,38 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
     UsdPhysics.RigidBodyAPI.Apply(door.GetPrim())
     UsdPhysics.MassAPI.Apply(door.GetPrim()).CreateMassAttr(0.6)
     dp = str(door.GetPath())
-    cube(f"{dp}/Panel", (0, g.width / 2, 0), (g.door_thickness, g.width, g.height), grey)
-    # A fixed round escutcheon and an independently rotating L-shaped lever.
+    side = g.hinge_side
+    cube(f"{dp}/Panel", (0, -side * g.width / 2, 0), (g.door_thickness, g.width, g.height), grey)
+    # The isolator: a fixed round escutcheon and an independently rotating L-shaped lever.
     spindle_in_door = tuple(v - h for v, h in zip(g.spindle, g.hinge))
-    cylinder(f"{dp}/HandleRosette", (spindle_in_door[0] + 0.003, spindle_in_door[1], 0),
-             0.024, 0.006, steel, axis="X")
+    cylinder(f"{dp}/HandleRosette", (spindle_in_door[0] + 0.003, spindle_in_door[1], spindle_in_door[2]),
+             0.030, 0.006, handle_black, axis="X")
+    # The cam lock on the free edge: a black bezel round a chrome insert (diameters by eye from the photo).
+    lock = tuple(v - h for v, h in zip(g.lock, g.hinge))
+    cylinder(f"{dp}/LockBezel", (lock[0] + 0.004, lock[1], lock[2]), 0.016, 0.008, handle_black, axis="X")
+    cylinder(f"{dp}/LockInsert", (lock[0] + 0.0085, lock[1], lock[2]), 0.0085, 0.002, chrome, axis="X")
     handle = UsdGeom.Xform.Define(stage, "/CombinerBox/Handle")
     handle.AddTranslateOp().Set(Gf.Vec3d(*g.spindle))
     handle.AddOrientOp().Set(Gf.Quatf(1.0))
     UsdPhysics.RigidBodyAPI.Apply(handle.GetPrim())
     UsdPhysics.MassAPI.Apply(handle.GetPrim()).CreateMassAttr(0.12)
     hp = str(handle.GetPath())
+    # Black like the isolator's handle, with its red grip marker near the end (visual only); the colliders
+    # keep the earlier proxy's shape, so the grasp records stay comparable.
     cylinder(f"{hp}/Spindle", (g.handle_projection / 2, 0, 0),
-             0.012, g.handle_projection, steel, axis="X")
-    cylinder(f"{hp}/Lever", (g.handle_projection, -g.handle_length / 2, 0),
-             g.handle_radius, g.handle_length, steel, axis="Y")
+             0.012, g.handle_projection, handle_black, axis="X")
+    cylinder(f"{hp}/Lever", (g.handle_projection, side * g.handle_length / 2, 0),
+             g.handle_radius, g.handle_length, handle_black, axis="Y")
+    cylinder(f"{hp}/LeverMarker", (g.handle_projection, side * (g.handle_length - 0.02), 0),
+             g.handle_radius + 0.0008, 0.024, red, axis="Y", collides=False)
     grasp = UsdGeom.Xform.Define(stage, f"{hp}/HandleGrasp")
-    grasp.AddTranslateOp().Set(Gf.Vec3d(g.handle_projection, -g.handle_grasp_offset, 0))
+    grasp.AddTranslateOp().Set(Gf.Vec3d(g.handle_projection, side * g.handle_grasp_offset, 0))
 
     # Raised vector decals: triangle, lightning bolt, and a compact readable label.
     face_x = g.door_thickness / 2 + 0.0003
-    cy, cz = g.width / 2 - 0.05, 0.025
+    # Where the photo's yellow WARNING label sits: under the handle's bar, above the tag.
+    cy = spindle_in_door[1] + side * 0.055
+    cz = spindle_in_door[2] - 0.055
     for name, size, offset, mat in (("WarningBorder", 0.064, 0, dark),
                                      ("WarningFill", 0.056, 0.0002, yellow)):
         points = [(face_x + offset, cy, cz + size),
@@ -174,7 +185,7 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
             for col in range(5):
                 if bits & (1 << (4 - col)):
                     y = cy + (letter * 6 + col - len(label) * 3) * pixel
-                    z = -0.027 - row * pixel
+                    z = cz - 0.052 - row * pixel
                     indices.extend(range(len(points), len(points) + 4))
                     points.extend((face_x + 0.0003, y + dy * pixel, z + dz * pixel)
                                   for dy, dz in ((0, 0), (1, 0), (1, -1), (0, -1)))
@@ -204,9 +215,11 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
     hinge.CreateBody1Rel().SetTargets([door.GetPath()])
     hinge.CreateLocalPos0Attr(Gf.Vec3f(*g.hinge))
     hinge.CreateLocalPos1Attr(Gf.Vec3f(0.0))
-    # Both joint frames rotate +Z onto -Z, so positive joint angles open outward.
-    hinge.CreateLocalRot0Attr(Gf.Quatf(0.0, 1.0, 0.0, 0.0))
-    hinge.CreateLocalRot1Attr(Gf.Quatf(0.0, 1.0, 0.0, 0.0))
+    # Positive joint angles open outward: about +Z with the hinge on +Y; with it on -Y both joint frames
+    # rotate +Z onto -Z.
+    hinge_rot = Gf.Quatf(1.0) if g.hinge_axis_z > 0 else Gf.Quatf(0.0, 1.0, 0.0, 0.0)
+    hinge.CreateLocalRot0Attr(hinge_rot)
+    hinge.CreateLocalRot1Attr(hinge_rot)
     hinge.CreateAxisAttr("Z")
     hinge.CreateLowerLimitAttr(0.0)
     hinge.CreateUpperLimitAttr(g.open_limit_deg)
@@ -221,6 +234,11 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
     handle_joint.CreateBody1Rel().SetTargets([handle.GetPath()])
     handle_joint.CreateLocalPos0Attr(Gf.Vec3f(*spindle_in_door))
     handle_joint.CreateLocalPos1Attr(Gf.Vec3f(0.0))
+    # Positive angles lower the lever: about +X when it points -Y; pointing +Y, both joint frames turn
+    # half a turn about Z, so the joint's X is the door's -X.
+    lever_rot = Gf.Quatf(1.0) if g.lever_axis_x > 0 else Gf.Quatf(0.0, 0.0, 0.0, 1.0)
+    handle_joint.CreateLocalRot0Attr(lever_rot)
+    handle_joint.CreateLocalRot1Attr(lever_rot)
     handle_joint.CreateAxisAttr("X")
     handle_joint.CreateLowerLimitAttr(0.0)
     handle_joint.CreateUpperLimitAttr(g.handle_limit_deg)
@@ -239,9 +257,13 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
             "door_mass_kg": 0.6, "enclosure_mass_kg": 8.0, "handle_mass_kg": 0.12,
             "handle_spring": spring_record(handle_torque_nm),
             "apriltag": {"family": apriltag.FAMILY, "id": g.tag_id, "size_m": g.tag_size,
-                         "centre_enclosure_m": list(g.tag_centre),
+                         "centre_enclosure_m": list(g.tag_centre), "printed_size_m": g.tag_outer_size,
                          "pose_enclosure": apriltag.tag_pose_box(g).round(6).tolist()},
-            "assumptions": "Proxy geometry/masses; spring-return lever; runtime joint-limit latch, not a bolt simulation"}
+            "lock_centre_enclosure_m": list(g.lock),
+            "assumptions": "Measured outline, handle height, tag offset and lock position (Lukas, 2026-10-19); "
+                           "assumed handle and tag on the door's centreline, lever shape, wall/door thickness, "
+                           "interior and masses; spring-return lever; runtime joint-limit latch, not a cam lock "
+                           "simulation"}
 
 
 def spring_record(handle_torque_nm):

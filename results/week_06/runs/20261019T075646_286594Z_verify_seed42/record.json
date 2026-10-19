@@ -1,0 +1,38 @@
+{
+  "id": "20261019T075646_286594Z_verify_seed42",
+  "title": "G0 verify, payload physical: failed (mass check predates the camera)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-19T19:04:24+11:00",
+  "started_utc": "2026-10-19T07:56:46+00:00",
+  "source_dir": "logs/position_only/20261019T075646_286594Z_verify_seed42",
+  "mode": "verify",
+  "seed": 42,
+  "status": "verify_failed",
+  "error": null,
+  "num_envs": 8,
+  "iterations": 100,
+  "steps": 600,
+  "git_commit": "ab7752c848d6900b4b6c4e1bc8c9f83829e4012e",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.689599990844727,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json",
+    "verify.json",
+    "params_deploy.yaml"
+  ],
+  "verify_summary": {
+    "all_passed": false,
+    "passed": 24,
+    "total": 25,
+    "failed": [
+      "arm_link_masses_match_weld_model"
+    ],
+    "interpretation": "Deliberate mechanism checks only; not standing, stepping or reaching ability."
+  }
+}

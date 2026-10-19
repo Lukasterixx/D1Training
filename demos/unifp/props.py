@@ -79,16 +79,20 @@ CUP_SUCCESS_LIFT_M = 0.05
 
 # --- the combiner box on its post -------------------------------------------------------------
 
-#: The lever's spindle sits `GEOMETRY.bottom + GEOMETRY.height / 2` = 0.30 m above the box's root,
-#: so a 0.38 m post puts the grasp point at 0.68 m: radius 0.53, pitch 21 degrees. Same reasoning
-#: as the table -- that is where the hand arrives level, and a lever is gripped across a
-#: horizontal bar, which wants the jaws above and below it and so the approach flat.
-POST_TOP_M = 0.38 + BOX_SCENE_SHIFT_M[2]
-POST_SIZE_M = (0.22, 0.32)
-#: Distance from the robot to the box's root. The scripted demo samples 0.62-0.70 m
-#: (`geometry.sample_placement`); the handle stands 0.151 m proud of the root toward the robot, so
-#: 0.64 m puts the grasp at a 0.52 m radius and 0.68 m at 0.55 -- inside the trained 0.58.
-BOX_DISTANCE_RANGE_M = (0.64, 0.68)
+#: The grasp point belongs at 0.68 m (plus the arm's rise): radius 0.53, pitch 21 degrees. Same
+#: reasoning as the table -- that is where the hand arrives level, and a lever is gripped across a
+#: horizontal bar, which wants the jaws above and below it and so the approach flat. The earlier
+#: proxy's spindle was 0.30 m up and stood on a 0.38 m post. The real box stands on the floor with its
+#: isolator handle 0.67 m up (`GEOMETRY.spindle`), so the post is now a 10 mm plinth (38 mm with the
+#: arm's rise) that keeps the handle at the height the demo was tuned for, under most of the box's
+#: 284 x 630 mm footprint.
+POST_TOP_M = 0.68 - GEOMETRY.spindle[2] + BOX_SCENE_SHIFT_M[2]
+POST_SIZE_M = (0.28, 0.56)
+#: Distance from the robot to the box's root. The earlier proxy's handle stood 0.151 m proud of the
+#: root toward the robot and was sampled at 0.64-0.68 m: the grasp at a 0.52-0.55 m radius, inside the
+#: trained 0.58. The real box is deeper and its handle stands 0.223 m proud (`GEOMETRY.handle`), so the
+#: range moves out by the difference and the grasp keeps its distance.
+BOX_DISTANCE_RANGE_M = (0.70, 0.74)
 BOX_BEARING_RANGE_DEG = (-12.0, 12.0)
 BOX_YAW_JITTER_DEG = (-8.0, 8.0)
 #: How far out the lever the jaws close, from the spindle. The scripted grip uses 90 mm on a 105 mm
@@ -102,6 +106,18 @@ LEVER_TURN_DEG = 52.0
 #: degrees against springs up to 0.4 N·m (F-073), so 30 is a pass either controller could earn.
 DOOR_OPEN_DEG = 50.0
 DOOR_SUCCESS_DEG = 30.0
+
+# --- the door pull: the box unlocked, the door swung 90 degrees by walking -------------------------
+
+#: The door-pull demo's door target, and what counts as having got there. A free door overshoots or
+#: stops a little short of the hand; 85 is "swung open", 90 is what is asked.
+DOOR_PULL_DEG = 90.0
+DOOR_PULL_SUCCESS_DEG = 85.0
+#: The robot starts squarely in front of the door, so the arc it walks round the hinge is the same
+#: arc every time; small spreads only. Its distance is the combiner's: the grasp lands where the
+#: reach was tuned, ~0.53 m out in the goal sphere.
+DOOR_PULL_BEARING_RANGE_DEG = (-5.0, 5.0)
+DOOR_PULL_YAW_JITTER_DEG = (-5.0, 5.0)
 
 
 @dataclass(frozen=True)
@@ -183,7 +199,7 @@ class BoxSite:
         """Carry a point in the enclosure frame round the door's hinge (its local -Z)."""
         if not door_deg:
             return local
-        angle = math.radians(-door_deg)
+        angle = math.radians(GEOMETRY.hinge_axis_z * door_deg)
         hx, hy = GEOMETRY.hinge[0], GEOMETRY.hinge[1]
         x, y = local[0] - hx, local[1] - hy
         return (hx + math.cos(angle) * x - math.sin(angle) * y,
@@ -194,26 +210,53 @@ class BoxSite:
 
         `GEOMETRY.handle_at_angle` is the same construction at the geometry's own
         `handle_grasp_offset`; this uses `LEVER_GRASP_OFFSET_M` instead. The lever extends from its
-        spindle toward the enclosure's -y and a positive lever angle lowers it, so turning it moves
+        spindle toward the hinge and a positive lever angle lowers it, so turning it moves
         the grasp point down *and* in, not down alone -- which is why the demo's turn phase follows
         an arc rather than a vertical line.
         """
         sx, sy, sz = GEOMETRY.spindle
         lever = math.radians(handle_deg)
         local = (sx + GEOMETRY.handle_projection,
-                 sy - LEVER_GRASP_OFFSET_M * math.cos(lever),
+                 sy + GEOMETRY.hinge_side * LEVER_GRASP_OFFSET_M * math.cos(lever),
                  sz - LEVER_GRASP_OFFSET_M * math.sin(lever))
         return self.world(self._about_hinge(local, door_deg))
 
     def lever_axis_unit(self, handle_deg: float = 0.0, door_deg: float = 0.0):
         """Direction the lever bar runs in: the axis the jaws must close *across*."""
-        lever = math.radians(handle_deg)
-        local = (0.0, -math.cos(lever), -math.sin(lever))
+        local = GEOMETRY.lever_direction(handle_deg)
         if door_deg:
-            angle = math.radians(-door_deg)
+            angle = math.radians(GEOMETRY.hinge_axis_z * door_deg)
             local = (math.cos(angle) * local[0] - math.sin(angle) * local[1],
                      math.sin(angle) * local[0] + math.cos(angle) * local[1], local[2])
         return self.direction(local)
+
+    def hinge_xy_m(self) -> tuple[float, float]:
+        """The door's hinge axis, as a point in the robot's yaw frame (the axis is vertical)."""
+        x, y, _ = self.world(GEOMETRY.hinge)
+        return x, y
+
+    def base_pose_m(self, door_deg: float, start=(0.0, 0.0, 0.0)) -> tuple[float, float, float]:
+        """Where the robot's base should be, (x, y, yaw rad), for the door at `door_deg`: carried round the
+        hinge with the door from `start`, where it stood with the door shut.
+
+        The robot and the door turn together as one body, so the handle, the door's face and the hinge
+        all stay where they were in the robot's own frame: the grasp is the one the reach made, and the
+        goal does not move in the goal sphere. It also keeps the robot out of the door's sweep. On the
+        real box the hinge is on the robot's right: the base steps right while turning left, staying
+        ~0.65 m from the hinge, and at 90 degrees stands 0.88 m right of where it started and 0.25 m
+        further forward, facing the open door's outer face (at the combiner's 0.72 m).
+        """
+        hx, hy = self.hinge_xy_m()
+        angle = math.radians(GEOMETRY.hinge_axis_z * door_deg)
+        x, y = start[0] - hx, start[1] - hy
+        return (hx + math.cos(angle) * x - math.sin(angle) * y,
+                hy + math.sin(angle) * x + math.cos(angle) * y, start[2] + angle)
+
+    @staticmethod
+    def from_base(pose, local) -> tuple[float, float, float]:
+        """A point given in a base pose's own yaw frame, in the robot's spawn yaw frame."""
+        c, s = math.cos(pose[2]), math.sin(pose[2])
+        return (pose[0] + c * local[0] - s * local[1], pose[1] + s * local[0] + c * local[1], local[2])
 
     def approach_unit(self, door_deg: float = 0.0) -> tuple[float, float, float]:
         """Direction the hand travels along to reach the lever: from the robot into the door.
@@ -223,7 +266,7 @@ class BoxSite:
         """
         local = (1.0, 0.0, 0.0)
         if door_deg:
-            angle = math.radians(-door_deg)
+            angle = math.radians(GEOMETRY.hinge_axis_z * door_deg)
             local = (math.cos(angle), math.sin(angle), 0.0)
         out = self.direction(local)
         return (-out[0], -out[1], -out[2])
@@ -244,19 +287,28 @@ def sample_box_site(rng) -> BoxSite:
     return BoxSite(distance_m=distance, bearing_deg=bearing, yaw_deg=yaw)
 
 
+def sample_door_site(rng) -> BoxSite:
+    """A box placement for the door pull: at the combiner's distance, facing the robot nearly squarely."""
+    distance = float(rng.uniform(*BOX_DISTANCE_RANGE_M))
+    bearing = float(rng.uniform(*DOOR_PULL_BEARING_RANGE_DEG))
+    yaw = bearing + 180.0 + float(rng.uniform(*DOOR_PULL_YAW_JITTER_DEG))
+    return BoxSite(distance_m=distance, bearing_deg=bearing, yaw_deg=yaw)
+
+
 def side_stance(site: BoxSite, stance_deg: float) -> BoxSite:
     """`site` turned about its grasp point by `stance_deg`: the robot stands off the door's normal.
 
     The grasp point stays where it was in the robot's frame -- the same reach, the same place in the
     goal sphere -- and only the directions the lever and the door move in turn with the box. Positive
-    puts the robot on the latch side (the lever's spindle, the enclosure's +y, the robot's right when it
-    faces the door squarely): there turning the lever down also draws the handle toward the robot, and
-    the opening door swings away from it. Negative puts it on the hinge side, the other way round.
+    puts the robot on the latch side (the door's free edge with the cam lock, away from where the lever
+    points; on the real box the robot's left when it faces the door squarely): there turning the lever
+    down also draws the handle toward the robot, and the opening door swings away from it. Negative puts
+    it on the hinge side, the other way round.
     """
     if not stance_deg:
         return site
     grasp = site.grasp_point_m()
-    turned = BoxSite(site.distance_m, site.bearing_deg, site.yaw_deg - stance_deg)
+    turned = BoxSite(site.distance_m, site.bearing_deg, site.yaw_deg + GEOMETRY.hinge_side * stance_deg)
     moved = turned.grasp_point_m()
     root = site.root_m
     x, y = root[0] + grasp[0] - moved[0], root[1] + grasp[1] - moved[1]

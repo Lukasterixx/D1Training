@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the cup pick or the combiner-box opening under UniFP's trained whole-body policy.
+"""Run the cup pick, the combiner-box opening or the door pull under UniFP's trained whole-body policy.
 
     source ~/miniconda3/etc/profile.d/conda.sh && conda activate env_isaaclab
     unset PYTHONPATH AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
@@ -13,6 +13,11 @@
 
     # the same, with the two wrist joints servoed instead of policy-driven
     ./demos/unifp/run_demo.py --task cup --attempts 16 --headless --wrist
+
+    # the door pull: the box unlocked, the lever never turned; grip the handle and walk the door 90 degrees
+    # open, the base carried round the hinge with the door by velocity commands
+    ./demos/unifp/run_demo.py --task door --wrist --num_envs 1 --attempts 1
+    ./demos/unifp/run_demo.py --task door --wrist --attempts 16 --headless
 
     # the combiner under the mechanism-trained policy (F-108): claw, force law, roll command, and the
     # script turning the lever to its stop with the claw 95 mm out; watch one, or measure a stiff door
@@ -67,6 +72,7 @@ import os
 from pathlib import Path
 import random
 import subprocess
+import time
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -116,13 +122,39 @@ def stack_versions() -> dict:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--task", choices=("cup", "combiner"), default="cup")
+    parser.add_argument("--task", choices=("cup", "combiner", "door"), default="cup",
+                        help="'door': the combiner box unlocked, its handle never turned; the hand grips it and the "
+                             "robot walks round the hinge with the door until it is --door_deg open.")
+    parser.add_argument("--door_deg", type=float, default=props.DOOR_PULL_DEG,
+                        help=f"Door only: how far the script swings the door, degrees (default {props.DOOR_PULL_DEG:g}; "
+                             f"success is {props.DOOR_PULL_SUCCESS_DEG:g} or more at the end of the hold).")
+    parser.add_argument("--grip_s", type=float, default=None,
+                        help="Door only: how long the jaws take to close on the handle, s (default DoorTiming's 0.8, "
+                             "times --speed_scale).")
+    parser.add_argument("--pull_s", type=float, default=None,
+                        help="Door only: the swing's duration, s (default DoorTiming's 7, times --speed_scale). Much "
+                             "slower and the walk command falls inside UniFP's dead zones, where it is told to stand.")
+    parser.add_argument("--controller", choices=("unifp", "decoupled"), default="unifp",
+                        help="Door only: 'decoupled' is the non-UniFP baseline -- Rescue's walking policy on the legs and "
+                             "inverse kinematics on the arm through the measured D1 model (`decoupled.py`), on the same "
+                             "script, scene and placements.")
+    parser.add_argument("--seeded_ik_loop", action="store_true",
+                        help="With --controller decoupled: the arm IK's first version, which re-ran the seeded search "
+                             "inside the 10 Hz loop (up to ~0.5 s a command). A diagnostic for comparing results.")
+    parser.add_argument("--park_arm", action="store_true",
+                        help="With --controller decoupled: never command the arm, which stays at its reset pose while the "
+                             "legs walk the script's path. A diagnostic of the walking policy alone.")
     parser.add_argument("--checkpoint", default=None,
                         help=f"Default {DEFAULT_CHECKPOINT}, or {MECH_CHECKPOINT} with --mech.")
     parser.add_argument("--attempts", type=int, default=16,
                         help="Placements to try. One environment each unless --num_envs is smaller.")
     parser.add_argument("--num_envs", type=int, default=None,
-                        help="Attempts run at once. Defaults to --attempts.")
+                        help="Attempts run at once. Defaults to 1 with the viewer (the rest follow one after another) "
+                             "and to --attempts headless. The count changes results (F-098): state it with any rate.")
+    parser.add_argument("--markers", action="store_true",
+                        help="With the viewer: draw UniFP's goal overlay (`unifp_train/debug_vis.py`): yellow goal, "
+                             "magenta scored goal, blue tool point, cyan sphere centre. Off by default so the hand can "
+                             "be seen.")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--wrist", action="store_true",
                         help="Servo Joint5/Joint6 instead of letting the policy drive them. A "
@@ -178,7 +210,7 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Combiner only: a door closer, the torque it needs at 45 degrees. 0 is a free door.")
     parser.add_argument("--post_top_m", type=float, default=None,
                         help=f"Combiner only: the post's height, m (default props.POST_TOP_M, {props.POST_TOP_M:g}). The "
-                             f"lever's spindle is {GEOMETRY.bottom + GEOMETRY.height / 2:g} m above it: raise it to put the "
+                             f"lever's spindle is {GEOMETRY.spindle[2]:g} m above it: raise it to put the "
                              "handle above the robot, where turning it down is a pull. Pair with --box_distance_m.")
     parser.add_argument("--box_distance_m", type=float, nargs=2, default=None, metavar=("NEAR", "FAR"),
                         help="Combiner only: the range the box's root is placed at from the robot, m (default "
@@ -227,6 +259,9 @@ def build_parser() -> argparse.ArgumentParser:
                              "waited long enough.")
     parser.add_argument("--settle_s", type=float, default=1.0,
                         help="Standing time before the script starts, so the spawn drop is over.")
+    parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=True,
+                        help="Draw the wrist RealSense in its printed bracket on the gripper, as fitted to the real arm, at "
+                             "the saved mount (demos/cup/pick_demo). Visual only: no mass, no collider, no rendering.")
     parser.add_argument("--robot_usd", default=None)
     parser.add_argument("--out", default=None, help="Defaults to logs/unifp_demos/<stamp>_<task>.")
     parser.add_argument("--run_name", default="")
@@ -239,7 +274,7 @@ def main() -> int:
 
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
-    args.num_envs = args.num_envs or args.attempts
+    args.num_envs = args.num_envs or (args.attempts if args.headless else 1)
     app_launcher = AppLauncher(args)
     simulation_app = app_launcher.app
 
@@ -261,8 +296,16 @@ def main() -> int:
     suffix = f"_{args.run_name}" if args.run_name else ""
     if args.mech and args.task != "combiner":
         parser.error("--mech is for the combiner task")
+    if args.task == "door" and args.stance_deg:
+        parser.error("--stance_deg is for the combiner task; the door pull starts square to the door")
+    if args.task == "door" and not 10.0 <= args.door_deg <= GEOMETRY.open_limit_deg - 5.0:
+        parser.error(f"--door_deg must be between 10 and {GEOMETRY.open_limit_deg - 5.0:g}")
     if args.mech and args.wrist:
         parser.error("--mech commands the roll itself; do not add --wrist")
+    decoupled_run = args.controller == "decoupled"
+    if decoupled_run and (args.task != "door" or args.wrist or args.mech or args.zero_actions or args.checkpoint):
+        parser.error("--controller decoupled is the door pull's baseline: --task door, without --wrist, --mech, "
+                     "--zero_actions or --checkpoint")
     if args.checkpoint is None:
         args.checkpoint = MECH_CHECKPOINT if args.mech else DEFAULT_CHECKPOINT
     if args.mech:
@@ -274,6 +317,8 @@ def main() -> int:
     force_law = args.mech and not args.no_force_law
     controller = ("mech_law" if force_law else "mech_goal") if args.mech else (
         "unifp_wrist" if args.wrist else ("zero_actions" if args.zero_actions else "unifp"))
+    if decoupled_run:
+        controller = "decoupled_walk_ik"
     if claw and not args.mech:
         controller += "_claw"
     if claw and not lips:
@@ -347,6 +392,21 @@ def main() -> int:
         timing = dataclasses.replace(timing, settle_s=base.settle_s * holds,
                                      arrive_s=base.arrive_s * holds)
         phases = demo_script.cup_phases(timing)
+    elif args.task == "door":
+        base = demo_script.DoorTiming()
+        timing = demo_script.DoorTiming(
+            **{f.name: getattr(base, f.name) * args.speed_scale
+               for f in dataclasses.fields(base) if f.name.endswith("_s")},
+            standoff_m=base.standoff_m, door_deg=args.door_deg)
+        timing = dataclasses.replace(timing, settle_s=base.settle_s * holds, arrive_s=base.arrive_s * holds)
+        if args.pull_s is not None:
+            timing = dataclasses.replace(timing, pull_s=args.pull_s)
+        if args.grip_s is not None:
+            timing = dataclasses.replace(timing, grip_s=args.grip_s)
+        phases = demo_script.door_phases(timing)
+        if lips:
+            jaws = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
+            phases = [dataclasses.replace(p, jaw_m=jaws.get(p.jaw_m, p.jaw_m)) for p in phases]
     else:
         base = demo_script.CombinerTiming()
         timing = demo_script.CombinerTiming(
@@ -376,7 +436,8 @@ def main() -> int:
     goal_correction = (args.mech and not args.no_goal_correction) or args.goal_correction
     use_mech_env = args.mech or claw or goal_correction
     cfg = mech_env.MechDemoEnvCfg() if use_mech_env else demo_env.UniFPDemoEnvCfg()
-    cfg.task = args.task
+    # The door pull is the combiner's scene: the same box on the same plinth.
+    cfg.task = "cup" if args.task == "cup" else "combiner"
     cfg.seed = args.seed
     cfg.scene.num_envs = args.num_envs
     cfg.scene.env_spacing = 3.0
@@ -392,8 +453,15 @@ def main() -> int:
         cfg.tool_body, cfg.tool_offset_m = task_cfg.TOOL_BODY, task_cfg.TOOL_OFFSET_M
         cfg.roll_objective = True
         cfg.roll_command = True
+    elif decoupled_run:
+        from demos.unifp import decoupled  # noqa: E402
+
+        cfg.robot = decoupled.make_robot_cfg(robot_usd)
+        cfg.seeded_ik_loop = args.seeded_ik_loop
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
+    if args.jaw_effort_n is not None and decoupled_run:
+        parser.error("--jaw_effort_n sets UniFP's actuator group; the decoupled robot has its own")
     if args.jaw_effort_n is not None:
         actuator = cfg.robot.actuators["unifp"]
         for name in ("Joint7_1", "Joint7_2"):
@@ -409,6 +477,21 @@ def main() -> int:
             cfg.force_law_gains = tuple(args.force_law_gains)
         cfg.force_law_bleed_s = args.force_law_bleed or None
     cfg.robot_usd = robot_usd
+    camera_body = None
+    if args.camera_body:
+        from demos.cup.pick_demo.camera import resolve_mount
+        from demos.cup.pick_demo.camera_asset import build_bracket_usd, build_camera_usd
+
+        mount, mount_source, mount_file = resolve_mount()
+        body, bracket = build_camera_usd(ROOT / "generated/pick_demo"), build_bracket_usd(ROOT / "generated/pick_demo")
+        camera_body = {"mount_source": mount_source, "mount_file": mount_file,
+                       "pos_link6_m": [float(v) for v in mount.pos_link6],
+                       "quat_wxyz": [float(v) for v in mount.quat_wxyz()],
+                       "body_usd": body["usd_path"], "bracket_usd": bracket and bracket["usd_path"],
+                       "physics": "visual only: no mass, no collider"}
+        cfg.camera_body_usd = body["usd_path"]
+        cfg.camera_body_pose = (tuple(camera_body["pos_link6_m"]), tuple(camera_body["quat_wxyz"]))
+        cfg.bracket_usd = camera_body["bracket_usd"] or ""
     cfg.handle_torque_nm = torque
     cfg.door_torque_nm = args.door_torque_nm
     # Long enough that the time limit never lands inside an attempt: the runner ends attempts, and
@@ -443,15 +526,26 @@ def main() -> int:
             # Off the robot's right shoulder, high enough to see the lever turn and the door swing.
             cfg.viewer.eye = (1.15, -1.25, 1.05)
             cfg.viewer.lookat = (0.50, 0.0, 0.62)
+        elif args.task == "door":
+            # Behind and to the right, high: the robot walks right round the hinge and turns to face it.
+            cfg.viewer.eye = (-0.9, -2.0, 1.7)
+            cfg.viewer.lookat = (0.35, -0.45, 0.45)
         else:
             cfg.viewer.eye = (1.0, -1.15, 1.0)
             cfg.viewer.lookat = (0.45, 0.0, 0.64)
 
-    env = (mech_env.MechDemoEnv if use_mech_env else demo_env.UniFPDemoEnv)(cfg)
-    if args.task == "combiner":
+    env_class = decoupled.DecoupledDoorEnv if decoupled_run else (
+        mech_env.MechDemoEnv if use_mech_env else demo_env.UniFPDemoEnv)
+    env = env_class(cfg)
+    if args.park_arm:
+        if not decoupled_run:
+            parser.error("--park_arm is for --controller decoupled")
+        env.park_arm = True
+    if args.task != "cup":
         # The grip squeezes the bar past the URDF's stop (F-063), with or without the lips.
         env.open_gripper_stop(demo_script.JAW_BAR_SHUT_M)
-        env.attach_latches()
+        # Unlocked for the door pull: the door is free, and the lever's spring still holds it up.
+        env.attach_latches(locked=args.task == "combiner")
     env.hide_object = args.no_object
     env.hide_furniture = args.free_space
     env.command_tip = args.command_tip
@@ -460,9 +554,10 @@ def main() -> int:
     env.jaw_compensation = not args.no_jaw_compensation and not args.mech
     env.scripts = [demo_script.DemoScript(phases) for _ in range(env.num_envs)]
     if not args.headless:
-        env.set_debug_vis(True)
+        env.set_debug_vis(args.markers)
 
-    policy = None if args.zero_actions else EvaluablePolicy(args.checkpoint, device=str(env.device))
+    walker = decoupled.WalkingPolicy(decoupled.walking_checkpoint(), env.device) if decoupled_run else None
+    policy = None if (args.zero_actions or decoupled_run) else EvaluablePolicy(args.checkpoint, device=str(env.device))
 
     report = {
         **early,
@@ -476,6 +571,19 @@ def main() -> int:
         "checkpoint": os.path.abspath(args.checkpoint) if policy else None,
         "checkpoint_source": policy.source if policy else None,
         "checkpoint_iteration": policy.iteration if policy else None,
+        "decoupled": ({"legs": {"policy": str(walker.path), "sha256": walker.sha256,
+                                "trained": "Rescue's Go2 velocity tracking, 12 leg actions, arm passive (F-008)",
+                                "actuator": "Isaac Lab Go2 DCMotor (25/0.5, 23.5 N·m)",
+                                "observation": "flat_env_cfg's 235: velocities, gravity, command, legs, last action, "
+                                               "height scan; no noise"},
+                       "arm": {"control": "IK on Link6 + jaw centre in the base's current frame (decoupled_arm.py), "
+                                          "grasp pitch/roll from the scripted grip's order, held per attempt",
+                               "command_hz": 10.0,
+                               "model": "D1 firmware planner (F-045) into the stiff servo drive, published torque "
+                                        "and measured speed limits"},
+                       "jaws": "UniFP's drive (800 N/m, 15 N)"} if decoupled_run else None),
+        "park_arm": bool(args.park_arm),
+        "seeded_ik_loop": bool(args.seeded_ik_loop),
         "num_envs": env.num_envs,
         "attempts": args.attempts,
         "script_phases": [{"name": p.name, "duration_s": p.duration_s} for p in phases],
@@ -483,11 +591,17 @@ def main() -> int:
         "speed_scale": args.speed_scale,
         "hold_scale": args.hold_scale,
         "settle_s": args.settle_s,
-        "handle_torque_nm": torque if args.task == "combiner" else None,
-        "door_torque_nm": args.door_torque_nm if args.task == "combiner" else None,
+        "handle_torque_nm": torque if args.task != "cup" else None,
+        "door_torque_nm": args.door_torque_nm if args.task != "cup" else None,
         "stance_deg": args.stance_deg if args.task == "combiner" else None,
-        "post_top_m": props.POST_TOP_M if args.task == "combiner" else None,
-        "box_distance_m": list(props.BOX_DISTANCE_RANGE_M) if args.task == "combiner" else None,
+        "post_top_m": props.POST_TOP_M if args.task != "cup" else None,
+        "box_distance_m": list(props.BOX_DISTANCE_RANGE_M) if args.task != "cup" else None,
+        "door_pull": ({"door_deg": args.door_deg, "success_deg": props.DOOR_PULL_SUCCESS_DEG, "latch": "unlocked",
+                       "bearing_deg": list(props.DOOR_PULL_BEARING_RANGE_DEG),
+                       "yaw_jitter_deg": list(props.DOOR_PULL_YAW_JITTER_DEG),
+                       "base_gains_per_s": [demo_script.BASE_GAIN_XY, demo_script.BASE_GAIN_YAW],
+                       "base_command_limits": list(demo_script.BASE_COMMAND_LIMITS)}
+                      if args.task == "door" else None),
         "turn_deg": (args.turn_deg if args.turn_deg is not None else props.LEVER_TURN_DEG)
         if args.task == "combiner" else None,
         "lever_grasp_m": props.LEVER_GRASP_OFFSET_M if args.task == "combiner" else None,
@@ -504,8 +618,11 @@ def main() -> int:
                             if goal_correction else None),
         "jaw_compensation": not args.no_jaw_compensation,
         "forces": "scheduled pushes off; contact only",
-        "base_command": "zero (standing)",
+        "base_command": ("scripted walk round the hinge with the door (BoxSite.base_pose_m), velocity commands from "
+                         "script.base_velocity_command: path rate fed forward, pose error fed back"
+                         if args.task == "door" else "zero (standing)"),
         "perception": "none -- the object pose is given",
+        "camera_body": camera_body,
         "assets": asset_info,
         "robot_usd": robot_usd,
         "robot_usd_sha256": hashlib.sha256(Path(robot_usd).read_bytes()).hexdigest(),
@@ -521,6 +638,8 @@ def main() -> int:
     rng = random.Random(args.seed)
     if args.task == "cup":
         sampler = props.sample_cup_site
+    elif args.task == "door":
+        sampler = props.sample_door_site
     else:
         # The same draws at every stance: a stance sweep compares the same placements, turned.
         sampler = lambda generator: props.side_stance(props.sample_box_site(generator), args.stance_deg)
@@ -553,13 +672,19 @@ def main() -> int:
                 if not simulation_app.is_running():
                     status = "aborted"
                     break
-                if policy is None:
+                started = time.perf_counter()
+                if decoupled_run:
+                    action = env.action_from_legs(walker.act(env.walking_observation()))
+                elif policy is None:
                     action = torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
                 else:
                     action = policy.act(obs["policy"]).clone()
                 if args.wrist:
                     action = _servo_wrist(env, action, wrist_indices, limits, gain)
                 obs, _, terminated, truncated, _ = env.step(action)
+                # Wall time of the step: the controller and the simulator together, every environment at once. Not a
+                # deployment cost (the robot runs no simulator), but where a stall in the controller shows up.
+                record.step_wall_ms = 1000.0 * (time.perf_counter() - started)
                 record.update(step, terminated | truncated, rows)
         attempts.extend(record.finish())
         remaining -= count
@@ -724,7 +849,8 @@ class _AttemptRecord:
         # UniFP's port drives the arm with its own PD and neither model, so this is the number
         # that says whether a time here could be a time on the bench.
         arm_speed = env._dof()[1][:, 12:interface.NUM_ACTIONS].abs().max(dim=1).values
-        base_yaw = torch.rad2deg(interface.yaw_from_quat(env._robot.data.root_quat_w)
+        arm_q_deg = torch.rad2deg(env._dof()[0][:, 12:interface.NUM_ACTIONS])
+        base_yaw =torch.rad2deg(interface.yaw_from_quat(env._robot.data.root_quat_w)
                                  - interface.yaw_from_quat(env._spawn_yaw_quat))
         truth = env.cup_state() if self.task == "cup" else env.box_state()
         contact = env.contact_state()
@@ -734,6 +860,7 @@ class _AttemptRecord:
         self.arm_speed_peak = torch.maximum(self.arm_speed_peak, arm_speed)
         for index in range(self.count):
             command = commands[index]
+            best = self.best[index]
             row = {
                 "attempt": self.batch * env.num_envs + index, "step": step, "time_s": time_s,
                 "phase": command.phase,
@@ -755,6 +882,7 @@ class _AttemptRecord:
                 "finger_contact_n": round(float(contact["finger_n"][index]), 3),
                 "forearm_contact_n": round(float(contact["forearm_n"][index]), 3),
                 "fell": int(bool(self.fell[index])),
+                "step_wall_ms": round(getattr(self, "step_wall_ms", float("nan")), 2),
             }
             if self.task == "cup":
                 row["cup_lift_m"] = round(float(truth["lift_m"][index]), 4)
@@ -762,6 +890,28 @@ class _AttemptRecord:
             else:
                 row["door_deg"] = round(float(truth["door_deg"][index]), 2)
                 row["handle_deg"] = round(float(truth["handle_deg"][index]), 2)
+            if self.task == "door":
+                # The walk: what the script commanded the base, and how far the base is from the pose it asked for.
+                vx, vy, wz = env._base_cmd[index].tolist()
+                row["base_cmd_vx_m_s"], row["base_cmd_vy_m_s"], row["base_cmd_wz_rad_s"] = (
+                    round(vx, 4), round(vy, 4), round(wz, 4))
+                pose_error, yaw_error = env.base_pose_error[index].tolist()
+                row["base_pose_error_m"] = None if math.isnan(pose_error) else round(pose_error, 4)
+                row["base_yaw_error_deg"] = None if math.isnan(yaw_error) else round(yaw_error, 2)
+                # The goal as the policy is given it (UniFP's sphere: trained radius 0.30-0.58 m, pitch -45..60 deg,
+                # yaw +/-72 deg) and the arm's six joints: what shape the arm takes for it while the dog walks.
+                radius, pitch, yaw = env._goal_sphere[index].tolist()
+                row["goal_radius_m"] = round(radius, 4)
+                row["goal_pitch_deg"], row["goal_yaw_deg"] = round(math.degrees(pitch), 2), round(math.degrees(yaw), 2)
+                for joint, angle in enumerate(arm_q_deg[index].tolist()):
+                    row[f"arm_q{joint}_deg"] = round(angle, 2)
+                if hasattr(env, "ik_status"):
+                    # The decoupled baseline's arm: how its latest 10 Hz command was solved (`decoupled_arm.IKStep`).
+                    row["ik_status"] = env.ik_status[index]
+                if row["base_pose_error_m"] is not None:
+                    best["max_base_pose_error_m"] = max(best.get("max_base_pose_error_m", 0.0), row["base_pose_error_m"])
+                    best["max_base_yaw_error_deg"] = max(best.get("max_base_yaw_error_deg", 0.0),
+                                                         abs(row["base_yaw_error_deg"]))
             if mech is not None:
                 row["claw_engaged"] = int(bool(mech["claw_engaged"][index] > 0.5))
                 row["claw_force_n"] = round(float(mech["claw_force_n"][index]), 3)
@@ -771,7 +921,6 @@ class _AttemptRecord:
                         row[key] = round(float(mech[key][index]), 4)
             rows.append(row)
 
-            best = self.best[index]
             for key in ("claw_force_n", "force_cmd_n"):
                 if key in row:
                     best[f"peak_{key}"] = max(best.get(f"peak_{key}", 0.0), row[key])
@@ -835,6 +984,21 @@ class _AttemptRecord:
                 record["spilled"] = bool(record["picked"]
                                          and (record["final_cup_tilt_deg"] or 0.0) > 45.0)
                 record["success"] = bool(record["picked"] and not record["spilled"]
+                                         and not record["fell"])
+            elif self.task == "door":
+                record["site"] = {"distance_m": round(site.distance_m, 4),
+                                  "bearing_deg": round(site.bearing_deg, 2),
+                                  "yaw_deg": round(site.yaw_deg, 2)}
+                record["door_at_end_of_hold_deg"] = self.last[index].get("hold", {}).get("door_deg")
+                record["base_yaw_final_deg"] = final.get("base_yaw_deg")
+                record["base_forward_final_m"] = final.get("base_forward_m")
+                record["base_left_final_m"] = final.get("base_left_m")
+                if hasattr(self.env, "ik_counts"):
+                    record["ik_counts"] = dict(self.env.ik_counts[index])
+                    record["grasp"] = self.env.arms[index].grasp_note
+                # Swung open: the door at the success angle when the hold ends, the jaws still on it, and the robot
+                # still up. Its peak alone would count a door flung past and swinging back.
+                record["success"] = bool((record["door_at_end_of_hold_deg"] or 0.0) >= props.DOOR_PULL_SUCCESS_DEG
                                          and not record["fell"])
             else:
                 record["site"] = {"distance_m": round(site.distance_m, 4),
@@ -905,6 +1069,22 @@ def _summarise(attempts: list[dict], task: str) -> dict:
             "forearm_contact_arrive_n_median": median(
                 [a.get("forearm_contact_arrive_n") for a in attempts]),
             "base_shift_arrive_m_median": median([a.get("base_shift_arrive_m") for a in attempts]),
+        })
+    elif task == "door":
+        summary.update({
+            "jaw_centre_error_arrive_m_median": median(
+                [a.get("final_jaw_centre_error_arrive_m") for a in attempts]),
+            "lateral_error_arrive_m_median": median(
+                [a.get("final_lateral_error_arrive_m") for a in attempts]),
+            "finger_contact_grip_n_median": median([a.get("finger_contact_grip_n") for a in attempts]),
+            "door_at_end_of_hold_deg_median": median([a.get("door_at_end_of_hold_deg") for a in attempts]),
+            "door_at_end_of_hold_deg": sorted(a.get("door_at_end_of_hold_deg") or 0.0 for a in attempts),
+            "max_door_deg_median": median([a.get("max_door_deg") for a in attempts]),
+            "jaw_centre_error_pull_m_median": median([a.get("jaw_centre_error_pull_m") for a in attempts]),
+            "finger_contact_pull_n_median": median([a.get("finger_contact_pull_n") for a in attempts]),
+            "max_base_pose_error_m_median": median([a.get("max_base_pose_error_m") for a in attempts]),
+            "max_base_yaw_error_deg_median": median([a.get("max_base_yaw_error_deg") for a in attempts]),
+            "base_yaw_final_deg_median": median([a.get("base_yaw_final_deg") for a in attempts]),
         })
     else:
         summary.update({

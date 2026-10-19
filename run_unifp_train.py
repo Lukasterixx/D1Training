@@ -237,6 +237,11 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Policy updates, for 'train'. Upstream's config asks for 60000.")
     parser.add_argument("--seed", type=int, default=1, help="UniFP's config seed is 1.")
     parser.add_argument("--robot_usd", help="Existing welded USD; otherwise it is rebuilt.")
+    parser.add_argument("--payload", choices=("physical", "visual"), default="physical",
+                        help="Bolted-on parts (payload.py): 'physical' (default) gives the MID-360, its mount, the wrist "
+                             "RealSense and its bracket colliders and mass, as the real robot carries them (since "
+                             "2026-10-19); 'visual' only draws the lidar, the robot every checkpoint before then was "
+                             "trained on. Use 'visual' to re-score those checkpoints as they were.")
     parser.add_argument("--mount_pos", type=float, nargs=3, default=None, metavar=("X", "Y", "Z"),
                         help="Weld the D1 at this offset from the Go2's base link, m (default mount.ARM_MOUNT_POS_M, the "
                              "measured mount, F-117). For measuring how much a policy depends on where the arm is.")
@@ -391,17 +396,21 @@ def main() -> int:
     suffix = f"_{args.run_name}" if args.run_name else ""
     run_dir = Path(args.output).resolve() / f"{stamp}_{args.mode}_seed{args.seed}{suffix}"
 
+    payload_record = None
     if args.robot_usd:
         robot_usd = str(Path(args.robot_usd).resolve())
     else:
         from mount import ARM_MOUNT_POS_M
         mount_pos = tuple(args.mount_pos) if args.mount_pos is not None else ARM_MOUNT_POS_M
-        robot_usd = build_welded_robot_usd(
+        # Its own file with the payload's physics, so a demo rebuilding `generated/go2_d1.usd` never swaps it.
+        weld = build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
-            out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-            mount_pos=mount_pos, arm_mass_kg=3.152,
-        ).usd_path
+            out_usd_path=str(ROOT / ("generated/go2_d1_payload.usd" if args.payload == "physical"
+                                     else "generated/go2_d1.usd")),
+            mount_pos=mount_pos, arm_mass_kg=3.152, payload_physics=args.payload == "physical",
+        )
+        robot_usd, payload_record = weld.usd_path, weld.payload
 
     cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg, "insertion": Go2D1InsertEnvCfg,
            "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg, "rope": Go2D1RopeEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
@@ -707,6 +716,7 @@ def main() -> int:
         "mount_pos_m": (list(args.mount_pos) if args.mount_pos is not None else None) if args.robot_usd else
                        list(args.mount_pos if args.mount_pos is not None else __import__("mount").ARM_MOUNT_POS_M),
         "robot_usd": robot_usd,
+        "payload": None if args.robot_usd else {"mode": args.payload, "bodies": payload_record},
         "robot_usd_sha256": hashlib.sha256(Path(robot_usd).read_bytes()).hexdigest(),
         # The D1's Joint1-6 effort limits the actuator clips at: Joint3 was 1.7 N·m until 2026-10-09, 3.33 since.
         "arm_effort_limits_nm": list(interface.TORQUE_LIMITS[12:18]),

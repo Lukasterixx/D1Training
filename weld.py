@@ -19,15 +19,22 @@ scoped back down to the legs. See LEG_JOINTS there.
 The Go2 EDU's expansion dock and its rails, which the arm stands on, are drawn
 on the trunk (`dock.py`): meshes only, with no collider and no mass, so the
 physics is the same with them or without.
+
+The MID-360 lidar and its mount are drawn on the trunk too (`payload.py`, `payload_visual`). A training setup also asks
+for `payload_physics`: the lidar, its mount, the wrist RealSense and its bracket then get box colliders, and their masses
+are folded into the Go2's `base` and the D1's `Link6`. The demos run policies trained without them, so they draw them
+and leave the physics alone.
 """
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from pxr import Gf, PhysxSchema, Usd, UsdGeom, UsdPhysics, Vt
 
+import payload
 from dock import DOCK_MESHES, MESH_DIR, read_binary_stl
 from mount import ARM_MOUNT_POS_M
 
@@ -47,6 +54,8 @@ class WeldResult:
     # limits, which come from Unitree's published per-joint torques and are
     # independent of how heavy the arm is.
     arm_mass_scale: float = 1.0
+    # What `payload_physics` folded in (bodies, masses before and after, parts and their sources), or None.
+    payload: list | None = None
 
 
 def import_d1_urdf(urdf_path: str, dest_usd_path: str) -> str:
@@ -249,8 +258,8 @@ def _apply_d1_mass_model(subtree_root: Usd.Prim, total_kg: float) -> float:
     return total_kg / shell_total
 
 
-def _add_dock_visuals(stage: Usd.Stage, go2_base: Usd.Prim) -> int:
-    """Draw the expansion dock and its rails under the Go2's base body; returns the triangles drawn.
+def _add_dock_visuals(stage: Usd.Stage, go2_base: Usd.Prim, meshes=DOCK_MESHES, mesh_dir=MESH_DIR) -> int:
+    """Draw the expansion dock and its rails (or `meshes`) under the Go2's base body; returns the triangles drawn.
 
     The meshes are already in the base's frame. No CollisionAPI and no MassAPI, so PhysX never sees them. Normals are
     per face (faceVarying), because these are machined parts: shared, smoothed normals would round their edges.
@@ -258,8 +267,8 @@ def _add_dock_visuals(stage: Usd.Stage, go2_base: Usd.Prim) -> int:
     if go2_base.IsInstanceProxy():
         raise RuntimeError(f"[weld] {go2_base.GetPath()} is inside an instance; the dock cannot be drawn under it")
     drawn = 0
-    for name, filename, rgb in DOCK_MESHES:
-        tri = read_binary_stl(MESH_DIR / filename)
+    for name, filename, rgb in meshes:
+        tri = read_binary_stl(Path(mesh_dir) / filename)
         points, index = np.unique(tri.reshape(-1, 3), axis=0, return_inverse=True)
         normals = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
         normals /= np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-12)
@@ -276,6 +285,48 @@ def _add_dock_visuals(stage: Usd.Stage, go2_base: Usd.Prim) -> int:
     return drawn
 
 
+def _add_payload_physics(stage: Usd.Stage, bodies: dict) -> list[dict]:
+    """Colliders for every `payload` part, and its mass folded into the body it is fixed to; returns what was done.
+
+    The colliders are boxes, children of the body, with `guide` purpose so they do not render (the parts are drawn by
+    their meshes). A body whose mass PhysX would compute from its colliders has nothing to fold into, so its explicit
+    mass, centre of mass and inertia are required.
+    """
+    record = []
+    for body_name, parts in (("base", payload.trunk_parts()), ("Link6", payload.wrist_parts())):
+        body = bodies[body_name]
+        for part in parts:
+            for index, box in enumerate(part.colliders):
+                cube = UsdGeom.Cube.Define(stage, body.GetPath().AppendChild(f"{part.name}_collider{index}"))
+                cube.CreateSizeAttr(1.0)
+                cube.AddTranslateOp().Set(Gf.Vec3d(*box.centre))
+                cube.AddOrientOp().Set(Gf.Quatf(*box.quat_wxyz))
+                cube.AddScaleOp().Set(Gf.Vec3f(*box.size))
+                cube.CreatePurposeAttr(UsdGeom.Tokens.guide)
+                UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
+        mass_api = UsdPhysics.MassAPI(body)
+        mass = mass_api.GetMassAttr().Get() or 0.0
+        com = mass_api.GetCenterOfMassAttr().Get()
+        diagonal = mass_api.GetDiagonalInertiaAttr().Get()
+        axes = mass_api.GetPrincipalAxesAttr().Get()
+        if mass <= 0.0 or com is None or diagonal is None:
+            raise RuntimeError(f"[weld] {body.GetPath()} has no explicit mass properties to fold the payload into")
+        axes_wxyz = (1.0, 0.0, 0.0, 0.0) if axes is None else (axes.GetReal(), *axes.GetImaginary())
+        inertia = payload.tensor_from_principal(tuple(diagonal), axes_wxyz)
+        total, new_com, tensor = payload.combine(mass, tuple(com), inertia, parts)
+        values, new_axes = payload.principal(tensor)
+        mass_api.GetMassAttr().Set(float(total))
+        mass_api.GetCenterOfMassAttr().Set(Gf.Vec3f(*new_com))
+        mass_api.GetDiagonalInertiaAttr().Set(Gf.Vec3f(*values))
+        mass_api.CreatePrincipalAxesAttr().Set(Gf.Quatf(new_axes[0], *new_axes[1:]))
+        record.append({"body": body_name, "mass_kg": [round(mass, 4), round(float(total), 4)],
+                       "com_m": [[round(v, 4) for v in com], [round(float(v), 4) for v in new_com]],
+                       "parts": [{"name": p.name, "mass_kg": p.mass_kg, "source": p.mass_source} for p in parts]})
+        print(f"[weld] {body_name}: {mass:.3f} -> {total:.3f} kg with {', '.join(p.name for p in parts)} "
+              f"(colliders added)")
+    return record
+
+
 def build_welded_robot_usd(
     go2_usd_path: str,
     d1_urdf_path: str,
@@ -285,6 +336,8 @@ def build_welded_robot_usd(
     d1_base_link: str = "base_link",
     arm_mass_kg: float | None = None,
     dock_visual: bool = True,
+    payload_visual: bool = True,
+    payload_physics: bool = False,
 ) -> WeldResult:
     """Compose go2.usd + d1.usd into one articulation.
 
@@ -292,6 +345,8 @@ def build_welded_robot_usd(
     Go2 EDU's expansion-dock rails, midway between their screws (`mount.ARM_MOUNT_POS_M`, F-117, F-125). Before
     2026-09-26 it was Rescue's (0, 0, 0.08).
     `dock_visual` draws the dock and its rails on the trunk (visual only, `dock.py`).
+    `payload_visual` draws the MID-360 and its mount on the trunk (`payload.py`). `payload_physics` gives the lidar, its
+    mount, the wrist camera and its bracket colliders and mass (training setups; the demos leave it off).
     """
     os.makedirs(os.path.dirname(out_usd_path), exist_ok=True)
     d1_usd_path = os.path.join(os.path.dirname(out_usd_path), "d1.usd")
@@ -354,6 +409,15 @@ def build_welded_robot_usd(
     if dock_visual:
         drawn = _add_dock_visuals(stage, go2_base)
         print(f"[weld] Drew the expansion dock and rails on {go2_base.GetPath()} ({drawn} triangles, visual only).")
+    if payload_visual:
+        drawn = _add_dock_visuals(stage, go2_base, payload.TRUNK_MESHES, payload.MESH_DIR)
+        print(f"[weld] Drew the MID-360 and its mount on {go2_base.GetPath()} ({drawn} triangles).")
+    payload_record = None
+    if payload_physics:
+        link6 = _find_prim_named(arm_prim, "Link6")
+        if link6 is None:
+            raise RuntimeError("[weld] No Link6 in the arm to carry the wrist camera")
+        payload_record = _add_payload_physics(stage, {"base": go2_base, "Link6": link6})
 
     # Duplicate body names are ambiguous to Isaac Lab's find_bodies() regexes,
     # and the failure is a silently wrong body index rather than an exception.
@@ -365,4 +429,4 @@ def build_welded_robot_usd(
     stage.GetRootLayer().Save()
     print(f"[weld] Welded robot written to {out_usd_path}")
     print(f"[weld] Rigid bodies ({len(names)}): {names}")
-    return WeldResult(usd_path=out_usd_path, arm_mass_scale=arm_mass_scale)
+    return WeldResult(usd_path=out_usd_path, arm_mass_scale=arm_mass_scale, payload=payload_record)

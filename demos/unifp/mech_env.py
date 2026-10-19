@@ -179,12 +179,13 @@ class MechDemoEnv(UniFPDemoEnv):
         """(distance from the jaw centre to the lever bar, the jaw centre in the lever's frame).
 
         The bar is the Lever cylinder of `demos/combiner/asset.py`: in the lever body's frame it runs
-        from the spindle along -y for `handle_length`, at x = `handle_projection`, z = 0.
+        from the spindle toward the hinge (`hinge_side` y) for `handle_length`, at x = `handle_projection`, z = 0.
         """
         centre, _ = self._jaw_centre_state()
         pos, quat = self._handle_pose()
         local = interface.quat_rotate_inverse(quat[ids], centre[ids] - pos[ids])
-        along = torch.clamp(local[:, 1], min=-GEOMETRY.handle_length, max=0.0)
+        bar_end = GEOMETRY.hinge_side * GEOMETRY.handle_length
+        along = torch.clamp(local[:, 1], min=min(bar_end, 0.0), max=max(bar_end, 0.0))
         dx = local[:, 0] - GEOMETRY.handle_projection
         dy = local[:, 1] - along
         return torch.sqrt(dx * dx + dy * dy + local[:, 2] ** 2), local
@@ -293,7 +294,7 @@ class MechDemoEnv(UniFPDemoEnv):
 
         pos, quat = self._handle_pose()
         start = torch.tensor([GEOMETRY.handle_projection, 0.0, 0.0], device=self.device).expand(self.num_envs, 3)
-        end = torch.tensor([GEOMETRY.handle_projection, -GEOMETRY.handle_length, 0.0],
+        end = torch.tensor([GEOMETRY.handle_projection, GEOMETRY.hinge_side * GEOMETRY.handle_length, 0.0],
                            device=self.device).expand(self.num_envs, 3)
         a_w = pos + interface.quat_apply(quat, start)
         b_w = pos + interface.quat_apply(quat, end)

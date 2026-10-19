@@ -514,7 +514,8 @@ pulls only 17-20 N. Simulation only.
 polish there brings back sinking after unnoticed snaps. The v3 recipe re-run on that robot from hook v4 `13000` gives
 `checkpoints/unifp_go2d1_rope_cad333_model_14600.pt`. It holds 21.9 / 31.9 / 45.2 N for 15 / 30 / 45 held out, with no
 fall in 192 releases. It leans 4-5 degrees rather than 20-24, pulling with the arm at its new limits. Use it with the
-model as it now is, and the polish with a 1.7 N·m elbow.
+model as it now is, and the polish with a 1.7 N·m elbow. The real shoulder and elbow are the same motor, a Fashion Star
+RX18-U100H-M at 3.14 N·m rated (F-142), so the 3.33 N·m model is the one that matches the hardware.
 
 **Two scoring lessons.** A last-2-s window never sees the snatch as the rope is tied on, so each hold is also scored
 whole; and a tug is a *prominent peak* of the tension (25% of the command above the troughs either side), since the

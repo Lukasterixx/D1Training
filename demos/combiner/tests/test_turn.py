@@ -8,12 +8,13 @@ import numpy as np
 from demos.combiner.apriltag import (TAG_BITS, TagDetector, black_cells, box_pose, corner_points, invert,
                                      mean_pose, pose_error, tag_image, tag_pose_box)
 from demos.combiner.geometry import DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, Placement, sample_placement
-from demos.combiner.press import (Lever, PressParams, SearchParams, plan_close_look, plan_press, plan_search,
-                                  press_capacity)
+from demos.combiner.press import (Lever, PressParams, SearchParams, behind_fingers, plan_close_look, plan_press,
+                                  plan_search, press_capacity)
 from demos.combiner.pull import Handle, PullParams, arc_times, is_proven, plan_pull
 from demos.cup.pick_demo.camera import CAMERAS, camera_pose, link6_pose, project, resolve_mount, transform
 from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6, optical_rotation
 from mount import ARM_SHIFT_FROM_LEGACY_M
+from position_only.task_space import ZERO_ACTION_BASE_OFFSET_M
 from position_only.workspace import load_urdf
 
 try:
@@ -24,11 +25,10 @@ except ImportError:
 JOINTS, LINKS = load_urdf()
 MODEL = CAMERAS["d435"]
 MOUNT = resolve_mount(None)[0]   # the demo's default: the pick's saved wrist mount, else the assumed one
-# The lying Go2 as the pick measured it: base 0.0851 m up, 7.3 deg nose-up (demos/cup/pick_demo/grasp.py).
-_PITCH = math.radians(-7.3)
+# The standing Go2 as the position-only task measured it under zero action: settled 0.2736 m up after sliding 5.7 cm
+# back from its spawn (position_only/task_space.py). Its ~1 deg resting tilt is left out: level.
 BASE_W = np.eye(4)
-BASE_W[:3, :3] = [[math.cos(_PITCH), 0, math.sin(_PITCH)], [0, 1, 0], [-math.sin(_PITCH), 0, math.cos(_PITCH)]]
-BASE_W[:3, 3] = (0.0, 0.0, 0.0851)
+BASE_W[:3, 3] = ZERO_ACTION_BASE_OFFSET_M
 UP_B = BASE_W[:3, :3].T @ np.array([0.0, 0.0, 1.0])
 
 
@@ -103,11 +103,18 @@ class TagTests(unittest.TestCase):
         y0, y1, z0, z1 = g.tag_centre_y - half, g.tag_centre_y + half, g.tag_centre_z - half, g.tag_centre_z + half
         self.assertGreater(y0, -g.width / 2 + 0.01)
         self.assertLess(y1, g.width / 2 - 0.01)
-        self.assertLess(z1, g.bottom + g.height - 0.01)
-        # The warning triangle spans door-local y 0.074-0.186 (enclosure -0.106 to 0.006).
-        self.assertGreater(y0, 0.006 + 0.01)
-        # The rosette and the lever are at the spindle's height and below it, at any angle.
-        self.assertGreater(z0, g.spindle[2] + 0.024 + 0.02)
+        self.assertGreater(z0, g.bottom + 0.01)
+        # Where Lukas put it: the cut sheet's top edge 150 mm below the handle's centre, under it.
+        self.assertAlmostEqual(z1, g.spindle[2] - 0.150)
+        self.assertAlmostEqual(g.tag_centre_y, g.spindle[1])
+        self.assertAlmostEqual(g.tag_outer_size, 0.125)
+        # The warning label's lowest row (asset.py: 55 + 52 mm and seven 1.35 mm pixel rows under the spindle).
+        self.assertLess(z1, g.spindle[2] - 0.055 - 0.052 - 7 * 0.00135 - 0.01)
+        # The lever turned to its 60 degree stop reaches no lower than this.
+        self.assertLess(z1, g.spindle[2] - g.handle_length * math.sin(math.radians(g.handle_limit_deg))
+                        - g.handle_radius - 0.03)
+        # Clear of the cam lock on the free edge.
+        self.assertGreater(y0 - g.lock[1], 0.016 + 0.05)
 
 
 class SpringTests(unittest.TestCase):
@@ -171,11 +178,11 @@ class PressPlanTests(unittest.TestCase):
         self.assertEqual([h for h, _ in stops], list(SearchParams().headings_deg))
         for _ in range(12):
             box = box_in_base(sample_placement(rng))
-            seen = [q for _, q in stops if self._tag_in_view(q, box)]
+            seen = [q for _, q in stops if self._tag_in_view(q, box, fingers=True)]
             self.assertTrue(seen)
             q_close = plan_close_look(JOINTS, LINKS, MOUNT, box, UP_B, seen[0])
             self.assertIsNotNone(q_close)
-            self.assertTrue(self._tag_in_view(q_close, box))
+            self.assertTrue(self._tag_in_view(q_close, box, fingers=True))
             plan_press(JOINTS, LINKS, box, q_close)
 
     def test_a_close_look_before_a_grip_turns_the_camera_to_spare_the_wrist(self):
@@ -184,33 +191,43 @@ class PressPlanTests(unittest.TestCase):
         rng = random.Random(5)
         stops = plan_search(JOINTS, LINKS, MOUNT, UP_B, np.zeros(6))
         saved = []
-        for _ in range(8):
+        # Standing at the real box a grasp that has held reaches about one placement in five, so look at more.
+        for _ in range(40):
             box = box_in_base(sample_placement(rng))
-            q_look = next(q for _, q in stops if self._tag_in_view(q, box))
+            q_look = next(q for _, q in stops if self._tag_in_view(q, box, fingers=True))
             toward = standoff_guess(JOINTS, LINKS, box, q_look)
             if toward is None:          # the grasp that has held does not reach here; the look stays upright
                 continue
             upright = plan_close_look(JOINTS, LINKS, MOUNT, box, UP_B, q_look)
             turned = plan_close_look(JOINTS, LINKS, MOUNT, box, UP_B, q_look, toward=toward)
-            self.assertTrue(self._tag_in_view(turned, box))
+            self.assertTrue(self._tag_in_view(turned, box, fingers=True))
             travel = lambda q: np.max(np.abs(q - q_look)) + np.max(np.abs(toward - q))
             self.assertLessEqual(travel(turned), travel(upright) + 1e-9)
             saved.append(travel(upright) - travel(turned))
         self.assertGreaterEqual(len(saved), 4)
         # With the camera pointing along the gripper (the mount aligned by eye) turning saved over 0.5 rad here. With
         # the bracket's camera, 30 deg down from the approach axis, it saves at most 0.18 rad over these placements
-        # (Week 4, 2026-10-09): still a saving, a smaller one.
+        # (Week 4, 2026-10-09): still a saving, a smaller one. Standing at the real box, in quarter turns, up to 2 rad
+        # (2026-10-19).
         self.assertGreater(max(saved), 0.1, saved)
 
     @staticmethod
-    def _tag_in_view(q, box, margin=20):
+    def _tag_in_view(q, box, margin=20, fingers=False):
+        """The whole printed tag in the image, `margin` px inside its edges. With `fingers`, what the detector needs
+        instead: the black square and 5 mm round it inside the image and clear of the shut fingers' wedge in its
+        lower right (`press.FINGERS_PX`), sampled along that outline."""
         tag = invert(camera_pose(JOINTS, q, MOUNT)) @ box @ tag_pose_box()
-        points = (tag[:3, :3] @ corner_points(GEOMETRY.tag_outer_size).T).T + tag[:3, 3]
+        size, margin = (GEOMETRY.tag_size + 0.01, 5) if fingers else (GEOMETRY.tag_outer_size, margin)
+        points = (tag[:3, :3] @ corner_points(size).T).T + tag[:3, 3]
         if (points[:, 2] < 0.05).any():
             return False
         uv = project(MODEL, points)
-        return bool((uv[:, 0] > margin).all() and (uv[:, 0] < MODEL.width - margin).all()
-                    and (uv[:, 1] > margin).all() and (uv[:, 1] < MODEL.height - margin).all())
+        inside = bool((uv[:, 0] > margin).all() and (uv[:, 0] < MODEL.width - margin).all()
+                      and (uv[:, 1] > margin).all() and (uv[:, 1] < MODEL.height - margin).all())
+        if not inside or not fingers:
+            return inside
+        outline = [a + t * (b - a) for a, b in zip(uv, np.roll(uv, -1, axis=0)) for t in np.linspace(0.0, 1.0, 11)]
+        return not any(behind_fingers(u, v) for u, v in outline)
 
 
 class PullPlanTests(unittest.TestCase):
@@ -264,8 +281,8 @@ class PullPlanTests(unittest.TestCase):
         self.assertGreater((opened - closed) @ out, 0.05)       # towards the robot, out of the box
         # The same swing as the asset's own geometry (`BoxGeometry.handle_at_angle`) at the lever's centreline.
         g = GEOMETRY
-        grasp = (g.spindle[0] + g.handle_projection, g.spindle[1] - handle.p.radius_m, g.spindle[2])
-        angle = math.radians(-30.0)
+        grasp = (g.spindle[0] + g.handle_projection, g.spindle[1] + g.hinge_side * handle.p.radius_m, g.spindle[2])
+        angle = math.radians(g.hinge_axis_z * 30.0)
         x, y = grasp[0] - g.hinge[0], grasp[1] - g.hinge[1]
         expected = (g.hinge[0] + math.cos(angle) * x - math.sin(angle) * y,
                     g.hinge[1] + math.sin(angle) * x + math.cos(angle) * y, grasp[2])
@@ -280,8 +297,10 @@ class PullPlanTests(unittest.TestCase):
         from demos.combiner.pull import PROVEN_GRASPS, proven_rank
 
         proven = [proven_rank(plan.params) for plan in ranked]
-        self.assertEqual(proven[0], len(PROVEN_GRASPS), [(plan.params.pitch_deg, plan.params.roll) for plan in ranked])
+        # Standing at the real box, the grasps that held on the earlier proxy rarely solve (pitch 40 roll -1 at 6 of
+        # 30 default placements, pitch 50 at none; 2026-10-19), and not here: the ranking is what is checked.
         self.assertEqual(proven, sorted(proven, reverse=True))
+        self.assertLessEqual(max(proven), len(PROVEN_GRASPS))
         rest = [plan.door_final_deg for plan in ranked if not is_proven(plan.params)]
         self.assertEqual(rest, sorted(rest, reverse=True))
         self.assertTrue(0.5 < self.plan.predicted_torque_nm() < 1.3)
@@ -319,6 +338,46 @@ class PullPlanTests(unittest.TestCase):
 
 
 @unittest.skipUnless(cv2 is not None, "needs OpenCV")
+class WristCameraClearanceTests(unittest.TestCase):
+    """The RealSense and its printed bracket sit on top of the pincer (fitted to the real arm, Lukas 2026-10-19). The
+    simulator draws them without colliders, so nothing in a run would show them hitting the box: checked here."""
+
+    def test_camera_and_bracket_clear_the_door_lever_and_spindle_at_every_grasp(self):
+        try:
+            import trimesh
+        except ImportError:
+            self.skipTest("trimesh is needed to read the bracket mesh")
+        from demos.cup.pick_demo import bracket, camera_body
+        from demos.combiner.pull import PITCHES_DEG, ROLLS
+
+        g = GEOMETRY
+        points, _ = camera_body.mesh_optical()
+        camera = (MOUNT.pose[:3, :3] @ np.asarray(points).T).T + MOUNT.pose[:3, 3]
+        held = np.vstack([camera, np.asarray(trimesh.load(bracket.BRACKET_MESH_PATH, force="mesh").vertices)])
+        held = held - np.asarray(JAW_CENTRE_LINK6)
+        face = g.door_x + g.door_thickness / 2
+        spindle = np.array(g.spindle)
+        root = spindle + np.array([g.handle_projection, 0.0, 0.0])
+        tip = root + np.array([0.0, g.hinge_side * g.handle_length, 0.0])
+
+        def to_segment(p, a, b):
+            d = b - a
+            t = np.clip(((p - a) @ d) / (d @ d), 0.0, 1.0)
+            return np.linalg.norm(p - (a + t[:, None] * d), axis=1).min()
+
+        for radius in (0.075, PullParams().radius_m):
+            for pitch in PITCHES_DEG:
+                for roll in ROLLS:
+                    pos, rot = Handle(np.eye(4), PullParams(pitch_deg=pitch, roll=roll, radius_m=radius)).grasp(0.0, 0.0)
+                    world = (rot @ held.T).T + pos
+                    with self.subTest(radius=radius, pitch=pitch, roll=roll):
+                        # 2026-10-19, on the proxy lever: at least 29.6 mm off the door, 24.9 mm off anything on it.
+                        self.assertGreater(world[:, 0].min() - face, 0.02)
+                        self.assertGreater(to_segment(world, root, tip) - g.handle_radius, 0.02)
+                        self.assertGreater(to_segment(world, spindle, root) - 0.012, 0.02)
+                        self.assertGreater(to_segment(world, spindle, spindle + np.array([0.006, 0.0, 0.0])) - 0.030, 0.02)
+
+
 class SequenceTests(unittest.TestCase):
     """The whole sequence against rendered tags, with feedback that follows each command after a lag."""
 

@@ -1,0 +1,352 @@
+{
+  "mode": "combiner_scene",
+  "status": "completed",
+  "seed": 3,
+  "arguments": {
+    "headless": true,
+    "device": "cuda:0",
+    "seed": 3,
+    "box_range": [
+      0.62,
+      0.7
+    ],
+    "sweep_deg": 45.0,
+    "yaw_jitter_deg": 10.0,
+    "door_angle_deg": 0.0,
+    "handle_angle_deg": 0.0,
+    "episodes": 1,
+    "episode_s": 3.0,
+    "capture": true,
+    "realtime": false,
+    "robot_usd": null,
+    "output": "/home/lukas/D1Training/logs/combiner_demo",
+    "turn": false,
+    "method": "pull",
+    "door_deg": 60.0,
+    "handle_torque_nm": [
+      0.4
+    ],
+    "grasp": null,
+    "mount_calibration": "sim",
+    "attempt_s": 90.0,
+    "settle_s": 4.0,
+    "camera": "d435",
+    "calibration": null,
+    "mount": null,
+    "camera_body": true,
+    "ui_feed_port": 0
+  },
+  "episodes": [
+    {
+      "episode": 0,
+      "attempt": 0,
+      "handle_torque_nm": 0.4,
+      "position": [
+        0.6184955412467368,
+        0.04436146690571023,
+        0.0
+      ],
+      "yaw_deg": 181.37973360759727,
+      "handle_position_env_m": [
+        0.39724569548405825,
+        -0.030987758372264314,
+        0.6699999999999999
+      ],
+      "initial_door_angle_deg": 0.0,
+      "initial_handle_angle_deg": 0.0,
+      "latch_transitions": [
+        {
+          "time_s": 0.0,
+          "latched": true
+        }
+      ],
+      "inspection_events": [],
+      "overview": "scene_000.png",
+      "wrist_view": "wrist_000.png",
+      "simulated_s": 3.0,
+      "final_door_angle_deg": 0.0005214244327570587,
+      "final_handle_angle_deg": -1.9375906041707057e-07,
+      "final_latched": true,
+      "robot_root_position_w_m": [
+        -0.04568316787481308,
+        2.850253167707706e-06,
+        0.2755395174026489
+      ]
+    }
+  ],
+  "scope": "Scene setup and manual door inspection; no autonomous opening controller",
+  "asset": {
+    "usd_path": "/home/lukas/D1Training/logs/combiner_demo/20261019T080359_526678Z_combiner_seed3/assets/combiner_box.usda",
+    "geometry": {
+      "width": 0.63,
+      "height": 0.825,
+      "depth": 0.284,
+      "bottom": 0.005,
+      "wall": 0.006,
+      "door_thickness": 0.012,
+      "door_gap": 0.004,
+      "hinge_side": 1,
+      "handle_below_top": 0.16,
+      "handle_y": 0.0,
+      "lock_from_edge": 0.064,
+      "handle_projection": 0.065,
+      "handle_length": 0.105,
+      "handle_radius": 0.009,
+      "handle_grasp_offset": 0.07,
+      "handle_limit_deg": 60.0,
+      "handle_release_deg": 45.0,
+      "handle_reset_deg": 10.0,
+      "handle_hold_deg": 50.0,
+      "spring_rest_deg": -15.0,
+      "spring_reference_deg": 45.0,
+      "tag_id": 0,
+      "tag_size": 0.1,
+      "tag_top_below_handle": 0.15,
+      "tag_standoff": 0.0006,
+      "latch_capture_deg": 0.5,
+      "open_limit_deg": 110.0
+    },
+    "hinge_joint": "DoorHinge",
+    "handle_joint": "HandleJoint",
+    "handle_frame": "Handle/HandleGrasp",
+    "door_mass_kg": 0.6,
+    "enclosure_mass_kg": 8.0,
+    "handle_mass_kg": 0.12,
+    "handle_spring": {
+      "torque_at_45_deg_nm": 0.4,
+      "stiffness_nm_per_rad": 0.38197,
+      "rest_deg": -15.0,
+      "preload_at_stop_nm": 0.1,
+      "torque_at_stop_60_deg_nm": 0.5,
+      "drive_effort_limit_nm": 0.6,
+      "lever_weight_nm_at_horizontal": 0.029,
+      "latch_release_deg": 45.0,
+      "source": "assumed; lowered from 0.94 N\u00b7m at 45 deg so the D1 can turn it (Lukas, 2026-09-19)"
+    },
+    "apriltag": {
+      "family": "tag36h11",
+      "id": 0,
+      "size_m": 0.1,
+      "centre_enclosure_m": [
+        0.1586,
+        0.0,
+        0.4574999999999999
+      ],
+      "printed_size_m": 0.125,
+      "pose_enclosure": [
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.1586
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.4575
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "lock_centre_enclosure_m": [
+      0.158,
+      -0.251,
+      0.4175
+    ],
+    "assumptions": "Measured outline, handle height, tag offset and lock position (Lukas, 2026-10-19); assumed handle and tag on the door's centreline, lever shape, wall/door thickness, interior and masses; spring-return lever; runtime joint-limit latch, not a cam lock simulation"
+  },
+  "robot_usd": "/home/lukas/D1Training/logs/combiner_demo/20261019T080359_526678Z_combiner_seed3/assets/go2_d1.usd",
+  "posture": {
+    "name": "standing",
+    "legs": "robot config default pose, zero leg action",
+    "spawn_height_m": 0.3
+  },
+  "arm_model": {
+    "actuator": "d1_servo",
+    "trajectory": "measured",
+    "latency": "estimated"
+  },
+  "camera": {
+    "name": "d435",
+    "width": 640,
+    "height": 480,
+    "fx": 616.1849198306193,
+    "fy": 616.1849198306193,
+    "cx": 320.0,
+    "cy": 240.0,
+    "min_depth_m": 0.177,
+    "max_depth_m": 3.0,
+    "baseline_m": 0.05,
+    "depth_fx": 446.80277311912806,
+    "subpixel_rms": 0.08,
+    "source": "derived from the Intel D400 datasheet FOV and baseline; not a calibration",
+    "model_source": "preset d435 (datasheet-derived, not a calibration)",
+    "mount": {
+      "schema": "d1training.wrist_mount/1",
+      "created_utc": "2026-10-19T08:04:05+00:00",
+      "frame": "the camera's colour optical frame, expressed in the arm's Link6 frame",
+      "convention": "optical axes ROS (x right, y down, z forward); rpy is ZYX, Rz(yaw)Ry(pitch)Rx(roll)",
+      "xyz_m": [
+        -0.04905,
+        0.032815,
+        0.061332
+      ],
+      "rpy_deg": [
+        -30.0,
+        -0.0,
+        -90.0
+      ],
+      "pose_link6": [
+        [
+          0.0,
+          0.866025404,
+          0.5,
+          -0.049049512
+        ],
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.032814543
+        ],
+        [
+          0.0,
+          -0.5,
+          0.866025404,
+          0.061331667
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measured": false,
+      "method": "unstated",
+      "source": "wrist_mount.json (the saved default): the bracket's CAD (bracket.py) (from CAD, not measured: cad: Lukas's bracket (Fusion 360, 2026-10-09) on Unitree's D1-550 CAD. Link6 from the wrist flange's roll axis, the jaw axis and a fit of d1.urdf's Link6 mesh; the camera as Intel's D435 case with its back on the bracket's plate and its M3 holes on the plate's (demos/cup/pick_demo/bracket.py))",
+      "camera": ""
+    },
+    "mount_source": "wrist_mount.json (the saved default): the bracket's CAD (bracket.py) (from CAD, not measured: cad: Lukas's bracket (Fusion 360, 2026-10-09) on Unitree's D1-550 CAD. Link6 from the wrist flange's roll axis, the jaw axis and a fit of d1.urdf's Link6 mesh; the camera as Intel's D435 case with its back on the bracket's plate and its M3 holes on the plate's (demos/cup/pick_demo/bracket.py))",
+    "mount_file": "/home/lukas/D1Training/demos/cup/pick_demo/assets/mounts/wrist_mount.json",
+    "body_drawn": true,
+    "body_asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/d435_b9501e40b983.usd",
+      "source": "/home/lukas/D1Training/pick_demo/assets/realsense/d435_housing.ply",
+      "source_sha256": "a1a4abe241d5d55ebdb55ac544944da4b8fa76942c24b50c2e94da6785251641",
+      "colour": [
+        0.62,
+        0.63,
+        0.65
+      ],
+      "roughness": 0.35,
+      "clearance_tan": 0.9,
+      "transform": [
+        [
+          -1.0,
+          0.0,
+          0.0,
+          0.0325
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0043
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "builder": 1,
+      "triangles": 229148,
+      "triangles_removed": 2038,
+      "vertices": 154149,
+      "bounds_optical_m": [
+        [
+          -0.0125,
+          -0.0125,
+          -0.020755
+        ],
+        [
+          0.077414,
+          0.0125,
+          0.0043
+        ]
+      ],
+      "frame": "colour optical: x right, y down, z forward, origin at the colour sensor",
+      "note": "Intel's d435.dae (realsense2_description, Apache-2.0), registered by _d435.urdf.xacro's offsets, with the colour lens element removed so a pinhole camera at the sensor plane has a clear aperture. Visual only."
+    },
+    "bracket_asset": {
+      "usd_path": "/home/lukas/D1Training/generated/pick_demo/wrist_bracket_2020061f6a14.usd",
+      "source": "/home/lukas/D1Training/demos/cup/pick_demo/assets/bracket/wrist_bracket_link6.stl",
+      "source_sha256": "a78eed56c53a0d686422bde2aa3baac1d1a68e902146e800bdcb2ba9859943af",
+      "colour": [
+        0.17,
+        0.17,
+        0.18
+      ],
+      "roughness": 0.6,
+      "builder": 1,
+      "triangles": 2648,
+      "bounds_link6_m": [
+        [
+          -0.064757,
+          -0.027514,
+          0.000576
+        ],
+        [
+          -0.032407,
+          0.027812,
+          0.045858
+        ]
+      ],
+      "frame": "Link6 (d1.urdf)",
+      "note": "Lukas's wrist camera bracket, from its CAD, registered to Link6 by bracket.py. Visual only."
+    },
+    "intrinsics_model": [
+      616.18,
+      0.0,
+      320.0,
+      0.0,
+      616.18,
+      240.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "intrinsics_rendered": [
+      616.18,
+      0.0,
+      320.0,
+      0.0,
+      616.18,
+      240.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "ui_feed": null
+}

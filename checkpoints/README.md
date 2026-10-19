@@ -8,6 +8,18 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## The robot with its lidar and wrist camera (since 2026-10-19): none of these trained on it
+
+The real robot carries a MID-360 in its mount on the trunk and the RealSense in its bracket on the gripper (`payload.py`).
+`run_position_only.py` and `run_unifp_train.py` now build that robot by default (`--payload physical`). Every checkpoint
+here was trained without it, so **re-score them with `--payload visual`** to reproduce the numbers below. On the payload
+robot the reach default `..._cad333_model_58400.pt` scores 1.69 / 2.33 cm median / p90 on the validation set, against
+1.50 / 1.96 on the same day without it, with no falls (F-147). Lukas retrains on another machine.
+
+The numbers below for `58400` (1.40 / 1.93 cm) do not reproduce from this repository: the arm URDF they were scored with
+(sha256 `1509b0bc…`, on Victor's machine) is not the committed `d1_arm/d1.urdf` (`a848ee41…`). The committed one gives
+1.50 / 1.96 (F-148).
+
 ## On the CAD-length robot with a 3.33 N·m shoulder and elbow (since 2026-10-09)
 
 The simulated D1 changed again on 2026-10-09:
@@ -28,8 +40,9 @@ identical run on the previous robot as the control (Week 4 log, 2026-10-09). Wha
 | insertion | `unifp_go2d1_insertion_seed3_measured_model_21400.pt` (unchanged) | lateral 76 (1 damaged), detent 79 (2); demo 44/48, 44/48, 89/96 | every fine-tuned checkpoint scored lower (F-121's decline, on both robots) |
 
 The new rope policy pulls differently from every earlier one. It leans 3.6–5.4° rather than ~20–24°, so the arm
-makes more of the force, with Joint2 and Joint3 at their 3.33 N·m limits. If the real elbow is 1.7 N·m, it
-will ask for torque the arm does not have. Measure the elbow before running it on hardware.
+makes more of the force, with Joint2 and Joint3 at their 3.33 N·m limits. Both joints are a Fashion Star RX18-U100H-M,
+3.14 N·m rated and 4.90 continuous (F-142), so Unitree's 1.7 N·m for the elbow is not the motor's limit. Whether the
+firmware caps it lower is not measured: check the elbow's torque before running this on hardware.
 
 ```bash
 ./run_unifp_train.py rope_eval --task rope --headless --rope_set test --checkpoint checkpoints/unifp_go2d1_rope_cad333_model_14600.pt

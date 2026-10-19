@@ -13,8 +13,8 @@ from demos.cup.pick_demo.scene import bracket_cfg, camera_body_cfg, wrist_camera
 from flat_env_cfg import FlatSceneCfg
 from position_only.env_cfg import ReachSceneCfg
 
-OVERVIEW_EYE = (-0.95, -1.15, 0.95)
-OVERVIEW_TARGET = (0.25, 0.0, 0.24)
+OVERVIEW_EYE = (-1.25, -1.45, 1.25)
+OVERVIEW_TARGET = (0.35, 0.0, 0.42)
 _FLAT_SCENE = FlatSceneCfg(num_envs=1, env_spacing=3.0)
 
 
@@ -45,7 +45,8 @@ def make_combiner_cfg(robot_usd, box_usd, placement, seed=42, device="cuda:0",
                       door_angle_deg=0.0, handle_angle_deg=0.0, capture=False,
                       camera=None, mount=None, camera_usd=None, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM,
                       bracket_usd=None):
-    cfg = make_resting_cfg(robot_usd, seed=seed, device=device)
+    # Standing: the real box's handle is 0.67 m up, out of the lying dog's reach (2026-10-19).
+    cfg = make_resting_cfg(robot_usd, seed=seed, device=device, posture="standing")
     # This is a scene setup, not a reaching episode. Resets are owned by the runner.
     cfg.terminations.time_out = None
     scene = CombinerSceneCfg(num_envs=1, env_spacing=3.0)

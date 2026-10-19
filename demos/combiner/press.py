@@ -7,16 +7,17 @@ spindle axis, which the arm follows through `final_deg`. Pushing needs no grasp 
 bar, tolerates error along the lever and along the door's normal, and the commanded pose sits a few
 millimetres *inside* the lever so the fingers keep pressing on it.
 
-Why this pose rather than fingertips from above. With the dog lying down the handle is 0.13 m above the
-arm's mount and 0.45-0.55 m out. A near-vertical approach does not solve there, and a fingertip press
+Why this pose rather than fingertips from above. With the dog lying down the earlier proxy's handle was 0.13 m above
+the arm's mount and 0.45-0.55 m out. A near-vertical approach does not solve there, and a fingertip press
 lands on 18 mm of bar with a 26 mm pad. On the CPU model the level press, the search stops and the close
-look all solve at 300 of 300 seeded default placements (Week 1 log, 2026-09-19).
+look all solved at 300 of 300 seeded default placements (Week 1 log, 2026-09-19). The real box's handle is
+0.67 m up, which the dog stands for: about 0.31 m above the mount.
 
 How hard it can push (`press_capacity`): the largest force along the push direction for which the torque
 each joint needs -- holding the arm's own weight plus J^T F -- stays within the published limits
 (`workspace.EFFORT_LIMIT_NM`). Only the direction and the joint limits enter, so it is a quasi-static
 ceiling with the base level, not a prediction of what the servos' loops deliver. Pushing 80 mm out along
-the lever it is 0.63-0.87 N·m at 45 degrees over those 300 placements (median 0.74): the elbow (Joint3)
+the lever it was 0.63-0.87 N·m at 45 degrees over those 300 lying placements (median 0.74): the elbow (Joint3)
 binds while the lever is near level, the base yaw (Joint1) once the push has turned sideways.
 
 Everything is in the Go2 base frame, from the box pose the tag gives (`apriltag.box_pose`).
@@ -67,20 +68,21 @@ class Lever:
         self.pivot = self.rot @ np.asarray(geometry.lever_axis_point) + self.box_pose[:3, 3]
 
     def direction(self, deg: float) -> np.ndarray:
-        a = math.radians(deg)
-        return self.rot @ np.array([0.0, -math.cos(a), -math.sin(a)])
+        return self.rot @ np.array(self.g.lever_direction(deg))
 
     def normal(self, deg: float) -> np.ndarray:
         """The lever's upper side's outward normal: up when it is level, turning with it."""
-        a = math.radians(deg)
-        return self.rot @ np.array([0.0, -math.sin(a), math.cos(a)])
+        return self.rot @ np.array(self.g.lever_normal(deg))
 
     def top(self, deg: float, radius: float) -> np.ndarray:
         return self.pivot + radius * self.direction(deg) + self.g.handle_radius * self.normal(deg)
 
     def tool_rotation(self, deg: float) -> np.ndarray:
-        """Link6: approach (z) into the door, jaw axis (y) along the lever, +x (finger undersides) into it."""
-        return np.column_stack([-self.normal(deg), self.direction(deg), -self.axis])
+        """Link6: approach (z) into the door, jaw axis (y) along the lever, +x (finger undersides) into it.
+
+        The jaw axis runs toward the hinge's far side whichever side the hinge is on, so the frame stays
+        right-handed (a lever pointing -Y gives +y along it)."""
+        return np.column_stack([-self.normal(deg), -self.g.hinge_side * self.direction(deg), -self.axis])
 
 
 def press_capacity(joints, links, q, point_b, push_b) -> dict:
@@ -196,14 +198,27 @@ def plan_press(joints, links, box_pose_b, q_start, params: PressParams | None = 
 
 _SHOULDER_RISE_M = JOINT1_HEIGHT_M - LEGACY_JOINT1_HEIGHT_M
 
+# The shut fingers in the wrist camera's 640 x 480 colour image: a bright wedge in the lower right whose left edge
+# runs from (448, 225) to (349, 470) px, and nothing of them above y = 220. Read off the simulator's rendered frames
+# (2026-10-19, jaws at `GRIPPER_CLOSED_M`, the bracket's CAD mount); not seen on the real camera.
+FINGERS_PX = ((448.0, 225.0), (349.0, 470.0))
+
+
+def behind_fingers(u, v) -> bool:
+    """Whether pixel (u, v) is covered by the shut fingers (`FINGERS_PX`)."""
+    (u0, v0), (u1, v1) = FINGERS_PX
+    return v >= v0 - 5.0 and u >= u0 + (u1 - u0) * (v - v0) / (v1 - v0)
+
 
 @dataclass(frozen=True)
 class SearchParams:
     """Camera stops for finding the tag, placed from the arm's mount like the cup's survey.
 
-    The lying dog's mount is ~0.17 m above the floor and the tag's centre 0.41 m, so the tag sits about
-    0.24 m above the mount wherever the box is: the camera stands a little above that and looks at a point
-    that high, `target_range_m` out, at each heading in turn. A dog standing up would need other numbers.
+    The standing dog's mount is ~0.36 m above the floor and the real box's tag centre 0.46 m, so the tag
+    sits about 0.10 m above the mount wherever the box is (0.13 m in the base frame, where the scene sits
+    with the arm's shift): the camera stands above it and looks at a point about that high,
+    `target_range_m` out, at each heading in turn. The lying dog's numbers (the earlier proxy's tag 0.24 m
+    above its mount) were 0.17 m for the target and the same camera height.
     """
     # Straight ahead, then out along one side and back across to the other. Alternating sides (0, +20, -20,
     # +40, ...) visits the stops in the same order of likelihood but swings Joint1 through 20, 40, 60, 80... deg
@@ -212,18 +227,33 @@ class SearchParams:
     camera_ahead_m: float = 0.20
     # Above the mount as set on Unitree's base; the measured base stands the shoulder 22.7 mm higher on it (F-126), and
     # the stops ride up with it, so each sits where it was relative to the arm (Week 4, 2026-10-06).
-    camera_above_m: float = 0.30 + _SHOULDER_RISE_M
+    camera_above_m: float = 0.35 + _SHOULDER_RISE_M
     target_range_m: float = 0.55
-    # Each stop looks 20 deg down, not at the tag's own height (0.24 m above the mount, 10 deg down) as it did
-    # with the camera pointing along the gripper. The bracket holds it 30 deg down from the approach axis, so a
-    # level look needs the gripper pitched up, and from this height the D1 reaches no stop at all looking less
-    # than about 19 deg down (Week 4, 2026-10-09). The tag then sits in the upper half of the image.
-    target_above_m: float = 0.17 + _SHOULDER_RISE_M
-    # The second look, straight in front of the tag: the first of these (range, height above it) that solves.
-    close_views_m: tuple = ((0.25, 0.03), (0.30, 0.03), (0.25, 0.08), (0.22, 0.0), (0.35, 0.06))
+    # Each stop looks down at about the tag's height. The bracket holds the camera 30 deg down from the approach
+    # axis, and the D1 reaches no stop looking less than about 19 deg down (Week 4, 2026-10-09). The shut fingers
+    # fill the image's lower right (`FINGERS_PX`) and hid the tag from every stop at one placement of the first
+    # real-box run (2026-10-19), so each stop also turns its view 15 deg right and 8 deg down (`stop_aim_deg`),
+    # which puts the tag up and to the left. On the CPU model, with the black square and 5 mm round it clear of
+    # the fingers: some stop sees it at 60 of 60 seeded default placements, and at 58-60 for targets 0.08-0.10 m
+    # and cameras 0.33-0.37 m above the mount; looking straight at the target, 44 of 60 (2026-10-19).
+    target_above_m: float = 0.08 + _SHOULDER_RISE_M
+    # Each stop's optical axis turned this far right of and below its target (deg), as `close_aim_deg` is.
+    stop_aim_deg: tuple = (15.0, 8.0)
+    # The second look, in front of the tag: the first of these (range, height above it) that solves. Standing, with
+    # `close_aim_deg`'s extra 5 deg down, nothing 0.12 m or less above the tag solves; 0.16 m above at 0.30 m out
+    # (about 33 deg down) solves with the tag clear of the fingers at 60 of 60 seeded default placements, as does
+    # 0.20 m (2026-10-19). The lying dog's were 0.03 m above at 0.25 m.
+    close_views_m: tuple = ((0.30, 0.16), (0.30, 0.20), (0.35, 0.20), (0.30, 0.25))
+    # The close look aims the camera this far right of and below the tag's centre (deg), so the tag sits up and to
+    # the left in the image, clear of the shut fingers, which fill its lower right (`FINGERS_PX`). Centred, the
+    # 125 mm printed tag ran into them at 0.29 m and the box estimate came out 37 mm and 5.4 deg off, worse than
+    # the search look's 3-4 mm (2026-10-19 run). 10 and 5 deg put its centre near (210, 185) px.
+    close_aim_deg: tuple = (10.0, 5.0)
     # The tag reads the same at any image rotation, so the close look may turn the camera about its view to
-    # save the wrist a swing on the way to the grasp (`plan_close_look`'s `toward`).
-    look_rolls_deg: tuple = (0.0, 45.0, 90.0, 135.0, 180.0, -135.0, -90.0, -45.0)
+    # save the wrist a swing on the way to the grasp (`plan_close_look`'s `toward`). Quarter turns only: turned
+    # 45 deg the square is 41% wider across and its corners reach the fingers (5 of 19 turned looks, against 0 of
+    # 19 in quarter turns, which still save up to 2 rad; 2026-10-19).
+    look_rolls_deg: tuple = (0.0, 90.0, 180.0, -90.0)
 
 
 def heading_vector(up_b, heading_deg: float) -> np.ndarray:
@@ -236,13 +266,19 @@ def heading_vector(up_b, heading_deg: float) -> np.ndarray:
     return math.cos(a) * forward_h + math.sin(a) * left
 
 
-def plan_look(joints, links, mount, camera_pos_b, target_b, up_b, seeds=(), roll_deg: float = 0.0):
+def plan_look(joints, links, mount, camera_pos_b, target_b, up_b, seeds=(), roll_deg: float = 0.0,
+              aim_deg=(0.0, 0.0)):
     """Arm angles putting the wrist camera at `camera_pos_b`, looking at `target_b` with the image upright, or
-    turned `roll_deg` about the view from upright."""
+    turned `roll_deg` about the view from upright. `aim_deg` (right, down) then turns the optical axis that far
+    off the target, in the image's own axes, so the target appears that far up and left of centre."""
     view = np.asarray(target_b, dtype=float) - np.asarray(camera_pos_b, dtype=float)
     a = math.radians(roll_deg)
     about_view = np.array([[math.cos(a), -math.sin(a), 0.0], [math.sin(a), math.cos(a), 0.0], [0.0, 0.0, 1.0]])
-    camera = transform(optical_rotation(view, up_b) @ about_view, camera_pos_b)
+    right, down = (math.radians(v) for v in aim_deg)
+    # Optical frame: x right, y down, z along the view. About +y turns the axis right; about -x tilts it down.
+    turn = np.array([[math.cos(right), 0.0, math.sin(right)], [0.0, 1.0, 0.0], [-math.sin(right), 0.0, math.cos(right)]])
+    tilt = np.array([[1.0, 0.0, 0.0], [0.0, math.cos(down), math.sin(down)], [0.0, -math.sin(down), math.cos(down)]])
+    camera = transform(optical_rotation(view, up_b) @ about_view @ turn @ tilt, camera_pos_b)
     link6 = camera @ invert(mount.pose)
     return _solve(joints, links, link6[:3, 3], link6[:3, :3], _seeds(target_b, seeds), np.zeros(3))
 
@@ -256,7 +292,7 @@ def plan_search(joints, links, mount, up_b, q_start, params: SearchParams | None
         h = heading_vector(up, heading)
         camera = MOUNT_B + p.camera_ahead_m * h + p.camera_above_m * up
         target = MOUNT_B + p.target_range_m * h + p.target_above_m * up
-        q = plan_look(joints, links, mount, camera, target, up, [q_prev])
+        q = plan_look(joints, links, mount, camera, target, up, [q_prev], aim_deg=p.stop_aim_deg)
         if q is not None:
             stops.append((heading, q))
             q_prev = q
@@ -278,7 +314,8 @@ def plan_close_look(joints, links, mount, box_pose_b, up_b, q_start, params: Sea
     q_start = np.asarray(q_start, dtype=float)
     for range_m, above_m in p.close_views_m:
         solved = [q for q in (plan_look(joints, links, mount, centre + range_m * out + above_m * up, centre, up,
-                                        [q_start], roll_deg=roll) for roll in rolls) if q is not None]
+                                        [q_start], roll_deg=roll, aim_deg=p.close_aim_deg) for roll in rolls)
+                  if q is not None]
         if solved:
             if toward is None:
                 return solved[0]
@@ -293,4 +330,4 @@ def plan_close_look(joints, links, mount, box_pose_b, up_b, q_start, params: Sea
 
 
 __all__ = ["PressParams", "PressPlan", "Lever", "plan_press", "press_capacity", "SearchParams", "plan_search",
-           "plan_look", "plan_close_look", "heading_vector"]
+           "plan_look", "plan_close_look", "heading_vector", "FINGERS_PX", "behind_fingers"]

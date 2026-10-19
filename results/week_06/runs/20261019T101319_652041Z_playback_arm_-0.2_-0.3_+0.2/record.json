@@ -1,0 +1,56 @@
+{
+  "id": "20261019T101319_652041Z_playback_arm_-0.2_-0.3_+0.2",
+  "title": "Native walking playback (-0.2,-0.33,0.2), first try (console lost)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-19T21:32:05+11:00",
+  "started_utc": "2026-10-19T10:13:19+00:00",
+  "source_dir": "logs/playback/20261019T101319_652041Z_playback_arm_-0.2_-0.3_+0.2",
+  "mode": "playback",
+  "seed": null,
+  "status": "selftest_finished",
+  "error": null,
+  "num_envs": 1,
+  "iterations": null,
+  "steps": null,
+  "git_commit": "ab7752c848d6900b4b6c4e1bc8c9f83829e4012e",
+  "git_dirty": true,
+  "articulation_mass_kg": 18.17099952697754,
+  "last_iteration": null,
+  "final_checkpoint": null,
+  "scalar_summary": {},
+  "copied_files": [
+    "run.json",
+    "selftest.json"
+  ],
+  "smoke_summary": {
+    "command": {
+      "count": 3,
+      "mean": -0.11,
+      "min": -0.33,
+      "median": -0.2,
+      "max": 0.2
+    },
+    "duration_s": 6.0,
+    "settle_s": 1.0,
+    "mean_base_velocity.vx_m_s": -0.18447995926887786,
+    "mean_base_velocity.vy_m_s": -0.32851226403040695,
+    "mean_base_velocity.wz_rad_s": 0.22581776520206387,
+    "tracking_pct.vx": 92.23997963443892,
+    "tracking_pct.vy": 99.54917091830514,
+    "tracking_pct.wz": 112.90888260103192,
+    "travelled_xy_m": {
+      "count": 2,
+      "mean": -0.9148644804954529,
+      "min": -2.111865520477295,
+      "median": 0.28213655948638916,
+      "max": 0.28213655948638916
+    },
+    "planar_speed_m_s": 0.3551047245661418,
+    "min_base_height_m": 0.37558889389038086,
+    "max_tilt_deg": 7.000173066931324,
+    "fell": false,
+    "arm_ee_error_m": 0.03449837262299885,
+    "gripper_measured_mm": 59.83949080109596
+  }
+}

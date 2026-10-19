@@ -110,16 +110,18 @@ class Handle:
         self.spindle = np.array(g.spindle)
         self.hinge = np.array(g.hinge)
         axis = np.array(g.lever_axis_point)
-        self.grasp0 = axis + np.array([0.0, -self.p.radius_m, 0.0])
+        self.grasp0 = axis + np.array([0.0, g.hinge_side * self.p.radius_m, 0.0])
         z = np.array([-1.0, 0.0, 0.0])                      # approach: into the door
-        y = self.p.roll * np.array([0.0, 0.0, 1.0])         # jaw axis: across the lever, vertical at rest
+        # Jaw axis: across the lever, vertical at rest. `roll` keeps its meaning (which way the camera side
+        # faces along the lever) when the door is mirrored.
+        y = -g.hinge_side * self.p.roll * np.array([0.0, 0.0, 1.0])
         # Tipped about the lever's own axis by the pitch: from level towards coming down from above.
         self.tool0 = _ry(-(self.p.pitch_deg or 0.0)) @ np.column_stack([np.cross(y, z), y, z])
 
     def _box_frame(self, lever_deg, door_deg):
-        """(rotation, point) of the grasp in the enclosure frame. The door swings outward: -Z about the hinge."""
-        door = _rz(-door_deg)
-        lever = _rx(lever_deg)
+        """(rotation, point) of the grasp in the enclosure frame. The door swings outward about the hinge."""
+        door = _rz(self.g.hinge_axis_z * door_deg)
+        lever = _rx(self.g.lever_axis_x * lever_deg)
         point = self.spindle + lever @ (self.grasp0 - self.spindle)
         point = self.hinge + door @ (point - self.hinge)
         return door @ lever @ self.tool0, point
@@ -131,13 +133,12 @@ class Handle:
 
     def lever_normal(self, lever_deg: float, door_deg: float = 0.0):
         """The lever's upper side's normal in the base frame: pushing along minus this turns it down."""
-        a = math.radians(lever_deg)
-        return self.box[:3, :3] @ _rz(-door_deg) @ np.array([0.0, -math.sin(a), math.cos(a)])
+        return self.box[:3, :3] @ _rz(self.g.hinge_axis_z * door_deg) @ np.array(self.g.lever_normal(lever_deg))
 
     def door_tangent(self, door_deg: float):
         """The direction the handle moves as the door opens, in the base frame."""
         radial = self._box_frame(0.0, door_deg)[1] - self.hinge
-        tangent = np.cross(np.array([0.0, 0.0, -1.0]), radial)
+        tangent = np.cross(np.array([0.0, 0.0, float(self.g.hinge_axis_z)]), radial)
         return self.box[:3, :3] @ (tangent / np.linalg.norm(tangent))
 
 
@@ -213,6 +214,9 @@ ROLLS = (1, -1)
 # - every other grasp taken -- pitch 20 roll +1 five times, pitch 60 roll -1 once -- let the lever stall at
 #   43-45 deg and lost the bar.
 # A grasp here goes first whenever it is strong enough, even when another would open the door further.
+# All of it was recorded on the earlier proxy (lever 0.30 m up, hinge on the left) with the dog lying. Whether these
+# grasps hold on the real box with the dog standing has not been tested; `roll` keeps its meaning relative to the
+# lever through the mirror (2026-10-19).
 PROVEN_GRASPS = ((40.0, -1), (50.0, -1))
 
 

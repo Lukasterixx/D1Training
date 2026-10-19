@@ -1,7 +1,7 @@
-"""Resting Go2 + D1 beside a randomized solar combiner box in Isaac Sim.
+"""Standing Go2 + D1 beside a randomized solar combiner box (Lukas's real one, measured) in Isaac Sim.
 
 R: next attempt. H: depress/release handle. O/C: pull door open/closed. F: release inspection drives.
-Without --turn the arm holds its resting pose. With --turn it finds the door's AprilTag with the wrist
+Without --turn the arm holds its zero pose. With --turn it finds the door's AprilTag with the wrist
 camera, grips the lever in its jaws, turns it through 45 degrees and pulls the door open
 (`sequence.TurnSequence`; `--method press` only pushes the lever down, as F-071's runs did). Several
 --handle_torque_nm values try each placement once per spring, which measures the most it can turn.
@@ -25,8 +25,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from demos.combiner import wrist_camera
-from demos.combiner.geometry import (DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, Placement, sample_placement,
-                                    validate_region)
+from demos.combiner.geometry import (DEFAULT_DISTANCE_M, DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, Placement,
+                                    sample_placement, validate_region)
 from mount import ARM_SHIFT_FROM_LEGACY_M
 
 
@@ -67,7 +67,8 @@ def run(args):
                 "seed": args.seed, "arguments": vars(args), "episodes": [],
                 "scope": (("AprilTag-guided grasp of the lever, 45 degree turn and door pull" if args.method == "pull"
                            else "AprilTag-guided lever push; door opening not attempted")
-                          + " in simulation, lying dog, arm only (IK reference); the latch releases at 45 degrees"
+                          + " in simulation, standing dog (legs held at zero action), arm only (IK reference); "
+                            "the latch releases at 45 degrees"
                           if args.turn else "Scene setup and manual door inspection; no autonomous opening controller")}
     write_json(run_dir / "run.json", metadata)
     app = env = keys = latch = feed = None
@@ -84,7 +85,7 @@ def run(args):
         from demos.combiner.asset import build_combiner_usd
         from demos.combiner.latch import LatchController
         from demos.combiner.scene import make_combiner_cfg, overview_view
-        from demos.common.resting import LYING_LEG_POSE, LYING_SPAWN_HEIGHT_M
+        from position_only.task_space import SPAWN_HEIGHT_M
         from weld import D1_MOUNT_POS, build_welded_robot_usd
 
         rng = random.Random(args.seed)
@@ -104,7 +105,8 @@ def run(args):
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"), out_usd_path=str(run_dir / "assets/go2_d1.usd"),
             mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152).usd_path
         metadata.update(asset=asset, robot_usd=robot_usd,
-                        posture={"legs": LYING_LEG_POSE, "spawn_height_m": LYING_SPAWN_HEIGHT_M},
+                        posture={"name": "standing", "legs": "robot config default pose, zero leg action",
+                                 "spawn_height_m": SPAWN_HEIGHT_M},
                         arm_model={"actuator": "d1_servo", "trajectory": "measured", "latency": "estimated"})
         camera, mount, metadata["camera"] = wrist_camera.resolve(args)
         print(f"[combiner] wrist camera: {metadata['camera']['model_source']}; mount: "
@@ -184,7 +186,8 @@ def run(args):
                           f"{torque:.3f} N·m at 45 deg", flush=True)
                     if args.turn:
                         step = 0
-                        # The dog settles onto its folded legs before the arm starts, as in the pick.
+                        # The dog settles into its stance before the arm starts (the position-only task's: settled by
+                        # 3.6 s, Week 1).
                         for _ in range(math.ceil(args.settle_s / env.step_dt)):
                             obs, *_ = env.step(actions)
                             step += 1
@@ -292,7 +295,7 @@ def parse_args(argv=None):
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--box_range", type=float, nargs=2, default=(0.62, 0.70), metavar=("MIN", "MAX"),
+    parser.add_argument("--box_range", type=float, nargs=2, default=DEFAULT_DISTANCE_M, metavar=("MIN", "MAX"),
                         help="Enclosure centre distance from the dog spawn in metres (minimum 0.60).")
     parser.add_argument("--sweep_deg", type=float, default=45.0,
                         help="Placement sector either side of forward; 180 samples all around the dog.")
@@ -327,7 +330,7 @@ def parse_args(argv=None):
                       help="'sim': locate the tag with the camera pose the renderer used (a perfect hand-eye "
                            "calibration), so the torque test is not a perception test. 'none': the requested mount.")
     turn.add_argument("--attempt_s", type=float, default=90.0, help="Longest a --turn attempt may run (s).")
-    turn.add_argument("--settle_s", type=float, default=2.0, help="Settling before a --turn attempt starts (s).")
+    turn.add_argument("--settle_s", type=float, default=4.0, help="Settling before a --turn attempt starts (s).")
     wrist_camera.add_arguments(parser)
     args = parser.parse_args(argv)
     if args.episodes is None:

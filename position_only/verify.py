@@ -235,7 +235,7 @@ def terminations_and_resets(env, settle_steps=60, after_steps=5):
     return checks, {"settle_steps": settle_steps, "settled_base_height_m": settled_height, "table": rows}
 
 
-def arm_model(env, settle_steps=150, seed=0):
+def arm_model(env, settle_steps=150, seed=0, wrist_payload=False):
     """Compare the simulator's arm with the CPU model in `workspace.py` (URDF kinematics, weld mass model).
 
     1. Standing with zero actions, every arm joint should hold its zero-pose target: the model's static
@@ -305,10 +305,11 @@ def arm_model(env, settle_steps=150, seed=0):
     names = robot.body_names
     masses = robot.root_physx_view.get_masses()[0].cpu().numpy()
     coms = robot.root_physx_view.get_coms()[0].cpu().numpy()
-    expected_mass = workspace.simulated_masses(links)
+    expected_mass = workspace.simulated_masses(links, wrist_payload)
+    expected_com = workspace.simulated_coms(links, wrist_payload)
     mass_rows = {name: {"sim_kg": round(float(masses[names.index(name)]), 4), "model_kg": round(expected_mass[name], 4),
                         "sim_com_m": coms[names.index(name), :3].round(4).tolist(),
-                        "urdf_com_m": links[name]["com"].round(4).tolist()}
+                        "urdf_com_m": expected_com[name].round(4).tolist()}
                  for name in expected_mass if name in names}
     mass_error = max(abs(r["sim_kg"] - r["model_kg"]) for r in mass_rows.values())
     com_error = max(float(np.abs(np.array(r["sim_com_m"]) - np.array(r["urdf_com_m"])).max()) for r in mass_rows.values())
@@ -514,10 +515,10 @@ def arm_planner(env, settle_steps=60, move_steps=60, step_rad=0.3):
     ]
 
 
-def run_checks(env):
+def run_checks(env, wrist_payload=False):
     timing_checks, timing = interface_timing(env)
     reset_checks, resets = terminations_and_resets(env)
-    model_checks, model = arm_model(env)
+    model_checks, model = arm_model(env, wrist_payload=wrist_payload)
     checks = (timing_checks + reset_checks + model_checks + self_collision_control(env)
               + target_box_needs_arm_motion(env) + arm_planner(env))
     return {

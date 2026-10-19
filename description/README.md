@@ -1,7 +1,11 @@
 # description/
 
-What RViz needs to draw the robot, and where the robot's mount and expansion dock come from. Nothing in here
-changes the simulation's physics; the dock's meshes are also drawn in the sim, visual only (`weld.py`, `dock.py`).
+What RViz needs to draw the robot, and where the robot's mount, expansion dock and lidar come from. The dock's
+meshes are drawn in the sim, visual only (`weld.py`, `dock.py`). The MID-360's and its mount's are drawn too, and a
+training setup also gives them colliders and mass (`payload.py`).
+
+The MID-360 meshes come from Lukas's Fusion 360 model of the robot. Whether its lidar body is Livox's published CAD,
+and under what terms, is not recorded.
 
 | File | Role |
 | --- | --- |
@@ -9,6 +13,8 @@ changes the simulation's physics; the dock's meshes are also drawn in the sim, v
 | `build_go2_d1_urdf.py` | regenerates the above from its sources |
 | `meshes/go2/*.dae` | the Go2's visual meshes, copied from P2Dingo |
 | `meshes/go2/expansion_dock.stl`, `expansion_dock_rails.stl` | the Go2 EDU's Jetson expansion dock and the two rails the D1 stands on, in `base_link`'s frame. **Generated** from Unitree's CAD by `dock_from_cad.py` |
+| `meshes/go2/mid360.stl`, `mid360_mount.stl` | the Livox MID-360 and Lukas's mount for it (a plate on the trunk's front and a cage over the lidar), in `base_link`: 95,240 and 34,574 triangles, each part decimated only as far as it stays within 0.3 mm. **Generated** from Lukas's `mount_and_mid360_only.stl` by `mid360_from_cad.py`. Drawn on every robot; colliders and mass for training (`payload.py`, `weld.py`) |
+| `mid360_from_cad.py` | takes Lukas's full-resolution export of the lidar and mount alone, `mount_and_mid360_only.stl` (2026-10-19, 174,238 triangles), or diffs `Go2 v115.stl` against `Go2_with_mid360.stl`, as it first did. That whole-robot export was coarse and lost the cage's ring, struts and side walls. Puts them in `base_link` (the trunk-mesh fit, 0.34 mm median), splits lidar from mount and decimates within a tolerance (`fast_simplification`) |
 | `mount_from_cad.py` | measures the arm mount (`mount.py`, F-117) from the same CAD |
 | `dock_from_cad.py` | tessellates the dock and rails out of the CAD and registers them to `base_link` |
 | `go2_d1.rviz` | RViz layout: robot model, L1 cloud, grid |

@@ -40,7 +40,7 @@ import numpy as np
 
 import d1_ik
 from mount import JOINT1_HEIGHT_M, LEGACY_JOINT1_HEIGHT_M
-from position_only.workspace import (BODY_BOX_B, EFFORT_LIMIT_NM, LINK_RADIUS_M, MOUNT_B, SOFT_LIMIT_FACTOR,
+from position_only.workspace import (BODY_BOX_B, CLEARANCE_BOXES_B, EFFORT_LIMIT_NM, LINK_RADIUS_M, MOUNT_B, SOFT_LIMIT_FACTOR,
                                      clear_of_body, forward, gravity_torques)
 
 from .camera import CameraModel, WristMount, camera_pose, invert, pixel_ray, transform
@@ -224,13 +224,16 @@ def path_clear(joints, q_start, q_goal):
 
 def proxy_margin(joints, q) -> float:
     """How far (m) the arm is from failing `arm_clear`: the smallest gap between its link segments (same
-    chain and radius as the proxy) and the body box. Negative inside."""
+    chain and radius as the proxy) and the body's boxes (the trunk, the lidar's mount and cage). Negative inside."""
     points = _chain_points(joints, q)[0]
-    low, high = np.array(BODY_BOX_B)[:, 0], np.array(BODY_BOX_B)[:, 1]
-    outside = np.linalg.norm(np.maximum(np.maximum(low - points, points - high), 0.0), axis=1)
-    inside = np.minimum(points - low, high - points).min(axis=1)
-    box = np.where(outside > 0.0, outside, -np.maximum(inside, 0.0))
-    return float((box - LINK_RADIUS_M).min())
+    margin = np.inf
+    for bounds in (BODY_BOX_B, *CLEARANCE_BOXES_B):     # the trunk, then the lidar's mount and cage
+        low, high = np.array(bounds)[:, 0], np.array(bounds)[:, 1]
+        outside = np.linalg.norm(np.maximum(np.maximum(low - points, points - high), 0.0), axis=1)
+        inside = np.minimum(points - low, high - points).min(axis=1)
+        box = np.where(outside > 0.0, outside, -np.maximum(inside, 0.0))
+        margin = min(margin, float((box - LINK_RADIUS_M).min()))
+    return margin
 
 
 def jaw_positions(joints, qs) -> np.ndarray:

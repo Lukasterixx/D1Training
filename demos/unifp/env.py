@@ -13,9 +13,12 @@ things that change are the ones a demo has to change:
   * **The jaws are commanded.** UniFP holds them at their default with a separate PD and never
     actions them (`interface.NUM_ACTIONS` is 18 of 20 joints), which leaves them free for a demo
     to drive without touching anything the policy does.
-  * **The base is told to stand, always.** `_resample_velocity_commands` is overridden to write
-    zeros instead of sampling, which also pins the gait phase to 0 (`interface.gait_step`). The
-    robot is standing still by command, not by the policy's choice.
+  * **The base is told to stand, unless the script walks it.** `_resample_velocity_commands` is
+    overridden to write the script's command instead of sampling: zeros for every phase of the cup
+    and combiner demos, which also pins the gait phase to 0 (`interface.gait_step`), so the robot is
+    standing still by command, not by the policy's choice. A phase that names a base pose (the door
+    pull's walk round the hinge) gets the velocity command `script.base_velocity_command` computes
+    from the base's measured pose.
   * **The scheduled pushes are off.** UniFP's force curriculum applies random wrenches to the tool
     on a timer; a demo's forces should be the ones the cup and the lever actually exert. The
     curriculum is disabled by `force_start_step`, and what the trace records is contact, not
@@ -46,7 +49,7 @@ from demos.combiner.geometry import DEFAULT_HANDLE_TORQUE_NM, GEOMETRY
 from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6
 
 from . import props, wrist
-from .script import Command, DemoScript
+from .script import Command, DemoScript, base_velocity_command
 
 #: Link6's own axes, in its frame: +z out of the palm toward the fingertips, +y from one finger to
 #: the other. Read off `d1_arm/d1.urdf`, where the two finger joints sit at z = +0.0706 and
@@ -81,6 +84,13 @@ class UniFPDemoEnvCfg(Go2D1PosForceEnvCfg):
     handle_torque_nm: float = DEFAULT_HANDLE_TORQUE_NM
     #: The door closer's torque at 45 degrees, N·m (`combiner_cfg`); 0 is a free door.
     door_torque_nm: float = 0.0
+    #: The wrist RealSense and its printed bracket, as fitted to the real arm (Lukas, 2026-10-19): the camera body
+    #: (`camera_asset.build_camera_usd`) at `camera_body_pose`, ((x, y, z), (w, x, y, z)) in Link6, and the bracket
+    #: (`camera_asset.build_bracket_usd`), authored in Link6. Visual only: no mass, no collider, no rendering. The
+    #: policies were trained without the camera's weight.
+    camera_body_usd: str = ""
+    camera_body_pose: tuple | None = None
+    bracket_usd: str = ""
     #: Replaced with the demo's own length by the launcher; the trained 20 s would reset mid-attempt.
     episode_length_s: float = 40.0
     #: UniFP's scheduled tool pushes, off: a demo's forces should be the object's.
@@ -215,6 +225,12 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
         self._spawn_yaw_quat = torch.zeros(self.num_envs, 4, device=self.device)
         self._spawn_yaw_quat[:, 0] = 1.0
         self._latches = []
+        #: The base velocity command the script asks for this step (vx, vy, yaw rate), the desired base
+        #: pose it was computed from last step, and how far the base is from the pose it is asked for
+        #: (metres, degrees; NaN while standing).
+        self._base_cmd = torch.zeros(self.num_envs, 3, device=self.device)
+        self._base_desired_prev: list = [None] * self.num_envs
+        self.base_pose_error = torch.full((self.num_envs, 2), float("nan"), device=self.device)
         #: Put the cup or the box a metre to one side and run the script anyway. The control that
         #: separates two things a failed grasp confounds: how accurately the arm follows the demo
         #: path, and what happens when it meets the object. Set by the launcher before `reset`.
@@ -274,18 +290,59 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
         self.cfg.terrain.spawn.func(self.cfg.terrain.prim_path, self.cfg.terrain.spawn)
         self.scene.clone_environments(copy_from_source=False)
         self.cfg.dome_light.spawn.func(self.cfg.dome_light.prim_path, self.cfg.dome_light.spawn)
+        # The camera and its bracket on the gripper, spawned into every environment (the spawner clones over the
+        # regex), as the insertion demo does.
+        link6 = f"{self.cfg.robot.prim_path}/D1/Link6"
+        if self.cfg.camera_body_usd:
+            pos, rot = self.cfg.camera_body_pose
+            spawn = sim_utils.UsdFileCfg(usd_path=self.cfg.camera_body_usd)
+            spawn.func(f"{link6}/rs_body", spawn, translation=tuple(pos), orientation=tuple(rot))
+        if self.cfg.bracket_usd:
+            spawn = sim_utils.UsdFileCfg(usd_path=self.cfg.bracket_usd)
+            spawn.func(f"{link6}/rs_bracket", spawn)
 
     # --- standing ---------------------------------------------------------------------------------
 
     def _resample_velocity_commands(self, env_ids: torch.Tensor) -> None:
-        """Stand. The demos are standing manipulation, so the base is never told to walk.
+        """The script's base command instead of a random one: zero (stand) unless a phase walks the base.
 
         Overriding the sampler rather than zeroing the buffer after each step matters: the parent
         resamples inside `_get_rewards`, which runs *before* the observation is built, so a
         command zeroed from outside would still be seen by the policy for one step every five
         seconds -- and a step of commanded walk is a step of gait phase.
         """
-        self._commands[env_ids, :3] = 0.0
+        self._commands[env_ids, :3] = self._base_cmd[env_ids]
+
+    def base_pose_in_spawn(self) -> torch.Tensor:
+        """Each base's (x, y, yaw rad) in its script's frame: the spawn position and heading."""
+        root = self._robot.data.root_pos_w - self.scene.env_origins - self._spawn_pos
+        local = interface.quat_rotate_inverse(self._spawn_yaw_quat, root)
+        yaw = (interface.yaw_from_quat(self._robot.data.root_quat_w)
+               - interface.yaw_from_quat(self._spawn_yaw_quat))
+        yaw = torch.remainder(yaw + math.pi, 2 * math.pi) - math.pi
+        return torch.stack((local[:, 0], local[:, 1], yaw), dim=-1)
+
+    def _walk_base(self) -> None:
+        """Turn each script's base pose into this step's velocity command (after the scripts have run).
+
+        Written into the command buffer here, after the parent's gait step: the policy sees it in this
+        step's observation and the gait clock starts on it at the next, as for a resampled command.
+        """
+        actual = self.base_pose_in_spawn().tolist()
+        for index, command in enumerate(self.commands):
+            desired = None if command is None else command.base_pose
+            if desired is None:
+                self._base_cmd[index] = 0.0
+                self._base_desired_prev[index] = None
+                self.base_pose_error[index] = float("nan")
+                continue
+            self._base_cmd[index] = torch.as_tensor(base_velocity_command(
+                desired, self._base_desired_prev[index], actual[index], interface.POLICY_DT), device=self.device)
+            self._base_desired_prev[index] = desired
+            yaw_error = (desired[2] - actual[index][2] + math.pi) % (2 * math.pi) - math.pi
+            self.base_pose_error[index, 0] = math.hypot(desired[0] - actual[index][0], desired[1] - actual[index][1])
+            self.base_pose_error[index, 1] = math.degrees(yaw_error)
+        self._commands[:, :3] = self._base_cmd
 
     # --- the hand ---------------------------------------------------------------------------------
 
@@ -353,6 +410,7 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
             self.commands[index] = command
             targets[index] = torch.as_tensor(command.point, device=self.device)
             jaws[index] = command.jaw_m if self.jaw_override is None else self.jaw_override
+        self._walk_base()
         # The script works in the robot's yaw frame at its spawn; the base may have shifted under
         # it, so the point is carried back into the world through the *current* yaw and position.
         world = self.scene.env_origins + self._spawn_pos + interface.quat_apply(
@@ -427,6 +485,10 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
             (root[env_ids, 0], root[env_ids, 1], torch.zeros_like(root[env_ids, 2])), dim=-1)
         self._spawn_yaw_quat[env_ids] = interface.yaw_quat(
             interface.yaw_from_quat(self._robot.data.root_quat_w[env_ids]))
+        self._base_cmd[env_ids] = 0.0
+        self._commands[env_ids, :3] = 0.0
+        for index in env_ids.tolist():
+            self._base_desired_prev[index] = None
 
         self._place_props(env_ids)
         centre, _, _ = self._hand_frame()
@@ -497,13 +559,14 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
         limits[..., 1] = torch.maximum(limits[..., 1], torch.full_like(limits[..., 1], -reach))
         self._robot.write_joint_position_limit_to_sim(limits, joint_ids=ids)
 
-    def attach_latches(self) -> None:
-        """One `LatchController` per environment, stepped at the physics rate from `_apply_action`."""
+    def attach_latches(self, locked: bool = True) -> None:
+        """One `LatchController` per environment, stepped at the physics rate from `_apply_action`.
+        `locked` False: the box is unlocked and the door free (the door pull); the handle's spring still acts."""
         from demos.combiner.latch import LatchController
 
         self._latches = []
         for index in range(self.num_envs):
-            latch = LatchController(_SingleBoxView(self._box, index))
+            latch = LatchController(_SingleBoxView(self._box, index), locked=locked)
             latch.set_spring(self.cfg.handle_torque_nm)
             self._latches.append(latch)
 

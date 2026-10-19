@@ -150,16 +150,27 @@ class TurnAttempt:
         fk = link6_pose(self.joints, robot.data.joint_pos[0, self.arm_ids].cpu().numpy())
         jaw_fk = fk[:3, :3] @ np.asarray(JAW_CENTRE_LINK6) + fk[:3, 3]
         handle = self.box.data.body_link_pose_w[0, self.handle_body].cpu().numpy()
-        point_w = handle[:3] + quat_to_matrix(handle[3:]) @ np.array([GEOMETRY.handle_projection, -seq.plan.params.radius_m, 0.0])
+        point_w = handle[:3] + quat_to_matrix(handle[3:]) @ np.array(
+            [GEOMETRY.handle_projection, GEOMETRY.hinge_side * seq.plan.params.radius_m, 0.0])
         point_true = (base @ np.append(point_w, 1.0))[:3]
         from .pull import Handle
 
         planned, rot = Handle(seq.box, seq.plan.params).grasp(0.0, 0.0)
         in_tool = lambda v: np.round(1000 * (rot.T @ v), 2).tolist()
-        return {"jaw_minus_lever_mm": in_tool(jaw_sim - point_true),
-                "plan_minus_lever_mm (perception)": in_tool(planned - point_true),
-                "arm_sim_minus_fk_mm (arm model)": in_tool(jaw_sim - jaw_fk),
-                "fk_minus_plan_mm (servo and IK)": in_tool(jaw_fk - planned)}
+        out = {"jaw_minus_lever_mm": in_tool(jaw_sim - point_true),
+               "plan_minus_lever_mm (perception)": in_tool(planned - point_true),
+               "arm_sim_minus_fk_mm (arm model)": in_tool(jaw_sim - jaw_fk),
+               "fk_minus_plan_mm (servo and IK)": in_tool(jaw_fk - planned)}
+        # The plan lives in the base frame. A standing dog's base gives under the arm, so the lever can move in that
+        # frame between the look the plan came from and the grip: the perception split above then holds that too.
+        look = self.truth_at_look.get("refine" if seq.box is not seq.box_first else "detect")
+        if look is not None:
+            at_look, _ = Handle(look, seq.plan.params).grasp(0.0, 0.0)
+            out["plan_minus_lever_at_look_mm (perception alone)"] = in_tool(planned - at_look)
+            out["lever_at_look_minus_now_mm (base motion)"] = in_tool(at_look - point_true)
+            out["base_tilt_since_look_deg"] = round(math.degrees(math.acos(np.clip(
+                (np.trace(self.box_truth_b()[:3, :3] @ look[:3, :3].T) - 1.0) / 2.0, -1.0, 1.0))), 3)
+        return out
 
     def grip_slip_m(self):
         """Distance from the jaw centre to the lever point the plan grips, both from the simulator."""
@@ -169,7 +180,8 @@ class TurnAttempt:
         link6 = self.robot.data.body_link_pose_w[0, self.link6].cpu().numpy()
         jaw = link6[:3] + quat_to_matrix(link6[3:]) @ np.asarray(JAW_CENTRE_LINK6)
         handle = self.box.data.body_link_pose_w[0, self.handle_body].cpu().numpy()
-        point = handle[:3] + quat_to_matrix(handle[3:]) @ np.array([GEOMETRY.handle_projection, -plan.params.radius_m, 0.0])
+        point = handle[:3] + quat_to_matrix(handle[3:]) @ np.array(
+            [GEOMETRY.handle_projection, GEOMETRY.hinge_side * plan.params.radius_m, 0.0])
         return float(np.linalg.norm(jaw - point))
 
     # ------------------------------------------------------------------ the loop

@@ -13,25 +13,36 @@
 ```
 
 With **no arguments** the launcher runs the tag-guided grip-and-pull in the viewer against a
-0.3 N·m spring (`--turn --handle_torque_nm 0.3`): the grip turned 0.4 N·m in simulation and
-lost the bar at 0.5 (F-073), so not the 0.8 N·m the push managed. Each attempt holds its end
+0.3 N·m spring (`--turn --handle_torque_nm 0.3`): on the earlier proxy box the grip turned
+0.4 N·m in simulation and lost the bar at 0.5 (F-073), so not the 0.8 N·m the push managed. Each attempt holds its end
 pose until `R`, or `--attempt_s` (90 s) after it began, then the next placement starts. Any
 argument at all, even just `--seed 42` or `--no_console`, hands the choice back and nothing is
 added. The reach console's camera window outlines the door's tag in magenta, with its id and
 range (`d1_ui/server.py --apriltag`, which the launcher passes).
 
-Uses the same `env_isaaclab` environment and welded Go2+D1 as the cup demo.
-The dog holds the **same folded-leg resting pose**, with the same measured D1
-trajectory model and force drives. No walking policy or hardware link is needed.
+Uses the same `env_isaaclab` environment and welded Go2+D1 as the cup demo, with the same
+measured D1 trajectory model and force drives. **The dog stands** (since 2026-10-19): the
+position-only task's stance, its legs held at the robot config's default pose under zero
+action, spawned at 0.30 m; the base settles 0.274 m up after sliding about 6 cm back. The
+cup pick's folded-leg pose put the arm's mount 0.17 m up, and the real box's handle 0.46 m
+above it, which the arm reached at 2 of 12 default placements on the CPU model. No walking
+policy or hardware link is needed.
 
-The procedural enclosure follows the supplied photo: light-grey cabinet, yellow
-electrical warning, six black cable glands underneath, and a silver door lever
-in place of the right-hand keyhole. A short stand supports the cabinet. A 60 mm
-tag36h11 AprilTag (id 0) sits on the door above the handle (`apriltag.py`).
-Inside are simple mounting rails and fuse-block proxies. The housing is hollow;
-the door and handle have colliders and are separate rigid links. The lever starts
-horizontal, extends toward the hinge, and turns downward about its spindle through
-0–60°. Its return spring brings it back when released. Turning it at least **45°
+The box is **Lukas's real combiner** (photos of 2026-10-19), a Shoals "PV array d.c
+isolator": a light-grey cabinet standing on the floor, **830 mm tall, 630 mm wide and
+300 mm deep**, its door hinged on the right edge. Measured: those outside dimensions; the
+black-and-red rotary isolator handle's centre **160 mm below the top**; the tag's top edge
+**150 mm below that centre**; the quarter-turn cam lock midway up the **left edge** (the side
+that swings open), its centre **64 mm in** from it. The tag is tag36h11 id 0 printed from
+`dock_tag_id0_100mm_A4.pdf`: a **100 mm** black square cut out with its 12.5 mm white border,
+125 mm in all (`apriltag.py`). Assumed: the handle and the tag on the door's centreline (the
+photo puts both within a few centimetres of it), wall and door thickness, the interior
+(mounting plate, two rails of fuse-holder proxies), the decals' places, and every mass. The
+cam lock is drawn, not simulated. The housing is hollow; the door and handle have colliders
+and are separate rigid links. The lever starts horizontal, points from its spindle toward the
+hinge as the isolator's bar does, and turns downward about the spindle through 0–60°. Its
+shape (18 mm bar, 65 mm proud, 105 mm long) is the earlier proxy's, not the isolator's, so the
+grasp results stay comparable; the photo suggests a longer, flatter grip. Its return spring brings it back when released. Turning it at least **45°
 releases the latch** (Lukas, 2026-09-19), allowing the door to swing outward through 0–110°.
 
 The return spring is sized by the **torque it needs at 45°**, `--handle_torque_nm`
@@ -63,7 +74,7 @@ press **H** again to release the handle, then **C** to close and re-latch. O/C
 apply a bounded pull torque (maximum 0.6 Nm); they do not teleport the door or
 bypass the latch. These are inspection controls, not robot opening actions. The
 door is otherwise unpowered, with slight hinge damping. Without `--turn` the arm
-stays at rest.
+holds its zero pose.
 
 ## Working the handle (`--turn`)
 
@@ -73,12 +84,17 @@ and a programmed sequence works it (`sequence.py`; planned in `pull.py` or
 `press.py`; run in the simulator by `turn_run.py`):
 
 1. **Search.** The camera looks from stops at 0, −20, −40, −60, +20, +40, +60° of
-   heading, about 0.24 m above the arm's mount, until three frames show the tag. A
-   stop whose first three frames show nothing is left at once.
-2. **Close look** straight at the tag from 0.25 m; three more frames give the box
-   pose the rest is planned on. Before a grip the camera is turned about its view
-   to face the way the grasp will hold the wrist, which saves Joint6 up to about a
-   radian on the way in.
+   heading, the camera about 0.37 m above the arm's mount looking down at a point 0.10 m
+   above it (the tag's height, standing), its view turned 15° right and 8° down so the tag
+   sits up and to the left, clear of the shut fingers that fill the image's lower right
+   (`press.FINGERS_PX`), until three frames show the tag. A stop whose first three frames
+   show nothing is left at once.
+2. **Close look** at the tag from 0.30 m out and 0.16 m above it, aimed 10° right of and 5°
+   below it for the same reason (centred, the fingers hid a corner and the estimate came out
+   37 mm off, 2026-10-19); three more frames give the box
+   pose the rest is planned on. Before a grip the camera is turned about its view, in
+   quarter turns, to face the way the grasp will hold the wrist, which saves the wrist up to
+   2 rad on the way in.
 3. **`--method pull` (default): grip, turn, pull.** The jaws open and close across
    the lever 90 mm from the spindle, shut to the real jaws' 2 mm past the URDF's stop
    (F-063). Before closing, the arm takes out what its joints fall short of the plan,
@@ -103,12 +119,17 @@ angle, the latch or the door. The runner reads them from the simulator, along wi
 PhysX's joint torques, finger positions and contact forces, and how far the jaws
 have slid from the point they gripped.
 
-In simulation the grip opens the door against springs up to 0.4 N·m and loses the
-bar at 0.5 (F-073). Only two grasps have held, both wrist roll −1: pitch 40° and 50°. At
-0.3 N·m every attempt with one of them opened the door, 17 of 17 at 17 placements, and
-every other grasp lost the bar (F-075). On the CPU model about 6% of default placements
-reach neither grasp, and there the planner falls back to one with no record. A whole attempt takes 18–25 s from its start
-to letting go, where it took 29–49 s. The rest is mostly the arm's own speed (F-076). The push turns up to 1.15 N·m but opens nothing (F-071). The
+**On the earlier proxy box** (360 × 400 × 160 mm, lever 0.30 m up, hinge on the left) with the
+dog lying, the grip opened the door against springs up to 0.4 N·m and lost the bar at 0.5
+(F-073). Only two grasps held, both wrist roll −1: pitch 40° and 50°. At 0.3 N·m every attempt
+with one of them opened the door, 17 of 17 at 17 placements, and every other grasp lost the bar
+(F-075). A whole attempt took 18–25 s from its start to letting go (F-076). The push turned up to
+1.15 N·m but opened nothing (F-071). None of that has been re-measured on the real box.
+**Standing at the real box**, on the CPU model at 30 seeded default placements, the search
+sees the whole tag, the close look solves, and a grip-and-pull plans at all 30, opening the
+door 20–40° in the plan with static turning ceilings of 0.82–0.96 N·m; the push plans at 28.
+The level grasp (pitch 0, roll +1, no record) solves at all 30 and goes first at 22; pitch 40
+roll −1 solves at only 6, pitch 50 at none (2026-10-19). The
 grip's weak direction is the URDF's two independent finger drives, where the real
 jaws are one servo. Coupling them with a PhysX mimic joint broke the articulation
 in this Isaac Lab, so the fingers stay as the URDF has them.
@@ -138,22 +159,24 @@ Its row in `run.json` has:
 - whether the latch released;
 - for the pull: the door's peak, held and final angles, and the grip's slip and shift.
 
-Results so far are F-071 to F-076, all in simulation.
+Results so far are F-071 to F-076, all in simulation and all on the earlier proxy box with the dog lying.
 
 Placement is randomized on the first episode and every reset, reproducibly with
 `--seed`. Defaults are an enclosure centre 0.62–0.70 m from the dog's spawn,
 within ±45 degrees of forward, facing the dog with ±10 degrees of yaw variation.
 Use `--box_range MIN MAX`, `--sweep_deg`, and `--yaw_jitter_deg` to change these.
 `--sweep_deg 180` covers the full circle. Height stays fixed. Defaults put the
-handle in the arm's workspace: on the CPU model the `--turn` search, close look
-and push all plan at 300 of 300 seeded default placements, and some grip-and-pull
-grasp at 30 of 30. Door-swing clearance
-has not been validated. Wider placements may require moving the dog.
+handle in the standing arm's workspace (CPU numbers above); at 0.70–0.78 m the pull plans
+at 22 of 30 and the push at 12. Door-swing clearance has not been validated: the door is
+630 mm wide and swings toward the dog's right, and the planner models the dog's trunk, not
+the door. Wider placements may require moving the dog.
 
-Dimensions (360 × 400 × 160 mm cabinet), masses (8 kg enclosure, 0.6 kg door,
-0.12 kg lever),
-mounting height (100 mm), and handle geometry are **demo assumptions**, not
-measurements of the photographed product. The lever has an 18 mm diameter grip,
+The outline, the handle's height, the tag's place and the lock's place are **measured**
+(above). The masses (8 kg enclosure, 0.6 kg door, 0.12 kg lever) and the handle's geometry are
+**demo assumptions**. A 630 × 825 mm steel door weighs several kilograms, not 0.6; the door's
+mass has not been changed with the outline and is unvalidated. The body stands 5 mm off the
+floor so the door's lower edge clears the ground plane; its top is at the measured 830 mm.
+The lever has an 18 mm diameter grip,
 65 mm projection and 105 mm length. Its return spring is set by `--handle_torque_nm`
 (see above), with 0.08 Nm·s/rad damping and a drive limit 20% above the most the
 spring can ask for. No product CAD is needed.
@@ -176,7 +199,7 @@ preset's colour intrinsics (datasheet-derived, not a calibration) at the saved w
 (`demos/cup/pick_demo/assets/mounts/wrist_mount.json`: since 2026-10-09 the bracket's CAD,
 30 deg down from the gripper, `demos/cup/pick_demo/bracket.py`; from CAD, not measured). It renders
 RGB and ideal depth with the 20 mm near clip, and Intel's D435 case is drawn at the mount and the
-bracket on Link6 (visual only). The tag search's stops look 20 deg down because of that pitch
+bracket on Link6 (visual only). The tag search's stops look 32 deg down because of that pitch
 (`press.SearchParams`). The flags match the pick's: `--camera`, `--calibration FILE`,
 `--mount FILE|none`, `--no_camera_body`. `run.json` `camera` records the model, the mount
 and its provenance, and the model's intrinsics beside the rendered ones (F-070).
@@ -190,25 +213,27 @@ in sim mode. There is no cup here, so its YOLO is off (`--detect none`), which a
 it off the shared GPU. `D1_UI_ARGS='--detect all'` turns it back on. Use `--no_console` for
 the simulator alone and `--ui_feed_port 0` to stop publishing.
 
-**At rest the wrist camera does not see the box.** With the arm at its zero pose it looks
-level and straight ahead from about 0.73 m up. The cabinet's top is at 0.50 m and the
-colour camera's vertical half-angle is 21.3°. Projecting the whole cabinet for 2,000
-default placements puts none of it in the image; at best it reaches 54 px below the bottom
-edge (level base assumed). One live frame shows only the floor grid and background. The
-camera shows the box only once the arm moves to a pose that looks down at it, and nothing
-here does that yet.
+**At rest the wrist camera sees part of the door but not the whole tag.** Standing, with the
+arm at its zero pose, the camera is 0.85 m up and looks 30° down (the bracket's pitch).
+Projecting the door face for 2,000 default placements (CPU model, level base) puts some of it in
+the image at all 2,000 and the whole printed tag at none, so `--turn` still searches. Not
+checked in a live frame. (Lying, at the earlier proxy, it saw none of the box.)
 
-The asset root is at floor level, +X out of the door, +Y toward the handle, +Z up.
-`DoorHinge` opens outward (joint +Z is enclosure -Z); `HandleJoint` turns about
-the door's +X spindle. `Handle/HandleGrasp` follows both joints, 70 mm along the
-lever from the spindle. The enclosure, door and lever are three rigid bodies.
+The asset root is at floor level, +X out of the door, +Y toward the hinge (the right,
+looking at the door), +Z up. `DoorHinge` opens outward about enclosure +Z; `HandleJoint`
+lowers the lever about the door's −X spindle (its joint frames are turned half a turn about
+Z). `Handle/HandleGrasp` follows both joints, 70 mm along the lever from the spindle.
+`geometry.BoxGeometry.hinge_side` mirrors the whole door (−1 is the earlier proxy's left hinge). The enclosure, door and lever are three rigid bodies.
 Joint frames and the fixed mount use [USD Physics conventions](https://openusd.org/dev/api/usd_physics_page_front.html).
 
 CPU placement/CLI tests: `python -m unittest discover -s demos/combiner/tests -v`.
 `test_turn.py` checks the tag pattern against OpenCV's dictionary, pose recovery from
 rendered views, the push plan against the lever's arc, and runs the whole sequence
 against rendered tags (numpy and OpenCV only).
-With `pxr`, this also checks the USD's joints, colliders and moving grasp frame.
+With `pxr`, this also checks the USD's joints, colliders, moving grasp frame and the measured
+layout. `env_isaaclab` has no importable `pxr` of its own; Isaac Sim's bundled one works with
+`L=$(ls -d $CONDA_PREFIX/lib/python3.11/site-packages/isaacsim/extscache/omni.usd.libs-*)`,
+`PYTHONPATH=$L LD_LIBRARY_PATH=$L/bin:$CONDA_PREFIX/lib`.
 With `torch` (the Isaac environment), it also tests the controller's joint-limit
 writes and inspection commands against an articulation test double, including
 reversed joint ordering. Live PhysX behavior and rendered appearance still need

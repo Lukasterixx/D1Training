@@ -2253,6 +2253,10 @@ result that changes a conclusion gets a new entry, and the old one is marked
   only to pull the door. A faithful simulated gripper needs the jaws coupled, which this Isaac Lab did not
   accept as a mimic joint.
 
+- **Followed by:** F-145 (2026-10-19): on Lukas's real box (handle 0.67 m up, hinged on the right) the dog stands, and
+  in three attempts at 0.3 N·m no grip turned the lever past 45°: the standing base tilts under the arm and the jaws
+  close 9–20 mm off the bar. This finding holds for the proxy box and the lying dog.
+
 ### F-074 — The simulated D1 settles short of its joint targets, Joint2 by 0.0135 rad at the lever (7–9 mm at the jaws); one step of feedback correction takes it to under 0.001 rad
 
 - **Status:** confirmed (simulation)
@@ -2316,6 +2320,10 @@ result that changes a conclusion gets a new entry, and the old one is marked
   follows the record (`pull.PROVEN_GRASPS`), and the record needs extending as placements widen. On the real arm
   the list starts empty. The first bench grips should try 40° and 50° at roll −1 before anything else, and
   record each grasp's outcome the same way.
+
+- **Followed by:** F-145 (2026-10-19): standing at the real box only pitch 40 roll −1 of these solves often (6 of 30
+  default placements on the CPU model, pitch 50 at none); taken in all three real-box attempts, it lost the bar or
+  stalled short of 45° each time, for a reason this finding's record could not see (the base moving under it).
 
 ### F-076 — The grip-and-pull now finishes in 18–25 s in simulation, down from 29–49 s; what remains is mostly the arm's own speed
 
@@ -4949,6 +4957,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
     the constraint the simulation says.
 - **Followed by:** F-139 (2026-10-09): Lukas asked for `d1.urdf` to be patched to the CAD without the caliper reading;
   done, and the policies re-scored.
+- **Followed by:** F-142 (2026-10-18): the shoulder and elbow are the same part, a Fashion Star RX18-U100H-M; the
+  elbow torque is no longer a housing-versus-gearbox question.
 
 ### F-138 — From Lukas's bracket CAD, the wrist camera looks 30° down from the gripper's approach axis, its colour optical frame at (−49.1, 32.8, 61.3) mm in Link6: 13.3 mm and 30° from the mount aligned by eye; with it the D1 cannot point the camera within ~19° of level from the tag search's height
 
@@ -4986,6 +4996,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - With the camera pitched 30° down, looks have to be planned at least ~20° down from the D1's reach at a lying dog's
     height; a level look at a target is out of reach.
   - Check the printed bracket on the bench with a hand-eye calibration before trusting millimetres from the camera.
+- **Followed by:** Lukas, 2026-10-19: the bracket is printed and fitted to the real arm, the RealSense on top of the
+  pincer. Its seating is still unmeasured; the hand-eye check above stands. Every demo now draws it (Week 6 log).
 
 ### F-139 — Given Unitree's CAD lengths, the D1's controlled point moves 6 mm and the policies in use barely notice: the frozen sets move by at most 4 episodes, the closed-loop reach not at all; one scripted demo, already on the edge of a tolerance, falls off it
 
@@ -5081,6 +5093,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
     grasp wherever the hand stops cannot select for a claw's entry.
   - `mech_cfg.LEVER_PEAK_N` was drawn against the 1.7 N·m capacities and now understates what the arm can turn.
   - If the bench later shows 1.7 N·m, F-135's saturated elbow stands, and these policies would under-pull on the real arm.
+- **Followed by:** F-142 (2026-10-18): the shoulder and elbow are the same motor, a Fashion Star RX18-U100H-M
+  (datasheet: 3.14 N·m rated, 4.90 continuous), so the 3.33 N·m model stands; the firmware's limit is still unmeasured.
 
 ### F-141 — Retrained for the 3.33 N·m shoulder and elbow, the rope policy holds 30 and 45 N on the command with no fall in 192 releases, by pulling with the arm: it leans 4–5° where every earlier rope policy leaned 20–24°
 
@@ -5109,3 +5123,338 @@ result that changes a conclusion gets a new entry, and the old one is marked
     pull.
   - Use `checkpoints/unifp_go2d1_rope_cad333_model_14600.pt` on the 3.33 N·m model, and
     `unifp_go2d1_rope_v3_polish_model_14600.pt` on the 1.7 N·m one.
+- **Followed by:** F-142 (2026-10-18): the shoulder and elbow are the same motor, a Fashion Star RX18-U100H-M, so the
+  1.7 N·m case above is not the motor's limit; this is the rope policy for hardware unless the firmware caps the elbow.
+
+### F-142 — The D1's shoulder and elbow are the same motor, a Fashion Star RX18-U100H-M bus servo. Its datasheet gives 3.14 N·m rated, 4.90 N·m continuous and 9.80 N·m stall at 12 V, so Unitree's 1.7 N·m for Joint3 is not the motor's limit, and the model's 3.33 N·m sits between rated and continuous
+
+- **Status:** confirmed for the part (Lukas, from his D1, 2026-10-18); the torques are the vendor's datasheet, not
+  measured on the arm, and the limit Unitree's firmware lets the servo deliver is unknown
+- **Week:** 5
+- **Date:** 2026-10-18
+- **Evidence:** [Week 5 log, 2026-10-18](week_05/notes.md), "The shoulder and elbow motors identified".
+  - Lukas: "I can confirm now that I have the d1 arm that the shoulder and elbow motors at the same RX18-U100H-M".
+  - Fashion Star, *UART Bus Servo Actuator, 100KG Series*, datasheet V1.1.08
+    ([PDF](https://files.seeedstudio.com/products/Fashionstar/Fashion%20Star_U100H_Datasheet_EN_V1.1.08.pdf), linked from
+    [Seeed's FashionStar page](https://wiki.seeedstudio.com/fashionstar_servo/)). The model code reads R dual-shaft,
+    X brushless, 18 the 63 × 34 × 47 mm case, U UART/TTL, 100 kg·cm, H 12 V, M 12-bit magnetic absolute encoder.
+  - At 12 V: max stall 9.80 N·m, max continuous 4.90, rated 3.14 at 35 rpm (3.67 rad/s), no load 42 rpm. 392:1
+    stainless-steel gears, 230 g, input 9.0–12.6 V, peak current 13 A.
+  - The overload graph (25 °C ambient), read off by eye: about 3,000 s at 1.7 N·m, ~900 s at 3.3, ~300 s at 5.6.
+  - The arm's measured speed ceiling, 1.20–1.29 rad/s on every joint (F-033), is about a third of the rated speed.
+- **Scope:** identifies the motor, not the limit the arm enforces. Unitree's D1 page gives a 24 V supply and the servo
+  is rated 9.0–12.6 V, so the voltage it sees and any current or power limit Unitree configures are unknown. Joint1
+  and Joint4–6 were not identified. No torque was measured.
+- **Implication:**
+  - The caveat in F-137 and F-140 is resolved: an identical housing did mean an identical motor, so one limit belongs on
+    Joint2 and Joint3. `motor_model.D1_EFFORT_LIMIT_NM` keeps 3.33 N·m, Unitree's D1-550 URDF value, a little above
+    the rated 3.14 and below the continuous 4.90. Nothing is retrained.
+  - Unitree's published 1.7 N·m for Joint3 is not this motor's limit. Unless the firmware caps the elbow lower, the
+    1.7 N·m-elbow policies model a weaker arm than this one, and `unifp_go2d1_rope_cad333_model_14600.pt` (F-141) is
+    the rope policy for hardware.
+  - F-141's pull holds Joint2 and Joint3 at their 3.33 N·m limits. By the overload graph the servo sustains that for
+    about 15 minutes at 25 °C, so a rope hold of seconds is well inside it.
+  - The bench check F-137 and F-141 ask for narrows to one question: does the elbow deliver ~3.3 N·m on the arm, or
+    does the firmware cap it? A pull to stall against a spring scale at a known lever arm answers it.
+
+### F-143 — Lukas's real combiner box puts its handle 0.67 m up, 0.46 m above the lying dog's arm mount: from there the grip-and-pull plans at 2 of 12 default placements and the push at none. Standing, on the CPU model, the tag search, the close look and a grip-and-pull plan at all 30 of 30, opening the door 20–40° in the plan
+
+- **Status:** provisional (CPU kinematic model, base level; the box is measured, the arm's reach is the model's)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "The combiner demo on Lukas's real box".
+  - The box, measured by Lukas: 830 × 630 × 300 mm, standing on the floor, hinged on the right; the rotary isolator
+    handle's centre 160 mm below the top; the 100 mm tag (`dock_tag_id0_100mm_A4.pdf`, 125 mm cut) with its top edge
+    150 mm below that; the cam lock midway up the left edge, 64 mm in. In `demos/combiner/geometry.py`.
+  - Lying (base 0.085 m up, 7.3° nose-up), default placements 0.62–0.70 m: the pull plans at 2 of 12, the push at 0
+    of 12. Pulled in to 0.56–0.60 m the pull plans at every bearing tried, but opens the door only 20–26°.
+  - Standing (the position-only task's zero-action stance: base 0.2736 m up, 5.7 cm back), 30 seeded default
+    placements: some search stop sees the tag, the close look solves, and a grip-and-pull plans at all 30, the door to
+    20–40° in the plan, static ceilings 0.82–0.96 N·m at 45°; the push at 28. At 0.70–0.78 m: pull 22, push 12.
+  - The grasp that plans: pitch 0 roll +1 at all 30 (first choice at 22), pitch 40 roll −1 at 6, pitch 50 at none.
+- **Scope:** reachability on the CPU model only; the live runs are F-144 and F-145. Door-swing clearance past the
+  dog is not modelled. Masses (a 0.6 kg door) are still the proxy's.
+- **Implication:** the scripted combiner demo now stands the dog (`demos/common/resting.py` posture "standing"); the
+  lying dog cannot work this box. F-071 to F-076 stay records of the earlier proxy and the lying dog.
+
+### F-144 — Standing, the shut fingers fill the wrist image's lower right, and the 100 mm tag ran into them: the close look's box estimate came out 9.6 and 36.9 mm off, worse than the search look's 3–4 mm, and one placement's tag was hidden from every search stop. Aiming both looks so the tag sits up and to the left brought the close look to 2.2–3.5 mm and found the tag at 3 of 3 placements
+
+- **Status:** provisional (simulation, three placements, rendered camera)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), same entry.
+  - [smoke 1](#/week/6/run/20261019T012022_709892Z_combiner_seed42): close-look frames show a finger over the tag's lower-right corner; box errors 9.55 mm / 0.53° and
+    36.91 mm / 5.44°; at the third placement no stop of seven found the tag (frames show the finger over it).
+  - The fingers' edge in the 640 × 480 image, jaws shut, read off the frames: (448, 225) to (349, 470) px
+    (`press.FINGERS_PX`). The 125 mm sheet spans ~265 px at the old 0.29 m close look.
+  - [smoke 2](#/week/6/run/20261019T013204_701444Z_combiner_seed42): the close look aimed 10° right and 5° down (tag centre near (210, 185) px): 2.94 and 2.24 mm. Search
+    unchanged: the hidden placement stayed hidden.
+  - [smoke 3](#/week/6/run/20261019T013846_816348Z_combiner_seed42): search stops also turned 15° right and 8° down, from 0.35 m above the mount: the tag found at all three
+    (−20°, +20°, −20°); close-look errors 2.76, 3.24, 3.47 mm.
+  - On the CPU model with the finger wedge as a keep-out: the search sees the tag at 60 of 60 seeded placements
+    (44 of 60 looking straight at the target), the close look at 60 of 60; quarter-turn camera rolls stay clear,
+    45° ones clipped 5 of 19.
+- **Scope:** the simulator's rendered fingers and the bracket's CAD mount. The real camera's view of the real jaws
+  has not been checked.
+- **Implication:** a larger tag needs the looks aimed off-centre; check one real wrist frame with the jaws shut to
+  confirm where the fingers are before trusting `FINGERS_PX` on hardware.
+
+### F-145 — Standing on held legs, the dog's base tilts 1.3–1.5° under the arm between the close look and the grip, which moves the lever 17–21 mm in the base frame the plan is in, against 1–4.5 mm of perception error: the jaws close off the bar, and in three attempts at 0.3 N·m the lever reached 13.6–37.6° and no door opened
+
+- **Status:** provisional (simulation, three attempts, one spring)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), same entry; [smoke 3](#/week/6/run/20261019T013846_816348Z_combiner_seed42).
+  - The grasp offset at the moment the jaws close, split (new in `turn_run.grasp_offsets`): perception alone
+    [−0.8, 0.0, 2.4], [3.1, 1.3, 3.3], [3.0, −0.1, −0.1] mm; the lever's motion in the base frame since the close
+    look [−9.1, 0.9, 14.4], [1.0, 0.6, 5.0], [−11.3, 1.1, 17.4] mm; base tilt since the look 1.26°, 0.32°, 1.47°.
+    The arm itself reached its plan to 0.1 mm.
+  - Outcomes: peak lever 13.6°, 37.6°, 26.5°; grip slip 157, 26, 143 mm (the jaws came off the bar in the first
+    and third); latch never released; door 0.2–0.5°. All three took pitch 40 roll −1.
+  - [smoke 1](#/week/6/run/20261019T012022_709892Z_combiner_seed42) and [smoke 2](#/week/6/run/20261019T013204_701444Z_combiner_seed42) failed the same way (lever 17–41°, slips 136–157 mm), their perception split then hidden in the
+    single offset of ~19 mm.
+  - The base stayed up: 0.273 m at the end of every attempt.
+- **Scope:** the scripted IK sequence; legs held by PD at zero action with no balance controller; three
+  placements; one spring (0.3 N·m). Even the attempt with a 5 mm shift stalled at 37.6°, so tilt is not the only
+  limit.
+- **Implication:** with the dog standing, an open-loop plan in the base frame is not enough. The next step is to
+  correct the box pose for the base's measured tilt (the IMU's gravity vector, which the sequence already reads)
+  at the align step before the jaws close, and for the arcs after it, or to re-look at the tag from the standoff.
+
+### F-146 — UniFP walks the unlocked combiner door 90° open, its base carried round the hinge by velocity commands, with no fall in 116 attempts and the door at 87–105° whenever the grip holds; the friction grip on the handle holds in only about half the attempts (15 of 32)
+
+- **Status:** provisional (simulation; UniFP plus the wrist roll servo; two seeds of 16 placements)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "The door pull".
+  - The demo (`demos/unifp/run_demo.py --task door --wrist`): Lukas's real box, unlocked, the lever never turned. The
+    combiner's reach onto the bar, then 7 s in which the script swings the commanded door 0→90°. The jaw centre
+    follows the handle's arc; the base follows the same rotation about the hinge
+    (`BoxSite.base_pose_m`) through UniFP's own velocity command, fed forward and fed back
+    (`script.base_velocity_command`): a steady 0.07 m/s back, 0.13 m/s right, 0.22 rad/s left.
+  - [seed 1](#/week/6/run/20261019T024909_door_unifp_wrist_seed1_door16) and [seed 2](#/week/6/run/20261019T025447_door_unifp_wrist_seed2_door16_s2), 16 environments each: 8 and 7 of 16 at 85° or more when the hold ends (87.4–104.6°);
+    0 falls. The base's peak pose error 3–11 cm (median 5.5 cm), yaw error up to 11°, final yaw 87–95°.
+  - Failures (17): 4 doors under 6°, 12 lost the handle at 15–39°, one swung past 108° and back to 65°. Median
+    jaw-centre miss at arrive 12 mm for the failures, 5 mm for the successes. Attempt 1 of seed 1 arrived 3 mm off,
+    then during the 0.8 s grip the hand pitched up 30° and backed 24 mm off the bar, dragging the door 8° open,
+    and the bar slipped out once the walk began. Several doors that lost the handle ended shut, cause not
+    established (the upper arm carries no contact sensor).
+  - The same seed-1 placements, one change each: [goal correction](#/week/6/run/20261019T024957_door_unifp_wrist_corr_seed1_door16) 8/16 (arrive miss 5.9 → 4.2 mm), [2 s grip, seed 1](#/week/6/run/20261019T025326_door_unifp_wrist_seed1_door16_grip_s2.0) 10/16,
+    [wrist pitch servoed](#/week/6/run/20261019T025238_door_unifp_wrist_seed1_door16_wrist_joints56) 3/16, [lip claw](#/week/6/run/20261019T025131_door_unifp_wrist_claw_seed1_door16) 2/16 (arrive miss 79 mm: the lip claw without the mechanism policy's correction and
+    roll). [2 s grip, seed 2](#/week/6/run/20261019T025535_door_unifp_wrist_seed2_door16_s2grip_s2.0) 7/16. Outcomes flip at the same placement between settings. [first, 4 envs](#/week/6/run/20261019T024810_door_unifp_wrist_seed1_door_first): 2/4.
+- **Scope:** simulation, `--wrist` (a different controller from UniFP alone), a free 0.6 kg door with no closer,
+  the proxy lever's shape, the object pose given, no perception. 16 environments per run (F-098: the count is
+  a condition). Footprint clearance from the door is checked on the planned path only (≥ 0.19 m).
+- **Implication:**
+  - Walking while holding works with the deliverable policy as it is, through the command it was trained on: a
+    co-rotating base keeps the goal fixed in the goal sphere, and nothing fell.
+  - The grasp is the limit. A pinch on a horizontal bar, pulled out along the jaws, rests on friction alone, and
+    the hand tips while the jaws close. A grasp that takes the pull in the fingers' bending (a hook behind the bar,
+    or the lip claw with the goal correction and roll it was tuned with) is the next thing to try. Settings changes
+    to the friction grip did not move the rate beyond 7–10 of 16.
+
+
+### F-147 — Adding the real robot's lidar and wrist camera costs the reach policy 1.9 mm median and 3.7 mm p90 of settled error, with no falls: the trunk gains 0.42 kg and the gripper's last link 0.099 kg (+59%)
+
+- **Status:** provisional (simulation; one checkpoint, the 50-episode validation set; two masses estimated)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "The lidar and the wrist camera, in every demo and every
+  training setup".
+  - The parts (`payload.py`): MID-360, 0.265 kg, published; its mount, 0.155 kg, estimated (CAD volume x PLA); the D435i,
+    0.072 kg, published; its bracket, 0.027 kg, estimated. The lidar and mount are cut out of Lukas's Go2 CAD and
+    registered to `base_link` by fitting the trunk mesh (0.34 mm median residual).
+  - Folded in by the weld (`payload_physics`): Go2 `base` 6.921 → 7.341 kg; D1 `Link6` 0.168 → 0.267 kg, its centre of
+    mass 16.5 mm toward the camera. Box colliders on both. G0 verify passes on both robots ([physical](#/week/6/run/20261019T075759_109111Z_verify_seed42), [visual](#/week/6/run/20261019T075818_960184Z_verify_seed42)); the
+    [first, failed](#/week/6/run/20261019T075646_286594Z_verify_seed42) run's mass check predated the camera and was extended.
+  - `unifp_go2d1_isaaclab_cad333_model_58400.pt`, `run_unifp_train.py eval --tool_point fingertip --manifest
+    results/manifests/unifp_isaaclab_validation.json`, seed 20260921: [payload physical](#/week/6/run/20261019T075856_eval_seed1_payload_physical) 1.69 / 2.33 cm median / p90; [payload visual](#/week/6/run/20261019T075915_eval_seed1_payload_visual)
+    1.50 / 1.96; [no lidar drawn](#/week/6/run/20261019T080030_eval_seed1_payload_none) 1.50 / 1.96, identical to the digit. 0 falls of 50 in each.
+  - On the CPU model the folded arm clears the lidar by 14 cm, and 174 of 18,511 random arm poses that clear the trunk
+    (0.9%) pass through the lidar or its mount's hull.
+- **Scope:** one checkpoint, simulation. The mount's and bracket's masses are solid-PLA estimates (a print with infill is
+  lighter). The D435i's and lidar's colliders are boxes. The demos keep the payload visual-only.
+- **Implication:** the payload is small for reaching, as the gripper's +59% might have suggested otherwise; Lukas retrains
+  on the payload robot (`--payload physical`, now the default for both training launchers). Weigh the mount and bracket
+  first, and replace the estimates in `payload.py`.
+
+### F-148 — The CAD-length checkpoints were scored on an arm URDF that is not in the repository: `58400` gives 1.50 / 1.96 cm on the committed `d1.urdf`, not the recorded 1.40 / 1.93
+
+- **Status:** confirmed (the hashes and the scores); the content of the missing URDF is not known
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), same entry.
+  - All 42 runs recorded in Week 4 on the CAD-length robot (2026-10-09, Victor's machine) record `d1_urdf_sha256`
+    `1509b0bc…`. The committed `d1_arm/d1.urdf` (ab7752c, 2026-10-13, and the working tree) is `a848ee41…`; the previous
+    commit's is `dad072b0…`. No file with `1509b0bc…` exists on Lukas's machine.
+  - The same checkpoint, manifest, seed and options on the committed URDF: 1.50 / 1.96 cm ([payload visual](#/week/6/run/20261019T075915_eval_seed1_payload_visual), and [no lidar drawn](#/week/6/run/20261019T080030_eval_seed1_payload_none) without the
+    lidar drawn), against the recorded 1.40 / 1.93. F-139 found these evaluations deterministic to the digit.
+- **Scope:** the difference could be the URDF or other code between 054983a and now; only the URDF hash is known to
+  differ. The demos' numbers on that robot (cup 10/16 etc.) may move too.
+- **Implication:** before retraining, find the `1509b0bc…` URDF on Victor's machine and diff it against the committed
+  one, so the new policies are trained on the arm the record describes. Until then the Week 4 numbers on the
+  CAD-length robot are not reproducible from the repository.
+
+### F-149 — Switched on with the arm folded, the reach policy unfolds and reaches all 27 goals with no fall, but at low or far goals it turns the hand down before lifting the shoulder and strikes the Go2's head (11 of 27, none from the zero pose), pitching the base up to 26° nose-down
+
+- **Status:** provisional (simulation; one seed; standing, no forces; UniFP's PD arm, not the D1 servo)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "Switching the reach policy on with the arm folded".
+  - `demos/unifp/folded_start_probe.py`, `unifp_go2d1_isaaclab_cad333_model_58400.pt`. 27 held goals run in pairs,
+    from the trained zero pose and from the folded rest pose [2.1, −90.0, 88.9, −2.3, 4.9, 2.9]°, after a 1 s
+    standing hold ([run](#/week/6/run/20261019T075835_probe_seed1_folded_start)).
+  - Both starts: 0 falls, 27 of 27 reached and held within 5 cm.
+  - Folded against zero: time to 5 cm median 1.10 s against 0.46 s (max 1.68 against 1.18 s). Final error median
+    1.07 against 1.16 cm.
+  - Contact with the dog's head (`Head_lower`): 11 of 27 folded envs, none from zero. It comes 0.20–0.66 s after
+    handover and lasts up to 1.04 s. Affected: every 0°-pitch goal except 0.35 m straight ahead, and all 0.55 m /
+    20° goals. None at 40°.
+  - Peak base pitch 8–26° against 3–13°. J1 sits at its torque limit for the whole first 2 s.
+  - Without the hold, from training's spawn-drop reset ([run](#/week/6/run/20261019T075729_probe_seed1_folded_start)):
+    13 of 27 hit. At the peak contact J1/J2 were still −69…−82° / +54…+78°, while J3 had turned 29–68°.
+- **Scope:** simulation of UniFP's port, which drives the arm with its own PD and torque limits, faster than the
+  real D1 (2.25 rad/s peak against 1.21–1.29, F-033). The timings do not transfer (F-097).
+  - J1/J2 start 1–3° short of the real rest pose (URDF limits).
+  - The contact magnitudes are PhysX impact values, not loads.
+  - The real head's position relative to the simulated collider is not checked, and the dock and MID-360 have no
+    colliders.
+  - One seed, 27 goals, standing only.
+- **Implication:**
+  - Handing a folded arm straight to the policy is not safe to try first on hardware. The motion it produces most
+    often is a wrist turn that brings the hand down onto the head.
+  - Either bring the arm to the zero pose with the existing joint-space path first (the step-capped
+    `approach_joints`, F-025/F-027), which is the start the policy was trained from, or limit the first goals to
+    high pitch (≥ 40° was contact-free here).
+  - The first option also removes the unfold's base pitch and the 0.6 s of extra tracking time.
+
+### F-150 — The arm folds during the door pull's walk because UniFP commands only the tip's position, and the elbow and wrist are the policy's choice: alone it folds in 13 of 16 attempts, holding or not; with the wrist servo it stays in a forward line whenever the grip holds, and folds only after losing the handle
+
+- **Status:** provisional (simulation; one seed; 16 placements per condition)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "Why the arm folds during the door pull's walk". Seed 1 of
+  F-146's door pull, with the goal (sphere coordinates) and the arm's joints traced.
+  - [With `--wrist`](#/week/6/run/20261019T085418_door_unifp_wrist_seed1_door16_armtrace), 8/16:
+    - The 8 successes never fold: J2 −22 to +3° through the 90° walk, 0.2–2.1 cm tracking.
+    - Folding (J2 −65 to −88°, J3 ~110°, J5 at its −134.6° limit) appears only after the handle is lost: attempts
+      1 and 3, and 4 transiently. The tracking error jumps to 12–22 cm as the door drifts shut while the script
+      walks on.
+    - The arm then stays folded, 5–10 cm off a goal (r 0.56 m, pitch 22°, yaw −12°) that the successful attempts
+      track to ~1 cm extended.
+  - [UniFP alone](#/week/6/run/20261019T085634_door_unifp_seed1_door16_nowrist_armtrace), 4/16:
+    - J2 passes −40° in 13 of 16 attempts, including while holding, and the arm is folded at the end in 5;
+    - one of those 5 is a success (door 90°, J2 −59°, J3 107°);
+    - no joint is at a limit.
+  - The goal: radius 0.57–0.62 m at the grip (trained 0.30–0.58), 0.50–0.58 m during the walk.
+- **Scope:** one seed, 16 placements each, simulation. The proxy lever's shape, a free door, the object pose given.
+  The upper arm has no contact sensor. Which configuration an attempt ends in is not predicted here, only counted.
+- **Implication:**
+  - **UniFP's formulation:** the goal is three numbers for a six-joint arm, and its orientation channels are
+    declared and never written. The arm's configuration is therefore not commanded, it depends on history (as in
+    F-149), and a disturbance can leave it in a folded branch that still tracks within a few cm.
+  - **Our use:** the friction grip's losses (F-146) and a script that walks on regardless are the trigger.
+  - **In the demo:** stop or re-grip when the fingers lose contact or the tracking error passes a few cm. Stand so
+    the handle sits nearer the middle of the trained radius.
+  - **To keep the line by design, train it:** command the hand's orientation (the unused channels, as the roll
+    objective began to), or add a posture term to the reward.
+
+### F-151 — A decoupled baseline for the door pull opens 7 of 16 doors, against UniFP's 8 with the wrist servo and 4 alone, on the same placements; its arm IK lands within 3 mm, but its walking policy trails the path by up to 0.39 m (median attempt), and the grip goes when the base lags out of the arm's reach
+
+- **Status:** superseded
+- **Superseded by:** [F-152](#f-152) (2026-10-19, same day). The 7 of 16 stands, but for an arm IK loop that re-ran a
+  seeded search on every miss, up to 486 ms a command, which cannot run at 10 Hz. The baseline's loop is now bounded,
+  and opens 9 of 32 on two seeds where this one opens 15. The rest of this finding (the walk, how it fails, the scope)
+  stands.
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "A non-UniFP baseline for the door pull".
+  - `run_demo.py --task door --controller decoupled`: the go2_omniverse walking checkpoint `model_7850` on the legs,
+    with its own 235-wide observation, DCMotor legs, self-collision off and the trained foot friction. IK on the arm
+    every 10 Hz command, through the D1 firmware planner.
+  - The scene, placements, script, walk feedback, latch, jaws and success criterion are F-146's door pull.
+  - [16 placements, seed 1](#/week/6/run/20261019T102047_door_decoupled_walk_ik_seed1_door16_decoupled): 7 doors at
+    ≥ 85° at the end of the hold, 0 falls. Arrival 2.7–3.5 mm. Maximum base path error 0.27–0.72 m (median 0.39).
+  - Same placements under UniFP: [with the wrist servo](#/week/6/run/20261019T085418_door_unifp_wrist_seed1_door16_armtrace)
+    8/16 (path error 3–11 cm), [alone](#/week/6/run/20261019T085634_door_unifp_seed1_door16_nowrist_armtrace) 4/16.
+  - [Walk-only control](#/week/6/run/20261019T103049_door_decoupled_walk_ik_no_object_free_seed1_door16_decoupled_walk_only):
+    free space, arm parked, same 16 walks. Pull-phase path error 0.146 m (0.19 m with the door), roll up to 26°,
+    no falls. The walk's quality is the policy's own.
+  - Failures: 14 of 16 doors pass 66°. In 6 of the 9 failures the grip let go with the door past 79°, and the free
+    door swung back. Through the pull the IK finds no solution near the target 11–59% of the time.
+  - Bringing up the port needed four fixes, each recorded in the log:
+    - the grasp nearest level, to match the script's level entry;
+    - self-collision off;
+    - the trained foot friction;
+    - and before them, ruling out the box and plinth.
+  - After them, a constant (−0.2, −0.33, 0.2) command tracks (−0.166, −0.267, 0.234) at 12.4° tilt, against the
+    native environment's (−0.184, −0.355, 0.204) at 10.4°.
+- **Scope:**
+  - **Different plant:** each controller runs on the plant it was built for, so this is not a same-plant
+    comparison. Legs: DCMotor, self-collision off and 0.8/0.6 foot friction here, against UniFP's PD, self-collision
+    on and 1.0. Arm: the measured D1 here, UniFP's faster PD there (F-097).
+  - **Naive stack:** an untuned decoupled stack, with a walking policy that never carried the arm. The 25% shortfall
+    in sideways speed against native playback is attributed to the arm's drive model, not tested.
+  - **Sample:** one seed, 16 placements, a free door, the box's pose given, simulation.
+- **Implication:**
+  - On this task UniFP's advantage is in coordination, not in reaching. The decoupled arm is more accurate. Its
+    failures come from the legs lagging while the arm cannot ask them to wait, which a whole-body policy handles by
+    construction.
+  - So the baseline is a fair reference for "UniFP vs. a conventional stack". It is not evidence that the arm needs
+    learning.
+  - Cheap upgrades a stronger baseline would add:
+    - a walking policy trained with the arm (F-008's arm-on runs);
+    - a supervisor that slows or stops the walk when the IK saturates or the base path error passes a few cm;
+    - a re-grip when finger contact drops.
+
+### F-152 — The decoupled door-pull baseline's arm IK, bounded to run at 10 Hz (≤ 7 ms a command), opens 9 doors of 32 on two seeds, against 15 for the same IK with an unbounded seeded search on every miss (up to 486 ms a command); UniFP with the wrist servo opened 15 on the same two seeds
+
+- **Status:** provisional (simulation; two seeds of 16; the baseline's own plant as in F-151)
+- **Week:** 6
+- **Date:** 2026-10-19
+- **Supersedes:** [F-151](#f-151)
+- **Evidence:** [Week 6 log, 2026-10-19](week_06/notes.md), "The door pull hitches: the baseline's IK search".
+  - Lukas saw the one-environment viewer stall every half second while pulling. The cause was the first version's
+    IK. Every 10 Hz command that missed re-ran the scripted grip's seeded search (13 seeds x up to 300 iterations),
+    which cost 486 ms on the development PC, against 0.2 ms for a warm start. The pull misses 43-49% of its commands
+    because the walk lags.
+  - The bounded loop: a warm start capped at 30 iterations, a pose accepted within 2 mm and 0.02 rad, else the jaw
+    centre alone. Worst case 7.3 ms a command. One environment
+    ([run](#/week/6/run/20261019T113038_door_decoupled_walk_ik_seed1_timing_decoupled_final_1env)): step wall time
+    median 18 ms, max 36 ms, none over 50 ms. UniFP with the wrist servo
+    ([run](#/week/6/run/20261019T104640_door_unifp_wrist_seed1_timing_unifp_wrist_1env)): 15 and 21 ms.
+  - Doors opened:
+
+    | arm IK loop | seed 1 | seed 2 | of 32 |
+    | --- | --- | --- | --- |
+    | seeded search on every miss (the first version) | [7](#/week/6/run/20261019T104918_door_decoupled_walk_ik_seed1_door16_decoupled_seededik_s1) | [8](#/week/6/run/20261019T105837_door_decoupled_walk_ik_seed2_door16_decoupled_seededik_s2) | 15 |
+    | **bounded (the baseline now)** | [3](#/week/6/run/20261019T112933_door_decoupled_walk_ik_seed1_door16_decoupled_final_s1) | [6](#/week/6/run/20261019T111204_door_decoupled_walk_ik_seed2_door16_decoupled_bounded_nostandoffseed_s2) | **9** |
+
+  - The first version's 7 reproduces F-151 attempt for attempt, and the bounded seed-1 run reproduces its
+    configuration's earlier run likewise.
+  - Same seeds under UniFP with the wrist servo: 8 and 7 of 16 (F-146).
+  - Where they part: once an attempt, around 13.8 s as the walk starts to lag, the seeded search finds the pose on
+    another branch, and the bounded loop falls back to the jaw centre (attempts 1, 3, 8, 10, 11 on seed 1).
+  - Bounded versions of the search all opened 3/16 and 7/16 on seeds 1 and 2, the same attempts each time:
+    - [one seed a command at 100 iterations](#/week/6/run/20261019T111651_door_decoupled_walk_ik_seed1_door16_decoupled_amortizedik_s1);
+    - [the current joints and one seed at 300](#/week/6/run/20261019T112336_door_decoupled_walk_ik_seed1_door16_decoupled_rescueik_s1);
+    - [the full search once, at the first oriented command](#/week/6/run/20261019T112013_door_decoupled_walk_ik_seed1_door16_decoupled_plannedik_s1);
+    - [100 iterations instead of 30](#/week/6/run/20261019T111329_door_decoupled_walk_ik_seed1_door16_decoupled_bounded100_nostandoffseed_s1).
+
+    So did a [standoff warm start](#/week/6/run/20261019T104734_door_decoupled_walk_ik_seed1_door16_decoupled_boundedik),
+    with 4 and 4.
+- **Scope:**
+  - Two seeds, 32 placements. The cost figures are the development PC's, single-threaded numpy; none were measured
+    on the Jetson Orin.
+  - The rescue the unbounded search finds was located (when, which attempts) but not explained (which seed, which
+    branch).
+  - Wall time does not change a simulated result. The search made the viewer stall but did not alter the outcome;
+    what makes it unusable is the robot's 10 Hz loop.
+- **Implication:**
+  - The real-time decoupled baseline opens 9 of 32 against UniFP's 15 of 32 with the wrist servo; quote that pair.
+    F-151's 7 of 16 needs a planner the robot could not run in its loop.
+  - Running that search asynchronously, in a planner thread beside the 10 Hz loop, is how a robot would get its
+    rescues back, with a delay. That would be a stronger baseline, not built here.
+  - For deployment, the controllers are cheap either way. UniFP is 0.11 ms of inference per 20 ms step on one
+    development-PC core, the walking policy 0.03 ms, the bounded IK 7 ms per 100 ms command at worst. What the
+    viewer showed was the simulator stalling on the first version's IK.

@@ -83,6 +83,14 @@ class Phase:
     #: that matters is the one the jaws close from. On from the standoff hold onward, so the
     #: wrist turns and the policy re-converges before the fine approach rather than during it.
     servo: bool = False
+    #: The hand's orientation as a function of the phase's progress, for arcs that turn the hand with
+    #: them (the door pull's 90 degrees). Given, they replace `approach` and `object_axis`.
+    approach_path: Callable[[dict, float], Vec3] | None = None
+    object_axis_path: Callable[[dict, float], Vec3] | None = None
+    #: Where the robot's base should be, (x, y, yaw rad) in the spawn yaw frame, as a function of the
+    #: phase's progress. None: stand, as every phase of the cup and combiner demos does. The
+    #: environment walks the base there with velocity commands (`base_velocity_command`).
+    base: Callable[[dict, float], tuple[float, float, float]] | None = None
 
 
 @dataclass
@@ -97,6 +105,8 @@ class Command:
     progress: float
     elapsed_s: float
     finished: bool
+    #: The base pose the phase asks for, (x, y, yaw rad) in the spawn yaw frame; None to stand.
+    base_pose: tuple[float, float, float] | None = None
 
 
 @dataclass
@@ -136,7 +146,7 @@ class DemoScript:
             point = self.phase_end_point(phase, state)
             return Command(point, phase.jaw_m, self._approach(phase, state),
                            self._object_axis(phase, state), phase.servo, "done", 1.0,
-                           self.elapsed_s, True)
+                           self.elapsed_s, True, self._base(phase, state, 1.0))
 
         self.elapsed_s += dt
         while not self.finished:
@@ -161,14 +171,22 @@ class DemoScript:
         # controlled and a step target closes them as fast as the drive allows, which on the bar
         # is a hammer blow rather than a grip.
         jaw = self._start_jaw + (phase.jaw_m - self._start_jaw) * u
-        return Command(point, jaw, self._approach(phase, state), self._object_axis(phase, state),
-                       phase.servo, phase.name, u, self.elapsed_s, False)
+        return Command(point, jaw, self._approach(phase, state, u), self._object_axis(phase, state, u),
+                       phase.servo, phase.name, u, self.elapsed_s, False, self._base(phase, state, u))
 
-    def _approach(self, phase: Phase, state: dict) -> Vec3:
+    def _approach(self, phase: Phase, state: dict, u: float = 1.0) -> Vec3:
+        if phase.approach_path is not None:
+            return phase.approach_path(state, u)
         return phase.approach(state) if phase.approach is not None else (1.0, 0.0, 0.0)
 
-    def _object_axis(self, phase: Phase, state: dict) -> Vec3:
+    def _object_axis(self, phase: Phase, state: dict, u: float = 1.0) -> Vec3:
+        if phase.object_axis_path is not None:
+            return phase.object_axis_path(state, u)
         return phase.object_axis(state) if phase.object_axis is not None else (0.0, 0.0, 1.0)
+
+    @staticmethod
+    def _base(phase: Phase, state: dict, u: float):
+        return None if phase.base is None else phase.base(state, u)
 
 
 # --- the two demos ------------------------------------------------------------------------------
@@ -309,6 +327,102 @@ def combiner_phases(timing: CombinerTiming = CombinerTiming()) -> list[Phase]:
               approach=lambda st: approach(st, timing.door_deg),
               object_axis=lambda st: axis(st, timing.ease_deg, timing.door_deg)),
     ]
+
+
+@dataclass(frozen=True)
+class DoorTiming:
+    """The door pull's clock: the combiner's reach onto the bar, then the walk round the hinge."""
+    stand_s: float = 1.5
+    approach_s: float = 2.0
+    settle_s: float = 2.0
+    enter_s: float = 2.5
+    arrive_s: float = 1.2
+    grip_s: float = 0.8
+    #: The swing. 7 s for 90 degrees turns the base at 0.22 rad/s and steps it sideways at ~0.12 m/s,
+    #: both just outside UniFP's dead zones (0.2 rad/s, 0.1 m/s), inside which it is told to stand.
+    #: Slower and the walk command would fall into them.
+    pull_s: float = 7.0
+    #: At the end of the swing, still holding, so the door and the base come to rest.
+    hold_s: float = 1.5
+    release_s: float = 0.8
+    back_s: float = 1.5
+    standoff_m: float = 0.12
+    door_deg: float = props.DOOR_PULL_DEG
+
+
+def door_phases(timing: DoorTiming = DoorTiming()) -> list[Phase]:
+    """Grip the unlocked box's handle and walk the door open, the lever never turned.
+
+    The reach is the combiner's, onto the bar and shut. Then the script runs the door's angle up to
+    `door_deg` on the clock and moves two things with it: the jaw centre along the handle's arc, and
+    the base round the hinge with the door (`BoxSite.base_pose_m`), so the handle stays where it was
+    in the robot's frame. Neither reads the door: the angle is the commanded one, as every arc here
+    is, and how far the real door lags it is the measurement.
+    """
+    site = lambda st: st["box_site"]
+    approach = lambda st, door=0.0: site(st).approach_unit(door)
+    axis = lambda st, door=0.0: site(st).lever_axis_unit(0.0, door)
+    at = lambda st, door=0.0: site(st).grasp_point_m(0.0, door)
+    door = lambda u: timing.door_deg * u
+    end = lambda st: site(st).base_pose_m(timing.door_deg)
+    reach = dict(approach=lambda st: approach(st), object_axis=lambda st: axis(st))
+    swung = dict(approach=lambda st: approach(st, timing.door_deg),
+                 object_axis=lambda st: axis(st, timing.door_deg), base=lambda st, u: end(st))
+    return [
+        Phase("stand", timing.stand_s, target=lambda st: HOME_POINT, jaw_m=JAW_LEVER_OPEN_M, **reach),
+        Phase("approach", timing.approach_s, jaw_m=JAW_LEVER_OPEN_M, **reach,
+              target=lambda st: offset(at(st), approach(st), timing.standoff_m)),
+        Phase("settle", timing.settle_s, jaw_m=JAW_LEVER_OPEN_M, measure=True, servo=True, **reach,
+              target=lambda st: offset(at(st), approach(st), timing.standoff_m)),
+        Phase("enter", timing.enter_s, target=lambda st: at(st), jaw_m=JAW_LEVER_OPEN_M, servo=True, **reach),
+        Phase("arrive", timing.arrive_s, target=lambda st: at(st), jaw_m=JAW_LEVER_OPEN_M,
+              measure=True, servo=True, **reach),
+        Phase("grip", timing.grip_s, target=lambda st: at(st), jaw_m=JAW_BAR_SHUT_M,
+              measure=True, servo=True, **reach),
+        Phase("pull", timing.pull_s, jaw_m=JAW_BAR_SHUT_M, measure=True, servo=True,
+              path=lambda st, u: at(st, door(u)),
+              approach_path=lambda st, u: approach(st, door(u)),
+              object_axis_path=lambda st, u: axis(st, door(u)),
+              base=lambda st, u: site(st).base_pose_m(door(u))),
+        Phase("hold", timing.hold_s, target=lambda st: at(st, timing.door_deg), jaw_m=JAW_BAR_SHUT_M,
+              measure=True, servo=True, **swung),
+        Phase("release", timing.release_s, target=lambda st: at(st, timing.door_deg), jaw_m=JAW_LEVER_OPEN_M,
+              servo=True, **swung),
+        # Back to the ready pose in front of the robot where it now stands, not where it started.
+        Phase("back", timing.back_s, jaw_m=JAW_LEVER_OPEN_M,
+              target=lambda st: site(st).from_base(end(st), HOME_POINT), **swung),
+    ]
+
+
+#: The walk command's feedback gains on the base's pose error (1/s), and the trained command ranges it is
+#: clipped to (`unifp_train.task_cfg`: vx 0.6, vy 0.4, yaw rate 0.6).
+BASE_GAIN_XY = 1.5
+BASE_GAIN_YAW = 1.5
+BASE_COMMAND_LIMITS = (0.6, 0.4, 0.6)
+
+
+def _wrap(angle: float) -> float:
+    return (angle + math.pi) % (2.0 * math.pi) - math.pi
+
+
+def base_velocity_command(desired, previous, actual, dt: float, gain_xy: float = BASE_GAIN_XY,
+                          gain_yaw: float = BASE_GAIN_YAW, limits=BASE_COMMAND_LIMITS):
+    """UniFP's base command (vx, vy forward and left in the base frame, m/s; yaw rate, rad/s) that
+    walks the base along a scripted path of poses.
+
+    Poses are (x, y, yaw) in the spawn yaw frame. The path's own rate (`desired` against `previous`,
+    one step of `dt` earlier) is fed forward, and the base's error from `desired` fed back at
+    `gain_xy` and `gain_yaw`; the result is turned into the base's frame and clipped to the ranges the
+    policy was trained on. `previous` None (the path's first step) feeds nothing forward.
+    """
+    if previous is None:
+        previous = desired
+    vx_w = (desired[0] - previous[0]) / dt + gain_xy * (desired[0] - actual[0])
+    vy_w = (desired[1] - previous[1]) / dt + gain_xy * (desired[1] - actual[1])
+    wz = _wrap(desired[2] - previous[2]) / dt + gain_yaw * _wrap(desired[2] - actual[2])
+    c, s = math.cos(actual[2]), math.sin(actual[2])
+    clip = lambda v, limit: max(-limit, min(limit, v))
+    return (clip(c * vx_w + s * vy_w, limits[0]), clip(-s * vx_w + c * vy_w, limits[1]), clip(wz, limits[2]))
 
 
 def latch_would_release(turn_deg: float) -> bool:

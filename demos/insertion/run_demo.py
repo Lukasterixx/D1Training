@@ -89,9 +89,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Draw the door the lock is in: a wooden door in a wall, its casing, an escutcheon and a "
                              "lever handle (asset.build_scenery_usd), and a floor of boards; the viewer then looks at it "
                              "from behind the robot. Visual only. Default: in the viewer, not headless.")
-    parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=None,
-                        help="Draw the wrist RealSense and its bracket at the saved mount (demos/cup/pick_demo). Visual "
-                             "only, with no mass and no camera rendering. Default: in the viewer, not headless.")
+    parser.add_argument("--camera_body", action=argparse.BooleanOptionalAction, default=True,
+                        help="Draw the wrist RealSense in its printed bracket, as fitted to the real arm (demos/cup/pick_demo, "
+                             "saved mount). Visual only, with no mass and no camera rendering. Default: on.")
     parser.add_argument("--run_name", default=None)
     parser.add_argument("--output", default=str(ROOT / "logs/insertion_demo"))
     return parser
@@ -155,7 +155,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.checkpoint is None and not args.zero_actions:
         parser.error("--checkpoint is required (or --zero_actions)")
-    for name in ("realtime", "scenery", "camera_body"):
+    for name in ("realtime", "scenery"):
         if getattr(args, name) is None:
             setattr(args, name, not args.headless)
     simulation_app = AppLauncher(args).app

@@ -1072,8 +1072,9 @@ def main() -> int:
     ap.add_argument("--apriltag", action="store_true",
                     help="Outline tag36h11 AprilTags in the camera window, with their range when the camera's "
                          "intrinsics are known (the combiner box's door carries one).")
-    ap.add_argument("--apriltag-size", type=float, default=0.06, metavar="M",
-                    help="Black-square edge of the tags, for their range (default: the combiner's 60 mm).")
+    ap.add_argument("--apriltag-size", type=float, default=0.10, metavar="M",
+                    help="Black-square edge of the tags, for their range (default: the combiner door's 100 mm, "
+                         "printed from dock_tag_id0_100mm_A4.pdf).")
     ap.add_argument("--yolo-weights", default=None, help="Ultralytics weights (default: the pick demo's).")
     ap.add_argument("--yolo-device", default="auto", help="auto, cpu or cuda:N.")
     ap.add_argument("--camera-fps", type=float, default=15.0, help="Cap on frames detected and streamed.")

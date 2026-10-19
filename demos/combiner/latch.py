@@ -12,15 +12,20 @@ from .geometry import GEOMETRY
 @dataclass
 class DoorLatch:
     latched: bool = True
+    #: False: the box is unlocked and the door free, whatever the handle does (the door-pull demo).
+    locked: bool = True
 
     def reset(self, door_deg=0.0, handle_deg=0.0):
         # An explicitly open initial inspection pose starts outside the strike.
-        self.latched = door_deg <= GEOMETRY.latch_capture_deg and handle_deg < GEOMETRY.handle_release_deg
+        self.latched = (self.locked and door_deg <= GEOMETRY.latch_capture_deg
+                        and handle_deg < GEOMETRY.handle_release_deg)
 
     def update(self, door_deg, handle_deg):
         if not all(math.isfinite(v) for v in (door_deg, handle_deg)):
             raise ValueError("Non-finite door or handle angle")
-        if handle_deg >= GEOMETRY.handle_release_deg:
+        if not self.locked:
+            self.latched = False
+        elif handle_deg >= GEOMETRY.handle_release_deg:
             self.latched = False
         elif not self.latched and door_deg <= GEOMETRY.latch_capture_deg and handle_deg <= GEOMETRY.handle_reset_deg:
             self.latched = True
@@ -43,14 +48,15 @@ class LatchController:
     it between attempts, which is how a torque sweep runs without rebuilding the scene.
     """
 
-    def __init__(self, box):
+    def __init__(self, box, locked=True):
         import torch
 
         self.torch = torch
         self.box = box
         self.door_id = box.joint_names.index("DoorHinge")
         self.handle_id = box.joint_names.index("HandleJoint")
-        self.latch = DoorLatch()
+        # Unlocked, the handle's return spring still acts; only the door's constraint is gone.
+        self.latch = DoorLatch(locked=locked)
         self.enabled = False
         self.handle_held = False
         self.door_target_deg = None

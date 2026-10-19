@@ -271,14 +271,16 @@ def run(args, report):
             if args.robot_usd:
                 robot_path = str(Path(args.robot_usd).resolve())
             else:
-                robot_path = build_welded_robot_usd(
+                weld = build_welded_robot_usd(
                     go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
                     d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
                     out_usd_path=str(run_dir / "assets/go2_d1.usd"),
-                    mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152,
-                ).usd_path
+                    mount_pos=D1_MOUNT_POS, arm_mass_kg=3.152, payload_physics=args.payload == "physical",
+                )
+                robot_path = weld.usd_path
                 # Which mount this run's arm was welded at: it moved on 2026-09-30, from (0, 0, 0.08).
                 metadata["arm_mount_m"] = list(D1_MOUNT_POS)
+                metadata["payload"] = {"mode": args.payload, "bodies": weld.payload}
             metadata["robot_usd"] = robot_path
             metadata["robot_usd_sha256"] = hashlib.sha256(Path(robot_path).read_bytes()).hexdigest()
             spawn_kwargs = {} if args.spawn_height is None else {"spawn_height": args.spawn_height}
@@ -367,7 +369,7 @@ def run(args, report):
             elif args.mode == "verify":
                 from position_only.verify import run_checks
 
-                result = run_checks(env.unwrapped)
+                result = run_checks(env.unwrapped, wrist_payload=args.payload == "physical")
                 write_json(run_dir / "verify.json", result)
                 metadata["status"] = "verify_passed" if result["all_passed"] else "verify_failed"
                 metadata["verify_failed"] = result["failed"]
@@ -529,6 +531,11 @@ def main():
     parser.add_argument("--spawn_height", type=float, default=None,
                         help="Base height at reset (m). Default: the task's standing spawn, env_cfg.SPAWN_HEIGHT_M.")
     parser.add_argument("--robot_usd", help="Existing local welded USD; otherwise rebuild inside the new run directory.")
+    parser.add_argument("--payload", choices=("physical", "visual"), default="physical",
+                        help="Bolted-on parts (payload.py): 'physical' (default) gives the MID-360, its mount, the wrist "
+                             "RealSense and its bracket colliders and mass, as the real robot carries them (since "
+                             "2026-10-19); 'visual' only draws the lidar, the robot every checkpoint before then was "
+                             "trained on. Use 'visual' to re-score those checkpoints as they were.")
     parser.add_argument("--output", default=str(ROOT / "logs/position_only"))
     args = parser.parse_args()
     if min(args.num_envs, args.iterations, args.steps) <= 0:

@@ -198,7 +198,7 @@ def draw_tags(bgr, tags):
     return bgr
 
 
-def make_tag_detector(intrinsic_matrix=None, size_m: float = 0.06):
+def make_tag_detector(intrinsic_matrix=None, size_m: float = 0.10):
     """Every tag36h11 tag, measured when `intrinsic_matrix` is known."""
     import sys
 
