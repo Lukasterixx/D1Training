@@ -1,0 +1,39 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "stopped",
+  "stage": "watch",
+  "live": false,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T063933_watch_dry"
+  ],
+  "started_utc": "20261020T063936",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 107.582,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  }
+}

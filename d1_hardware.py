@@ -57,6 +57,9 @@ PEAK_RATE_DEG_S = 70.0      # measured on every joint, 68.6-74.1 deg/s (F-033)
 ARM_IFACE = "enP8p1s0"      # the Go2 payload's arm-facing NIC
 ARM_SERVOS = 6              # servos 0-5 are the IK chain; 6 is the gripper
 GRIPPER_SERVO = 6
+# The folded rest pose, servo degrees: where the arm lies against its mechanical stop, as it reported it with the dog
+# sitting (F-023, F-027). J1 and J2 are past the +/-90 deg the driver commands, so a commanded fold stops at the limits.
+REST_SERVO_DEG = (2.1, -90.9, 91.7, -3.1, 4.1, 3.1)
 
 # What this module will put on the wire for servo 6. **Not** the vendor's advertised 0-65: probing found
 # the arm's own window runs from about -19.8 to +50.2, and the useful half of it is negative (F-063).

@@ -1,0 +1,130 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "finished",
+  "stage": "pull",
+  "live": false,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T065323_pull_dry",
+    "--stage",
+    "pull",
+    "--ignore_range"
+  ],
+  "started_utc": "20261020T065326",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 41.645,
+      "stop": "attempt finished"
+    },
+    {
+      "t": 116.527,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 30,
+    "with_tag": 30,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": false,
+    "text": "the tag is not on a door the box's size: the lidar's face is +2 cm from it and carries on past the door's edges (141%). A tag on a stand in front of a wall? (P2Dingo's dock carries the same one)",
+    "detections": 30,
+    "site": {
+      "distance_m": 0.72,
+      "bearing_deg": -0.57,
+      "yaw_deg": 177.03
+    },
+    "walk_in_m": 0.229,
+    "lidar_heading": {
+      "used": true,
+      "points": 3998,
+      "span_m": 0.56,
+      "rms_mm": 19.2,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 1.42
+  },
+  "outcome": "attempt finished",
+  "attempt_events": [
+    {
+      "t": 6.446,
+      "phase": "walk_in"
+    },
+    {
+      "t": 11.446,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 19.9,
+      "turned_deg": 0.12
+    },
+    {
+      "t": 13.446,
+      "phase": "stand"
+    },
+    {
+      "t": 15.745,
+      "phase": "approach"
+    },
+    {
+      "t": 18.745,
+      "phase": "settle"
+    },
+    {
+      "t": 21.745,
+      "phase": "enter"
+    },
+    {
+      "t": 25.445,
+      "phase": "arrive"
+    },
+    {
+      "t": 27.246,
+      "phase": "grip"
+    },
+    {
+      "t": 28.445,
+      "phase": "pull"
+    },
+    {
+      "t": 31.945,
+      "phase": "hold"
+    },
+    {
+      "t": 34.245,
+      "phase": "release"
+    },
+    {
+      "t": 35.448,
+      "phase": "back"
+    },
+    {
+      "t": 37.663,
+      "phase": "fold"
+    }
+  ]
+}

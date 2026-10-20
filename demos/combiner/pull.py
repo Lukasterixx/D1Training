@@ -73,10 +73,10 @@ class PullParams:
     # arc's joints on their path instead of trailing it -- at a fixed 15 deg/s the wrist lagged its command by
     # 0.4 rad through the turn (Week 1 log, 2026-09-19).
     joint_speed_rad_s: float = 0.6
-    # Per-finger travel from the URDF's stop while coming onto the bar: a 41 mm mouth for the 18 mm bar, 11.5 mm
-    # clear either side. The pick's 30 mm (a 77 mm mouth, for cups) cost 1.3 s of closing at the simulated
-    # fingers' ~23 mm/s before they touched the bar.
-    jaw_open_m: float = 0.012
+    # Per-finger travel from the URDF's stop while coming onto the lever: a 63.2 mm mouth for the 40 mm tall lever,
+    # 11.6 mm clear above and below it, as the earlier 18 mm bar had from 12 mm (a 41 mm mouth). The pick's 30 mm
+    # (a 77 mm mouth, for cups) costs 0.6 s more closing at the simulated fingers' ~23 mm/s before they touch it.
+    jaw_open_m: float = 0.023
     handle_torque_nm: float | None = None   # what the lever needs at 45 deg, if known: picks a strong enough grasp
     torque_margin: float = 1.1
     hold_fraction: float = 0.85             # each waypoint's gravity load at most this fraction of the limits

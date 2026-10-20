@@ -4,9 +4,10 @@ The box is Lukas's real enclosure (Shoals PV array d.c isolator, photographed 20
 630 mm wide and 300 mm deep, standing on the floor, its door hinged on the right edge and held by a
 quarter-turn cam lock midway up the left edge. Measured by Lukas: the outside dimensions, the isolator
 handle's centre 160 mm below the top, the tag's top edge 150 mm below that centre, and the lock's centre
-64 mm in from the left edge. Not measured, and assumed here: the handle's and the tag's horizontal place
-(the door's centreline; the photo puts both within a few centimetres of it), the lever's own shape (kept
-from the earlier proxy, so the grasp records stay comparable), wall and door thickness, and every mass.
+64 mm in from the left edge; and the lever (2026-10-20), 140 x 40 x 17 mm, a slot seen from the front, 27 mm
+clear of the door. Not measured, and assumed here: the handle's and the tag's horizontal place (the door's
+centreline; the photo puts both within a few centimetres of it), where along the lever it turns, wall and door
+thickness, and every mass.
 Local +X points out of the door, +Y is right when looking at it, +Z is up.
 The root is on the floor directly below the centre of the enclosure.
 
@@ -39,10 +40,19 @@ class BoxGeometry:
     handle_below_top: float = 0.160        # isolator handle's centre (its spindle), measured
     handle_y: float = 0.0                  # assumed on the door's centreline
     lock_from_edge: float = 0.064          # cam lock's centre from the free edge, measured; midway up
-    handle_projection: float = 0.065
-    handle_length: float = 0.105
-    handle_radius: float = 0.009
+    # The lever, measured by Lukas (2026-10-20): 140 mm long, 40 mm tall and 17 mm thick, its front profile a slot
+    # (each end a semicircle of half the height), with 27 mm clear between its back and the door (`handle_gap`; the
+    # earlier proxy's bar stood 56 mm off it). Assumed: it turns about its near end's centre (`handle_span`).
+    handle_gap: float = 0.027
+    handle_length: float = 0.140
+    handle_height: float = 0.040
+    handle_thickness: float = 0.017
     handle_grasp_offset: float = 0.070
+    # The round hub the lever turns on, 63 mm across (Lukas, 2026-10-20; photographed). Assumed: centred on the spindle
+    # and filling the gap from the door to the lever's back, as the photo shows it. The robot program's release keeps
+    # the fingers off it (`demos/combiner_door/robot/plan.ungrasp_phases`); the simulated box's asset still has the
+    # earlier 24 mm spindle and 60 mm rosette in its place.
+    handle_hub_diameter: float = 0.063
     handle_limit_deg: float = 60.0
     handle_release_deg: float = 45.0
     handle_reset_deg: float = 10.0
@@ -59,6 +69,27 @@ class BoxGeometry:
     tag_standoff: float = 0.0006          # printed face above the door skin, clear of the decals
     latch_capture_deg: float = 0.5
     open_limit_deg: float = 110.0
+
+    @property
+    def handle_projection(self):
+        """The lever's centre plane from the door's outer face: the measured gap behind it and half its thickness."""
+        return self.handle_gap + self.handle_thickness / 2
+
+    @property
+    def handle_radius(self):
+        """The slot's end radius, half the lever's height: from its centreline to its top or bottom edge."""
+        return self.handle_height / 2
+
+    @property
+    def handle_span(self):
+        """Between the slot's two end centres, along the lever: its centreline runs from the spindle's axis this far
+        toward the hinge, and the lever reaches `handle_radius` past either end."""
+        return self.handle_length - self.handle_height
+
+    @property
+    def handle_tip(self):
+        """From the spindle's axis to the lever's far end."""
+        return self.handle_span + self.handle_radius
 
     @property
     def door_x(self):
@@ -193,8 +224,12 @@ class Placement:
 # Default enclosure-centre distances from the dog's spawn, unchanged from the earlier proxy. With the real box and
 # the dog standing (its base settles 5.7 cm back), on the CPU model at 30 seeded placements: the tag seen, the close
 # look and the grip-and-pull plan at all 30 (the door to 20-40 deg in the plan), the push at 28. At 0.70-0.78 m the
-# pull plans at 22 and the push at 12 (2026-10-19).
-DEFAULT_DISTANCE_M = (0.62, 0.70)
+# pull plans at 22 and the push at 12 (2026-10-19). That was with the lever 56 mm off the door (0.223 m proud of the
+# root); measured at 27 mm (2026-10-20) it is 0.1935 m proud, and the range moves in by the difference so the handle
+# stays where those plans were made, 0.477 m from the spawn at the far end. Not at the near end: the box keeps the
+# 0.60 m `validate_region` allows it, so the nearest handle is 0.4065 m off, not 0.397.
+DEFAULT_HANDLE_DISTANCE_M = (0.397, 0.477)
+DEFAULT_DISTANCE_M = tuple(max(0.60, round(d + GEOMETRY.handle[0], 4)) for d in DEFAULT_HANDLE_DISTANCE_M)
 
 
 def validate_region(distance=DEFAULT_DISTANCE_M, sweep_deg=45.0, yaw_jitter_deg=10.0):

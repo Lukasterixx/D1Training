@@ -1,0 +1,66 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "finished",
+  "stage": "walk",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T082827_walk_live",
+    "--stage",
+    "walk",
+    "--live"
+  ],
+  "started_utc": "20261020T082830",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 2.667,
+      "stop": "the box is out of range: nothing moved"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 33,
+    "with_tag": 33,
+    "lidar_frames": 22,
+    "found": true,
+    "in_range": false,
+    "text": "box 0.73 m from the stance at -2.8 deg, door -2.4 deg off square, walk in 0.00 m; move the dog back 0.16 m",
+    "detections": 33,
+    "site": {
+      "distance_m": 0.728,
+      "bearing_deg": -2.777,
+      "yaw_deg": 177.58
+    },
+    "walk_in_m": 0.0,
+    "lidar_heading": {
+      "used": true,
+      "points": 3994,
+      "span_m": 0.56,
+      "rms_mm": 6.1,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -0.32
+  },
+  "outcome": "the box is out of range: nothing moved"
+}

@@ -8,7 +8,8 @@ import unittest
 from unittest.mock import patch
 import types
 
-from demos.combiner.geometry import DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, Placement, sample_placement, validate_region
+from demos.combiner.geometry import (DEFAULT_DISTANCE_M, DEFAULT_HANDLE_TORQUE_NM, GEOMETRY, Placement, sample_placement,
+                                     validate_region)
 from demos.combiner.run_combiner_demo import parse_args
 from demos.combiner.latch import DoorLatch, LatchController
 from demos.common.resting import LYING_LEG_POSE, make_resting_cfg
@@ -39,7 +40,7 @@ class PlacementTests(unittest.TestCase):
             pose = sample_placement(rng)
             x, y, z = pose.position
             radius = math.hypot(x, y)
-            self.assertTrue(0.62 <= radius <= 0.70)
+            self.assertTrue(DEFAULT_DISTANCE_M[0] <= radius <= DEFAULT_DISTANCE_M[1])
             bearing = math.degrees(math.atan2(y, x))
             bearings.append(bearing)
             self.assertTrue(-45 <= bearing <= 45)
@@ -64,7 +65,7 @@ class PlacementTests(unittest.TestCase):
         pose = sample_placement(random.Random(1), distance=(0.65, 0.65), sweep_deg=0, yaw_jitter_deg=0)
         self.assertEqual(pose, Placement((0.65, 0.0, 0.0), 180.0))
         handle = pose.world_point(GEOMETRY.handle)
-        self.assertAlmostEqual(handle[0], 0.427)
+        self.assertAlmostEqual(handle[0], 0.65 - GEOMETRY.handle[0])   # 0.4565 with the lever 27 mm off the door
         self.assertAlmostEqual(handle[1], -0.070)
 
     def test_bad_sampling_bounds_are_rejected(self):

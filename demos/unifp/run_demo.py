@@ -135,15 +135,25 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Door only: the swing's duration, s (default DoorTiming's 7, times --speed_scale). Much "
                              "slower and the walk command falls inside UniFP's dead zones, where it is told to stand.")
     parser.add_argument("--controller", choices=("unifp", "decoupled"), default="unifp",
-                        help="Door only: 'decoupled' is the non-UniFP baseline -- Rescue's walking policy on the legs and "
-                             "inverse kinematics on the arm through the measured D1 model (`decoupled.py`), on the same "
-                             "script, scene and placements.")
+                        help="Door only: 'decoupled' is the non-UniFP baseline -- a walking policy on the legs "
+                             "(--walker) and inverse kinematics on the arm through the measured D1 model "
+                             "(`decoupled.py`), on the same script, scene and placements.")
+    parser.add_argument("--walker", choices=("rescue_2024", "p2dingo_gait"), default=None,
+                        help="With --controller decoupled: the legs' walking policy (demos/unifp/decoupled.py WALKERS). "
+                             "Default p2dingo_gait (since 2026-10-20); rescue_2024 reproduces F-151 and F-152.")
     parser.add_argument("--seeded_ik_loop", action="store_true",
                         help="With --controller decoupled: the arm IK's first version, which re-ran the seeded search "
                              "inside the 10 Hz loop (up to ~0.5 s a command). A diagnostic for comparing results.")
     parser.add_argument("--park_arm", action="store_true",
                         help="With --controller decoupled: never command the arm, which stays at its reset pose while the "
                              "legs walk the script's path. A diagnostic of the walking policy alone.")
+    parser.add_argument("--perception", choices=("given", "head"), default="given",
+                        help="Door with --controller decoupled: 'head' finds the box with a RealSense on the dog's head "
+                             "and verifies the door with the MID-360 (demos/combiner_door). Default: the box's pose "
+                             "is given.")
+    parser.add_argument("--look_back_m", type=float, default=None,
+                        help="With --perception head: how far behind the door pull's stance the robot starts and "
+                             "looks from (default demos/combiner_door/env.py's LOOK_BACK_M).")
     parser.add_argument("--checkpoint", default=None,
                         help=f"Default {DEFAULT_CHECKPOINT}, or {MECH_CHECKPOINT} with --mech.")
     parser.add_argument("--attempts", type=int, default=16,
@@ -275,6 +285,10 @@ def main() -> int:
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
     args.num_envs = args.num_envs or (args.attempts if args.headless else 1)
+    if args.perception == "head":
+        # The head camera renders; and the RealSense is on the head, so the wrist one is not drawn.
+        args.enable_cameras = True
+        args.camera_body = False
     app_launcher = AppLauncher(args)
     simulation_app = app_launcher.app
 
@@ -303,6 +317,11 @@ def main() -> int:
     if args.mech and args.wrist:
         parser.error("--mech commands the roll itself; do not add --wrist")
     decoupled_run = args.controller == "decoupled"
+    head_perception = args.perception == "head"
+    if head_perception and not (decoupled_run and args.task == "door"):
+        parser.error("--perception head is the combiner door demo: --task door --controller decoupled")
+    if args.look_back_m is not None and not head_perception:
+        parser.error("--look_back_m is for --perception head")
     if decoupled_run and (args.task != "door" or args.wrist or args.mech or args.zero_actions or args.checkpoint):
         parser.error("--controller decoupled is the door pull's baseline: --task door, without --wrist, --mech, "
                      "--zero_actions or --checkpoint")
@@ -318,7 +337,7 @@ def main() -> int:
     controller = ("mech_law" if force_law else "mech_goal") if args.mech else (
         "unifp_wrist" if args.wrist else ("zero_actions" if args.zero_actions else "unifp"))
     if decoupled_run:
-        controller = "decoupled_walk_ik"
+        controller = "combiner_door" if head_perception else "decoupled_walk_ik"
     if claw and not args.mech:
         controller += "_claw"
     if claw and not lips:
@@ -431,6 +450,11 @@ def main() -> int:
             # as the friction grip does, onto the bar: beyond the fingertips the lips overbite and stop nothing.
             jaws = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
             phases = [dataclasses.replace(p, jaw_m=jaws.get(p.jaw_m, p.jaw_m)) for p in phases]
+    if head_perception:
+        from demos.combiner_door import env as door_env  # noqa: E402
+
+        look_back_m = door_env.LOOK_BACK_M if args.look_back_m is None else args.look_back_m
+        phases = door_env.pre_phases(look_back_m) + list(phases)
     total_s = sum(phase.duration_s for phase in phases)
 
     goal_correction = (args.mech and not args.no_goal_correction) or args.goal_correction
@@ -458,6 +482,7 @@ def main() -> int:
 
         cfg.robot = decoupled.make_robot_cfg(robot_usd)
         cfg.seeded_ik_loop = args.seeded_ik_loop
+        cfg.walker = args.walker or "p2dingo_gait"
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
     if args.jaw_effort_n is not None and decoupled_run:
@@ -507,7 +532,15 @@ def main() -> int:
         cfg.table = demo_env.table_cfg()
         cfg.cup = demo_env.cup_cfg(cfg.cup_usd)
     else:
-        box_usd = ROOT / "generated/unifp_demos" / f"combiner_{torque:.3f}.usda"
+        # Cached by what builds it: the torque, the geometry's every value and the builder's code. Keyed by the torque
+        # alone it outlived the geometry it was built from: the lever's measured shape and gap (2026-10-20) went into
+        # the scripts but not into the box simulated, until this key.
+        import demos.combiner.asset as box_asset  # noqa: E402
+
+        built_from = json.dumps(dataclasses.asdict(GEOMETRY), sort_keys=True).encode() + \
+            Path(box_asset.__file__).read_bytes()
+        box_key = hashlib.sha256(built_from).hexdigest()[:12]
+        box_usd = ROOT / "generated/unifp_demos" / f"combiner_{torque:.3f}_{box_key}.usda"
         if not box_usd.exists():
             build_combiner_usd(box_usd, handle_torque_nm=torque)
         cfg.box_usd = str(box_usd)
@@ -534,7 +567,9 @@ def main() -> int:
             cfg.viewer.eye = (1.0, -1.15, 1.0)
             cfg.viewer.lookat = (0.45, 0.0, 0.64)
 
-    env_class = decoupled.DecoupledDoorEnv if decoupled_run else (
+    if head_perception:
+        cfg.look_back_m, cfg.door_deg = look_back_m, args.door_deg
+    env_class = door_env.CombinerDoorEnv if head_perception else decoupled.DecoupledDoorEnv if decoupled_run else (
         mech_env.MechDemoEnv if use_mech_env else demo_env.UniFPDemoEnv)
     env = env_class(cfg)
     if args.park_arm:
@@ -556,7 +591,7 @@ def main() -> int:
     if not args.headless:
         env.set_debug_vis(args.markers)
 
-    walker = decoupled.WalkingPolicy(decoupled.walking_checkpoint(), env.device) if decoupled_run else None
+    walker = decoupled.WalkingPolicy(decoupled.walker_checkpoint(env.walker), env.device) if decoupled_run else None
     policy = None if (args.zero_actions or decoupled_run) else EvaluablePolicy(args.checkpoint, device=str(env.device))
 
     report = {
@@ -571,11 +606,11 @@ def main() -> int:
         "checkpoint": os.path.abspath(args.checkpoint) if policy else None,
         "checkpoint_source": policy.source if policy else None,
         "checkpoint_iteration": policy.iteration if policy else None,
-        "decoupled": ({"legs": {"policy": str(walker.path), "sha256": walker.sha256,
-                                "trained": "Rescue's Go2 velocity tracking, 12 leg actions, arm passive (F-008)",
+        "decoupled": ({"legs": {"walker": env.walker, "policy": str(walker.path), "sha256": walker.sha256,
+                                "trained": "a bare Go2's velocity tracking, 12 leg actions (decoupled.WALKERS)",
                                 "actuator": "Isaac Lab Go2 DCMotor (25/0.5, 23.5 N·m)",
-                                "observation": "flat_env_cfg's 235: velocities, gravity, command, legs, last action, "
-                                               "height scan; no noise"},
+                                "observation": "flat_env_cfg's 235 (velocities, gravity, command, legs, last action, "
+                                               "height scan; no noise), plus the gait clock for p2dingo_gait"},
                        "arm": {"control": "IK on Link6 + jaw centre in the base's current frame (decoupled_arm.py), "
                                           "grasp pitch/roll from the scripted grip's order, held per attempt",
                                "command_hz": 10.0,
@@ -583,6 +618,14 @@ def main() -> int:
                                         "and measured speed limits"},
                        "jaws": "UniFP's drive (800 N/m, 15 N)"} if decoupled_run else None),
         "park_arm": bool(args.park_arm),
+        "perception": ({"box": "AprilTag in the head RealSense (demos/combiner_door/head_camera.py: P2Dingo's mount, "
+                                "the measured D435i at 640x480), averaged over the look",
+                        "look_back_m": look_back_m,
+                        "camera_model": env.camera_model.source,
+                        "door": "MID-360 ray caster, door angle fitted round the tag (demos/combiner_door/mid360.py); "
+                                "verification only",
+                        "odometry": "the simulator's base pose"}
+                       if head_perception else {"box": "given (the simulator's placement)"}),
         "seeded_ik_loop": bool(args.seeded_ik_loop),
         "num_envs": env.num_envs,
         "attempts": args.attempts,
@@ -659,9 +702,11 @@ def main() -> int:
         # its standing height, so the first moments of an episode are a fall rather than a reach.
         # Set before the reset, so the reset seeds each script from the hand's measured position
         # and the first goal the policy sees is the one it is already at.
+        # The combiner door demo spawns behind its stance (`demos/combiner_door`), so its home point is behind too.
+        spawn_home = door_env.home_behind(look_back_m) if head_perception else demo_script.HOME_POINT
         for demo in env.scripts:
             demo.phases = [demo_script.Phase("spawn", args.settle_s,
-                                             target=lambda st: demo_script.HOME_POINT,
+                                             target=lambda st: spawn_home,
                                              jaw_m=phases[0].jaw_m)] + list(phases)
         obs, _ = env.reset()
 
@@ -796,6 +841,10 @@ class _AttemptRecord:
         self.topple: list[dict | None] = [None] * env.num_envs
         self.final_row: list[dict] = [{} for _ in range(env.num_envs)]
         self.arm_speed_peak = torch.zeros(env.num_envs, device=env.device)
+        #: The combiner door demo's lidar frames, each (phase, reading deg or nan, the simulator's door deg), and the
+        #: last frame's stamp seen, so each frame is counted once although every step's row repeats it.
+        self.lidar_frames: list[list] = [[] for _ in range(env.num_envs)]
+        self._lidar_stamp = [None] * env.num_envs
 
     def update(self, step, done, rows):
         import math
@@ -908,6 +957,19 @@ class _AttemptRecord:
                 if hasattr(env, "ik_status"):
                     # The decoupled baseline's arm: how its latest 10 Hz command was solved (`decoupled_arm.IKStep`).
                     row["ik_status"] = env.ik_status[index]
+                if hasattr(env, "lidar_readings"):
+                    # The combiner door demo: the MID-360's latest reading of the door, beside the script's command
+                    # (the simulator's angle is `door_deg`). Repeated every step until the next 10 Hz frame.
+                    reading = env.lidar_readings[index]
+                    row["commanded_door_deg"] = round(env.commanded_door_deg(index), 2)
+                    row["lidar_door_deg"] = round(reading.angle_deg, 2) if reading.ok else None
+                    row["lidar_points"] = reading.points
+                    row["lidar_rms_mm"] = round(1000 * reading.rms_m, 1) if reading.ok else None
+                    row["lidar_offset_mm"] = round(1000 * reading.offset_m, 1) if reading.ok else None
+                    stamp = env.lidar_times_s[index]
+                    if math.isfinite(stamp) and stamp != self._lidar_stamp[index]:
+                        self._lidar_stamp[index] = stamp
+                        self.lidar_frames[index].append((command.phase, reading.angle_deg, env.lidar_truth_deg[index]))
                 if row["base_pose_error_m"] is not None:
                     best["max_base_pose_error_m"] = max(best.get("max_base_pose_error_m", 0.0), row["base_pose_error_m"])
                     best["max_base_yaw_error_deg"] = max(best.get("max_base_yaw_error_deg", 0.0),
@@ -941,6 +1003,22 @@ class _AttemptRecord:
                                row["forearm_contact_n"], row["finger_contact_n"],
                                row["base_shift_m"]))
                 self.last[index][command.phase] = row
+
+    def _perception_record(self, index: int) -> dict:
+        """The combiner door demo's look and its lidar's reading of the door, for one attempt."""
+        import math
+
+        frames = [f for f in self.lidar_frames[index] if f[0] in ("grip", "pull", "hold")]
+        read = [f for f in frames if math.isfinite(f[1])]
+        errors = sorted(abs(f[1] - f[2]) for f in read)
+        pick = lambda q: round(errors[min(len(errors) - 1, int(q * len(errors)))], 2) if errors else None
+        end = self.last[index].get("hold", {}).get("lidar_door_deg")
+        return {"look": dict(self.env.look_records[index]),
+                "lidar": {"frames_grip_pull_hold": len(frames), "read": len(read),
+                          "error_deg_median": pick(0.5), "error_deg_p90": pick(0.9),
+                          "error_deg_max": round(errors[-1], 2) if errors else None},
+                "lidar_door_at_end_of_hold_deg": end,
+                "verified_open": end is not None and end >= props.DOOR_PULL_SUCCESS_DEG}
 
     def finish(self) -> list[dict]:
         out = []
@@ -996,6 +1074,8 @@ class _AttemptRecord:
                 if hasattr(self.env, "ik_counts"):
                     record["ik_counts"] = dict(self.env.ik_counts[index])
                     record["grasp"] = self.env.arms[index].grasp_note
+                if hasattr(self.env, "look_records"):
+                    record.update(self._perception_record(index))
                 # Swung open: the door at the success angle when the hold ends, the jaws still on it, and the robot
                 # still up. Its peak alone would count a door flung past and swinging back.
                 record["success"] = bool((record["door_at_end_of_hold_deg"] or 0.0) >= props.DOOR_PULL_SUCCESS_DEG
@@ -1086,6 +1166,22 @@ def _summarise(attempts: list[dict], task: str) -> dict:
             "max_base_yaw_error_deg_median": median([a.get("max_base_yaw_error_deg") for a in attempts]),
             "base_yaw_final_deg_median": median([a.get("base_yaw_final_deg") for a in attempts]),
         })
+        if any("look" in a for a in attempts):
+            looks = [a["look"] for a in attempts]
+            lidar = [a["lidar"] for a in attempts]
+            summary.update({
+                "tag_found": sum(bool(look.get("found")) for look in looks),
+                "look_site_position_mm_median": median([look.get("site_position_mm") for look in looks]),
+                "look_site_position_mm_max": max((look.get("site_position_mm") or 0.0 for look in looks), default=None),
+                "look_site_yaw_deg_median": median([look.get("site_yaw_deg") for look in looks]),
+                "lidar_read_fraction_median": median([l["read"] / l["frames_grip_pull_hold"]
+                                                      for l in lidar if l["frames_grip_pull_hold"]]),
+                "lidar_error_deg_median": median([l["error_deg_median"] for l in lidar]),
+                "lidar_error_deg_p90_max": max((l["error_deg_p90"] or 0.0 for l in lidar), default=None),
+                "verified_open": sum(bool(a.get("verified_open")) for a in attempts),
+                "verified_agrees_with_success": sum(bool(a.get("verified_open")) == bool(a.get("success"))
+                                                    for a in attempts),
+            })
     else:
         summary.update({
             "jaw_centre_error_arrive_m_median": median(

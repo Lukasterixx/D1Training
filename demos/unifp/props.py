@@ -90,9 +90,12 @@ POST_TOP_M = 0.68 - GEOMETRY.spindle[2] + BOX_SCENE_SHIFT_M[2]
 POST_SIZE_M = (0.28, 0.56)
 #: Distance from the robot to the box's root. The earlier proxy's handle stood 0.151 m proud of the
 #: root toward the robot and was sampled at 0.64-0.68 m: the grasp at a 0.52-0.55 m radius, inside the
-#: trained 0.58. The real box is deeper and its handle stands 0.223 m proud (`GEOMETRY.handle`), so the
-#: range moves out by the difference and the grasp keeps its distance.
-BOX_DISTANCE_RANGE_M = (0.70, 0.74)
+#: trained 0.58. The real box is deeper, so the range moves by the difference and the grasp keeps its distance:
+#: the handle 0.477-0.517 m from the robot whatever `GEOMETRY.handle` is. With the lever measured 27 mm off the
+#: door (2026-10-20) it stands 0.1935 m proud, so the box is 0.6705-0.7105 m off; the 56 mm gap assumed before
+#: put it 0.223 m proud and the box 0.70-0.74 m off.
+HANDLE_DISTANCE_RANGE_M = (0.477, 0.517)
+BOX_DISTANCE_RANGE_M = tuple(round(d + GEOMETRY.handle[0], 4) for d in HANDLE_DISTANCE_RANGE_M)
 BOX_BEARING_RANGE_DEG = (-12.0, 12.0)
 BOX_YAW_JITTER_DEG = (-8.0, 8.0)
 #: How far out the lever the jaws close, from the spindle. The scripted grip uses 90 mm on a 105 mm

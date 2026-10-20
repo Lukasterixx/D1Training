@@ -1,0 +1,103 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "stopped",
+  "stage": "walk",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T085050_walk_live",
+    "--stage",
+    "walk",
+    "--live"
+  ],
+  "started_utc": "20261020T085054",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 18.997,
+      "stop": "after the walk in: the tag is not on a door the box's size: the lidar's face is -3 cm from it and carries on past the door's edges (0%). A tag on a stand in front of a wall? (P2Dingo's dock carries the same one)"
+    },
+    {
+      "t": 69.88,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 32,
+    "with_tag": 32,
+    "lidar_frames": 23,
+    "found": true,
+    "in_range": true,
+    "text": "box 0.69 m from the stance at +0.6 deg, door +1.5 deg off square, walk in 0.25 m",
+    "detections": 32,
+    "site": {
+      "distance_m": 0.6905,
+      "bearing_deg": 0.554,
+      "yaw_deg": -178.483
+    },
+    "walk_in_m": 0.253,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.7,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.0
+  },
+  "abort": "after the walk in: the tag is not on a door the box's size: the lidar's face is -3 cm from it and carries on past the door's edges (0%). A tag on a stand in front of a wall? (P2Dingo's dock carries the same one)",
+  "attempt_events": [
+    {
+      "t": 11.947,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "walk_in",
+      "short_m": 0.069,
+      "carried_m": -0.005,
+      "step": 0
+    },
+    {
+      "phase": "walk_in",
+      "short_m": -0.015,
+      "carried_m": -0.002,
+      "step": 1
+    },
+    {
+      "t": 16.947,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 34.5,
+      "turned_deg": 0.25
+    },
+    {
+      "phase": "reanchor",
+      "ok": false,
+      "text": "the tag is not on a door the box's size: the lidar's face is -3 cm from it and carries on past the door's edges (0%). A tag on a stand in front of a wall? (P2Dingo's dock carries the same one)"
+    }
+  ]
+}

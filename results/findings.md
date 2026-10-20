@@ -5409,7 +5409,10 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-152 — The decoupled door-pull baseline's arm IK, bounded to run at 10 Hz (≤ 7 ms a command), opens 9 doors of 32 on two seeds, against 15 for the same IK with an unbounded seeded search on every miss (up to 486 ms a command); UniFP with the wrist servo opened 15 on the same two seeds
 
-- **Status:** provisional (simulation; two seeds of 16; the baseline's own plant as in F-151)
+- **Status:** superseded
+- **Superseded by:** [F-153](#f-153) (2026-10-20), as the decoupled baseline's number: on P2Dingo's walking policy the same
+  bounded IK opens 32 of 32. What this finding measured on the 2024 walking policy (the IK's cost, the 15 against 9 of 32,
+  where the two loops part) stands.
 - **Week:** 6
 - **Date:** 2026-10-19
 - **Supersedes:** [F-151](#f-151)
@@ -5458,3 +5461,220 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - For deployment, the controllers are cheap either way. UniFP is 0.11 ms of inference per 20 ms step on one
     development-PC core, the walking policy 0.03 ms, the bounded IK 7 ms per 100 ms command at worst. What the
     viewer showed was the simulator stalling on the first version's IK.
+
+### F-153 — On P2Dingo's walking policy the decoupled door pull opens 32 doors of 32 on two seeds, against 9 on the 2024 walking policy and UniFP's 15 with the wrist servo; the 2024 policy, stopped from a walk faster than 0.06 m/s, turns in place and leans up to 26 deg, and P2Dingo's stops level
+
+- **Status:** provisional (simulation; two seeds of 16; each controller on its own plant, as in F-151)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Supersedes:** [F-152](#f-152) (as the baseline's number)
+- **Evidence:** [Week 6 log, 2026-10-20](week_06/notes.md), "The combiner door demo".
+  - The same door pull, placements and bounded arm IK as F-152, with `--walker p2dingo_gait`: P2Dingo's installed policy
+    (`go2_p2dingo_gait` v7 `model_7000.pt`, a clocked gait after UniFP's, trained on a bare Go2). Results:
+    [seed 1](#/week/6/run/20261020T051554_door_decoupled_walk_ik_seed1_door16_decoupled_p2dwalker_s1) 16/16,
+    [seed 2](#/week/6/run/20261020T051945_door_decoupled_walk_ik_seed2_door16_decoupled_p2dwalker_s2) 16/16, no falls,
+    doors 85.8-102.8 deg at the end of the hold. Arrival 5.0-5.1 mm; worst base path error, median attempt, 0.10-0.12 m
+    (0.37-0.39 on the 2024 policy).
+  - Same seeds: the 2024 policy 3 and 6 (F-152); UniFP + wrist 8 and 7 (F-146).
+  - Why the 2024 policy fails, measured in a probe of the port, free space, arm parked or out:
+    - stopped from a steady 0.06 m/s it stands (roll 0.7 deg);
+    - from 0.08 m/s, 0.10, or a ramp down from 0.10, it keeps turning in place at ~5 deg/s and leans 10-26 deg;
+    - native playback leans too (9-14 deg after 0.06 m/s, 20.6 deg tilt walking 0.15 m/s).
+  - P2Dingo's, the same probe: stopped from 0.15 or 0.30 m/s, 1.0-1.7 deg of roll, and turning ~2 deg/s for a few
+    seconds, which settles (as after landing from the spawn: ~15 deg over 3-4 s, then still).
+- **Scope:**
+  - Neither walking policy trained with the arm.
+  - The legs run each policy's own conditions: DCMotor, self-collision off, 0.8/0.6 foot friction. UniFP's are not
+    these (F-151).
+  - Two seeds, 32 placements, a free door, the pose given.
+- **Implication:**
+  - The decoupled stack's weak half was its walking policy, not its arm and not the decoupling. With a policy that
+    stops cleanly it beats UniFP + wrist on this task, 32 to 15. The door pull's comparison should be quoted against
+    this baseline, which is now its default.
+  - UniFP's coordination advantage (F-151) is not visible here.
+  - The 2024 policy should not be used to walk the arm: `sim.py` still plays it back.
+
+
+### F-154 — Finding the box itself with the head RealSense and the MID-360 (P2Dingo's docking method) and verifying the door with the lidar, the combiner door demo opens 31 doors of 32: the box placed within 7.4 mm and 0.34 deg, the door read to a median 0.5 deg while it swings, the lidar's open/not-open agreeing with the simulator 32 of 32
+
+- **Status:** provisional (simulation; two seeds of 16; ideal rendering and a grid lidar)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Evidence:** [Week 6 log, 2026-10-20](week_06/notes.md), "The combiner door demo". `demos/combiner_door/`, P2Dingo's
+  walking policy (F-153). Results: [seed 1](#/week/6/run/20261020T051305_door_combiner_door_seed1_combiner_door16_s1)
+  15/16, [seed 2](#/week/6/run/20261020T051658_door_combiner_door_seed2_combiner_door16_s2) 16/16, no falls. The given
+  pose on the same placements: 32/32 (F-153).
+  - **The look.** The RealSense on P2Dingo's head mount (`base_link` (0.3392, 0.03215, 0.0927), straight ahead), 0.15 m
+    behind the door pull's stance: the tag whole in the picture at 200 of 200 sampled placements, against 149 from the
+    stance itself.
+    - The tag was found in 32/32 attempts.
+    - The tag's centre gives the position and the MID-360's line through the door's face around it gives the heading
+      (P2Dingo's `dock_wall` fit, ported).
+    - The box was placed a median 2.2-2.4 mm off (max 7.4) and 0.14-0.20 deg off (max 0.34). The tag's own heading
+      would have given a max 0.50 deg and 8.8 mm.
+  - **The door.** Read at 10 Hz from the walk's end by the same face fit, laid at the tag's place at the last reading:
+    - a reading on every frame of grip, pull and hold;
+    - error against the simulator a median 0.46-0.49 deg, 90th percentile at most 2.9 deg;
+    - the reading at the end of the hold called the door open (85 deg or more) or not in agreement with the simulator
+      32/32;
+    - the one failure, a door at 74.5 deg, was read at 74.4 deg and not verified.
+  - Making it work (all runs recorded, the log has each):
+    - the walk in had to be straight, slow and stopped by odometry;
+    - the 2024 walking policy could not stand after it (F-153);
+    - the attempt is anchored after the robot lands, since the spawn drop turned it.
+- **Scope:**
+  - Simulation: an ideal render of a printed tag, a 1-deg grid lidar with 3 cm range noise and no motion distortion,
+    and the simulator's odometry.
+  - The tag's heading at 0.37 m in an ideal render is already good, so the lidar's heading gains little here
+    (0.50 → 0.34 deg max). On the robot P2Dingo measured the tag's heading ~10 deg off at a metre, which is where the
+    lidar earns its place.
+  - The placements are the door pull's (0.70-0.74 m, square to within ±5 deg); there is no search for a box out of view.
+  - The mount and the bracket are from P2Dingo's working tree (uncommitted there; `third_party/p2dingo/NOTICE.md`).
+- **Implication:**
+  - The sequence the week's plan asks for runs end to end in simulation without a given pose: locate, approach,
+    engage, actuate, open, verify.
+  - The lidar's door reading is accurate enough to be the verify step. It could also close the loop (re-grip, or stop
+    the walk when the door lags its command), which this does not do.
+  - On hardware, three things this has not tested: the camera's intrinsics on the head, the face fit on real returns,
+    and P2Dingo's walking policy carrying the arm.
+
+### F-155 — With the arm starting folded in the real D1's rest pose and the handle as Lukas measured it (a 140 × 40 × 17 mm slot, 27 mm off the door), the combiner door demo opens 32 doors of 32 on two seeds, as does the door pull given the pose; the unfold, in joint space, tilts the base under 0.5 deg and touches nothing
+
+- **Status:** provisional (simulation; two seeds of 16; ideal rendering and a grid lidar)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Evidence:** [Week 6 log, 2026-10-20](week_06/notes.md), "The arm starts folded, and the handle as measured".
+  - Results:
+    - this demo: [seed 1](#/week/6/run/20261020T072044_door_combiner_door_seed1_cd16_gap27b_s1) 16/16,
+      [seed 2](#/week/6/run/20261020T072351_door_combiner_door_seed2_cd16_gap27b_s2) 16/16;
+    - the pose given: [seed 1](#/week/6/run/20261020T072654_door_decoupled_walk_ik_seed1_door16_decoupled_gap27b_s1)
+      16/16, [seed 2](#/week/6/run/20261020T072754_door_decoupled_walk_ik_seed2_door16_decoupled_gap27b_s2) 16/16;
+    - no falls.
+  - **The fold.** The arm starts at `d1_hardware.REST_SERVO_DEG`, its J1 and J2 inside the URDF's limits. It stays
+    folded through the landing and the look. It unfolds after the look, in a straight line in joint space to the
+    home point's IK solution, each 10 Hz command at most 4 deg from the measured pose.
+    - In a 4-attempt smoke, J1 went from -89.7 to +8.2 deg in 3 s.
+    - The base tilted under 0.5 deg; nothing touched.
+    - The body proxy finds the path clear throughout (`d1_ik.path_clearance`).
+  - **The lever.**
+    - A slot, 140 × 40 × 17 mm, turning about its near end, its back 27 mm off the door; it was an 18 mm bar 56.5 mm
+      off.
+    - The jaws open to 63.2 mm onto it (11.6 mm clear above and below) and squeeze it 14 N through the pull (about 10 N
+      on the bar).
+    - The placements moved 29.5 mm closer so the handle keeps its distance from the robot; the look moved back as far.
+  - **The look and the lidar, against F-154:**
+    - the tag found 32/32;
+    - the box placed a median 2.2-2.3 mm and 0.12 deg off (max 3.0 mm, 0.64 deg);
+    - the door read to a median 0.33-0.39 deg (p90 at most 2.1);
+    - the verdict agreed with the simulator 32/32.
+  - **A stale box.** The door runner cached the box's USD by the handle's torque alone, so the first runs with the
+    changes simulated the old bar. They are recorded as such:
+    - the folded start alone, 16/16 twice, valid as that;
+    - the measured gap aimed at a box that did not have it, 6-7/16 and 13-14/16, invalid.
+    - The cache is now keyed by the geometry and the builder's code. The cached box was byte-identical to one built from
+      the committed geometry (81b9c4a), so F-146 to F-154 were run on the box they describe.
+- **Scope:**
+  - Simulation, as F-154: an ideal render, a grid lidar, the simulator's odometry, P2Dingo's walking policy.
+  - Measured on the lever: its outline and its gap. Assumed: where it turns, its mass, the jaw's grip on its flat faces
+    (PhysX friction).
+  - The real arm's rest pose is 1-3 deg outside the URDF's limits here.
+- **Implication:**
+  - Folded at rest is a safe start for this sequence in simulation: the unfold is one joint-space move, after the box
+    is found.
+  - The measured lever does not cost the decoupled grip anything. A flat top and bottom grips firmer than the round
+    bar did.
+  - The cache bug is a reminder: a measurement change must be traced through to the simulated object, not only to the
+    scripts.
+
+### F-156 — The combiner door's robot program runs on the dog: its sensors, arm feedback and a dry run of the whole attempt all work, drawn in RViz over P2Dingo's zenoh link; the real dog walks on Unitree's sport mode, not the walking policy the simulation uses; and P2Dingo's charging dock carries the box's tag, which the look took for the box until it checked the lidar face's extent
+
+- **Status:** provisional (one session on the dog, 2026-10-20, dry runs only; the dock in view, not the box)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Evidence:** [Week 6 log, 2026-10-20](week_06/notes.md), "The combiner door on the real dog". `demos/combiner_door/robot/`
+  (its README). Nine runs on the dog, all recorded:
+  - watch runs, from [the first](#/week/6/run/20261020T063824_watch_dry) to
+    [the face-extent guard](#/week/6/run/20261020T064744_watch_dry);
+  - [a dry pull to 30 deg](#/week/6/run/20261020T065323_pull_dry).
+  - **Sensors and arm.**
+    - The head D435i at 1280x720 (fx 907.1, fy 906.0) and the MID-360 (20,064 points a frame) were read.
+    - The arm link read the arm folded at [-1.4, -89.7, 90.0, 2.7, 11.1, -4.0] deg with the gripper at 67.1 units,
+      P2Dingo's arm bridge disconnected.
+    - RViz on the PC drew the robot, the arm, the box, the lidar's face points and the camera through the dog's zenoh
+      bridge (two allow-list lines added there).
+  - **The look, against P2Dingo's dock:**
+    - the tag found 30 times in 2 s at about 1 m;
+    - its own pose had the box tilted 5.2 deg, which the levelled fix ignores;
+    - the lidar's face heading within 1.4 deg of the tag's, fitting at 19 mm rms;
+    - the dog lying, pitched 6.2 deg.
+  - **The dock's tag.** The face 20 mm behind the tag did not tell the dock from the box. The face carrying on past the
+    door's edges did: 141% of its points round the tag lay outside the box's outline, where the synthetic box gives 0.
+  - **The dry pull.**
+    - All 14 phases ran in order, against the dock's tag with `--ignore_range`.
+    - The ghost walked in to within 8 mm of the stance with the gait's carry modelled.
+    - The IK held the hand's pose (transit steps fell back to the position).
+    - The base was commanded only at sport mode's floors; the arm ended commanded to the fold.
+  - **Walking.** P2Dingo walks the real Go2 through sport mode (`/api/sport/request`); its clocked-gait policy, which
+    F-153 to F-155 walk with, has only run in Isaac Sim. P2Dingo measured sport mode's dead zones (still at 0.12-0.15
+    m/s, no turn on the spot at 0.30-0.42 rad/s, 75 mm of carry from 0.21 m/s).
+- **Scope:**
+  - Dry: nothing was commanded to the legs or the arm.
+  - The box was not in view.
+  - The dog was lying, so its pose for the look was not a standing one.
+  - One room, one session.
+- **Implication:**
+  - The program is ready for its first live steps, in the README's order: unfold, then walk, reach, grip, pull.
+  - **Walking will not match the simulation.** The pull's base path, 0.12 m/s sideways and 0.22 rad/s, lies inside
+    sport mode's dead zones, so on the robot it is walked in lifted bursts. The pull is the step most likely to differ
+    from simulation, and F-154's "P2Dingo's walking policy carrying the arm" was never on the table for hardware.
+  - Keep the dock out of view; the extent check is the guard.
+
+### F-157 — Two earlier designs do not fit the lever as measured: the L-lip claw's lip tips stand 37.2 mm apart fully open, so the 40 mm lever cannot enter between them from the front; and the turning demo's 60-80 deg grasps put the wrist RealSense into the door, 27 mm behind the lever
+
+- **Status:** confirmed (geometry, CPU)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Evidence:** [Week 6 log, 2026-10-20](week_06/notes.md), "The arm starts folded, and the handle as measured".
+  - **The claw.** `demos/unifp/claw.py`: the lips reach 20 mm in from each finger, 37.2 mm between their tips with the
+    jaws fully open. The lever is 40 mm tall. UniFP's claw runs (F-07x) were on the 18 mm bar.
+  - **The wrist camera.** `demos/combiner/tests/test_turn.py::test_camera_and_bracket_clear_the_door_lever_and_spindle_at_every_grasp`:
+    - at the 60 and 80 deg grasps the camera or its bracket comes within 0.05-19 mm of the door or the lever;
+    - pitched 40 deg or less, 14 mm or more off the lever and 20 mm or more off the door.
+    - The camera has no collider in the demos, so a simulated run would not show the collision.
+- **Scope:** CAD and measured outlines; the lever's pivot assumed at its near end.
+- **Implication:**
+  - The lip claw needs lips under 18.6 mm deep for the lever to pass between them at all with the jaws fully open
+    (77.2 mm), and shallower for any clearance; or a sideways entry.
+  - The turning demo's planner still lists the 60-80 deg grasps; with the wrist camera fitted they should be dropped.
+    Not changed here: Lukas's call.
+
+### F-158 — Letting go after the pull, the door script's straight line from the lever to the home point runs the fingers into the lever and its 63 mm hub, as Lukas saw on the dog; backing the hand straight off along its own approach first keeps them 11.5 mm off the lever and 38 mm off the hub
+
+- **Status:** provisional (CPU model, and one live observation; the ungrasp has not run on the dog)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Evidence:** [Week 6 log, 2026-10-20](week_06/notes.md), "The combiner door on the real dog", the last block.
+  - **Live** ([the first live pull](#/week/6/run/20261020T090355_pull_live) and Lukas's runs after it): returning
+    home from the lever, the fingers caught the lever's hub and pushed the door. The hub is 63 mm across (Lukas,
+    photographed); it is assumed to fill the 27 mm gap behind the lever, centred on the spindle.
+  - **Model:** `demos/combiner_door/tests/test_robot.py::test_letting_go_keeps_the_fingers_off_the_lever_and_its_hub`.
+    - A dry pull to 30 deg, with the arm link's profile driving a model servo.
+    - The fingers are sampled through their CAD volume (`grasp.FINGER_*`) and measured against the slot lever and the
+      hub at the script's door angle.
+    - **The script's release then "back":** 8.2 mm into the lever and 0.7 mm into the hub. The fingertips stand 20 mm
+      past the jaw centre, in the gap behind the lever. With the door turned 30 deg relative to the base, the line home
+      runs 11 cm along the door towards the hub for every 5 cm out from it.
+    - **The ungrasp:** the jaws opened where the hand measures itself, then 12 cm straight back along Link6's +z, its
+      orientation held. Never closer than 11.5 mm to the lever (the open jaws' clearance) or 38 mm to the hub.
+- **Scope:**
+  - The hub's depth and centring are assumed, from the photo.
+  - The door is at the script's angle; the live door read 40-51 deg against 30 commanded.
+  - The fingers only (not the wrist camera or Link6).
+  - The simulated demos' door script (`demos/unifp/script.door_phases`) still goes home straight from the lever. Their
+    asset has a 24 mm spindle and a 60 mm rosette 6 mm deep, not the hub.
+- **Implication:**
+  - Leave a held handle along the approach the hand came in on, by more than the fingers' 29 mm past the lever's front,
+    before any sideways move.
+  - The simulated door pulls may also drag the lever on the way home. Their scores are taken at the end of the pull, so
+    F-146 to F-155's door counts stand. Whether the released door was pushed back has not been checked.
+

@@ -1,0 +1,75 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "stopped",
+  "stage": "unfold",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T081928_unfold_live",
+    "--stage",
+    "unfold",
+    "--live"
+  ],
+  "started_utc": "20261020T081931",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 25.249,
+      "stop": "arm feedback 0.56 s old"
+    },
+    {
+      "t": 78.022,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 30,
+    "with_tag": 30,
+    "lidar_frames": 19,
+    "found": true,
+    "in_range": true,
+    "text": "box 0.69 m from the stance at -3.7 deg, door -4.6 deg off square, walk in 0.28 m",
+    "detections": 30,
+    "site": {
+      "distance_m": 0.6905,
+      "bearing_deg": -3.688,
+      "yaw_deg": 175.443
+    },
+    "walk_in_m": 0.282,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.4,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -1.87
+  },
+  "abort": "arm feedback 0.56 s old",
+  "attempt_events": [
+    {
+      "phase": "recover"
+    }
+  ]
+}

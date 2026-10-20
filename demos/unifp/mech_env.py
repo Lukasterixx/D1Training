@@ -178,13 +178,13 @@ class MechDemoEnv(UniFPDemoEnv):
     def _bar_distance(self, ids: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """(distance from the jaw centre to the lever bar, the jaw centre in the lever's frame).
 
-        The bar is the Lever cylinder of `demos/combiner/asset.py`: in the lever body's frame it runs
-        from the spindle toward the hinge (`hinge_side` y) for `handle_length`, at x = `handle_projection`, z = 0.
+        The bar is the Lever slot's centreline (`demos/combiner/asset.py`): in the lever body's frame it runs
+        from the spindle toward the hinge (`hinge_side` y) for `handle_span`, at x = `handle_projection`, z = 0.
         """
         centre, _ = self._jaw_centre_state()
         pos, quat = self._handle_pose()
         local = interface.quat_rotate_inverse(quat[ids], centre[ids] - pos[ids])
-        bar_end = GEOMETRY.hinge_side * GEOMETRY.handle_length
+        bar_end = GEOMETRY.hinge_side * GEOMETRY.handle_span
         along = torch.clamp(local[:, 1], min=min(bar_end, 0.0), max=max(bar_end, 0.0))
         dx = local[:, 0] - GEOMETRY.handle_projection
         dy = local[:, 1] - along
@@ -294,7 +294,7 @@ class MechDemoEnv(UniFPDemoEnv):
 
         pos, quat = self._handle_pose()
         start = torch.tensor([GEOMETRY.handle_projection, 0.0, 0.0], device=self.device).expand(self.num_envs, 3)
-        end = torch.tensor([GEOMETRY.handle_projection, GEOMETRY.hinge_side * GEOMETRY.handle_length, 0.0],
+        end = torch.tensor([GEOMETRY.handle_projection, GEOMETRY.hinge_side * GEOMETRY.handle_span, 0.0],
                            device=self.device).expand(self.num_envs, 3)
         a_w = pos + interface.quat_apply(quat, start)
         b_w = pos + interface.quat_apply(quat, end)
@@ -320,7 +320,7 @@ class MechDemoEnv(UniFPDemoEnv):
         # Where the bar sits in the claw, for the record: how far out the lever the claw is (from the spindle),
         # how deep in the loop (along the approach) and how far across it (along the jaw axis), and how askew.
         tilt = torch.rad2deg(torch.atan2(d[:, 2].abs(), d[:, 0].abs()))
-        self._lip_where = torch.stack((s * GEOMETRY.handle_length, q[:, 2], q[:, 1], tilt), dim=-1)
+        self._lip_where = torch.stack((s * GEOMETRY.handle_span, q[:, 2], q[:, 1], tilt), dim=-1)
         return inside, point_w, (q - centre).norm(dim=-1)
 
     def _track_lips(self, phases: list[str]) -> None:

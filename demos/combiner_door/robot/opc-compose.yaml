@@ -1,0 +1,7 @@
+# Added to P2Dingo's operator stack (docker-compose-opc.yaml) by view_on_pc.sh, through p2dingo-rviz.sh's
+# OPC_COMPOSE_EXTRA: this repo mounted into rviz at /root/d1training, for the robot model's meshes (node.py publishes
+# the URDF with file:///root/d1training/ mesh paths) and for combiner_door_robot.rviz.
+services:
+  rviz:
+    volumes:
+      - ${D1TRAINING_ROOT:?view_on_pc.sh sets it}:/root/d1training:ro

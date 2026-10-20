@@ -8,6 +8,14 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## A walking policy: P2Dingo's clocked gait (2026-10-20)
+
+`p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs
+(`go2_p2dingo_gait` v7), copied for the decoupled door pull's legs (`demos/unifp/decoupled.py`, `--walker p2dingo_gait`)
+and the combiner door demo (`demos/combiner_door/`), where it is the default. It trained on a bare Go2, observes a gait
+clock (`demos/unifp/p2dingo_gait_clock.py`, which must not change) and loads through `decoupled.WalkingPolicy`, not
+`EvaluablePolicy`. Provenance: `third_party/p2dingo/NOTICE.md`.
+
 ## The robot with its lidar and wrist camera (since 2026-10-19): none of these trained on it
 
 The real robot carries a MID-360 in its mount on the trunk and the RealSense in its bracket on the gripper (`payload.py`).

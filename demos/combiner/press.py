@@ -43,7 +43,9 @@ from .geometry import GEOMETRY
 @dataclass(frozen=True)
 class PressParams:
     radius_m: float = 0.08           # along the lever from the spindle axis, where the fingers cross it
-    reach_past_m: float = 0.025      # the fingertips run this far past the lever's centreline, towards the door
+    # The fingertips run this far past the lever's centreline, towards the door: 6.5 mm past the measured lever's back,
+    # 20.5 mm short of the door 27 mm behind it (25 mm, set for the earlier 56 mm gap, left 10.5 mm).
+    reach_past_m: float = 0.015
     press_depth_m: float = 0.004     # commanded below the lever's top, so the fingers keep pressing
     final_deg: float = 52.0          # commanded lever angle at the end of the push; the latch needs 45
     clearance_m: float = 0.04        # above the lever before coming down onto it

@@ -1,0 +1,139 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "stopped",
+  "stage": "pull",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T090355_pull_live",
+    "--stage",
+    "pull",
+    "--live"
+  ],
+  "started_utc": "20261020T090358",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 47.664,
+      "stop": "the arm is 11 deg from where the IK wants it: loaded"
+    },
+    {
+      "t": 93.847,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 33,
+    "with_tag": 33,
+    "lidar_frames": 22,
+    "found": true,
+    "in_range": true,
+    "text": "box 0.69 m from the stance at -8.1 deg, door -2.4 deg off square, walk in 0.29 m",
+    "detections": 33,
+    "site": {
+      "distance_m": 0.6905,
+      "bearing_deg": -8.145,
+      "yaw_deg": 177.643
+    },
+    "walk_in_m": 0.286,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.4,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -2.42
+  },
+  "abort": "the arm is 11 deg from where the IK wants it: loaded",
+  "attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "t": 21.347,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "walk_in",
+      "short_m": 0.06,
+      "carried_m": 0.005,
+      "step": 0
+    },
+    {
+      "phase": "walk_in",
+      "short_m": -0.003,
+      "carried_m": 0.006,
+      "step": 1
+    },
+    {
+      "t": 26.348,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 36.1,
+      "turned_deg": 0.16
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "box 0.65 m from the stance at -9.6 deg, door -4.4 deg off square, walk in 0.00 m (outside the simulated 0.67-0.71 m)"
+    },
+    {
+      "t": 28.348,
+      "phase": "stand"
+    },
+    {
+      "t": 30.547,
+      "phase": "approach"
+    },
+    {
+      "t": 33.547,
+      "phase": "settle"
+    },
+    {
+      "t": 36.547,
+      "phase": "enter"
+    },
+    {
+      "t": 40.247,
+      "phase": "arrive"
+    },
+    {
+      "t": 42.047,
+      "phase": "grip"
+    },
+    {
+      "t": 43.247,
+      "phase": "pull"
+    },
+    {
+      "t": 46.747,
+      "phase": "hold"
+    }
+  ]
+}

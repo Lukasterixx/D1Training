@@ -45,9 +45,9 @@ HOME_POINT: Vec3 = (0.50 * math.cos(math.pi / 5), 0.0,
 
 #: Jaw travel per finger. The gap between the pads is `CLOSED_GAP_M + 2 * travel`.
 JAW_WIDE_M = GRIPPER_OPEN_M              # 77.2 mm gap: the pick's open jaws, over a 55 mm cup
-JAW_LEVER_OPEN_M = PullParams().jaw_open_m   # 41.2 mm gap: the scripted grip's opening on the bar
+JAW_LEVER_OPEN_M = PullParams().jaw_open_m   # 63.2 mm gap: the scripted grip's opening on the 40 mm lever
 JAW_CUP_SHUT_M = 0.0                     # the URDF's stop; the 55 mm cup arrests the pads long before
-JAW_BAR_SHUT_M = GRIP_SHUT_M             # past the stop, to squeeze the 18 mm bar (F-063)
+JAW_BAR_SHUT_M = GRIP_SHUT_M             # past the stop, to squeeze the 40 mm lever (F-063)
 
 
 def lerp(a: Vec3, b: Vec3, u: float) -> Vec3:

@@ -73,7 +73,7 @@ class PlacementGeometry(unittest.TestCase):
         grasp = site.grasp_point_m()
         self.assertAlmostEqual(grasp[2], props.POST_TOP_M + GEOMETRY.spindle[2])
         # Between the spindle and the end of the lever.
-        self.assertLess(props.LEVER_GRASP_OFFSET_M, GEOMETRY.handle_length)
+        self.assertLess(props.LEVER_GRASP_OFFSET_M, GEOMETRY.handle_span)
         self.assertGreater(props.LEVER_GRASP_OFFSET_M, 0.0)
 
     def test_turning_the_lever_moves_the_grasp_down_and_in(self):

@@ -1,0 +1,42 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "stopped",
+  "stage": "unfold",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261020T081401_unfold_live",
+    "--stage",
+    "unfold",
+    "--live"
+  ],
+  "started_utc": "20261020T081405",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 30.881,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 4.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  }
+}

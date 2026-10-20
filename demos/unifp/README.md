@@ -205,9 +205,11 @@ placements. F-146.
 
 The same scene, placements, script, walk feedback, latch, jaws and success criterion, with a conventional stack in
 place of UniFP (`decoupled.py`, `decoupled_arm.py`):
-- **Legs:** the walking checkpoint `sim.py` plays back (go2_omniverse's rough-terrain policy, trained on a bare Go2).
-  It gets its own 235-wide observation (height scan included), its DCMotor legs, self-collision off and the foot
-  friction it trained on. With UniFP's self-collision and friction it tracked a third of its command and fell.
+- **Legs:** a walking policy trained on a bare Go2 (`--walker`): P2Dingo's clocked gait by default since 2026-10-20
+  (`checkpoints/p2dingo_go2_gait_v7_model_7000.pt`), or `rescue_2024`, the checkpoint `sim.py` plays back. Each gets its
+  own observation (height scan included; the gait clock for P2Dingo's), its DCMotor legs, self-collision off and the
+  foot friction it trained on. With UniFP's self-collision and friction the 2024 policy tracked a third of its command
+  and fell.
 - **Arm:** IK on the jaw centre and the scripted grip's hand orientation, nearest-level grasp, re-solved every
   10 Hz command in the base's current frame. It runs through the D1 firmware planner into the measured servo model.
 - **Jaws:** UniFP's drive.
@@ -224,8 +226,13 @@ of 32 and is kept as `--seeded_ik_loop` for comparison (F-152).
 - **How it fails:** the door is pulled past 66° in 14 of 16, but the grip goes when the base lags out of the arm's
   reach, and the free door swings back.
 
-It is a naive, untuned stack on its own plant (legs and arm both differ from UniFP's), not a same-plant comparison.
-F-151, F-152.
+**On P2Dingo's walking policy (2026-10-20, the default since):** 16/16 and 16/16 on seeds 1 and 2, no falls (F-153).
+- The base trails its path by 0.10–0.12 m at worst (median attempt).
+- The 2024 policy, stopped from a walk faster than 0.06 m/s, turns in place and leans up to 26°; P2Dingo's stops level.
+- The walking policy was the stack's weak half, and with it fixed the stack beats UniFP + wrist's 15 of 32 on this task.
+
+It is still a stack on its own plant (legs and arm both differ from UniFP's), not a same-plant comparison. F-151, F-152,
+F-153. The same stack finding the box itself, with a head camera and the lidar: `demos/combiner_door/`.
 
 ## The wrist camera
 

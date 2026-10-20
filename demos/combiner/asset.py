@@ -144,14 +144,17 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
     UsdPhysics.RigidBodyAPI.Apply(handle.GetPrim())
     UsdPhysics.MassAPI.Apply(handle.GetPrim()).CreateMassAttr(0.12)
     hp = str(handle.GetPath())
-    # Black like the isolator's handle, with its red grip marker near the end (visual only); the colliders
-    # keep the earlier proxy's shape, so the grasp records stay comparable.
+    # Black like the isolator's handle, with its red grip marker near the end (visual only). The lever is the
+    # measured slot: a 17 mm thick plate, 40 mm tall, its ends semicircles, as a box between two end cylinders.
     cylinder(f"{hp}/Spindle", (g.handle_projection / 2, 0, 0),
              0.012, g.handle_projection, handle_black, axis="X")
-    cylinder(f"{hp}/Lever", (g.handle_projection, side * g.handle_length / 2, 0),
-             g.handle_radius, g.handle_length, handle_black, axis="Y")
-    cylinder(f"{hp}/LeverMarker", (g.handle_projection, side * (g.handle_length - 0.02), 0),
-             g.handle_radius + 0.0008, 0.024, red, axis="Y", collides=False)
+    cube(f"{hp}/Lever", (g.handle_projection, side * g.handle_span / 2, 0),
+         (g.handle_thickness, g.handle_span, g.handle_height), handle_black)
+    for name, along in (("LeverNearEnd", 0.0), ("LeverFarEnd", g.handle_span)):
+        cylinder(f"{hp}/{name}", (g.handle_projection, side * along, 0),
+                 g.handle_radius, g.handle_thickness, handle_black, axis="X")
+    cube(f"{hp}/LeverMarker", (g.handle_projection, side * (g.handle_span - 0.02), 0),
+         (g.handle_thickness + 0.0016, 0.024, g.handle_height + 0.0016), red, collides=False)
     grasp = UsdGeom.Xform.Define(stage, f"{hp}/HandleGrasp")
     grasp.AddTranslateOp().Set(Gf.Vec3d(g.handle_projection, side * g.handle_grasp_offset, 0))
 
@@ -260,8 +263,9 @@ def build_combiner_usd(output, handle_torque_nm=DEFAULT_HANDLE_TORQUE_NM):
                          "centre_enclosure_m": list(g.tag_centre), "printed_size_m": g.tag_outer_size,
                          "pose_enclosure": apriltag.tag_pose_box(g).round(6).tolist()},
             "lock_centre_enclosure_m": list(g.lock),
-            "assumptions": "Measured outline, handle height, tag offset and lock position (Lukas, 2026-10-19); "
-                           "assumed handle and tag on the door's centreline, lever shape, wall/door thickness, "
+            "assumptions": "Measured outline, handle height, tag offset and lock position (Lukas, 2026-10-19) and "
+                           "the lever's 140 x 40 x 17 mm slot, 27 mm off the door (2026-10-20); assumed handle and tag "
+                           "on the door's centreline, the lever's pivot at its near end, wall/door thickness, "
                            "interior and masses; spring-return lever; runtime joint-limit latch, not a cam lock "
                            "simulation"}
 
