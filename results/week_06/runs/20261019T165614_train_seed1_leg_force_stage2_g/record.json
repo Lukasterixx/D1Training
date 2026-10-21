@@ -1,0 +1,63 @@
+{
+  "id": "20261019T165614_train_seed1_leg_force_stage2_g",
+  "title": "Leg stage 2 force, recipe g (touch then turn, 40 N cap): stopped ~1450, 61-71% damaged (contact-model spikes)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T04:16:04+11:00",
+  "started_utc": "2026-10-19T16:56:14+00:00",
+  "source_dir": "logs/unifp_train/20261019T165614_train_seed1_leg_force_stage2_g",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1445,
+  "final_checkpoint": {
+    "file": "model_1445.pt",
+    "sha256": "0244ed2594508305d6fb033c485a5afcde2de3fb8e63ff347a94390649911216"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 95.44334411621094,
+      "last_step": 1445,
+      "mean_last_10": 94.51564483642578,
+      "min": 1.396523356437683,
+      "max": 97.99916076660156,
+      "points": 246
+    },
+    "Train/mean_episode_length": {
+      "last": 637.989990234375,
+      "last_step": 1445,
+      "mean_last_10": 622.0239990234375,
+      "min": 11.8125,
+      "max": 672.8400268554688,
+      "points": 246
+    },
+    "Policy/mean_std": {
+      "last": 0.2533799707889557,
+      "last_step": 1445,
+      "mean_last_10": 0.2526948779821396,
+      "min": 0.2010553479194641,
+      "max": 0.2533799707889557,
+      "points": 246
+    },
+    "Perf/total_fps": {
+      "last": 11296.0,
+      "last_step": 1445,
+      "mean_last_10": 10660.3,
+      "min": 7645.0,
+      "max": 11825.0,
+      "points": 246
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

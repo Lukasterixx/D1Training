@@ -1,0 +1,63 @@
+{
+  "id": "20261020T181612_train_seed2_key_position_s2_stage2b",
+  "title": "Key task stage 2 (the combiner key, 60% of episodes, from stage-1 model_600), position variant, seed 2",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-21T07:12:48+11:00",
+  "started_utc": "2026-10-20T18:16:12+00:00",
+  "source_dir": "logs/unifp_train/20261020T181612_train_seed2_key_position_s2_stage2b",
+  "mode": "train",
+  "seed": 2,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "9136aba825726b622a29132d3ef76cb1b3f88976",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1614,
+  "final_checkpoint": {
+    "file": "model_1614.pt",
+    "sha256": "6c57b8a2a24ee513726278f7c4dbf535a95c1e16e1c5426ecfb75db8c434c7fe"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 160.94554138183594,
+      "last_step": 1614,
+      "mean_last_10": 161.68630676269532,
+      "min": 2.706757068634033,
+      "max": 172.0487060546875,
+      "points": 1015
+    },
+    "Train/mean_episode_length": {
+      "last": 830.1599731445312,
+      "last_step": 1614,
+      "mean_last_10": 813.8410034179688,
+      "min": 13.145454406738281,
+      "max": 845.9299926757812,
+      "points": 1015
+    },
+    "Policy/mean_std": {
+      "last": 0.1997743844985962,
+      "last_step": 1614,
+      "mean_last_10": 0.19923968464136124,
+      "min": 0.1988103836774826,
+      "max": 0.21534274518489838,
+      "points": 1015
+    },
+    "Perf/total_fps": {
+      "last": 16872.0,
+      "last_step": 1614,
+      "mean_last_10": 16735.5,
+      "min": 5644.0,
+      "max": 17095.0,
+      "points": 1015
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

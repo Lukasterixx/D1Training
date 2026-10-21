@@ -5678,3 +5678,577 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - The simulated door pulls may also drag the lever on the way home. Their scores are taken at the end of the pull, so
     F-146 to F-155's door counts stand. Whether the released door was pushed back has not been checked.
 
+### F-159 — Trained UniFP-style with the front-right foot as the end effector, the Go2 stands on three legs and tracks foot goals at body height to ~5 cm, but turns a lever door handle only when it is light: after a handle stage, 17 (position-only) and 12 (force-aware) of 144 frozen handles held 1 s, all but one on the weakest spring; the foot slips off a 2 cm round bar or overloads before the lever reaches its stop, so the force-aware variant shows no advantage in success
+
+- **Status:** superseded by [F-160](#f-160) (2026-10-20, two hours after it was written: the second seed reverses
+  the steadier-hold observation below and widens the gap in success; the seed-1 numbers stand)
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Evidence:** [Week 6 log, 2026-10-19/20](week_06/notes.md), "The front-right foot as the end effector: a door handle
+  at body height"; `unifp_train/README.md`, "The front-right-leg task".
+  - The task (`--task leg`): UniFP's environment with the FR foot sphere's centre as the controlled point, its goal
+    walk about the FR thigh joint, 12 actions (the legs), the D1 held at a look pose aiming the wrist RealSense at the
+    handle region, UniFP's pushes on the foot. Variants as the plan's P0/P1: *position* (no force command, the push a
+    disturbance to reject, no force in critic or estimator target) and *force* (the target `goal + (external +
+    command) / 400 N/m`, the estimator on the external force).
+  - Stage 1, free space ([force](#/week/6/run/20261019T132551_train_seed1_leg_force_v3_s1),
+    [position](#/week/6/run/20261019T151333_train_seed1_leg_position_v3_s1)), 4096 envs: three-legged standing from
+    iteration ~35, foot error at reset ~5 cm from ~400 (training-time). Two earlier force runs did not lift the foot
+    at all (v1, v2): "lifted" meant "under 5 N", and they rested it on the floor unloaded. At full +-35 N pushes
+    (from 1800) the force-aware run's episodes fell from 776 to 622 steps; both variants' `model_1200` were used.
+  - Zero-shot on the 144 frozen handles (3 door distances x 3 sides x 2 lever directions x 4 springs x 2 heights,
+    estimate errors drawn once), final plant:
+    [force](#/week/6/run/20261019T175951_leg_eval_seed1_leg_eval_force_stage1_1200_j) 0/144 (108 engaged, 48 past
+    120 N, mostly slipped), [position](#/week/6/run/20261019T180115_leg_eval_seed1_leg_eval_position_stage1_1200_j)
+    0/144 (124 engaged, 54 damaged).
+  - Stage 2, recipe j ([force](#/week/6/run/20261019T175803_train_seed1_leg_force_stage2_j),
+    [position](#/week/6/run/20261019T175803_train_seed1_leg_position_stage2_j)), 1500 iterations from `model_1200`,
+    handles in 60% of episodes, then the frozen set:
+
+    | final checkpoint (`model_2699`) | latch held 1 s | opened at all | damaged | slipped (any) | 1 / 2 / 3 / 4 N·m held | peak median (p95) |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | [position-only](#/week/6/run/20261019T223051_leg_eval_seed1_leg_eval_position_stage2_j_2699) | **17** | 48 | 24 | 136 | 16 / 1 / 0 / 0 | 80 N (128) |
+    | [force-aware](#/week/6/run/20261019T222952_leg_eval_seed1_leg_eval_force_stage2_j_2699) | **12** | 61 | 48 | 132 | 12 / 0 / 0 / 0 | 86 N (138) |
+
+    Neither fell; both engaged all 144. The force needed at the latch is 9 / 17 / 25 / 32 N for the four
+    springs; the force held while the latch is open is ~11 N for both. The lever reaches its end stop almost never.
+  - Every bar 20 mm in radius instead of 8-12 (a diagnostic, not the frozen set):
+    [position](#/week/6/run/20261019T223120_leg_eval_seed1_leg_eval_position_stage2_j_2699_bar20mm) 22 held, 108
+    damaged; [force](#/week/6/run/20261019T223022_leg_eval_seed1_leg_eval_force_stage2_j_2699_bar20mm) 14 held, 122
+    damaged; slipping as the failure falls from 74 / 59 episodes to 2 / 3, peaks rise to ~130 N median for both.
+  - Holding with the latch open (14 force-aware, 23 position-only episodes): on the bar 0.68 / 0.58 of the hold,
+    contact force std/mean 0.88 / 1.10, lever angle std 1.4° / 2.6°. On handle 64 (1 N·m) the force-aware policy
+    held the lever at 45° on a steady ~6 N where the position-only one bounced 0-50 N and the lever between 30° and
+    42° (`results/week_06/figures/leg_handle_eval_stage2_seed1.png`).
+  - The wrist camera at the look pose (`leg_cfg.ARM_LOOK_POSE`, 0.89 m up) sees the door, the rose and the FR foot,
+    but a fixed shape on its own link -- almost certainly the D1's closed fingers -- covers ~40% of the image on the
+    right, and for a lever pointing right hides the bar and the foot through the press
+    (`results/week_06/figures/leg_handle_frames_force_handle64.png`).
+- **Scope:**
+  - One seed per variant; a second (stage 2 only) was started 2026-10-20 09:40. 12 against 17 is within what a seed
+    can move.
+  - The handle is a torch plant: a capsule bar on a sprung spindle, penalty contact at the foot sphere and the knee,
+    nothing in PhysX. Its stiffness, damping, friction and every handle number are invented, and the contact model was
+    changed twice (damping bounded by the spring; 16,000 -> 8,000 N/m) because it produced artefacts. No PhysX check.
+  - The scripted approach, the outer loop on the foot's measured position, the touch-then-turn reference and the
+    force law are part of what was evaluated; so is the 120 N damage force, which is a declared limit, not a measured
+    handle strength. The task layer is told the handle's pose with drawn errors; no image was used to find it.
+  - The recipe was revised against training-time handle numbers, never the frozen set, but ten starts on one task is
+    a search, and the result is that search's.
+- **Implication:**
+  - The leg can be made a manipulator in simulation -- three-legged stance, foot goals at body height, a light lever
+    turned and held -- but turning door handles at 2-4 N·m is not demonstrated. The limits found are the foot's
+    precision on a thin round bar (~1.6 cm off centre at μ 0.6 starts outside the friction cone; engagement is a median
+    ~1.1 cm off in training), and the force once the foot stays on.
+  - The force-aware formulation's argument for this task -- a bounded force into an end stop -- was never tested,
+    because neither policy brings the lever to its stop. A steadier hold is the only difference seen, and it is small.
+  - Before more training: a paddle-shaped or wider lever (or a foot pad), a contact-location estimate to centre the
+    foot, and a PhysX check of the plant. For the camera: a look pose that keeps the fingers out of the view of the bar,
+    or the fingers opened, before any perception claim.
+
+### F-160 — Over two seeds of the handle stage, the position-only foot policy turns more lever handles than the force-aware one, 60 of 288 frozen handles held 1 s against 15, with a threefold spread between seeds; the force-aware policies hold ~12 N and slip off, the position-only ones push to ~60 N, turn springs up to 3 N·m and pass the 120 N damage force more often
+
+- **Status:** provisional (simulation; two seeds of stage 2 from one stage-1 checkpoint per variant; the analytic
+  handle plant of F-159). Its scope's "the policies deliver ~12 N whatever is asked" is corrected by
+  [F-161](#f-161) (2026-10-21): the force law asked for little more; the rest stands.
+- **Week:** 6
+- **Date:** 2026-10-20
+- **Supersedes:** [F-159](#f-159)
+- **Evidence:** [Week 6 log, 2026-10-19/20](week_06/notes.md), "The front-right foot as the end effector: a door handle
+  at body height". Task, stage 1 and recipe j as in F-159; the second seed is the same command with `--seed 2`
+  ([force](#/week/6/run/20261019T223505_train_seed2_leg_force_stage2_j_s2),
+  [position](#/week/6/run/20261019T223505_train_seed2_leg_position_stage2_j_s2)).
+  - The 144 frozen handles, final checkpoints (`model_2699`), latch held 1 s:
+
+    | policy | seed 1 | seed 2 | of 288 | held at 1 / 2 / 3 / 4 N·m, seed 2 | damaged, seed 1 / 2 | slipped as the failure, seed 1 / 2 |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | position-only | [17](#/week/6/run/20261019T223051_leg_eval_seed1_leg_eval_position_stage2_j_2699) | [43](#/week/6/run/20261020T003041_leg_eval_seed1_leg_eval_position_stage2_j_s2_2699) | **60** | 28 / 11 / 4 / 0 | 24 / 59 | 74 / 31 |
+    | force-aware | [12](#/week/6/run/20261019T222952_leg_eval_seed1_leg_eval_force_stage2_j_2699) | [3](#/week/6/run/20261020T003011_leg_eval_seed1_leg_eval_force_stage2_j_s2_2699) | **15** | 3 / 0 / 0 / 0 | 48 / 6 | 59 / 126 |
+
+    No falls in any. The latch needs 9 / 17 / 25 / 32 N at the foot. Force held with the latch open, seed 2:
+    position-only 12 / 23 / 34 / 60 N by spring, force-aware ~12 N. Peak force median, seed 2: 92 N (p95 138)
+    position-only, 59 N (p95 115) force-aware.
+  - Holding with the latch open, seed 2: position-only 57 episodes, on the bar the whole hold, contact force
+    std/mean 0.53, lever std 1.1°; force-aware 3 episodes. Seed 1 had shown the force-aware policy the steadier
+    (0.68 against 0.58 of the hold on the bar, std/mean 0.88 against 1.10): the difference is the seed's, not the
+    variant's. Figures: `results/week_06/figures/leg_handle_eval_stage2_seed1.png`, `..._seed2.png` (handle 64: the
+    seed-2 position-only policy holds the lever at 42° on a steady ~21 N, the force-aware one touches at ~5 N and
+    slips off).
+  - Seed 2's position-only policy passes the damage force mostly on levers pointing left (55 of 72) and succeeds
+    mostly on levers pointing right (31 of 43).
+- **Scope:**
+  - Two seeds of stage 2, each from the same stage-1 checkpoint; stage 1 itself was one seed per variant, and its
+    force-aware run had degraded under full-strength pushes before `model_1200` was taken (F-159). A seed spread of
+    17-43 and 3-12 says a two-seed difference of this size is suggestive, not established.
+  - F-159's scope applies: invented handle numbers, a torch plant, no PhysX check, a task layer and recipe found over
+    ten training starts, the 120 N damage force declared rather than measured.
+  - The force-aware variant's weakness may be its task layer as much as its policy: the PI law asks for at most
+    1.8x the rated force within 12-40 N, through UniFP's 400 N/m virtual spring, and the policies deliver ~12 N
+    whatever is asked; the position-only variant is driven by a goal past the stop and pushes as hard as that takes.
+- **Implication:**
+  - On this task, as built, force awareness does not help the foot turn handles; position-only does better in both
+    seeds. Do not quote the force-aware variant as the better leg controller, and do not quote F-159's steadier hold.
+  - The force-aware policy's failure is under-pushing and slipping, not over-pushing; its claimed advantage (a bounded
+    force into an end stop) was never reached. Testing it needs levers the foot can stay on (wider bars or a pad), and
+    a force law the policy actually follows -- check commanded against applied force before retraining.
+  - The position-only policy's cost is force: 59 damaged on seed 2, and up to 60 N held at 4 N·m without opening.
+
+### F-161 — The force-aware handle policies of F-160 held ~12 N because their force law asked for little more, not because they ignored larger commands: the law raises its force only from the foot's lag behind the reference, a foot slipping off the 2 cm bar does not lag, and the largest command in an episode had a median of 16.5 N (seed 1) and 9.1 N (seed 2) against caps of 19-40 N
+
+- **Status:** confirmed (a re-reading of F-160's recorded frozen traces; no new simulation)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock", the 12 N paragraph. The traces of
+  [seed 1](#/week/6/run/20261019T222952_leg_eval_seed1_leg_eval_force_stage2_j_2699) and
+  [seed 2](#/week/6/run/20261020T003011_leg_eval_seed1_leg_eval_force_stage2_j_s2_2699)'s force-aware evaluations,
+  every step the layer pressed or held with the foot on the bar:
+
+  | command | steps, seed 1 / 2 | delivered along the turn, median, seed 1 / 2 | contact force, median |
+  | --- | --- | --- | --- |
+  | 0-8 N | 4015 / 6694 | 5.6 / 3.1 N | 6.6 / 5.0 N |
+  | 8-16 N | 2132 / 680 | 14.7 / 13.7 N | 19.0 / 15.6 N |
+  | 16-24 N | 465 / 155 | 10.8 / 21.3 N | 14.6 / 24.4 N |
+  | 24-41 N | 51 / 14 | 12-20 / 27-76 N | 16-27 / 28-77 N |
+
+  The foot was off its goal by a median 17 mm (seed 1) and 50 mm (seed 2) while pressing: at the 400 N/m virtual
+  spring, 7-20 N of the force is set by position error alone. Seed 2's handles failed by slipping in 126 of 144.
+- **Scope:** F-160's handles, plant, layer and checkpoints; the reading is of the delivered force along the lever's
+  turning direction (`drive_n`) against the layer's command, at the policy rate.
+- **Implication:**
+  - The handle's force-aware result was set by the bar and the law, not by a limit of the leg or of the policy's
+    force channel: up to 16 N the policy delivered roughly what it was asked. A surface the foot stays on lets the
+    law build force; on the key's flat platform (F-163) the same law asks for a median 21 N per episode (p90 32).
+  - Keep reading commanded against delivered force before reading success: the law's lag-only build-up is a design
+    choice of the layer, and on a slipping contact it stays low by construction.
+
+### F-162 — The handle policies Lukas watched stood with a rear foot 13-20 cm out of place because they put it there while the robot dropped from its 0.35 m spawn, and nothing asked for it back; starting every episode standing settled and rewarding each support foot's distance from its place keeps the worst support foot within 3-4 cm in free space (force-aware), though the position-only run came apart from iteration ~600
+
+- **Status:** provisional (simulation; one seed of stage 1 per variant; training-time numbers except the probe)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock".
+  - The probe (a scratch script, not recorded): recipe j seed 1's final handle checkpoints on 64 robots against zero
+    actions. Zero actions settle the feet at FL (+0.23, +0.17), RL (-0.22, +0.17), RR (-0.22, -0.17) m from the base,
+    base 0.272 m. Under both policies the right-rear foot was 13-20 cm off that by 0.1 s (five policy steps) and the
+    left-rear 12-13 cm: the right-rear forward under the body, where a tripod over the other three has room for the
+    centre of mass (with the feet in place it sits on the FL-RR diagonal). For the first ~0.08 s of an episode the feet
+    are in the air. Once down, `support_slip` paid for keeping them there.
+  - The fix, in the key task (`--leg_object key`): every episode starts standing settled (the base 0.272 m, the knees
+    as gravity bends them at the default targets, measured), `support_stance` (exp(-(d / 6 cm)^2) per support foot,
+    weight 4) and the front-right foot's footfall where it actually stands. Stage 1 at weight 2 (stopped at 463): the
+    median support foot 2.4 cm from its place, the worst ~15 cm. At weight 4,
+    [force-aware](#/week/6/run/20261020T140313_train_seed1_key_force_s1_stage1b): the worst support foot 3.6-4.0 cm
+    (per-100-iteration means, 400-1300), the foot's free-space error 5.2-6.9 cm.
+    [Position-only](#/week/6/run/20261020T140352_train_seed1_key_position_s1_stage1b), identical to it until the pushes
+    and the force channel start at 500: the worst support foot 7.0 cm at 600-700, 15 cm from 700, the foot's error
+    6.4 cm at 700 rising to 24 cm by 1300.
+  - Turning the key (F-163) the robots do move a foot: over the frozen keys' episodes the worst support foot stands a
+    median 8.9 cm (force-aware) and 10.7 cm (position-only) from its place.
+- **Scope:** training-time stance numbers sampled at reset over each iteration's ending episodes; one seed; the
+  settled state measured once (8 robots, zero actions, the arm folded at rest). The stance reward's weight was chosen
+  from one stage-1 start.
+- **Implication:**
+  - Lukas's reading was right: the spawn's drop gave the policies a free step, and the reward let them keep it. Spawn
+    standing, and pay for the stance, in any leg-manipulation training.
+  - The position-only stage 1 is unstable under foot pushes with the stance reward in this recipe (the force-aware
+    one, which yields to the push by design, is not); its stage 2 started from both variants' `model_600`, before it
+    came apart. That is a training-recipe result about P0, not yet repeated on a second seed.
+  - "Feet near the normal stance" holds in free space, not while turning the key: there a support foot moves ~9 cm.
+    A tighter stance during the turn would need more weight there, or a body that leans further.
+
+### F-163 — Turning Lukas's lever key with the front-right foot from 45 degrees up to 45 down, the force-aware policy unlocks 84 of 108 frozen keys with no damage and the foot back on its footfall, against 20 for the position-only one (seed 1); the force-aware foot also pushes less hard (82 N against 142 N median peak), and neither turns any zero-shot
+
+- **Status:** superseded by [F-166](#f-166) (2026-10-21, the second seed: it confirms the ranking and widens it; the
+  seed-1 numbers stand)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock". The key task
+  (`--task leg --leg_object key`, F-162's stance fixes): the key's plant (the foot sphere against the key's bar and
+  100 x 50 mm platform, a lock friction that sticks, a cam detent before the unlock, end stop at +45 degrees, the
+  key on a lock adapter 17 mm off the door at the real box's lock, 0.4175 m up), the handle task's layer starting at
+  -45 degrees, the foot returned to its footfall afterwards. Stage 1 (1300 iterations, 2048 envs) and stage 2 (from
+  both variants' `model_600`, 60% key episodes, 1000 iterations, recipe j's settings); the 108 frozen keys
+  (`leg_eval.build_key_plan`), one episode each, the last checkpoints (`model_1607`, `model_1615`):
+  [force](#/week/6/run/20261020T174654_leg_eval_seed1_key_eval_force_s1_final),
+  [position](#/week/6/run/20261020T174805_leg_eval_seed1_key_eval_position_s1_final).
+
+  | | force-aware (P1) | position-only (P0) |
+  | --- | --- | --- |
+  | unlocked, foot back down, no damage, no fall | **84** | **20** |
+  | at lock friction 0.5 / 1.5 / 2.5 N·m (36 each) | 36 / 35 / 13 | 18 / 2 / 0 |
+  | past 120 N | 14 | 79 |
+  | peak force, median (p95) | 82 N (136) | 142 N (218) |
+  | time to unlock, median | 1.6 s | 2.5 s |
+  | zero-shot from stage 1 | 0 | 0 |
+
+  No falls. Training-time (`figures/key_training_curves_seed1.png`): the force-aware policy's key episodes unlocked
+  ~20-30% for its first 300 stage-2 iterations and ~95% by its last; the position-only one's stayed under ~15%, its
+  foot 7-9 cm short of the pre-contact point when the layer engaged. The force-aware law asked a median 21 N per
+  episode (p90 32) and the foot delivered ~16-20 N along the turn of commands of 15-45 N (F-161's handle: 9-16 N
+  asked).
+- **Scope:**
+  - One seed; the handle study's seeds spread threefold (F-160). Stage 1 for both from `model_600`, chosen on
+    training-time numbers because the position-only run came apart after it (F-162); stage 2 stopped at 1000
+    iterations for time, where the force-aware run was still improving.
+  - Not PhysX: the key's turn and its contact with the foot are the training's plant, its friction and detent
+    invented (0.3-2.5 + 0-1 N·m, to exercise the leg). The lock's place on the box is Lukas's measurement and photo;
+    the key's shape is his STL, mirrored (F-164). The estimate the layer is told is the training's (+-1 cm, +-30% on
+    the lock's resistance); the stance the policy starts from is its own settled one.
+  - The 120 N damage force is declared, not measured; the force-aware policy still meets the platform at 82 N median
+    where the lock needs ~5-37 N.
+- **Implication:**
+  - On a contact the foot can stay on, the force-aware formulation is the better leg controller here, the reverse of
+    the handle (F-160, F-161): the flat platform lets the force law build force, and the position-only policy, driven
+    by a goal past the stop, overloads (79 of 108 past 120 N) instead of turning.
+  - Quote it with its seed count until seed 2 is in. The impact peaks are the force-aware policy's weak point: what
+    damages a printed key or lock is the meeting, not the push.
+
+### F-164 — Without learning, the D1 puts Lukas's key on the cam lock's keyway axis to 1.5 mm and seats it when the box's place is known exactly; from the head camera's and lidar's look it seated 0 of 12, because the tag's range is off by 3-11 mm along the door's normal and the position-aimed push stalls; the key as drawn is handed the wrong way for the turn asked for, and the D1 at the lock's reach has no torque to spare
+
+- **Status:** provisional (simulation, PhysX; one development attempt with the box given, twelve with the look over
+  three runs at four placements)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock", the demo's development and
+  camera runs; `demos/combiner_key/` (README, 9 CPU tests).
+  - The method: the combiner door demo's stack (P2Dingo's walking policy to the stance, the decoupled baseline's arm IK
+    at 10 Hz through the D1's planner and servo model), the key held in a capped spring grip, a pre-insertion point
+    15 mm short along the estimated keyway axis rolled to 45 degrees, the IK warm-started from a seeded search there,
+    an outer loop on the hand's measured miss (the encoders' forward kinematics on a real arm), then straight in to
+    4 mm past seated. The slot adjusted: a printed adapter over the cam lock, its keyway the key's outline plus
+    1.5 mm a side behind a 5 mm 45-degree lead-in.
+  - Box given ([run](#/week/6/run/20261020T161133_force_seed1_pipeline_test_insert_given7)): 25 mm out and 0.5 / 0.7 mm
+    across before going in; seated 0.16 mm out, 1.5 mm across, roll -0.8 deg, tilt 0.7 deg; still seated after letting
+    go. The six attempts before it (recorded) fixed the grip (a soft one let the key pivot 48 degrees on the adapter)
+    and found the arm's limit (below).
+  - With the look ([force](#/week/6/run/20261020T175404_force_seed1_key_demo_force_s1),
+    [position](#/week/6/run/20261020T175841_position_seed1_key_demo_position_s1),
+    [v2](#/week/6/run/20261020T180321_force_seed1_key_demo_force_s1_v2); the insertion does not depend on the leg policy):
+    tags found 12/12; the lock's estimate off -3.0 / +2.5 / +9.9 / +11.4 mm along the door's normal and under 0.6 mm
+    across, heading 0.1-1.1 deg. Where the depth was within ~3 mm the key reached the keyway on its axis (1.1-1.4 mm
+    across) and stalled 2.7-7.8 mm short, tilted 2-4 deg: the push is the grip's spring stretched by how far past the
+    seat the IK aims, 0.6-4 N as the depth error moves it. Where the depth was 10-11 mm off it missed the lead-in.
+    Taking the depth from the lidar's face fit did not help (it read the face 1.8-2.6 mm in front of every estimate);
+    aiming 15 mm deeper put the IK out of what it solves.
+  - The arm's margin: on the CPU model the insertion poses need 78-84% of the worst joint's limit. The leg policy's
+    training robot carries the wrist RealSense and bracket (99 g) on Link6; with it and the key the D1 saturated at the
+    shoulder and sagged 16 mm, and an outer loop could not recover it. The demo uses the robot without (the camera is
+    on the head in this task).
+  - The key (`combinerbox_lever v3.stl`): with its shaft in the lock and its platform facing up, its lever points to
+    the robot's left, off the box past its edge. The turn asked for -- the front-right foot pushing it clockwise, down,
+    toward the box's middle -- needs the mirror image; the simulation uses it mirrored.
+- **Scope:** PhysX contact on boxes (a square shaft in a rectangular keyway behind the lead-in; the cylinder's own
+  keyway not modelled; the key held by a spring, not by friction at the fingers); the perception simulated (an ideal
+  picture of a printed tag, a grid ray caster for the lidar); four box placements; the D1's servo model and the
+  combiner door demo's robot.
+- **Implication:**
+  - Lateral alignment is solved by IK and the outer loop; the open problem is along the axis. A push limited by force
+    rather than aimed by position (the D1 in a compliant mode along the approach, or a spring in the gripper), or a
+    depth the robot measures itself (the hand touching the adapter's face before the insertion), is the next step;
+    the lidar as used here is not it.
+  - Print the key mirrored (or turn the requirement round) before trying the turn on the real box.
+  - The D1 is near its torque limit at the lock's height and reach: keep the wrist camera off the arm for this task,
+    and do not add mass to the hand.
+
+### F-165 — In the staged PhysX demo the key-trained leg policies keep their frozen-evaluation ranking only on the leg actuator they trained on: on the decoupled stack's DCMotor legs the force-aware policy turns none and falls from 84 to 3 of 108 frozen keys, while the position-only one is unchanged; and neither can take over from the walking policy's stance, which leaves a support foot ~16 cm from where the leg policy's training always started it
+
+- **Status:** provisional (simulation; seed 1's final policies; four demo attempts per condition, the box given in the
+  diagnostics); its reading of why the force-aware policy fell on the DCMotor legs corrected by
+  [F-168](#f-168) (2026-10-21: the stock group's zero leg armature, not its torque limits or the estimator; with the
+  trained armature the same group gives 84, and seed 2 holds 104 even at zero)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock", the demo's camera runs and the
+  diagnostics after them.
+  - The turn in the demo's scene from the leg policy's own settled stance (a teleport, `--handover settled`):
+
+    | legs | force-aware | position-only |
+    | --- | --- | --- |
+    | DCMotor (the walking policy's; head camera and lidar look) | [0/4 engaged](#/week/6/run/20261020T180759_force_inserted_settled_seed1_key_demo_force_s1_settled) | [4/4 unlocked, 3 of them past 120 N](#/week/6/run/20261020T181112_position_inserted_settled_seed1_key_demo_position_s1_settled) |
+    | UniFP's ideal PD (the leg policy's; box given) | [**4/4**, peaks 76-88 N](#/week/6/run/20261020T182511_force_inserted_settled_unifplegs_seed1_key_demo_force_s1_settled_unifplegs_given) | [0/4 turned, all past 120 N](#/week/6/run/20261020T183653_position_inserted_settled_unifplegs_seed1_key_demo_position_s1_settled_unifplegs_given) |
+    | UniFP's ideal PD; head camera and lidar look (1.1-10.3 mm off) | [**3/4**, peaks 70-87 N (the fourth 181 N)](#/week/6/run/20261020T201437_force_inserted_settled_unifplegs_seed1_key_demo_force_s1_settled_unifplegs_camera) | [0/4, all past 120 N](#/week/6/run/20261020T201806_position_inserted_settled_unifplegs_seed1_key_demo_position_s1_settled_unifplegs_camera) |
+
+  - The frozen evaluation with only the legs' actuator swapped (`--leg_actuator dcmotor`): force-aware
+    [3/108](#/week/6/run/20261020T181728_leg_eval_seed1_key_eval_force_s1_final_dcmotor) (engaged 2, 105 past 120 N),
+    position-only [20/108](#/week/6/run/20261020T182100_leg_eval_seed1_key_eval_position_s1_final_dcmotor), against 84
+    and 20 on the trained actuator (F-163). The DCMotor is Isaac Lab's Go2 model: 23.5 N·m on every joint with a
+    torque-speed curve, the same 25 / 0.5 gains; UniFP's ideal PD has the knees at the Go2's 45.43 N·m.
+  - The handover itself (`--handover crouch`: the legs eased over 1.5 s from the walking policy's last action to the
+    default targets, then the leg policy), on either actuator: the walk arrives within 1.2-1.7 cm, but easing moves the
+    base back over feet that stay where the walking policy left them, so the leg policy starts with its worst support
+    foot 15.6-15.9 cm from its place and the door 0.54-0.56 m ahead (it trained at 0.40-0.47): it engaged 0 of 4
+    ([run](#/week/6/run/20261020T184836_force_inserted_unifplegs_seed1_key_demo_force_s1_crouch_unifplegs_given) on
+    ideal-PD legs, and 0 in the earlier development runs on DCMotor).
+  - The robot's own check, the turn as the foot measured it at the end of the hold, read "past 30 degrees" on all four
+    position-only attempts on ideal-PD legs whose keys never turned: the foot had slid down past the platform.
+  - The head RealSense cannot see the key or the foot from the turn's stance: rendered, it sees only the door, the key
+    being ~10 cm ahead of it and ~48 degrees to its right, outside the D435's +-34.5 degrees
+    ([frames](#/week/6/run/20261020T202459_leg_eval_seed1_key_frames_force_s1_v2),
+    `figures/key_frames_force_key54.png`).
+- **Scope:** four attempts per demo condition; seed 1; the demo's other differences from training (self-collision
+  off, the payload not simulated) not separated; why the force-aware policy is the sensitive one is a reading, not a
+  test (its estimator infers the external force from its own dynamics, so an actuator that answers torque differently
+  looks like a push).
+- **Implication:**
+  - F-163's force-aware advantage is conditional on the actuator model. Before anything goes to the dog, train and
+    evaluate the leg policy on an actuator model checked against the real Go2's motors (and randomise it), and say
+    which actuator every comparison used.
+  - The staged sequence is missing its handover: train the leg policy from the stances the walking policy (or the
+    sport mode, F-156) actually leaves -- recorded stops, randomised feet -- or have it step to its stance first.
+  - Do not verify the unlock from the foot's position alone; the lidar on the door (F-154) or the door opening is
+    the check.
+
+### F-166 — Over two seeds, the force-aware foot policy unlocks Lukas's key in 190 of 216 frozen keys with no damage and the foot back on its footfall, the position-only one in 43; the force-aware one does it at every lock friction tried, pressing a median 50-82 N, and the position-only one only on the lightest lock, past 120 N in 113 of 216
+
+- **Status:** provisional (simulation; two seeds of stage 2 from one stage-1 checkpoint per variant; the analytic key
+  plant; stage 2 cut to 1000 iterations; on the trained actuator only -- F-165); its comparison conditional on the legs' armature,
+  [F-168](#f-168) (2026-10-21: at 0.01 kg·m² with knees at 0.037, force-aware 169 and position-only 136 of 216)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Supersedes:** [F-163](#f-163)
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock". Task, stage 1 and stage 2 as in
+  F-163; the second seed is the same command with `--seed 2`
+  ([force](#/week/6/run/20261020T181513_train_seed2_key_force_s2_stage2b),
+  [position](#/week/6/run/20261020T181612_train_seed2_key_position_s2_stage2b)), scored at the checkpoints its
+  interrupt saved (`model_1605`, `model_1614`), no selection.
+
+  | 108 frozen keys | seed 1 | seed 2 | of 216 | at lock friction 0.5 / 1.5 / 2.5 N·m, seed 2 (36 each) | past 120 N, seed 1 / 2 | peak force median, seed 1 / 2 |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | force-aware | [84](#/week/6/run/20261020T174654_leg_eval_seed1_key_eval_force_s1_final) | [106](#/week/6/run/20261020T201142_leg_eval_seed1_key_eval_force_s2_final) | **190** | 36 / 36 / 34 | 14 / 1 | 82 / 50 N |
+  | position-only | [20](#/week/6/run/20261020T174805_leg_eval_seed1_key_eval_position_s1_final) | [23](#/week/6/run/20261020T201252_leg_eval_seed1_key_eval_position_s2_final) | **43** | 23 / 0 / 0 | 79 / 34 | 142 / 83 N |
+
+  Success: past the unlock (30 degrees down), the foot back on its footfall, no contact past 120 N, no fall. No falls in
+  any. The force law's largest command per episode, median (p90): 21 (32) N on seed 1, 26 (45) N on seed 2. Time
+  from engaging to unlocked, median: force-aware 1.6 / 2.4 s, position-only 2.5 / 2.0 s. The worst support foot over
+  an episode, median: 8.9 / 8.4 cm (force-aware), 10.7 / 7.5 cm (position-only). Zero-shot from stage 1: 0 of 108
+  for both. Figures: `figures/key_eval_stage2_seed{1,2}.png`, `figures/key_training_curves_seed{1,2}.png`.
+- **Scope:**
+  - Two seeds of stage 2 from the same stage-1 checkpoint per variant (`model_600`, chosen on training-time numbers
+    because the position-only stage 1 came apart after it, F-162); stage 1 itself one seed. The seeds agree here
+    (84 / 106 and 20 / 23), unlike the handle's (F-160).
+  - F-163's scope applies: the analytic plant with invented lock numbers, the training's estimate errors, the policy's
+    own settled stance to start from, the 120 N damage force declared.
+  - On UniFP's ideal-PD legs, as trained. On Isaac Lab's Go2 DCMotor legs seed 1's force-aware policy falls to 3 of 108
+    and the position-only one stays at 20 (F-165): the ranking is conditional on the actuator model.
+- **Implication:**
+  - On a contact the foot can stay on, the force-aware formulation is clearly the better leg controller in this
+    setting: it turns harder locks, pushes less hard and damages less, on both seeds. This is the reverse of the
+    handle (F-160), whose failure was the bar and the force law, not the formulation (F-161).
+  - The position-only policy, driven by a goal past the stop, turns only the 0.5 N·m lock and overloads on the rest.
+  - The next questions are the actuator (F-165) and the handover from the walking policy (F-165), not the policy's
+    skill on its own trained conditions.
+
+### F-167 — Fine-tuned for 500 iterations with half its episodes starting from 32 stances the walking policy actually leaves, the force-aware key policy starts from those stances at rest and unlocks 97 of 108 frozen keys (26 before the fine-tune), keeping 102 of 108 from its own; but in the staged demo's live handover it still fails (0 of 12), so what blocks the sequence is the handover itself, not the stance alone
+
+- **Status:** provisional (simulation; one fine-tune of one policy, force-aware seed 2; a diagnostic evaluation with the
+  stances drawn per episode)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key in the cam lock", the handover paragraph.
+  - The stances: 32 attempts of the demo on ideal-PD legs, box given, the robot's legs, height, roll and pitch recorded
+    at the turn's stance as the walking policy left it (`demos/combiner_key/assets/walker_stances.json`): the base
+    0.306-0.315 m up (settled: 0.272), rear thighs 0.60-0.67 rad (settled: 0.99), front knees -1.56 to -1.65 rad
+    (settled: -1.80), nose 2.5 degrees down.
+  - The fine-tune ([run](#/week/6/run/20261020T203809_train_seed2_key_force_s2_stage3_walker)): from seed 2's force-aware `model_1605`,
+    500 iterations, `--spawn_states` (half the episodes from a recorded stance, the joints jittered +-0.03 rad), the
+    stage-2 recipe with the pushes at +-10 N throughout. Training-time key episodes unlocked: 85-97%.
+  - Frozen keys: from its own settled stance [102/108](#/week/6/run/20261020T210248_leg_eval_seed1_key_eval_force_s2_stage3_walker) (106 before);
+    every episode from a recorded stance at rest (`--eval_spawn_states`):
+    [97/108](#/week/6/run/20261020T211501_leg_eval_seed1_key_eval_force_s2_stage3_walkerstarts), against
+    [26/108](#/week/6/run/20261020T211611_leg_eval_seed1_key_eval_force_s2_stage2_walkerstarts) for the policy before the fine-tune (45 never
+    engaged).
+  - The demo with a direct handover (`--handover direct`: the leg policy takes over at once, no crouch), ideal-PD legs:
+    box given [0/8](#/week/6/run/20261020T210357_force_inserted_unifplegs_seed1_key_demo_stage3_direct_given) (2 unlocked, 5 fell, all past 120 N); head camera
+    and lidar [0/4](#/week/6/run/20261020T210652_force_inserted_unifplegs_seed1_key_demo_stage3_direct_camera) (3 fell); the whole sequence with the arm's
+    insertion [0/4](#/week/6/run/20261020T211008_force_unifplegs_seed1_key_demo_stage3_full_camera) (no key seated, F-164).
+  - Not the motion: the direct handover with the robot's joint and base velocities zeroed at the switch
+    ([run](#/week/6/run/20261020T211833_force_inserted_unifplegs_seed1_key_demo_stage3_direct_still_given), a diagnostic) is 0/8 too (4 fell, the foot never at the pre-contact point, contact peaks
+    99-390 N on the way). From the settled stance the same scene turns 4/4 (F-165, seed 1's policy).
+- **Scope:** one fine-tune, force-aware only (no matched position-only run); the recorded stances from one walking
+  policy on ideal-PD legs; the diagnostic draws a stance per episode; what in the demo's scene breaks a start from
+  those stances is not separated -- the box's real colliders round the approach (the lock adapter's block is not in
+  the training plant), self-collision off and the payload not simulated are the candidates; the robot's motion at the
+  switch is ruled out.
+- **Implication:**
+  - The stance mismatch of F-165 is trainable: half an hour of fine-tuning took the policy from 26 to 97 of 108 from
+    the walking policy's stances, at little cost from its own.
+  - The next step for the sequence is the moment of handover: train from the walking policy's states in motion (its
+    joint velocities, a gait still settling), with self-collision on in the demo or off in training, and the payload
+    simulated in both.
+
+
+### F-168 — The key policies' collapse on the stock DCMotor legs (F-165: 84 to 3 of 108) was the legs' armature, 0 in the stock group against the trained 2e-4 kg·m², not its 23.5 N·m knee or its speed curve; on every torque model tried, including Unitree's envelope with and without a geared knee, the force-aware policies unlock 82-85 (seed 1), 104-106 (seed 2) and 94-104 (the walker fine-tune) of 108; a 0-10 ms command delay costs seed 1 17 keys and the fine-tune 24-41, and a realistic armature narrows F-166's force-aware lead from 190 against 43 of 216 to 169 against 136
+
+- **Status:** provisional (simulation; frozen policies evaluated off their training conditions, not policies trained on
+  each model; the analytic key plant; one stage-1 checkpoint per variant)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "Which leg motor model the key policies hold on". The frozen
+  key set (108 keys, F-166) with only the legs' model changed (`unifp_train/leg_actuators.py`), the trained model's
+  re-run reproducing F-166 and F-167 exactly (84, 106, 102, 20, 23):
+
+  | legs (all kp 25 / kd 0.5) | force s1 | force s2 | fine-tune | position s1 | position s2 |
+  | --- | --- | --- | --- | --- | --- |
+  | trained: UniFP ideal PD, URDF limits (23.7 / 45.43 N·m knee), armature 2e-4 | 84 | 106 | 102 | 20 | 23 |
+  | knee cap + DCMotor speed curve (23.7 / 23.5, linear to 0 at 30 rad/s), armature 2e-4 | [84](#/week/6/run/20261020T232931_leg_eval_seed1_key_act_force_s1_knee23curve) | 106 | 103 | 20 | 23 |
+  | Isaac Lab's stock `DCMotor` (23.5 on every joint, 30 rad/s), armature 0 as loaded | [**3**](#/week/6/run/20261020T233521_leg_eval_seed1_key_act_force_s1_dcmotor_rerun) | 104 | 94 | 20 | 20 |
+  | the stock `DCMotor` with armature 2e-4 | [**84**](#/week/6/run/20261020T233521_leg_eval_seed1_key_act_force_s1_dcmotor_armature) | | | | |
+  | unitree_rl_lab's GO2HV envelope, the knee as the hip (20.2 / 23.4 N·m) | 85 | 106 | 102 | 22 | 20 |
+  | the GO2HV envelope with the knee geared 1.917 (38.7 / 44.9 N·m, 0 at 15.65 rad/s) | [82](#/week/6/run/20261020T225436_leg_eval_seed1_key_act_force_s1_unitree_geared) | 106 | 104 | 21 | 20 |
+  | trained + 0-10 ms delay | 67 | 107 | [61](#/week/6/run/20261021T002503_leg_eval_seed1_key_act_force_s2walker_unifp_d2) | 16 | 29 |
+  | geared + 0-10 ms delay | 66 | 107 | 80 | 24 | 27 |
+  | trained, armature 0.003 / 0.01 / 0.01 with knees 0.037 | 92 / 96 / 81 | 103 / 102 / 88 | 102 / 105 / 106 | 37 / 60 / 69 | 31 / 60 / 67 |
+  | geared, armature 0.003 / 0.01 / 0.01 with knees 0.037 | 91 / 92 / 83 | 102 / 101 / 88 | 105 / 107 / 107 | 35 / 65 / 68 | 32 / 58 / 66 |
+
+  The knee cap alone and the speed curve alone also give 84 / 106 / 20 / 23. The run record's `leg_joints_loaded` has
+  the stock group's leg armature at 0.0 (it sets none, so the robot file's stays) and every other model's at 2e-4;
+  PhysX's velocity limit is the URDF's (30.1 / 30.1 / 15.70 rad/s) in all. On the stock group, seed 1's policy, which
+  crouches to 0.21 m and then rears on three legs, sinks instead (0.197 to 0.170 m over 1.2-2.0 s, the support knees
+  clipped at 23.5 N·m with 24-32 demanded) and 103 of 108 end at ~2.0 s with the foot striking the key (median
+  184 N); seed 2's, its support knees clipped for 0.58 s an episode, still unlocks 104.
+- **Scope:**
+  - Frozen policies, each evaluated on models it did not train on; a policy trained on a model may rank differently.
+  - The armature values are references, not measurements: unitree_rl_lab gives the same GO2HV motor 0.01 kg·m² where it
+    drives the H1's joints (`UNITREE_H1_CFG`) and leaves the Go2's at the robot file's 0; 0.037 is 0.01 times 1.917²
+    for a geared knee. The geared knee itself is derived from the URDF (`motor_model.GO2_HV_KNEE`), not measured. The
+    delay is `motor_model.GO2_LEG_DELAY_PHYSICS_STEPS`' estimate.
+  - Why zero armature breaks seed 1's rear-up and not seed 2's is not separated.
+  - Joint torques are the last physics substep of each 50 Hz step; the analytic key plant throughout (F-163's scope).
+- **Implication:**
+  - F-165's "the ranking is conditional on the actuator model" holds, but the parameter is the armature, not the
+    torque limits: within the torque models tried at the trained armature, the force-aware policies' results move by
+    at most 2 keys.
+    F-165's reading of why is corrected; F-166's comparison is conditional on the armature.
+  - Before the real dog: identify the legs' armature and the control loop's delay (neither is measured), train with
+    both randomised around them, and repeat F-166's comparison there. The torque model to train on can be Unitree's
+    envelope with the knee geared, once the knee is checked (`sysid/go2_knee/`, F-169).
+  - Say which armature every leg comparison used.
+
+### F-169 — The force-aware key policies crouch to ~0.22 m and then rear the base ~35° nose-up on three legs to reach the key's platform at 0.42 m, holding the standing knees at a median 12-14 N·m with peaks of 28-33 N·m; the pressing leg's joints carry at most 19 N·m; whether the real knee has that margin turns on its reduction, which the simulators disagree on (23.5 N·m in Isaac Lab's and unitree_rl_lab's models, 45.43 in the URDF)
+
+- **Status:** provisional (simulation, the trained leg model; the real knee not measured)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "Which leg motor model the key policies hold on". Joint
+  torques logged in the frozen key evaluation on the trained model (`leg_eval.TORQUE_FIELDS`):
+
+  | policy | base before lifting | while the FR foot is up (~10-12 s an episode): pitch, base | largest support knee: median, time above 20 N·m, episode peak median / max | pressing leg's max hip / thigh / knee |
+  | --- | --- | --- | --- | --- |
+  | [force s1](#/week/6/run/20261020T225436_leg_eval_seed1_key_act_force_s1_unifp) | 0.215 m | 35° nose-up, 0.28 m | 13.9 N·m, 6.7%, 23.2 / 32.8 N·m | 8.0 / 7.5 / 18.9 N·m |
+  | [force s2](#/week/6/run/20261020T230912_leg_eval_seed1_key_act_force_s2_unifp) | 0.219 m | 34°, 0.28 m | 12.0, 11.0%, 27.7 / 28.0 | 5.9 / 6.9 / 10.7 |
+  | [fine-tune](#/week/6/run/20261020T232518_leg_eval_seed1_key_act_force_s2walker_unifp) | 0.230 m | 26°, 0.30 m | 12.6, 4.7%, 23.9 / 23.9 | 9.8 / 10.4 / 16.3 |
+  | [position s1](#/week/6/run/20261020T230252_leg_eval_seed1_key_act_position_s1_unifp) | 0.237 m | 25°, 0.30 m | 12.5, 3.5%, 22.1 / 35.7 | 10.9 / 10.0 / 23.7 |
+
+  With more than 40 N on the foot, seed 1's pressing knee carries a median 1.9 N·m (max 8.8): the leg pushes nearly
+  straight, the force through its joints. The key's platform is at ~0.42 m, above the front hips' standing height
+  (~0.30 m), so the foot reaches it from above only with the base reared.
+- **Scope:** the trained ideal-PD legs (no torque-speed limit); the torques sampled at 50 Hz; the analytic key plant; one
+  key height (the real box's).
+- **Implication:**
+  - If the knee is geared as the URDF says, the standing knees run at about a third of their peak through the rear-up
+    and peak at about 70% of it; if it is capped at the hip motor's ~23.5 N·m, they run at over half of it, above
+    20 N·m for 0.5-1.2 s an episode, with peaks past it.
+    `sysid/go2_knee/` (read-only, LowState `tau_est` with a unit check against the robot's weight) settles which before
+    any test on the dog; nothing in it has run yet.
+  - A 35° rear-up on three legs with the D1 on the back is a fall risk the simulator has not been asked about (fixed
+    mass, no randomisation); a lower key, or a stand the dog can lean on, would remove it.
+
+### F-170 — From the Go2 sport mode's classic stand at rest (feet 41 x 28 cm, 3-4 cm from the trained places), the walker-stance fine-tune unlocks 96-99 of 108 frozen keys at base heights 0.28-0.32 m and 74 at 0.34 m; the policies trained only from their own stance lose 9-34 keys at 0.28-0.32 m and more at 0.34 m, and the seed-2 position-only policy falls in 20-58 of 108
+
+- **Status:** provisional (simulation; a start at rest, not the switch out of sport mode; the classic stand's height not
+  measured)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "Which leg motor model the key policies hold on". Lukas
+  measured the classic stand's feet at 41 x 28 cm, "almost directly under the shoulders"
+  (`demos/combiner_key/classic_stance.py` solves the legs for the feet's sphere centres there, level; its kinematics
+  reproduce `leg_cfg.NOMINAL_FEET_B` to 2.5 mm). The trained stance is 44.8 x 34 cm under a 0.272 m base. Every
+  frozen key episode starts from the stand at rest, its joints jittered 0.03 rad, on the trained legs:
+
+  | policy | trained stance | 0.28 m | 0.30 m | 0.32 m | 0.34 m |
+  | --- | --- | --- | --- | --- | --- |
+  | force s1 | 84 | 73 | 75 | 50 | 20 |
+  | force s2 | 106 | 91 | 80 | 93 | 65 |
+  | fine-tune (F-167) | 102 | [97](#/week/6/run/20261020T234136_leg_eval_seed1_key_classic_force_s2walker_28cm) | [99](#/week/6/run/20261020T234402_leg_eval_seed1_key_classic_force_s2walker_30cm) | [96](#/week/6/run/20261020T234409_leg_eval_seed1_key_classic_force_s2walker_32cm) | [74](#/week/6/run/20261020T234414_leg_eval_seed1_key_classic_force_s2walker_34cm) |
+  | fine-tune, geared knee | 104 | | [98](#/week/6/run/20261020T235228_leg_eval_seed1_key_classic_force_s2walker_30cm_unitree_geared) | [97](#/week/6/run/20261020T235434_leg_eval_seed1_key_classic_force_s2walker_32cm_unitree_geared) | |
+  | position s1 | 20 | 24 | 24 | 22 | 21 |
+  | position s2 | 23 | 12 (50 fell) | 14 (27 fell) | 13 (20 fell) | 7 (58 fell) |
+
+- **Scope:** a start at rest with zero velocities and an empty history, not the robot leaving sport mode (on the dog
+  the motors pass from the sport controller to low-level commands, which rima's node does by ramping to its own default
+  stance); level ground, the trained legs (no delay, armature 2e-4); the sport mode's stand modelled from two spacings
+  and a guessed height.
+- **Implication:**
+  - The classic stand is close enough to start from for the policy fine-tuned from the walking policy's stops (~0.31 m),
+    up to 0.32 m; the base height is the variable to measure (`sportmodestate.body_height`, which the door demo's robot
+    program already reports).
+  - A real handover should start the leg policy from the classic stand as it is, not ramp to another stance first,
+    and the switch out of sport mode itself is still to be simulated.
+
+### F-171 — The key policy's runner for the dog (numpy, no torch) reproduces the training environment: through four recorded Isaac episodes (3,596 steps) its frames match to 1.0e-7, its actions to 1.1e-6 and its joint targets to 1.2e-7 rad; as a ROS 2 node in shadow mode it holds the 50 Hz step (p99 20.2 ms, inference p99 ~1 ms on the PC) and publishes nothing; the dog's own conventions (motor order, IMU frame) are taken from rima's working node and are untested here
+
+- **Status:** confirmed (software, on the PC); not run on the dog
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The leg policy's shadow mode for the dog".
+  `demos/combiner_key/robot/`: `export_policy.py` (the walker fine-tune `model_2104` to
+  `checkpoints/leg_key_force_s2walker_model_2104.npz`, numpy against the checkpoint on 64 random stacks: actions
+  3.3e-6, estimates 1.3e-6), `leg_policy.py`, `shadow.py`, `check_shadow.py`.
+  - `check_shadow.py --sim` on a key evaluation with `--leg_shadow_dump 4`
+    ([run](#/week/6/run/20261021T013654_leg_eval_seed1_key_shadow_dump_force_s2walker), 102 of 108 as before): the raw
+    state mapped to Unitree's joint order by name, then the dog's pipeline from each reset -- frames 1.0e-7 (every
+    block), actions 1.1e-6 (|a| up to 4.2), targets 1.2e-7 rad, the waiting stage's command 4.9e-7.
+  - The node under ROS 2 against a fake 500 Hz LowState (localhost, domain 77; the classic stand at 0.30 m with a 0.01
+    rad sway): [20 s](#/week/6/run/20261021T014808_leg_shadow), 1001 steps, period p99 20.2 ms, state age p99 2.2 ms,
+    inference median / p99 0.52 / 1.11 ms; `check_shadow --dog`: frames against `interface.single_obs` 3.5e-18, actions
+    against the checkpoint in torch 1.2e-6, the stand from the joints 0.41 x 0.28 m under 0.30 m, the still-robot
+    prediction within 0.012 rad RMS (the sway). With the foot asked up
+    ([run](#/week/6/run/20261021T014859_leg_shadow)): 1.8e-6, 0.045 rad RMS.
+  - `tests/test_leg_shadow.py` (10 tests): the export of a random actor, the frame against `single_obs` on random
+    states, Unitree target order, the waiting command, the estimates' decoding, the foot kinematics, the node offline,
+    and a source scan: no publisher, no client, no socket write, no torch.
+- **Scope:** software on the PC. On the dog nothing has run: the motor order (FR, FL, RR, RL), the gyroscope as the body
+  rate and the quaternion as w, x, y, z are rima's node's (`~/rima_summerschool`), which runs Isaac Lab policies on this
+  dog; the arm's angles come through the door demo's arm link and `d1_ik.from_servo_deg`; the dog's CPU is not timed.
+  Open loop by design: the sport controller holds the robot, so the shadow run shows the policy's response to the real
+  observation, not what it would do with the legs.
+- **Implication:**
+  - A shadow run on the dog (`run_shadow_on_dog.sh`, read on the PC with `check_shadow.py --dog`) can now check what only
+    the dog can: the joints' signs and zeros (the stand from the encoders against the tape's 41 x 28 cm), the IMU's frame
+    (level, and the pitch's sign when the nose is pushed down), the arm's angles, and the policy's response against a
+    still model in the same pose. It also measures the classic stand's base height, which F-170 lacked.
+  - The runner is the policy's; driving the legs needs a separate, commanding program with its own safety design, after
+    the fine-tune F-168 asks for.
+
+### F-172 — With the key starting 45 degrees down and needing to turn to 90 (straight down, unlocking at 85), the trained key policies fail zero-shot (1-16 of 108), though the walker fine-tune does turn it in 100: what fails is the force at the vertical end stop, past 120 N in 105 of 108; ending the task layer's path short of the stop and holding 0.3 s instead of 2 s gets it to 33, so the new turn needs retraining, not only a layer change
+
+- **Status:** provisional (simulation; frozen policies off their training turn; the analytic key plant; the unlock at 85
+  degrees chosen, not measured)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key turned from 45 to 90 degrees down". The frozen key
+  set with `--key_turn_deg 45 90 85` (start, end stop, unlock; degrees below horizontal), keys at their trained
+  lock friction and detent:
+
+  | policy | zero-shot | path to 3° short of the stop (`--key_overdrive_deg -3`) | and a 0.3 s hold (`--key_hold_s 0.3`) |
+  | --- | --- | --- | --- |
+  | force s1 | [16](#/week/6/run/20261021T021850_leg_eval_seed1_key_turn4590_force_s1) (83 past 120 N) | 11 | 9 |
+  | force s2 | [1](#/week/6/run/20261021T021855_leg_eval_seed1_key_turn4590_force_s2) (46 never reach the pad) | 2 | |
+  | walker fine-tune | [3](#/week/6/run/20261021T021900_leg_eval_seed1_key_turn4590_force_s2walker) (100 unlocked, 105 past 120 N) | 17 | [**33**](#/week/6/run/20261021T022958_leg_eval_seed1_key_turn4590_force_s2walker_od-3_hold03) (55 past 120 N, 16 stalled) |
+  | position s1 | 11 | 6 | |
+  | position s2 | [12](#/week/6/run/20261021T022137_leg_eval_seed1_key_turn4590_position_s2) (94 unlocked, 84 past 120 N) | 10 | [27](#/week/6/run/20261021T023004_leg_eval_seed1_key_turn4590_position_s2_od-3_hold03) |
+
+  For the walker fine-tune zero-shot, every first contact past 120 N is while engaged, with the key at a median 90.8
+  degrees: at the stop, in the layer's hold (79 of 105) or the press, with 15-20 N commanded and a median peak of
+  142 N. It unlocks a median 2.0 s after engaging. The base rears about as on the trained turn (24 against 26 degrees
+  nose-up, F-169).
+- **Scope:** zero-shot only, no policy trained on this turn; the end stop's 90 degrees and the unlock's 85 are this
+  study's choices; why the vertical stop overloads the foot (the pad's face turned sideways under a foot that pushes
+  down, against a rigid stop) is a reading of where and when, not a test.
+- **Implication:**
+  - The policies can drive the key into the new range: the walker fine-tune unlocks 100 of 108. But they do it with
+    the trained turn's pressing, which at a vertical stop exceeds the damage force. A fine-tune on the new turn
+    (`--key_turn_deg 45 90 85` in training, from the current checkpoints) is the way to make it work.
+  - For a cam lock that stays where it is turned, the layer's 2 s hold is not needed. A retrained policy should be
+    trained with the short hold too.
+  - If the policy is retrained anyway, it is the point to add F-168's delay and armature randomisation.

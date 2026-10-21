@@ -1,0 +1,97 @@
+{
+  "mode": "combiner_key_demo",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "leg_checkpoint": "logs/unifp_train/20261020T154539_train_seed1_key_force_s1_stage2b/model_800.pt",
+    "leg_variant": "force",
+    "key_inserted": true,
+    "attempts": 1,
+    "num_envs": 1,
+    "seed": 1,
+    "settle_s": 4.0,
+    "lock_friction_nm": 1.5,
+    "lock_detent_nm": 0.5,
+    "walker": "p2dingo_gait",
+    "given_box": true,
+    "run_name": "pipeline_test_turn_given",
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "demos/combiner_key/run_combiner_key.py --leg_checkpoint logs/unifp_train/20261020T154539_train_seed1_key_force_s1_stage2b/model_800.pt --leg_variant force --key_inserted --given_box --attempts 1 --headless --run_name pipeline_test_turn_given",
+  "git_commit": "9136aba825726b622a29132d3ef76cb1b3f88976",
+  "git_status": "M results/findings.md\n M results/week_06/notes.md\n M run_unifp_train.py\n M unifp_train/README.md\n M unifp_train/eval.py\n?? demos/combiner_key/\n?? logs/combiner_key/\n?? logs/combiner_key_test1.out\n?? logs/combiner_key_test10.out\n?? logs/combiner_key_test2.out\n?? logs/combiner_key_test3.out\n?? logs/combiner_key_test4.out\n?? logs/combiner_key_test5.out\n?? logs/combiner_key_test6.out\n?? logs/combiner_key_test7.out\n?? logs/combiner_key_test8.out\n?? logs/combiner_key_test9.out\n?? results/week_06/figures/leg_handle_eval_stage2_seed1.png\n?? results/week_06/figures/leg_handle_eval_stage2_seed2.png\n?? results/week_06/figures/leg_handle_frames_force_handle64.png\n?? results/week_06/figures/leg_handle_frames_position_handle64.png\n?? results/week_06/runs/20261019T125232_smoke_seed1_leg_smoke/\n?? results/week_06/runs/20261019T125605_train_seed1_leg_force_s1/\n?? results/week_06/runs/20261019T131141_train_seed1_leg_force_v2_s1/\n?? results/week_06/runs/20261019T132551_train_seed1_leg_force_v3_s1/\n?? results/week_06/runs/20261019T135610_leg_eval_seed1_leg_frames_pipeline_test/\n?? results/week_06/runs/20261019T141313_leg_eval_seed1_leg_eval_force_v3_1000_zeroshot/\n?? results/week_06/runs/20261019T142125_train_seed1_leg_force_stage2_pilot/\n?? results/week_06/runs/20261019T143608_train_seed1_leg_force_stage2_pilot2/\n?? results/week_06/runs/20261019T151333_train_seed1_leg_position_v3_s1/\n?? results/week_06/runs/20261019T151401_train_seed1_leg_force_stage2_s1/\n?? results/week_06/runs/20261019T151538_train_seed1_leg_force_stage2_s1b/\n?? results/week_06/runs/20261019T153231_train_seed1_leg_force_stage2_s1c/\n?? results/week_06/runs/20261019T154414_train_seed1_leg_force_stage2_s1d/\n?? results/week_06/runs/20261019T155848_train_seed1_leg_force_stage2_e/\n?? results/week_06/runs/20261019T160947_train_seed1_leg_force_stage2_f/\n?? results/week_06/runs/20261019T165037_train_seed1_leg_position_stage2_f/\n?? results/week_06/runs/20261019T165614_train_seed1_leg_force_stage2_g/\n?? results/week_06/runs/20261019T165614_train_seed1_leg_position_stage2_g/\n?? results/week_06/runs/20261019T165935_leg_eval_seed1_leg_eval_force_stage1_1200/\n?? results/week_06/runs/20261019T170105_leg_eval_seed1_leg_eval_position_stage1_1200/\n?? results/week_06/runs/20261019T171618_train_seed1_leg_force_stage2_h/\n?? results/week_06/runs/20261019T171618_train_seed1_leg_position_stage2_h/\n?? results/week_06/runs/20261019T171804_leg_eval_seed1_leg_eval_force_stage1_1200_h/\n?? results/week_06/runs/20261019T171934_leg_eval_seed1_leg_eval_position_stage1_1200_h/\n?? results/week_06/runs/20261019T173338_smoke_seed1_leg_smoke_recipe_i/\n?? results/week_06/runs/20261019T173407_train_seed1_leg_force_stage2_i/\n?? results/week_06/runs/20261019T173407_train_seed1_leg_position_stage2_i/\n?? results/week_06/runs/20261019T175803_train_seed1_leg_force_stage2_j/\n?? results/week_06/runs/20261019T175803_train_seed1_leg_position_stage2_j/\n?? results/week_06/runs/20261019T175951_leg_eval_seed1_leg_eval_force_stage1_1200_j/\n?? results/week_06/runs/20261019T180115_leg_eval_seed1_leg_eval_position_stage1_1200_j/\n?? results/week_06/runs/20261019T222952_leg_eval_seed1_leg_eval_force_stage2_j_2699/\n?? results/week_06/runs/20261019T223022_leg_eval_seed1_leg_eval_force_stage2_j_2699_bar20mm/\n?? results/week_06/runs/20261019T223051_leg_eval_seed1_leg_eval_position_stage2_j_2699/\n?? results/week_06/runs/20261019T223120_leg_eval_seed1_leg_eval_position_stage2_j_2699_bar20mm/\n?? results/week_06/runs/20261019T223153_leg_eval_seed1_leg_frames_force_stage2_j/\n?? results/week_06/runs/20261019T223252_leg_eval_seed1_leg_frames_position_stage2_j/\n?? results/week_06/runs/20261019T223505_train_seed2_leg_force_stage2_j_s2/\n?? results/week_06/runs/20261019T223505_train_seed2_leg_position_stage2_j_s2/\n?? results/week_06/runs/20261020T003011_leg_eval_seed1_leg_eval_force_stage2_j_s2_2699/\n?? results/week_06/runs/20261020T003041_leg_eval_seed1_leg_eval_position_stage2_j_s2_2699/\n?? results/week_06/runs/20261020T025831_leg_eval_seed1_leg_video_position_s2/\n?? results/week_06/runs/20261020T025938_leg_eval_seed1_leg_video_force_s2/\n?? results/week_06/runs/20261020T030436_play_seed1_leg_viewer_position_s2/\n?? results/week_06/runs/20261020T030544_play_seed1_leg_viewer_force_s2/\n?? results/week_06/runs/20261020T133850_smoke_seed1_key_stage1_smoke/\n?? results/week_06/runs/20261020T133916_train_seed1_key_force_s1_stage1/\n?? results/week_06/runs/20261020T133935_train_seed1_key_position_s1_stage1/\n?? results/week_06/runs/20261020T134924_smoke_seed1_key_stage2_smoke/\n?? results/week_06/runs/20261020T135146_leg_eval_seed1_key_eval_pipeline_test/\n?? results/week_06/runs/20261020T140313_train_seed1_key_force_s1_stage1b/\n?? results/week_06/runs/20261020T140352_train_seed1_key_position_s1_stage1b/\n?? results/week_06/runs/20261020T154059_train_seed1_key_force_s1_stage2/\n?? results/week_06/runs/20261020T154159_train_seed1_key_position_s1_stage2/\n?? tests/test_handle.py\n?? unifp_train/foot_goals.py\n?? unifp_train/handle.py\n?? unifp_train/leg_cfg.py\n?? unifp_train/leg_env.py\n?? unifp_train/leg_eval.py\n?? unifp_train/leg_plot.py\n?? unifp_train/leg_rewards.py\n?? unifp_train/leg_vis.py",
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "box_usd": "/home/victor/D1Training/generated/unifp_demos/combiner_0.400_ac02abf3702d.usda",
+  "phases": [
+    "look",
+    "walk_to_key",
+    "settle_turn",
+    "turn",
+    "stand"
+  ],
+  "leg": {
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T154539_train_seed1_key_force_s1_stage2b/model_800.pt",
+    "variant": "force",
+    "plant": "unifp_train.handle.LeverHandle(pad=True), as trained (leg_cfg.KEY_*)",
+    "lock_friction_nm": 1.5,
+    "lock_detent_nm": 0.5,
+    "actuator": "the decoupled stack's DCMotor (trained on UniFP's ideal PD, the same gains)",
+    "robot": "the combiner door demo's: payload drawn, not simulated (trained with the lidar's and the wrist camera's mass and colliders)"
+  },
+  "key": {
+    "stl": "/home/victor/D1Training/demos/combiner_key/assets/combinerbox_lever_v3.stl",
+    "mirrored": true,
+    "grip": {
+      "k_n_m": 600.0,
+      "k_nm_rad": 5.0
+    },
+    "adapter": {
+      "half_size": 0.03,
+      "thickness": 0.016,
+      "gap": 0.001,
+      "shaft_half": 0.0065,
+      "ward_half_u": 0.0095,
+      "ward_half_t": 0.00325,
+      "depth": 0.012,
+      "chamfer": 0.005,
+      "friction": 0.3
+    }
+  },
+  "stances": {
+    "insert_from_look": [
+      0.16699999999999993,
+      0.331
+    ],
+    "turn_from_look": [
+      0.26499999999999996,
+      0.331
+    ]
+  },
+  "summary": {
+    "attempts": 1,
+    "tag_found": 1,
+    "inserted": 1,
+    "turn_started": 1,
+    "unlocked": 0,
+    "verified_unlocked": 0,
+    "foot_down": 0,
+    "fell": 0,
+    "success": 0,
+    "max_stance_cm_median": 33.502235412597656
+  }
+}

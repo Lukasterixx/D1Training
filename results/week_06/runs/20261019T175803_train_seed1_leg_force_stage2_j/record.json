@@ -1,0 +1,63 @@
+{
+  "id": "20261019T175803_train_seed1_leg_force_stage2_j",
+  "title": "Leg stage 2 force, recipe j (two-leg lift, approach penalty, 8 kN/m contact): 1500 iterations from model_1200",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T09:30:25+11:00",
+  "started_utc": "2026-10-19T17:58:03+00:00",
+  "source_dir": "logs/unifp_train/20261019T175803_train_seed1_leg_force_stage2_j",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 2699,
+  "final_checkpoint": {
+    "file": "model_2699.pt",
+    "sha256": "d68e29fe0e2f9957444855eecb35d9634159ad23ebe76b0438fef5d39c15362c"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 99.79840850830078,
+      "last_step": 2699,
+      "mean_last_10": 99.68075027465821,
+      "min": 1.396507740020752,
+      "max": 107.63746643066406,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 642.760009765625,
+      "last_step": 2699,
+      "mean_last_10": 621.3980041503906,
+      "min": 11.8125,
+      "max": 740.489990234375,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.21555955708026886,
+      "last_step": 2699,
+      "mean_last_10": 0.21502481102943422,
+      "min": 0.2010641247034073,
+      "max": 0.2417914867401123,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 23036.0,
+      "last_step": 2699,
+      "mean_last_10": 23228.0,
+      "min": 7557.0,
+      "max": 23545.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

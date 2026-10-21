@@ -1,0 +1,491 @@
+{
+  "summary": {
+    "attempts": 4,
+    "tag_found": 4,
+    "inserted": 0,
+    "turn_started": 0,
+    "unlocked": 0,
+    "verified_unlocked": 0,
+    "foot_down": 0,
+    "fell": 0,
+    "damaged": 0,
+    "success": 0,
+    "max_stance_cm_median": 16.75184679031372
+  },
+  "attempts": [
+    {
+      "batch": 0,
+      "env": 0,
+      "site": {
+        "distance_m": 0.8586619404558785,
+        "bearing_deg": 1.202408630676469,
+        "yaw_deg": 176.44159612719633
+      },
+      "look": {
+        "found": true,
+        "detections": 48,
+        "lidar": {
+          "used": true,
+          "points": 3892,
+          "span_m": 0.56,
+          "rms_mm": 25.0,
+          "face_behind_tag_mm": -1.6,
+          "why_not": null
+        },
+        "lidar_depth_shift_mm": null,
+        "tag_only": {
+          "pose_position_mm": 2.75,
+          "pose_rotation_deg": 0.445,
+          "pose_offset_mm_xyz": [
+            -2.22,
+            1.63,
+            0.02
+          ],
+          "site_position_mm": 2.75,
+          "site_yaw_deg": 0.412,
+          "estimate_site": {
+            "distance_m": 0.8565,
+            "bearing_deg": 1.314,
+            "yaw_deg": 176.854
+          }
+        }
+      },
+      "walk_error_m": 0.0285,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 2.27,
+        "lock_error_xyz_mm": [
+          -2.2,
+          0.55,
+          0.0
+        ],
+        "yaw_error_deg": 0.29
+      },
+      "pre_seed": "seeded",
+      "hand_loop_mm": 5.1,
+      "hand_miss_mm": 1.4,
+      "aligned": {
+        "seated": false,
+        "out_mm": 27.3,
+        "across_mm": [
+          -0.6,
+          -0.58
+        ],
+        "roll_deg": -0.16,
+        "tilt_deg": 0.38,
+        "hand_approach_error_deg": 0.4,
+        "grip_tilt_deg": 0.02,
+        "ik": {
+          "joint": 35,
+          "position": 116,
+          "pose": 45
+        },
+        "ik_last": "pose"
+      },
+      "seat": {
+        "seated": false,
+        "out_mm": 8.56,
+        "across_mm": [
+          1.23,
+          -0.67
+        ],
+        "roll_deg": -0.54,
+        "tilt_deg": 16.5,
+        "hand_approach_error_deg": 0.51,
+        "grip_tilt_deg": 15.99,
+        "ik": {
+          "joint": 35,
+          "position": 116,
+          "pose": 95
+        },
+        "ik_last": "pose"
+      },
+      "after_release": {
+        "seated": false,
+        "out_mm": 21.47,
+        "across_mm": [
+          -322.23,
+          -222.3
+        ],
+        "roll_deg": -82.43,
+        "tilt_deg": 54.36,
+        "hand_approach_error_deg": 0.35,
+        "grip_tilt_deg": 54.66,
+        "ik": {
+          "joint": 35,
+          "position": 116,
+          "pose": 116
+        },
+        "ik_last": "pose"
+      },
+      "turn_started": false,
+      "min_base_z": 0.30310487747192383,
+      "max_tilt_deg": 5.2191323868011565,
+      "max_stance_cm": 14.2787504196167,
+      "fell": false,
+      "inserted": false,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 1,
+      "site": {
+        "distance_m": 0.8759783148101846,
+        "bearing_deg": -0.49231338816455134,
+        "yaw_deg": 179.23326448972577
+      },
+      "look": {
+        "found": true,
+        "detections": 48,
+        "lidar": {
+          "used": true,
+          "points": 3896,
+          "span_m": 0.56,
+          "rms_mm": 24.8,
+          "face_behind_tag_mm": -3.1,
+          "why_not": null
+        },
+        "lidar_depth_shift_mm": null,
+        "tag_only": {
+          "pose_position_mm": 5.25,
+          "pose_rotation_deg": 0.421,
+          "pose_offset_mm_xyz": [
+            4.93,
+            -1.37,
+            1.19
+          ],
+          "site_position_mm": 5.11,
+          "site_yaw_deg": 0.32,
+          "estimate_site": {
+            "distance_m": 0.8809,
+            "bearing_deg": -0.578,
+            "yaw_deg": 178.913
+          }
+        }
+      },
+      "walk_error_m": 0.0186,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 3.52,
+        "lock_error_xyz_mm": [
+          3.51,
+          0.16,
+          0.0
+        ],
+        "yaw_error_deg": -0.15
+      },
+      "pre_seed": "seeded",
+      "hand_loop_mm": 9.9,
+      "hand_miss_mm": 10.1,
+      "aligned": {
+        "seated": false,
+        "out_mm": 21.52,
+        "across_mm": [
+          -0.85,
+          -0.36
+        ],
+        "roll_deg": -0.09,
+        "tilt_deg": 0.23,
+        "hand_approach_error_deg": 0.24,
+        "grip_tilt_deg": 0.02,
+        "ik": {
+          "joint": 35,
+          "position": 115,
+          "pose": 45
+        },
+        "ik_last": "pose"
+      },
+      "seat": {
+        "seated": false,
+        "out_mm": 5.78,
+        "across_mm": [
+          -1.97,
+          -1.08
+        ],
+        "roll_deg": -1.93,
+        "tilt_deg": 12.29,
+        "hand_approach_error_deg": 12.11,
+        "grip_tilt_deg": 0.57,
+        "ik": {
+          "joint": 35,
+          "position": 121,
+          "pose": 87,
+          "hold": 2
+        },
+        "ik_last": "hold"
+      },
+      "after_release": {
+        "seated": false,
+        "out_mm": 4.76,
+        "across_mm": [
+          -224.55,
+          -304.11
+        ],
+        "roll_deg": -155.41,
+        "tilt_deg": 72.46,
+        "hand_approach_error_deg": 19.52,
+        "grip_tilt_deg": 81.95,
+        "ik": {
+          "joint": 35,
+          "position": 125,
+          "pose": 95,
+          "hold": 11
+        },
+        "ik_last": "pose"
+      },
+      "turn_started": false,
+      "min_base_z": 0.30241671204566956,
+      "max_tilt_deg": 5.426471316793356,
+      "max_stance_cm": 13.924132347106934,
+      "fell": false,
+      "inserted": false,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 2,
+      "site": {
+        "distance_m": 0.8711156754982472,
+        "bearing_deg": -0.23889003410149562,
+        "yaw_deg": 180.49593687673058
+      },
+      "look": {
+        "found": true,
+        "detections": 48,
+        "lidar": {
+          "used": true,
+          "points": 3889,
+          "span_m": 0.56,
+          "rms_mm": 25.1,
+          "face_behind_tag_mm": -2.5,
+          "why_not": null
+        },
+        "lidar_depth_shift_mm": null,
+        "tag_only": {
+          "pose_position_mm": 8.95,
+          "pose_rotation_deg": 0.559,
+          "pose_offset_mm_xyz": [
+            8.72,
+            -1.71,
+            1.09
+          ],
+          "site_position_mm": 8.89,
+          "site_yaw_deg": 0.509,
+          "estimate_site": {
+            "distance_m": 0.8798,
+            "bearing_deg": -0.348,
+            "yaw_deg": 179.987
+          }
+        }
+      },
+      "walk_error_m": 0.0169,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 10.92,
+        "lock_error_xyz_mm": [
+          10.92,
+          0.19,
+          0.0
+        ],
+        "yaw_error_deg": -0.911
+      },
+      "pre_seed": "seeded",
+      "hand_loop_mm": 30.0,
+      "hand_miss_mm": 132.7,
+      "aligned": {
+        "seated": false,
+        "out_mm": 13.29,
+        "across_mm": [
+          -6.42,
+          -4.88
+        ],
+        "roll_deg": -10.59,
+        "tilt_deg": 3.41,
+        "hand_approach_error_deg": 4.48,
+        "grip_tilt_deg": 6.71,
+        "ik": {
+          "joint": 35,
+          "position": 115,
+          "pose": 45
+        },
+        "ik_last": "pose"
+      },
+      "seat": {
+        "seated": false,
+        "out_mm": 80.7,
+        "across_mm": [
+          -56.16,
+          79.19
+        ],
+        "roll_deg": -3.96,
+        "tilt_deg": 12.79,
+        "hand_approach_error_deg": 12.75,
+        "grip_tilt_deg": 0.04,
+        "ik": {
+          "joint": 35,
+          "position": 119,
+          "pose": 70,
+          "hold": 21
+        },
+        "ik_last": "hold"
+      },
+      "after_release": {
+        "seated": false,
+        "out_mm": 88.83,
+        "across_mm": [
+          -347.83,
+          -200.9
+        ],
+        "roll_deg": -100.89,
+        "tilt_deg": 104.64,
+        "hand_approach_error_deg": 13.18,
+        "grip_tilt_deg": 92.62,
+        "ik": {
+          "joint": 35,
+          "position": 121,
+          "pose": 70,
+          "hold": 40
+        },
+        "ik_last": "position"
+      },
+      "turn_started": false,
+      "min_base_z": 0.27937960624694824,
+      "max_tilt_deg": 20.934953277817623,
+      "max_stance_cm": 19.224943161010742,
+      "fell": false,
+      "inserted": false,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 3,
+      "site": {
+        "distance_m": 0.8391636362434943,
+        "bearing_deg": 0.6923838966434925,
+        "yaw_deg": 180.38143313219277
+      },
+      "look": {
+        "found": true,
+        "detections": 48,
+        "lidar": {
+          "used": true,
+          "points": 3901,
+          "span_m": 0.56,
+          "rms_mm": 25.0,
+          "face_behind_tag_mm": -2.2,
+          "why_not": null
+        },
+        "lidar_depth_shift_mm": null,
+        "tag_only": {
+          "pose_position_mm": 8.88,
+          "pose_rotation_deg": 0.889,
+          "pose_offset_mm_xyz": [
+            8.58,
+            -2.04,
+            1.08
+          ],
+          "site_position_mm": 8.81,
+          "site_yaw_deg": 0.855,
+          "estimate_site": {
+            "distance_m": 0.8477,
+            "bearing_deg": 0.548,
+            "yaw_deg": 179.527
+          }
+        }
+      },
+      "walk_error_m": 0.0199,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 11.07,
+        "lock_error_xyz_mm": [
+          11.06,
+          0.31,
+          0.0
+        ],
+        "yaw_error_deg": -1.011
+      },
+      "pre_seed": "seeded",
+      "hand_loop_mm": 5.2,
+      "hand_miss_mm": 22.6,
+      "aligned": {
+        "seated": false,
+        "out_mm": 14.09,
+        "across_mm": [
+          -0.47,
+          0.84
+        ],
+        "roll_deg": -0.09,
+        "tilt_deg": 1.01,
+        "hand_approach_error_deg": 1.01,
+        "grip_tilt_deg": 0.02,
+        "ik": {
+          "joint": 35,
+          "position": 115,
+          "pose": 45
+        },
+        "ik_last": "pose"
+      },
+      "seat": {
+        "seated": false,
+        "out_mm": 12.54,
+        "across_mm": [
+          -1.67,
+          9.07
+        ],
+        "roll_deg": -6.13,
+        "tilt_deg": 7.38,
+        "hand_approach_error_deg": 7.39,
+        "grip_tilt_deg": 0.02,
+        "ik": {
+          "joint": 35,
+          "position": 118,
+          "pose": 78,
+          "hold": 14
+        },
+        "ik_last": "hold"
+      },
+      "after_release": {
+        "seated": false,
+        "out_mm": 34.3,
+        "across_mm": [
+          -283.32,
+          -292.21
+        ],
+        "roll_deg": -2.71,
+        "tilt_deg": 88.49,
+        "hand_approach_error_deg": 19.02,
+        "grip_tilt_deg": 70.82,
+        "ik": {
+          "joint": 35,
+          "position": 118,
+          "pose": 78,
+          "hold": 35
+        },
+        "ik_last": "hold"
+      },
+      "turn_started": false,
+      "min_base_z": 0.26047369837760925,
+      "max_tilt_deg": 25.189541291068387,
+      "max_stance_cm": 19.503339767456055,
+      "fell": false,
+      "inserted": false,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    }
+  ]
+}

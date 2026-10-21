@@ -1,0 +1,63 @@
+{
+  "id": "20261019T223505_train_seed2_leg_position_stage2_j_s2",
+  "title": "Leg stage 2 position, recipe j, seed 2: 1500 iterations from model_1200",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T11:32:46+11:00",
+  "started_utc": "2026-10-19T22:35:05+00:00",
+  "source_dir": "logs/unifp_train/20261019T223505_train_seed2_leg_position_stage2_j_s2",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 2699,
+  "final_checkpoint": {
+    "file": "model_2699.pt",
+    "sha256": "4c7f1e686acfc711047fda75ca7081e381a5fe1bf6b9832800bf02c0bbeffffd"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 109.73493957519531,
+      "last_step": 2699,
+      "mean_last_10": 107.76924667358398,
+      "min": 1.1193126440048218,
+      "max": 112.46183776855469,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 637.7100219726562,
+      "last_step": 2699,
+      "mean_last_10": 624.5949951171875,
+      "min": 10.459016799926758,
+      "max": 720.8699951171875,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.1890505850315094,
+      "last_step": 2699,
+      "mean_last_10": 0.18925270736217498,
+      "min": 0.18834054470062256,
+      "max": 0.2389913648366928,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 10816.0,
+      "last_step": 2699,
+      "mean_last_10": 11005.2,
+      "min": 10270.0,
+      "max": 13154.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

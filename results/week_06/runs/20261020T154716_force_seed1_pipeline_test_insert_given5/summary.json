@@ -1,0 +1,105 @@
+{
+  "summary": {
+    "attempts": 1,
+    "tag_found": 1,
+    "inserted": 0,
+    "turn_started": 0,
+    "unlocked": 0,
+    "verified_unlocked": 0,
+    "foot_down": 0,
+    "fell": 0,
+    "success": 0,
+    "max_stance_cm_median": 12.212965965270996
+  },
+  "attempts": [
+    {
+      "batch": 0,
+      "env": 0,
+      "site": {
+        "distance_m": 0.8586619404558785,
+        "bearing_deg": 1.202408630676469,
+        "yaw_deg": 176.44159612719633
+      },
+      "look": {
+        "found": true,
+        "detections": 0
+      },
+      "walk_error_m": 0.0204,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "pre_seed": "seeded",
+      "aligned": {
+        "seated": false,
+        "out_mm": 28.1,
+        "across_mm": [
+          -12.43,
+          -10.55
+        ],
+        "roll_deg": -0.55,
+        "tilt_deg": 1.54,
+        "hand_approach_error_deg": 1.55,
+        "grip_tilt_deg": 0.01,
+        "ik": {
+          "joint": 35,
+          "position": 86,
+          "pose": 35
+        },
+        "ik_last": "pose"
+      },
+      "seat": {
+        "seated": false,
+        "out_mm": 35.6,
+        "across_mm": [
+          -103.19,
+          -85.55
+        ],
+        "roll_deg": -4.93,
+        "tilt_deg": 12.78,
+        "hand_approach_error_deg": 12.8,
+        "grip_tilt_deg": 0.01,
+        "ik": {
+          "joint": 35,
+          "position": 86,
+          "pose": 85
+        },
+        "ik_last": "pose"
+      },
+      "after_release": {
+        "seated": false,
+        "out_mm": 55.99,
+        "across_mm": [
+          -279.8,
+          -274.8
+        ],
+        "roll_deg": -74.57,
+        "tilt_deg": 104.48,
+        "hand_approach_error_deg": 0.2,
+        "grip_tilt_deg": 104.65,
+        "ik": {
+          "joint": 35,
+          "position": 86,
+          "pose": 106
+        },
+        "ik_last": "pose"
+      },
+      "turn_started": false,
+      "min_base_z": 0.2892664074897766,
+      "max_tilt_deg": 4.6697559393081125,
+      "max_stance_cm": 12.212965965270996,
+      "fell": false,
+      "inserted": false,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "success": false
+    }
+  ]
+}

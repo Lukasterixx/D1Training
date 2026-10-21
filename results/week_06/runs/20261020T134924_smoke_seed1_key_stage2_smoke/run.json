@@ -1,0 +1,364 @@
+{
+  "action_space": 12,
+  "actor_obs": [
+    16,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "foot_push_n": null,
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_ramp_iterations": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "handle_fraction": 1.0,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "leg_bar_radius": null,
+    "leg_frame_every": 5,
+    "leg_frames": 0,
+    "leg_object": "key",
+    "leg_rows": null,
+    "leg_variant": "force",
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "smoke",
+    "mount_pos": null,
+    "no_arm_jitter": false,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "payload": "physical",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "key_stage2_smoke",
+    "seed": 1,
+    "small_physx": true,
+    "std_type": null,
+    "steps": 600,
+    "stochastic": false,
+    "task": "leg",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "critic_obs": [
+    16,
+    459
+  ],
+  "d1_urdf_sha256": "a848ee41d51def2956fcb6f0af12048e723a1d7f3f3f52b007fcca571a586691",
+  "driven_by": "zero actions",
+  "env_steps_with_external_force": 0,
+  "episode_length_steps": 900,
+  "estimate_obs": [
+    16,
+    12
+  ],
+  "expected_actor": [
+    16,
+    2432
+  ],
+  "expected_critic": [
+    16,
+    459
+  ],
+  "expected_estimates": [
+    16,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 500,
+  "force_start_step": 12000,
+  "frames_consistent": true,
+  "git_commit": "9136aba825726b622a29132d3ef76cb1b3f88976",
+  "git_status": "M results/findings.md\n M results/week_06/notes.md\n M run_unifp_train.py\n M unifp_train/README.md\n M unifp_train/eval.py\n?? results/week_06/figures/leg_handle_eval_stage2_seed1.png\n?? results/week_06/figures/leg_handle_eval_stage2_seed2.png\n?? results/week_06/figures/leg_handle_frames_force_handle64.png\n?? results/week_06/figures/leg_handle_frames_position_handle64.png\n?? results/week_06/runs/20261019T125232_smoke_seed1_leg_smoke/\n?? results/week_06/runs/20261019T125605_train_seed1_leg_force_s1/\n?? results/week_06/runs/20261019T131141_train_seed1_leg_force_v2_s1/\n?? results/week_06/runs/20261019T132551_train_seed1_leg_force_v3_s1/\n?? results/week_06/runs/20261019T135610_leg_eval_seed1_leg_frames_pipeline_test/\n?? results/week_06/runs/20261019T141313_leg_eval_seed1_leg_eval_force_v3_1000_zeroshot/\n?? results/week_06/runs/20261019T142125_train_seed1_leg_force_stage2_pilot/\n?? results/week_06/runs/20261019T143608_train_seed1_leg_force_stage2_pilot2/\n?? results/week_06/runs/20261019T151333_train_seed1_leg_position_v3_s1/\n?? results/week_06/runs/20261019T151401_train_seed1_leg_force_stage2_s1/\n?? results/week_06/runs/20261019T151538_train_seed1_leg_force_stage2_s1b/\n?? results/week_06/runs/20261019T153231_train_seed1_leg_force_stage2_s1c/\n?? results/week_06/runs/20261019T154414_train_seed1_leg_force_stage2_s1d/\n?? results/week_06/runs/20261019T155848_train_seed1_leg_force_stage2_e/\n?? results/week_06/runs/20261019T160947_train_seed1_leg_force_stage2_f/\n?? results/week_06/runs/20261019T165037_train_seed1_leg_position_stage2_f/\n?? results/week_06/runs/20261019T165614_train_seed1_leg_force_stage2_g/\n?? results/week_06/runs/20261019T165614_train_seed1_leg_position_stage2_g/\n?? results/week_06/runs/20261019T165935_leg_eval_seed1_leg_eval_force_stage1_1200/\n?? results/week_06/runs/20261019T170105_leg_eval_seed1_leg_eval_position_stage1_1200/\n?? results/week_06/runs/20261019T171618_train_seed1_leg_force_stage2_h/\n?? results/week_06/runs/20261019T171618_train_seed1_leg_position_stage2_h/\n?? results/week_06/runs/20261019T171804_leg_eval_seed1_leg_eval_force_stage1_1200_h/\n?? results/week_06/runs/20261019T171934_leg_eval_seed1_leg_eval_position_stage1_1200_h/\n?? results/week_06/runs/20261019T173338_smoke_seed1_leg_smoke_recipe_i/\n?? results/week_06/runs/20261019T173407_train_seed1_leg_force_stage2_i/\n?? results/week_06/runs/20261019T173407_train_seed1_leg_position_stage2_i/\n?? results/week_06/runs/20261019T175803_train_seed1_leg_force_stage2_j/\n?? results/week_06/runs/20261019T175803_train_seed1_leg_position_stage2_j/\n?? results/week_06/runs/20261019T175951_leg_eval_seed1_leg_eval_force_stage1_1200_j/\n?? results/week_06/runs/20261019T180115_leg_eval_seed1_leg_eval_position_stage1_1200_j/\n?? results/week_06/runs/20261019T222952_leg_eval_seed1_leg_eval_force_stage2_j_2699/\n?? results/week_06/runs/20261019T223022_leg_eval_seed1_leg_eval_force_stage2_j_2699_bar20mm/\n?? results/week_06/runs/20261019T223051_leg_eval_seed1_leg_eval_position_stage2_j_2699/\n?? results/week_06/runs/20261019T223120_leg_eval_seed1_leg_eval_position_stage2_j_2699_bar20mm/\n?? results/week_06/runs/20261019T223153_leg_eval_seed1_leg_frames_force_stage2_j/\n?? results/week_06/runs/20261019T223252_leg_eval_seed1_leg_frames_position_stage2_j/\n?? results/week_06/runs/20261019T223505_train_seed2_leg_force_stage2_j_s2/\n?? results/week_06/runs/20261019T223505_train_seed2_leg_position_stage2_j_s2/\n?? results/week_06/runs/20261020T003011_leg_eval_seed1_leg_eval_force_stage2_j_s2_2699/\n?? results/week_06/runs/20261020T003041_leg_eval_seed1_leg_eval_position_stage2_j_s2_2699/\n?? results/week_06/runs/20261020T025831_leg_eval_seed1_leg_video_position_s2/\n?? results/week_06/runs/20261020T025938_leg_eval_seed1_leg_video_force_s2/\n?? results/week_06/runs/20261020T030436_play_seed1_leg_viewer_position_s2/\n?? results/week_06/runs/20261020T030544_play_seed1_leg_viewer_force_s2/\n?? tests/test_handle.py\n?? unifp_train/foot_goals.py\n?? unifp_train/handle.py\n?? unifp_train/leg_cfg.py\n?? unifp_train/leg_env.py\n?? unifp_train/leg_eval.py\n?? unifp_train/leg_plot.py\n?? unifp_train/leg_rewards.py\n?? unifp_train/leg_vis.py",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "leg": {
+    "arm_jitter": true,
+    "arm_look_pose": [
+      -0.3,
+      -0.2,
+      -0.6,
+      0.0,
+      1.3,
+      0.0
+    ],
+    "arm_pose": "rest",
+    "foot_command_n": 35.0,
+    "foot_force_kp": 400.0,
+    "foot_force_range_n": [
+      -35.0,
+      35.0
+    ],
+    "foot_push_n": 35.0,
+    "force_ramp_iterations": 1000,
+    "handle_fraction": 1.0,
+    "handle_weights": {
+      "approach_contact": -2.0,
+      "door_push": -1.0,
+      "handle_contact": 1.0,
+      "handle_open": 2.0,
+      "handle_progress": 1.5,
+      "handle_slip": -3.0
+    },
+    "object": "key",
+    "settled_spawn": true,
+    "stance_weight": 2.0,
+    "variant": "force",
+    "weights": {
+      "action_rate": -0.02,
+      "alive": 1.0,
+      "ang_vel_xy": -0.05,
+      "base_height": -2.0,
+      "base_still": 1.0,
+      "base_yaw_still": 0.5,
+      "collision": -5.0,
+      "dof_acc": -2.5e-07,
+      "dof_pos_limits": -10.0,
+      "dof_vel": -0.0008,
+      "dof_vel_arm": -0.0002,
+      "feet_contact_forces": -0.001,
+      "foot_lift": 1.5,
+      "foot_tracking": 1.0,
+      "foot_tracking_fine": 2.0,
+      "foot_tracking_mid": 3.0,
+      "lin_vel_z": -1.5,
+      "orientation": -1.0,
+      "support_contact": 1.0,
+      "support_hip_pos": -0.5,
+      "support_slip": -1.0,
+      "torque_limits": -0.005,
+      "torques": -5e-06
+    }
+  },
+  "mean_reward_per_step": 0.11533,
+  "mechanism": null,
+  "mode": "smoke",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 16,
+  "payload": {
+    "bodies": [
+      {
+        "body": "base",
+        "com_m": [
+          [
+            0.0211,
+            0.0,
+            -0.0054
+          ],
+          [
+            0.0297,
+            -0.0,
+            0.0013
+          ]
+        ],
+        "mass_kg": [
+          6.921,
+          7.3409
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.265,
+            "name": "mid360",
+            "source": "published: Livox Mid-360 user manual, approx. 265 g"
+          },
+          {
+            "mass_kg": 0.1549,
+            "name": "mid360_mount",
+            "source": "estimated: the CAD's closed parts, 124.9 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      },
+      {
+        "body": "Link6",
+        "com_m": [
+          [
+            -0.0069,
+            -0.0,
+            0.0397
+          ],
+          [
+            -0.0234,
+            0.0001,
+            0.0421
+          ]
+        ],
+        "mass_kg": [
+          0.1679,
+          0.2666
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.072,
+            "name": "d435i",
+            "source": "published: Intel RealSense D400 series datasheet, D435/D435i 72 g"
+          },
+          {
+            "mass_kg": 0.0267,
+            "name": "wrist_bracket",
+            "source": "estimated: the CAD's 21.6 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      }
+    ],
+    "mode": "physical"
+  },
+  "press": null,
+  "resets": 0,
+  "reward_terms_per_step": {
+    "action_rate": 0.0,
+    "alive": 0.02,
+    "ang_vel_xy": -0.0,
+    "approach_contact": 0.0,
+    "base_height": -1.3e-05,
+    "base_still": 0.02,
+    "base_yaw_still": 0.01,
+    "collision": 0.0,
+    "dof_acc": -0.0,
+    "dof_pos_limits": 0.0,
+    "dof_vel": -1e-06,
+    "dof_vel_arm": -0.0,
+    "door_push": 0.0,
+    "feet_contact_forces": 0.0,
+    "foot_lift": 0.0,
+    "foot_tracking": 0.006757,
+    "foot_tracking_fine": 0.002805,
+    "foot_tracking_mid": 0.006621,
+    "handle_contact": 0.0,
+    "handle_open": 0.0,
+    "handle_progress": 0.0,
+    "handle_slip": 0.0,
+    "lin_vel_z": -0.0,
+    "orientation": -0.0,
+    "support_contact": 0.010678,
+    "support_hip_pos": -1e-06,
+    "support_slip": -0.001472,
+    "support_stance": 0.039982,
+    "torque_limits": -3e-06,
+    "torques": -2.5e-05
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1_payload.usd",
+  "robot_usd_sha256": "61290b5a5d9a7943a8b82743d6363ddd1ea2823bbc79d0612b78d9b86da915cd",
+  "roll_objective": false,
+  "rope": null,
+  "run_dir": "/home/victor/D1Training/logs/unifp_train/20261020T134924_smoke_seed1_key_stage2_smoke",
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "finished",
+  "steps": 600,
+  "task": "leg",
+  "tip_goal_error_m": {
+    "max": 0.6395,
+    "median": 0.5016,
+    "p90": 0.6078
+  },
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

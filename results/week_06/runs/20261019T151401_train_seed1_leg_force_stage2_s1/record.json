@@ -1,0 +1,63 @@
+{
+  "id": "20261019T151401_train_seed1_leg_force_stage2_s1",
+  "title": "Leg stage 2 force, start a: stopped at 2005 to cut the physical push to 20 N",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T02:33:14+11:00",
+  "started_utc": "2026-10-19T15:14:01+00:00",
+  "source_dir": "logs/unifp_train/20261019T151401_train_seed1_leg_force_stage2_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 2010,
+  "final_checkpoint": {
+    "file": "model_2010.pt",
+    "sha256": "72c580740efd7e4872b8e27fa10913e5470fbb6a05c741b017c8ab59eb6b6e58"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 23.625558853149414,
+      "last_step": 2010,
+      "mean_last_10": 13.999321031570435,
+      "min": 1.1440829038619995,
+      "max": 23.625558853149414,
+      "points": 11
+    },
+    "Train/mean_episode_length": {
+      "last": 227.49000549316406,
+      "last_step": 2010,
+      "mean_last_10": 133.66100120544434,
+      "min": 11.8125,
+      "max": 227.49000549316406,
+      "points": 11
+    },
+    "Policy/mean_std": {
+      "last": 0.5515182614326477,
+      "last_step": 2010,
+      "mean_last_10": 0.5495143830776215,
+      "min": 0.5454328656196594,
+      "max": 0.5515182614326477,
+      "points": 11
+    },
+    "Perf/total_fps": {
+      "last": 8323.0,
+      "last_step": 2010,
+      "mean_last_10": 8569.0,
+      "min": 7501.0,
+      "max": 9376.0,
+      "points": 11
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

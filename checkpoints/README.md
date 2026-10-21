@@ -8,6 +8,16 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## The key-turning leg policy, exported for the dog's shadow mode (2026-10-21)
+
+`leg_key_force_s2walker_model_2104.npz` is the force-aware front-right-leg key policy fine-tuned from the walking
+policy's stances (seed 2, `model_2104`, F-167; from `logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/`,
+which is gitignored), exported by `demos/combiner_key/robot/export_policy.py` for the dog's numpy runner
+(`demos/combiner_key/robot/`). It holds the weights and every constant of the policy's interface, and the export
+checked numpy against the checkpoint (actions to 3.3e-6). It is not a checkpoint: `EvaluablePolicy` does not load it,
+and it cannot be trained further. Trained on UniFP's ideal-PD legs with armature 2e-4, no delay and no noise (F-168):
+for shadow mode, not for driving the legs.
+
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 
 `p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs

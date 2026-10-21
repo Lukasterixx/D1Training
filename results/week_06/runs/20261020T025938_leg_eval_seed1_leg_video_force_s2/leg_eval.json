@@ -1,0 +1,164 @@
+{
+  "by_contact_side": [
+    {
+      "contact_side": -0.2,
+      "hold_force_n_median": 27.22,
+      "of": 1,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 121.63,
+      "reasons": {
+        "damaged": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": 2.52
+    },
+    {
+      "contact_side": -0.16,
+      "hold_force_n_median": null,
+      "of": 3,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 62.04,
+      "reasons": {
+        "slipped": 3
+      },
+      "success": 0,
+      "time_to_open_s_median": null
+    }
+  ],
+  "by_door_ahead": [
+    {
+      "door_ahead": 0.5,
+      "hold_force_n_median": null,
+      "of": 3,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 62.04,
+      "reasons": {
+        "slipped": 3
+      },
+      "success": 0,
+      "time_to_open_s_median": null
+    },
+    {
+      "door_ahead": 0.53,
+      "hold_force_n_median": 27.22,
+      "of": 1,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 121.63,
+      "reasons": {
+        "damaged": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": 2.52
+    }
+  ],
+  "by_full_nm": [
+    {
+      "full_nm": 1.0,
+      "hold_force_n_median": null,
+      "of": 1,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 39.35,
+      "reasons": {
+        "slipped": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": null
+    },
+    {
+      "full_nm": 2.0,
+      "hold_force_n_median": 27.22,
+      "of": 2,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 91.835,
+      "reasons": {
+        "damaged": 1,
+        "slipped": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": 2.52
+    },
+    {
+      "full_nm": 3.0,
+      "hold_force_n_median": null,
+      "of": 1,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 78.37,
+      "reasons": {
+        "slipped": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": null
+    }
+  ],
+  "by_height": [
+    {
+      "height": 0.28,
+      "hold_force_n_median": null,
+      "of": 3,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 62.04,
+      "reasons": {
+        "slipped": 3
+      },
+      "success": 0,
+      "time_to_open_s_median": null
+    },
+    {
+      "height": 0.32,
+      "hold_force_n_median": 27.22,
+      "of": 1,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 121.63,
+      "reasons": {
+        "damaged": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": 2.52
+    }
+  ],
+  "by_left": [
+    {
+      "hold_force_n_median": null,
+      "left": false,
+      "of": 3,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 62.04,
+      "reasons": {
+        "slipped": 3
+      },
+      "success": 0,
+      "time_to_open_s_median": null
+    },
+    {
+      "hold_force_n_median": 27.22,
+      "left": true,
+      "of": 1,
+      "peak_at_stop_n_median": 0.0,
+      "peak_n_median": 121.63,
+      "reasons": {
+        "damaged": 1
+      },
+      "success": 0,
+      "time_to_open_s_median": 2.52
+    }
+  ],
+  "damaged": 1,
+  "door_peak_n_median": 3.465,
+  "engaged": 4,
+  "episodes": 4,
+  "fell": 0,
+  "force_rmse_n_median": 6.225,
+  "hold_force_n_median": 27.22,
+  "max_tilt_deg_median": 23.13,
+  "opened": 1,
+  "peak_at_stop_n_median": 0.0,
+  "peak_n_median": 70.205,
+  "peak_n_p95": 115.141,
+  "reasons": {
+    "damaged": 1,
+    "slipped": 3
+  },
+  "slipped": 4,
+  "success": 0,
+  "time_to_open_s_median": 2.52
+}

@@ -1,0 +1,42 @@
+"""A fake Go2 LowState at 500 Hz on /lowstate: the classic stand at 0.30 m with a small sway (localhost test only)."""
+import json
+import math
+import sys
+import time
+
+import numpy as np
+import rclpy
+from rclpy.qos import qos_profile_sensor_data
+from unitree_go.msg import LowState
+
+sys.path.insert(0, "/home/victor/D1Training")
+from demos.combiner_key.robot import leg_policy  # noqa: E402
+
+stance = np.array(json.load(open("/home/victor/D1Training/demos/combiner_key/assets/classic_stance_30cm.json"))[0]["legs"])
+names = ["FL", "FR", "RL", "RR"]
+unifp = [f"{l}_{p}_joint" for l in names for p in ("hip", "thigh", "calf")]
+q_unitree = np.array([stance[unifp.index(n)] for n in leg_policy.UNITREE_LEGS])
+
+rclpy.init()
+node = rclpy.create_node("fake_lowstate")
+pub = node.create_publisher(LowState, "/lowstate", qos_profile_sensor_data)
+start = time.monotonic()
+seconds = float(sys.argv[1]) if len(sys.argv) > 1 else 15.0
+while time.monotonic() - start < seconds:
+    t = time.monotonic() - start
+    msg = LowState()
+    sway = 0.01 * math.sin(2 * math.pi * 0.5 * t)
+    pitch = 0.02 * math.sin(2 * math.pi * 0.3 * t)
+    for i in range(12):
+        msg.motor_state[i].q = float(q_unitree[i] + (sway if i % 3 == 2 else 0.0))
+        msg.motor_state[i].dq = float(0.01 * 2 * math.pi * 0.5 * math.cos(2 * math.pi * 0.5 * t) if i % 3 == 2 else 0.0)
+        msg.motor_state[i].tau_est = 5.0
+    msg.imu_state.quaternion = [math.cos(pitch / 2), 0.0, math.sin(pitch / 2), 0.0]
+    msg.imu_state.gyroscope = [0.0, float(0.02 * 2 * math.pi * 0.3 * math.cos(2 * math.pi * 0.3 * t)), 0.0]
+    msg.imu_state.rpy = [0.0, pitch, 0.0]
+    msg.foot_force = [20, 20, 20, 20]
+    pub.publish(msg)
+    rclpy.spin_once(node, timeout_sec=0.0)
+    time.sleep(0.002)
+node.destroy_node()
+rclpy.shutdown()

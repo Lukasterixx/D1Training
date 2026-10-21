@@ -1,0 +1,1875 @@
+{
+  "summary": {
+    "attempts": 32,
+    "tag_found": 32,
+    "inserted": 32,
+    "turn_started": 32,
+    "unlocked": 2,
+    "verified_unlocked": 2,
+    "foot_down": 2,
+    "fell": 17,
+    "damaged": 17,
+    "success": 0,
+    "max_stance_cm_median": 27.94990825653076
+  },
+  "attempts": [
+    {
+      "batch": 0,
+      "env": 0,
+      "site": {
+        "distance_m": 0.8414918225081819,
+        "bearing_deg": -0.7168241057099105,
+        "yaw_deg": 183.01274465206396
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0097,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2572,
+          "stance_max_cm": 15.33,
+          "door_ahead_m": 0.5558,
+          "axis_side_m": -0.0695
+        }
+      },
+      "min_base_z": 0.12234464287757874,
+      "max_tilt_deg": 27.24422270285372,
+      "max_stance_cm": 34.462093353271484,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 1,
+      "site": {
+        "distance_m": 0.8614394776246385,
+        "bearing_deg": -1.079871227019044,
+        "yaw_deg": 179.33126940236474
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0135,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 335.46,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2636,
+          "stance_max_cm": 16.42,
+          "door_ahead_m": 0.5625,
+          "axis_side_m": -0.0676
+        }
+      },
+      "min_base_z": 0.18157850205898285,
+      "max_tilt_deg": 40.85980695475499,
+      "max_stance_cm": 18.921276092529297,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 2,
+      "site": {
+        "distance_m": 0.8572701017948204,
+        "bearing_deg": -0.9096943048788206,
+        "yaw_deg": 182.34577151409215
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0168,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2568,
+          "stance_max_cm": 15.21,
+          "door_ahead_m": 0.5442,
+          "axis_side_m": -0.0765
+        }
+      },
+      "min_base_z": 0.13353078067302704,
+      "max_tilt_deg": 27.645467288287996,
+      "max_stance_cm": 35.6983642578125,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 3,
+      "site": {
+        "distance_m": 0.842558114571915,
+        "bearing_deg": -0.2958700749374976,
+        "yaw_deg": 180.16740182621365
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.025,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 48.83,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2571,
+          "stance_max_cm": 15.31,
+          "door_ahead_m": 0.5648,
+          "axis_side_m": -0.0847
+        }
+      },
+      "min_base_z": 0.11425305157899857,
+      "max_tilt_deg": 27.364517702063274,
+      "max_stance_cm": 36.00982666015625,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 4,
+      "site": {
+        "distance_m": 0.8552321682811737,
+        "bearing_deg": 0.23260142244611204,
+        "yaw_deg": 182.3783778729216
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0244,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 386.31,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2653,
+          "stance_max_cm": 16.36,
+          "door_ahead_m": 0.5668,
+          "axis_side_m": -0.1441
+        }
+      },
+      "min_base_z": 0.1420542597770691,
+      "max_tilt_deg": 35.49223790870335,
+      "max_stance_cm": 27.473073959350586,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 5,
+      "site": {
+        "distance_m": 0.8762932058876474,
+        "bearing_deg": -0.5644029840760899,
+        "yaw_deg": 181.48547207079824
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0202,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -41.14,
+        "final_theta_deg": -41.14,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 58.13,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2594,
+          "stance_max_cm": 16.01,
+          "door_ahead_m": 0.5615,
+          "axis_side_m": -0.121
+        }
+      },
+      "min_base_z": 0.17876987159252167,
+      "max_tilt_deg": 35.9106621274475,
+      "max_stance_cm": 25.791635513305664,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 6,
+      "site": {
+        "distance_m": 0.8658883361379931,
+        "bearing_deg": -0.5486346105693896,
+        "yaw_deg": 175.01490083508835
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0142,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2574,
+          "stance_max_cm": 15.54,
+          "door_ahead_m": 0.5517,
+          "axis_side_m": -0.02
+        }
+      },
+      "min_base_z": 0.12476705014705658,
+      "max_tilt_deg": 25.891906718893726,
+      "max_stance_cm": 31.663423538208008,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 7,
+      "site": {
+        "distance_m": 0.8769754865318798,
+        "bearing_deg": -0.5268526672356068,
+        "yaw_deg": 178.13986002034338
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0288,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 256.75,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2636,
+          "stance_max_cm": 16.65,
+          "door_ahead_m": 0.5798,
+          "axis_side_m": -0.1157
+        }
+      },
+      "min_base_z": 0.17663942277431488,
+      "max_tilt_deg": 37.03891717077981,
+      "max_stance_cm": 25.96285629272461,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 8,
+      "site": {
+        "distance_m": 0.8736750839630371,
+        "bearing_deg": 0.2234006430941025,
+        "yaw_deg": 179.71309665181832
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0205,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 321.12,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.26,
+          "stance_max_cm": 15.59,
+          "door_ahead_m": 0.5638,
+          "axis_side_m": -0.1175
+        }
+      },
+      "min_base_z": 0.17443200945854187,
+      "max_tilt_deg": 37.104486986811935,
+      "max_stance_cm": 20.04167938232422,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 9,
+      "site": {
+        "distance_m": 0.8691341336391804,
+        "bearing_deg": -1.2385332168402063,
+        "yaw_deg": 182.06965095655625
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.023,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2653,
+          "stance_max_cm": 16.54,
+          "door_ahead_m": 0.5667,
+          "axis_side_m": -0.116
+        }
+      },
+      "min_base_z": 0.11624438315629959,
+      "max_tilt_deg": 27.562888593675247,
+      "max_stance_cm": 32.13643264770508,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 10,
+      "site": {
+        "distance_m": 0.8531267446954798,
+        "bearing_deg": -1.0991966159890376,
+        "yaw_deg": 181.60500067427895
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0233,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 189.47,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.261,
+          "stance_max_cm": 16.0,
+          "door_ahead_m": 0.5743,
+          "axis_side_m": -0.0902
+        }
+      },
+      "min_base_z": 0.1929234117269516,
+      "max_tilt_deg": 41.25240622824732,
+      "max_stance_cm": 18.709383010864258,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 11,
+      "site": {
+        "distance_m": 0.8753369156510215,
+        "bearing_deg": -0.7666630124428289,
+        "yaw_deg": 181.30090199785343
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0277,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2658,
+          "stance_max_cm": 16.6,
+          "door_ahead_m": 0.5664,
+          "axis_side_m": -0.1581
+        }
+      },
+      "min_base_z": 0.12552882730960846,
+      "max_tilt_deg": 28.64912943587552,
+      "max_stance_cm": 32.18210983276367,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 12,
+      "site": {
+        "distance_m": 0.8499815348766439,
+        "bearing_deg": 0.651869985633274,
+        "yaw_deg": 182.22164808142116
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0088,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -42.24,
+        "final_theta_deg": -42.24,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 331.64,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2582,
+          "stance_max_cm": 15.18,
+          "door_ahead_m": 0.5453,
+          "axis_side_m": -0.0634
+        }
+      },
+      "min_base_z": 0.17957378923892975,
+      "max_tilt_deg": 39.02185427552333,
+      "max_stance_cm": 18.713390350341797,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 13,
+      "site": {
+        "distance_m": 0.846851427891524,
+        "bearing_deg": 0.8928078723721162,
+        "yaw_deg": 181.57652210873243
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0175,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2593,
+          "stance_max_cm": 15.92,
+          "door_ahead_m": 0.5591,
+          "axis_side_m": -0.0674
+        }
+      },
+      "min_base_z": 0.13823381066322327,
+      "max_tilt_deg": 27.32389002933275,
+      "max_stance_cm": 32.667694091796875,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 14,
+      "site": {
+        "distance_m": 0.8654066670173243,
+        "bearing_deg": 0.847678177119305,
+        "yaw_deg": 179.28572904298463
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0169,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2557,
+          "stance_max_cm": 15.34,
+          "door_ahead_m": 0.5497,
+          "axis_side_m": -0.0871
+        }
+      },
+      "min_base_z": 0.13284434378147125,
+      "max_tilt_deg": 29.490424326513498,
+      "max_stance_cm": 35.27251052856445,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 0,
+      "env": 15,
+      "site": {
+        "distance_m": 0.8684801805907719,
+        "bearing_deg": 0.9988214397973691,
+        "yaw_deg": 176.02319921922074
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0123,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 310.93,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2636,
+          "stance_max_cm": 16.4,
+          "door_ahead_m": 0.5588,
+          "axis_side_m": -0.0851
+        }
+      },
+      "min_base_z": 0.19771935045719147,
+      "max_tilt_deg": 40.67326424323818,
+      "max_stance_cm": 18.98328399658203,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 0,
+      "site": {
+        "distance_m": 0.8720010559424379,
+        "bearing_deg": -0.27878590750458276,
+        "yaw_deg": 179.79683923512275
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0172,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "unlocked_at_s": 26.24,
+      "turn": {
+        "stage": 7,
+        "engaged": true,
+        "engage_miss_mm": 19.8,
+        "max_theta_deg": 45.74,
+        "final_theta_deg": 45.41,
+        "unlocked": true,
+        "measured_at_hold_deg": 108.5,
+        "verified_unlocked": true,
+        "peak_n": 321.93,
+        "cmd_max_n": 18.9,
+        "foot_down": true,
+        "steps": 624,
+        "handover": {
+          "base_z_m": 0.2575,
+          "stance_max_cm": 15.04,
+          "door_ahead_m": 0.5519,
+          "axis_side_m": -0.0503
+        }
+      },
+      "min_base_z": 0.17714780569076538,
+      "max_tilt_deg": 35.92755318526494,
+      "max_stance_cm": 17.315080642700195,
+      "fell": false,
+      "inserted": true,
+      "unlocked": true,
+      "verified_unlocked": true,
+      "foot_down": true,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 1,
+      "site": {
+        "distance_m": 0.8438907088418915,
+        "bearing_deg": 0.5388925183698995,
+        "yaw_deg": 177.9197861598785
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0266,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2639,
+          "stance_max_cm": 16.44,
+          "door_ahead_m": 0.5709,
+          "axis_side_m": -0.1108
+        }
+      },
+      "min_base_z": 0.1288638710975647,
+      "max_tilt_deg": 29.44199828529811,
+      "max_stance_cm": 35.50165557861328,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 2,
+      "site": {
+        "distance_m": 0.8728918104463448,
+        "bearing_deg": -0.5897788157239748,
+        "yaw_deg": 180.6180971873089
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0207,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 327.56,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2643,
+          "stance_max_cm": 16.52,
+          "door_ahead_m": 0.5646,
+          "axis_side_m": -0.1081
+        }
+      },
+      "min_base_z": 0.19676268100738525,
+      "max_tilt_deg": 37.85978638070487,
+      "max_stance_cm": 18.804758071899414,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 3,
+      "site": {
+        "distance_m": 0.8539981913927602,
+        "bearing_deg": 0.30301082949434327,
+        "yaw_deg": 176.96639239772125
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0197,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 285.24,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2639,
+          "stance_max_cm": 16.77,
+          "door_ahead_m": 0.5683,
+          "axis_side_m": -0.1078
+        }
+      },
+      "min_base_z": 0.19803300499916077,
+      "max_tilt_deg": 44.22178998877534,
+      "max_stance_cm": 19.28959846496582,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 4,
+      "site": {
+        "distance_m": 0.8452691799503513,
+        "bearing_deg": 0.6693432239225208,
+        "yaw_deg": 182.52223418369277
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0282,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 110.59,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2643,
+          "stance_max_cm": 16.71,
+          "door_ahead_m": 0.5749,
+          "axis_side_m": -0.1241
+        }
+      },
+      "min_base_z": 0.1300337165594101,
+      "max_tilt_deg": 27.36813599477609,
+      "max_stance_cm": 34.97682189941406,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 5,
+      "site": {
+        "distance_m": 0.8608439068210374,
+        "bearing_deg": 1.1211151180401542,
+        "yaw_deg": 177.05775048229017
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0247,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2653,
+          "stance_max_cm": 16.34,
+          "door_ahead_m": 0.5718,
+          "axis_side_m": -0.1412
+        }
+      },
+      "min_base_z": 0.1314113736152649,
+      "max_tilt_deg": 28.196569639206935,
+      "max_stance_cm": 32.9223747253418,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 6,
+      "site": {
+        "distance_m": 0.872136557421402,
+        "bearing_deg": -0.8698802262233576,
+        "yaw_deg": 184.6435772089428
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0258,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 204.55,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2622,
+          "stance_max_cm": 15.93,
+          "door_ahead_m": 0.5607,
+          "axis_side_m": -0.116
+        }
+      },
+      "min_base_z": 0.16020292043685913,
+      "max_tilt_deg": 35.67910846930031,
+      "max_stance_cm": 19.00339126586914,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 7,
+      "site": {
+        "distance_m": 0.8629582998693548,
+        "bearing_deg": 0.28386145679709385,
+        "yaw_deg": 184.70558763132624
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0242,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 390.61,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2651,
+          "stance_max_cm": 16.33,
+          "door_ahead_m": 0.5676,
+          "axis_side_m": -0.1216
+        }
+      },
+      "min_base_z": 0.12077471613883972,
+      "max_tilt_deg": 31.789797265314537,
+      "max_stance_cm": 28.426742553710938,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 8,
+      "site": {
+        "distance_m": 0.8695586405465842,
+        "bearing_deg": 0.764136629797432,
+        "yaw_deg": 175.54093757870965
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0153,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2619,
+          "stance_max_cm": 16.08,
+          "door_ahead_m": 0.5631,
+          "axis_side_m": -0.0697
+        }
+      },
+      "min_base_z": 0.13062380254268646,
+      "max_tilt_deg": 28.485974999624133,
+      "max_stance_cm": 35.56053161621094,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 9,
+      "site": {
+        "distance_m": 0.8529330861927218,
+        "bearing_deg": -1.115458198477673,
+        "yaw_deg": 176.93527581465514
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0159,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 289.58,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2638,
+          "stance_max_cm": 16.5,
+          "door_ahead_m": 0.5567,
+          "axis_side_m": -0.1124
+        }
+      },
+      "min_base_z": 0.18577848374843597,
+      "max_tilt_deg": 37.843492964439804,
+      "max_stance_cm": 25.55525016784668,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 10,
+      "site": {
+        "distance_m": 0.8466762215016707,
+        "bearing_deg": 0.9708387631583175,
+        "yaw_deg": 176.26754979718305
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0208,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 311.82,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2596,
+          "stance_max_cm": 16.01,
+          "door_ahead_m": 0.5608,
+          "axis_side_m": -0.1198
+        }
+      },
+      "min_base_z": 0.1562531739473343,
+      "max_tilt_deg": 35.052274688411565,
+      "max_stance_cm": 19.46063995361328,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 11,
+      "site": {
+        "distance_m": 0.849870358898888,
+        "bearing_deg": -0.01928943264602805,
+        "yaw_deg": 183.49460411189537
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0152,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 199.32,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2578,
+          "stance_max_cm": 15.82,
+          "door_ahead_m": 0.5535,
+          "axis_side_m": -0.039
+        }
+      },
+      "min_base_z": 0.17888256907463074,
+      "max_tilt_deg": 37.53694041411129,
+      "max_stance_cm": 19.527997970581055,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 12,
+      "site": {
+        "distance_m": 0.8766487939643078,
+        "bearing_deg": 0.5441630107494597,
+        "yaw_deg": 177.13687219430548
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0106,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "unlocked_at_s": 26.92,
+      "turn": {
+        "stage": 7,
+        "engaged": true,
+        "engage_miss_mm": 19.9,
+        "max_theta_deg": 45.66,
+        "final_theta_deg": 43.42,
+        "unlocked": true,
+        "measured_at_hold_deg": 83.17,
+        "verified_unlocked": true,
+        "peak_n": 338.11,
+        "cmd_max_n": 32.36,
+        "foot_down": true,
+        "steps": 653,
+        "handover": {
+          "base_z_m": 0.2582,
+          "stance_max_cm": 15.11,
+          "door_ahead_m": 0.545,
+          "axis_side_m": -0.0446
+        }
+      },
+      "min_base_z": 0.17980317771434784,
+      "max_tilt_deg": 37.81709086820312,
+      "max_stance_cm": 17.462535858154297,
+      "fell": false,
+      "inserted": true,
+      "unlocked": true,
+      "verified_unlocked": true,
+      "foot_down": true,
+      "damaged": true,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 13,
+      "site": {
+        "distance_m": 0.8598387752164403,
+        "bearing_deg": 0.5489756830840625,
+        "yaw_deg": 175.51882527726625
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0189,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2646,
+          "stance_max_cm": 16.44,
+          "door_ahead_m": 0.5635,
+          "axis_side_m": -0.0889
+        }
+      },
+      "min_base_z": 0.12234173715114594,
+      "max_tilt_deg": 27.843474472326665,
+      "max_stance_cm": 29.74942970275879,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 14,
+      "site": {
+        "distance_m": 0.8652114088591156,
+        "bearing_deg": -0.3489062440909186,
+        "yaw_deg": 180.89700286779208
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0094,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2569,
+          "stance_max_cm": 15.02,
+          "door_ahead_m": 0.5499,
+          "axis_side_m": -0.0494
+        }
+      },
+      "min_base_z": 0.12569202482700348,
+      "max_tilt_deg": 29.66311199929893,
+      "max_stance_cm": 35.718231201171875,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": false,
+      "success": false
+    },
+    {
+      "batch": 1,
+      "env": 15,
+      "site": {
+        "distance_m": 0.8648077921983309,
+        "bearing_deg": 0.4482101410414146,
+        "yaw_deg": 180.23049775525857
+      },
+      "look": {
+        "found": true,
+        "detections": 0,
+        "lidar": null,
+        "lidar_depth_shift_mm": null,
+        "tag_only": null
+      },
+      "walk_error_m": 0.0122,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 254.96,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2572,
+          "stance_max_cm": 15.59,
+          "door_ahead_m": 0.5518,
+          "axis_side_m": -0.0528
+        }
+      },
+      "min_base_z": 0.11817711591720581,
+      "max_tilt_deg": 28.452940789703366,
+      "max_stance_cm": 34.58208465576172,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "damaged": true,
+      "success": false
+    }
+  ]
+}

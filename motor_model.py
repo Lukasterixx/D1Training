@@ -38,6 +38,16 @@ class UnitreeMotorSpec:
 # Go2 hip/thigh/calf motor, values from unitree_rl_lab `UnitreeActuatorCfg_Go2HV`.
 GO2_HV = UnitreeMotorSpec(Y1=20.2, Y2=23.4, X1=13.5, X2=30.0)
 
+# Go2 knee (calf joint): DERIVED, not measured. GO2_HV with its torques multiplied and its speeds divided by the knee's
+# reduction, read off Unitree's Go2 URDF (`description/go2_d1.urdf`): the calf 45.43 N·m at 15.70 rad/s against the hip's
+# and thigh's 23.7 at 30.1, the same factor 1.917 in torque and in speed, i.e. the same motor behind a geared knee.
+# unitree_rl_lab and Isaac Lab's stock Go2 config give the knee the hip's limits; Unitree's Go2 page gives ~45 N·m as the
+# largest joint motor's peak. Used by the leg task's actuator diagnostics (`unifp_train/leg_actuators.py`) until the
+# knee's torque is measured on the dog.
+GO2_KNEE_RATIO = 45.43 / 23.7
+GO2_HV_KNEE = UnitreeMotorSpec(Y1=GO2_HV.Y1 * GO2_KNEE_RATIO, Y2=GO2_HV.Y2 * GO2_KNEE_RATIO,
+                               X1=GO2_HV.X1 / GO2_KNEE_RATIO, X2=GO2_HV.X2 / GO2_KNEE_RATIO)
+
 
 def unitree_effort_limit(effort, joint_vel, y1, y2, x1, x2):
     """Magnitude of the torque available at `joint_vel` for a demand of `effort`."""

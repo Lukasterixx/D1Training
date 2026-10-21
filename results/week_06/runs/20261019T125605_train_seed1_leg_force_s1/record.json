@@ -1,0 +1,63 @@
+{
+  "id": "20261019T125605_train_seed1_leg_force_s1",
+  "title": "Leg task v1, force-aware: stopped at 328, foot lifted but not tracking",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T00:11:36+11:00",
+  "started_utc": "2026-10-19T12:56:05+00:00",
+  "source_dir": "logs/unifp_train/20261019T125605_train_seed1_leg_force_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 3000,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 328,
+  "final_checkpoint": {
+    "file": "model_328.pt",
+    "sha256": "f9421bad122b90ce6b4bc01fce01dbef18172c7e55b5366f5c5280be980a9fda"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 58.232643127441406,
+      "last_step": 328,
+      "mean_last_10": 57.68351593017578,
+      "min": 0.412217915058136,
+      "max": 58.591461181640625,
+      "points": 329
+    },
+    "Train/mean_episode_length": {
+      "last": 799.0,
+      "last_step": 328,
+      "mean_last_10": 799.0,
+      "min": 13.8100004196167,
+      "max": 799.0,
+      "points": 329
+    },
+    "Policy/mean_std": {
+      "last": 0.4102293848991394,
+      "last_step": 328,
+      "mean_last_10": 0.41155144274234773,
+      "min": 0.4102293848991394,
+      "max": 0.9867756366729736,
+      "points": 329
+    },
+    "Perf/total_fps": {
+      "last": 36223.0,
+      "last_step": 328,
+      "mean_last_10": 35709.4,
+      "min": 34482.0,
+      "max": 38824.0,
+      "points": 329
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

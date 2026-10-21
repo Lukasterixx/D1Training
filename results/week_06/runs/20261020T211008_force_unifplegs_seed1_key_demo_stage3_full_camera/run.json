@@ -1,0 +1,110 @@
+{
+  "mode": "combiner_key_demo",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "leg_checkpoint": "logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "leg_variant": "force",
+    "key_inserted": false,
+    "attempts": 4,
+    "num_envs": 4,
+    "seed": 1,
+    "settle_s": 4.0,
+    "lock_friction_nm": 1.5,
+    "lock_detent_nm": 0.5,
+    "walker": "p2dingo_gait",
+    "handover": "direct",
+    "legs": "unifp",
+    "given_box": false,
+    "run_name": "key_demo_stage3_full_camera",
+    "enable_cameras": true,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "demos/combiner_key/run_combiner_key.py --leg_checkpoint logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt --leg_variant force --headless --run_name key_demo_stage3_full_camera --handover direct --legs unifp --attempts 4 --seed 1",
+  "git_commit": "9136aba825726b622a29132d3ef76cb1b3f88976",
+  "git_status": "M results/findings.md\n M results/week_06/notes.md\n M run_unifp_train.py\n M unifp_train/README.md\n M unifp_train/eval.py\n?? demos/combiner_key/\n?? logs/combiner_key/\n?? logs/combiner_key_test1.out\n?? logs/combiner_key_test10.out\n?? logs/combiner_key_test11.out\n?? logs/combiner_key_test12.out\n?? logs/combiner_key_test2.out\n?? logs/combiner_key_test3.out\n?? logs/combiner_key_test4.out\n?? logs/combiner_key_test5.out\n?? logs/combiner_key_test6.out\n?? logs/combiner_key_test7.out\n?? logs/combiner_key_test8.out\n?? logs/combiner_key_test9.out\n?? results/week_06/figures/key_eval_stage2_seed1.png\n?? results/week_06/figures/key_eval_stage2_seed2.png\n?? results/week_06/figures/key_frames_force_key54.png\n?? results/week_06/figures/key_frames_position_key54.png\n?? results/week_06/figures/key_training_curves_seed1.png\n?? results/week_06/figures/key_training_curves_seed2.png\n?? results/week_06/figures/leg_handle_eval_stage2_seed1.png\n?? results/week_06/figures/leg_handle_eval_stage2_seed2.png\n?? results/week_06/figures/leg_handle_frames_force_handle64.png\n?? results/week_06/figures/leg_handle_frames_position_handle64.png\n?? results/week_06/runs/20261019T125232_smoke_seed1_leg_smoke/\n?? results/week_06/runs/20261019T125605_train_seed1_leg_force_s1/\n?? results/week_06/runs/20261019T131141_train_seed1_leg_force_v2_s1/\n?? results/week_06/runs/20261019T132551_train_seed1_leg_force_v3_s1/\n?? results/week_06/runs/20261019T135610_leg_eval_seed1_leg_frames_pipeline_test/\n?? results/week_06/runs/20261019T141313_leg_eval_seed1_leg_eval_force_v3_1000_zeroshot/\n?? results/week_06/runs/20261019T142125_train_seed1_leg_force_stage2_pilot/\n?? results/week_06/runs/20261019T143608_train_seed1_leg_force_stage2_pilot2/\n?? results/week_06/runs/20261019T151333_train_seed1_leg_position_v3_s1/\n?? results/week_06/runs/20261019T151401_train_seed1_leg_force_stage2_s1/\n?? results/week_06/runs/20261019T151538_train_seed1_leg_force_stage2_s1b/\n?? results/week_06/runs/20261019T153231_train_seed1_leg_force_stage2_s1c/\n?? results/week_06/runs/20261019T154414_train_seed1_leg_force_stage2_s1d/\n?? results/week_06/runs/20261019T155848_train_seed1_leg_force_stage2_e/\n?? results/week_06/runs/20261019T160947_train_seed1_leg_force_stage2_f/\n?? results/week_06/runs/20261019T165037_train_seed1_leg_position_stage2_f/\n?? results/week_06/runs/20261019T165614_train_seed1_leg_force_stage2_g/\n?? results/week_06/runs/20261019T165614_train_seed1_leg_position_stage2_g/\n?? results/week_06/runs/20261019T165935_leg_eval_seed1_leg_eval_force_stage1_1200/\n?? results/week_06/runs/20261019T170105_leg_eval_seed1_leg_eval_position_stage1_1200/\n?? results/week_06/runs/20261019T171618_train_seed1_leg_force_stage2_h/\n?? results/week_06/runs/20261019T171618_train_seed1_leg_position_stage2_h/\n?? results/week_06/runs/20261019T171804_leg_eval_seed1_leg_eval_force_stage1_1200_h/\n?? results/week_06/runs/20261019T171934_leg_eval_seed1_leg_eval_position_stage1_1200_h/\n?? results/week_06/runs/20261019T173338_smoke_seed1_leg_smoke_recipe_i/\n?? results/week_06/runs/20261019T173407_train_seed1_leg_force_stage2_i/\n?? results/week_06/runs/20261019T173407_train_seed1_leg_position_stage2_i/\n?? results/week_06/runs/20261019T175803_train_seed1_leg_force_stage2_j/\n?? results/week_06/runs/20261019T175803_train_seed1_leg_position_stage2_j/\n?? results/week_06/runs/20261019T175951_leg_eval_seed1_leg_eval_force_stage1_1200_j/\n?? results/week_06/runs/20261019T180115_leg_eval_seed1_leg_eval_position_stage1_1200_j/\n?? results/week_06/runs/20261019T222952_leg_eval_seed1_leg_eval_force_stage2_j_2699/\n?? results/week_06/runs/20261019T223022_leg_eval_seed1_leg_eval_force_stage2_j_2699_bar20mm/\n?? results/week_06/runs/20261019T223051_leg_eval_seed1_leg_eval_position_stage2_j_2699/\n?? results/week_06/runs/20261019T223120_leg_eval_seed1_leg_eval_position_stage2_j_2699_bar20mm/\n?? results/week_06/runs/20261019T223153_leg_eval_seed1_leg_frames_force_stage2_j/\n?? results/week_06/runs/20261019T223252_leg_eval_seed1_leg_frames_position_stage2_j/\n?? results/week_06/runs/20261019T223505_train_seed2_leg_force_stage2_j_s2/\n?? results/week_06/runs/20261019T223505_train_seed2_leg_position_stage2_j_s2/\n?? results/week_06/runs/20261020T003011_leg_eval_seed1_leg_eval_force_stage2_j_s2_2699/\n?? results/week_06/runs/20261020T003041_leg_eval_seed1_leg_eval_position_stage2_j_s2_2699/\n?? results/week_06/runs/20261020T025831_leg_eval_seed1_leg_video_position_s2/\n?? results/week_06/runs/20261020T025938_leg_eval_seed1_leg_video_force_s2/\n?? results/week_06/runs/20261020T030436_play_seed1_leg_viewer_position_s2/\n?? results/week_06/runs/20261020T030544_play_seed1_leg_viewer_force_s2/\n?? results/week_06/runs/20261020T133850_smoke_seed1_key_stage1_smoke/\n?? results/week_06/runs/20261020T133916_train_seed1_key_force_s1_stage1/\n?? results/week_06/runs/20261020T133935_train_seed1_key_position_s1_stage1/\n?? results/week_06/runs/20261020T134924_smoke_seed1_key_stage2_smoke/\n?? results/week_06/runs/20261020T135146_leg_eval_seed1_key_eval_pipeline_test/\n?? results/week_06/runs/20261020T140313_train_seed1_key_force_s1_stage1b/\n?? results/week_06/runs/20261020T140352_train_seed1_key_position_s1_stage1b/\n?? results/week_06/runs/20261020T142801_force_inserted_seed1_pipeline_test_inserted/\n?? results/week_06/runs/20261020T143746_force_inserted_seed1_pipeline_test_inserted/\n?? results/week_06/runs/20261020T144043_force_inserted_seed1_pipeline_test_inserted_given/\n?? results/week_06/runs/20261020T145109_force_seed1_pipeline_test_insert_given/\n?? results/week_06/runs/20261020T150349_force_seed1_pipeline_test_insert_given2/\n?? results/week_06/runs/20261020T151617_force_seed1_pipeline_test_insert_given3/\n?? results/week_06/runs/20261020T152929_force_seed1_pipeline_test_insert_given4/\n?? results/week_06/runs/20261020T154059_train_seed1_key_force_s1_stage2/\n?? results/week_06/runs/20261020T154159_train_seed1_key_position_s1_stage2/\n?? results/week_06/runs/20261020T154539_train_seed1_key_force_s1_stage2b/\n?? results/week_06/runs/20261020T154638_train_seed1_key_position_s1_stage2b/\n?? results/week_06/runs/20261020T154716_force_seed1_pipeline_test_insert_given5/\n?? results/week_06/runs/20261020T155905_force_seed1_pipeline_test_insert_given6/\n?? results/week_06/runs/20261020T161133_force_seed1_pipeline_test_insert_given7/\n?? results/week_06/runs/20261020T162437_force_inserted_seed1_pipeline_test_turn_given/\n?? results/week_06/runs/20261020T174654_leg_eval_seed1_key_eval_force_s1_final/\n?? results/week_06/runs/20261020T174805_leg_eval_seed1_key_eval_position_s1_final/\n?? results/week_06/runs/20261020T174915_leg_eval_seed1_key_eval_force_stage1_600_zeroshot/\n?? results/week_06/runs/20261020T174931_leg_eval_seed1_key_eval_position_stage1_600_zeroshot/\n?? results/week_06/runs/20261020T175105_force_seed1_key_demo_force_s1/\n?? results/week_06/runs/20261020T175404_force_seed1_key_demo_force_s1/\n?? results/week_06/runs/20261020T175841_position_seed1_key_demo_position_s1/\n?? results/week_06/runs/20261020T180321_force_seed1_key_demo_force_s1_v2/\n?? results/week_06/runs/20261020T180759_force_inserted_settled_seed1_key_demo_force_s1_settled/\n?? results/week_06/runs/20261020T181112_position_inserted_settled_seed1_key_demo_position_s1_settled/\n?? results/week_06/runs/20261020T181513_train_seed2_key_force_s2_stage2b/\n?? results/week_06/runs/20261020T181612_train_seed2_key_position_s2_stage2b/\n?? results/week_06/runs/20261020T181728_leg_eval_seed1_key_eval_force_s1_final_dcmotor/\n?? results/week_06/runs/20261020T182100_leg_eval_seed1_key_eval_position_s1_final_dcmotor/\n?? results/week_06/runs/20261020T182511_force_inserted_settled_unifplegs_seed1_key_demo_force_s1_settled_unifplegs_given/\n?? results/week_06/runs/20261020T183653_position_inserted_settled_unifplegs_seed1_key_demo_position_s1_settled_unifplegs_given/\n?? results/week_06/runs/20261020T184836_force_inserted_unifplegs_seed1_key_demo_force_s1_crouch_unifplegs_given/\n?? results/week_06/runs/20261020T201142_leg_eval_seed1_key_eval_force_s2_final/\n?? results/week_06/runs/20261020T201252_leg_eval_seed1_key_eval_position_s2_final/\n?? results/week_06/runs/20261020T201437_force_inserted_settled_unifplegs_seed1_key_demo_force_s1_settled_unifplegs_camera/\n?? results/week_06/runs/20261020T201806_position_inserted_settled_unifplegs_seed1_key_demo_position_s1_settled_unifplegs_camera/\n?? results/week_06/runs/20261020T202138_leg_eval_seed1_key_frames_force_s1/\n?? results/week_06/runs/20261020T202309_leg_eval_seed1_key_frames_position_s1/\n?? results/week_06/runs/20261020T202459_leg_eval_seed1_key_frames_force_s1_v2/\n?? results/week_06/runs/20261020T202628_leg_eval_seed1_key_frames_position_s1_v2/\n?? results/week_06/runs/20261020T202942_force_inserted_unifplegs_seed3_walker_stances/\n?? results/week_06/runs/20261020T203738_smoke_seed1_key_spawn_states_smoke/\n?? results/week_06/runs/20261020T203809_train_seed2_key_force_s2_stage3_walker/\n?? results/week_06/runs/20261020T210248_leg_eval_seed1_key_eval_force_s2_stage3_walker/\n?? results/week_06/runs/20261020T210357_force_inserted_unifplegs_seed1_key_demo_stage3_direct_given/\n?? results/week_06/runs/20261020T210652_force_inserted_unifplegs_seed1_key_demo_stage3_direct_camera/\n?? tests/test_handle.py\n?? unifp_train/foot_goals.py\n?? unifp_train/handle.py\n?? unifp_train/leg_cfg.py\n?? unifp_train/leg_curves.py\n?? unifp_train/leg_env.py\n?? unifp_train/leg_eval.py\n?? unifp_train/leg_plot.py\n?? unifp_train/leg_rewards.py\n?? unifp_train/leg_vis.py",
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1.usd",
+  "box_usd": "/home/victor/D1Training/generated/unifp_demos/combiner_0.400_ac02abf3702d.usda",
+  "phases": [
+    "look",
+    "unfold",
+    "walk_to_insert",
+    "settle_insert",
+    "pre",
+    "align",
+    "insert",
+    "seat",
+    "release",
+    "back",
+    "fold",
+    "walk_to_turn",
+    "settle_turn",
+    "turn",
+    "stand"
+  ],
+  "leg": {
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "variant": "force",
+    "plant": "unifp_train.handle.LeverHandle(pad=True), as trained (leg_cfg.KEY_*)",
+    "lock_friction_nm": 1.5,
+    "lock_detent_nm": 0.5,
+    "actuator": "the decoupled stack's DCMotor (trained on UniFP's ideal PD, the same gains)",
+    "robot": "the combiner door demo's: payload drawn, not simulated (trained with the lidar's and the wrist camera's mass and colliders)"
+  },
+  "key": {
+    "stl": "/home/victor/D1Training/demos/combiner_key/assets/combinerbox_lever_v3.stl",
+    "mirrored": true,
+    "grip": {
+      "k_n_m": 600.0,
+      "k_nm_rad": 5.0
+    },
+    "adapter": {
+      "half_size": 0.03,
+      "thickness": 0.016,
+      "gap": 0.001,
+      "shaft_half": 0.0065,
+      "ward_half_u": 0.0095,
+      "ward_half_t": 0.00325,
+      "depth": 0.012,
+      "chamfer": 0.005,
+      "friction": 0.3
+    }
+  },
+  "stances": {
+    "insert_from_look": [
+      0.16699999999999993,
+      0.331
+    ],
+    "turn_from_look": [
+      0.26499999999999996,
+      0.331
+    ]
+  },
+  "summary": {
+    "attempts": 4,
+    "tag_found": 4,
+    "inserted": 0,
+    "turn_started": 0,
+    "unlocked": 0,
+    "verified_unlocked": 0,
+    "foot_down": 0,
+    "fell": 0,
+    "damaged": 0,
+    "success": 0,
+    "max_stance_cm_median": 16.75184679031372
+  }
+}

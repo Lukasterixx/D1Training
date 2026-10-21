@@ -1,0 +1,63 @@
+{
+  "id": "20261019T131141_train_seed1_leg_force_v2_s1",
+  "title": "Leg task v2, force-aware: stopped at 290, foot unloaded on the floor",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T00:25:46+11:00",
+  "started_utc": "2026-10-19T13:11:41+00:00",
+  "source_dir": "logs/unifp_train/20261019T131141_train_seed1_leg_force_v2_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 3000,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 290,
+  "final_checkpoint": {
+    "file": "model_290.pt",
+    "sha256": "091deb336aadd735a0f9e1ea32fe5b8a64ed478863cf4108aa558626a797d725"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 61.603355407714844,
+      "last_step": 290,
+      "mean_last_10": 60.71317100524902,
+      "min": 0.4992581605911255,
+      "max": 61.603355407714844,
+      "points": 291
+    },
+    "Train/mean_episode_length": {
+      "last": 799.0,
+      "last_step": 290,
+      "mean_last_10": 799.0,
+      "min": 13.8100004196167,
+      "max": 799.0,
+      "points": 291
+    },
+    "Policy/mean_std": {
+      "last": 0.5319724678993225,
+      "last_step": 290,
+      "mean_last_10": 0.5339564144611358,
+      "min": 0.5319724678993225,
+      "max": 0.9868873953819275,
+      "points": 291
+    },
+    "Perf/total_fps": {
+      "last": 35995.0,
+      "last_step": 290,
+      "mean_last_10": 36242.8,
+      "min": 24378.0,
+      "max": 37838.0,
+      "points": 291
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

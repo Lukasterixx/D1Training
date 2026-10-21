@@ -1,0 +1,63 @@
+{
+  "id": "20261020T133916_train_seed1_key_force_s1_stage1",
+  "title": "Key stage 1, force variant, first start (4096 envs, stance weight 2): stopped at 463, its twin had died",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-21T01:06:34+11:00",
+  "started_utc": "2026-10-20T13:39:16+00:00",
+  "source_dir": "logs/unifp_train/20261020T133916_train_seed1_key_force_s1_stage1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1300,
+  "steps": 100,
+  "git_commit": "9136aba825726b622a29132d3ef76cb1b3f88976",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 463,
+  "final_checkpoint": {
+    "file": "model_463.pt",
+    "sha256": "294e152af5e9742a420c8c4cec357d335dcc34857cb2362c121562b679938249"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 152.1764678955078,
+      "last_step": 463,
+      "mean_last_10": 153.13590393066406,
+      "min": 1.00856351852417,
+      "max": 158.33108520507812,
+      "points": 464
+    },
+    "Train/mean_episode_length": {
+      "last": 899.0,
+      "last_step": 463,
+      "mean_last_10": 898.7530029296875,
+      "min": 11.890000343322754,
+      "max": 899.0,
+      "points": 464
+    },
+    "Policy/mean_std": {
+      "last": 0.4202495217323303,
+      "last_step": 463,
+      "mean_last_10": 0.42023460268974305,
+      "min": 0.41945526003837585,
+      "max": 0.9919174909591675,
+      "points": 464
+    },
+    "Perf/total_fps": {
+      "last": 35189.0,
+      "last_step": 463,
+      "mean_last_10": 35376.8,
+      "min": 22317.0,
+      "max": 37880.0,
+      "points": 464
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

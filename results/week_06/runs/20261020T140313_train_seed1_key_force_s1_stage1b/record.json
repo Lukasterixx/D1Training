@@ -1,0 +1,63 @@
+{
+  "id": "20261020T140313_train_seed1_key_force_s1_stage1b",
+  "title": "Key task stage 1 (free space, settled spawn, stance reward), force variant, seed 1",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-21T02:40:55+11:00",
+  "started_utc": "2026-10-20T14:03:13+00:00",
+  "source_dir": "logs/unifp_train/20261020T140313_train_seed1_key_force_s1_stage1b",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1300,
+  "steps": 100,
+  "git_commit": "9136aba825726b622a29132d3ef76cb1b3f88976",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1299,
+  "final_checkpoint": {
+    "file": "model_1299.pt",
+    "sha256": "5c638d0443cac153d27aea9cbd45388ddef682ad48698c45778e34c6d408534b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 183.56797790527344,
+      "last_step": 1299,
+      "mean_last_10": 184.13731689453124,
+      "min": 1.2381833791732788,
+      "max": 186.74383544921875,
+      "points": 1300
+    },
+    "Train/mean_episode_length": {
+      "last": 895.0700073242188,
+      "last_step": 1299,
+      "mean_last_10": 894.1830017089844,
+      "min": 10.736842155456543,
+      "max": 899.0,
+      "points": 1300
+    },
+    "Policy/mean_std": {
+      "last": 0.423177570104599,
+      "last_step": 1299,
+      "mean_last_10": 0.4231051802635193,
+      "min": 0.4227389097213745,
+      "max": 0.9963567852973938,
+      "points": 1300
+    },
+    "Perf/total_fps": {
+      "last": 9280.0,
+      "last_step": 1299,
+      "mean_last_10": 9224.1,
+      "min": 7832.0,
+      "max": 31770.0,
+      "points": 1300
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

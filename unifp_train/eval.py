@@ -326,8 +326,12 @@ class EvaluablePolicy:
         probe = TensorDict(
             {"policy": torch.zeros(1, interface.NUM_OBS),
              "critic": torch.zeros(1, observations.NUM_CRITIC_OBS)}, batch_size=[1])
+        # The width of the action noise is the action count: 18 for UniFP's tasks, 12 for the leg task's legs-only
+        # policy (`leg_env`), which has the same observation and no arm actions.
+        std = raw.get("actor_state_dict", {}).get("distribution.std_param")
+        self.num_actions = int(std.shape[0]) if std is not None else interface.NUM_ACTIONS
         self.actor = UniFPActor(
-            probe, {"actor": ["policy"], "critic": ["critic"]}, "actor", interface.NUM_ACTIONS,
+            probe, {"actor": ["policy"], "critic": ["critic"]}, "actor", self.num_actions,
             distribution_cfg={"class_name": "GaussianDistribution", "init_std": 1.0,
                               "std_type": "scalar"})
 

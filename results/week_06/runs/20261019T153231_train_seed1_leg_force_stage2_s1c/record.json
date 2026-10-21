@@ -1,0 +1,63 @@
+{
+  "id": "20261019T153231_train_seed1_leg_force_stage2_s1c",
+  "title": "Leg stage 2 force, start c (loop back to 2/s, engage 2 cm, from model_2000): stopped at ~2110, ~100% missed",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T02:44:22+11:00",
+  "started_utc": "2026-10-19T15:32:31+00:00",
+  "source_dir": "logs/unifp_train/20261019T153231_train_seed1_leg_force_stage2_s1c",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 2109,
+  "final_checkpoint": {
+    "file": "model_2109.pt",
+    "sha256": "8402d44fcaf06dc9462a92dc41d70ec32f14366bc226736bf280397f36bbba97"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 48.25407409667969,
+      "last_step": 2108,
+      "mean_last_10": 53.524711227416994,
+      "min": 1.1440829038619995,
+      "max": 66.33431243896484,
+      "points": 109
+    },
+    "Train/mean_episode_length": {
+      "last": 457.260009765625,
+      "last_step": 2108,
+      "mean_last_10": 502.1750061035156,
+      "min": 11.8125,
+      "max": 663.6099853515625,
+      "points": 109
+    },
+    "Policy/mean_std": {
+      "last": 0.590080738067627,
+      "last_step": 2108,
+      "mean_last_10": 0.5887374103069305,
+      "min": 0.5454280972480774,
+      "max": 0.590080738067627,
+      "points": 109
+    },
+    "Perf/total_fps": {
+      "last": 8383.0,
+      "last_step": 2108,
+      "mean_last_10": 8156.1,
+      "min": 6738.0,
+      "max": 9055.0,
+      "points": 109
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

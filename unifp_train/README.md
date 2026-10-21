@@ -540,3 +540,110 @@ evaluation reports the lunge it produces.
 What it is not: the rope is a spring, not a cable model (no sag, no mass, no wave along it), and its stiffness tops out at
 6,000 N/m in training where a real 1 m rope is ~10^5 N/m. The release is an anchor model; nothing is attached to the far
 end. The floor is UniFP's μ = 1.0 unless `--ground_friction` says otherwise. Simulation only.
+
+## The front-right-leg task (`--task leg`)
+
+Lukas's question of 2026-10-19: the Go2's front-right leg is far stronger than the D1 (23.7 / 23.7 / 45.4 N·m at hip,
+thigh and knee against the D1's 3.33 N·m shoulder), so can it turn a lever door handle at the Go2's own body height,
+trained position-only and force-aware as UniFP is, while the arm holds the wrist camera on what the foot is doing? The
+door does not have to open; the latch held back is the task.
+
+| file | |
+| --- | --- |
+| `leg_env.py` | `Go2D1LegEnv`: UniFP's environment with the FR foot as the end effector, 12 actions (the legs), the arm held at a look pose, UniFP's pushes on the foot, a door handle in `handle_fraction` of episodes with a scripted approach and the task layer in the loop |
+| `foot_goals.py` | UniFP's goal walk about the FR thigh joint, with the foot's keep-out rules and foot-down goals; plain torch |
+| `handle.py` | the lever handle (a capsule on a sprung spindle with stops, the foot sphere's penalty contact, the door's face, sub-stepped) and the task layer (onto the bar, round its arc past the estimated stop, hold, lift off; a PI force along the arc for the force-aware variant); plain torch, `tests/test_handle.py` |
+| `leg_cfg.py` | every constant: the goal sphere, the pushes (+-35 N, 400 N/m), the arm's look pose and how it was chosen, the handles, the estimate's errors, the layer, the rewards, the frozen evaluation |
+| `leg_rewards.py` | UniFP's end-effector term on the foot plus a 4 cm one; three support feet down and still; the handle's progress, latch, slip and door terms |
+| `leg_eval.py` | the 144 frozen handles and their scoring |
+| `leg_vis.py` | the door, rose and bar in the viewer (grey at rest, orange turning, green latch open) |
+
+```bash
+# stage 1, UniFP-style: free-space foot goals with pushes (opening at 800, ramped to +-35 N by 1800)
+./run_unifp_train.py train --task leg --leg_variant force    --num_envs 4096 --iterations 2000 --force_start_iteration 800 --headless
+./run_unifp_train.py train --task leg --leg_variant position --num_envs 4096 --iterations 2000 --force_start_iteration 800 --headless
+# stage 2, the handle in the loop (recipe j, 2026-10-20), from each variant's model_1200
+./run_unifp_train.py train --task leg --leg_variant <v> --num_envs 2048 --iterations 1500 --handle_fraction 0.6 \
+    --foot_push_n 20 --fixed_learning_rate 1e-4 --resume_leg_std 0.2 --entropy_coef 0.002 --headless --resume_from <model_1200.pt>
+# the frozen handles (--small_physx fits it beside training runs); --leg_frames 4 --enable_cameras --leg_rows ... for frames
+./run_unifp_train.py leg_eval --task leg --leg_variant <v> --checkpoint <model.pt> --headless --small_physx
+# watch it: frozen handles looped one per environment, real time, the viewer fixed on environment 0
+./run_unifp_train.py play --task leg --leg_variant <v> --checkpoint <model.pt> --leg_rows 64 66 68 107 --real_time --steps 200000
+python -m unifp_train.leg_plot --run "position=<leg_eval dir>" --run "force=<leg_eval dir>" --out <png>
+```
+
+**The handle episode as it now runs** (each piece the answer to a failure, `results/week_06/notes.md`, 2026-10-20):
+the foot is held on its footfall, lifted straight up to 14 cm and then to a waypoint 15 cm back from and 6 cm above
+the pre-contact point (2 s: on a straight line the foot, which must swing forward to rise, cut under the bar), slid
+onto the pre-contact point 4-6 cm above the bar (0.8 s), and held there while the layer's outer loop
+(`insertion.PoseCorrection`, 2/s, at most 7 cm) integrates the foot's measured miss into the goal; the layer engages
+once the foot is within 2 cm and slow (in training, at the 3 s deadline regardless). It then lowers the reference at
+4-7 cm/s onto the bar, waits there 0.6 s at a 4 N touch force, turns it at 0.6-1.2 rad/s to the estimated stop plus
+6°, holds 2 s and lifts off; the loop keeps integrating the miss across the push direction. The force-aware layer's PI
+force along the arc is capped at 1.8x the rated force, within 12-40 N. Exploration noise on the legs is cut to 0.2 on
+resume (0.05 rad a joint), as F-119 found the arm needs for millimetre tasks. Crossing 120 N is recorded but does not
+end a training episode; frozen evaluations end there. The contact is 8,000 N/m with its damping bounded by the spring.
+
+**The two variants are the plan's P0 and P1** (`--leg_variant`). *position*: the external push on the foot is a
+disturbance to reject; no force command, the target is the goal, and neither the critic nor the estimator's target
+carries a force. *force*: UniFP's formulation, the target `goal + (external + command) / 400 N/m`, the estimator
+supervised on the external force. Same architecture, observation (UniFP's 76 x 32), pushes, handles and task layer;
+only the force-aware layer adds its force command.
+
+**The arm's look pose** (`leg_cfg.ARM_LOOK_POSE`) folds the arm upright with the wrist pitched forward: in Isaac Lab
+the camera sits 0.89 m up, 0.6-0.77 m from the handle, and every handle point projects inside the 640 x 480 image --
+but rendered, the D1's own closed fingers cover ~40% of the image on the right, hiding a right-pointing lever and the
+foot while it presses (F-159), so the pose needs revisiting before it is a perception setup. The
+arm's six action slots are zero in the observation and the D1 is driven to the pose; it is jittered per episode in
+training so the legs are not tuned to one arm posture.
+
+**Where it stands (2026-10-20, F-160).** Two seeds of stage 2 (recipe j) on the frozen set's 144 handles: the
+position-only policy held 17 and 43 latches for 1 s, the force-aware one 12 and 3; zero-shot from stage 1, none. The
+force-aware policies push ~12 N and slip off -- not because they ignore larger commands: the force law asked for little more, since it raises the force only from the foot's lag behind its reference and a slipping foot does not lag (largest command per episode, median 16.5 / 9.1 N on the two seeds; checked 2026-10-21); the position-only ones push up to ~60 N, turn
+springs up to 3 N·m and pass 120 N more often. The foot slips off the 2 cm round bar (on a 20 mm-radius bar it stays on and overloads instead), and
+the levers almost never reach their stops, so the force-aware layer's bounded force at a stop is never exercised.
+
+What it is not: the handle is an analytic plant -- nothing in PhysX touches the bar or the door, only the foot sphere
+(and the knee, against the door's face) through penalty forces -- and every handle number is invented. The task layer
+is told the handle's pose by an estimate with drawn errors; no camera image is rendered or processed. The arm holds
+one pose: nothing here moves the camera to keep the foot in view.
+
+### The combiner box's key (`--leg_object key`, 2026-10-21)
+
+Lukas's lever key (`demos/combiner_key/assets/combinerbox_lever_v3.stl`, mirrored, F-164) in the box's cam lock,
+turned by the front-right foot from 45° up to 45° down; the door unlocks past 30° down. The same environment, with:
+
+- **the key's plant** (`handle.LeverHandle(..., pad=True)`): the foot sphere against the key's bar and its
+  100 x 50 mm platform (two boxes, `leg_cfg.KEY_*_BOX`), a start stop at -45°, the end stop at +45°, a lock friction
+  that sticks below its level plus a cam detent over the 20° before the unlock, no return spring, the key's own
+  weight; on a lock adapter 17 mm off the door at the real box's lock (0.4175 m up). The head is checked against the
+  door's face as well as the foot and the knee. The layer's path starts at the key's -45° (`theta_start`).
+- **the stance** (F-162): every episode starts standing settled (`leg_cfg.SETTLED_*`, measured) instead of dropping
+  from 0.35 m; `support_stance` pays each support foot for its distance from its settled place (weight 4); the
+  front-right foot's footfall is where it actually stands; the D1 is folded at rest (the camera is on the head now).
+- **after the turn** the foot goes back to its footfall, and the episode ends a second after it is down.
+- **108 frozen keys** (`leg_eval.build_key_plan`): 3 distances x 3 sides x lock friction 0.5 / 1.5 / 2.5 N·m x
+  detent 0 / 1 N·m x 2 heights, scored as the handles plus the foot back down and the stance.
+
+```bash
+# stage 1 (free space, the stance fixes), then stage 2 from both variants' model_600 (F-162: the position-only run
+# came apart after it)
+./run_unifp_train.py train --task leg --leg_object key --leg_variant <v> --num_envs 2048 --iterations 1300 \
+    --force_start_iteration 500 --foot_push_n 25 --headless
+./run_unifp_train.py train --task leg --leg_object key --leg_variant <v> --num_envs 2048 --iterations 1000 \
+    --handle_fraction 0.6 --foot_push_n 20 --resume_from <stage-1 model_600.pt> --resume_leg_std 0.2 \
+    --fixed_learning_rate 1e-4 --entropy_coef 0.002 --headless
+./run_unifp_train.py leg_eval --task leg --leg_object key --leg_variant <v> --checkpoint <model.pt> --headless
+#   --leg_actuator <model>: the legs' motor model, a diagnostic (unifp_train/leg_actuators.py: dcmotor, knee23, speedcurve,
+#   knee23curve, dcmotor_armature, unitree, unitree_geared); --leg_armature / --leg_knee_armature, --leg_delay_steps;
+#   the trace logs the legs' joint torques and speeds (leg_eval.TORQUE_FIELDS)
+./run_unifp_train.py play --task leg --leg_object key --leg_variant <v> --checkpoint <model.pt> --leg_rows 54 55 --real_time
+python -m unifp_train.leg_plot --run "position=<leg_eval dir>" --run "force=<leg_eval dir>" --trace_row 54 --out <png>
+python -m unifp_train.leg_curves --run "position=<stage-1 .out>,<stage-2 .out>" --run "force=..." --out <png>
+```
+
+**Where it stands (2026-10-21, F-166).** Two seeds, 108 frozen keys each: the force-aware policy unlocks 84 and 106
+with no damage and its foot back down, the position-only one 20 and 23; zero-shot from stage 1, none. On the decoupled demos' DCMotor legs
+the force-aware policy falls to 3 (the position-only one stays at 20); that was the stock group's zero armature, not its
+torque limits: with the trained 2e-4 it is 84, and seed 1 holds 82-85 on Unitree's envelope with or without the geared
+knee, seed 2 104-106 (F-168). The staged demo with the arm's insertion and the walking policy is `demos/combiner_key`.

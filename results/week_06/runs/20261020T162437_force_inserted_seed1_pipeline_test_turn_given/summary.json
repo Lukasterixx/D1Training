@@ -1,0 +1,70 @@
+{
+  "summary": {
+    "attempts": 1,
+    "tag_found": 1,
+    "inserted": 1,
+    "turn_started": 1,
+    "unlocked": 0,
+    "verified_unlocked": 0,
+    "foot_down": 0,
+    "fell": 0,
+    "success": 0,
+    "max_stance_cm_median": 33.502235412597656
+  },
+  "attempts": [
+    {
+      "batch": 0,
+      "env": 0,
+      "site": {
+        "distance_m": 0.8586619404558785,
+        "bearing_deg": 1.202408630676469,
+        "yaw_deg": 176.44159612719633
+      },
+      "look": {
+        "found": true,
+        "detections": 0
+      },
+      "walk_error_m": 0.1866,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 0.0,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315,
+        "handover": {
+          "base_z_m": 0.2601,
+          "stance_max_cm": 15.66,
+          "door_ahead_m": 0.7243,
+          "axis_side_m": -0.0941
+        }
+      },
+      "min_base_z": 0.15279316902160645,
+      "max_tilt_deg": 36.3813714442881,
+      "max_stance_cm": 33.502235412597656,
+      "fell": false,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "success": false
+    }
+  ]
+}

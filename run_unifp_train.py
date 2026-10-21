@@ -58,13 +58,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval", "ins_eval",
-                                         "press_eval", "wipe_eval", "rope_eval"),
+                                         "press_eval", "wipe_eval", "rope_eval", "leg_eval"),
                         help="'play' drives the new environment with an existing UniFP checkpoint, "
                              "which checks the whole loop -- observation, action mapping, reward -- "
                              "against a policy already known to work on this robot. 'train' runs "
                              "PPO with the adaptation module. 'manifest' freezes an "
                              "evaluation set; 'eval' scores a policy against one.")
-    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion", "press", "wipe", "rope"), default="unifp",
+    parser.add_argument("--task", choices=("unifp", "hook", "mechanism", "insertion", "press", "wipe", "rope", "leg"),
+                        default="unifp",
                         help="'unifp' is UniFP's task as ported. 'hook' adds a fixture: a handle the "
                              "claw pulls or a button the pad presses, loaded with tens of newtons "
                              "(unifp_train/hook_env.py). 'mechanism' has the claw holding a drawer, "
@@ -215,6 +216,73 @@ def build_parser() -> argparse.ArgumentParser:
                         help="'hook' only: starting ceiling of the commanded force, N (default 15).")
     parser.add_argument("--force_ceiling_max", type=float, default=None,
                         help="'hook' only: where the curriculum stops raising it, N (default 60).")
+    parser.add_argument("--leg_variant", choices=("position", "force"), default="force",
+                        help="--task leg: 'position' is the plan's P0 (no force command, the push a disturbance to "
+                             "reject, no force in the critic or the estimator's target); 'force' is P1, UniFP's "
+                             "formulation at the foot (unifp_train/leg_env.py).")
+    parser.add_argument("--leg_object", choices=("handle", "key"), default="handle",
+                        help="--task leg: 'handle' is a lever door handle at body height (2026-10-19); 'key' is the "
+                             "combiner box's lever key in its cam lock, turned 90 degrees down (2026-10-21), which also "
+                             "starts each episode standing settled, holds the arm folded at rest and rewards the support "
+                             "feet for their settled places (unifp_train/leg_cfg.py, 'the combiner box's key').")
+    parser.add_argument("--leg_actuator", choices=("unifp", "dcmotor", "knee23", "speedcurve", "knee23curve",
+                                                        "dcmotor_armature", "unitree", "unitree_geared"),
+                        default="unifp",
+                        help="--task leg, a diagnostic of the legs' motor model (unifp_train/leg_actuators.py), the 25 / 0.5 "
+                             "gains in all: 'unifp' is UniFP's ideal PD the leg policies trained on (knees 45.43 N·m); "
+                             "'dcmotor' Isaac Lab's Go2 DCMotor (23.5 N·m on every joint, its torque-speed curve), as the "
+                             "decoupled demos' robot; 'knee23' and 'speedcurve' change one of those differences each; "
+                             "'unitree' is unitree_rl_lab's Go2 envelope; 'unitree_geared' that with the URDF's geared knee.")
+    parser.add_argument("--key_turn_deg", type=float, nargs=3, default=None, metavar=("START", "STOP", "UNLOCK"),
+                        help="--leg_object key: the turn in degrees below horizontal (positive down, clockwise as the "
+                             "robot sees it): where the key starts, its end stop, where the door unlocks. The trained "
+                             "turn is -45 45 30 (leg_cfg.KEY_THETA_*); e.g. 45 90 85 starts it 45 down and needs it "
+                             "turned straight down. Applies to the frozen key set and to training.")
+    parser.add_argument("--key_overdrive_deg", type=float, default=None,
+                        help="--leg_object key: how far past the end stop the task layer's path ends (degrees; "
+                             "leg_cfg.OVERDRIVE_RAD, 6 as trained); negative ends it short of the stop.")
+    parser.add_argument("--key_hold_s", type=float, default=None,
+                        help="--leg_object key: how long the task layer holds the foot on the key at the end of the turn "
+                             "(leg_cfg.HOLD_S, 2 s as trained; a cam lock stays where it is turned).")
+    parser.add_argument("--leg_armature", type=float, default=None,
+                        help="--task leg: the legs' armature, kg·m² (trained with 2e-4; unitree_rl_lab's GO2HV 0.01), in any "
+                             "--leg_actuator; --leg_knee_armature sets the knees' apart.")
+    parser.add_argument("--leg_knee_armature", type=float, default=None)
+    parser.add_argument("--leg_delay_steps", type=int, default=0,
+                        help="--task leg: delay the legs' commands by 0 to this many physics steps (5 ms), per environment "
+                             "(the 'unifp', 'knee23', 'unitree' and 'unitree_geared' leg actuators).")
+    parser.add_argument("--spawn_states", default="",
+                        help="--task leg --leg_object key: a json of stances to start half the episodes from (the walking "
+                             "policy's stops, demos/combiner_key/assets/walker_stances.json), for a handover from it.")
+    parser.add_argument("--eval_spawn_states", action="store_true",
+                        help="leg_eval with --spawn_states: start every frozen episode from one of the stances (a "
+                             "diagnostic for the handover from the walking policy), the stance drawn per episode.")
+    parser.add_argument("--handle_fraction", type=float, default=None,
+                        help="--task leg: share of training episodes with a door handle ahead (default 0: free-space "
+                             "foot goals with pushes only).")
+    parser.add_argument("--force_ramp_iterations", type=int, default=None,
+                        help="--task leg: iterations over which the foot pushes ramp up once the force curriculum opens.")
+    parser.add_argument("--leg_frames", type=int, default=0,
+                        help="leg_eval: save the wrist camera's and a side view's frames for the first N episodes "
+                             "(needs --enable_cameras).")
+    parser.add_argument("--leg_frame_every", type=int, default=5, help="leg_eval: policy steps between saved frames.")
+    parser.add_argument("--leg_shadow_dump", type=int, default=0,
+                        help="leg_eval: record the first N episodes' raw robot state, commands, frames, actions and joint "
+                             "targets every step (shadow_dump.npz), to check the dog's numpy policy against "
+                             "(demos/combiner_key/robot/check_shadow.py --sim).")
+    parser.add_argument("--leg_rows", type=int, nargs="+", default=None,
+                        help="leg_eval: score only these rows of the frozen handle set (a subset for frames).")
+    parser.add_argument("--foot_push_n", type=float, default=None,
+                        help="--task leg: peak per-axis force of the physical push on the foot, N (default 35; the "
+                             "command channel keeps 35).")
+    parser.add_argument("--leg_bar_radius", type=float, default=None,
+                        help="leg_eval: give every frozen handle this bar radius, m (a diagnostic, not the frozen set: "
+                             "how much of a failure is the foot's precision on a 2 cm round bar).")
+    parser.add_argument("--small_physx", action="store_true",
+                        help="Shrink PhysX's GPU contact and pair buffers (ample for a few hundred environments), so an "
+                             "evaluation fits beside training runs on the shared GPU. Not for training at 4096.")
+    parser.add_argument("--no_arm_jitter", action="store_true",
+                        help="--task leg: hold the arm exactly at its look pose rather than jittering it per episode.")
     parser.add_argument("--no_curriculum", action="store_true",
                         help="'hook' and 'mechanism': hold the curriculum's ceiling where it starts.")
     parser.add_argument("--repeats", type=int, default=4,
@@ -378,6 +446,8 @@ def main() -> int:
     from unifp_train.wipe_env import Go2D1WipeEnv, Go2D1WipeEnvCfg  # noqa: E402
     from unifp_train import rope_cfg  # noqa: E402
     from unifp_train.rope_env import Go2D1RopeEnv, Go2D1RopeEnvCfg  # noqa: E402
+    from unifp_train import leg_actuators, leg_cfg  # noqa: E402
+    from unifp_train.leg_env import Go2D1LegEnv, Go2D1LegEnvCfg  # noqa: E402
 
     if args.mode == "hook_eval" and args.task != "hook":
         parser.error("hook_eval needs --task hook")
@@ -391,6 +461,8 @@ def main() -> int:
         parser.error("wipe_eval needs --task wipe")
     if args.mode == "rope_eval" and args.task != "rope":
         parser.error("rope_eval needs --task rope")
+    if args.mode == "leg_eval" and args.task != "leg":
+        parser.error("leg_eval needs --task leg")
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     suffix = f"_{args.run_name}" if args.run_name else ""
@@ -413,7 +485,37 @@ def main() -> int:
         robot_usd, payload_record = weld.usd_path, weld.payload
 
     cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg, "insertion": Go2D1InsertEnvCfg,
-           "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg, "rope": Go2D1RopeEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
+           "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg, "rope": Go2D1RopeEnvCfg,
+           "leg": Go2D1LegEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
+    if args.task == "leg":
+        cfg.leg_variant = args.leg_variant
+        if args.leg_object == "key":
+            cfg.leg_object, cfg.arm_pose, cfg.settled_spawn = "key", "rest", True
+            if args.key_turn_deg is not None:
+                # Read at run time by the plant, the task layer, the approach and the frozen plan (`c.KEY_THETA_*`).
+                start, stop, unlock = args.key_turn_deg
+                if not start < unlock <= stop:
+                    parser.error("--key_turn_deg needs START < UNLOCK <= STOP")
+                leg_cfg.KEY_THETA_START_RAD, leg_cfg.KEY_THETA_END_RAD = math.radians(start), math.radians(stop)
+                leg_cfg.KEY_THETA_UNLOCK_RAD = math.radians(unlock)
+            if args.key_overdrive_deg is not None:
+                leg_cfg.OVERDRIVE_RAD = math.radians(args.key_overdrive_deg)
+            if args.key_hold_s is not None:
+                leg_cfg.HOLD_S = args.key_hold_s
+            cfg.stance_weight = leg_cfg.STANCE_WEIGHT
+            cfg.episode_length_s = leg_cfg.KEY_EPISODE_LENGTH_S
+            if args.spawn_states:
+                cfg.spawn_states = str(Path(args.spawn_states).resolve())
+                if args.eval_spawn_states:
+                    cfg.spawn_states_in_eval, cfg.spawn_states_fraction = True, 1.0
+        if args.handle_fraction is not None:
+            cfg.handle_fraction = args.handle_fraction
+        if args.force_ramp_iterations is not None:
+            cfg.force_ramp_iterations = args.force_ramp_iterations
+        if args.no_arm_jitter:
+            cfg.arm_jitter = False
+        if args.foot_push_n is not None:
+            cfg.foot_push_n = args.foot_push_n
     if args.task == "insertion":
         if args.insertion_fraction is not None:
             cfg.insertion_fraction = args.insertion_fraction
@@ -474,6 +576,28 @@ def main() -> int:
         from unifp_train import wipe_eval
         eval_plan, eval_rows = wipe_eval.build_plan("cpu")
         cfg.episode_length_s = wipe_cfg.EVAL_EPISODE_S
+    # `play --task leg --leg_rows ...` loops chosen frozen handles in the viewer, one per environment.
+    if args.mode == "leg_eval" or (args.mode == "play" and args.task == "leg" and args.leg_rows):
+        from unifp_train import leg_eval
+        eval_plan, eval_rows = (leg_eval.build_key_plan if args.leg_object == "key" else leg_eval.build_plan)("cpu")
+        # One episode per handle unless --repeats is given: the policy is deterministic, so repeats measure only PhysX.
+        repeats = args.repeats if "--repeats" in sys.argv else 1
+        if args.leg_bar_radius is not None:
+            eval_plan["handles"]["radius"][:] = args.leg_bar_radius
+            eval_rows = [dict(r, bar_radius=args.leg_bar_radius) for r in eval_rows]
+        if args.leg_rows:
+            keep = list(args.leg_rows)
+            eval_rows = [dict(eval_rows[i], row=i) for i in keep]
+            eval_plan = {"handles": {k: v[keep] for k, v in eval_plan["handles"].items()}}
+        eval_rows = eval_rows * repeats
+        eval_plan = {"handles": {k: v.repeat(repeats) for k, v in eval_plan["handles"].items()}}
+        if args.leg_frames:
+            cfg.wrist_camera = cfg.overview_camera = True
+            cfg.unifp_markers = False
+            if args.leg_object == "key":
+                # The camera is on the head for the key: render that, not the folded arm's.
+                cfg.head_camera_visual, cfg.head_camera, cfg.wrist_camera = True, True, False
+        cfg.episode_length_s = leg_cfg.KEY_EVAL_EPISODE_S if args.leg_object == "key" else leg_cfg.EVAL_EPISODE_S
     cfg.scene.num_envs = args.num_envs if eval_rows is None else len(eval_rows)
     if args.task == "mechanism":
         for name, value in (("mechanism_fraction", args.mechanism_fraction),
@@ -583,17 +707,26 @@ def main() -> int:
         # pushed is not what this task is for.
         cfg.force_start_step = 0
     cfg.seed = args.seed
+    if args.small_physx:
+        px = cfg.sim.physx
+        px.gpu_max_rigid_contact_count, px.gpu_max_rigid_patch_count = 2**18, 2**16
+        px.gpu_found_lost_pairs_capacity, px.gpu_found_lost_aggregate_pairs_capacity = 2**18, 2**20
+        px.gpu_total_aggregate_pairs_capacity, px.gpu_collision_stack_size = 2**18, 2**25
+        px.gpu_heap_capacity, px.gpu_temp_buffer_capacity = 2**25, 2**23
     # The hook and mechanism tasks have the roll objective on by default (the claw has to meet the
     # handle the right way up); UniFP's task has it off unless asked for.
     if args.task == "unifp":
         cfg.roll_objective = args.roll_objective
     if args.tool_point == "fingertip":
         cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
-    if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope"):
+    if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope", "leg"):
         # F-102: the arm's explicit PD chatters at UniFP's 2e-4 armature; see hook_cfg.ARM_ARMATURE_KG_M2.
         armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18]
                            else robot_mod.ARM_ARMATURE) for name in interface.ISAACLAB_NAMES}
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot", armature=armature)
+        if args.task == "leg":
+            leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                                    args.leg_knee_armature)
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
     cfg.robot_usd = robot_usd
@@ -608,16 +741,29 @@ def main() -> int:
         cfg.viewer.env_index = 0
         cfg.viewer.eye = (1.6, -1.8, 0.9)
         cfg.viewer.lookat = (0.0, 0.0, 0.3)
+        if args.task == "leg":
+            # Fixed on environment 0 (the robot stands), from its front right onto the foot, the door and the handle; only
+            # the handle's markers, UniFP's goal spheres hiding the foot.
+            cfg.viewer.origin_type = "env"
+            cfg.viewer.eye = (1.25, -1.45, 0.85)
+            cfg.viewer.lookat = (0.35, -0.08, 0.28)
+            cfg.unifp_markers = False
+            if args.leg_object == "key":
+                # The key is higher (0.42 m) and nearer; the head RealSense is drawn where the key task has it.
+                cfg.viewer.eye = (1.15, -1.25, 0.95)
+                cfg.viewer.lookat = (0.38, -0.10, 0.40)
+                cfg.head_camera_visual = True
         if rope_rows is not None:
             # From the side, back far enough to hold the robot, the rope and its post 1.5 m ahead: the lean shows.
             cfg.viewer.eye = (0.75, -2.9, 0.75)
             cfg.viewer.lookat = (0.75, 0.0, 0.3)
 
     env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv, "insertion": Go2D1InsertEnv,
-           "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv, "rope": Go2D1RopeEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
+           "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv, "rope": Go2D1RopeEnv,
+           "leg": Go2D1LegEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
     if args.mode == "ins_eval":
         env.set_evaluation(ins_plan)
-    if args.mode in ("press_eval", "wipe_eval"):
+    if args.mode in ("press_eval", "wipe_eval", "leg_eval") or (args.mode == "play" and args.task == "leg" and args.leg_rows):
         env.set_evaluation(eval_plan)
     if args.mode == "mech_eval":
         from unifp_train import mech_eval
@@ -666,7 +812,7 @@ def main() -> int:
         "force_start_iteration": cfg.force_start_step // task_cfg.NUM_STEPS_PER_ENV,
         "roll_objective": cfg.roll_objective,
         "task": args.task,
-        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope")
+        "arm_armature_kg_m2": (hook_cfg.ARM_ARMATURE_KG_M2 if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope", "leg")
                                else robot_mod.ARM_ARMATURE),
         "fixture": ({name: getattr(cfg, name) for name in (
             "fixture_fraction", "press_fraction", "force_ceiling_n", "force_ceiling_max_n", "curriculum")}
@@ -710,6 +856,22 @@ def main() -> int:
                   "force_term": {"sigmas_n": [rope_cfg.FORCE_SIGMA_FINE_N, rope_cfg.FORCE_SIGMA_COARSE_N,
                                               rope_cfg.FORCE_SIGMA_BROAD_N], "shares": list(rope_cfg.FORCE_SHARES)}}
                  if args.task == "rope" else None),
+        "leg": ({"variant": cfg.leg_variant, "object": cfg.leg_object, "arm_pose": cfg.arm_pose,
+                 "leg_actuator": args.leg_actuator, "leg_delay_steps": args.leg_delay_steps,
+                 "key_turn_deg": [round(math.degrees(v), 3) for v in (leg_cfg.KEY_THETA_START_RAD, leg_cfg.KEY_THETA_END_RAD,
+                                                                      leg_cfg.KEY_THETA_UNLOCK_RAD)],
+                 "key_overdrive_deg": round(math.degrees(leg_cfg.OVERDRIVE_RAD), 3), "key_hold_s": leg_cfg.HOLD_S,
+                 "leg_actuator_model": leg_actuators.describe(args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                                                              args.leg_knee_armature),
+                 "settled_spawn": cfg.settled_spawn, "stance_weight": cfg.stance_weight,
+                 "spawn_states": cfg.spawn_states, "spawn_states_fraction": cfg.spawn_states_fraction,
+                 "handle_fraction": cfg.handle_fraction,
+                 "force_ramp_iterations": cfg.force_ramp_iterations, "arm_jitter": cfg.arm_jitter,
+                 "arm_look_pose": list(leg_cfg.ARM_LOOK_POSE), "foot_force_range_n": list(leg_cfg.FOOT_FORCE_RANGE_N),
+                 "foot_push_n": cfg.foot_push_n, "foot_command_n": cfg.foot_command_n,
+                 "foot_force_kp": leg_cfg.FOOT_FORCE_KP, "weights": dict(leg_cfg.REWARD_WEIGHTS),
+                 "handle_weights": dict(leg_cfg.HANDLE_WEIGHTS)}
+                if args.task == "leg" else None),
         "ground_friction": args.ground_friction if args.ground_friction is not None else robot_mod.GROUND_STATIC_FRICTION,
         "tool_body": cfg.tool_body,
         "tool_offset_m": list(cfg.tool_offset_m),
@@ -726,6 +888,16 @@ def main() -> int:
         "git_commit": git_output("rev-parse", "HEAD"),
         "git_status": git_output("status", "--short"),
     }
+    if args.task == "leg":
+        # What the legs' joints loaded with, as PhysX holds them (UniFP's order): the leg actuator models
+        # (`leg_actuators`) differ in these, and a group that sets no armature keeps the robot file's.
+        legs, data = env._order[:12], env._robot.data
+        report["leg_joints_loaded"] = {
+            "groups": {name: type(group).__name__ for name, group in env._robot.actuators.items()},
+            **{key: [round(float(v), 6) for v in getattr(data, attr)[0, legs].tolist()]
+               for key, attr in (("armature", "joint_armature"), ("friction", "joint_friction_coeff"),
+                                 ("effort_limit_sim", "joint_effort_limits"), ("velocity_limit_sim", "joint_vel_limits"))
+               if getattr(data, attr, None) is not None}}
     report["shapes_ok"] = (report["actor_obs"] == report["expected_actor"]
                            and report["critic_obs"] == report["expected_critic"]
                            and report["estimate_obs"] == report["expected_estimates"])
@@ -746,6 +918,10 @@ def main() -> int:
         report["run_dir"] = str(run_dir)
     elif args.mode == "rope_eval":
         status = rope_evaluate(args, env, obs, report, run_dir, rope_rows)
+        write_json(run_dir / "run.json", report)
+        report["run_dir"] = str(run_dir)
+    elif args.mode == "leg_eval":
+        status = leg_evaluate(args, env, obs, report, run_dir, eval_rows)
         write_json(run_dir / "run.json", report)
         report["run_dir"] = str(run_dir)
     elif args.mode in ("press_eval", "wipe_eval"):
@@ -824,7 +1000,7 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
             paced += interface.POLICY_DT
             time.sleep(max(0.0, paced - time.monotonic()))
         if policy is None:
-            actions = torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+            actions = torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
         else:
             actions = policy.act(obs["policy"])
         obs, reward, terminated, truncated, _ = env.step(actions)
@@ -1068,7 +1244,7 @@ def hook_evaluate(args, env, obs, report: dict, run_dir: Path) -> int:
     trace = {key: [] for key in hook_eval.FIELDS}
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
-            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+            actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
                        if policy is None else policy.act(obs["policy"]))
             obs, _, terminated, truncated, _ = env.step(actions)
             estimate = None if policy is None else policy.estimate(obs["policy"])
@@ -1143,7 +1319,7 @@ def rope_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict])
     trace = {key: [] for key in rope_eval.FIELDS}
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
-            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device) if policy is None
+            actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device) if policy is None
                        else policy.sample(obs["policy"]) if args.stochastic else policy.act(obs["policy"]))
             if args.freeze_legs:
                 actions[:, :12] = 0.0
@@ -1254,7 +1430,7 @@ def ins_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) 
     trace = {key: [] for key in insert_eval.FIELDS}
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
-            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+            actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
                        if policy is None else policy.act(obs["policy"]))
             obs, _, terminated, truncated, _ = env.step(actions)
             ended = (terminated | truncated) & ~done
@@ -1311,7 +1487,7 @@ def contact_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dic
     trace = {key: [] for key in scorer.FIELDS}
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
-            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+            actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
                        if policy is None else policy.act(obs["policy"]))
             obs, _, terminated, truncated, _ = env.step(actions)
             ended = (terminated | truncated) & ~done
@@ -1339,6 +1515,109 @@ def contact_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dic
                      else f"completion {row['completion']}  contact {row['contact_fraction']}")
             print(f"  {key[3:]} {list(row.values())[0]}: success {row['success']}/{row['of']}  {extra}  "
                   f"force rmse {row['force_rmse_n']}  peak {row['peak_contact_n']}  {row['reasons']}", flush=True)
+    return 0
+
+
+def leg_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) -> int:
+    """Turn every planned door handle once with the front-right foot, and score it (`leg_eval`)."""
+    import numpy as np
+    import torch
+
+    from unifp_isaaclab import interface
+    from unifp_train import eval as evaluation, leg_eval
+
+    run_dir.mkdir(parents=True, exist_ok=True)
+    policy = None
+    if not args.zero_actions:
+        policy = evaluation.EvaluablePolicy(args.checkpoint, device=str(env.device))
+        report["checkpoint"] = os.path.abspath(args.checkpoint)
+        report["checkpoint_source"] = policy.source
+        report["checkpoint_iteration"] = policy.iteration
+    controller = "zero actions" if policy is None else os.path.basename(args.checkpoint)
+    report["controller"] = controller
+    report["leg_rows"] = rows
+    done = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    fields = leg_eval.FIELDS + leg_eval.TORQUE_FIELDS
+    trace = {key: [] for key in fields}
+    frames = min(args.leg_frames, env.num_envs) if args.leg_frames else 0
+    if frames:
+        import cv2
+
+        env.set_debug_vis(True)
+        (run_dir / "frames").mkdir(parents=True, exist_ok=True)
+        report["frames"] = {"episodes": frames, "every_steps": args.leg_frame_every, "dir": str(run_dir / "frames")}
+    dump_n = min(args.leg_shadow_dump, env.num_envs)
+    dump = {k: [] for k in ("joint_pos", "joint_vel", "root_quat_w", "root_ang_vel_b", "commands", "frame", "action",
+                            "joint_pos_target", "stage", "alive")} if dump_n else None
+    with torch.inference_mode():
+        for step_index in range(int(env.max_episode_length) - 1):
+            if frames and step_index % args.leg_frame_every == 0:
+                cams = [(name, getattr(env, attr)) for name, attr in (("head", "_head_cam"), ("wrist", "_wrist_cam"),
+                                                                     ("side", "_overview_cam")) if hasattr(env, attr)]
+                for name, cam in cams:
+                    rgb = cam.data.output["rgb"][:frames, ..., :3].cpu().numpy()
+                    for e in range(frames):
+                        cv2.imwrite(str(run_dir / "frames" / f"ep{e:02d}_{name}_{step_index:04d}.png"),
+                                    cv2.cvtColor(rgb[e], cv2.COLOR_RGB2BGR))
+            actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
+                       if policy is None else (policy.sample(obs["policy"]) if args.stochastic else policy.act(obs["policy"])))
+            if dump is not None:
+                # The state the frame below was built from (nothing moves between the observation and the action).
+                data = env._robot.data
+                for key, value in (("joint_pos", data.joint_pos), ("joint_vel", data.joint_vel),
+                                   ("root_quat_w", data.root_quat_w), ("root_ang_vel_b", data.root_ang_vel_b),
+                                   ("commands", env._commands), ("frame", obs["policy"][:, -interface.NUM_SINGLE_OBS:]),
+                                   ("action", actions), ("stage", env._stage.float()), ("alive", (~done).float())):
+                    dump[key].append(value[:dump_n].detach().float().cpu().numpy())
+            obs, _, terminated, truncated, _ = env.step(actions)
+            if dump is not None:
+                # The joint targets the actuators were given for that action (Isaac's order).
+                dump["joint_pos_target"].append(env._robot.data.joint_pos_target[:dump_n].detach().float().cpu().numpy())
+            ended = (terminated | truncated) & ~done
+            step = leg_eval.record_step(env, done, ended)
+            for key in fields:
+                trace[key].append(step[key])
+            done |= ended
+            if bool(done.all()):
+                break
+    trace = {key: np.stack(values) for key, values in trace.items()}
+    np.savez_compressed(run_dir / "leg_trace.npz", **trace)
+    if dump is not None:
+        np.savez_compressed(run_dir / "shadow_dump.npz", joint_names=np.array(list(env._robot.joint_names)),
+                            **{key: np.stack(values, axis=1) for key, values in dump.items()})
+        report["shadow_dump"] = {"episodes": dump_n, "file": str(run_dir / "shadow_dump.npz")}
+    result = leg_eval.score(trace, rows)
+    write_json(run_dir / "leg_eval.json", result["summary"])
+    write_json(run_dir / "leg_eval_episodes.json", {"episodes": result["episodes"]})
+    report["summary"] = result["summary"]
+    report["status"] = "evaluated"
+    s = result["summary"]
+    print(f"\n[leg_eval {env.cfg.leg_variant}] {controller}  success {s['success']}/{s['episodes']}  engaged {s['engaged']}  "
+          f"opened {s['opened']}  fell {s['fell']}  damaged {s['damaged']}  slipped {s['slipped']}  reasons {s['reasons']}\n"
+          f"  peak median {s['peak_n_median']} N (p95 {s['peak_n_p95']})  at stop {s['peak_at_stop_n_median']} N  "
+          f"held {s['hold_force_n_median']} N  time to open {s['time_to_open_s_median']} s  "
+          f"force rmse {s['force_rmse_n_median']} N  door {s['door_peak_n_median']} N  tilt {s['max_tilt_deg_median']} deg",
+          flush=True)
+    if "unlocked" in s:
+        print(f"  key: unlocked {s['unlocked']}  foot back down {s['foot_down']}  both {s['success_and_foot_down']}  "
+              f"time to unlock {s['time_to_unlock_s_median']} s  FR footfall {s['fr_footfall_cm_median']} cm off  "
+              f"support stance median {s['stance_median_cm']} cm, worst-foot median {s['stance_max_cm_median']} cm "
+              f"(p90 {s['stance_max_cm_p90']})", flush=True)
+    if "torques" in s:
+        t = s["torques"]
+        print(f"  torques ({args.leg_actuator}, delay 0-{args.leg_delay_steps}): FR knee peak median {t['fr_calf_peak_nm']['median']} "
+              f"(p90 {t['fr_calf_peak_nm']['p90']}, max {t['fr_calf_peak_nm']['max']}) N·m, demanded {t['fr_calf_demand_peak_nm']['median']}, "
+              f"while turning {t['fr_calf_turn_peak_nm']['median']}; FR knee past 23.5 N·m in {t['episodes_fr_calf_over_stock']} episodes "
+              f"for a median {t['fr_calf_over_stock_s']['median']} s; FR thigh {t['fr_thigh_peak_nm']['median']}, hip {t['fr_hip_peak_nm']['median']}; "
+              f"support knees {t['sup_calf_peak_nm']['median']} (past 23.5 in {t['episodes_sup_calf_over_stock']}); FR knee speed "
+              f"{t['fr_calf_speed_peak']['median']} rad/s (past 7.04 for {t['fr_calf_fast_s']['median']} s); clipped: FR "
+              f"{t['fr_saturated_s']['median']} s, any leg {t['legs_saturated_s']['median']} s", flush=True)
+    for key in ("by_full_nm", "by_friction_nm", "by_detent_nm", "by_axis_side", "by_contact_side", "by_left",
+                "by_door_ahead", "by_height"):
+        for row in s.get(key, []):
+            print(f"  {key[3:]} {list(row.values())[0]}: success {row['success']}/{row['of']}  peak {row['peak_n_median']}  "
+                  f"at stop {row['peak_at_stop_n_median']}  held {row['hold_force_n_median']}  "
+                  f"time {row['time_to_open_s_median']}  {row['reasons']}", flush=True)
     return 0
 
 
@@ -1371,7 +1650,7 @@ def mech_evaluate(args, env, obs, report: dict, run_dir: Path, kinds: list[str],
     trace = {key: [] for key in mech_eval.FIELDS}
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
-            actions = (torch.zeros(env.num_envs, interface.NUM_ACTIONS, device=env.device)
+            actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
                        if policy is None else policy.act(obs["policy"]))
             obs, _, terminated, truncated, _ = env.step(actions)
             estimate = None if policy is None else policy.estimate(obs["policy"])

@@ -28,3 +28,11 @@ logs/unifp_demos/
 logs/combiner_door_robot/
 # The UniFP gait probe's runs (each with its own USD); the recorded copies are the evidence.
 logs/unifp_gait_probe/
+# The leg policy's shadow runs and the knee logger's records from the dog (`d1fetch`), and their PC tests; the recorded
+# copies are the evidence. The combiner key demo's runs likewise.
+logs/leg_shadow/
+logs/leg_shadow_pc_test/
+logs/go2_knee/
+logs/combiner_key/
+# Top-level console logs of demo and test runs; the recorded copies are the evidence.
+logs/*.out

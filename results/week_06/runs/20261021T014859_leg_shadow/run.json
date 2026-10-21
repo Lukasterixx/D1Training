@@ -1,0 +1,152 @@
+{
+  "mode": "leg_shadow",
+  "status": "recorded",
+  "published": "nothing",
+  "arguments": {
+    "policy": "checkpoints/leg_key_force_s2walker_model_2104.npz",
+    "topic": "/lowstate",
+    "arm_link_port": 0,
+    "foot_goal": [
+      0.3,
+      -0.17,
+      0.12
+    ],
+    "seconds": 10.0,
+    "print_s": 10.0,
+    "run_dir": "logs/leg_shadow_pc_test"
+  },
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "checkpoint_sha256": "d6a8c7f96f6cc575cccbb14292a4bee8666191b557e3b9e96e4ba90eefedd8c7",
+    "checkpoint_iteration": 2104
+  },
+  "summary": {
+    "policy": "checkpoints/leg_key_force_s2walker_model_2104.npz",
+    "policy_variant": "force",
+    "policy_checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "topic": "/lowstate",
+    "foot_goal_local": [
+      0.3,
+      -0.17,
+      0.12
+    ],
+    "published": "nothing",
+    "steps": 501,
+    "seconds": 10.0,
+    "resets": 1,
+    "step_period_s": {
+      "median": 0.02,
+      "p99": 0.0202
+    },
+    "state_age_s_p99": 0.0022,
+    "infer_ms": {
+      "median": 0.57,
+      "p99": 1.18
+    },
+    "arm_measured_share": 0.0,
+    "rpy_deg_median": [
+      0.0,
+      0.01,
+      0.0
+    ],
+    "q_minus_default_median_rad": {
+      "FR_hip_joint": 0.1072,
+      "FR_thigh_joint": 0.0101,
+      "FR_calf_joint": -0.2123,
+      "FL_hip_joint": -0.1072,
+      "FL_thigh_joint": 0.0101,
+      "FL_calf_joint": -0.2123,
+      "RR_hip_joint": 0.1072,
+      "RR_thigh_joint": -0.1065,
+      "RR_calf_joint": -0.2137,
+      "RL_hip_joint": -0.1072,
+      "RL_thigh_joint": -0.1065,
+      "RL_calf_joint": -0.2137
+    },
+    "target_minus_q_median_rad": {
+      "FR_hip_joint": 0.0829,
+      "FR_thigh_joint": 0.162,
+      "FR_calf_joint": 0.223,
+      "FL_hip_joint": 0.1232,
+      "FL_thigh_joint": -0.0898,
+      "FL_calf_joint": 0.1034,
+      "RR_hip_joint": -0.0153,
+      "RR_thigh_joint": 0.0836,
+      "RR_calf_joint": -0.108,
+      "RL_hip_joint": 0.0434,
+      "RL_thigh_joint": 0.1432,
+      "RL_calf_joint": -0.2396
+    },
+    "target_minus_q_max_abs_rad": {
+      "FR_hip_joint": 0.2545,
+      "FR_thigh_joint": 0.5523,
+      "FR_calf_joint": 0.7872,
+      "FL_hip_joint": 0.3096,
+      "FL_thigh_joint": 0.1902,
+      "FL_calf_joint": 0.4972,
+      "RR_hip_joint": 0.3261,
+      "RR_thigh_joint": 0.3033,
+      "RR_calf_joint": 0.2857,
+      "RL_hip_joint": 0.2469,
+      "RL_thigh_joint": 0.3468,
+      "RL_calf_joint": 0.4477
+    },
+    "would_be_torque_median_nm": {
+      "FR_hip_joint": 2.0713,
+      "FR_thigh_joint": 4.049,
+      "FR_calf_joint": 5.5684,
+      "FL_hip_joint": 3.0805,
+      "FL_thigh_joint": -2.2453,
+      "FL_calf_joint": 2.577,
+      "RR_hip_joint": -0.3834,
+      "RR_thigh_joint": 2.0903,
+      "RR_calf_joint": -2.7003,
+      "RL_hip_joint": 1.0843,
+      "RL_thigh_joint": 3.579,
+      "RL_calf_joint": -5.9866
+    },
+    "sport_mode_tau_est_median_nm": {
+      "FR_hip_joint": 5.0,
+      "FR_thigh_joint": 5.0,
+      "FR_calf_joint": 5.0,
+      "FL_hip_joint": 5.0,
+      "FL_thigh_joint": 5.0,
+      "FL_calf_joint": 5.0,
+      "RR_hip_joint": 5.0,
+      "RR_thigh_joint": 5.0,
+      "RR_calf_joint": 5.0,
+      "RL_hip_joint": 5.0,
+      "RL_thigh_joint": 5.0,
+      "RL_calf_joint": 5.0
+    },
+    "estimates_median": {
+      "base_lin_vel_b_m_s": [
+        -0.11,
+        -0.042,
+        -0.189
+      ],
+      "fr_foot_local_m": [
+        0.219,
+        -0.159,
+        -0.036
+      ],
+      "fr_foot_force_n": [
+        0.73,
+        3.18,
+        -4.96
+      ],
+      "base_force_n": [
+        -0.87,
+        1.08,
+        -1.49
+      ]
+    },
+    "fr_foot_from_joints_base_frame_m": [
+      0.205,
+      -0.14,
+      -0.278
+    ],
+    "read_with": "demos/combiner_key/robot/check_shadow.py --dog <this directory>"
+  }
+}

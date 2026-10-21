@@ -1,0 +1,64 @@
+{
+  "summary": {
+    "attempts": 1,
+    "tag_found": 1,
+    "inserted": 1,
+    "turn_started": 1,
+    "unlocked": 0,
+    "verified_unlocked": 0,
+    "foot_down": 0,
+    "fell": 1,
+    "success": 0,
+    "max_stance_cm_median": 23.60832977294922
+  },
+  "attempts": [
+    {
+      "batch": 0,
+      "env": 0,
+      "site": {
+        "distance_m": 0.8586619404558785,
+        "bearing_deg": 1.202408630676469,
+        "yaw_deg": 176.44159612719633
+      },
+      "look": {
+        "found": true,
+        "detections": 0
+      },
+      "walk_error_m": 0.0255,
+      "estimate": {
+        "found": true,
+        "lock_error_mm": 0.0,
+        "lock_error_xyz_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "yaw_error_deg": 0.0
+      },
+      "turn_started": true,
+      "turn": {
+        "stage": 5,
+        "engaged": false,
+        "engage_miss_mm": NaN,
+        "max_theta_deg": -45.0,
+        "final_theta_deg": -45.0,
+        "unlocked": false,
+        "measured_at_hold_deg": NaN,
+        "verified_unlocked": false,
+        "peak_n": 119.75,
+        "cmd_max_n": 0.0,
+        "foot_down": false,
+        "steps": 315
+      },
+      "min_base_z": 0.14710219204425812,
+      "max_tilt_deg": 44.79166682217535,
+      "max_stance_cm": 23.60832977294922,
+      "fell": true,
+      "inserted": true,
+      "unlocked": false,
+      "verified_unlocked": false,
+      "foot_down": false,
+      "success": false
+    }
+  ]
+}

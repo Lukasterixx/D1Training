@@ -1,0 +1,63 @@
+{
+  "id": "20261019T165614_train_seed1_leg_position_stage2_g",
+  "title": "Leg stage 2 position, recipe g: stopped ~1450, learnt to keep the foot ~8-12 cm off",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T04:16:04+11:00",
+  "started_utc": "2026-10-19T16:56:14+00:00",
+  "source_dir": "logs/unifp_train/20261019T165614_train_seed1_leg_position_stage2_g",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1448,
+  "final_checkpoint": {
+    "file": "model_1448.pt",
+    "sha256": "30016c723984e873ac1076e8ef6ee9e5f1807407883f6d1ae13eba64b42fbae2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 96.93412780761719,
+      "last_step": 1448,
+      "mean_last_10": 93.55576553344727,
+      "min": 1.263789415359497,
+      "max": 98.421630859375,
+      "points": 249
+    },
+    "Train/mean_episode_length": {
+      "last": 680.1599731445312,
+      "last_step": 1448,
+      "mean_last_10": 657.572998046875,
+      "min": 11.8125,
+      "max": 730.8300170898438,
+      "points": 249
+    },
+    "Policy/mean_std": {
+      "last": 0.23918727040290833,
+      "last_step": 1448,
+      "mean_last_10": 0.2394071862101555,
+      "min": 0.2020803689956665,
+      "max": 0.24303719401359558,
+      "points": 249
+    },
+    "Perf/total_fps": {
+      "last": 12418.0,
+      "last_step": 1448,
+      "mean_last_10": 10949.1,
+      "min": 7699.0,
+      "max": 13825.0,
+      "points": 249
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

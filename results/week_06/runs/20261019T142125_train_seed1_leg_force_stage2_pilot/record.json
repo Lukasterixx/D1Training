@@ -1,0 +1,63 @@
+{
+  "id": "20261019T142125_train_seed1_leg_force_stage2_pilot",
+  "title": "Leg v3 force: stage-2 handle pilot (150 it, 1024 envs) from model_1000: 92-97% of approaches missed",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-20T01:35:58+11:00",
+  "started_utc": "2026-10-19T14:21:25+00:00",
+  "source_dir": "logs/unifp_train/20261019T142125_train_seed1_leg_force_stage2_pilot",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 1024,
+  "iterations": 150,
+  "steps": 100,
+  "git_commit": "81b9c4a04d842fa71c1f16e8ed2cd7b9d09e26f6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1149,
+  "final_checkpoint": {
+    "file": "model_1149.pt",
+    "sha256": "b4323d579cb7fa39321f151d885cddadeaa19ba10fddd559e661703c0989255d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 53.02339172363281,
+      "last_step": 1149,
+      "mean_last_10": 56.35969276428223,
+      "min": 1.2855935096740723,
+      "max": 74.8755111694336,
+      "points": 150
+    },
+    "Train/mean_episode_length": {
+      "last": 461.6400146484375,
+      "last_step": 1149,
+      "mean_last_10": 492.2589935302734,
+      "min": 11.384614944458008,
+      "max": 645.5700073242188,
+      "points": 150
+    },
+    "Policy/mean_std": {
+      "last": 0.5234196782112122,
+      "last_step": 1149,
+      "mean_last_10": 0.5219398736953735,
+      "min": 0.46535736322402954,
+      "max": 0.5234196782112122,
+      "points": 150
+    },
+    "Perf/total_fps": {
+      "last": 5301.0,
+      "last_step": 1149,
+      "mean_last_10": 5083.6,
+      "min": 3785.0,
+      "max": 5764.0,
+      "points": 150
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

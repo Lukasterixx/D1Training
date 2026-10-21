@@ -1,0 +1,28 @@
+{
+  "policy": "checkpoints/leg_key_force_s2walker_model_2104.npz",
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "checkpoint_iteration": 2104
+  },
+  "sim": {
+    "dump": "logs/unifp_train/20261021T013654_leg_eval_seed1_key_shadow_dump_force_s2walker/shadow_dump.npz",
+    "episodes": 4,
+    "steps": 3596,
+    "waiting_steps": 100,
+    "frame_max_abs_err": 1.0132789607375514e-07,
+    "frame_err_by_block": {
+      "roll_pitch": 9.290195501776566e-08,
+      "ang_vel": 0.0,
+      "dof_pos": 4.1723251298364517e-08,
+      "dof_vel": 1.7881393421514957e-08,
+      "actions": 0.0,
+      "gait_phase": 0.0,
+      "commands": 1.0132789607375514e-07
+    },
+    "action_max_abs_err": 1.1083889139840153e-06,
+    "action_scale": 4.207542419433594,
+    "target_max_abs_err_rad": 1.1920928955078125e-07,
+    "waiting_command_max_abs_err": 4.913140443374431e-07
+  }
+}
