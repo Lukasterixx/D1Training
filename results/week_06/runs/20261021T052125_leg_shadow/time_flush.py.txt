@@ -1,0 +1,19 @@
+"""Time Shadow.flush() (one second's 50 steps) on this machine's CPU and disk, from a real dog record."""
+import sys, time, types
+from pathlib import Path
+import numpy as np
+REPO = Path(sys.argv[1]); OUT = Path(sys.argv[2]); sys.path.insert(0, str(REPO))
+from demos.combiner_key.robot import shadow as sh
+rec = dict(np.load(REPO / "logs/leg_shadow/20261021T050842_leg_shadow/shadow.npz"))
+args = types.SimpleNamespace(policy=str(REPO / "checkpoints/leg_key_force_s2walker_model_2104.npz"), foot_goal=None,
+                             arm_link_port=0, topic="/lowstate", seconds=0.0, print_s=1.0, run_dir=str(OUT))
+s = sh.Shadow(args)
+s.rows = {k: [] for k in s.rows}
+times = []
+for i in range(0, 4450, 50):
+    for k in s.rows:
+        s.rows[k].extend(np.asarray(v, dtype=float) for v in rec[k][i:i + 50])
+    t0 = time.perf_counter(); s.flush(); times.append(1e3 * (time.perf_counter() - t0))
+times = np.array(times)
+print(f"{len(times)} flushes of 50 steps: median {np.median(times):.2f} ms, p99 {np.quantile(times, .99):.2f}, max {times.max():.2f}; "
+      f"first 10 {times[:10].mean():.2f}, last 10 {times[-10:].mean():.2f} ms")

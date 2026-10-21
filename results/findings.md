@@ -6219,6 +6219,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
     still model in the same pose. It also measures the classic stand's base height, which F-170 lacked.
   - The runner is the policy's; driving the legs needs a separate, commanding program with its own safety design, after
     the fine-tune F-168 asks for.
+- **Follow-up (2026-10-21):** run on the dog, with the conventions above checked there: [F-173](#f-173).
 
 ### F-172 — With the key starting 45 degrees down and needing to turn to 90 (straight down, unlocking at 85), the trained key policies fail zero-shot (1-16 of 108), though the walker fine-tune does turn it in 100: what fails is the force at the vertical end stop, past 120 N in 105 of 108; ending the task layer's path short of the stop and holding 0.3 s instead of 2 s gets it to 33, so the new turn needs retraining, not only a layer change
 
@@ -6252,3 +6253,104 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - For a cam lock that stays where it is turned, the layer's 2 s hold is not needed. A retrained policy should be
     trained with the short hold too.
   - If the policy is retrained anyway, it is the point to add F-168's delay and armature randomisation.
+
+### F-173 — On the real dog, the key policy's shadow runner holds the 50 Hz step (period p99 20.7 ms, inference 3.1 ms on its CPU) and builds the training code's observation from the robot (frames to 1e-17, joint targets within 0.013-0.078 rad RMS of a still model's); pushing the nose and the front-right shoulder confirms the conventions F-171 took from rima's node: pitch positive nose down, roll positive right side down, FR first, the quaternion as w, x, y, z; the sport mode's stand from the encoders is 38.7 x 31.7 cm under 0.32-0.33 m, 2-4 cm off the tape
+
+- **Status:** confirmed (one 90 s run on the dog, open loop, with the method stated); the stand's spacing against the
+  tape is unresolved
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key policy in shadow mode on the real dog";
+  [record](#/week/6/run/20261021T044358_leg_shadow) (`summary.json`, `check_shadow.json`, the arm link's log);
+  [`figures/leg_shadow_dog_20261021.png`](week_06/figures/leg_shadow_dog_20261021.png)
+  (`demos/combiner_key/robot/plot_shadow.py`). `run_shadow_on_dog.sh --policy
+  checkpoints/leg_key_force_s2walker_model_2104.npz --seconds 90` beside P2Dingo's containers, the robot in sport mode's
+  stand, the D1 folded and observed only; then `check_shadow.py --dog` on the PC (without the `.pt`, which is on the
+  training machine: no torch comparison).
+  - 4,472 steps, one reset; period median / p99 20.0 / 20.7 ms; `/lowstate` age p99 1.6 ms; inference median / p99
+    3.1 / 4.6 ms; the arm measured in every step.
+  - Frames against `interface.single_obs` from the recorded raw state 1.4e-17; the dog's numpy actions against the PC's
+    2.7e-15; against a still robot in the first second's pose, targets 0.013-0.078 rad RMS per joint (max 0.28, FR
+    calf, during the pushes) and the estimator's outputs as the still model's.
+  - Nose pushed down: pitch -1.7 → +3.9°; the front knees' `tau_est` 4.0 → 11.4 (FR) and 9.1 N·m (FL). FR shoulder
+    pressed three times: roll -1.8..-2.4 → +1.6..+2.0°; the FR knee 6.3-7.1 → 12.4-13.2 N·m (the others at most
+    9.0), the FR foot sensor 38-45 → 77-84, the diagonal RL's 41-44 → 24-28. The policy's roll and pitch from the
+    quaternion equal the firmware's `rpy` in every step; the gyroscope's x and y correlate with their rates at 0.91 and
+    0.94.
+  - The stand from the joints (`foot_local`, the URDF's numbers): 38.7 x 31.7 cm in every quiet window; the base 0.333 m
+    above the feet before the pushes, 0.319 m after; the rear-left foot 18.3-19.4 cm from the centre line, the others
+    13.7-16.0 cm. Lukas's tape: 41 x 28 cm.
+- **Scope:** open loop: sport mode held the robot and the policy's targets never acted. One run, one robot, one
+  operator's pushes, level-looking floor not checked (roll -2.1° at the start). The runner's waiting stage only (the
+  foot on its footfall); the `--foot_goal` run is not done. The foot sensors are raw units. The stand is computed
+  from encoders and URDF kinematics, not measured: the 2-4 cm against the tape could be the stand sport mode left, the
+  tape, or a hip's zero (~0.1 rad at the rear left).
+- **Implication:**
+  - The dog-side observation needs no change before the policy drives the legs: what remains is the policy (F-168's
+    fine-tune) and the handover, not the interface.
+  - The real classic stand sits at 0.32-0.33 m, the top of the range F-170 found the walker fine-tune holds (96 of 108
+    at 0.32 m, 74 at 0.34). F-170's start should be re-run at 0.32 and 0.33 m with this spacing.
+  - From that stand, with an empty history, the policy's targets would fold three knees (would-be knee torques FR +0.5,
+    FL -3.0, RR -8.5, RL -7.6 N·m where sport mode holds +6.4 to +7.7), which reads as its drop into the crouch at an
+    episode's start (F-169). A handover would begin with that drop; it should be simulated from this stand before the
+    legs are driven.
+- **Update (2026-10-21, the second run, [F-174](#f-174)):** sport mode's stand is not the same each time: 38.4 x 27.8 cm
+  under 0.337 m then, so the 31.7 cm width above was the stand, not the encoders; the rear-left foot was again 2.3-3.3 cm
+  further out than the others, so a hip zero at the rear left is still possible.
+
+### F-174 — A second shadow run on the dog, with the front-right foot asked 10 cm up and ahead, repeats F-173's agreement (frames to 4e-18, targets within 0.004-0.069 rad RMS of a still model's); open loop, the policy cycles the FR knee's target 0.42 rad at 4.3 Hz, as a still model does; sport mode's stand differs between stands (38.4 x 27.8 cm under 0.337 m this time); and the shadow loop stalls once for 0.18 s at 30 s and once for 0.36-0.40 s at 60 s in both runs
+
+- **Status:** confirmed (two 90 s runs on the dog, open loop); the stall's cause not found
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The key policy in shadow mode on the real dog", the second
+  run; [record](#/week/6/run/20261021T050842_leg_shadow) (`d1dogshadow --foot_goal 0.30 -0.17 0.12`, the robot not
+  touched; `check_shadow.json`, the arm link's log);
+  [`figures/leg_shadow_dog_20261021_foot_goal.png`](week_06/figures/leg_shadow_dog_20261021_foot_goal.png).
+  - 4,475 steps, one reset, period p99 20.6 ms, inference median 3.1 ms; frames against `interface.single_obs`
+    3.5e-18, numpy dog against PC 2.9e-15; against a still robot in the first second's pose, targets 0.004-0.069 rad
+    RMS per joint and the estimator's outputs equal to the third decimal.
+  - The FR calf target after 20 s: 0.42 rad peak to peak, dominant 4.3 Hz; the still model's (`check_shadow`'s
+    `static_prediction`, the policy fed its own actions with the robot still): 0.40 rad, the same rate of reversals.
+    The PC's fake LowState at a 0.30 m stand (F-171's lift run) put the FR knee target a median 0.22 rad off.
+  - The stand from the encoders: feet 38.4 x 27.8 cm, the base 0.337 m above them, pitch -1.35°, roll -0.4°; the
+    rear-left foot 15.9 cm from the centre line, the others 12.6-13.6. Knee `tau_est` 5.8, 8.0, 11.0, 11.7 N·m.
+  - Steps over 30 ms, both runs: 30.16-30.17 s (0.178-0.185 s) and 60.34-60.37 s (0.359-0.402 s) after the first
+    LowState; no others. The runs started 25 min apart.
+- **Scope:** open loop; the lifting regime is the waiting stage's command with a raised footfall, not the key task.
+  The cycle is the policy's response to a foot that never lifts; closed loop the foot would move, so it shows nothing
+  about the leg's real motion. The stall is seen, not explained: it could be the node (it keeps every step in Python
+  lists) or the LowState stream (the node does not record a step whose state is over 0.1 s old).
+- **Implication:**
+  - Shadow mode has checked what it can on a robot that stands: the interface is the training code's in both regimes.
+    The open-loop cycle is a reminder that the shadow targets are not a preview of motion.
+  - Before any program commands the legs, find the 30 s / 60 s stall (a longer run would show whether it recurs and
+    grows) and give the program a watchdog for a missed step.
+  - Compare the stand with the tape again in the same session: sport mode's stand changes from one to the next.
+- **Update (2026-10-21, [F-175](#f-175)):** the stall is the node's own 30 s save of its whole record inside the loop,
+  not the LowState stream; fixed with a per-second flush of the new steps.
+
+### F-175 — The shadow loop's stalls on the dog (0.18 s at 30 s, 0.4 s at 60 s, F-174) were the node itself: every 30 s its loop saved the whole record so far (compressed, with a per-step summary), 150 ms per 1,500 steps on the dog's CPU; flushing only each second's new steps instead costs at most 2.9 ms there, and on the PC the fixed loop's longest step is 20.4 ms over 65 s
+
+- **Status:** confirmed (cause reproduced on the PC and timed on the dog's CPU; the fixed node not yet run on the dog)
+- **Week:** 6
+- **Date:** 2026-10-21
+- **Evidence:** [Week 6 log, 2026-10-21](week_06/notes.md), "The shadow loop's stalls".
+  - `save()` on the dog (`p2dingo-web`, the second dog run's rows): 150 / 302 / 449 ms at 1,500 / 3,000 / 4,500 steps,
+    70% of it `np.savez_compressed`, a quarter the summary; the stalls were 178-185 and 359-402 ms (the save plus the
+    next step's wait). On the PC: 49 / 98 / 147 ms.
+  - The unfixed node on the PC against a fake 500 Hz LowState: gaps of 40 ms at 29.6 s and 83 ms at 59.7 s
+    ([run](#/week/6/run/20261021T051927_leg_shadow)), so the cause is in the node.
+  - Fixed (`shadow.py`: `flush()` each second right after a step, the full save once at the end; SIGTERM and SIGHUP end
+    the loop so the final save runs; `run_shadow_on_dog.sh` waits 10 s before SIGKILL): 65 s on the PC, period p99
+    20.2 ms, max 20.4 ms, no gap ([run](#/week/6/run/20261021T052125_leg_shadow)); SIGTERM at 8 s saved the whole record
+    ([run](#/week/6/run/20261021T052245_leg_shadow)); SIGKILL at 5.5 s left 5 parts, 252 contiguous steps. The flush on
+    the dog: median 2.4 ms, max 2.9 ms over 89 flushes, flat over the run. `tests/test_leg_shadow.py`: the parts
+    concatenated are the saved record.
+- **Scope:** the node's own loop. The fix is in the repo, not yet on the dog (`d1update`); the dog's step timing with it
+  is measured only in pieces (the flush in a container, inference in the runs). The LowState stream showed no gap of its
+  own in either dog run, which does not rule one out on a longer run.
+- **Implication:**
+  - Rerun a shadow run over 60 s on the dog after `d1update`: no step should exceed ~25 ms.
+  - The rule for any program that commands the legs: nothing in its control loop may grow with the run's length
+    (records, logs, plots), and it needs a watchdog for a missed step whatever the cause.

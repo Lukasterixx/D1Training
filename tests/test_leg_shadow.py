@@ -134,6 +134,35 @@ class Export(unittest.TestCase):
         self.assertLess(max(report["still_robot_prediction"]["max_rad"].values()), 1e-9)
         self.assertEqual(int(np.load(record / "shadow.npz")["commands"][0].any()), 0)
 
+    def test_the_flushed_parts_are_the_record(self):
+        """The loop's flush writes only new steps (its cost cannot grow with the run, F-175); the parts concatenated are
+        the record, and the final save removes them."""
+        from demos.combiner_key.robot import shadow
+
+        stance = np.array(classic_stance.stance(0.41, 0.28, 0.30)["legs"])
+        q_unitree = stance[leg_policy.LegObservation(self.policy.meta).to_unitree]
+        args = types.SimpleNamespace(policy=self.result["out"], foot_goal=None, arm_link_port=0, print_s=100.0,
+                                     run_dir=self.tmp.name, topic="/lowstate")
+        node = shadow.Shadow(args)
+        for i in range(45):
+            motor = lambda q: types.SimpleNamespace(q=q + 0.001 * i, dq=0.0, tau_est=1.0)
+            node.on_state(types.SimpleNamespace(
+                motor_state=[motor(v) for v in q_unitree] + [motor(0.0)] * 8, foot_force=[20, 20, 20, 20],
+                imu_state=types.SimpleNamespace(quaternion=[1.0, 0, 0, 0], gyroscope=[0.0, 0, 0], rpy=[0.0, 0, 0])))
+            node.tick()
+            if i in (9, 29, 30):
+                node.flush()
+        node.flush()
+        parts = sorted(node.parts.glob("*.npz"))
+        self.assertEqual([len(np.load(p)["t"]) for p in parts], [10, 20, 1, 14])
+        joined = {k: np.concatenate([np.load(p)[k] for p in parts]) for k in np.load(parts[0]).files}
+        record = node.save()
+        saved = np.load(record / "shadow.npz")
+        self.assertEqual(sorted(joined), sorted(saved.files))
+        for key in saved.files:
+            np.testing.assert_array_equal(joined[key], saved[key], key)
+        self.assertFalse(node.parts.exists())
+
 
 class ReadOnly(unittest.TestCase):
     def test_the_shadow_node_sends_nothing(self):

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# The shadow node against a fake 500 Hz LowState on this PC (ROS 2 only, localhost, domain 77). $1: seconds; $2: run dir.
+set -eo pipefail
+env -i HOME="$HOME" PATH=/usr/bin:/bin bash -c '
+source /opt/ros/humble/setup.bash && source $HOME/unitree_ros2/install/setup.bash
+export ROS_LOCALHOST_ONLY=1 ROS_DOMAIN_ID=77 PYTHONUNBUFFERED=1
+S='"$(dirname "$0")"'
+python3 $S/fake_lowstate.py '"$(( $1 + 8 ))"' & FAKE=$!
+sleep 2
+cd /home/lukas/D1Training && python3 demos/combiner_key/robot/shadow.py --policy checkpoints/leg_key_force_s2walker_model_2104.npz \
+  --arm_link_port 0 --seconds '"$1"' --print_s 10 --run_dir '"$2"' 2>&1 | grep -v "^\[shadow\] t " || true
+kill $FAKE 2>/dev/null; wait $FAKE 2>/dev/null || true
+'

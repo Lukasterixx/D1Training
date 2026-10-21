@@ -50,7 +50,8 @@ OWNER="$(id -u):$(id -g)"
 
 cleanup() {
   set +e
-  docker stop -t 2 "$NODE_NAME" >/dev/null 2>&1
+  # SIGTERM ends the node's loop and it saves the record (~0.5 s per 90 s recorded on the dog) before SIGKILL.
+  docker stop -t 10 "$NODE_NAME" >/dev/null 2>&1
   if [ "$ARM" = 1 ]; then
     docker stop -t 3 "$ARM_NAME" >/dev/null 2>&1
     docker logs "$ARM_NAME" >"$REPO/logs/leg_shadow/${STAMP}_arm_link.log" 2>&1

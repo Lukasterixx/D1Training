@@ -1,0 +1,138 @@
+{
+  "policy": "checkpoints/leg_key_force_s2walker_model_2104.npz",
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "checkpoint_iteration": 2104
+  },
+  "dog": {
+    "record": "logs/leg_shadow/20261021T050842_leg_shadow",
+    "steps": 4475,
+    "resets": [
+      0
+    ],
+    "frame_vs_training_code_max_abs_err": 3.469446951953614e-18,
+    "frame_vs_training_code_by_block": {
+      "roll_pitch": 3.469446951953614e-18,
+      "ang_vel": 0.0,
+      "dof_pos": 0.0,
+      "dof_vel": 0.0,
+      "actions": 0.0,
+      "gait_phase": 0.0,
+      "commands": 0.0
+    },
+    "numpy_dog_vs_numpy_pc_action_max_abs_err": 2.886579864025407e-15,
+    "stand_from_joints": {
+      "feet_base_frame_m": {
+        "FR": [
+          0.2034,
+          -0.1355,
+          -0.3166
+        ],
+        "FL": [
+          0.2014,
+          0.1257,
+          -0.3153
+        ],
+        "RR": [
+          -0.1925,
+          -0.1358,
+          -0.313
+        ],
+        "RL": [
+          -0.1706,
+          0.1589,
+          -0.314
+        ]
+      },
+      "front_back_m": 0.384,
+      "left_right_m": 0.278,
+      "base_height_above_feet_m": 0.3367
+    },
+    "rpy_deg_median": [
+      -0.4,
+      -1.35,
+      -90.37
+    ],
+    "roll_pitch_as_the_policy_sees_deg_median": [
+      -0.4,
+      -1.35
+    ],
+    "arm_measured_share": 1.0,
+    "still_robot_prediction": {
+      "what": "the dog's joint targets against a still robot's in the record's first-second pose (rad, Unitree order)",
+      "rms_rad": {
+        "FR_hip_joint": 0.0316,
+        "FR_thigh_joint": 0.0582,
+        "FR_calf_joint": 0.0688,
+        "FL_hip_joint": 0.0219,
+        "FL_thigh_joint": 0.013,
+        "FL_calf_joint": 0.0075,
+        "RR_hip_joint": 0.0039,
+        "RR_thigh_joint": 0.0146,
+        "RR_calf_joint": 0.0142,
+        "RL_hip_joint": 0.0077,
+        "RL_thigh_joint": 0.0119,
+        "RL_calf_joint": 0.0117
+      },
+      "max_rad": {
+        "FR_hip_joint": 0.0736,
+        "FR_thigh_joint": 0.1331,
+        "FR_calf_joint": 0.1546,
+        "FL_hip_joint": 0.0519,
+        "FL_thigh_joint": 0.036,
+        "FL_calf_joint": 0.0277,
+        "RR_hip_joint": 0.014,
+        "RR_thigh_joint": 0.0437,
+        "RR_calf_joint": 0.0342,
+        "RL_hip_joint": 0.021,
+        "RL_thigh_joint": 0.0319,
+        "RL_calf_joint": 0.0325
+      },
+      "estimates_dog_median": {
+        "base_lin_vel_b": [
+          -0.121,
+          -0.069,
+          -0.351
+        ],
+        "foot_local": [
+          0.205,
+          -0.149,
+          -0.057
+        ],
+        "foot_force": [
+          -3.068,
+          -1.249,
+          -2.228
+        ],
+        "base_force": [
+          -0.387,
+          0.966,
+          -2.409
+        ]
+      },
+      "estimates_still_robot_median": {
+        "base_lin_vel_b": [
+          -0.121,
+          -0.07,
+          -0.352
+        ],
+        "foot_local": [
+          0.205,
+          -0.149,
+          -0.058
+        ],
+        "foot_force": [
+          -3.035,
+          -1.229,
+          -2.329
+        ],
+        "base_force": [
+          -0.369,
+          0.961,
+          -2.428
+        ]
+      }
+    }
+  }
+}

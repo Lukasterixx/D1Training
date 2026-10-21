@@ -11,6 +11,7 @@ nothing**: no LowCmd, no sport request, no arm target. `tests/test_leg_shadow.py
 | `shadow.py` | dog (ROS 2, P2Dingo's image) | the shadow node: `/lowstate` and the arm link's feedback in, a record out |
 | `run_shadow_on_dog.sh` | dog | starts the arm link with `--observe` (it reports, takes no target) and the node |
 | `check_shadow.py` | PC (torch) | `--sim`: a recorded Isaac rollout through the dog's pipeline; `--dog`: a dog record against the training code |
+| `plot_shadow.py` | PC (matplotlib) | a dog record as a figure: roll and pitch, sport mode's knee torques, the foot sensors, the would-be knee torques; `--mark` shades what was done at the robot |
 
 ## Running it
 
@@ -28,7 +29,10 @@ nothing**: no LowCmd, no sport request, no arm target. `tests/test_leg_shadow.py
    - press down on the front-right shoulder: the knee torques sport mode reports (`tau_est`, printed) should rise most
      on the first leg printed (FR).
 3. **Back on the PC** (`d1fetch` copies `logs/leg_shadow/`):
-   `python demos/combiner_key/robot/check_shadow.py --policy checkpoints/<the .npz> --checkpoint <the .pt> --dog logs/leg_shadow/<stamp>`.
+   `python demos/combiner_key/robot/check_shadow.py --policy checkpoints/<the .npz> --checkpoint <the .pt> --dog logs/leg_shadow/<stamp>`
+   (without `--checkpoint` when the `.pt` is not on this PC: only the torch comparison is skipped), then
+   `python demos/combiner_key/robot/plot_shadow.py logs/leg_shadow/<stamp> --mark <start> <end> "nose pushed down" ...`.
+   There is no live view: the node publishes nothing, so RViz (`view_on_pc.sh`) shows no robot during a shadow run.
 
 A second run with `--foot_goal 0.30 -0.17 0.12` (the foot asked ~10 cm up, ahead) puts the policy in its lifting
 regime on the real robot's observation, for the same still-robot comparison. Do not read the targets as where the
@@ -67,5 +71,13 @@ Checked on the PC (2026-10-21, the Week 6 log):
   0.96 ms p99 inference.
 
 The joint order (`motor_state` FR, FL, RR, RL), the gyroscope as the body's angular velocity and the quaternion as
-w, x, y, z are taken from rima's node (`~/rima_summerschool`), which runs Isaac Lab policies on this dog. Only a run on
-the dog checks them here.
+w, x, y, z are taken from rima's node (`~/rima_summerschool`), which runs Isaac Lab policies on this dog.
+
+Checked on the dog (2026-10-21, F-173): 50 Hz held (period p99 20.7 ms, inference 3.1 ms on its CPU), frames as the
+training code's to 1e-17, targets within 0.013-0.078 rad RMS of a still model's. Pushing the nose and the FR shoulder
+confirmed all four conventions above. The stand from the encoders came out 38.7 x 31.7 cm under 0.32-0.33 m, not the
+tape's 41 x 28; a second stand came out 38.4 x 27.8 under 0.337 m, so sport mode's stand differs between stands.
+With `--foot_goal 0.30 -0.17 0.12` (F-174) the FR knee's target cycles 0.42 rad at 4.3 Hz from that stand, as a still
+model's does: the policy's open-loop response, not the dog's sensors. Both runs paused once for ~0.18 s at 30 s and
+once for ~0.4 s at 60 s: the node saving its whole record inside the loop every 30 s. It now writes each second's
+new steps to `parts/` instead (2.9 ms at most on the dog) and saves the record once at the end (F-175).

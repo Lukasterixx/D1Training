@@ -1,0 +1,144 @@
+{
+  "mode": "leg_shadow",
+  "status": "recorded",
+  "published": "nothing",
+  "arguments": {
+    "policy": "checkpoints/leg_key_force_s2walker_model_2104.npz",
+    "topic": "/lowstate",
+    "arm_link_port": 8095,
+    "foot_goal": null,
+    "seconds": 90.0,
+    "print_s": 1.0,
+    "run_dir": "/root/D1Training/logs/leg_shadow"
+  },
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "checkpoint_sha256": "d6a8c7f96f6cc575cccbb14292a4bee8666191b557e3b9e96e4ba90eefedd8c7",
+    "checkpoint_iteration": 2104
+  },
+  "summary": {
+    "policy": "checkpoints/leg_key_force_s2walker_model_2104.npz",
+    "policy_variant": "force",
+    "policy_checkpoint": "/home/victor/D1Training/logs/unifp_train/20261020T203809_train_seed2_key_force_s2_stage3_walker/model_2104.pt",
+    "topic": "/lowstate",
+    "foot_goal_local": null,
+    "published": "nothing",
+    "steps": 4472,
+    "seconds": 89.97,
+    "resets": 1,
+    "step_period_s": {
+      "median": 0.02,
+      "p99": 0.0207
+    },
+    "state_age_s_p99": 0.0016,
+    "infer_ms": {
+      "median": 3.09,
+      "p99": 4.61
+    },
+    "arm_measured_share": 1.0,
+    "rpy_deg_median": [
+      -1.87,
+      0.2,
+      9.3
+    ],
+    "q_minus_default_median_rad": {
+      "FR_hip_joint": 0.0572,
+      "FR_thigh_joint": -0.049,
+      "FR_calf_joint": -0.028,
+      "FL_hip_joint": -0.0749,
+      "FL_thigh_joint": -0.0688,
+      "FL_calf_joint": -0.1258,
+      "RR_hip_joint": 0.086,
+      "RR_thigh_joint": -0.2642,
+      "RR_calf_joint": -0.0439,
+      "RL_hip_joint": 0.0414,
+      "RL_thigh_joint": -0.3648,
+      "RL_calf_joint": 0.0671
+    },
+    "target_minus_q_median_rad": {
+      "FR_hip_joint": 0.1486,
+      "FR_thigh_joint": 0.1329,
+      "FR_calf_joint": 0.0212,
+      "FL_hip_joint": 0.0597,
+      "FL_thigh_joint": -0.049,
+      "FL_calf_joint": -0.1181,
+      "RR_hip_joint": -0.0115,
+      "RR_thigh_joint": 0.168,
+      "RR_calf_joint": -0.3649,
+      "RL_hip_joint": -0.2786,
+      "RL_thigh_joint": 0.1979,
+      "RL_calf_joint": -0.3014
+    },
+    "target_minus_q_max_abs_rad": {
+      "FR_hip_joint": 0.2073,
+      "FR_thigh_joint": 0.4687,
+      "FR_calf_joint": 0.2115,
+      "FL_hip_joint": 0.3216,
+      "FL_thigh_joint": 0.2193,
+      "FL_calf_joint": 0.2673,
+      "RR_hip_joint": 0.2386,
+      "RR_thigh_joint": 0.4528,
+      "RR_calf_joint": 0.4979,
+      "RL_hip_joint": 0.3047,
+      "RL_thigh_joint": 0.4787,
+      "RL_calf_joint": 0.4805
+    },
+    "would_be_torque_median_nm": {
+      "FR_hip_joint": 3.7311,
+      "FR_thigh_joint": 3.3098,
+      "FR_calf_joint": 0.5363,
+      "FL_hip_joint": 1.5084,
+      "FL_thigh_joint": -1.2141,
+      "FL_calf_joint": -2.9546,
+      "RR_hip_joint": -0.2883,
+      "RR_thigh_joint": 4.1809,
+      "RR_calf_joint": -9.1201,
+      "RL_hip_joint": -6.9666,
+      "RL_thigh_joint": 4.9628,
+      "RL_calf_joint": -7.5372
+    },
+    "sport_mode_tau_est_median_nm": {
+      "FR_hip_joint": 0.9401,
+      "FR_thigh_joint": -0.8906,
+      "FR_calf_joint": 7.1123,
+      "FL_hip_joint": -0.0247,
+      "FL_thigh_joint": 0.0,
+      "FL_calf_joint": 7.0174,
+      "RR_hip_joint": 4.5024,
+      "RR_thigh_joint": 1.7812,
+      "RR_calf_joint": 6.8752,
+      "RL_hip_joint": -5.5414,
+      "RL_thigh_joint": 2.2512,
+      "RL_calf_joint": 6.4484
+    },
+    "estimates_median": {
+      "base_lin_vel_b_m_s": [
+        -0.113,
+        -0.045,
+        -0.307
+      ],
+      "fr_foot_local_m": [
+        0.216,
+        -0.179,
+        -0.048
+      ],
+      "fr_foot_force_n": [
+        -3.34,
+        -0.76,
+        -0.14
+      ],
+      "base_force_n": [
+        0.09,
+        0.39,
+        -1.19
+      ]
+    },
+    "fr_foot_from_joints_base_frame_m": [
+      0.195,
+      -0.155,
+      -0.3
+    ],
+    "read_with": "demos/combiner_key/robot/check_shadow.py --dog <this directory>"
+  }
+}

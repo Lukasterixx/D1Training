@@ -1,0 +1,19 @@
+"""Time Shadow.save() and its parts against record length, from a real dog record."""
+import sys, time, types, tempfile
+from pathlib import Path
+import numpy as np
+REPO = Path(sys.argv[1] if len(sys.argv) > 1 else "/home/lukas/D1Training"); sys.path.insert(0, str(REPO))
+from demos.combiner_key.robot import shadow as sh
+
+rec = dict(np.load(REPO / "logs/leg_shadow/20261021T050842_leg_shadow/shadow.npz"))
+args = types.SimpleNamespace(policy=str(REPO / "checkpoints/leg_key_force_s2walker_model_2104.npz"), foot_goal=None,
+                             arm_link_port=0, topic="/lowstate", seconds=0.0, print_s=1.0,
+                             run_dir=tempfile.mkdtemp())
+s = sh.Shadow(args)
+for n in (1500, 3000, 4500):
+    s.rows = {k: [np.asarray(v, dtype=float) for v in rec[k][:n]] for k in s.rows}
+    t0 = time.perf_counter(); arrays = {k: np.array(v) for k, v in s.rows.items() if v}; t1 = time.perf_counter()
+    np.savez_compressed(Path(args.run_dir) / "x.npz", **arrays); t2 = time.perf_counter()
+    s.summary(arrays); t3 = time.perf_counter()
+    s.save(); t4 = time.perf_counter()
+    print(f"n={n}: np.array {1e3*(t1-t0):6.1f} ms, savez_compressed {1e3*(t2-t1):6.1f} ms, summary {1e3*(t3-t2):6.1f} ms | save() {1e3*(t4-t3):6.1f} ms")

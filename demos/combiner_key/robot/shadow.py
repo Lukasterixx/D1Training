@@ -18,7 +18,9 @@ still robot in the same pose (which is what it should give here, if the observat
     run_shadow_on_dog.sh --policy checkpoints/leg_key_force_s2walker_model_2104.npz
     run_shadow_on_dog.sh --policy ... --seconds 60 --foot_goal 0.30 -0.17 0.12   # the lifting regime (open loop)
 
-The record is `logs/leg_shadow/<stamp>/` (`shadow.npz`, `summary.json`); `d1fetch` copies it back.
+The record is `logs/leg_shadow/<stamp>/` (`shadow.npz`, `summary.json`); `d1fetch` copies it back. While it runs, each
+second's steps also go to `parts/` (uncompressed, removed by the final save), so a run killed before its final save
+keeps all but its last second: each part's arrays, concatenated in name order, are the record.
 """
 from __future__ import annotations
 
@@ -26,6 +28,8 @@ import argparse
 import json
 import math
 import os
+import shutil
+import signal
 import socket
 import sys
 import threading
@@ -49,6 +53,10 @@ STALE_S, RESTART_S = 0.1, 0.5
 #: Arm feedback older than this is not used (the rest pose is).
 ARM_STALE_S = 1.0
 ARM_LINK_PORT = 8095
+#: The steps since the last flush go to their own file this often, right after a step: a bounded cost in the loop
+#: however long the run. Saving the whole record every 30 s instead (the first version) took 0.15 s per 1,500 steps on
+#: the dog and stalled the loop 0.18 s at 30 s and 0.4 s at 60 s (F-175).
+FLUSH_S = 1.0
 
 
 def log(msg: str) -> None:
@@ -122,6 +130,7 @@ class Shadow:
         # A UTC stamp first, as every run directory here (the dashboard dates a record by it).
         self.run_dir = Path(args.run_dir) / f"{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}_leg_shadow"
         self.run_dir.mkdir(parents=True, exist_ok=True)
+        self.parts, self.flushed = self.run_dir / "parts", 0
 
     # --- input ---------------------------------------------------------------------------------------------------
 
@@ -204,6 +213,16 @@ class Shadow:
             f"{np.round(est['base_lin_vel_b'], 2).tolist()} m/s, foot force {np.round(est['foot_force'], 1).tolist()} N  | "
             f"{np.mean(self.window('infer_ms')):.1f} ms, arm {'measured' if self.rows['arm_measured'][-1] else 'rest pose'}")
 
+    def flush(self) -> None:
+        """The steps recorded since the last flush to `parts/<first step>.npz`, uncompressed."""
+        n = len(self.rows["t"])
+        if n == self.flushed:
+            return
+        self.parts.mkdir(exist_ok=True)
+        np.savez(self.parts / f"{self.flushed:07d}.npz",
+                 **{key: np.array(values[self.flushed:n]) for key, values in self.rows.items()})
+        self.flushed = n
+
     def save(self) -> Path:
         arrays = {key: np.array(values) for key, values in self.rows.items() if values}
         if not arrays:
@@ -217,6 +236,7 @@ class Shadow:
             {"mode": "leg_shadow", "status": "recorded", "published": "nothing", "arguments": vars(self.args),
              "policy_meta": {k: self.meta[k] for k in ("variant", "checkpoint", "checkpoint_sha256", "checkpoint_iteration")},
              "summary": summary}, indent=2, default=str))
+        shutil.rmtree(self.parts, ignore_errors=True)
         return self.run_dir
 
     def summary(self, a: dict) -> dict:
@@ -275,14 +295,20 @@ def main() -> int:
         f"{Path(shadow.meta['checkpoint']).parent.name}/{Path(shadow.meta['checkpoint']).name}, the foot's goal "
         f"{'its footfall' if args.foot_goal is None else args.foot_goal}; recording to {shadow.run_dir}")
     rclpy.init()
+    # `docker stop` (SIGTERM) and a dropped terminal (SIGHUP) end the loop like Ctrl-C, so the final save runs; set
+    # after rclpy.init(), which installs its own SIGTERM handler.
+    stop = threading.Event()
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, lambda *_: stop.set())
     node = rclpy.create_node("leg_shadow")
     node.create_subscription(LowState, args.topic, shadow.on_state, qos_profile_sensor_data)
     # The policy's 50 Hz is kept here, not by a ROS timer, so the 500 Hz LowState callbacks cannot delay it: spin for
     # whatever is ready until the next step is due, then step (on a fixed grid, so the period does not drift).
     dt = float(shadow.meta["policy_dt"])
-    next_tick = last_save = time.monotonic()
+    next_tick = last_flush = time.monotonic()
     try:
-        while rclpy.ok() and (not args.seconds or shadow.start is None or time.monotonic() - shadow.start < args.seconds):
+        while not stop.is_set() and rclpy.ok() and (
+                not args.seconds or shadow.start is None or time.monotonic() - shadow.start < args.seconds):
             rclpy.spin_once(node, timeout_sec=max(0.0, min(0.002, next_tick - time.monotonic())))
             now = time.monotonic()
             if now >= next_tick:
@@ -290,9 +316,10 @@ def main() -> int:
                 next_tick += dt
                 if now - next_tick > 5 * dt:      # far behind (a stall): start the grid again rather than burst
                     next_tick = now + dt
-            if now - last_save > 30.0:
-                shadow.save()
-                last_save = now
+                # Right after a step, in the time before the next: nothing in the loop grows with the run's length.
+                if now - last_flush > FLUSH_S:
+                    shadow.flush()
+                    last_flush = now
     except KeyboardInterrupt:
         pass
     finally:
