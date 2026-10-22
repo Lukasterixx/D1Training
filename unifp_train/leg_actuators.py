@@ -50,7 +50,7 @@ def _only(value, names):
 
 
 def describe(name: str, delay_steps: int = 0, armature: float | None = None,
-             knee_armature: float | None = None) -> dict:
+             knee_armature: float | None = None, min_delay_steps: int = 0) -> dict:
     """The model's limits, for the run record (N·m, rad/s)."""
     hv, knee = motor_model.GO2_HV, motor_model.GO2_HV_KNEE
     ideal = lambda ht, k: {"hip_thigh_nm": ht, "knee_nm": k, "speed": "none"}
@@ -69,14 +69,14 @@ def describe(name: str, delay_steps: int = 0, armature: float | None = None,
                                     f"0 at {knee.X2:.2f} rad/s", "knee_ratio": round(motor_model.GO2_KNEE_RATIO, 4),
                            "friction": UNITREE_FRICTION},
     }
-    out = {"name": name, **table[name], "gains": [25.0, 0.5], "delay_physics_steps": [0, int(delay_steps)]}
+    out = {"name": name, **table[name], "gains": [25.0, 0.5], "delay_physics_steps": [int(min_delay_steps), int(delay_steps)]}
     if armature is not None:
         out["armature_kg_m2"] = {"hip_thigh": armature, "knee": armature if knee_armature is None else knee_armature}
     return out
 
 
 def swap_legs(robot_cfg, name: str, delay_steps: int = 0, armature: float | None = None,
-              knee_armature: float | None = None):
+              knee_armature: float | None = None, min_delay_steps: int = 0):
     """Give the legs of `robot_cfg` (`unifp_isaaclab.robot.make_robot_cfg`'s, one 'unifp' group) the model `name`.
 
     The arm and the jaws keep the 'unifp' group as it was. In place; returns `robot_cfg`. Import only after Isaac Sim has
@@ -103,7 +103,9 @@ def swap_legs(robot_cfg, name: str, delay_steps: int = 0, armature: float | None
 
     arm = group.replace(**part(REST, effort_limit=_only(group.effort_limit, REST),
                                effort_limit_sim=_only(group.effort_limit_sim, REST)))
-    delay = dict(min_delay=0, max_delay=int(delay_steps))
+    if min_delay_steps > delay_steps:
+        raise ValueError(f"min_delay_steps {min_delay_steps} is past delay_steps {delay_steps}")
+    delay = dict(min_delay=int(min_delay_steps), max_delay=int(delay_steps))
     if name in ("unifp", "knee23"):
         effort = _only(group.effort_limit, LEGS)
         if name == "knee23":

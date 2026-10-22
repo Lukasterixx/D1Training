@@ -1,0 +1,63 @@
+{
+  "id": "20261021T111219_train_seed3_press_r1c_force_s3",
+  "title": "foot-press round 1c, force (stopped at ~470 iterations: plates at the outer shell of the leg's reach)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-21T22:51:12+11:00",
+  "started_utc": "2026-10-21T11:12:19+00:00",
+  "source_dir": "logs/unifp_train/20261021T111219_train_seed3_press_r1c_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "63cedbdf2177b1f2e8b901662c844825566704df",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 3054,
+  "final_checkpoint": {
+    "file": "model_3054.pt",
+    "sha256": "58cdc0e1bf28621cbf97afe4e586ce1dc183a42db314575d3deeec9a43631347"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 169.4910125732422,
+      "last_step": 3054,
+      "mean_last_10": 168.5837142944336,
+      "min": 2.16924786567688,
+      "max": 173.01995849609375,
+      "points": 451
+    },
+    "Train/mean_episode_length": {
+      "last": 831.72998046875,
+      "last_step": 3054,
+      "mean_last_10": 836.8240051269531,
+      "min": 12.263157844543457,
+      "max": 898.8699951171875,
+      "points": 451
+    },
+    "Policy/mean_std": {
+      "last": 0.2034437358379364,
+      "last_step": 3054,
+      "mean_last_10": 0.2041688770055771,
+      "min": 0.2004309594631195,
+      "max": 0.21018768846988678,
+      "points": 451
+    },
+    "Perf/total_fps": {
+      "last": 7297.0,
+      "last_step": 3054,
+      "mean_last_10": 7331.1,
+      "min": 6557.0,
+      "max": 26100.0,
+      "points": 451
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20261021T234340_train_seed3_press_r5_position_s3",
+  "title": "foot-press round 5 (final layer and plant), position-only, from round 4 final, 1200 iterations",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-22T12:30:47+11:00",
+  "started_utc": "2026-10-21T23:43:40+00:00",
+  "source_dir": "logs/unifp_train/20261021T234340_train_seed3_press_r5_position_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1200,
+  "steps": 100,
+  "git_commit": "63cedbdf2177b1f2e8b901662c844825566704df",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7198,
+  "final_checkpoint": {
+    "file": "model_7198.pt",
+    "sha256": "7877ed2062fbc3990cb749cb5662155951e0b320408d0d26b9457736bab8df1d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 185.04397583007812,
+      "last_step": 7198,
+      "mean_last_10": 192.13005828857422,
+      "min": 2.186067819595337,
+      "max": 201.93511962890625,
+      "points": 1200
+    },
+    "Train/mean_episode_length": {
+      "last": 761.3900146484375,
+      "last_step": 7198,
+      "mean_last_10": 787.3470031738282,
+      "min": 12.379310607910156,
+      "max": 852.8400268554688,
+      "points": 1200
+    },
+    "Policy/mean_std": {
+      "last": 0.194589763879776,
+      "last_step": 7198,
+      "mean_last_10": 0.19359994381666185,
+      "min": 0.17969506978988647,
+      "max": 0.20149654150009155,
+      "points": 1200
+    },
+    "Perf/total_fps": {
+      "last": 23819.0,
+      "last_step": 7198,
+      "mean_last_10": 23862.6,
+      "min": 6978.0,
+      "max": 24161.0,
+      "points": 1200
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

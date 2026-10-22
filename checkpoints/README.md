@@ -18,6 +18,19 @@ checked numpy against the checkpoint (actions to 3.3e-6). It is not a checkpoint
 and it cannot be trained further. Trained on UniFP's ideal-PD legs with armature 2e-4, no delay and no noise (F-168):
 for shadow mode, not for driving the legs.
 
+`leg_key_force_ft045_model_2604.npz` (2026-10-21 evening) is the same export of the fine-tune on Lukas's turn (F-179):
+force-aware, from seed 2's `model_1605`, 1000 iterations on the turn from horizontal to 45 degrees down with a light lock,
+a 30 N press limit, the geared-knee legs with a 5-15 ms delay and armature drawn per environment, and 80% of its
+episodes started from sport-mode stands (`logs/unifp_train/20261021T053626_train_seed2_key_ft045_force_s2/`, gitignored).
+Its `meta.trained_on` holds the training run's own settings. Numpy against the checkpoint: actions to 4.9e-6.
+
+`leg_press_force_r4_model_5999.npz` (2026-10-22) is the same export of the general foot-press policy (`--leg_object
+press`, the week-6 log's "A general foot-press policy"): force-aware, the round-4 lineage's final (from F-179's
+`model_2604` through rounds 2-4, ~3400 iterations of plates anywhere the foot reaches and UniFP's free-space goals with
+pushes, on the same legs, delay, armature and sport-mode stands; `logs/unifp_train/20261021T140237_train_seed3_press_r4_force_s3/`,
+gitignored). It takes a foot goal and a force command from a task layer; its waiting command (the foot on its
+footfall) is the key policy's. Numpy against the checkpoint: actions to 8.6e-6.
+
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 
 `p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs

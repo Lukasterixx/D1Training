@@ -322,7 +322,9 @@ KEY_TOP_M = 0.010                    # the flat top above the axis
 KEY_MASS_KG = 0.053                  # 43 cm^3 of PLA
 KEY_COM_M = 0.069                    # its centre of mass along the key from the axis (the STL's)
 KEY_INERTIA_KG_M2 = (4e-4, 1.2e-3)   # the key's ~4e-4 about the shaft, plus the cam's
-#: The turn: from 45 degrees up to 45 degrees down (the end stop), unlocking past 30 degrees down.
+#: The turn: from 45 degrees up to 45 degrees down (the end stop), unlocking past 30 degrees down. Not the turn Lukas asked
+#: for, which starts horizontal (F-176): `run_unifp_train.py --key_turn_deg 0 45 30`. Kept as the default because every
+#: key checkpoint up to F-178 trained on it.
 KEY_THETA_START_RAD = math.radians(-45.0)
 KEY_THETA_END_RAD = math.radians(45.0)
 KEY_THETA_UNLOCK_RAD = math.radians(30.0)

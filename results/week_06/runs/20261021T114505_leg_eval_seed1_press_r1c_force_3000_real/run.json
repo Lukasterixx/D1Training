@@ -1,0 +1,10169 @@
+{
+  "action_space": 12,
+  "actor_obs": [
+    288,
+    2432
+  ],
+  "arguments": {
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261021T111219_train_seed3_press_r1c_force_s3/model_3000.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "eval_spawn_states": true,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "foot_push_n": null,
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_ramp_iterations": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "handle_fraction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "key_damage_n": null,
+    "key_detent_range_nm": null,
+    "key_eval_detent_nm": null,
+    "key_eval_lock_nm": null,
+    "key_hold_s": null,
+    "key_lock_range_nm": null,
+    "key_max_force_n": null,
+    "key_overdrive_deg": null,
+    "key_press_limit_n": null,
+    "key_press_weight": 0.0,
+    "key_turn_deg": null,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "leg_actuator": "unitree_geared",
+    "leg_armature": 0.01,
+    "leg_armature_range": null,
+    "leg_bar_radius": null,
+    "leg_delay_min_steps": 1,
+    "leg_delay_steps": 3,
+    "leg_frame_every": 5,
+    "leg_frames": 0,
+    "leg_knee_armature": 0.037,
+    "leg_knee_armature_factor": 3.67,
+    "leg_object": "press",
+    "leg_rows": null,
+    "leg_shadow_dump": 0,
+    "leg_variant": "force",
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "leg_eval",
+    "mount_pos": null,
+    "no_arm_jitter": false,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "payload": "physical",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "press": false,
+    "press_fraction": null,
+    "press_level": null,
+    "press_set": "panel",
+    "press_tools": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "press_r1c_force_3000_real",
+    "seed": 1,
+    "small_physx": true,
+    "spawn_states": "demos/combiner_key/assets/dog_stand_20261021/classic_stance_33cm.json",
+    "spawn_states_fraction": null,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "leg",
+    "tool_point": "jaw_centre",
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261021T111219_train_seed3_press_r1c_force_s3/model_3000.pt",
+  "checkpoint_iteration": 3000,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_3000.pt",
+  "critic_obs": [
+    288,
+    459
+  ],
+  "d1_urdf_sha256": "a848ee41d51def2956fcb6f0af12048e723a1d7f3f3f52b007fcca571a586691",
+  "episode_length_steps": 850,
+  "estimate_obs": [
+    288,
+    12
+  ],
+  "expected_actor": [
+    288,
+    2432
+  ],
+  "expected_critic": [
+    288,
+    459
+  ],
+  "expected_estimates": [
+    288,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 500,
+  "force_start_step": 12000,
+  "git_commit": "63cedbdf2177b1f2e8b901662c844825566704df",
+  "git_status": "M checkpoints/README.md\n M checkpoints/SHA256SUMS\n M demos/combiner_key/README.md\n M demos/combiner_key/geometry.py\n M demos/combiner_key/robot/export_policy.py\n M results/findings.md\n M results/week_06/notes.md\n M run_unifp_train.py\n M unifp_train/README.md\n M unifp_train/leg_actuators.py\n M unifp_train/leg_cfg.py\n M unifp_train/leg_env.py\n M unifp_train/leg_rewards.py\n M unifp_train/leg_vis.py\n?? checkpoints/leg_key_force_ft045_model_2604.npz\n?? demos/combiner_key/assets/dog_stand_20261021/\n?? demos/combiner_key/assets/sport_stands_20261021.json\n?? demos/combiner_key/sport_stands.py\n?? results/week_06/runs/20261021T043107_leg_eval_seed1_key_turn045_force_s1/\n?? results/week_06/runs/20261021T043112_leg_eval_seed1_key_turn045_force_s2/\n?? results/week_06/runs/20261021T043118_leg_eval_seed1_key_turn045_force_s2walker/\n?? results/week_06/runs/20261021T043341_leg_eval_seed1_key_turn045_position_s1/\n?? results/week_06/runs/20261021T043348_leg_eval_seed1_key_turn045_position_s2/\n?? results/week_06/runs/20261021T043355_leg_eval_seed1_key_turn045_force_s2walker_d2/\n?? results/week_06/runs/20261021T043627_leg_eval_seed1_key_turn045_force_s2walker_gearedarm/\n?? results/week_06/runs/20261021T043632_leg_eval_seed1_key_turn045_force_s2walker_real/\n?? results/week_06/runs/20261021T043646_leg_eval_seed1_key_turn045_force_s2walker_classic30/\n?? results/week_06/runs/20261021T043928_leg_eval_seed1_key_turn045_force_s2walker_classic30_real/\n?? results/week_06/runs/20261021T043933_leg_eval_seed1_key_turn045_force_s2_d2/\n?? results/week_06/runs/20261021T043938_leg_eval_seed1_key_turn045_force_s2_gearedarm/\n?? results/week_06/runs/20261021T044222_leg_eval_seed1_key_turn045_force_s2_real/\n?? results/week_06/runs/20261021T044228_leg_eval_seed1_key_turn045_force_s2_classic30/\n?? results/week_06/runs/20261021T044238_leg_eval_seed1_key_turn045_force_s2_classic30_real/\n?? results/week_06/runs/20261021T044503_leg_eval_seed1_key_turn045_position_s2_d2/\n?? results/week_06/runs/20261021T044521_leg_eval_seed1_key_turn045_position_s2_gearedarm/\n?? results/week_06/runs/20261021T044545_leg_eval_seed1_key_turn045_position_s2_real/\n?? results/week_06/runs/20261021T044750_leg_eval_seed1_key_turn045_position_s2_classic30/\n?? results/week_06/runs/20261021T044820_leg_eval_seed1_key_turn045_position_s2_classic30_real/\n?? results/week_06/runs/20261021T045028_leg_eval_seed1_key_act_force_s2walker_real/\n?? results/week_06/runs/20261021T045033_leg_eval_seed1_key_act_force_s2walker_classic30_real/\n?? results/week_06/runs/20261021T045038_leg_eval_seed1_key_act_force_s2walker_unifp_d1/\n?? results/week_06/runs/20261021T045510_leg_eval_seed1_key_turn045_force_s2_light/\n?? results/week_06/runs/20261021T045516_leg_eval_seed1_key_turn045_force_s2_light_soft/\n?? results/week_06/runs/20261021T045521_leg_eval_seed1_key_turn045_force_s2_light_soft_cap/\n?? results/week_06/runs/20261021T045744_leg_eval_seed1_key_turn045_force_s2walker_light/\n?? results/week_06/runs/20261021T045751_leg_eval_seed1_key_turn045_force_s2walker_light_soft/\n?? results/week_06/runs/20261021T045756_leg_eval_seed1_key_turn045_force_s2walker_light_soft_cap/\n?? results/week_06/runs/20261021T050022_leg_eval_seed1_key_turn045_position_s2_light/\n?? results/week_06/runs/20261021T050031_leg_eval_seed1_key_turn045_position_s2_light_soft/\n?? results/week_06/runs/20261021T050036_leg_eval_seed1_key_turn045_position_s2_light_soft_cap/\n?? results/week_06/runs/20261021T050258_leg_eval_seed1_key_turn045_force_s2_light_soft_cap_classic30_real/\n?? results/week_06/runs/20261021T050546_leg_eval_seed1_key_dogstand_force_s1_32cm/\n?? results/week_06/runs/20261021T050551_leg_eval_seed1_key_dogstand_force_s1_33cm/\n?? results/week_06/runs/20261021T050556_leg_eval_seed1_key_dogstand_force_s2_32cm/\n?? results/week_06/runs/20261021T050827_leg_eval_seed1_key_dogstand_force_s2_33cm/\n?? results/week_06/runs/20261021T050835_leg_eval_seed1_key_dogstand_force_s2walker_32cm/\n?? results/week_06/runs/20261021T050840_leg_eval_seed1_key_dogstand_force_s2walker_33cm/\n?? results/week_06/runs/20261021T051102_leg_eval_seed1_key_dogstand_position_s1_32cm/\n?? results/week_06/runs/20261021T051114_leg_eval_seed1_key_dogstand_position_s1_33cm/\n?? results/week_06/runs/20261021T051120_leg_eval_seed1_key_dogstand_position_s2_32cm/\n?? results/week_06/runs/20261021T051344_leg_eval_seed1_key_dogstand_position_s2_33cm/\n?? results/week_06/runs/20261021T051359_leg_eval_seed1_key_dogstand_turn045_force_s2_32cm/\n?? results/week_06/runs/20261021T051404_leg_eval_seed1_key_dogstand_turn045_force_s2_33cm/\n?? results/week_06/runs/20261021T051622_leg_eval_seed1_key_dogstand_turn045_force_s2_33cm_real/\n?? results/week_06/runs/20261021T051645_leg_eval_seed1_key_dogstand_turn045_force_s2walker_32cm/\n?? results/week_06/runs/20261021T051651_leg_eval_seed1_key_dogstand_turn045_force_s2walker_33cm/\n?? results/week_06/runs/20261021T051927_leg_eval_seed1_key_dogstand_turn045_force_s2walker_33cm_real/\n?? results/week_06/runs/20261021T053524_train_seed2_key_finetune_smoke/\n?? results/week_06/runs/20261021T053626_train_seed2_key_ft045_force_s2/\n?? results/week_06/runs/20261021T053727_train_seed2_key_ft045_position_s2/\n?? results/week_06/runs/20261021T073137_leg_eval_seed1_key_ft045eval_ft_force_dog33/\n?? results/week_06/runs/20261021T073142_leg_eval_seed1_key_ft045eval_ft_force_dog32/\n?? results/week_06/runs/20261021T073147_leg_eval_seed1_key_ft045eval_ft_force_nominal/\n?? results/week_06/runs/20261021T073437_leg_eval_seed1_key_ft045eval_ft_position_dog33/\n?? results/week_06/runs/20261021T073442_leg_eval_seed1_key_ft045eval_ft_position_dog32/\n?? results/week_06/runs/20261021T073447_leg_eval_seed1_key_ft045eval_ft_position_nominal/\n?? results/week_06/runs/20261021T073527_leg_eval_seed1_key_ft045eval_base_force_dog33/\n?? results/week_06/runs/20261021T073739_leg_eval_seed1_key_ft045eval_base_force_dog32/\n?? results/week_06/runs/20261021T073748_leg_eval_seed1_key_ft045eval_base_force_nominal/\n?? results/week_06/runs/20261021T073852_leg_eval_seed1_key_ft045eval_base_position_dog33/\n?? results/week_06/runs/20261021T074017_leg_eval_seed1_key_ft045eval_base_position_dog32/\n?? results/week_06/runs/20261021T074102_leg_eval_seed1_key_ft045eval_base_position_nominal/\n?? results/week_06/runs/20261021T074205_leg_eval_seed1_key_ft045eval_ftmid_force_dog33/\n?? results/week_06/runs/20261021T074332_leg_eval_seed1_key_ft045eval_ftmid_force_dog32/\n?? results/week_06/runs/20261021T074337_leg_eval_seed1_key_ft045eval_ftmid_force_nominal/\n?? results/week_06/runs/20261021T074507_leg_eval_seed1_key_ft045eval_ftmid_position_dog33/\n?? results/week_06/runs/20261021T074613_leg_eval_seed1_key_ft045eval_ftmid_position_dog32/\n?? results/week_06/runs/20261021T074637_leg_eval_seed1_key_ft045eval_ftmid_position_nominal/\n?? results/week_06/runs/20261021T091755_leg_eval_seed1_key_ft045sweep_ft_force_delay0to5/\n?? results/week_06/runs/20261021T091800_leg_eval_seed1_key_ft045sweep_ft_force_delay5/\n?? results/week_06/runs/20261021T091806_leg_eval_seed1_key_ft045sweep_ft_force_delay15/\n?? results/week_06/runs/20261021T092014_play_seed1_key_ft045_play_force/\n?? results/week_06/runs/20261021T092151_leg_eval_seed1_key_ft045sweep_ft_force_delay20/\n?? results/week_06/runs/20261021T092159_leg_eval_seed1_key_ft045sweep_ft_force_armlow/\n?? results/week_06/runs/20261021T092207_leg_eval_seed1_key_ft045sweep_ft_force_armhigh/\n?? results/week_06/runs/20261021T092246_play_seed1_key_ft045_play_force/\n?? results/week_06/runs/20261021T092301_play_seed1_key_ft045_play_force/\n?? results/week_06/runs/20261021T092648_leg_eval_seed1_key_ft045sweep_ft_force_arm2e-4/\n?? results/week_06/runs/20261021T092655_leg_eval_seed1_key_ft045sweep_ft_force_idealpd/\n?? results/week_06/runs/20261021T092700_leg_eval_seed1_key_ft045sweep_ft_force_unitreeknee/\n?? results/week_06/runs/20261021T093004_leg_eval_seed1_key_ft045sweep_ft_force_tape30/\n?? results/week_06/runs/20261021T093008_leg_eval_seed1_key_ft045sweep_ftmid_position_delay0to5/\n?? results/week_06/runs/20261021T093025_leg_eval_seed1_key_ft045sweep_ftmid_position_delay5/\n?? results/week_06/runs/20261021T093308_leg_eval_seed1_key_ft045sweep_ftmid_position_delay15/\n?? results/week_06/runs/20261021T093314_leg_eval_seed1_key_ft045sweep_ftmid_position_delay20/\n?? results/week_06/runs/20261021T093324_leg_eval_seed1_key_ft045sweep_ftmid_position_armlow/\n?? results/week_06/runs/20261021T093611_leg_eval_seed1_key_ft045sweep_ftmid_position_armhigh/\n?? results/week_06/runs/20261021T093617_leg_eval_seed1_key_ft045sweep_ftmid_position_arm2e-4/\n?? results/week_06/runs/20261021T093626_leg_eval_seed1_key_ft045sweep_ftmid_position_idealpd/\n?? results/week_06/runs/20261021T093914_leg_eval_seed1_key_ft045sweep_ftmid_position_unitreeknee/\n?? results/week_06/runs/20261021T093918_leg_eval_seed1_key_ft045sweep_ftmid_position_tape30/\n?? results/week_06/runs/20261021T110103_smoke_seed1_press_smoke/\n?? results/week_06/runs/20261021T110137_smoke_seed1_press_smoke/\n?? results/week_06/runs/20261021T110230_train_seed3_press_train_smoke/\n?? results/week_06/runs/20261021T110321_leg_eval_seed1_press_eval_keyft_force_real/\n?? results/week_06/runs/20261021T110441_train_seed3_press_r1_force_s3/\n?? results/week_06/runs/20261021T110557_train_seed3_press_r1_position_s3/\n?? results/week_06/runs/20261021T110920_train_seed3_press_r1b_force_s3/\n?? results/week_06/runs/20261021T111035_train_seed3_press_r1b_position_s3/\n?? results/week_06/runs/20261021T111335_leg_eval_seed1_press_r1c_keyft_force_real/\n?? tests/test_foot_press.py\n?? unifp_train/foot_press.py\n?? unifp_train/foot_press_cfg.py\n?? unifp_train/foot_press_env.py\n?? unifp_train/foot_press_eval.py",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "leg": {
+    "arm_jitter": true,
+    "arm_look_pose": [
+      -0.3,
+      -0.2,
+      -0.6,
+      0.0,
+      1.3,
+      0.0
+    ],
+    "arm_pose": "rest",
+    "damage_n": 120.0,
+    "foot_command_n": 35.0,
+    "foot_force_kp": 400.0,
+    "foot_force_range_n": [
+      -35.0,
+      35.0
+    ],
+    "foot_push_n": 35.0,
+    "force_ramp_iterations": 1000,
+    "handle_fraction": 0.0,
+    "handle_weights": {
+      "approach_contact": -2.0,
+      "door_push": -1.0,
+      "handle_contact": 1.0,
+      "handle_open": 2.0,
+      "handle_progress": 1.5,
+      "handle_slip": -3.0
+    },
+    "key_detent_range_nm": [
+      0.0,
+      1.0
+    ],
+    "key_eval_detent_nm": [
+      0.0,
+      1.0
+    ],
+    "key_eval_lock_nm": [
+      0.5,
+      1.5,
+      2.5
+    ],
+    "key_hold_s": 2.0,
+    "key_lock_range_nm": [
+      0.3,
+      2.5
+    ],
+    "key_max_force_n": [
+      15.0,
+      55.0
+    ],
+    "key_overdrive_deg": 6.0,
+    "key_turn_deg": [
+      -45.0,
+      45.0,
+      30.0
+    ],
+    "knee_armature_factor": 3.67,
+    "leg_actuator": "unitree_geared",
+    "leg_actuator_model": {
+      "armature_kg_m2": {
+        "hip_thigh": 0.01,
+        "knee": 0.037
+      },
+      "delay_physics_steps": [
+        1,
+        3
+      ],
+      "friction": 0.01,
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": [
+        20.2,
+        23.4
+      ],
+      "knee_nm": [
+        38.72,
+        44.85
+      ],
+      "knee_ratio": 1.9169,
+      "name": "unitree_geared",
+      "speed": "hip, thigh flat to 13.5, 0 at 30.0; knee flat to 7.04, 0 at 15.65 rad/s"
+    },
+    "leg_armature_range": null,
+    "leg_delay_steps": 3,
+    "object": "press",
+    "press": {
+      "APPROACH_SPEED_M_S": [
+        0.03,
+        0.06
+      ],
+      "CONTACT_OFFSET_SHARE": 0.6,
+      "DETECT_ACROSS_M": 0.025,
+      "DETECT_FROM_M": 0.02,
+      "DETECT_LAG_M": 0.012,
+      "DETECT_SPEED_M_S": 0.015,
+      "DETECT_WAIT_S": 0.5,
+      "EPISODE_LENGTH_S": 20.0,
+      "EST_ERROR_NORMAL_M": 0.01,
+      "EST_ERROR_PLANE_M": 0.01,
+      "EST_ERROR_TILT_RAD": 0.06981317007977318,
+      "EVAL_EPISODE_S": 17.0,
+      "EVAL_FORCES_N": [
+        8.0,
+        16.0,
+        28.0
+      ],
+      "EVAL_HOLD_S": 3.0,
+      "EVAL_PLATES_PER_KIND": 12,
+      "EVAL_RAMP_S": 0.5,
+      "EVAL_SCORE_S": 2.0,
+      "EVAL_SEED": 20261022,
+      "EVAL_STIFFNESS": [
+        [
+          8000.0,
+          0.0
+        ],
+        [
+          1000.0,
+          0.025
+        ]
+      ],
+      "EVAL_TABLE_SEED": 20261023,
+      "EVAL_TOL_N": 3.0,
+      "EVAL_TOL_SHARE": 0.2,
+      "FOLLOW_MAX_M": 0.04,
+      "FOLLOW_OUT_M": 0.01,
+      "FOLLOW_TAU_S": 0.1,
+      "FORCE_LEVELS_N": [
+        3.0,
+        35.0
+      ],
+      "KINDS": [
+        "tilted",
+        "wall",
+        "level_up",
+        "level_down"
+      ],
+      "LEG_CLEARANCE_M": 0.04,
+      "LEVEL_SNAP_PROB": 0.15,
+      "LIFT_MIN_M": 0.05,
+      "MIN_CONTACT_HEIGHT_M": 0.032,
+      "NORMAL_TILT_MAX_RAD": 1.0471975511965976,
+      "OVER_TRAVEL_M": 0.04,
+      "PLATE_HALF_M": [
+        0.03,
+        0.15
+      ],
+      "PLATE_MU": [
+        0.4,
+        0.9
+      ],
+      "PLATE_THICKNESS_M": 0.02,
+      "PLATE_WEIGHTS": {
+        "approach_contact": -2.0,
+        "door_push": -1.0,
+        "handle_contact": 1.0,
+        "handle_slip": -3.0
+      },
+      "PRESS_EXCESS_WEIGHT": -4.0,
+      "PRESS_FORCE_SIGMA_N": 6.0,
+      "PRESS_FORCE_WEIGHT": 2.0,
+      "PRESS_LIMIT_N": 45.0,
+      "PUSH_ROOM_M": 0.02,
+      "RAMP_S": [
+        0.3,
+        1.0
+      ],
+      "REACH_HEIGHTS_M": [
+        0.272,
+        0.32
+      ],
+      "REACH_TOL_M": 0.015,
+      "RELEASE_FORCE_S": 0.3,
+      "RELEASE_S": 0.8,
+      "RIGID_PROB": 0.4,
+      "SEGMENTS": [
+        1,
+        3
+      ],
+      "SEG_HOLD_S": [
+        0.8,
+        2.0
+      ],
+      "SHOULDER_M": [
+        0.19,
+        -0.14,
+        0.3
+      ],
+      "SLIDE_DIST_M": [
+        0.02,
+        0.06
+      ],
+      "SLIDE_PROB": 0.3,
+      "SLIDE_SPEED_M_S": [
+        0.02,
+        0.04
+      ],
+      "SOFT_K_N_PER_M": [
+        400.0,
+        8000.0
+      ],
+      "SOFT_TRAVEL_M": [
+        0.005,
+        0.03
+      ],
+      "STANDOFF_M": [
+        0.03,
+        0.05
+      ],
+      "STANDOFF_REACH_M": 0.05,
+      "SUBSTEPS": 4,
+      "TABLE_SEED": 20261022,
+      "TABLE_SIZE": 20000,
+      "TANGENT_C_N_S_PER_M": 20.0,
+      "TANGENT_K_N_PER_M": 4000.0,
+      "TANGENT_PROB": 0.3,
+      "TANGENT_RATIO": 0.3,
+      "TOUCH_N": 3.0,
+      "TRUNK_KEEPOUT_M": [
+        [
+          -0.32,
+          0.38
+        ],
+        [
+          -0.15,
+          0.15
+        ],
+        [
+          0.13,
+          0.52
+        ]
+      ],
+      "WALL_SNAP_PROB": 0.25,
+      "WAYPOINT_OUT_M": 0.06
+    },
+    "press_excess_weight": 0.0,
+    "press_limit_n": 30.0,
+    "settled_spawn": true,
+    "spawn_states": "/home/victor/D1Training/demos/combiner_key/assets/dog_stand_20261021/classic_stance_33cm.json",
+    "spawn_states_fraction": 1.0,
+    "stance_weight": 4.0,
+    "variant": "force",
+    "weights": {
+      "action_rate": -0.02,
+      "alive": 1.0,
+      "ang_vel_xy": -0.05,
+      "base_height": -2.0,
+      "base_still": 1.0,
+      "base_yaw_still": 0.5,
+      "collision": -5.0,
+      "dof_acc": -2.5e-07,
+      "dof_pos_limits": -10.0,
+      "dof_vel": -0.0008,
+      "dof_vel_arm": -0.0002,
+      "feet_contact_forces": -0.001,
+      "foot_lift": 1.5,
+      "foot_tracking": 1.0,
+      "foot_tracking_fine": 2.0,
+      "foot_tracking_mid": 3.0,
+      "lin_vel_z": -1.5,
+      "orientation": -1.0,
+      "support_contact": 1.0,
+      "support_hip_pos": -0.5,
+      "support_slip": -1.0,
+      "torque_limits": -0.005,
+      "torques": -5e-06
+    }
+  },
+  "leg_joints_loaded": {
+    "armature": [
+      0.01,
+      0.01,
+      0.037,
+      0.01,
+      0.01,
+      0.037,
+      0.01,
+      0.01,
+      0.037,
+      0.01,
+      0.01,
+      0.037
+    ],
+    "effort_limit_sim": [
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0
+    ],
+    "friction": [
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01
+    ],
+    "groups": {
+      "legs_hip_thigh": "UnitreeActuator",
+      "legs_knee": "UnitreeActuator",
+      "unifp": "IdealPDActuator"
+    },
+    "velocity_limit_sim": [
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999
+    ]
+  },
+  "leg_rows": [
+    {
+      "contact_m": [
+        0.556,
+        -0.1368,
+        0.3748
+      ],
+      "err_normal_m": -0.0099,
+      "err_plane_m": [
+        -0.0092,
+        -0.008
+      ],
+      "err_tilt_deg": [
+        -0.982,
+        0.195
+      ],
+      "half_m": [
+        0.0515,
+        0.0761
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.837,
+        -0.3291,
+        -0.4372
+      ],
+      "plate": 0,
+      "stiffness": "rigid",
+      "table_row": 8,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.556,
+        -0.1368,
+        0.3748
+      ],
+      "err_normal_m": -0.0099,
+      "err_plane_m": [
+        -0.0092,
+        -0.008
+      ],
+      "err_tilt_deg": [
+        -0.982,
+        0.195
+      ],
+      "half_m": [
+        0.0515,
+        0.0761
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.837,
+        -0.3291,
+        -0.4372
+      ],
+      "plate": 0,
+      "stiffness": "rigid",
+      "table_row": 8,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.556,
+        -0.1368,
+        0.3748
+      ],
+      "err_normal_m": -0.0099,
+      "err_plane_m": [
+        -0.0092,
+        -0.008
+      ],
+      "err_tilt_deg": [
+        -0.982,
+        0.195
+      ],
+      "half_m": [
+        0.0515,
+        0.0761
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.837,
+        -0.3291,
+        -0.4372
+      ],
+      "plate": 0,
+      "stiffness": "rigid",
+      "table_row": 8,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.556,
+        -0.1368,
+        0.3748
+      ],
+      "err_normal_m": -0.0099,
+      "err_plane_m": [
+        -0.0092,
+        -0.008
+      ],
+      "err_tilt_deg": [
+        -0.982,
+        0.195
+      ],
+      "half_m": [
+        0.0515,
+        0.0761
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.837,
+        -0.3291,
+        -0.4372
+      ],
+      "plate": 0,
+      "stiffness": "sprung",
+      "table_row": 8,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.556,
+        -0.1368,
+        0.3748
+      ],
+      "err_normal_m": -0.0099,
+      "err_plane_m": [
+        -0.0092,
+        -0.008
+      ],
+      "err_tilt_deg": [
+        -0.982,
+        0.195
+      ],
+      "half_m": [
+        0.0515,
+        0.0761
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.837,
+        -0.3291,
+        -0.4372
+      ],
+      "plate": 0,
+      "stiffness": "sprung",
+      "table_row": 8,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.556,
+        -0.1368,
+        0.3748
+      ],
+      "err_normal_m": -0.0099,
+      "err_plane_m": [
+        -0.0092,
+        -0.008
+      ],
+      "err_tilt_deg": [
+        -0.982,
+        0.195
+      ],
+      "half_m": [
+        0.0515,
+        0.0761
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.837,
+        -0.3291,
+        -0.4372
+      ],
+      "plate": 0,
+      "stiffness": "sprung",
+      "table_row": 8,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.572,
+        -0.1438,
+        0.2984
+      ],
+      "err_normal_m": 0.001,
+      "err_plane_m": [
+        -0.0004,
+        -0.0035
+      ],
+      "err_tilt_deg": [
+        1.518,
+        0.439
+      ],
+      "half_m": [
+        0.0906,
+        0.0347
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.6811,
+        -0.4263,
+        0.5953
+      ],
+      "plate": 1,
+      "stiffness": "rigid",
+      "table_row": 561,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.572,
+        -0.1438,
+        0.2984
+      ],
+      "err_normal_m": 0.001,
+      "err_plane_m": [
+        -0.0004,
+        -0.0035
+      ],
+      "err_tilt_deg": [
+        1.518,
+        0.439
+      ],
+      "half_m": [
+        0.0906,
+        0.0347
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.6811,
+        -0.4263,
+        0.5953
+      ],
+      "plate": 1,
+      "stiffness": "rigid",
+      "table_row": 561,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.572,
+        -0.1438,
+        0.2984
+      ],
+      "err_normal_m": 0.001,
+      "err_plane_m": [
+        -0.0004,
+        -0.0035
+      ],
+      "err_tilt_deg": [
+        1.518,
+        0.439
+      ],
+      "half_m": [
+        0.0906,
+        0.0347
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.6811,
+        -0.4263,
+        0.5953
+      ],
+      "plate": 1,
+      "stiffness": "rigid",
+      "table_row": 561,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.572,
+        -0.1438,
+        0.2984
+      ],
+      "err_normal_m": 0.001,
+      "err_plane_m": [
+        -0.0004,
+        -0.0035
+      ],
+      "err_tilt_deg": [
+        1.518,
+        0.439
+      ],
+      "half_m": [
+        0.0906,
+        0.0347
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.6811,
+        -0.4263,
+        0.5953
+      ],
+      "plate": 1,
+      "stiffness": "sprung",
+      "table_row": 561,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.572,
+        -0.1438,
+        0.2984
+      ],
+      "err_normal_m": 0.001,
+      "err_plane_m": [
+        -0.0004,
+        -0.0035
+      ],
+      "err_tilt_deg": [
+        1.518,
+        0.439
+      ],
+      "half_m": [
+        0.0906,
+        0.0347
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.6811,
+        -0.4263,
+        0.5953
+      ],
+      "plate": 1,
+      "stiffness": "sprung",
+      "table_row": 561,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.572,
+        -0.1438,
+        0.2984
+      ],
+      "err_normal_m": 0.001,
+      "err_plane_m": [
+        -0.0004,
+        -0.0035
+      ],
+      "err_tilt_deg": [
+        1.518,
+        0.439
+      ],
+      "half_m": [
+        0.0906,
+        0.0347
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.6811,
+        -0.4263,
+        0.5953
+      ],
+      "plate": 1,
+      "stiffness": "sprung",
+      "table_row": 561,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5706,
+        -0.1304,
+        0.3485
+      ],
+      "err_normal_m": -0.0084,
+      "err_plane_m": [
+        -0.0088,
+        -0.001
+      ],
+      "err_tilt_deg": [
+        -0.321,
+        2.758
+      ],
+      "half_m": [
+        0.1279,
+        0.0809
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.8961,
+        0.3012,
+        0.3261
+      ],
+      "plate": 2,
+      "stiffness": "rigid",
+      "table_row": 590,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5706,
+        -0.1304,
+        0.3485
+      ],
+      "err_normal_m": -0.0084,
+      "err_plane_m": [
+        -0.0088,
+        -0.001
+      ],
+      "err_tilt_deg": [
+        -0.321,
+        2.758
+      ],
+      "half_m": [
+        0.1279,
+        0.0809
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.8961,
+        0.3012,
+        0.3261
+      ],
+      "plate": 2,
+      "stiffness": "rigid",
+      "table_row": 590,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5706,
+        -0.1304,
+        0.3485
+      ],
+      "err_normal_m": -0.0084,
+      "err_plane_m": [
+        -0.0088,
+        -0.001
+      ],
+      "err_tilt_deg": [
+        -0.321,
+        2.758
+      ],
+      "half_m": [
+        0.1279,
+        0.0809
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.8961,
+        0.3012,
+        0.3261
+      ],
+      "plate": 2,
+      "stiffness": "rigid",
+      "table_row": 590,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5706,
+        -0.1304,
+        0.3485
+      ],
+      "err_normal_m": -0.0084,
+      "err_plane_m": [
+        -0.0088,
+        -0.001
+      ],
+      "err_tilt_deg": [
+        -0.321,
+        2.758
+      ],
+      "half_m": [
+        0.1279,
+        0.0809
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.8961,
+        0.3012,
+        0.3261
+      ],
+      "plate": 2,
+      "stiffness": "sprung",
+      "table_row": 590,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5706,
+        -0.1304,
+        0.3485
+      ],
+      "err_normal_m": -0.0084,
+      "err_plane_m": [
+        -0.0088,
+        -0.001
+      ],
+      "err_tilt_deg": [
+        -0.321,
+        2.758
+      ],
+      "half_m": [
+        0.1279,
+        0.0809
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.8961,
+        0.3012,
+        0.3261
+      ],
+      "plate": 2,
+      "stiffness": "sprung",
+      "table_row": 590,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5706,
+        -0.1304,
+        0.3485
+      ],
+      "err_normal_m": -0.0084,
+      "err_plane_m": [
+        -0.0088,
+        -0.001
+      ],
+      "err_tilt_deg": [
+        -0.321,
+        2.758
+      ],
+      "half_m": [
+        0.1279,
+        0.0809
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.8961,
+        0.3012,
+        0.3261
+      ],
+      "plate": 2,
+      "stiffness": "sprung",
+      "table_row": 590,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5469,
+        -0.1548,
+        0.2221
+      ],
+      "err_normal_m": 0.007,
+      "err_plane_m": [
+        0.003,
+        -0.0073
+      ],
+      "err_tilt_deg": [
+        2.957,
+        1.805
+      ],
+      "half_m": [
+        0.1458,
+        0.12
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.3935,
+        -0.0179,
+        0.9191
+      ],
+      "plate": 3,
+      "stiffness": "rigid",
+      "table_row": 592,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5469,
+        -0.1548,
+        0.2221
+      ],
+      "err_normal_m": 0.007,
+      "err_plane_m": [
+        0.003,
+        -0.0073
+      ],
+      "err_tilt_deg": [
+        2.957,
+        1.805
+      ],
+      "half_m": [
+        0.1458,
+        0.12
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.3935,
+        -0.0179,
+        0.9191
+      ],
+      "plate": 3,
+      "stiffness": "rigid",
+      "table_row": 592,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5469,
+        -0.1548,
+        0.2221
+      ],
+      "err_normal_m": 0.007,
+      "err_plane_m": [
+        0.003,
+        -0.0073
+      ],
+      "err_tilt_deg": [
+        2.957,
+        1.805
+      ],
+      "half_m": [
+        0.1458,
+        0.12
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.3935,
+        -0.0179,
+        0.9191
+      ],
+      "plate": 3,
+      "stiffness": "rigid",
+      "table_row": 592,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5469,
+        -0.1548,
+        0.2221
+      ],
+      "err_normal_m": 0.007,
+      "err_plane_m": [
+        0.003,
+        -0.0073
+      ],
+      "err_tilt_deg": [
+        2.957,
+        1.805
+      ],
+      "half_m": [
+        0.1458,
+        0.12
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.3935,
+        -0.0179,
+        0.9191
+      ],
+      "plate": 3,
+      "stiffness": "sprung",
+      "table_row": 592,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5469,
+        -0.1548,
+        0.2221
+      ],
+      "err_normal_m": 0.007,
+      "err_plane_m": [
+        0.003,
+        -0.0073
+      ],
+      "err_tilt_deg": [
+        2.957,
+        1.805
+      ],
+      "half_m": [
+        0.1458,
+        0.12
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.3935,
+        -0.0179,
+        0.9191
+      ],
+      "plate": 3,
+      "stiffness": "sprung",
+      "table_row": 592,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5469,
+        -0.1548,
+        0.2221
+      ],
+      "err_normal_m": 0.007,
+      "err_plane_m": [
+        0.003,
+        -0.0073
+      ],
+      "err_tilt_deg": [
+        2.957,
+        1.805
+      ],
+      "half_m": [
+        0.1458,
+        0.12
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.3935,
+        -0.0179,
+        0.9191
+      ],
+      "plate": 3,
+      "stiffness": "sprung",
+      "table_row": 592,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4762,
+        -0.2193,
+        0.1556
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        0.0022,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        1.706,
+        3.144
+      ],
+      "half_m": [
+        0.1154,
+        0.0972
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.9345,
+        -0.3553,
+        -0.0221
+      ],
+      "plate": 4,
+      "stiffness": "rigid",
+      "table_row": 671,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4762,
+        -0.2193,
+        0.1556
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        0.0022,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        1.706,
+        3.144
+      ],
+      "half_m": [
+        0.1154,
+        0.0972
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.9345,
+        -0.3553,
+        -0.0221
+      ],
+      "plate": 4,
+      "stiffness": "rigid",
+      "table_row": 671,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4762,
+        -0.2193,
+        0.1556
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        0.0022,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        1.706,
+        3.144
+      ],
+      "half_m": [
+        0.1154,
+        0.0972
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.9345,
+        -0.3553,
+        -0.0221
+      ],
+      "plate": 4,
+      "stiffness": "rigid",
+      "table_row": 671,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4762,
+        -0.2193,
+        0.1556
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        0.0022,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        1.706,
+        3.144
+      ],
+      "half_m": [
+        0.1154,
+        0.0972
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.9345,
+        -0.3553,
+        -0.0221
+      ],
+      "plate": 4,
+      "stiffness": "sprung",
+      "table_row": 671,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4762,
+        -0.2193,
+        0.1556
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        0.0022,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        1.706,
+        3.144
+      ],
+      "half_m": [
+        0.1154,
+        0.0972
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.9345,
+        -0.3553,
+        -0.0221
+      ],
+      "plate": 4,
+      "stiffness": "sprung",
+      "table_row": 671,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4762,
+        -0.2193,
+        0.1556
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        0.0022,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        1.706,
+        3.144
+      ],
+      "half_m": [
+        0.1154,
+        0.0972
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.9345,
+        -0.3553,
+        -0.0221
+      ],
+      "plate": 4,
+      "stiffness": "sprung",
+      "table_row": 671,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4908,
+        -0.1336,
+        0.2208
+      ],
+      "err_normal_m": -0.0065,
+      "err_plane_m": [
+        -0.0067,
+        0.0094
+      ],
+      "err_tilt_deg": [
+        3.618,
+        -2.848
+      ],
+      "half_m": [
+        0.0564,
+        0.0698
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.8562,
+        -0.362,
+        0.3686
+      ],
+      "plate": 5,
+      "stiffness": "rigid",
+      "table_row": 1043,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4908,
+        -0.1336,
+        0.2208
+      ],
+      "err_normal_m": -0.0065,
+      "err_plane_m": [
+        -0.0067,
+        0.0094
+      ],
+      "err_tilt_deg": [
+        3.618,
+        -2.848
+      ],
+      "half_m": [
+        0.0564,
+        0.0698
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.8562,
+        -0.362,
+        0.3686
+      ],
+      "plate": 5,
+      "stiffness": "rigid",
+      "table_row": 1043,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4908,
+        -0.1336,
+        0.2208
+      ],
+      "err_normal_m": -0.0065,
+      "err_plane_m": [
+        -0.0067,
+        0.0094
+      ],
+      "err_tilt_deg": [
+        3.618,
+        -2.848
+      ],
+      "half_m": [
+        0.0564,
+        0.0698
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.8562,
+        -0.362,
+        0.3686
+      ],
+      "plate": 5,
+      "stiffness": "rigid",
+      "table_row": 1043,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4908,
+        -0.1336,
+        0.2208
+      ],
+      "err_normal_m": -0.0065,
+      "err_plane_m": [
+        -0.0067,
+        0.0094
+      ],
+      "err_tilt_deg": [
+        3.618,
+        -2.848
+      ],
+      "half_m": [
+        0.0564,
+        0.0698
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.8562,
+        -0.362,
+        0.3686
+      ],
+      "plate": 5,
+      "stiffness": "sprung",
+      "table_row": 1043,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4908,
+        -0.1336,
+        0.2208
+      ],
+      "err_normal_m": -0.0065,
+      "err_plane_m": [
+        -0.0067,
+        0.0094
+      ],
+      "err_tilt_deg": [
+        3.618,
+        -2.848
+      ],
+      "half_m": [
+        0.0564,
+        0.0698
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.8562,
+        -0.362,
+        0.3686
+      ],
+      "plate": 5,
+      "stiffness": "sprung",
+      "table_row": 1043,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4908,
+        -0.1336,
+        0.2208
+      ],
+      "err_normal_m": -0.0065,
+      "err_plane_m": [
+        -0.0067,
+        0.0094
+      ],
+      "err_tilt_deg": [
+        3.618,
+        -2.848
+      ],
+      "half_m": [
+        0.0564,
+        0.0698
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.8562,
+        -0.362,
+        0.3686
+      ],
+      "plate": 5,
+      "stiffness": "sprung",
+      "table_row": 1043,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4809,
+        -0.1665,
+        0.3015
+      ],
+      "err_normal_m": 0.0091,
+      "err_plane_m": [
+        -0.0056,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        -3.922,
+        -3.306
+      ],
+      "half_m": [
+        0.044,
+        0.1275
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.801,
+        -0.1995,
+        0.5644
+      ],
+      "plate": 6,
+      "stiffness": "rigid",
+      "table_row": 1109,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4809,
+        -0.1665,
+        0.3015
+      ],
+      "err_normal_m": 0.0091,
+      "err_plane_m": [
+        -0.0056,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        -3.922,
+        -3.306
+      ],
+      "half_m": [
+        0.044,
+        0.1275
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.801,
+        -0.1995,
+        0.5644
+      ],
+      "plate": 6,
+      "stiffness": "rigid",
+      "table_row": 1109,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4809,
+        -0.1665,
+        0.3015
+      ],
+      "err_normal_m": 0.0091,
+      "err_plane_m": [
+        -0.0056,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        -3.922,
+        -3.306
+      ],
+      "half_m": [
+        0.044,
+        0.1275
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.801,
+        -0.1995,
+        0.5644
+      ],
+      "plate": 6,
+      "stiffness": "rigid",
+      "table_row": 1109,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4809,
+        -0.1665,
+        0.3015
+      ],
+      "err_normal_m": 0.0091,
+      "err_plane_m": [
+        -0.0056,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        -3.922,
+        -3.306
+      ],
+      "half_m": [
+        0.044,
+        0.1275
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.801,
+        -0.1995,
+        0.5644
+      ],
+      "plate": 6,
+      "stiffness": "sprung",
+      "table_row": 1109,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4809,
+        -0.1665,
+        0.3015
+      ],
+      "err_normal_m": 0.0091,
+      "err_plane_m": [
+        -0.0056,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        -3.922,
+        -3.306
+      ],
+      "half_m": [
+        0.044,
+        0.1275
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.801,
+        -0.1995,
+        0.5644
+      ],
+      "plate": 6,
+      "stiffness": "sprung",
+      "table_row": 1109,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4809,
+        -0.1665,
+        0.3015
+      ],
+      "err_normal_m": 0.0091,
+      "err_plane_m": [
+        -0.0056,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        -3.922,
+        -3.306
+      ],
+      "half_m": [
+        0.044,
+        0.1275
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.801,
+        -0.1995,
+        0.5644
+      ],
+      "plate": 6,
+      "stiffness": "sprung",
+      "table_row": 1109,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4914,
+        -0.1745,
+        0.2831
+      ],
+      "err_normal_m": -0.006,
+      "err_plane_m": [
+        -0.0055,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        3.524,
+        -3.96
+      ],
+      "half_m": [
+        0.0654,
+        0.0639
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.7795,
+        -0.2809,
+        0.5599
+      ],
+      "plate": 7,
+      "stiffness": "rigid",
+      "table_row": 1256,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4914,
+        -0.1745,
+        0.2831
+      ],
+      "err_normal_m": -0.006,
+      "err_plane_m": [
+        -0.0055,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        3.524,
+        -3.96
+      ],
+      "half_m": [
+        0.0654,
+        0.0639
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.7795,
+        -0.2809,
+        0.5599
+      ],
+      "plate": 7,
+      "stiffness": "rigid",
+      "table_row": 1256,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4914,
+        -0.1745,
+        0.2831
+      ],
+      "err_normal_m": -0.006,
+      "err_plane_m": [
+        -0.0055,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        3.524,
+        -3.96
+      ],
+      "half_m": [
+        0.0654,
+        0.0639
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.7795,
+        -0.2809,
+        0.5599
+      ],
+      "plate": 7,
+      "stiffness": "rigid",
+      "table_row": 1256,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4914,
+        -0.1745,
+        0.2831
+      ],
+      "err_normal_m": -0.006,
+      "err_plane_m": [
+        -0.0055,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        3.524,
+        -3.96
+      ],
+      "half_m": [
+        0.0654,
+        0.0639
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.7795,
+        -0.2809,
+        0.5599
+      ],
+      "plate": 7,
+      "stiffness": "sprung",
+      "table_row": 1256,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4914,
+        -0.1745,
+        0.2831
+      ],
+      "err_normal_m": -0.006,
+      "err_plane_m": [
+        -0.0055,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        3.524,
+        -3.96
+      ],
+      "half_m": [
+        0.0654,
+        0.0639
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.7795,
+        -0.2809,
+        0.5599
+      ],
+      "plate": 7,
+      "stiffness": "sprung",
+      "table_row": 1256,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4914,
+        -0.1745,
+        0.2831
+      ],
+      "err_normal_m": -0.006,
+      "err_plane_m": [
+        -0.0055,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        3.524,
+        -3.96
+      ],
+      "half_m": [
+        0.0654,
+        0.0639
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.7795,
+        -0.2809,
+        0.5599
+      ],
+      "plate": 7,
+      "stiffness": "sprung",
+      "table_row": 1256,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4633,
+        -0.1412,
+        0.3008
+      ],
+      "err_normal_m": -0.0071,
+      "err_plane_m": [
+        0.0085,
+        -0.0097
+      ],
+      "err_tilt_deg": [
+        0.136,
+        -0.14
+      ],
+      "half_m": [
+        0.1479,
+        0.0703
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.5544,
+        0.029,
+        0.8318
+      ],
+      "plate": 8,
+      "stiffness": "rigid",
+      "table_row": 1701,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4633,
+        -0.1412,
+        0.3008
+      ],
+      "err_normal_m": -0.0071,
+      "err_plane_m": [
+        0.0085,
+        -0.0097
+      ],
+      "err_tilt_deg": [
+        0.136,
+        -0.14
+      ],
+      "half_m": [
+        0.1479,
+        0.0703
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.5544,
+        0.029,
+        0.8318
+      ],
+      "plate": 8,
+      "stiffness": "rigid",
+      "table_row": 1701,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4633,
+        -0.1412,
+        0.3008
+      ],
+      "err_normal_m": -0.0071,
+      "err_plane_m": [
+        0.0085,
+        -0.0097
+      ],
+      "err_tilt_deg": [
+        0.136,
+        -0.14
+      ],
+      "half_m": [
+        0.1479,
+        0.0703
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.5544,
+        0.029,
+        0.8318
+      ],
+      "plate": 8,
+      "stiffness": "rigid",
+      "table_row": 1701,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4633,
+        -0.1412,
+        0.3008
+      ],
+      "err_normal_m": -0.0071,
+      "err_plane_m": [
+        0.0085,
+        -0.0097
+      ],
+      "err_tilt_deg": [
+        0.136,
+        -0.14
+      ],
+      "half_m": [
+        0.1479,
+        0.0703
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.5544,
+        0.029,
+        0.8318
+      ],
+      "plate": 8,
+      "stiffness": "sprung",
+      "table_row": 1701,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4633,
+        -0.1412,
+        0.3008
+      ],
+      "err_normal_m": -0.0071,
+      "err_plane_m": [
+        0.0085,
+        -0.0097
+      ],
+      "err_tilt_deg": [
+        0.136,
+        -0.14
+      ],
+      "half_m": [
+        0.1479,
+        0.0703
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.5544,
+        0.029,
+        0.8318
+      ],
+      "plate": 8,
+      "stiffness": "sprung",
+      "table_row": 1701,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4633,
+        -0.1412,
+        0.3008
+      ],
+      "err_normal_m": -0.0071,
+      "err_plane_m": [
+        0.0085,
+        -0.0097
+      ],
+      "err_tilt_deg": [
+        0.136,
+        -0.14
+      ],
+      "half_m": [
+        0.1479,
+        0.0703
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.5544,
+        0.029,
+        0.8318
+      ],
+      "plate": 8,
+      "stiffness": "sprung",
+      "table_row": 1701,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5204,
+        -0.1301,
+        0.2322
+      ],
+      "err_normal_m": 0.0053,
+      "err_plane_m": [
+        0.0095,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -0.443,
+        -3.595
+      ],
+      "half_m": [
+        0.0616,
+        0.1116
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.4306,
+        -0.4214,
+        0.7981
+      ],
+      "plate": 9,
+      "stiffness": "rigid",
+      "table_row": 2735,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5204,
+        -0.1301,
+        0.2322
+      ],
+      "err_normal_m": 0.0053,
+      "err_plane_m": [
+        0.0095,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -0.443,
+        -3.595
+      ],
+      "half_m": [
+        0.0616,
+        0.1116
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.4306,
+        -0.4214,
+        0.7981
+      ],
+      "plate": 9,
+      "stiffness": "rigid",
+      "table_row": 2735,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5204,
+        -0.1301,
+        0.2322
+      ],
+      "err_normal_m": 0.0053,
+      "err_plane_m": [
+        0.0095,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -0.443,
+        -3.595
+      ],
+      "half_m": [
+        0.0616,
+        0.1116
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.4306,
+        -0.4214,
+        0.7981
+      ],
+      "plate": 9,
+      "stiffness": "rigid",
+      "table_row": 2735,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5204,
+        -0.1301,
+        0.2322
+      ],
+      "err_normal_m": 0.0053,
+      "err_plane_m": [
+        0.0095,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -0.443,
+        -3.595
+      ],
+      "half_m": [
+        0.0616,
+        0.1116
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.4306,
+        -0.4214,
+        0.7981
+      ],
+      "plate": 9,
+      "stiffness": "sprung",
+      "table_row": 2735,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5204,
+        -0.1301,
+        0.2322
+      ],
+      "err_normal_m": 0.0053,
+      "err_plane_m": [
+        0.0095,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -0.443,
+        -3.595
+      ],
+      "half_m": [
+        0.0616,
+        0.1116
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.4306,
+        -0.4214,
+        0.7981
+      ],
+      "plate": 9,
+      "stiffness": "sprung",
+      "table_row": 2735,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5204,
+        -0.1301,
+        0.2322
+      ],
+      "err_normal_m": 0.0053,
+      "err_plane_m": [
+        0.0095,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -0.443,
+        -3.595
+      ],
+      "half_m": [
+        0.0616,
+        0.1116
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.4306,
+        -0.4214,
+        0.7981
+      ],
+      "plate": 9,
+      "stiffness": "sprung",
+      "table_row": 2735,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4935,
+        -0.2037,
+        0.1804
+      ],
+      "err_normal_m": 0.0071,
+      "err_plane_m": [
+        0.001,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -2.458,
+        -0.986
+      ],
+      "half_m": [
+        0.1185,
+        0.0429
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.4215,
+        0.8711,
+        0.2522
+      ],
+      "plate": 10,
+      "stiffness": "rigid",
+      "table_row": 3236,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4935,
+        -0.2037,
+        0.1804
+      ],
+      "err_normal_m": 0.0071,
+      "err_plane_m": [
+        0.001,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -2.458,
+        -0.986
+      ],
+      "half_m": [
+        0.1185,
+        0.0429
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.4215,
+        0.8711,
+        0.2522
+      ],
+      "plate": 10,
+      "stiffness": "rigid",
+      "table_row": 3236,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4935,
+        -0.2037,
+        0.1804
+      ],
+      "err_normal_m": 0.0071,
+      "err_plane_m": [
+        0.001,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -2.458,
+        -0.986
+      ],
+      "half_m": [
+        0.1185,
+        0.0429
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.4215,
+        0.8711,
+        0.2522
+      ],
+      "plate": 10,
+      "stiffness": "rigid",
+      "table_row": 3236,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4935,
+        -0.2037,
+        0.1804
+      ],
+      "err_normal_m": 0.0071,
+      "err_plane_m": [
+        0.001,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -2.458,
+        -0.986
+      ],
+      "half_m": [
+        0.1185,
+        0.0429
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.4215,
+        0.8711,
+        0.2522
+      ],
+      "plate": 10,
+      "stiffness": "sprung",
+      "table_row": 3236,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4935,
+        -0.2037,
+        0.1804
+      ],
+      "err_normal_m": 0.0071,
+      "err_plane_m": [
+        0.001,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -2.458,
+        -0.986
+      ],
+      "half_m": [
+        0.1185,
+        0.0429
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.4215,
+        0.8711,
+        0.2522
+      ],
+      "plate": 10,
+      "stiffness": "sprung",
+      "table_row": 3236,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4935,
+        -0.2037,
+        0.1804
+      ],
+      "err_normal_m": 0.0071,
+      "err_plane_m": [
+        0.001,
+        0.0019
+      ],
+      "err_tilt_deg": [
+        -2.458,
+        -0.986
+      ],
+      "half_m": [
+        0.1185,
+        0.0429
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.4215,
+        0.8711,
+        0.2522
+      ],
+      "plate": 10,
+      "stiffness": "sprung",
+      "table_row": 3236,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5152,
+        -0.1634,
+        0.2635
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        0.0036,
+        -0.003
+      ],
+      "err_tilt_deg": [
+        -1.709,
+        2.373
+      ],
+      "half_m": [
+        0.1036,
+        0.0368
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.4221,
+        -0.0669,
+        0.9041
+      ],
+      "plate": 11,
+      "stiffness": "rigid",
+      "table_row": 3305,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5152,
+        -0.1634,
+        0.2635
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        0.0036,
+        -0.003
+      ],
+      "err_tilt_deg": [
+        -1.709,
+        2.373
+      ],
+      "half_m": [
+        0.1036,
+        0.0368
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.4221,
+        -0.0669,
+        0.9041
+      ],
+      "plate": 11,
+      "stiffness": "rigid",
+      "table_row": 3305,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5152,
+        -0.1634,
+        0.2635
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        0.0036,
+        -0.003
+      ],
+      "err_tilt_deg": [
+        -1.709,
+        2.373
+      ],
+      "half_m": [
+        0.1036,
+        0.0368
+      ],
+      "k_soft": 8000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.4221,
+        -0.0669,
+        0.9041
+      ],
+      "plate": 11,
+      "stiffness": "rigid",
+      "table_row": 3305,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5152,
+        -0.1634,
+        0.2635
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        0.0036,
+        -0.003
+      ],
+      "err_tilt_deg": [
+        -1.709,
+        2.373
+      ],
+      "half_m": [
+        0.1036,
+        0.0368
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 8.0,
+      "normal": [
+        -0.4221,
+        -0.0669,
+        0.9041
+      ],
+      "plate": 11,
+      "stiffness": "sprung",
+      "table_row": 3305,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5152,
+        -0.1634,
+        0.2635
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        0.0036,
+        -0.003
+      ],
+      "err_tilt_deg": [
+        -1.709,
+        2.373
+      ],
+      "half_m": [
+        0.1036,
+        0.0368
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 16.0,
+      "normal": [
+        -0.4221,
+        -0.0669,
+        0.9041
+      ],
+      "plate": 11,
+      "stiffness": "sprung",
+      "table_row": 3305,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5152,
+        -0.1634,
+        0.2635
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        0.0036,
+        -0.003
+      ],
+      "err_tilt_deg": [
+        -1.709,
+        2.373
+      ],
+      "half_m": [
+        0.1036,
+        0.0368
+      ],
+      "k_soft": 1000.0,
+      "kind": "tilted",
+      "level_n": 28.0,
+      "normal": [
+        -0.4221,
+        -0.0669,
+        0.9041
+      ],
+      "plate": 11,
+      "stiffness": "sprung",
+      "table_row": 3305,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5266,
+        -0.144,
+        0.2506
+      ],
+      "err_normal_m": -0.002,
+      "err_plane_m": [
+        -0.0063,
+        0.0028
+      ],
+      "err_tilt_deg": [
+        2.625,
+        -2.485
+      ],
+      "half_m": [
+        0.1273,
+        0.0639
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9878,
+        0.1554,
+        0.0
+      ],
+      "plate": 12,
+      "stiffness": "rigid",
+      "table_row": 265,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5266,
+        -0.144,
+        0.2506
+      ],
+      "err_normal_m": -0.002,
+      "err_plane_m": [
+        -0.0063,
+        0.0028
+      ],
+      "err_tilt_deg": [
+        2.625,
+        -2.485
+      ],
+      "half_m": [
+        0.1273,
+        0.0639
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9878,
+        0.1554,
+        0.0
+      ],
+      "plate": 12,
+      "stiffness": "rigid",
+      "table_row": 265,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5266,
+        -0.144,
+        0.2506
+      ],
+      "err_normal_m": -0.002,
+      "err_plane_m": [
+        -0.0063,
+        0.0028
+      ],
+      "err_tilt_deg": [
+        2.625,
+        -2.485
+      ],
+      "half_m": [
+        0.1273,
+        0.0639
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9878,
+        0.1554,
+        0.0
+      ],
+      "plate": 12,
+      "stiffness": "rigid",
+      "table_row": 265,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5266,
+        -0.144,
+        0.2506
+      ],
+      "err_normal_m": -0.002,
+      "err_plane_m": [
+        -0.0063,
+        0.0028
+      ],
+      "err_tilt_deg": [
+        2.625,
+        -2.485
+      ],
+      "half_m": [
+        0.1273,
+        0.0639
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9878,
+        0.1554,
+        0.0
+      ],
+      "plate": 12,
+      "stiffness": "sprung",
+      "table_row": 265,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5266,
+        -0.144,
+        0.2506
+      ],
+      "err_normal_m": -0.002,
+      "err_plane_m": [
+        -0.0063,
+        0.0028
+      ],
+      "err_tilt_deg": [
+        2.625,
+        -2.485
+      ],
+      "half_m": [
+        0.1273,
+        0.0639
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9878,
+        0.1554,
+        0.0
+      ],
+      "plate": 12,
+      "stiffness": "sprung",
+      "table_row": 265,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5266,
+        -0.144,
+        0.2506
+      ],
+      "err_normal_m": -0.002,
+      "err_plane_m": [
+        -0.0063,
+        0.0028
+      ],
+      "err_tilt_deg": [
+        2.625,
+        -2.485
+      ],
+      "half_m": [
+        0.1273,
+        0.0639
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9878,
+        0.1554,
+        0.0
+      ],
+      "plate": 12,
+      "stiffness": "sprung",
+      "table_row": 265,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4332,
+        -0.1713,
+        0.2504
+      ],
+      "err_normal_m": 0.0093,
+      "err_plane_m": [
+        -0.0027,
+        0.0011
+      ],
+      "err_tilt_deg": [
+        0.283,
+        -2.925
+      ],
+      "half_m": [
+        0.0494,
+        0.1183
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9902,
+        0.1399,
+        0.0
+      ],
+      "plate": 13,
+      "stiffness": "rigid",
+      "table_row": 1129,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4332,
+        -0.1713,
+        0.2504
+      ],
+      "err_normal_m": 0.0093,
+      "err_plane_m": [
+        -0.0027,
+        0.0011
+      ],
+      "err_tilt_deg": [
+        0.283,
+        -2.925
+      ],
+      "half_m": [
+        0.0494,
+        0.1183
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9902,
+        0.1399,
+        0.0
+      ],
+      "plate": 13,
+      "stiffness": "rigid",
+      "table_row": 1129,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4332,
+        -0.1713,
+        0.2504
+      ],
+      "err_normal_m": 0.0093,
+      "err_plane_m": [
+        -0.0027,
+        0.0011
+      ],
+      "err_tilt_deg": [
+        0.283,
+        -2.925
+      ],
+      "half_m": [
+        0.0494,
+        0.1183
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9902,
+        0.1399,
+        0.0
+      ],
+      "plate": 13,
+      "stiffness": "rigid",
+      "table_row": 1129,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4332,
+        -0.1713,
+        0.2504
+      ],
+      "err_normal_m": 0.0093,
+      "err_plane_m": [
+        -0.0027,
+        0.0011
+      ],
+      "err_tilt_deg": [
+        0.283,
+        -2.925
+      ],
+      "half_m": [
+        0.0494,
+        0.1183
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9902,
+        0.1399,
+        0.0
+      ],
+      "plate": 13,
+      "stiffness": "sprung",
+      "table_row": 1129,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4332,
+        -0.1713,
+        0.2504
+      ],
+      "err_normal_m": 0.0093,
+      "err_plane_m": [
+        -0.0027,
+        0.0011
+      ],
+      "err_tilt_deg": [
+        0.283,
+        -2.925
+      ],
+      "half_m": [
+        0.0494,
+        0.1183
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9902,
+        0.1399,
+        0.0
+      ],
+      "plate": 13,
+      "stiffness": "sprung",
+      "table_row": 1129,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4332,
+        -0.1713,
+        0.2504
+      ],
+      "err_normal_m": 0.0093,
+      "err_plane_m": [
+        -0.0027,
+        0.0011
+      ],
+      "err_tilt_deg": [
+        0.283,
+        -2.925
+      ],
+      "half_m": [
+        0.0494,
+        0.1183
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9902,
+        0.1399,
+        0.0
+      ],
+      "plate": 13,
+      "stiffness": "sprung",
+      "table_row": 1129,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4983,
+        -0.179,
+        0.1501
+      ],
+      "err_normal_m": -0.0037,
+      "err_plane_m": [
+        -0.0007,
+        0.0048
+      ],
+      "err_tilt_deg": [
+        -2.805,
+        -1.846
+      ],
+      "half_m": [
+        0.0824,
+        0.1021
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9987,
+        0.0519,
+        0.0
+      ],
+      "plate": 14,
+      "stiffness": "rigid",
+      "table_row": 1195,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4983,
+        -0.179,
+        0.1501
+      ],
+      "err_normal_m": -0.0037,
+      "err_plane_m": [
+        -0.0007,
+        0.0048
+      ],
+      "err_tilt_deg": [
+        -2.805,
+        -1.846
+      ],
+      "half_m": [
+        0.0824,
+        0.1021
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9987,
+        0.0519,
+        0.0
+      ],
+      "plate": 14,
+      "stiffness": "rigid",
+      "table_row": 1195,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4983,
+        -0.179,
+        0.1501
+      ],
+      "err_normal_m": -0.0037,
+      "err_plane_m": [
+        -0.0007,
+        0.0048
+      ],
+      "err_tilt_deg": [
+        -2.805,
+        -1.846
+      ],
+      "half_m": [
+        0.0824,
+        0.1021
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9987,
+        0.0519,
+        0.0
+      ],
+      "plate": 14,
+      "stiffness": "rigid",
+      "table_row": 1195,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4983,
+        -0.179,
+        0.1501
+      ],
+      "err_normal_m": -0.0037,
+      "err_plane_m": [
+        -0.0007,
+        0.0048
+      ],
+      "err_tilt_deg": [
+        -2.805,
+        -1.846
+      ],
+      "half_m": [
+        0.0824,
+        0.1021
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9987,
+        0.0519,
+        0.0
+      ],
+      "plate": 14,
+      "stiffness": "sprung",
+      "table_row": 1195,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4983,
+        -0.179,
+        0.1501
+      ],
+      "err_normal_m": -0.0037,
+      "err_plane_m": [
+        -0.0007,
+        0.0048
+      ],
+      "err_tilt_deg": [
+        -2.805,
+        -1.846
+      ],
+      "half_m": [
+        0.0824,
+        0.1021
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9987,
+        0.0519,
+        0.0
+      ],
+      "plate": 14,
+      "stiffness": "sprung",
+      "table_row": 1195,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4983,
+        -0.179,
+        0.1501
+      ],
+      "err_normal_m": -0.0037,
+      "err_plane_m": [
+        -0.0007,
+        0.0048
+      ],
+      "err_tilt_deg": [
+        -2.805,
+        -1.846
+      ],
+      "half_m": [
+        0.0824,
+        0.1021
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9987,
+        0.0519,
+        0.0
+      ],
+      "plate": 14,
+      "stiffness": "sprung",
+      "table_row": 1195,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.557,
+        -0.083,
+        0.398
+      ],
+      "err_normal_m": 0.0083,
+      "err_plane_m": [
+        -0.0008,
+        0.0003
+      ],
+      "err_tilt_deg": [
+        1.078,
+        1.95
+      ],
+      "half_m": [
+        0.034,
+        0.0531
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9339,
+        -0.3575,
+        0.0
+      ],
+      "plate": 15,
+      "stiffness": "rigid",
+      "table_row": 1290,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.557,
+        -0.083,
+        0.398
+      ],
+      "err_normal_m": 0.0083,
+      "err_plane_m": [
+        -0.0008,
+        0.0003
+      ],
+      "err_tilt_deg": [
+        1.078,
+        1.95
+      ],
+      "half_m": [
+        0.034,
+        0.0531
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9339,
+        -0.3575,
+        0.0
+      ],
+      "plate": 15,
+      "stiffness": "rigid",
+      "table_row": 1290,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.557,
+        -0.083,
+        0.398
+      ],
+      "err_normal_m": 0.0083,
+      "err_plane_m": [
+        -0.0008,
+        0.0003
+      ],
+      "err_tilt_deg": [
+        1.078,
+        1.95
+      ],
+      "half_m": [
+        0.034,
+        0.0531
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9339,
+        -0.3575,
+        0.0
+      ],
+      "plate": 15,
+      "stiffness": "rigid",
+      "table_row": 1290,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.557,
+        -0.083,
+        0.398
+      ],
+      "err_normal_m": 0.0083,
+      "err_plane_m": [
+        -0.0008,
+        0.0003
+      ],
+      "err_tilt_deg": [
+        1.078,
+        1.95
+      ],
+      "half_m": [
+        0.034,
+        0.0531
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9339,
+        -0.3575,
+        0.0
+      ],
+      "plate": 15,
+      "stiffness": "sprung",
+      "table_row": 1290,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.557,
+        -0.083,
+        0.398
+      ],
+      "err_normal_m": 0.0083,
+      "err_plane_m": [
+        -0.0008,
+        0.0003
+      ],
+      "err_tilt_deg": [
+        1.078,
+        1.95
+      ],
+      "half_m": [
+        0.034,
+        0.0531
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9339,
+        -0.3575,
+        0.0
+      ],
+      "plate": 15,
+      "stiffness": "sprung",
+      "table_row": 1290,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.557,
+        -0.083,
+        0.398
+      ],
+      "err_normal_m": 0.0083,
+      "err_plane_m": [
+        -0.0008,
+        0.0003
+      ],
+      "err_tilt_deg": [
+        1.078,
+        1.95
+      ],
+      "half_m": [
+        0.034,
+        0.0531
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9339,
+        -0.3575,
+        0.0
+      ],
+      "plate": 15,
+      "stiffness": "sprung",
+      "table_row": 1290,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.453,
+        -0.138,
+        0.2091
+      ],
+      "err_normal_m": -0.01,
+      "err_plane_m": [
+        -0.0073,
+        -0.0046
+      ],
+      "err_tilt_deg": [
+        -0.29,
+        1.435
+      ],
+      "half_m": [
+        0.0428,
+        0.0678
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.995,
+        -0.1002,
+        0.0
+      ],
+      "plate": 16,
+      "stiffness": "rigid",
+      "table_row": 1592,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.453,
+        -0.138,
+        0.2091
+      ],
+      "err_normal_m": -0.01,
+      "err_plane_m": [
+        -0.0073,
+        -0.0046
+      ],
+      "err_tilt_deg": [
+        -0.29,
+        1.435
+      ],
+      "half_m": [
+        0.0428,
+        0.0678
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.995,
+        -0.1002,
+        0.0
+      ],
+      "plate": 16,
+      "stiffness": "rigid",
+      "table_row": 1592,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.453,
+        -0.138,
+        0.2091
+      ],
+      "err_normal_m": -0.01,
+      "err_plane_m": [
+        -0.0073,
+        -0.0046
+      ],
+      "err_tilt_deg": [
+        -0.29,
+        1.435
+      ],
+      "half_m": [
+        0.0428,
+        0.0678
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.995,
+        -0.1002,
+        0.0
+      ],
+      "plate": 16,
+      "stiffness": "rigid",
+      "table_row": 1592,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.453,
+        -0.138,
+        0.2091
+      ],
+      "err_normal_m": -0.01,
+      "err_plane_m": [
+        -0.0073,
+        -0.0046
+      ],
+      "err_tilt_deg": [
+        -0.29,
+        1.435
+      ],
+      "half_m": [
+        0.0428,
+        0.0678
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.995,
+        -0.1002,
+        0.0
+      ],
+      "plate": 16,
+      "stiffness": "sprung",
+      "table_row": 1592,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.453,
+        -0.138,
+        0.2091
+      ],
+      "err_normal_m": -0.01,
+      "err_plane_m": [
+        -0.0073,
+        -0.0046
+      ],
+      "err_tilt_deg": [
+        -0.29,
+        1.435
+      ],
+      "half_m": [
+        0.0428,
+        0.0678
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.995,
+        -0.1002,
+        0.0
+      ],
+      "plate": 16,
+      "stiffness": "sprung",
+      "table_row": 1592,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.453,
+        -0.138,
+        0.2091
+      ],
+      "err_normal_m": -0.01,
+      "err_plane_m": [
+        -0.0073,
+        -0.0046
+      ],
+      "err_tilt_deg": [
+        -0.29,
+        1.435
+      ],
+      "half_m": [
+        0.0428,
+        0.0678
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.995,
+        -0.1002,
+        0.0
+      ],
+      "plate": 16,
+      "stiffness": "sprung",
+      "table_row": 1592,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4545,
+        -0.2206,
+        0.2281
+      ],
+      "err_normal_m": 0.0066,
+      "err_plane_m": [
+        -0.0084,
+        0.0057
+      ],
+      "err_tilt_deg": [
+        -0.64,
+        1.413
+      ],
+      "half_m": [
+        0.0849,
+        0.1034
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.8943,
+        0.4474,
+        0.0
+      ],
+      "plate": 17,
+      "stiffness": "rigid",
+      "table_row": 2551,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4545,
+        -0.2206,
+        0.2281
+      ],
+      "err_normal_m": 0.0066,
+      "err_plane_m": [
+        -0.0084,
+        0.0057
+      ],
+      "err_tilt_deg": [
+        -0.64,
+        1.413
+      ],
+      "half_m": [
+        0.0849,
+        0.1034
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.8943,
+        0.4474,
+        0.0
+      ],
+      "plate": 17,
+      "stiffness": "rigid",
+      "table_row": 2551,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4545,
+        -0.2206,
+        0.2281
+      ],
+      "err_normal_m": 0.0066,
+      "err_plane_m": [
+        -0.0084,
+        0.0057
+      ],
+      "err_tilt_deg": [
+        -0.64,
+        1.413
+      ],
+      "half_m": [
+        0.0849,
+        0.1034
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.8943,
+        0.4474,
+        0.0
+      ],
+      "plate": 17,
+      "stiffness": "rigid",
+      "table_row": 2551,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4545,
+        -0.2206,
+        0.2281
+      ],
+      "err_normal_m": 0.0066,
+      "err_plane_m": [
+        -0.0084,
+        0.0057
+      ],
+      "err_tilt_deg": [
+        -0.64,
+        1.413
+      ],
+      "half_m": [
+        0.0849,
+        0.1034
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.8943,
+        0.4474,
+        0.0
+      ],
+      "plate": 17,
+      "stiffness": "sprung",
+      "table_row": 2551,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4545,
+        -0.2206,
+        0.2281
+      ],
+      "err_normal_m": 0.0066,
+      "err_plane_m": [
+        -0.0084,
+        0.0057
+      ],
+      "err_tilt_deg": [
+        -0.64,
+        1.413
+      ],
+      "half_m": [
+        0.0849,
+        0.1034
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.8943,
+        0.4474,
+        0.0
+      ],
+      "plate": 17,
+      "stiffness": "sprung",
+      "table_row": 2551,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4545,
+        -0.2206,
+        0.2281
+      ],
+      "err_normal_m": 0.0066,
+      "err_plane_m": [
+        -0.0084,
+        0.0057
+      ],
+      "err_tilt_deg": [
+        -0.64,
+        1.413
+      ],
+      "half_m": [
+        0.0849,
+        0.1034
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.8943,
+        0.4474,
+        0.0
+      ],
+      "plate": 17,
+      "stiffness": "sprung",
+      "table_row": 2551,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.518,
+        -0.1455,
+        0.1745
+      ],
+      "err_normal_m": 0.0064,
+      "err_plane_m": [
+        0.0087,
+        -0.0008
+      ],
+      "err_tilt_deg": [
+        -3.939,
+        3.836
+      ],
+      "half_m": [
+        0.1181,
+        0.0684
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.8766,
+        0.4812,
+        0.0
+      ],
+      "plate": 18,
+      "stiffness": "rigid",
+      "table_row": 2723,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.518,
+        -0.1455,
+        0.1745
+      ],
+      "err_normal_m": 0.0064,
+      "err_plane_m": [
+        0.0087,
+        -0.0008
+      ],
+      "err_tilt_deg": [
+        -3.939,
+        3.836
+      ],
+      "half_m": [
+        0.1181,
+        0.0684
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.8766,
+        0.4812,
+        0.0
+      ],
+      "plate": 18,
+      "stiffness": "rigid",
+      "table_row": 2723,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.518,
+        -0.1455,
+        0.1745
+      ],
+      "err_normal_m": 0.0064,
+      "err_plane_m": [
+        0.0087,
+        -0.0008
+      ],
+      "err_tilt_deg": [
+        -3.939,
+        3.836
+      ],
+      "half_m": [
+        0.1181,
+        0.0684
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.8766,
+        0.4812,
+        0.0
+      ],
+      "plate": 18,
+      "stiffness": "rigid",
+      "table_row": 2723,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.518,
+        -0.1455,
+        0.1745
+      ],
+      "err_normal_m": 0.0064,
+      "err_plane_m": [
+        0.0087,
+        -0.0008
+      ],
+      "err_tilt_deg": [
+        -3.939,
+        3.836
+      ],
+      "half_m": [
+        0.1181,
+        0.0684
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.8766,
+        0.4812,
+        0.0
+      ],
+      "plate": 18,
+      "stiffness": "sprung",
+      "table_row": 2723,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.518,
+        -0.1455,
+        0.1745
+      ],
+      "err_normal_m": 0.0064,
+      "err_plane_m": [
+        0.0087,
+        -0.0008
+      ],
+      "err_tilt_deg": [
+        -3.939,
+        3.836
+      ],
+      "half_m": [
+        0.1181,
+        0.0684
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.8766,
+        0.4812,
+        0.0
+      ],
+      "plate": 18,
+      "stiffness": "sprung",
+      "table_row": 2723,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.518,
+        -0.1455,
+        0.1745
+      ],
+      "err_normal_m": 0.0064,
+      "err_plane_m": [
+        0.0087,
+        -0.0008
+      ],
+      "err_tilt_deg": [
+        -3.939,
+        3.836
+      ],
+      "half_m": [
+        0.1181,
+        0.0684
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.8766,
+        0.4812,
+        0.0
+      ],
+      "plate": 18,
+      "stiffness": "sprung",
+      "table_row": 2723,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5189,
+        -0.1359,
+        0.3175
+      ],
+      "err_normal_m": 0.0067,
+      "err_plane_m": [
+        -0.0029,
+        -0.0065
+      ],
+      "err_tilt_deg": [
+        3.26,
+        -0.335
+      ],
+      "half_m": [
+        0.1379,
+        0.1184
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.8388,
+        -0.5445,
+        0.0
+      ],
+      "plate": 19,
+      "stiffness": "rigid",
+      "table_row": 2857,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5189,
+        -0.1359,
+        0.3175
+      ],
+      "err_normal_m": 0.0067,
+      "err_plane_m": [
+        -0.0029,
+        -0.0065
+      ],
+      "err_tilt_deg": [
+        3.26,
+        -0.335
+      ],
+      "half_m": [
+        0.1379,
+        0.1184
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.8388,
+        -0.5445,
+        0.0
+      ],
+      "plate": 19,
+      "stiffness": "rigid",
+      "table_row": 2857,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5189,
+        -0.1359,
+        0.3175
+      ],
+      "err_normal_m": 0.0067,
+      "err_plane_m": [
+        -0.0029,
+        -0.0065
+      ],
+      "err_tilt_deg": [
+        3.26,
+        -0.335
+      ],
+      "half_m": [
+        0.1379,
+        0.1184
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.8388,
+        -0.5445,
+        0.0
+      ],
+      "plate": 19,
+      "stiffness": "rigid",
+      "table_row": 2857,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5189,
+        -0.1359,
+        0.3175
+      ],
+      "err_normal_m": 0.0067,
+      "err_plane_m": [
+        -0.0029,
+        -0.0065
+      ],
+      "err_tilt_deg": [
+        3.26,
+        -0.335
+      ],
+      "half_m": [
+        0.1379,
+        0.1184
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.8388,
+        -0.5445,
+        0.0
+      ],
+      "plate": 19,
+      "stiffness": "sprung",
+      "table_row": 2857,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5189,
+        -0.1359,
+        0.3175
+      ],
+      "err_normal_m": 0.0067,
+      "err_plane_m": [
+        -0.0029,
+        -0.0065
+      ],
+      "err_tilt_deg": [
+        3.26,
+        -0.335
+      ],
+      "half_m": [
+        0.1379,
+        0.1184
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.8388,
+        -0.5445,
+        0.0
+      ],
+      "plate": 19,
+      "stiffness": "sprung",
+      "table_row": 2857,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5189,
+        -0.1359,
+        0.3175
+      ],
+      "err_normal_m": 0.0067,
+      "err_plane_m": [
+        -0.0029,
+        -0.0065
+      ],
+      "err_tilt_deg": [
+        3.26,
+        -0.335
+      ],
+      "half_m": [
+        0.1379,
+        0.1184
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.8388,
+        -0.5445,
+        0.0
+      ],
+      "plate": 19,
+      "stiffness": "sprung",
+      "table_row": 2857,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4299,
+        -0.1427,
+        0.3942
+      ],
+      "err_normal_m": -0.0079,
+      "err_plane_m": [
+        -0.0091,
+        -0.0037
+      ],
+      "err_tilt_deg": [
+        1.275,
+        3.936
+      ],
+      "half_m": [
+        0.046,
+        0.0809
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9664,
+        -0.2571,
+        0.0
+      ],
+      "plate": 20,
+      "stiffness": "rigid",
+      "table_row": 3002,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4299,
+        -0.1427,
+        0.3942
+      ],
+      "err_normal_m": -0.0079,
+      "err_plane_m": [
+        -0.0091,
+        -0.0037
+      ],
+      "err_tilt_deg": [
+        1.275,
+        3.936
+      ],
+      "half_m": [
+        0.046,
+        0.0809
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9664,
+        -0.2571,
+        0.0
+      ],
+      "plate": 20,
+      "stiffness": "rigid",
+      "table_row": 3002,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4299,
+        -0.1427,
+        0.3942
+      ],
+      "err_normal_m": -0.0079,
+      "err_plane_m": [
+        -0.0091,
+        -0.0037
+      ],
+      "err_tilt_deg": [
+        1.275,
+        3.936
+      ],
+      "half_m": [
+        0.046,
+        0.0809
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9664,
+        -0.2571,
+        0.0
+      ],
+      "plate": 20,
+      "stiffness": "rigid",
+      "table_row": 3002,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4299,
+        -0.1427,
+        0.3942
+      ],
+      "err_normal_m": -0.0079,
+      "err_plane_m": [
+        -0.0091,
+        -0.0037
+      ],
+      "err_tilt_deg": [
+        1.275,
+        3.936
+      ],
+      "half_m": [
+        0.046,
+        0.0809
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9664,
+        -0.2571,
+        0.0
+      ],
+      "plate": 20,
+      "stiffness": "sprung",
+      "table_row": 3002,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4299,
+        -0.1427,
+        0.3942
+      ],
+      "err_normal_m": -0.0079,
+      "err_plane_m": [
+        -0.0091,
+        -0.0037
+      ],
+      "err_tilt_deg": [
+        1.275,
+        3.936
+      ],
+      "half_m": [
+        0.046,
+        0.0809
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9664,
+        -0.2571,
+        0.0
+      ],
+      "plate": 20,
+      "stiffness": "sprung",
+      "table_row": 3002,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4299,
+        -0.1427,
+        0.3942
+      ],
+      "err_normal_m": -0.0079,
+      "err_plane_m": [
+        -0.0091,
+        -0.0037
+      ],
+      "err_tilt_deg": [
+        1.275,
+        3.936
+      ],
+      "half_m": [
+        0.046,
+        0.0809
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9664,
+        -0.2571,
+        0.0
+      ],
+      "plate": 20,
+      "stiffness": "sprung",
+      "table_row": 3002,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5122,
+        -0.2364,
+        0.2656
+      ],
+      "err_normal_m": -0.0004,
+      "err_plane_m": [
+        0.0043,
+        -0.0017
+      ],
+      "err_tilt_deg": [
+        2.14,
+        2.24
+      ],
+      "half_m": [
+        0.04,
+        0.1456
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9777,
+        -0.21,
+        0.0
+      ],
+      "plate": 21,
+      "stiffness": "rigid",
+      "table_row": 3763,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5122,
+        -0.2364,
+        0.2656
+      ],
+      "err_normal_m": -0.0004,
+      "err_plane_m": [
+        0.0043,
+        -0.0017
+      ],
+      "err_tilt_deg": [
+        2.14,
+        2.24
+      ],
+      "half_m": [
+        0.04,
+        0.1456
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9777,
+        -0.21,
+        0.0
+      ],
+      "plate": 21,
+      "stiffness": "rigid",
+      "table_row": 3763,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5122,
+        -0.2364,
+        0.2656
+      ],
+      "err_normal_m": -0.0004,
+      "err_plane_m": [
+        0.0043,
+        -0.0017
+      ],
+      "err_tilt_deg": [
+        2.14,
+        2.24
+      ],
+      "half_m": [
+        0.04,
+        0.1456
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9777,
+        -0.21,
+        0.0
+      ],
+      "plate": 21,
+      "stiffness": "rigid",
+      "table_row": 3763,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5122,
+        -0.2364,
+        0.2656
+      ],
+      "err_normal_m": -0.0004,
+      "err_plane_m": [
+        0.0043,
+        -0.0017
+      ],
+      "err_tilt_deg": [
+        2.14,
+        2.24
+      ],
+      "half_m": [
+        0.04,
+        0.1456
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9777,
+        -0.21,
+        0.0
+      ],
+      "plate": 21,
+      "stiffness": "sprung",
+      "table_row": 3763,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5122,
+        -0.2364,
+        0.2656
+      ],
+      "err_normal_m": -0.0004,
+      "err_plane_m": [
+        0.0043,
+        -0.0017
+      ],
+      "err_tilt_deg": [
+        2.14,
+        2.24
+      ],
+      "half_m": [
+        0.04,
+        0.1456
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9777,
+        -0.21,
+        0.0
+      ],
+      "plate": 21,
+      "stiffness": "sprung",
+      "table_row": 3763,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5122,
+        -0.2364,
+        0.2656
+      ],
+      "err_normal_m": -0.0004,
+      "err_plane_m": [
+        0.0043,
+        -0.0017
+      ],
+      "err_tilt_deg": [
+        2.14,
+        2.24
+      ],
+      "half_m": [
+        0.04,
+        0.1456
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9777,
+        -0.21,
+        0.0
+      ],
+      "plate": 21,
+      "stiffness": "sprung",
+      "table_row": 3763,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2772,
+        -0.2145,
+        0.295
+      ],
+      "err_normal_m": 0.0004,
+      "err_plane_m": [
+        -0.0057,
+        0.0026
+      ],
+      "err_tilt_deg": [
+        -3.042,
+        -1.714
+      ],
+      "half_m": [
+        0.0591,
+        0.0404
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.2201,
+        0.9755,
+        0.0
+      ],
+      "plate": 22,
+      "stiffness": "rigid",
+      "table_row": 3910,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2772,
+        -0.2145,
+        0.295
+      ],
+      "err_normal_m": 0.0004,
+      "err_plane_m": [
+        -0.0057,
+        0.0026
+      ],
+      "err_tilt_deg": [
+        -3.042,
+        -1.714
+      ],
+      "half_m": [
+        0.0591,
+        0.0404
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.2201,
+        0.9755,
+        0.0
+      ],
+      "plate": 22,
+      "stiffness": "rigid",
+      "table_row": 3910,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2772,
+        -0.2145,
+        0.295
+      ],
+      "err_normal_m": 0.0004,
+      "err_plane_m": [
+        -0.0057,
+        0.0026
+      ],
+      "err_tilt_deg": [
+        -3.042,
+        -1.714
+      ],
+      "half_m": [
+        0.0591,
+        0.0404
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.2201,
+        0.9755,
+        0.0
+      ],
+      "plate": 22,
+      "stiffness": "rigid",
+      "table_row": 3910,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2772,
+        -0.2145,
+        0.295
+      ],
+      "err_normal_m": 0.0004,
+      "err_plane_m": [
+        -0.0057,
+        0.0026
+      ],
+      "err_tilt_deg": [
+        -3.042,
+        -1.714
+      ],
+      "half_m": [
+        0.0591,
+        0.0404
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.2201,
+        0.9755,
+        0.0
+      ],
+      "plate": 22,
+      "stiffness": "sprung",
+      "table_row": 3910,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2772,
+        -0.2145,
+        0.295
+      ],
+      "err_normal_m": 0.0004,
+      "err_plane_m": [
+        -0.0057,
+        0.0026
+      ],
+      "err_tilt_deg": [
+        -3.042,
+        -1.714
+      ],
+      "half_m": [
+        0.0591,
+        0.0404
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.2201,
+        0.9755,
+        0.0
+      ],
+      "plate": 22,
+      "stiffness": "sprung",
+      "table_row": 3910,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2772,
+        -0.2145,
+        0.295
+      ],
+      "err_normal_m": 0.0004,
+      "err_plane_m": [
+        -0.0057,
+        0.0026
+      ],
+      "err_tilt_deg": [
+        -3.042,
+        -1.714
+      ],
+      "half_m": [
+        0.0591,
+        0.0404
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.2201,
+        0.9755,
+        0.0
+      ],
+      "plate": 22,
+      "stiffness": "sprung",
+      "table_row": 3910,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3855,
+        -0.2114,
+        0.3179
+      ],
+      "err_normal_m": 0.0029,
+      "err_plane_m": [
+        0.0046,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        -1.673,
+        -2.114
+      ],
+      "half_m": [
+        0.1459,
+        0.0338
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9609,
+        0.2771,
+        0.0
+      ],
+      "plate": 23,
+      "stiffness": "rigid",
+      "table_row": 3946,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3855,
+        -0.2114,
+        0.3179
+      ],
+      "err_normal_m": 0.0029,
+      "err_plane_m": [
+        0.0046,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        -1.673,
+        -2.114
+      ],
+      "half_m": [
+        0.1459,
+        0.0338
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9609,
+        0.2771,
+        0.0
+      ],
+      "plate": 23,
+      "stiffness": "rigid",
+      "table_row": 3946,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3855,
+        -0.2114,
+        0.3179
+      ],
+      "err_normal_m": 0.0029,
+      "err_plane_m": [
+        0.0046,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        -1.673,
+        -2.114
+      ],
+      "half_m": [
+        0.1459,
+        0.0338
+      ],
+      "k_soft": 8000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9609,
+        0.2771,
+        0.0
+      ],
+      "plate": 23,
+      "stiffness": "rigid",
+      "table_row": 3946,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3855,
+        -0.2114,
+        0.3179
+      ],
+      "err_normal_m": 0.0029,
+      "err_plane_m": [
+        0.0046,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        -1.673,
+        -2.114
+      ],
+      "half_m": [
+        0.1459,
+        0.0338
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 8.0,
+      "normal": [
+        -0.9609,
+        0.2771,
+        0.0
+      ],
+      "plate": 23,
+      "stiffness": "sprung",
+      "table_row": 3946,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3855,
+        -0.2114,
+        0.3179
+      ],
+      "err_normal_m": 0.0029,
+      "err_plane_m": [
+        0.0046,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        -1.673,
+        -2.114
+      ],
+      "half_m": [
+        0.1459,
+        0.0338
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 16.0,
+      "normal": [
+        -0.9609,
+        0.2771,
+        0.0
+      ],
+      "plate": 23,
+      "stiffness": "sprung",
+      "table_row": 3946,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3855,
+        -0.2114,
+        0.3179
+      ],
+      "err_normal_m": 0.0029,
+      "err_plane_m": [
+        0.0046,
+        0.0046
+      ],
+      "err_tilt_deg": [
+        -1.673,
+        -2.114
+      ],
+      "half_m": [
+        0.1459,
+        0.0338
+      ],
+      "k_soft": 1000.0,
+      "kind": "wall",
+      "level_n": 28.0,
+      "normal": [
+        -0.9609,
+        0.2771,
+        0.0
+      ],
+      "plate": 23,
+      "stiffness": "sprung",
+      "table_row": 3946,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4785,
+        -0.2175,
+        0.1116
+      ],
+      "err_normal_m": 0.0081,
+      "err_plane_m": [
+        0.007,
+        -0.0051
+      ],
+      "err_tilt_deg": [
+        -0.416,
+        0.115
+      ],
+      "half_m": [
+        0.0914,
+        0.0599
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 24,
+      "stiffness": "rigid",
+      "table_row": 729,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4785,
+        -0.2175,
+        0.1116
+      ],
+      "err_normal_m": 0.0081,
+      "err_plane_m": [
+        0.007,
+        -0.0051
+      ],
+      "err_tilt_deg": [
+        -0.416,
+        0.115
+      ],
+      "half_m": [
+        0.0914,
+        0.0599
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 24,
+      "stiffness": "rigid",
+      "table_row": 729,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4785,
+        -0.2175,
+        0.1116
+      ],
+      "err_normal_m": 0.0081,
+      "err_plane_m": [
+        0.007,
+        -0.0051
+      ],
+      "err_tilt_deg": [
+        -0.416,
+        0.115
+      ],
+      "half_m": [
+        0.0914,
+        0.0599
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 24,
+      "stiffness": "rigid",
+      "table_row": 729,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4785,
+        -0.2175,
+        0.1116
+      ],
+      "err_normal_m": 0.0081,
+      "err_plane_m": [
+        0.007,
+        -0.0051
+      ],
+      "err_tilt_deg": [
+        -0.416,
+        0.115
+      ],
+      "half_m": [
+        0.0914,
+        0.0599
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 24,
+      "stiffness": "sprung",
+      "table_row": 729,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4785,
+        -0.2175,
+        0.1116
+      ],
+      "err_normal_m": 0.0081,
+      "err_plane_m": [
+        0.007,
+        -0.0051
+      ],
+      "err_tilt_deg": [
+        -0.416,
+        0.115
+      ],
+      "half_m": [
+        0.0914,
+        0.0599
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 24,
+      "stiffness": "sprung",
+      "table_row": 729,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4785,
+        -0.2175,
+        0.1116
+      ],
+      "err_normal_m": 0.0081,
+      "err_plane_m": [
+        0.007,
+        -0.0051
+      ],
+      "err_tilt_deg": [
+        -0.416,
+        0.115
+      ],
+      "half_m": [
+        0.0914,
+        0.0599
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 24,
+      "stiffness": "sprung",
+      "table_row": 729,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3801,
+        -0.1441,
+        0.0584
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        -0.0064,
+        0.0021
+      ],
+      "err_tilt_deg": [
+        3.834,
+        -3.153
+      ],
+      "half_m": [
+        0.1258,
+        0.0515
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 25,
+      "stiffness": "rigid",
+      "table_row": 889,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3801,
+        -0.1441,
+        0.0584
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        -0.0064,
+        0.0021
+      ],
+      "err_tilt_deg": [
+        3.834,
+        -3.153
+      ],
+      "half_m": [
+        0.1258,
+        0.0515
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 25,
+      "stiffness": "rigid",
+      "table_row": 889,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3801,
+        -0.1441,
+        0.0584
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        -0.0064,
+        0.0021
+      ],
+      "err_tilt_deg": [
+        3.834,
+        -3.153
+      ],
+      "half_m": [
+        0.1258,
+        0.0515
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 25,
+      "stiffness": "rigid",
+      "table_row": 889,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3801,
+        -0.1441,
+        0.0584
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        -0.0064,
+        0.0021
+      ],
+      "err_tilt_deg": [
+        3.834,
+        -3.153
+      ],
+      "half_m": [
+        0.1258,
+        0.0515
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 25,
+      "stiffness": "sprung",
+      "table_row": 889,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3801,
+        -0.1441,
+        0.0584
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        -0.0064,
+        0.0021
+      ],
+      "err_tilt_deg": [
+        3.834,
+        -3.153
+      ],
+      "half_m": [
+        0.1258,
+        0.0515
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 25,
+      "stiffness": "sprung",
+      "table_row": 889,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3801,
+        -0.1441,
+        0.0584
+      ],
+      "err_normal_m": -0.0057,
+      "err_plane_m": [
+        -0.0064,
+        0.0021
+      ],
+      "err_tilt_deg": [
+        3.834,
+        -3.153
+      ],
+      "half_m": [
+        0.1258,
+        0.0515
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 25,
+      "stiffness": "sprung",
+      "table_row": 889,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3664,
+        -0.1965,
+        0.0824
+      ],
+      "err_normal_m": 0.0036,
+      "err_plane_m": [
+        0.0015,
+        0.0054
+      ],
+      "err_tilt_deg": [
+        2.258,
+        -3.548
+      ],
+      "half_m": [
+        0.0616,
+        0.0369
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 26,
+      "stiffness": "rigid",
+      "table_row": 1082,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3664,
+        -0.1965,
+        0.0824
+      ],
+      "err_normal_m": 0.0036,
+      "err_plane_m": [
+        0.0015,
+        0.0054
+      ],
+      "err_tilt_deg": [
+        2.258,
+        -3.548
+      ],
+      "half_m": [
+        0.0616,
+        0.0369
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 26,
+      "stiffness": "rigid",
+      "table_row": 1082,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3664,
+        -0.1965,
+        0.0824
+      ],
+      "err_normal_m": 0.0036,
+      "err_plane_m": [
+        0.0015,
+        0.0054
+      ],
+      "err_tilt_deg": [
+        2.258,
+        -3.548
+      ],
+      "half_m": [
+        0.0616,
+        0.0369
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 26,
+      "stiffness": "rigid",
+      "table_row": 1082,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3664,
+        -0.1965,
+        0.0824
+      ],
+      "err_normal_m": 0.0036,
+      "err_plane_m": [
+        0.0015,
+        0.0054
+      ],
+      "err_tilt_deg": [
+        2.258,
+        -3.548
+      ],
+      "half_m": [
+        0.0616,
+        0.0369
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 26,
+      "stiffness": "sprung",
+      "table_row": 1082,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3664,
+        -0.1965,
+        0.0824
+      ],
+      "err_normal_m": 0.0036,
+      "err_plane_m": [
+        0.0015,
+        0.0054
+      ],
+      "err_tilt_deg": [
+        2.258,
+        -3.548
+      ],
+      "half_m": [
+        0.0616,
+        0.0369
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 26,
+      "stiffness": "sprung",
+      "table_row": 1082,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3664,
+        -0.1965,
+        0.0824
+      ],
+      "err_normal_m": 0.0036,
+      "err_plane_m": [
+        0.0015,
+        0.0054
+      ],
+      "err_tilt_deg": [
+        2.258,
+        -3.548
+      ],
+      "half_m": [
+        0.0616,
+        0.0369
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 26,
+      "stiffness": "sprung",
+      "table_row": 1082,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4866,
+        -0.1825,
+        0.3142
+      ],
+      "err_normal_m": 0.0034,
+      "err_plane_m": [
+        0.0079,
+        0.0066
+      ],
+      "err_tilt_deg": [
+        -0.901,
+        -1.381
+      ],
+      "half_m": [
+        0.1174,
+        0.1077
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 27,
+      "stiffness": "rigid",
+      "table_row": 1192,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4866,
+        -0.1825,
+        0.3142
+      ],
+      "err_normal_m": 0.0034,
+      "err_plane_m": [
+        0.0079,
+        0.0066
+      ],
+      "err_tilt_deg": [
+        -0.901,
+        -1.381
+      ],
+      "half_m": [
+        0.1174,
+        0.1077
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 27,
+      "stiffness": "rigid",
+      "table_row": 1192,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4866,
+        -0.1825,
+        0.3142
+      ],
+      "err_normal_m": 0.0034,
+      "err_plane_m": [
+        0.0079,
+        0.0066
+      ],
+      "err_tilt_deg": [
+        -0.901,
+        -1.381
+      ],
+      "half_m": [
+        0.1174,
+        0.1077
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 27,
+      "stiffness": "rigid",
+      "table_row": 1192,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4866,
+        -0.1825,
+        0.3142
+      ],
+      "err_normal_m": 0.0034,
+      "err_plane_m": [
+        0.0079,
+        0.0066
+      ],
+      "err_tilt_deg": [
+        -0.901,
+        -1.381
+      ],
+      "half_m": [
+        0.1174,
+        0.1077
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 27,
+      "stiffness": "sprung",
+      "table_row": 1192,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4866,
+        -0.1825,
+        0.3142
+      ],
+      "err_normal_m": 0.0034,
+      "err_plane_m": [
+        0.0079,
+        0.0066
+      ],
+      "err_tilt_deg": [
+        -0.901,
+        -1.381
+      ],
+      "half_m": [
+        0.1174,
+        0.1077
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 27,
+      "stiffness": "sprung",
+      "table_row": 1192,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4866,
+        -0.1825,
+        0.3142
+      ],
+      "err_normal_m": 0.0034,
+      "err_plane_m": [
+        0.0079,
+        0.0066
+      ],
+      "err_tilt_deg": [
+        -0.901,
+        -1.381
+      ],
+      "half_m": [
+        0.1174,
+        0.1077
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 27,
+      "stiffness": "sprung",
+      "table_row": 1192,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3643,
+        -0.0543,
+        0.0814
+      ],
+      "err_normal_m": 0.0057,
+      "err_plane_m": [
+        -0.0091,
+        0.0084
+      ],
+      "err_tilt_deg": [
+        1.192,
+        2.735
+      ],
+      "half_m": [
+        0.073,
+        0.0487
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 28,
+      "stiffness": "rigid",
+      "table_row": 1358,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3643,
+        -0.0543,
+        0.0814
+      ],
+      "err_normal_m": 0.0057,
+      "err_plane_m": [
+        -0.0091,
+        0.0084
+      ],
+      "err_tilt_deg": [
+        1.192,
+        2.735
+      ],
+      "half_m": [
+        0.073,
+        0.0487
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 28,
+      "stiffness": "rigid",
+      "table_row": 1358,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3643,
+        -0.0543,
+        0.0814
+      ],
+      "err_normal_m": 0.0057,
+      "err_plane_m": [
+        -0.0091,
+        0.0084
+      ],
+      "err_tilt_deg": [
+        1.192,
+        2.735
+      ],
+      "half_m": [
+        0.073,
+        0.0487
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 28,
+      "stiffness": "rigid",
+      "table_row": 1358,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3643,
+        -0.0543,
+        0.0814
+      ],
+      "err_normal_m": 0.0057,
+      "err_plane_m": [
+        -0.0091,
+        0.0084
+      ],
+      "err_tilt_deg": [
+        1.192,
+        2.735
+      ],
+      "half_m": [
+        0.073,
+        0.0487
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 28,
+      "stiffness": "sprung",
+      "table_row": 1358,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3643,
+        -0.0543,
+        0.0814
+      ],
+      "err_normal_m": 0.0057,
+      "err_plane_m": [
+        -0.0091,
+        0.0084
+      ],
+      "err_tilt_deg": [
+        1.192,
+        2.735
+      ],
+      "half_m": [
+        0.073,
+        0.0487
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 28,
+      "stiffness": "sprung",
+      "table_row": 1358,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3643,
+        -0.0543,
+        0.0814
+      ],
+      "err_normal_m": 0.0057,
+      "err_plane_m": [
+        -0.0091,
+        0.0084
+      ],
+      "err_tilt_deg": [
+        1.192,
+        2.735
+      ],
+      "half_m": [
+        0.073,
+        0.0487
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 28,
+      "stiffness": "sprung",
+      "table_row": 1358,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2731,
+        -0.2997,
+        0.0599
+      ],
+      "err_normal_m": 0.0042,
+      "err_plane_m": [
+        0.0008,
+        0.0086
+      ],
+      "err_tilt_deg": [
+        3.803,
+        0.592
+      ],
+      "half_m": [
+        0.0589,
+        0.0323
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 29,
+      "stiffness": "rigid",
+      "table_row": 1381,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2731,
+        -0.2997,
+        0.0599
+      ],
+      "err_normal_m": 0.0042,
+      "err_plane_m": [
+        0.0008,
+        0.0086
+      ],
+      "err_tilt_deg": [
+        3.803,
+        0.592
+      ],
+      "half_m": [
+        0.0589,
+        0.0323
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 29,
+      "stiffness": "rigid",
+      "table_row": 1381,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2731,
+        -0.2997,
+        0.0599
+      ],
+      "err_normal_m": 0.0042,
+      "err_plane_m": [
+        0.0008,
+        0.0086
+      ],
+      "err_tilt_deg": [
+        3.803,
+        0.592
+      ],
+      "half_m": [
+        0.0589,
+        0.0323
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 29,
+      "stiffness": "rigid",
+      "table_row": 1381,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2731,
+        -0.2997,
+        0.0599
+      ],
+      "err_normal_m": 0.0042,
+      "err_plane_m": [
+        0.0008,
+        0.0086
+      ],
+      "err_tilt_deg": [
+        3.803,
+        0.592
+      ],
+      "half_m": [
+        0.0589,
+        0.0323
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 29,
+      "stiffness": "sprung",
+      "table_row": 1381,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2731,
+        -0.2997,
+        0.0599
+      ],
+      "err_normal_m": 0.0042,
+      "err_plane_m": [
+        0.0008,
+        0.0086
+      ],
+      "err_tilt_deg": [
+        3.803,
+        0.592
+      ],
+      "half_m": [
+        0.0589,
+        0.0323
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 29,
+      "stiffness": "sprung",
+      "table_row": 1381,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2731,
+        -0.2997,
+        0.0599
+      ],
+      "err_normal_m": 0.0042,
+      "err_plane_m": [
+        0.0008,
+        0.0086
+      ],
+      "err_tilt_deg": [
+        3.803,
+        0.592
+      ],
+      "half_m": [
+        0.0589,
+        0.0323
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 29,
+      "stiffness": "sprung",
+      "table_row": 1381,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4817,
+        -0.1515,
+        0.1795
+      ],
+      "err_normal_m": 0.0037,
+      "err_plane_m": [
+        0.003,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        3.322,
+        -2.321
+      ],
+      "half_m": [
+        0.0509,
+        0.133
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 30,
+      "stiffness": "rigid",
+      "table_row": 1678,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4817,
+        -0.1515,
+        0.1795
+      ],
+      "err_normal_m": 0.0037,
+      "err_plane_m": [
+        0.003,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        3.322,
+        -2.321
+      ],
+      "half_m": [
+        0.0509,
+        0.133
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 30,
+      "stiffness": "rigid",
+      "table_row": 1678,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4817,
+        -0.1515,
+        0.1795
+      ],
+      "err_normal_m": 0.0037,
+      "err_plane_m": [
+        0.003,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        3.322,
+        -2.321
+      ],
+      "half_m": [
+        0.0509,
+        0.133
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 30,
+      "stiffness": "rigid",
+      "table_row": 1678,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4817,
+        -0.1515,
+        0.1795
+      ],
+      "err_normal_m": 0.0037,
+      "err_plane_m": [
+        0.003,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        3.322,
+        -2.321
+      ],
+      "half_m": [
+        0.0509,
+        0.133
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 30,
+      "stiffness": "sprung",
+      "table_row": 1678,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4817,
+        -0.1515,
+        0.1795
+      ],
+      "err_normal_m": 0.0037,
+      "err_plane_m": [
+        0.003,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        3.322,
+        -2.321
+      ],
+      "half_m": [
+        0.0509,
+        0.133
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 30,
+      "stiffness": "sprung",
+      "table_row": 1678,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4817,
+        -0.1515,
+        0.1795
+      ],
+      "err_normal_m": 0.0037,
+      "err_plane_m": [
+        0.003,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        3.322,
+        -2.321
+      ],
+      "half_m": [
+        0.0509,
+        0.133
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 30,
+      "stiffness": "sprung",
+      "table_row": 1678,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2382,
+        -0.339,
+        0.0926
+      ],
+      "err_normal_m": 0.0008,
+      "err_plane_m": [
+        -0.0082,
+        -0.0015
+      ],
+      "err_tilt_deg": [
+        1.417,
+        -0.533
+      ],
+      "half_m": [
+        0.0688,
+        0.0959
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 31,
+      "stiffness": "rigid",
+      "table_row": 2191,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2382,
+        -0.339,
+        0.0926
+      ],
+      "err_normal_m": 0.0008,
+      "err_plane_m": [
+        -0.0082,
+        -0.0015
+      ],
+      "err_tilt_deg": [
+        1.417,
+        -0.533
+      ],
+      "half_m": [
+        0.0688,
+        0.0959
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 31,
+      "stiffness": "rigid",
+      "table_row": 2191,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2382,
+        -0.339,
+        0.0926
+      ],
+      "err_normal_m": 0.0008,
+      "err_plane_m": [
+        -0.0082,
+        -0.0015
+      ],
+      "err_tilt_deg": [
+        1.417,
+        -0.533
+      ],
+      "half_m": [
+        0.0688,
+        0.0959
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 31,
+      "stiffness": "rigid",
+      "table_row": 2191,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.2382,
+        -0.339,
+        0.0926
+      ],
+      "err_normal_m": 0.0008,
+      "err_plane_m": [
+        -0.0082,
+        -0.0015
+      ],
+      "err_tilt_deg": [
+        1.417,
+        -0.533
+      ],
+      "half_m": [
+        0.0688,
+        0.0959
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 31,
+      "stiffness": "sprung",
+      "table_row": 2191,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2382,
+        -0.339,
+        0.0926
+      ],
+      "err_normal_m": 0.0008,
+      "err_plane_m": [
+        -0.0082,
+        -0.0015
+      ],
+      "err_tilt_deg": [
+        1.417,
+        -0.533
+      ],
+      "half_m": [
+        0.0688,
+        0.0959
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 31,
+      "stiffness": "sprung",
+      "table_row": 2191,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.2382,
+        -0.339,
+        0.0926
+      ],
+      "err_normal_m": 0.0008,
+      "err_plane_m": [
+        -0.0082,
+        -0.0015
+      ],
+      "err_tilt_deg": [
+        1.417,
+        -0.533
+      ],
+      "half_m": [
+        0.0688,
+        0.0959
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 31,
+      "stiffness": "sprung",
+      "table_row": 2191,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.1738,
+        -0.2818,
+        0.0371
+      ],
+      "err_normal_m": 0.0089,
+      "err_plane_m": [
+        -0.0092,
+        0.0051
+      ],
+      "err_tilt_deg": [
+        0.359,
+        0.656
+      ],
+      "half_m": [
+        0.0465,
+        0.1301
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 32,
+      "stiffness": "rigid",
+      "table_row": 2602,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.1738,
+        -0.2818,
+        0.0371
+      ],
+      "err_normal_m": 0.0089,
+      "err_plane_m": [
+        -0.0092,
+        0.0051
+      ],
+      "err_tilt_deg": [
+        0.359,
+        0.656
+      ],
+      "half_m": [
+        0.0465,
+        0.1301
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 32,
+      "stiffness": "rigid",
+      "table_row": 2602,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.1738,
+        -0.2818,
+        0.0371
+      ],
+      "err_normal_m": 0.0089,
+      "err_plane_m": [
+        -0.0092,
+        0.0051
+      ],
+      "err_tilt_deg": [
+        0.359,
+        0.656
+      ],
+      "half_m": [
+        0.0465,
+        0.1301
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 32,
+      "stiffness": "rigid",
+      "table_row": 2602,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.1738,
+        -0.2818,
+        0.0371
+      ],
+      "err_normal_m": 0.0089,
+      "err_plane_m": [
+        -0.0092,
+        0.0051
+      ],
+      "err_tilt_deg": [
+        0.359,
+        0.656
+      ],
+      "half_m": [
+        0.0465,
+        0.1301
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 32,
+      "stiffness": "sprung",
+      "table_row": 2602,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.1738,
+        -0.2818,
+        0.0371
+      ],
+      "err_normal_m": 0.0089,
+      "err_plane_m": [
+        -0.0092,
+        0.0051
+      ],
+      "err_tilt_deg": [
+        0.359,
+        0.656
+      ],
+      "half_m": [
+        0.0465,
+        0.1301
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 32,
+      "stiffness": "sprung",
+      "table_row": 2602,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.1738,
+        -0.2818,
+        0.0371
+      ],
+      "err_normal_m": 0.0089,
+      "err_plane_m": [
+        -0.0092,
+        0.0051
+      ],
+      "err_tilt_deg": [
+        0.359,
+        0.656
+      ],
+      "half_m": [
+        0.0465,
+        0.1301
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 32,
+      "stiffness": "sprung",
+      "table_row": 2602,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3197,
+        -0.0419,
+        0.0848
+      ],
+      "err_normal_m": 0.0028,
+      "err_plane_m": [
+        0.0063,
+        -0.0089
+      ],
+      "err_tilt_deg": [
+        -1.611,
+        -0.433
+      ],
+      "half_m": [
+        0.0926,
+        0.0873
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 33,
+      "stiffness": "rigid",
+      "table_row": 2768,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3197,
+        -0.0419,
+        0.0848
+      ],
+      "err_normal_m": 0.0028,
+      "err_plane_m": [
+        0.0063,
+        -0.0089
+      ],
+      "err_tilt_deg": [
+        -1.611,
+        -0.433
+      ],
+      "half_m": [
+        0.0926,
+        0.0873
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 33,
+      "stiffness": "rigid",
+      "table_row": 2768,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3197,
+        -0.0419,
+        0.0848
+      ],
+      "err_normal_m": 0.0028,
+      "err_plane_m": [
+        0.0063,
+        -0.0089
+      ],
+      "err_tilt_deg": [
+        -1.611,
+        -0.433
+      ],
+      "half_m": [
+        0.0926,
+        0.0873
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 33,
+      "stiffness": "rigid",
+      "table_row": 2768,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3197,
+        -0.0419,
+        0.0848
+      ],
+      "err_normal_m": 0.0028,
+      "err_plane_m": [
+        0.0063,
+        -0.0089
+      ],
+      "err_tilt_deg": [
+        -1.611,
+        -0.433
+      ],
+      "half_m": [
+        0.0926,
+        0.0873
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 33,
+      "stiffness": "sprung",
+      "table_row": 2768,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3197,
+        -0.0419,
+        0.0848
+      ],
+      "err_normal_m": 0.0028,
+      "err_plane_m": [
+        0.0063,
+        -0.0089
+      ],
+      "err_tilt_deg": [
+        -1.611,
+        -0.433
+      ],
+      "half_m": [
+        0.0926,
+        0.0873
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 33,
+      "stiffness": "sprung",
+      "table_row": 2768,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3197,
+        -0.0419,
+        0.0848
+      ],
+      "err_normal_m": 0.0028,
+      "err_plane_m": [
+        0.0063,
+        -0.0089
+      ],
+      "err_tilt_deg": [
+        -1.611,
+        -0.433
+      ],
+      "half_m": [
+        0.0926,
+        0.0873
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 33,
+      "stiffness": "sprung",
+      "table_row": 2768,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3456,
+        -0.0325,
+        0.0518
+      ],
+      "err_normal_m": 0.0019,
+      "err_plane_m": [
+        -0.0018,
+        -0.0066
+      ],
+      "err_tilt_deg": [
+        3.215,
+        3.131
+      ],
+      "half_m": [
+        0.0719,
+        0.0302
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 34,
+      "stiffness": "rigid",
+      "table_row": 2850,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3456,
+        -0.0325,
+        0.0518
+      ],
+      "err_normal_m": 0.0019,
+      "err_plane_m": [
+        -0.0018,
+        -0.0066
+      ],
+      "err_tilt_deg": [
+        3.215,
+        3.131
+      ],
+      "half_m": [
+        0.0719,
+        0.0302
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 34,
+      "stiffness": "rigid",
+      "table_row": 2850,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3456,
+        -0.0325,
+        0.0518
+      ],
+      "err_normal_m": 0.0019,
+      "err_plane_m": [
+        -0.0018,
+        -0.0066
+      ],
+      "err_tilt_deg": [
+        3.215,
+        3.131
+      ],
+      "half_m": [
+        0.0719,
+        0.0302
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 34,
+      "stiffness": "rigid",
+      "table_row": 2850,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.3456,
+        -0.0325,
+        0.0518
+      ],
+      "err_normal_m": 0.0019,
+      "err_plane_m": [
+        -0.0018,
+        -0.0066
+      ],
+      "err_tilt_deg": [
+        3.215,
+        3.131
+      ],
+      "half_m": [
+        0.0719,
+        0.0302
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 34,
+      "stiffness": "sprung",
+      "table_row": 2850,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3456,
+        -0.0325,
+        0.0518
+      ],
+      "err_normal_m": 0.0019,
+      "err_plane_m": [
+        -0.0018,
+        -0.0066
+      ],
+      "err_tilt_deg": [
+        3.215,
+        3.131
+      ],
+      "half_m": [
+        0.0719,
+        0.0302
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 34,
+      "stiffness": "sprung",
+      "table_row": 2850,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.3456,
+        -0.0325,
+        0.0518
+      ],
+      "err_normal_m": 0.0019,
+      "err_plane_m": [
+        -0.0018,
+        -0.0066
+      ],
+      "err_tilt_deg": [
+        3.215,
+        3.131
+      ],
+      "half_m": [
+        0.0719,
+        0.0302
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 34,
+      "stiffness": "sprung",
+      "table_row": 2850,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5183,
+        -0.2035,
+        0.2757
+      ],
+      "err_normal_m": 0.0074,
+      "err_plane_m": [
+        -0.0007,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        1.711,
+        1.52
+      ],
+      "half_m": [
+        0.1447,
+        0.043
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 35,
+      "stiffness": "rigid",
+      "table_row": 3088,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5183,
+        -0.2035,
+        0.2757
+      ],
+      "err_normal_m": 0.0074,
+      "err_plane_m": [
+        -0.0007,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        1.711,
+        1.52
+      ],
+      "half_m": [
+        0.1447,
+        0.043
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 35,
+      "stiffness": "rigid",
+      "table_row": 3088,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5183,
+        -0.2035,
+        0.2757
+      ],
+      "err_normal_m": 0.0074,
+      "err_plane_m": [
+        -0.0007,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        1.711,
+        1.52
+      ],
+      "half_m": [
+        0.1447,
+        0.043
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 35,
+      "stiffness": "rigid",
+      "table_row": 3088,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5183,
+        -0.2035,
+        0.2757
+      ],
+      "err_normal_m": 0.0074,
+      "err_plane_m": [
+        -0.0007,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        1.711,
+        1.52
+      ],
+      "half_m": [
+        0.1447,
+        0.043
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 35,
+      "stiffness": "sprung",
+      "table_row": 3088,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5183,
+        -0.2035,
+        0.2757
+      ],
+      "err_normal_m": 0.0074,
+      "err_plane_m": [
+        -0.0007,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        1.711,
+        1.52
+      ],
+      "half_m": [
+        0.1447,
+        0.043
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 35,
+      "stiffness": "sprung",
+      "table_row": 3088,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5183,
+        -0.2035,
+        0.2757
+      ],
+      "err_normal_m": 0.0074,
+      "err_plane_m": [
+        -0.0007,
+        0.0022
+      ],
+      "err_tilt_deg": [
+        1.711,
+        1.52
+      ],
+      "half_m": [
+        0.1447,
+        0.043
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_up",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "plate": 35,
+      "stiffness": "sprung",
+      "table_row": 3088,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5086,
+        -0.2347,
+        0.2948
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        0.0014,
+        0.0004
+      ],
+      "err_tilt_deg": [
+        1.677,
+        -1.126
+      ],
+      "half_m": [
+        0.1485,
+        0.0888
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 36,
+      "stiffness": "rigid",
+      "table_row": 5,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5086,
+        -0.2347,
+        0.2948
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        0.0014,
+        0.0004
+      ],
+      "err_tilt_deg": [
+        1.677,
+        -1.126
+      ],
+      "half_m": [
+        0.1485,
+        0.0888
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 36,
+      "stiffness": "rigid",
+      "table_row": 5,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5086,
+        -0.2347,
+        0.2948
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        0.0014,
+        0.0004
+      ],
+      "err_tilt_deg": [
+        1.677,
+        -1.126
+      ],
+      "half_m": [
+        0.1485,
+        0.0888
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 36,
+      "stiffness": "rigid",
+      "table_row": 5,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5086,
+        -0.2347,
+        0.2948
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        0.0014,
+        0.0004
+      ],
+      "err_tilt_deg": [
+        1.677,
+        -1.126
+      ],
+      "half_m": [
+        0.1485,
+        0.0888
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 36,
+      "stiffness": "sprung",
+      "table_row": 5,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5086,
+        -0.2347,
+        0.2948
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        0.0014,
+        0.0004
+      ],
+      "err_tilt_deg": [
+        1.677,
+        -1.126
+      ],
+      "half_m": [
+        0.1485,
+        0.0888
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 36,
+      "stiffness": "sprung",
+      "table_row": 5,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5086,
+        -0.2347,
+        0.2948
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        0.0014,
+        0.0004
+      ],
+      "err_tilt_deg": [
+        1.677,
+        -1.126
+      ],
+      "half_m": [
+        0.1485,
+        0.0888
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 36,
+      "stiffness": "sprung",
+      "table_row": 5,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4843,
+        -0.273,
+        0.2024
+      ],
+      "err_normal_m": -0.001,
+      "err_plane_m": [
+        -0.004,
+        -0.0012
+      ],
+      "err_tilt_deg": [
+        3.354,
+        2.133
+      ],
+      "half_m": [
+        0.0371,
+        0.032
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 37,
+      "stiffness": "rigid",
+      "table_row": 154,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4843,
+        -0.273,
+        0.2024
+      ],
+      "err_normal_m": -0.001,
+      "err_plane_m": [
+        -0.004,
+        -0.0012
+      ],
+      "err_tilt_deg": [
+        3.354,
+        2.133
+      ],
+      "half_m": [
+        0.0371,
+        0.032
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 37,
+      "stiffness": "rigid",
+      "table_row": 154,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4843,
+        -0.273,
+        0.2024
+      ],
+      "err_normal_m": -0.001,
+      "err_plane_m": [
+        -0.004,
+        -0.0012
+      ],
+      "err_tilt_deg": [
+        3.354,
+        2.133
+      ],
+      "half_m": [
+        0.0371,
+        0.032
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 37,
+      "stiffness": "rigid",
+      "table_row": 154,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4843,
+        -0.273,
+        0.2024
+      ],
+      "err_normal_m": -0.001,
+      "err_plane_m": [
+        -0.004,
+        -0.0012
+      ],
+      "err_tilt_deg": [
+        3.354,
+        2.133
+      ],
+      "half_m": [
+        0.0371,
+        0.032
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 37,
+      "stiffness": "sprung",
+      "table_row": 154,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4843,
+        -0.273,
+        0.2024
+      ],
+      "err_normal_m": -0.001,
+      "err_plane_m": [
+        -0.004,
+        -0.0012
+      ],
+      "err_tilt_deg": [
+        3.354,
+        2.133
+      ],
+      "half_m": [
+        0.0371,
+        0.032
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 37,
+      "stiffness": "sprung",
+      "table_row": 154,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4843,
+        -0.273,
+        0.2024
+      ],
+      "err_normal_m": -0.001,
+      "err_plane_m": [
+        -0.004,
+        -0.0012
+      ],
+      "err_tilt_deg": [
+        3.354,
+        2.133
+      ],
+      "half_m": [
+        0.0371,
+        0.032
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 37,
+      "stiffness": "sprung",
+      "table_row": 154,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5376,
+        -0.1836,
+        0.3716
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        -0.003,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        3.211,
+        2.487
+      ],
+      "half_m": [
+        0.1378,
+        0.0465
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 38,
+      "stiffness": "rigid",
+      "table_row": 211,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5376,
+        -0.1836,
+        0.3716
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        -0.003,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        3.211,
+        2.487
+      ],
+      "half_m": [
+        0.1378,
+        0.0465
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 38,
+      "stiffness": "rigid",
+      "table_row": 211,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5376,
+        -0.1836,
+        0.3716
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        -0.003,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        3.211,
+        2.487
+      ],
+      "half_m": [
+        0.1378,
+        0.0465
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 38,
+      "stiffness": "rigid",
+      "table_row": 211,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5376,
+        -0.1836,
+        0.3716
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        -0.003,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        3.211,
+        2.487
+      ],
+      "half_m": [
+        0.1378,
+        0.0465
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 38,
+      "stiffness": "sprung",
+      "table_row": 211,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5376,
+        -0.1836,
+        0.3716
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        -0.003,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        3.211,
+        2.487
+      ],
+      "half_m": [
+        0.1378,
+        0.0465
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 38,
+      "stiffness": "sprung",
+      "table_row": 211,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5376,
+        -0.1836,
+        0.3716
+      ],
+      "err_normal_m": 0.0022,
+      "err_plane_m": [
+        -0.003,
+        0.0097
+      ],
+      "err_tilt_deg": [
+        3.211,
+        2.487
+      ],
+      "half_m": [
+        0.1378,
+        0.0465
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 38,
+      "stiffness": "sprung",
+      "table_row": 211,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5559,
+        -0.167,
+        0.2842
+      ],
+      "err_normal_m": 0.0038,
+      "err_plane_m": [
+        0.0039,
+        0.0001
+      ],
+      "err_tilt_deg": [
+        -0.882,
+        -3.055
+      ],
+      "half_m": [
+        0.1318,
+        0.1177
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 39,
+      "stiffness": "rigid",
+      "table_row": 385,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5559,
+        -0.167,
+        0.2842
+      ],
+      "err_normal_m": 0.0038,
+      "err_plane_m": [
+        0.0039,
+        0.0001
+      ],
+      "err_tilt_deg": [
+        -0.882,
+        -3.055
+      ],
+      "half_m": [
+        0.1318,
+        0.1177
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 39,
+      "stiffness": "rigid",
+      "table_row": 385,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5559,
+        -0.167,
+        0.2842
+      ],
+      "err_normal_m": 0.0038,
+      "err_plane_m": [
+        0.0039,
+        0.0001
+      ],
+      "err_tilt_deg": [
+        -0.882,
+        -3.055
+      ],
+      "half_m": [
+        0.1318,
+        0.1177
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 39,
+      "stiffness": "rigid",
+      "table_row": 385,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5559,
+        -0.167,
+        0.2842
+      ],
+      "err_normal_m": 0.0038,
+      "err_plane_m": [
+        0.0039,
+        0.0001
+      ],
+      "err_tilt_deg": [
+        -0.882,
+        -3.055
+      ],
+      "half_m": [
+        0.1318,
+        0.1177
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 39,
+      "stiffness": "sprung",
+      "table_row": 385,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5559,
+        -0.167,
+        0.2842
+      ],
+      "err_normal_m": 0.0038,
+      "err_plane_m": [
+        0.0039,
+        0.0001
+      ],
+      "err_tilt_deg": [
+        -0.882,
+        -3.055
+      ],
+      "half_m": [
+        0.1318,
+        0.1177
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 39,
+      "stiffness": "sprung",
+      "table_row": 385,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5559,
+        -0.167,
+        0.2842
+      ],
+      "err_normal_m": 0.0038,
+      "err_plane_m": [
+        0.0039,
+        0.0001
+      ],
+      "err_tilt_deg": [
+        -0.882,
+        -3.055
+      ],
+      "half_m": [
+        0.1318,
+        0.1177
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 39,
+      "stiffness": "sprung",
+      "table_row": 385,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5505,
+        -0.1526,
+        0.3208
+      ],
+      "err_normal_m": -0.0033,
+      "err_plane_m": [
+        0.0039,
+        -0.0061
+      ],
+      "err_tilt_deg": [
+        0.681,
+        -2.316
+      ],
+      "half_m": [
+        0.1072,
+        0.1203
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 40,
+      "stiffness": "rigid",
+      "table_row": 874,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5505,
+        -0.1526,
+        0.3208
+      ],
+      "err_normal_m": -0.0033,
+      "err_plane_m": [
+        0.0039,
+        -0.0061
+      ],
+      "err_tilt_deg": [
+        0.681,
+        -2.316
+      ],
+      "half_m": [
+        0.1072,
+        0.1203
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 40,
+      "stiffness": "rigid",
+      "table_row": 874,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5505,
+        -0.1526,
+        0.3208
+      ],
+      "err_normal_m": -0.0033,
+      "err_plane_m": [
+        0.0039,
+        -0.0061
+      ],
+      "err_tilt_deg": [
+        0.681,
+        -2.316
+      ],
+      "half_m": [
+        0.1072,
+        0.1203
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 40,
+      "stiffness": "rigid",
+      "table_row": 874,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5505,
+        -0.1526,
+        0.3208
+      ],
+      "err_normal_m": -0.0033,
+      "err_plane_m": [
+        0.0039,
+        -0.0061
+      ],
+      "err_tilt_deg": [
+        0.681,
+        -2.316
+      ],
+      "half_m": [
+        0.1072,
+        0.1203
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 40,
+      "stiffness": "sprung",
+      "table_row": 874,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5505,
+        -0.1526,
+        0.3208
+      ],
+      "err_normal_m": -0.0033,
+      "err_plane_m": [
+        0.0039,
+        -0.0061
+      ],
+      "err_tilt_deg": [
+        0.681,
+        -2.316
+      ],
+      "half_m": [
+        0.1072,
+        0.1203
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 40,
+      "stiffness": "sprung",
+      "table_row": 874,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5505,
+        -0.1526,
+        0.3208
+      ],
+      "err_normal_m": -0.0033,
+      "err_plane_m": [
+        0.0039,
+        -0.0061
+      ],
+      "err_tilt_deg": [
+        0.681,
+        -2.316
+      ],
+      "half_m": [
+        0.1072,
+        0.1203
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 40,
+      "stiffness": "sprung",
+      "table_row": 874,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.34,
+        -0.3484,
+        0.1889
+      ],
+      "err_normal_m": 0.0031,
+      "err_plane_m": [
+        -0.0087,
+        0.0023
+      ],
+      "err_tilt_deg": [
+        1.433,
+        -1.175
+      ],
+      "half_m": [
+        0.1267,
+        0.148
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 41,
+      "stiffness": "rigid",
+      "table_row": 940,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.34,
+        -0.3484,
+        0.1889
+      ],
+      "err_normal_m": 0.0031,
+      "err_plane_m": [
+        -0.0087,
+        0.0023
+      ],
+      "err_tilt_deg": [
+        1.433,
+        -1.175
+      ],
+      "half_m": [
+        0.1267,
+        0.148
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 41,
+      "stiffness": "rigid",
+      "table_row": 940,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.34,
+        -0.3484,
+        0.1889
+      ],
+      "err_normal_m": 0.0031,
+      "err_plane_m": [
+        -0.0087,
+        0.0023
+      ],
+      "err_tilt_deg": [
+        1.433,
+        -1.175
+      ],
+      "half_m": [
+        0.1267,
+        0.148
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 41,
+      "stiffness": "rigid",
+      "table_row": 940,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.34,
+        -0.3484,
+        0.1889
+      ],
+      "err_normal_m": 0.0031,
+      "err_plane_m": [
+        -0.0087,
+        0.0023
+      ],
+      "err_tilt_deg": [
+        1.433,
+        -1.175
+      ],
+      "half_m": [
+        0.1267,
+        0.148
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 41,
+      "stiffness": "sprung",
+      "table_row": 940,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.34,
+        -0.3484,
+        0.1889
+      ],
+      "err_normal_m": 0.0031,
+      "err_plane_m": [
+        -0.0087,
+        0.0023
+      ],
+      "err_tilt_deg": [
+        1.433,
+        -1.175
+      ],
+      "half_m": [
+        0.1267,
+        0.148
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 41,
+      "stiffness": "sprung",
+      "table_row": 940,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.34,
+        -0.3484,
+        0.1889
+      ],
+      "err_normal_m": 0.0031,
+      "err_plane_m": [
+        -0.0087,
+        0.0023
+      ],
+      "err_tilt_deg": [
+        1.433,
+        -1.175
+      ],
+      "half_m": [
+        0.1267,
+        0.148
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 41,
+      "stiffness": "sprung",
+      "table_row": 940,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5307,
+        -0.1688,
+        0.2388
+      ],
+      "err_normal_m": -0.0049,
+      "err_plane_m": [
+        0.0068,
+        0.002
+      ],
+      "err_tilt_deg": [
+        -1.739,
+        3.068
+      ],
+      "half_m": [
+        0.0659,
+        0.0621
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 42,
+      "stiffness": "rigid",
+      "table_row": 1246,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5307,
+        -0.1688,
+        0.2388
+      ],
+      "err_normal_m": -0.0049,
+      "err_plane_m": [
+        0.0068,
+        0.002
+      ],
+      "err_tilt_deg": [
+        -1.739,
+        3.068
+      ],
+      "half_m": [
+        0.0659,
+        0.0621
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 42,
+      "stiffness": "rigid",
+      "table_row": 1246,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5307,
+        -0.1688,
+        0.2388
+      ],
+      "err_normal_m": -0.0049,
+      "err_plane_m": [
+        0.0068,
+        0.002
+      ],
+      "err_tilt_deg": [
+        -1.739,
+        3.068
+      ],
+      "half_m": [
+        0.0659,
+        0.0621
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 42,
+      "stiffness": "rigid",
+      "table_row": 1246,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5307,
+        -0.1688,
+        0.2388
+      ],
+      "err_normal_m": -0.0049,
+      "err_plane_m": [
+        0.0068,
+        0.002
+      ],
+      "err_tilt_deg": [
+        -1.739,
+        3.068
+      ],
+      "half_m": [
+        0.0659,
+        0.0621
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 42,
+      "stiffness": "sprung",
+      "table_row": 1246,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5307,
+        -0.1688,
+        0.2388
+      ],
+      "err_normal_m": -0.0049,
+      "err_plane_m": [
+        0.0068,
+        0.002
+      ],
+      "err_tilt_deg": [
+        -1.739,
+        3.068
+      ],
+      "half_m": [
+        0.0659,
+        0.0621
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 42,
+      "stiffness": "sprung",
+      "table_row": 1246,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5307,
+        -0.1688,
+        0.2388
+      ],
+      "err_normal_m": -0.0049,
+      "err_plane_m": [
+        0.0068,
+        0.002
+      ],
+      "err_tilt_deg": [
+        -1.739,
+        3.068
+      ],
+      "half_m": [
+        0.0659,
+        0.0621
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 42,
+      "stiffness": "sprung",
+      "table_row": 1246,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5587,
+        -0.1713,
+        0.2642
+      ],
+      "err_normal_m": 0.0033,
+      "err_plane_m": [
+        0.0066,
+        -0.0
+      ],
+      "err_tilt_deg": [
+        -3.944,
+        -0.484
+      ],
+      "half_m": [
+        0.0822,
+        0.138
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 43,
+      "stiffness": "rigid",
+      "table_row": 1499,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5587,
+        -0.1713,
+        0.2642
+      ],
+      "err_normal_m": 0.0033,
+      "err_plane_m": [
+        0.0066,
+        -0.0
+      ],
+      "err_tilt_deg": [
+        -3.944,
+        -0.484
+      ],
+      "half_m": [
+        0.0822,
+        0.138
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 43,
+      "stiffness": "rigid",
+      "table_row": 1499,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5587,
+        -0.1713,
+        0.2642
+      ],
+      "err_normal_m": 0.0033,
+      "err_plane_m": [
+        0.0066,
+        -0.0
+      ],
+      "err_tilt_deg": [
+        -3.944,
+        -0.484
+      ],
+      "half_m": [
+        0.0822,
+        0.138
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 43,
+      "stiffness": "rigid",
+      "table_row": 1499,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5587,
+        -0.1713,
+        0.2642
+      ],
+      "err_normal_m": 0.0033,
+      "err_plane_m": [
+        0.0066,
+        -0.0
+      ],
+      "err_tilt_deg": [
+        -3.944,
+        -0.484
+      ],
+      "half_m": [
+        0.0822,
+        0.138
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 43,
+      "stiffness": "sprung",
+      "table_row": 1499,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5587,
+        -0.1713,
+        0.2642
+      ],
+      "err_normal_m": 0.0033,
+      "err_plane_m": [
+        0.0066,
+        -0.0
+      ],
+      "err_tilt_deg": [
+        -3.944,
+        -0.484
+      ],
+      "half_m": [
+        0.0822,
+        0.138
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 43,
+      "stiffness": "sprung",
+      "table_row": 1499,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5587,
+        -0.1713,
+        0.2642
+      ],
+      "err_normal_m": 0.0033,
+      "err_plane_m": [
+        0.0066,
+        -0.0
+      ],
+      "err_tilt_deg": [
+        -3.944,
+        -0.484
+      ],
+      "half_m": [
+        0.0822,
+        0.138
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 43,
+      "stiffness": "sprung",
+      "table_row": 1499,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5554,
+        -0.1999,
+        0.3094
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        -0.0095,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        2.78,
+        1.645
+      ],
+      "half_m": [
+        0.0554,
+        0.1345
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 44,
+      "stiffness": "rigid",
+      "table_row": 1601,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5554,
+        -0.1999,
+        0.3094
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        -0.0095,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        2.78,
+        1.645
+      ],
+      "half_m": [
+        0.0554,
+        0.1345
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 44,
+      "stiffness": "rigid",
+      "table_row": 1601,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5554,
+        -0.1999,
+        0.3094
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        -0.0095,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        2.78,
+        1.645
+      ],
+      "half_m": [
+        0.0554,
+        0.1345
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 44,
+      "stiffness": "rigid",
+      "table_row": 1601,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5554,
+        -0.1999,
+        0.3094
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        -0.0095,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        2.78,
+        1.645
+      ],
+      "half_m": [
+        0.0554,
+        0.1345
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 44,
+      "stiffness": "sprung",
+      "table_row": 1601,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5554,
+        -0.1999,
+        0.3094
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        -0.0095,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        2.78,
+        1.645
+      ],
+      "half_m": [
+        0.0554,
+        0.1345
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 44,
+      "stiffness": "sprung",
+      "table_row": 1601,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5554,
+        -0.1999,
+        0.3094
+      ],
+      "err_normal_m": 0.0032,
+      "err_plane_m": [
+        -0.0095,
+        -0.0094
+      ],
+      "err_tilt_deg": [
+        2.78,
+        1.645
+      ],
+      "half_m": [
+        0.0554,
+        0.1345
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 44,
+      "stiffness": "sprung",
+      "table_row": 1601,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5155,
+        -0.1414,
+        0.2496
+      ],
+      "err_normal_m": -0.0098,
+      "err_plane_m": [
+        0.0082,
+        0.0032
+      ],
+      "err_tilt_deg": [
+        -1.031,
+        2.524
+      ],
+      "half_m": [
+        0.1295,
+        0.0511
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 45,
+      "stiffness": "rigid",
+      "table_row": 1958,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5155,
+        -0.1414,
+        0.2496
+      ],
+      "err_normal_m": -0.0098,
+      "err_plane_m": [
+        0.0082,
+        0.0032
+      ],
+      "err_tilt_deg": [
+        -1.031,
+        2.524
+      ],
+      "half_m": [
+        0.1295,
+        0.0511
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 45,
+      "stiffness": "rigid",
+      "table_row": 1958,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5155,
+        -0.1414,
+        0.2496
+      ],
+      "err_normal_m": -0.0098,
+      "err_plane_m": [
+        0.0082,
+        0.0032
+      ],
+      "err_tilt_deg": [
+        -1.031,
+        2.524
+      ],
+      "half_m": [
+        0.1295,
+        0.0511
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 45,
+      "stiffness": "rigid",
+      "table_row": 1958,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5155,
+        -0.1414,
+        0.2496
+      ],
+      "err_normal_m": -0.0098,
+      "err_plane_m": [
+        0.0082,
+        0.0032
+      ],
+      "err_tilt_deg": [
+        -1.031,
+        2.524
+      ],
+      "half_m": [
+        0.1295,
+        0.0511
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 45,
+      "stiffness": "sprung",
+      "table_row": 1958,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5155,
+        -0.1414,
+        0.2496
+      ],
+      "err_normal_m": -0.0098,
+      "err_plane_m": [
+        0.0082,
+        0.0032
+      ],
+      "err_tilt_deg": [
+        -1.031,
+        2.524
+      ],
+      "half_m": [
+        0.1295,
+        0.0511
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 45,
+      "stiffness": "sprung",
+      "table_row": 1958,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5155,
+        -0.1414,
+        0.2496
+      ],
+      "err_normal_m": -0.0098,
+      "err_plane_m": [
+        0.0082,
+        0.0032
+      ],
+      "err_tilt_deg": [
+        -1.031,
+        2.524
+      ],
+      "half_m": [
+        0.1295,
+        0.0511
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 45,
+      "stiffness": "sprung",
+      "table_row": 1958,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4987,
+        -0.1753,
+        0.2656
+      ],
+      "err_normal_m": 0.0086,
+      "err_plane_m": [
+        0.0081,
+        -0.0095
+      ],
+      "err_tilt_deg": [
+        -1.237,
+        -3.827
+      ],
+      "half_m": [
+        0.1076,
+        0.1171
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 46,
+      "stiffness": "rigid",
+      "table_row": 2721,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4987,
+        -0.1753,
+        0.2656
+      ],
+      "err_normal_m": 0.0086,
+      "err_plane_m": [
+        0.0081,
+        -0.0095
+      ],
+      "err_tilt_deg": [
+        -1.237,
+        -3.827
+      ],
+      "half_m": [
+        0.1076,
+        0.1171
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 46,
+      "stiffness": "rigid",
+      "table_row": 2721,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4987,
+        -0.1753,
+        0.2656
+      ],
+      "err_normal_m": 0.0086,
+      "err_plane_m": [
+        0.0081,
+        -0.0095
+      ],
+      "err_tilt_deg": [
+        -1.237,
+        -3.827
+      ],
+      "half_m": [
+        0.1076,
+        0.1171
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 46,
+      "stiffness": "rigid",
+      "table_row": 2721,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.4987,
+        -0.1753,
+        0.2656
+      ],
+      "err_normal_m": 0.0086,
+      "err_plane_m": [
+        0.0081,
+        -0.0095
+      ],
+      "err_tilt_deg": [
+        -1.237,
+        -3.827
+      ],
+      "half_m": [
+        0.1076,
+        0.1171
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 46,
+      "stiffness": "sprung",
+      "table_row": 2721,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4987,
+        -0.1753,
+        0.2656
+      ],
+      "err_normal_m": 0.0086,
+      "err_plane_m": [
+        0.0081,
+        -0.0095
+      ],
+      "err_tilt_deg": [
+        -1.237,
+        -3.827
+      ],
+      "half_m": [
+        0.1076,
+        0.1171
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 46,
+      "stiffness": "sprung",
+      "table_row": 2721,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.4987,
+        -0.1753,
+        0.2656
+      ],
+      "err_normal_m": 0.0086,
+      "err_plane_m": [
+        0.0081,
+        -0.0095
+      ],
+      "err_tilt_deg": [
+        -1.237,
+        -3.827
+      ],
+      "half_m": [
+        0.1076,
+        0.1171
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 46,
+      "stiffness": "sprung",
+      "table_row": 2721,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5744,
+        -0.1431,
+        0.3197
+      ],
+      "err_normal_m": -0.0061,
+      "err_plane_m": [
+        -0.0098,
+        -0.0009
+      ],
+      "err_tilt_deg": [
+        0.64,
+        -3.168
+      ],
+      "half_m": [
+        0.0937,
+        0.0563
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 47,
+      "stiffness": "rigid",
+      "table_row": 2810,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5744,
+        -0.1431,
+        0.3197
+      ],
+      "err_normal_m": -0.0061,
+      "err_plane_m": [
+        -0.0098,
+        -0.0009
+      ],
+      "err_tilt_deg": [
+        0.64,
+        -3.168
+      ],
+      "half_m": [
+        0.0937,
+        0.0563
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 47,
+      "stiffness": "rigid",
+      "table_row": 2810,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5744,
+        -0.1431,
+        0.3197
+      ],
+      "err_normal_m": -0.0061,
+      "err_plane_m": [
+        -0.0098,
+        -0.0009
+      ],
+      "err_tilt_deg": [
+        0.64,
+        -3.168
+      ],
+      "half_m": [
+        0.0937,
+        0.0563
+      ],
+      "k_soft": 8000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 47,
+      "stiffness": "rigid",
+      "table_row": 2810,
+      "travel_m": 0.0
+    },
+    {
+      "contact_m": [
+        0.5744,
+        -0.1431,
+        0.3197
+      ],
+      "err_normal_m": -0.0061,
+      "err_plane_m": [
+        -0.0098,
+        -0.0009
+      ],
+      "err_tilt_deg": [
+        0.64,
+        -3.168
+      ],
+      "half_m": [
+        0.0937,
+        0.0563
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 8.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 47,
+      "stiffness": "sprung",
+      "table_row": 2810,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5744,
+        -0.1431,
+        0.3197
+      ],
+      "err_normal_m": -0.0061,
+      "err_plane_m": [
+        -0.0098,
+        -0.0009
+      ],
+      "err_tilt_deg": [
+        0.64,
+        -3.168
+      ],
+      "half_m": [
+        0.0937,
+        0.0563
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 16.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 47,
+      "stiffness": "sprung",
+      "table_row": 2810,
+      "travel_m": 0.025
+    },
+    {
+      "contact_m": [
+        0.5744,
+        -0.1431,
+        0.3197
+      ],
+      "err_normal_m": -0.0061,
+      "err_plane_m": [
+        -0.0098,
+        -0.0009
+      ],
+      "err_tilt_deg": [
+        0.64,
+        -3.168
+      ],
+      "half_m": [
+        0.0937,
+        0.0563
+      ],
+      "k_soft": 1000.0,
+      "kind": "level_down",
+      "level_n": 28.0,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "plate": 47,
+      "stiffness": "sprung",
+      "table_row": 2810,
+      "travel_m": 0.025
+    }
+  ],
+  "mechanism": null,
+  "mode": "leg_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 288,
+  "payload": {
+    "bodies": [
+      {
+        "body": "base",
+        "com_m": [
+          [
+            0.0211,
+            0.0,
+            -0.0054
+          ],
+          [
+            0.0297,
+            -0.0,
+            0.0013
+          ]
+        ],
+        "mass_kg": [
+          6.921,
+          7.3409
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.265,
+            "name": "mid360",
+            "source": "published: Livox Mid-360 user manual, approx. 265 g"
+          },
+          {
+            "mass_kg": 0.1549,
+            "name": "mid360_mount",
+            "source": "estimated: the CAD's closed parts, 124.9 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      },
+      {
+        "body": "Link6",
+        "com_m": [
+          [
+            -0.0069,
+            -0.0,
+            0.0397
+          ],
+          [
+            -0.0234,
+            0.0001,
+            0.0421
+          ]
+        ],
+        "mass_kg": [
+          0.1679,
+          0.2666
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.072,
+            "name": "d435i",
+            "source": "published: Intel RealSense D400 series datasheet, D435/D435i 72 g"
+          },
+          {
+            "mass_kg": 0.0267,
+            "name": "wrist_bracket",
+            "source": "estimated: the CAD's 21.6 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      }
+    ],
+    "mode": "physical"
+  },
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1_payload.usd",
+  "robot_usd_sha256": "61290b5a5d9a7943a8b82743d6363ddd1ea2823bbc79d0612b78d9b86da915cd",
+  "roll_objective": false,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_kind": [
+      {
+        "force_bias_n_median": null,
+        "force_mae_n_median": null,
+        "force_rel_bias_median": null,
+        "kind": "level_down",
+        "of": 72,
+        "peak_n_max": 4.42,
+        "press_peak_n_median": null,
+        "reasons": {
+          "missed": 72
+        },
+        "success": 0
+      },
+      {
+        "force_bias_n_median": -11.81,
+        "force_mae_n_median": 11.81,
+        "force_rel_bias_median": -1.0,
+        "kind": "level_up",
+        "of": 72,
+        "peak_n_max": 148.65,
+        "press_peak_n_median": 0.43,
+        "reasons": {
+          "damaged": 2,
+          "missed": 41,
+          "no contact": 12,
+          "off force": 10,
+          "ok": 1,
+          "slipped": 6
+        },
+        "success": 1
+      },
+      {
+        "force_bias_n_median": null,
+        "force_mae_n_median": null,
+        "force_rel_bias_median": null,
+        "kind": "tilted",
+        "of": 72,
+        "peak_n_max": 0.0,
+        "press_peak_n_median": null,
+        "reasons": {
+          "missed": 72
+        },
+        "success": 0
+      },
+      {
+        "force_bias_n_median": -16.0,
+        "force_mae_n_median": 16.0,
+        "force_rel_bias_median": -1.0,
+        "kind": "wall",
+        "of": 72,
+        "peak_n_max": 4.19,
+        "press_peak_n_median": 0.0,
+        "reasons": {
+          "fell": 1,
+          "missed": 52,
+          "no contact": 15,
+          "off force": 2,
+          "slipped": 2
+        },
+        "success": 0
+      }
+    ],
+    "by_level_n": [
+      {
+        "force_bias_n_median": -8.0,
+        "force_mae_n_median": 8.0,
+        "force_rel_bias_median": -1.0,
+        "level_n": 8.0,
+        "of": 96,
+        "peak_n_max": 123.04,
+        "press_peak_n_median": 0.0,
+        "reasons": {
+          "damaged": 1,
+          "missed": 78,
+          "no contact": 12,
+          "off force": 2,
+          "ok": 1,
+          "slipped": 2
+        },
+        "success": 1
+      },
+      {
+        "force_bias_n_median": -16.0,
+        "force_mae_n_median": 16.0,
+        "force_rel_bias_median": -1.0,
+        "level_n": 16.0,
+        "of": 96,
+        "peak_n_max": 83.02,
+        "press_peak_n_median": 0.0,
+        "reasons": {
+          "missed": 79,
+          "no contact": 9,
+          "off force": 5,
+          "slipped": 3
+        },
+        "success": 0
+      },
+      {
+        "force_bias_n_median": -27.945,
+        "force_mae_n_median": 27.945,
+        "force_rel_bias_median": -0.998,
+        "level_n": 28.0,
+        "of": 96,
+        "peak_n_max": 148.65,
+        "press_peak_n_median": 0.215,
+        "reasons": {
+          "damaged": 1,
+          "fell": 1,
+          "missed": 80,
+          "no contact": 6,
+          "off force": 5,
+          "slipped": 3
+        },
+        "success": 0
+      }
+    ],
+    "by_stiffness": [
+      {
+        "force_bias_n_median": -16.0,
+        "force_mae_n_median": 16.0,
+        "force_rel_bias_median": -1.0,
+        "of": 144,
+        "peak_n_max": 148.65,
+        "press_peak_n_median": 0.0,
+        "reasons": {
+          "damaged": 2,
+          "fell": 1,
+          "missed": 117,
+          "no contact": 15,
+          "off force": 5,
+          "slipped": 4
+        },
+        "stiffness": "rigid",
+        "success": 0
+      },
+      {
+        "force_bias_n_median": -13.18,
+        "force_mae_n_median": 14.295,
+        "force_rel_bias_median": -0.994,
+        "of": 144,
+        "peak_n_max": 83.02,
+        "press_peak_n_median": 0.215,
+        "reasons": {
+          "missed": 120,
+          "no contact": 12,
+          "off force": 7,
+          "ok": 1,
+          "slipped": 4
+        },
+        "stiffness": "sprung",
+        "success": 1
+      }
+    ],
+    "damaged": 2,
+    "engage_miss_mm_median": 20.0,
+    "engage_miss_mm_p90": 38.33,
+    "engaged": 48,
+    "episodes": 288,
+    "fell": 1,
+    "foot_down": 48,
+    "force_bias_n_median": -15.315,
+    "force_mae_n_median": 15.315,
+    "force_mae_n_p90": 28.0,
+    "force_rel_bias_median": -1.0,
+    "max_tilt_deg_median": 32.185,
+    "over_60n": 3,
+    "peak_n_max": 148.65,
+    "peak_n_median": 0.0,
+    "peak_n_p95": 11.881,
+    "plane_err_mm_median": 12.1,
+    "reasons": {
+      "damaged": 2,
+      "fell": 1,
+      "missed": 237,
+      "no contact": 27,
+      "off force": 12,
+      "ok": 1,
+      "slipped": 8
+    },
+    "released": 48,
+    "slipped": 8,
+    "stalled": 40,
+    "stance_max_cm_median": 6.33,
+    "success": 1,
+    "torques": {
+      "episodes_fr_calf_over_stock": 1,
+      "episodes_sup_calf_over_stock": 69,
+      "fr_calf_demand_over_stock_s": {
+        "max": 0.02,
+        "median": 0.0,
+        "p90": 0.0
+      },
+      "fr_calf_demand_peak_nm": {
+        "max": 25.91,
+        "median": 8.775,
+        "p90": 13.1
+      },
+      "fr_calf_fast_s": {
+        "max": 0.1,
+        "median": 0.0,
+        "p90": 0.0
+      },
+      "fr_calf_over_stock_s": {
+        "max": 0.02,
+        "median": 0.0,
+        "p90": 0.0
+      },
+      "fr_calf_peak_nm": {
+        "max": 25.91,
+        "median": 8.775,
+        "p90": 13.1
+      },
+      "fr_calf_speed_peak": {
+        "max": 13.37,
+        "median": 3.19,
+        "p90": 5.013
+      },
+      "fr_calf_turn_peak_nm": {
+        "max": 8.22,
+        "median": 0.505,
+        "p90": 1.593
+      },
+      "fr_hip_demand_peak_nm": {
+        "max": 37.46,
+        "median": 4.02,
+        "p90": 16.786
+      },
+      "fr_hip_peak_nm": {
+        "max": 23.4,
+        "median": 4.02,
+        "p90": 16.786
+      },
+      "fr_hip_speed_peak": {
+        "max": 18.25,
+        "median": 1.685,
+        "p90": 8.49
+      },
+      "fr_saturated_s": {
+        "max": 0.84,
+        "median": 0.0,
+        "p90": 0.0
+      },
+      "fr_thigh_demand_peak_nm": {
+        "max": 30.54,
+        "median": 8.54,
+        "p90": 15.231
+      },
+      "fr_thigh_peak_nm": {
+        "max": 23.4,
+        "median": 8.54,
+        "p90": 15.231
+      },
+      "fr_thigh_speed_peak": {
+        "max": 13.06,
+        "median": 4.255,
+        "p90": 6.581
+      },
+      "fr_thigh_turn_peak_nm": {
+        "max": 7.92,
+        "median": 0.51,
+        "p90": 1.477
+      },
+      "legs_saturated_s": {
+        "max": 1.58,
+        "median": 0.0,
+        "p90": 0.0
+      },
+      "successes": {
+        "fr_calf_peak_nm": 11.42,
+        "fr_calf_turn_peak_nm": 2.02,
+        "fr_thigh_peak_nm": 13.51,
+        "sup_calf_peak_nm": 26.08
+      },
+      "sup_calf_demand_peak_nm": {
+        "max": 41.61,
+        "median": 22.24,
+        "p90": 24.859
+      },
+      "sup_calf_over_stock_s": {
+        "max": 0.3,
+        "median": 0.0,
+        "p90": 0.08
+      },
+      "sup_calf_peak_nm": {
+        "max": 38.72,
+        "median": 22.24,
+        "p90": 24.859
+      },
+      "sup_calf_speed_peak": {
+        "max": 11.83,
+        "median": 8.8,
+        "p90": 11.1
+      },
+      "sup_hip_demand_peak_nm": {
+        "max": 40.97,
+        "median": 9.765,
+        "p90": 15.96
+      },
+      "sup_hip_peak_nm": {
+        "max": 23.4,
+        "median": 9.765,
+        "p90": 15.96
+      },
+      "sup_hip_speed_peak": {
+        "max": 16.54,
+        "median": 2.675,
+        "p90": 3.965
+      },
+      "sup_thigh_demand_peak_nm": {
+        "max": 38.29,
+        "median": 15.485,
+        "p90": 19.285
+      },
+      "sup_thigh_peak_nm": {
+        "max": 23.4,
+        "median": 15.485,
+        "p90": 19.285
+      },
+      "sup_thigh_speed_peak": {
+        "max": 14.4,
+        "median": 8.7,
+        "p90": 10.71
+      }
+    },
+    "touched": 30,
+    "within": 1
+  },
+  "task": "leg",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

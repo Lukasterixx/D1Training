@@ -161,6 +161,12 @@ def door_push(state: rewards.TaskState) -> torch.Tensor:
     return state.handle_door_cm
 
 
+def press_excess(state: rewards.TaskState) -> torch.Tensor:
+    """How far (cm) the peak contact goes past the press limit (`Go2D1LegEnvCfg.press_limit_n`), through the plant's
+    stiffness: a force limit stated as geometry, as `door_push` is."""
+    return state.handle_press_excess_cm
+
+
 TERMS = {
     "foot_tracking": foot_tracking,
     "foot_tracking_mid": foot_tracking_mid,
@@ -192,4 +198,5 @@ TERMS = {
     "handle_slip": handle_slip,
     "door_push": door_push,
     "approach_contact": approach_contact,
+    "press_excess": press_excess,
 }

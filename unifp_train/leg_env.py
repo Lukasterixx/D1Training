@@ -91,6 +91,26 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     spawn_state_jitter: float = 0.03
     #: Use `spawn_states` in a frozen evaluation too (a diagnostic: the handover's stances, at rest).
     spawn_states_in_eval: bool = False
+    #: A key episode's contact past this force (the plant's physics-rate peak, N) is penalised by `press_excess_weight`
+    #: per cm of the overlap it takes (2026-10-21: Lukas's lever is printed PLA, its platform 2.5 mm thick). A geometric
+    #: term like `door_push`, so the position variant is given it too. 0 weight: off.
+    press_limit_n: float = 30.0
+    press_excess_weight: float = 0.0
+    #: Draw each environment's leg armature once at start-up, uniform in this range (kg·m², hip and thigh), the knees'
+    #: `knee_armature_factor` times as much (a knee geared 1.917 more reflects 1.917^2, F-168). Empty: as configured.
+    leg_armature_range: tuple[float, float] | None = None
+    knee_armature_factor: float = 3.67
+    #: `leg_object="press"` only: the outer loop on the foot's miss while the plate is pressed
+    #: (`foot_press_env._correct_foot`): "full", the whole miss across the normal, as rounds 1-4 of the foot-press task
+    #: trained; "off", none once contact is called; "hybrid" (since 2026-10-22 05:25), the miss across the normal
+    #: and across a commanded tangential force -- position control along the plate where no force is commanded there.
+    press_hold_loop: str = "hybrid"
+    #: `leg_object="press"` only: the release backs out from wherever the foot is (`foot_press.PressLayer.release_from_foot`,
+    #: since 2026-10-22 10:50); False: from the press point, as trained before.
+    press_release_from_foot: bool = True
+    #: `leg_object="press"` only: the plate as a slab with edges and a back (`foot_press.PlateSet.edges`, since
+    #: 2026-10-22 10:55); False: its face only, as trained before.
+    press_plate_edges: bool = True
 
 
 class Go2D1LegEnv(Go2D1PosForceEnv):
@@ -99,8 +119,8 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
     def __init__(self, cfg: Go2D1LegEnvCfg, render_mode: str | None = None, **kwargs):
         if cfg.leg_variant not in ("position", "force"):
             raise ValueError(f"leg_variant must be 'position' or 'force', not {cfg.leg_variant!r}")
-        if cfg.leg_object not in ("handle", "key") or cfg.arm_pose not in ("look", "rest"):
-            raise ValueError(f"leg_object must be 'handle' or 'key' and arm_pose 'look' or 'rest'")
+        if cfg.leg_object not in ("handle", "key", "press") or cfg.arm_pose not in ("look", "rest"):
+            raise ValueError(f"leg_object must be 'handle', 'key' or 'press' and arm_pose 'look' or 'rest'")
         super().__init__(cfg, render_mode, **kwargs)
         n, device = self.num_envs, self.device
         self._force_aware = cfg.leg_variant == "force"
@@ -117,7 +137,9 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._knee_force_w = torch.zeros(n, 3, device=device)
         self._head_force_w = torch.zeros(n, 3, device=device)
 
-        self._key = cfg.leg_object == "key"
+        # The plates of `--leg_object press` (`foot_press_env`) are run as the key is: its stance, its head check, its
+        # return to the footfall.
+        self._key = cfg.leg_object in ("key", "press")
         self._down_goal = leg_cfg.KEY_DOWN_GOAL if self._key else leg_cfg.DOWN_GOAL
         self._goals = foot_goals.FootGoals(n, device, down_goal=self._down_goal,
                                            pitch_range=leg_cfg.KEY_GOAL_PITCH_RANGE if self._key else leg_cfg.GOAL_PITCH_RANGE)
@@ -161,6 +183,8 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._est.update({name: zeros(n) for name in ("reach", "clearance", "theta_end", "max_n", "descent",
                                                       "descend_speed", "turn_speed")})
         self._approach_from, self._waypoint, self._pre = zeros(n, 3), zeros(n, 3), zeros(n, 3)
+        #: The lift's first leg rises straight up to this height (the foot sphere's centre), per environment.
+        self._lift_first = torch.full((n,), leg_cfg.LIFT_FIRST_HEIGHT_M, device=device)
         self._return_from = zeros(n, 3)
         self._down_for = zeros(n)
         self._est["theta_start"] = zeros(n)
@@ -184,11 +208,25 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._weights = leg_cfg.scaled_weights(self._weight_table(handles=cfg.handle_fraction > 0.0))
         self._terms = dict(leg_rewards.TERMS)
         self._episode_sums = {name: zeros(n) for name in self._weights}
+        if cfg.leg_armature_range is not None:
+            self._draw_leg_armature()
+
+    def _draw_leg_armature(self) -> None:
+        """Each environment's leg armature, once (a start-up randomisation: writing it costs a copy of every joint's)."""
+        lo, hi = self.cfg.leg_armature_range
+        legs = self._order[:12]
+        draw = lo + (hi - lo) * torch.rand(self.num_envs, 1, device=self.device)
+        knee = torch.tensor([1.0 if k % 3 == 2 else 0.0 for k in range(12)], device=self.device)
+        armature = draw * (1.0 + (self.cfg.knee_armature_factor - 1.0) * knee)
+        self._robot.write_joint_armature_to_sim(armature, joint_ids=legs.tolist())
+        self._leg_armature_drawn = armature
 
     def _weight_table(self, handles: bool) -> dict[str, float]:
         weights = dict(leg_cfg.REWARD_WEIGHTS)
         if handles:
             weights.update(leg_cfg.HANDLE_WEIGHTS)
+            if self.cfg.press_excess_weight != 0.0:
+                weights["press_excess"] = self.cfg.press_excess_weight
         if self.cfg.stance_weight > 0.0:
             weights["support_stance"] = self.cfg.stance_weight
         return weights
@@ -319,7 +357,7 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         # above the bar (since 2026-10-20 10:45: on a straight line the foot, which has to swing forward to rise, cut
         # the corner under the bar and jammed there or kicked it).
         first = self._approach_from.clone()
-        first[:, 2] = leg_cfg.LIFT_FIRST_HEIGHT_M
+        first[:, 2] = self._lift_first
         split = leg_cfg.LIFT_FIRST_SHARE
         leg1 = torch.lerp(self._approach_from, first, smooth((t_lift / split).clamp(max=1.0)).unsqueeze(-1))
         leg2 = torch.lerp(first, self._waypoint, smooth(((t_lift - split) / (1.0 - split)).clamp(min=0.0)).unsqueeze(-1))
@@ -353,21 +391,25 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
             self._stage = torch.where(late, torch.full_like(self._stage, MISSED), self._stage)
             if bool(due.any()):
                 ids = due.nonzero(as_tuple=False).flatten()
-                e = self._est
-                count = len(ids)
-                self._layer.start(ids, pivot=e["pivot"][ids], u0=e["u0"][ids], reach=e["reach"][ids],
-                                  clearance=e["clearance"][ids], theta_end=e["theta_end"][ids],
-                                  descent=e["descent"][ids], descend_speed=e["descend_speed"][ids],
-                                  turn_speed=e["turn_speed"][ids], max_n=e["max_n"][ids],
-                                  touch_n=torch.full((count,), leg_cfg.TOUCH_N, device=self.device),
-                                  hold_s=torch.full((count,), leg_cfg.HOLD_S, device=self.device),
-                                  release_s=torch.full((count,), leg_cfg.RELEASE_S, device=self.device),
-                                  force_law=torch.full((count,), self._force_aware, dtype=torch.bool, device=self.device),
-                                  touch_s=torch.full((count,), leg_cfg.TOUCH_HOLD_S, device=self.device),
-                                  theta_start=e["theta_start"][ids])
+                self._start_layer(ids, foot)
                 self._stage[ids] = ENGAGED
                 self._engage_step[ids] = self._since_reset[ids]
                 self._engage_miss[ids] = miss[ids]
+
+    def _start_layer(self, ids: torch.Tensor, foot: torch.Tensor) -> None:
+        """Hand the task layer its estimate for `ids`, whose feet have settled at the pre-contact point."""
+        e = self._est
+        count = len(ids)
+        self._layer.start(ids, pivot=e["pivot"][ids], u0=e["u0"][ids], reach=e["reach"][ids],
+                          clearance=e["clearance"][ids], theta_end=e["theta_end"][ids],
+                          descent=e["descent"][ids], descend_speed=e["descend_speed"][ids],
+                          turn_speed=e["turn_speed"][ids], max_n=e["max_n"][ids],
+                          touch_n=torch.full((count,), leg_cfg.TOUCH_N, device=self.device),
+                          hold_s=torch.full((count,), leg_cfg.HOLD_S, device=self.device),
+                          release_s=torch.full((count,), leg_cfg.RELEASE_S, device=self.device),
+                          force_law=torch.full((count,), self._force_aware, dtype=torch.bool, device=self.device),
+                          touch_s=torch.full((count,), leg_cfg.TOUCH_HOLD_S, device=self.device),
+                          theta_start=e["theta_start"][ids])
 
     def _advance_return(self, foot: torch.Tensor, stance: torch.Tensor, smooth) -> None:
         """A key episode's end: once the layer has lifted off, the foot goes back to the waypoint and then down onto its
@@ -566,6 +608,11 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         state.goal_down = self._goals.goal_local()[:, 2] < 0.05
         state.soft_limits = self._soft_limits
         state.support_feet_vel_w = feet_vel[:, list(leg_cfg.SUPPORT_FEET)]
+        self._object_state(state)
+        return state
+
+    def _object_state(self, state: rewards.TaskState) -> None:
+        """The handle's or the key's part of the reward state."""
         engaged = self._handle_env & (self._stage == ENGAGED)
         layer = self._layer
         pushing = engaged & ((layer.phase == handle.PRESSING) | (layer.phase == handle.HOLDING))
@@ -584,7 +631,9 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         approaching = (self._handle_env & (self._stage < ENGAGED)).float()
         state.handle_approach_cm = 100.0 * (self._handle.bar_n + self._handle.door_n + self._handle.knee_door_n) \
             / handle.CONTACT_K_N_PER_M * approaching
-        return state
+        # The peak contact past the press limit, as overlap (cm), in every phase of a key or handle episode.
+        state.handle_press_excess_cm = 100.0 * (self._step_peak - self.cfg.press_limit_n).clamp(min=0.0) \
+            / handle.CONTACT_K_N_PER_M * self._handle_env
 
     def _stance_mask(self) -> torch.Tensor:
         mask = torch.ones(self.num_envs, 4, device=self.device)
@@ -900,11 +949,17 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
                 draw = {k: v[ids] for k, v in self._evaluation["handles"].items()}
                 self._start_delay[ids] = 25
             else:
-                draw = (self._draw_keys if self._key else self._draw_handles)(ids)
+                draw = self._draw_objects(ids)
                 self._start_delay[ids] = torch.randint(15, 50, (len(ids),), device=self.device)
-            (self._place_keys if self._key else self._place_handles)(ids, draw)
-            # The episode's largest angle starts from the lever's start stop (a key's is -45 degrees), not from 0.
-            self._max_theta[ids] = self._handle.theta_min[ids]
+            self._place_objects(ids, draw)
+
+    def _draw_objects(self, ids: torch.Tensor) -> dict[str, torch.Tensor]:
+        return (self._draw_keys if self.cfg.leg_object == "key" else self._draw_handles)(ids)
+
+    def _place_objects(self, ids: torch.Tensor, draw: dict[str, torch.Tensor]) -> None:
+        (self._place_keys if self.cfg.leg_object == "key" else self._place_handles)(ids, draw)
+        # The episode's largest angle starts from the lever's start stop (a key's is -45 degrees), not from 0.
+        self._max_theta[ids] = self._handle.theta_min[ids]
 
     def _log_handle_episodes(self, env_ids: torch.Tensor) -> None:
         """Training-time handle diagnostics over the episodes ending now (sampled at reset, not a frozen evaluation)."""

@@ -141,6 +141,54 @@ def _frame_quat(x: torch.Tensor, y: torch.Tensor, z: torch.Tensor) -> torch.Tens
     return torch.stack((w, qx, qy, qz), dim=-1)
 
 
+# --- the foot-press task's plates (`foot_press_env`) -------------------------------------------------------------------
+
+PLATE_IDLE, PLATE_PRESSING, PLATE_ON_FORCE = range(3)
+
+
+def plate_marker_cfg(prim_path: str):
+    import isaaclab.sim as sim_utils
+    from isaaclab.markers import VisualizationMarkersCfg
+
+    def block(colour):
+        return sim_utils.CuboidCfg(size=(1.0, 1.0, 1.0), visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=colour))
+
+    return VisualizationMarkersCfg(prim_path=prim_path, markers={
+        "idle": block((0.62, 0.62, 0.66)), "pressing": block((1.0, 0.5, 0.05)), "on_force": block((0.1, 0.75, 0.25))})
+
+
+class PlateMarkers:
+    """Each environment's plate as a thin block behind its face: **grey** before the press, **orange** while the layer
+    presses, **green** while the foot's normal force is within max(3 N, 20%) of the profile's level."""
+
+    def __init__(self, prim_path: str, num_envs: int, device: str) -> None:
+        from isaaclab.markers import VisualizationMarkers
+
+        self.markers = VisualizationMarkers(plate_marker_cfg(prim_path))
+        self.num_envs, self.device = num_envs, device
+
+    def update(self, plates, layer, origins: torch.Tensor) -> None:
+        from . import foot_press_cfg as pc
+
+        n = self.num_envs
+        thick = 0.01
+        centre = plates.face - 0.5 * thick * plates.n + origins
+        quat = _frame_quat(plates.t1, plates.t2, plates.n)
+        scales = torch.stack((2 * plates.half[:, 0], 2 * plates.half[:, 1], torch.full((n,), thick, device=self.device)), -1)
+        pressing = layer.phase == handle.HOLDING
+        normal = (plates.force_on_foot * plates.n).sum(-1)
+        level = layer.normal_level
+        within = (normal - level).abs() <= torch.maximum(torch.full_like(level, pc.EVAL_TOL_N), pc.EVAL_TOL_SHARE * level)
+        code = lambda value: torch.full((n,), value, dtype=torch.long, device=self.device)
+        indices = torch.where(pressing & within, code(PLATE_ON_FORCE), torch.where(pressing, code(PLATE_PRESSING),
+                                                                                    code(PLATE_IDLE)))
+        scales = torch.where(plates.active.unsqueeze(-1), scales, torch.full_like(scales, 1e-6))
+        self.markers.visualize(translations=centre, orientations=quat, scales=scales, marker_indices=indices)
+
+    def set_visibility(self, visible: bool) -> None:
+        self.markers.set_visibility(visible)
+
+
 # --- cameras for an evaluation's frames ---------------------------------------------------------------------------
 
 #: The fixed side view: from the robot's front right, looking at where the foot meets the handle (env frame).

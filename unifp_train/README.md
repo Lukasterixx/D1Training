@@ -647,3 +647,77 @@ with no damage and its foot back down, the position-only one 20 and 23; zero-sho
 the force-aware policy falls to 3 (the position-only one stays at 20); that was the stock group's zero armature, not its
 torque limits: with the trained 2e-4 it is 84, and seed 1 holds 82-85 on Unitree's envelope with or without the geared
 knee, seed 2 104-106 (F-168). The staged demo with the arm's insertion and the walking policy is `demos/combiner_key`.
+That turn (45 degrees up to 45 down) is not Lukas's: his starts horizontal (`--key_turn_deg 0 45 30`, F-176), and on it
+the policies trained so far need a fine-tune with the delay, armature and sport-mode stands before driving the dog's legs
+(F-176 to F-178; the fine-tune F-179).
+
+### Plates anywhere the foot reaches (`--leg_object press`, 2026-10-21/22)
+
+Lukas: develop the force-aware foot pushing "into a policy trained to go in many positions and directions just like
+uniFP so it can also be used for pressing etc." The key's stance and robot (settled spawn, sport stands, support feet
+held to their places, the D1 folded, the head checked, the foot back on its footfall), UniFP's free-space goal walk and
+pushes in `1 - handle_fraction` of episodes, and in the rest a flat plate the task layer presses:
+
+| file | |
+| --- | --- |
+| `foot_press_cfg.py` | every constant: where plates go, what they are, the estimate's errors, the layer, the profile, the weights, the frozen set |
+| `foot_press.py` | the FR leg's kinematics (checked against `classic_stance.foot`); `PlateTable`, plate geometries the foot reaches (a kinematic sample of the leg at 0.272 and 0.32 m, the normal within 60 degrees of facing the FR thigh joint, a quarter snapped to walls and some to level surfaces, room to stand off and to push, clear of floor, trunk, head and legs); `PlateSet`, the plate as a penalty contact (rigid 8,000 N/m, or a spring over a travel then the rigid stop; a sticking tangential contact; the knee and head too); `PressLayer`, the press; plain torch, `tests/test_foot_press.py` |
+| `foot_press_env.py` | `Go2D1FootPressEnv(Go2D1LegEnv)`: plates in place of the key, the approach to `standoff` off the estimated face, the press's bookkeeping, reward state and critic block |
+| `foot_press_eval.py` | the 288 frozen presses and their scoring |
+| `leg_vis.PlateMarkers` | the plate in the viewer (grey, orange while pressed, green while the force is within tolerance) |
+
+**The press** (`PressLayer`): from the pre-contact point, the reference in along the estimated normal at 3-6 cm/s up to
+4 cm past the estimated face, a 3 N touch force commanded (force-aware); contact is called where the foot stalls --
+1.2 cm behind the reference and slower than 1.5 cm/s, with the reference within 2 cm of the expected face and the foot
+within 2.5 cm of its line -- or 0.5 s after the reference ran out. Then the profile: 1-3 levels of 3-35 N, each ramped
+over 0.3-1 s and held 0.8-2 s; in 30% of episodes a tangential part (up to 0.3 of the level); in 30% the last level
+slides 2-6 cm along the plate. Then the force off over 0.3 s, back out to the standoff over 0.8 s, and the foot to its
+footfall. The force-aware layer commands the force, its goal at the contact and following the foot along the normal
+(0.1 s, at most 4 cm in), so UniFP's target `goal + (external + command) / 400 N/m` is met only where the plate takes
+the commanded force, whatever its stiffness; the position-only layer has no force to command and asks for the goal
+`level / 400 N/m` past the contact, fixed. **Rewards** in plate episodes: the key's contact, slip, knee-and-head and
+approach terms on the plate, the press limit at 45 N (both variants), and for the force-aware variant only
+`press_force`, `exp(-|applied - commanded| / 6 N)` while it presses.
+
+**The frozen set** (`foot_press_eval.build_plan`): 48 plates, 12 of each kind (tilted, wall, level facing up, level
+facing down), from a table with its own seed, x rigid / sprung (1,000 N/m over 25 mm) x 8 / 16 / 28 N, ramped over
+0.5 s and held 3 s. Success: the profile run to its end with the force's mean absolute error over the hold's last 2 s
+within max(3 N, 20%), no slip, no fall, no damage.
+
+```bash
+./run_unifp_train.py train --task leg --leg_object press --leg_variant <v> --resume_from <F-179 final> \
+    --num_envs 2048 --iterations 2000 --handle_fraction 0.7 --foot_push_n 15 --force_start_iteration 0 \
+    --force_ramp_iterations 1 --spawn_states demos/combiner_key/assets/sport_stands_20261021.json \
+    --spawn_states_fraction 0.8 --resume_leg_std 0.2 --fixed_learning_rate 1e-4 --entropy_coef 0.002 --headless \
+    --seed 3 --leg_actuator unitree_geared --leg_delay_min_steps 1 --leg_delay_steps 3 --leg_armature_range 0.003 0.02
+./run_unifp_train.py leg_eval --task leg --leg_object press --leg_variant <v> --checkpoint <model.pt> --headless \
+    --small_physx --leg_actuator unitree_geared --leg_armature 0.01 --leg_knee_armature 0.037 --leg_delay_min_steps 1 \
+    --leg_delay_steps 3 [--spawn_states demos/combiner_key/assets/dog_stand_20261021/classic_stance_33cm.json --eval_spawn_states]
+./run_unifp_train.py play --task leg --leg_object press --leg_variant <v> --checkpoint <model.pt> --leg_rows <row> \
+    --real_time --steps 60000
+```
+
+The press layer's outer loop on the foot's miss while the plate is pressed (`--press_hold_loop`): `hybrid` (the
+default) integrates it across the normal and across a commanded tangential force -- position control along the plate
+where no force is commanded there; `full`, as rounds 1-4 trained, across the normal only (slides happen, a tangential
+force is integrated away); `off` (the foot holds a tangential force but does not slide). `--plate_set slide` is the
+frozen set that tells them apart: the same 48 plates at 16 N with a tangential part or a slide. Two more defaults since
+2026-10-22 10:55: the release backs straight out from wherever the foot is (`--press_release_from_press_point` is the
+old one), and the plate is a 2 cm slab whose face, edges and back the foot meets at their nearest point
+(`--press_plate_face_only` is the old face-only plate, which a foot coming in from the side met all at once). Rounds 1-4
+and the replication trained on the old ones; the evaluations say which they ran with.
+
+**Where it stands (2026-10-22, F-180-F-182).** Round 4's force-aware final (`model_5999`, F-179's `model_2604`
+through ~3400 iterations of plates) holds 197 of the 288 frozen presses from the dog's stand on the realistic legs
+(207 from the settled stance), the force's median error 2.3 N, 5 past 60 N; the matched position-only final 100 (86),
+5.6 N. A second seed with the final recipe in one go: 186 against 58. Zero-shot on the key (F-179's evaluation) it
+unlocks 107 of 108 with a 7 N median peak -- the fine-tuned key specialist 101. Across delay, armature, motor model and
+stance it holds 143-229, the position-only 43-95; it rests on the loop's delay (15 ms: -31) and armature (0.003: -50). On
+the final layer and plant, not retrained: 196 / 207 and 56 of 96 slides with nothing past 34 N. A fine-tune onto that
+plant (round 5) learned to push plates facing down at the full 28 N and tipped the robot (F-182). Exported:
+`checkpoints/leg_press_force_r4_model_5999.npz`.
+
+What it is not: the plates are analytic -- nothing in PhysX touches them, only the foot sphere, the knee and the head
+through penalty forces; the thighs and calves pass through a plate's slab unchecked. The layer is told the plate by an
+estimate with drawn errors; no camera sees it. Plates facing down are its weak kind (22 of 72); the base rears ~30
+degrees through a press. Details: `results/week_06/notes.md`.

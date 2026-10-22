@@ -1863,9 +1863,380 @@ While timing on the dog, one copy failed (run from the wrong directory) and Dock
 directory `/tmp/claude_time_flush.py` on the dog for the missing bind source; removed through a container straight
 after. Nothing else was left on the dog.
 
+### 2026-10-21 · The turn Lukas meant, and what his lever can take
+
+Lukas, on the readiness of the trained turn: "lets keep the 0 to -45 degree turn from before"; "Does the policy still
+need more training before I can test it on the real robot? I'm talking about the 0 to -45"; "Do we need to retrain with
+the delay and armature before even the 45 to -45 is ready to deploy?"; "The key on the robot likely doesnt need that
+amount of force, and I don't want to crack my 3d printed lever. Will it be safe?"; and "the lock turned when resting a
+roughly half filled 1L water bottle on the lever's platform".
+
+**The misreading.** Lukas's original sentence ("turn it 45 degrees from horixontal (pad facing up) to 45 degrees below
+horizontal clockwise ... unlocks ... past the 30 degree mark") is a 45-degree turn from horizontal. It was read as
+45 up to 45 down, and every key policy and evaluation since the morning (F-163 to F-172) used that longer turn. F-166's
+status now says so. The code's default stays the trained turn; `--key_turn_deg 0 45 30` sets Lukas's.
+
+**Runs** (all `leg_eval --task leg --leg_object key --leg_variant <v> --checkpoint <final> --headless --small_physx`
+plus the options below; 49 recorded, titled "Key eval, turn horizontal->45° down ...", "Key eval, force-aware s2
+walker fine-tune, legs: ...", "Key eval from the dog's measured stand ..."):
+- Lukas's turn (`--key_turn_deg 0 45 30`) zero-shot, five policies, then the three best with `--leg_delay_steps 2`,
+  `--leg_actuator unitree_geared --leg_armature 0.01 --leg_knee_armature 0.037`, both, from the classic stand
+  (`--spawn_states demos/combiner_key/assets/classic_stance_30cm.json --eval_spawn_states`), and both of those together
+  (F-176's table). Force s2: 108 as trained, 89 realistic, 52 from the stand with the realistic legs.
+- The trained turn, the walker fine-tune: realistic legs 78, from the classic stand with them 49, a 0-5 ms delay alone
+  101 (F-176). With 0-10 ms the extra damage is on the key -- 12 as the foot settles on it, 23 pressing, 7 lifting off --
+  with no falls and the stance unchanged; peak median 67 -> 99 N.
+- A light lock, new options `--key_eval_lock_nm 0.2 0.3 0.5 --key_eval_detent_nm 0 0.2` (the frozen set keeps its 108
+  rows and estimate errors), the layer ending 5 degrees short of the stop with a 0.3 s hold (`--key_overdrive_deg -5
+  --key_hold_s 0.3`) and a lower command cap (`--key_max_force_n 8 15`; new): F-177's table. Force s2 at most 37 N in
+  the trained conditions; with the stand and the realistic legs 144 N p90, 342 N max. The cap changes nothing: the
+  layer already asks only ~10-15 N of a light lock, and the peaks are impacts.
+- The dog's measured stand (F-173: 38.7 x 31.7 cm, 0.32-0.33 m), solved symmetric into
+  `demos/combiner_key/assets/dog_stand_20261021/` (F-178's table): the walker fine-tune 84-85 on the trained turn, the
+  best 52 on Lukas's, 15-24 with 8-17 falls with the realistic legs.
+
+**The lever** (Lukas's STL, measured in mm): a 15 x 20 mm bar on a 10 mm shaft; the platform a **2.5 mm** plate,
+35 mm wide and 100 mm long, beside the bar (`geometry.py` and the demo's README said 2 mm: corrected). The layer aims at
+~18 mm from the plate's root. Printed-PLA estimates, not a test: the plate ~70-160 N there, less at its edge; the shaft
+~3-6 N·m in torsion, which a foot pressing ~0.09 m out on the end stop reaches at 35-65 N. Lukas's lock turned under a
+half-full 1 L bottle on the platform: ~5 N at ~0.1 m, so its breakaway is at most ~0.5 N·m.
+
+**Answers given.**
+- *More training before the real robot?* Yes, for either turn. On the realistic legs from the sport mode's stand no
+  policy is better than 49 of 108 (the trained turn) or 52 (Lukas's turn, at 0.30 m; 15-24 at the measured 0.33 m).
+  The dog's measured latency (3.4 ms median before a command leaves) rules out the 0 ms the policies trained with.
+  Shadow mode needed none.
+- *Safe for the lever?* Not with these policies on the dog. In the trained conditions with a soft end yes (<= 37 N);
+  on the dog's conditions the impacts reach 140-340 N. A stronger test print (a 4-5 mm platform is ~3x stronger, a metal
+  pin through the shaft) helps whatever the policy.
+
+**What this shows, and what it does not.** *Shows* (simulation): how far the trained policies are from Lukas's turn
+on the dog's conditions, and where the force comes from. *Does not show*: the real lever's strength or the real foot's
+impacts (the plant's contact stiffness sets the peaks), the motors' part of the delay, or the asymmetric real stand.
+
+### 2026-10-21 · The fine-tune on Lukas's turn
+
+Lukas: "the lock turned when resting a roughly half filled 1L water bottle on the lever's platform. with this
+knowledge, continue the training with your proposed fine tune" (the proposal: F-176 to F-178). The bottle: ~5 N at
+~0.1 m from the shaft, so the lock breaks away at most at ~0.5 N·m.
+
+**Added** (`run_unifp_train.py`, all in the run record): `--key_lock_range_nm` / `--key_detent_range_nm` (the lock drawn
+in training), `--key_damage_n` (`leg_cfg.DAMAGE_N`), `--key_press_limit_n` / `--key_press_weight` (`leg_rewards.press_excess`:
+the peak contact past the limit as overlap through the plant's stiffness, cm, so the position variant gets it as it
+gets `door_push`), `--leg_delay_min_steps`, `--leg_armature_range` / `--leg_knee_armature_factor` (each environment's
+leg armature drawn once at start-up, `Go2D1LegEnv._draw_leg_armature`), `--spawn_states_fraction`.
+`demos/combiner_key/sport_stands.py` writes `assets/sport_stands_20261021.json`: 20 sport stands (0.30-0.34 m; the
+tape's and the encoders' spacings; the rear-left foot as the others or 3.5 cm out) listed twice, and the walker's 32
+stops. A 2-iteration smoke ([run](#/week/6/run/20261021T053524_train_seed2_key_finetune_smoke)) checked every setting
+reached the simulator (env 0's armature 0.0052 hip and thigh, 0.0191 knee; the delay 1-3 steps).
+
+**Training** (16:36-18:31, both in parallel, 9.8 GB, ~6.5 s an iteration):
+
+    ./run_unifp_train.py train --task leg --leg_object key --leg_variant <v> --resume_from <seed 2 final> \
+        --num_envs 2048 --iterations 1000 --handle_fraction 0.6 --foot_push_n 10 --force_start_iteration 0 \
+        --force_ramp_iterations 1 --spawn_states demos/combiner_key/assets/sport_stands_20261021.json \
+        --spawn_states_fraction 0.8 --resume_leg_std 0.2 --fixed_learning_rate 1e-4 --entropy_coef 0.002 --headless \
+        --seed 2 --key_turn_deg 0 45 30 --key_overdrive_deg -5 --key_hold_s 0.3 --key_lock_range_nm 0.15 0.6 \
+        --key_detent_range_nm 0 0.2 --key_max_force_n 6 20 --key_press_limit_n 30 --key_press_weight -4 \
+        --leg_actuator unitree_geared --leg_delay_min_steps 1 --leg_delay_steps 3 --leg_armature_range 0.003 0.02
+
+[force](#/week/6/run/20261021T053626_train_seed2_key_ft045_force_s2) from `model_1605`,
+[position](#/week/6/run/20261021T053727_train_seed2_key_ft045_position_s2) from `model_1614`. The penalty is small
+in the episode sums (-0.006 against +0.15 for the key's progress and unlock, averaged over all episodes), yet the
+force-aware run's training-time peak fell from 65-96 N to 40-44 N; the position-only run's fell to ~60 N by ~2000,
+then rose to 85-98 N.
+
+**The frozen evaluations** (18:31-18:49, the queue; then the sweep 20:17-20:41): F-179's two tables. The fine-tuned
+force-aware policy: 101 / 100 from the dog's stand on the realistic legs, nothing past 60 N, max 35 N; 95-105 across
+the sweep's changes within the training ranges; 65 at 20 ms; 2 with UniFP's 2e-4 armature (the whole of its 0 in
+"nominal"). The position-only final 30 / 27 (its checkpoint at 2000: 86 / 94).
+
+**Viewers** (Lukas: "can you spin up visualisation so I can see it"): the fine-tuned force-aware policy on Lukas's
+turn from the dog's stand on the realistic legs. A first launch with four robots ended after `play`'s default 100 steps
+([run](#/week/6/run/20261021T092014_play_seed1_key_ft045_play_force)) -- it read to Lukas as a crash ("can we only show
+one at a time"); an interrupted relaunch with four robots ([run](#/week/6/run/20261021T092246_play_seed1_key_ft045_play_force))
+was closed, and one robot (row 53) ran until he asked to close it ([run](#/week/6/run/20261021T092301_play_seed1_key_ft045_play_force)).
+
+**Exported** for the dog's shadow runner: `checkpoints/leg_key_force_ft045_model_2604.npz` (numpy against the checkpoint:
+actions 4.9e-6; `checkpoints/README.md`, `SHA256SUMS`). `export_policy.py` now writes the training run's own settings into
+`meta.trained_on` (it had a fixed description of F-166's legs, right only for the first export).
+
+**What this shows, and what it does not.** *Shows* (simulation): a fine-tune on the dog's conditions turns Lukas's key
+gently from the dog's stand and is robust within the ranges it trained on; the force-aware variant holds its lead.
+*Does not show*: the real dog -- no commanding program exists; the motors' delay; a real foot on a real PLA lever (the
+plant's contact sets the peaks); the switch out of sport mode. One seed per variant.
+
+### 2026-10-21/22 · A general foot-press policy: plates anywhere the front-right foot reaches
+
+Lukas: "I see potential in developing this force aware foot pushing into a policy trained to go in many positions and
+directions just like uniFP so it can also be used for pressing etc. You have a day of gpu to train and iterate on
+this." UniFP's arm policy is general (any goal in its sphere, any force command); the key policy (F-179) has one
+contact at one place. Findings: F-180 (the policy), F-181 (what its task layer needs), F-182 (a limit and a regression).
+
+**Built** (`--task leg --leg_object press`, `unifp_train/README.md`, "Plates anywhere the foot reaches"):
+`foot_press_cfg.py`, `foot_press.py` (the FR leg's kinematics, checked against `classic_stance.foot`; `PlateTable`;
+`PlateSet`; `PressLayer`), `foot_press_env.py` (`Go2D1FootPressEnv`, a subclass of the leg environment: the key's stance,
+robot and return), `foot_press_eval.py` (288 frozen presses), `leg_vis.PlateMarkers`; hooks in `leg_env.py`
+(`_start_layer`, `_object_state`, `_draw_objects` / `_place_objects`, a per-environment lift height) with the handle and
+key paths unchanged; `tests/test_foot_press.py` (18). In 70% of episodes a flat plate -- rigid (8,000 N/m) or sprung
+(400-8,000 N/m over 5-30 mm, then rigid), sticking friction, the knee and head checked against it -- that the layer
+approaches, finds by the foot stalling, presses with 1-3 levels of 3-35 N (some with a tangential part, some sliding
+2-6 cm), releases, and the foot goes back to its footfall; in the rest UniFP's free-space goal walk with pushes. The
+force-aware variant is rewarded for the applied force against the command (`press_force`, its only extra term); both
+get the key's contact, slip, knee-and-head and approach terms, and a 45 N press limit.
+
+**Recipe** (all rounds; `logs/unifp_train/press/train_one.sh`): both variants in parallel from the F-179 fine-tune's
+finals (force `model_2604`, position `model_2613`), 2048 environments each, ~6.6 s an iteration:
+
+    ./run_unifp_train.py train --task leg --leg_object press --leg_variant <v> --resume_from <checkpoint> \
+        --num_envs 2048 --iterations <n> --handle_fraction 0.7 --foot_push_n 15 --force_start_iteration 0 \
+        --force_ramp_iterations 1 --spawn_states demos/combiner_key/assets/sport_stands_20261021.json \
+        --spawn_states_fraction 0.8 --resume_leg_std 0.2 --fixed_learning_rate 1e-4 --entropy_coef 0.002 --headless \
+        --seed 3 --leg_actuator unitree_geared --leg_delay_min_steps 1 --leg_delay_steps 3 --leg_armature_range 0.003 0.02
+
+The frozen evaluation (`logs/unifp_train/press/eval_one.sh <v> <ckpt> <name> real`): the 288 plates on the realistic
+legs (geared knee, armature 0.01 / 0.037, 5-15 ms delay) from the dog's measured stand at 0.33 m, damage at 120 N.
+
+**What went wrong first, and what changed** (each run recorded; stopped runs are titled as such):
+
+- Smokes: [crashed](#/week/6/run/20261021T110103_smoke_seed1_press_smoke) (a mask not broadcast in the layer; a batched
+  test now covers it), [then ran](#/week/6/run/20261021T110137_smoke_seed1_press_smoke); a 2-iteration
+  [training smoke](#/week/6/run/20261021T110230_train_seed3_press_train_smoke).
+- Round 1 ([force](#/week/6/run/20261021T110441_train_seed3_press_r1_force_s3),
+  [position](#/week/6/run/20261021T110557_train_seed3_press_r1_position_s3), stopped at ~50 iterations): the layer
+  called contact in the air -- training engages at the deadline wherever the foot is (12 cm off at first), and a foot
+  off its line lags the reference without touching anything. A stall now counts only with the reference within 2 cm
+  of the expected face and the foot within 2.5 cm of its line.
+- Round 1b ([force](#/week/6/run/20261021T110920_train_seed3_press_r1b_force_s3),
+  [position](#/week/6/run/20261021T111035_train_seed3_press_r1b_position_s3), stopped at ~50): held where contact was
+  called, the goal makes UniFP's target `goal + (external + command) / 400 N/m` a spring, and a plate of stiffness k_s
+  then settles at k_s / (k_s + 400) of the command (71% at 1,000 N/m) -- against the `press_force` term. The
+  force-aware layer's goal now follows the foot along the normal while it presses (0.1 s, at most 4 cm in).
+- Round 1c ([force](#/week/6/run/20261021T111219_train_seed3_press_r1c_force_s3),
+  [position](#/week/6/run/20261021T111335_train_seed3_press_r1c_position_s3), stopped at ~470): its `model_3000`
+  [held 1 of 288 and missed 237 approaches](#/week/6/run/20261021T114505_leg_eval_seed1_press_r1c_force_3000_real), the foot
+  ~20 cm short of its pre-contact point. The plate table had been drawn from the leg's kinematic sample, uniform in joint
+  space: its contact points sat at the reach's outer shell (median 0.31 m from the thigh joint, p90 0.37; the leg is
+  0.426 m at full stretch). The table is now drawn uniformly in space (half of it in a box ahead of the foot), 0.13-0.30 m
+  from the thigh joint (median 0.26), the waypoint checked too; the free-space goals' yaw widened to -1.2 rad for this
+  task, as far round to the right as the plates go. **The frozen set was rebuilt from it (v2, 23:00)**; the runs on v1
+  are titled as such and superseded.
+- Round 2 ([force](#/week/6/run/20261021T115106_train_seed3_press_r2_force_s3),
+  [position](#/week/6/run/20261021T115222_train_seed3_press_r2_position_s3), stopped at ~470): at `model_3000`
+  [force 44](#/week/6/run/20261021T122353_leg_eval_seed1_press_r2_force_3000_real) and
+  [position 40](#/week/6/run/20261021T122723_leg_eval_seed1_press_r2_position_3000_real) of 288, 55 damaged each. The
+  force-aware policy applied ~63% of the command on rigid and sprung plates alike (8 / 16 / 28 N -> 5 / 10.5 / 17.5: the
+  goal following works, the shortfall is the policy's); of its 83 peaks past 60 N, 22 were on the return to the footfall
+  (the key's path, waypoint then straight down, cut through plates between) and 22 on the approach (the key's 14 cm
+  first lift, then on a slant, met low plates); the base reared 32-40 degrees through every stage. Now: the lift goes
+  straight up to the waypoint's height, the return goes out to the waypoint, across at its height and straight down, and
+  the orientation weight is -4 in this task (-1 in UniFP's).
+
+Zero-shot, the F-179 key policy holds [0 of 288 on v2](#/week/6/run/20261021T115222_leg_eval_seed1_press_r2_keyft_force_real)
+(208 approaches missed; it rears ~30 degrees and drops from 0.34 to 0.22 m while it waits: the key's posture); on v1
+[1](#/week/6/run/20261021T110321_leg_eval_seed1_press_eval_keyft_force_real) and
+[4](#/week/6/run/20261021T111335_leg_eval_seed1_press_r1c_keyft_force_real) with the two layers.
+
+**Round 3** ([force](#/week/6/run/20261021T123300_train_seed3_press_r3_force_s3),
+[position](#/week/6/run/20261021T123415_train_seed3_press_r3_position_s3); both from their round-2 `model_3000`, 1600
+iterations, 23:40 to ~02:45):
+
+| checkpoint | held | within tolerance | missed | damaged | past 60 N | force bias / MAE (median) | tilt (median max) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| force-aware `model_3400` | [120](#/week/6/run/20261021T130547_leg_eval_seed1_press_r3_force_3400_real) | 134 | 13 | 20 | 26 | -2.3 / 3.9 N | 37 deg |
+| position-only `model_3400` | [73](#/week/6/run/20261021T130912_leg_eval_seed1_press_r3_position_3400_real) | 74 | 0 | 25 | 40 | -4.2 / 5.6 N | 34 deg |
+| force-aware `model_4000` | [97](#/week/6/run/20261021T135838_leg_eval_seed1_press_r3_force_4000_real) | 139 | 0 | 22 | 26 | -3.4 / 3.6 N | 36 deg |
+| position-only `model_4000` | [84](#/week/6/run/20261021T140202_leg_eval_seed1_press_r3_position_4000_real) | 84 | 0 | 0 | 0 (max 38 N) | -5.9 / 6.6 N | 25 deg |
+
+At `model_3400` the force-aware policy applies 7.5 / 15.3 / 22.5 N for 8 / 16 / 28 N (rigid and sprung within 0.5 N
+of each other); the return path's peaks fell from 22 to 4. What is left: plates facing down (pushing up), where the foot
+loses the plate and comes back onto it at up to 230 N (14 of the 20 damaged); brief contact losses at the start of the
+ramp on plates facing up (17 of 33 slips); and the tilt. At `model_4000` the force-aware policy holds more presses
+within tolerance (139) but fewer successes, because slips rose from 46 to 116 (42 of them within tolerance). That was the
+layer's doing: when contact was called, the force-aware goal jumped from the reference back to the stalled foot,
+pulling the target back by the foot's lag (at least 1.2 cm, ~5 N), so the foot let go. The first ramp now starts at the force the
+target already asked for (the touch force plus 400 N/m times the lag), which leaves both variants' targets continuous
+(`test_target_continuous_when_contact_is_called`). The position-only policy at 4000 is gentle -- nothing past 38 N, the
+base at 25 degrees -- and under-presses by 6 N.
+
+**Round 4** ([force](#/week/6/run/20261021T140237_train_seed3_press_r4_force_s3),
+[position](#/week/6/run/20261021T140352_train_seed3_press_r4_position_s3); 01:05 to ~04:50; both from round 3's
+`model_4000`, 2000 iterations, the ramp fix):
+
+| checkpoint | held | within tolerance | missed | damaged | past 60 N | force bias / MAE (median) | tilt (median max) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| force-aware `model_4400` | [168](#/week/6/run/20261021T143624_leg_eval_seed1_press_r4_force_4400_real) | 168 | 0 | 4 | 5 (p95 33 N) | -2.1 / 3.0 N | 37 deg |
+| position-only `model_4400` | [86](#/week/6/run/20261021T143845_leg_eval_seed1_press_r4_position_4400_real) | 87 | 0 | 7 | 12 | -1.8 / 6.5 N | 23 deg |
+| force-aware `model_5000` | [208](#/week/6/run/20261021T152810_leg_eval_seed1_press_r4_force_5000_real) | 209 | 2 | 7 | 10 (p95 35 N) | -1.0 / 1.8 N | 30 deg |
+| position-only `model_5000` | [67](#/week/6/run/20261021T153131_leg_eval_seed1_press_r4_position_5000_real) | 67 | 3 | 25 | 33 | +2.3 / 8.0 N | 20 deg |
+| force-aware `model_5600` | [188](#/week/6/run/20261021T161957_leg_eval_seed1_press_r4_force_5600_real) | 188 | 0 | 0 | 0 (max 55 N) | -0.8 / 2.4 N | 34 deg |
+| position-only `model_5600` | [106](#/week/6/run/20261021T162316_leg_eval_seed1_press_r4_position_5600_real) | 106 | 0 | 3 | 3 (max 311 N) | -2.9 / 5.1 N | 20 deg |
+
+The ramp fix took the force-aware slips from 116 to 3 (`model_4400`). Over the hold's last 2 s its force does not
+drift on sprung plates (median slope +0.05 to +0.33 N/s, as on rigid ones): the goal following does not ratchet.
+At 5000 the plates facing down are the weak kind (28 of 72; the others 57-65). Between checkpoints 600 iterations
+apart the counts move by 20-40 for both variants (force-aware 168 / 208 / 188, position-only 86 / 67 / 106): the
+position-only policy pressed harder at 5000 (bias +2.3 N, 25 damaged) and softer again at 5600. At 5600 the force-aware
+policy put nothing past 55 N on any plate.
+
+**Round 4's finals** (`model_5999`, 03:56; in 1700 s fewer than estimated, ~5.7 s an iteration):
+
+| final | set v2, dog's stand | set v2, settled stance | force bias / MAE | past 60 N (max) | key zero-shot, 0.33 / 0.32 m |
+| --- | --- | --- | --- | --- | --- |
+| force-aware | [197](#/week/6/run/20261021T165637_leg_eval_seed1_press_r4_force_5999_real) | [207](#/week/6/run/20261021T165640_leg_eval_seed1_press_r4_force_5999_real_settled) | -0.9 / 2.3 N | 5 (153 N), p95 39 N | **107 / 107** of 108, peak median 7 N, p95 12 N |
+| position-only | [100](#/week/6/run/20261021T165752_leg_eval_seed1_press_r4_position_5999_real) | [86](#/week/6/run/20261021T165757_leg_eval_seed1_press_r4_position_5999_real_settled) | 0.0 / 5.6 N | 11 (153 N), p95 49 N | 72 / 69 (peak p95 39-40 N) |
+
+Around "set v2, dog's stand", one thing changed at a time (04:25-05:02, beside the replication; the in-press outer
+loop kept on, as round 4 trained):
+
+| change | force-aware final (197) | position-only final (100) |
+| --- | --- | --- |
+| 0-5 ms delay | [229](#/week/6/run/20261021T172538_leg_eval_seed1_press_sweep_r4_force_5999_delay0to5) (0 past 60 N; MAE 2.0 N) | [95](#/week/6/run/20261021T174357_leg_eval_seed1_press_sweep_r4_position_5999_delay0to5) (12 past 60 N; MAE 5.5 N) |
+| 15 ms delay | [166](#/week/6/run/20261021T172811_leg_eval_seed1_press_sweep_r4_force_5999_delay15) (16 past 60 N; MAE 2.9 N) | [84](#/week/6/run/20261021T174616_leg_eval_seed1_press_sweep_r4_position_5999_delay15) (1 fell, 7 past 60 N; MAE 6.4 N) |
+| 20 ms delay | [143](#/week/6/run/20261021T173035_leg_eval_seed1_press_sweep_r4_force_5999_delay20) (27 missed, 4 fell, 20 past 60 N; MAE 2.8 N) | [43](#/week/6/run/20261021T174836_leg_eval_seed1_press_sweep_r4_position_5999_delay20) (33 missed, 16 fell, 11 past 60 N; MAE 8.0 N) |
+| armature 0.003 / knees 0.011 | [147](#/week/6/run/20261021T173255_leg_eval_seed1_press_sweep_r4_force_5999_armlow) (20 missed, 12 past 60 N; MAE 3.0 N) | [74](#/week/6/run/20261021T175100_leg_eval_seed1_press_sweep_r4_position_5999_armlow) (4 missed, 5 fell, 14 past 60 N; MAE 6.7 N) |
+| armature 0.02 / knees 0.073 | [205](#/week/6/run/20261021T173516_leg_eval_seed1_press_sweep_r4_force_5999_armhigh) (5 past 60 N; MAE 2.0 N) | [81](#/week/6/run/20261021T175324_leg_eval_seed1_press_sweep_r4_position_5999_armhigh) (7 past 60 N; MAE 6.3 N) |
+| UniFP's ideal-PD legs (armature and delay kept) | [196](#/week/6/run/20261021T173734_leg_eval_seed1_press_sweep_r4_force_5999_idealpd) (4 past 60 N; MAE 2.2 N) | [84](#/week/6/run/20261021T175545_leg_eval_seed1_press_sweep_r4_position_5999_idealpd) (8 past 60 N; MAE 6.5 N) |
+| GO2HV with the knee as the hip | [205](#/week/6/run/20261021T173935_leg_eval_seed1_press_sweep_r4_force_5999_unitreeknee) (11 past 60 N; MAE 2.2 N) | [46](#/week/6/run/20261021T175747_leg_eval_seed1_press_sweep_r4_position_5999_unitreeknee) (26 missed, 9 fell, 81 past 60 N; MAE 8.0 N) |
+| the taped stand, 41 x 28 cm at 0.30 m | [188](#/week/6/run/20261021T174138_leg_eval_seed1_press_sweep_r4_force_5999_tape30) (6 past 60 N; MAE 2.4 N) | [84](#/week/6/run/20261021T180000_leg_eval_seed1_press_sweep_r4_position_5999_tape30) (10 past 60 N; MAE 6.7 N) |
+
+The force-aware final holds 143-229 of 288 in every condition, the position-only one 43-95. As for the key (F-179),
+the loop's total delay and a low armature are what it rests on: 15 ms costs 31 presses, 20 ms 54; the lowest trained
+armature 50, mostly approaches that never settled.
+
+`figures/foot_press_eval_r4.png`: held by plate kind; the force held against the command, rigid and sprung (the
+position-only policy over-presses at 8 N and under-presses at 28 N, as an impedance does; the force-aware one is on the
+line); the peak force's distribution; two plates' force traces. The key evaluation is F-179's (Lukas's turn, the light
+lock, damage at 60 N, the same legs and the dog's stand): the general policy, never trained on the key, unlocks 107 of
+108 with the foot back down in all 108, more gently than the fine-tuned key specialist (101, peak median 15 N, F-179).
+Exported for the shadow runner: `checkpoints/leg_press_force_r4_model_5999.npz` (numpy against the checkpoint: actions
+8.6e-6).
+
+**The slide set** (`--plate_set slide`, frozen 02:45 before any policy was scored on it): the same 48 plates, rigid,
+16 N, once with a tangential part (0.25 of the level, one way along the plate) and once sliding up to 4 cm toward the
+plate's centre while the level is held. The rows of set v2 are unchanged by the code that added it (checked against
+`model_5000`'s recorded rows). Round 4's force-aware final
+[holds 56 of 96](#/week/6/run/20261021T170129_leg_eval_seed1_press_r4_force_5999_slide) (tangential rows 30, slides 26),
+the normal force's error 2.5 N; the slides go their full 4 cm (median; p10 1.9 cm). But of a 4 N tangential command it
+held 0.43 N. The layer did that: its outer loop kept integrating the foot's in-plane miss while the plate was pressed,
+which is exactly the displacement a tangential command asks for, so it moved the goal until the push was gone. Since
+04:05 the loop stops once contact is called; `--press_hold_correction` keeps the old behaviour, and round 4's plate
+evaluations use it (it trained with it). The position-only final's slide-set run was cut when its queue was stopped
+(an empty run directory, not recorded); re-run, it [holds 30 of 96](#/week/6/run/20261021T180258_leg_eval_seed1_press_r4_position_5999_slide_b)
+(MAE 5.0 N), its tangential push 7.4 N where the force-aware layer asked 4 -- not control: its goal is displaced along
+the plate and the same outer loop drives the stuck foot after it.
+
+**The in-press loop, both ways.** Round 4's force-aware final on the slide set with the loop off once contact is called
+([run](#/week/6/run/20261021T181441_leg_eval_seed1_press_r4_force_5999_slide_nohold), a diagnostic: it trained with the
+loop on) holds 3.0 N of the 4 N tangential command but slides 3 mm of 4 cm: friction holds the foot, and UniFP's target
+only asks for the slide less friction over 400 N/m. The loop made the slides and cancelled the tangential push. The
+layer now splits the plate's directions (`--press_hold_loop hybrid`, the default since 05:25): the miss is integrated
+across the normal and across a commanded tangential force, so where no force is commanded along the plate the foot is
+held in position. On the same final ([run](#/week/6/run/20261021T181955_leg_eval_seed1_press_r4_force_5999_slide_hybrid)):
+3.05 N of the 4, the slides their full 4 cm, 55 of 96. `--press_hold_loop full` (alias `--press_hold_correction`) is
+round 4's.
+
+**The replication.** The final recipe in one go from the F-179 finals with seed 4, 3400 iterations (round 4's lineage
+had ~3400 with the layer changed three times on the way). Two starts were stopped: with the loop still fully on
+([force](#/week/6/run/20261021T165913_train_seed4_press_rep_force_s4),
+[position](#/week/6/run/20261021T170028_train_seed4_press_rep_position_s4), ~60 iterations), and with it off
+([force](#/week/6/run/20261021T170612_train_seed4_press_rep_force_s4),
+[position](#/week/6/run/20261021T170728_train_seed4_press_rep_position_s4), ~690 iterations; at `model_3200`
+[force 41](#/week/6/run/20261021T180923_leg_eval_seed1_press_rep_force_3200_real),
+[position 86](#/week/6/run/20261021T181147_leg_eval_seed1_press_rep_position_3200_real)); smokes with the loop
+[off](#/week/6/run/20261021T170528_smoke_seed1_press_smoke_nohold) and
+[hybrid](#/week/6/run/20261021T181811_smoke_seed1_press_smoke_hybrid) ran clean. The third start, with the hybrid loop
+(05:26 to 10:17, `logs/unifp_train/press/queue5d.sh`; [force](#/week/6/run/20261021T182350_train_seed4_press_rep2_force_s4),
+[position](#/week/6/run/20261021T182506_train_seed4_press_rep2_position_s4)), is the one reported:
+
+| checkpoint | force-aware held (damaged, past 60 N) | position-only held (damaged, past 60 N) |
+| --- | --- | --- |
+| `model_3200` | [68](#/week/6/run/20261021T191308_leg_eval_seed1_press_rep2_force_3200_real) (27, 37) | [54](#/week/6/run/20261021T191536_leg_eval_seed1_press_rep2_position_3200_real) (116, 144) |
+| `model_4000` | [120](#/week/6/run/20261021T202323_leg_eval_seed1_press_rep2_force_4000_real) (30, 52) | [86](#/week/6/run/20261021T202549_leg_eval_seed1_press_rep2_position_4000_real) (10, 10) |
+| `model_4800` | [170](#/week/6/run/20261021T213213_leg_eval_seed1_press_rep2_force_4800_real) (2, 4) | [63](#/week/6/run/20261021T213437_leg_eval_seed1_press_rep2_position_4800_real) (62, 78) |
+| `model_5600` | [194](#/week/6/run/20261021T224342_leg_eval_seed1_press_rep2_force_5600_real) (16, 18) | [77](#/week/6/run/20261021T224011_leg_eval_seed1_press_rep2_position_5600_real) (49, 65) |
+| **finals** (6003 / 6012), dog's stand | [**186**](#/week/6/run/20261021T231704_leg_eval_seed1_press_rep2_force_6003_real) (20, 23), MAE 2.5 N | [**58**](#/week/6/run/20261021T231849_leg_eval_seed1_press_rep2_position_6012_real) (47, 63), MAE 6.5 N |
+| finals, settled stance | [203](#/week/6/run/20261021T231707_leg_eval_seed1_press_rep2_force_6003_real_settled) (11, 12) | [63](#/week/6/run/20261021T231855_leg_eval_seed1_press_rep2_position_6012_real_settled) (34, 43) |
+| finals, slide set | [50 of 96](#/week/6/run/20261021T231713_leg_eval_seed1_press_rep2_force_6003_slide): 3.1 N of a 4 N tangential command, slides 3.6 cm of 4 | [24](#/week/6/run/20261021T231900_leg_eval_seed1_press_rep2_position_6012_slide) (25 damaged) |
+| finals, key zero-shot 0.33 / 0.32 m | [104](#/week/6/run/20261021T232049_leg_eval_seed1_press_rep2_force_6003_key_dog33) / [103](#/week/6/run/20261021T232257_leg_eval_seed1_press_rep2_force_6003_key_dog32) of 108, peak median 9 N | [0](#/week/6/run/20261021T232052_leg_eval_seed1_press_rep2_position_6012_key_dog33) / [1](#/week/6/run/20261021T232304_leg_eval_seed1_press_rep2_position_6012_key_dog32) (into the door's face: 51 approaches missed, 57 damaged) |
+
+Its finals' sweep (force-aware / position-only, released from the press point as they trained): 0-5 ms delay
+[218](#/week/6/run/20261021T232517_leg_eval_seed1_press_sweep_rep2_force_6003_delay0to5) / [78](#/week/6/run/20261021T232946_leg_eval_seed1_press_sweep_rep2_position_6012_delay0to5); 15 ms [179](#/week/6/run/20261021T232522_leg_eval_seed1_press_sweep_rep2_force_6003_delay15) / [63](#/week/6/run/20261021T232955_leg_eval_seed1_press_sweep_rep2_position_6012_delay15); 20 ms [126](#/week/6/run/20261021T232626_leg_eval_seed1_press_sweep_rep2_force_6003_delay20) / [19](#/week/6/run/20261021T233056_leg_eval_seed1_press_sweep_rep2_position_6012_delay20); armature 0.003 [149](#/week/6/run/20261021T232631_leg_eval_seed1_press_sweep_rep2_force_6003_armlow) / [58](#/week/6/run/20261021T233104_leg_eval_seed1_press_sweep_rep2_position_6012_armlow); armature 0.02 [194](#/week/6/run/20261021T232734_leg_eval_seed1_press_sweep_rep2_force_6003_armhigh) / [66](#/week/6/run/20261021T233205_leg_eval_seed1_press_sweep_rep2_position_6012_armhigh); ideal-PD legs [188](#/week/6/run/20261021T232741_leg_eval_seed1_press_sweep_rep2_force_6003_idealpd) / [68](#/week/6/run/20261021T233213_leg_eval_seed1_press_sweep_rep2_position_6012_idealpd); knee as the hip [186](#/week/6/run/20261021T232843_leg_eval_seed1_press_sweep_rep2_force_6003_unitreeknee) / [63](#/week/6/run/20261021T233315_leg_eval_seed1_press_sweep_rep2_position_6012_unitreeknee); taped stand 0.30 m [188](#/week/6/run/20261021T232848_leg_eval_seed1_press_sweep_rep2_force_6003_tape30) / [62](#/week/6/run/20261021T233319_leg_eval_seed1_press_sweep_rep2_position_6012_tape30).
+The recipe reproduces: the second seed's force-aware final is round 4's within ~10 presses everywhere, and on the key;
+its position-only final is worse than round 4's (58 against 100), so the gap between the variants is wider, not
+narrower. The second seed presses harder, though: 20 of its finals' presses damaged against 5.
+
+**Where its hard presses came from** (both seeds' finals: 17 of the replication's 23 peaks past 60 N on plates facing
+down). Traced: on a strip 6.5 cm wide facing down, the foot pushing up at 28 N slid off its edge, hung beside it for the
+rest of the hold, and on the way back to its footfall moved in at the slab's height. The plate had a face and nothing
+else, so the foot met no edge until its centre crossed it, and then the whole of its radius at once (145 N in one
+physics step) -- a contact the plant made up. Two changes, both defaults since 10:55:
+
+- the release starts from wherever the foot is and backs straight out, never drawing it back to the press point
+  (`PressLayer.release_from_foot`; `--press_release_from_press_point` is the old one): alone, on the finals, it changes
+  almost nothing ([replication](#/week/6/run/20261021T233701_leg_eval_seed1_press_rep2_force_6003_real_release2) 187 with
+  21 damaged; [round 4](#/week/6/run/20261021T233709_leg_eval_seed1_press_r4_force_5999_real_release2) 197 with 4). A first
+  version, along the normal only, changed nothing at all (recorded, superseded the same hour);
+- the plate is the slab it is drawn as, 2 cm thick: the sphere meets its nearest point, face, edge or back, as the key's
+  platform does (`PlateSet.edges`; `--press_plate_face_only` is the old one), the sprung travel on the face only. With
+  both: [replication](#/week/6/run/20261021T234040_leg_eval_seed1_press_rep2_force_6003_real_edges) 186 with 12 damaged
+  (p95 peak 149 -> 93 N), [round 4](#/week/6/run/20261021T234043_leg_eval_seed1_press_r4_force_5999_real_edges) 196 with 2.
+
+Neither policy trained on either. **Round 5** (10:43-12:28, `logs/unifp_train/press/queue8.sh`;
+[force](#/week/6/run/20261021T234224_train_seed3_press_r5_force_s3),
+[position](#/week/6/run/20261021T234340_train_seed3_press_r5_position_s3)): both variants from round 4's finals, 1200
+iterations on the final layer and plant (hybrid loop, release from the foot, the slab), then every evaluation of its
+finals (26, recorded). It made the force-aware policy worse and less safe:
+[167](#/week/6/run/20261022T012835_leg_eval_seed1_press_r5_force_7198_real) from the dog's stand (5 fell, 17 damaged),
+[190](#/week/6/run/20261022T012838_leg_eval_seed1_press_r5_force_7198_real_settled) settled (11 fell), plates facing down 7
+and 9 of 72, falls in 2-86 episodes across the sweep. Every fall is on a plate facing down at 28 N, rolling ~45 degrees to
+the right at 33-42 N of contact: pushing up on a plate above it, the foot is pushed down at the corner the robot is not
+standing on. Round 4's policy under-presses those plates by ~6 N and stands; round 5 learned to press them fully and
+tips (F-182). Its key zero-shot held (105 / 107), and the position-only twin became gentler and better on the key (98
+plates, 95 / 92 keys).
+
+**The candidate, on the final layer and plant** (round 4's finals, not retrained; 12:47-12:50):
+
+| round 4 final | set v2, dog's stand | set v2, settled | slide set (96) |
+| --- | --- | --- | --- |
+| force-aware | [196](#/week/6/run/20261021T234043_leg_eval_seed1_press_r4_force_5999_real_edges) (2 damaged, 5 past 60 N) | [207](#/week/6/run/20261022T014725_leg_eval_seed1_press_r4_force_5999_final_layer_settled) (0 damaged, 3 past 60 N, max 110 N) | [56](#/week/6/run/20261022T014728_leg_eval_seed1_press_r4_force_5999_final_layer_slide): 3.05 N of 4 tangential, slides 4 cm, nothing past 34 N |
+| position-only | [100](#/week/6/run/20261022T014841_leg_eval_seed1_press_r4_position_5999_final_layer_real) (4 damaged) | [86](#/week/6/run/20261022T014846_leg_eval_seed1_press_r4_position_5999_final_layer_settled) | [30](#/week/6/run/20261022T014959_leg_eval_seed1_press_r4_position_5999_final_layer_slide): 1.2 N of 4 |
+
+(On set v2 the split loop is the full one -- no tangential commands -- so the dog's-stand row is the edges run.)
+
+**Viewers** (Lukas: "Can I see visualisation", then "can you open it again"): round 4's force-aware final on row 86 of
+set v2 (a wall ahead-right at 0.36 m, rigid, 28 N), one robot, real time, the realistic legs from the dog's stand, the
+plate orange while pressed and green while the force is within tolerance:
+[first](#/week/6/run/20261022T074454_play_seed1_press_play_r4_row86) (closed from the window),
+[reopened](#/week/6/run/20261022T141024_play_seed1_press_play_r4_row86_b) on 2026-10-23.
+
+**Tests:** `tests/test_foot_press.py` 23; the full suite 827, the known `test_payload` failure only (a first run during
+training also failed `test_decoupled`'s 50 ms wall-clock bound at 55.7 ms under the load; it passes alone and in the second
+run).
+
+**What this shows, and what it does not.** *Shows* (simulation): one force-aware foot policy presses flat plates across
+the front-right leg's reach and facing, rigid and sprung, holding the commanded force to ~2 N; the force-aware
+formulation is ~2x the position-only one on plates and on the key, over two seeds and eight changes to the legs; trained
+only on plates, it turns the key as well as the key specialist, more gently. What its layer has to do (F-181), and that
+upward pushes past ~30 N at the lifted corner tip the robot (F-182). *Does not show*: the dog -- no task layer runs on it,
+no plate or key estimate comes from a camera; real contact (the plates are penalty models on three spheres, edges only
+since 10:55); anything outside the reach the table samples; tangential force beyond a 4 N test; more than one fine-tune
+of the lineage.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
+
+- A general force-aware foot-press policy (F-180-F-182, simulation): on 288 frozen presses (48 plates across the
+  front-right foot's reach x rigid / sprung x 8-28 N) from the dog's stand on the realistic legs, force-aware 197 (seed 3)
+  and 186 (seed 4), the force's median error 2.3-2.5 N, against position-only 100 and 58; zero-shot on F-179's key
+  evaluation 107 and 104 of 108 (the key specialist 101). Across eight changes to the legs and stance 126-229 against
+  19-95. The candidate, round 4's force-aware final, on the final layer and plant: 196 / 207, on the slide set 56 of 96
+  with nothing past 34 N. `figures/foot_press_eval_r4.png`; exported `checkpoints/leg_press_force_r4_model_5999.npz`.
+
+- The fine-tune on Lukas's turn (F-179, simulation): from the dog's measured stand on the realistic legs, force-aware
+  101 / 100 of 108 with no contact past 60 N (max 35 N); 95-105 over 0-15 ms delay and armature 0.003-0.02; the
+  matched position-only final 30 / 27. Exported for shadow mode: `checkpoints/leg_key_force_ft045_model_2604.npz`.
 
 - The key policy in shadow mode on the real dog (F-173, one 90 s run, open loop): 50 Hz held (period p99 20.7 ms,
   inference 3.1 ms on the dog), frames as the training code's to 1e-17, targets within 0.013-0.078 rad RMS of a still
@@ -1895,6 +2266,27 @@ after. Nothing else was left on the dog.
   `figures/leg_handle_frames_*_handle64.png`.
 
 ## Findings this week
+
+- [F-180](../findings.md): a general force-aware foot-press policy holds 197 / 186 of 288 frozen presses (two seeds) with
+  the force's error ~2.3 N, against 100 / 58 position-only, and unlocks 104-107 of 108 keys zero-shot, more than the key
+  specialist (provisional, simulation).
+- [F-181](../findings.md): what a UniFP-style policy's task layer needs to press -- a goal that follows the foot along the
+  normal, a first ramp from the implied force, stall detection near the face, an outer loop split by direction along the
+  plate (provisional, simulation).
+- [F-182](../findings.md): pushing up at 28 N on a plate above the lifted front-right foot tips the robot; a fine-tune that
+  learned to do it falls 5-11 times in 288; the force a layer commands needs a cap by direction (provisional, simulation).
+
+- [F-179](../findings.md): fine-tuned on Lukas's turn, his light lock, a 30 N press limit, realistic legs and sport-mode
+  starts, the force-aware key policy unlocks 100-101 of 108 from the dog's stand with nothing past 60 N (max 35 N),
+  95-105 across 0-15 ms delay, armature and motor models; fails at 20 ms (65) and 2e-4 armature (2); position-only final
+  27-30 (provisional, simulation).
+
+- [F-178](../findings.md): from the dog's measured stand the trained key policies do worse; on Lukas's turn with the
+  realistic legs 15-24 of 108, with falls (provisional, simulation).
+- [F-177](../findings.md): on a light lock with a soft end the force-aware policy peaks at most 37 N in the trained
+  conditions, but 144 N p90 / 342 N on the dog's; a force cap changes nothing (provisional, simulation).
+- [F-176](../findings.md): Lukas's turn is horizontal to 45 down (unlock 30); all key policies trained on 45 up to 45
+  down; on his turn force s2 unlocks 108 as trained, 52 on the dog's conditions; a fine-tune is needed (provisional).
 
 - [F-175](../findings.md): the shadow loop's stalls were its own 30 s save of the whole record (150 ms per 1,500 steps
   on the dog); a per-second flush of only the new steps costs 2.9 ms at most there and the loop holds 20.4 ms max
@@ -1972,7 +2364,8 @@ after. Nothing else was left on the dog.
 - `tests/test_payload.py::TrunkParts::test_the_meshes_lie_inside_their_colliders` fails on HEAD (1149 lidar-mount
   vertices outside both collider boxes) since 81b9c4a's redrawn mount; found running the full suite on 2026-10-20,
   not caused by the leg task. The other 724 tests pass (7 skipped). Still the only failure on 2026-10-21 after 9136aba
-  and the key work: 788 tests, 1 failure, 7 skipped; and after the leg-model study: 793, the same 1 failure, 7 skipped. After the shadow runner: 803, the same 1 failure, 7 skipped.
+  and the key work: 788 tests, 1 failure, 7 skipped; and after the leg-model study: 793, the same 1 failure, 7 skipped. After the shadow runner: 803, the same 1 failure, 7 skipped. After the fine-tune's code (2026-10-21 evening): 804, the same 1 failure, 7 skipped. After the foot-press task
+  (2026-10-22): 827, the same 1 failure, 7 skipped.
 - The shadow runner on the dog stalls once at ~30 s (0.18 s) and once at ~60 s (0.36-0.40 s) after its first LowState,
   in both runs of 2026-10-21 (F-174). Not diagnosed. Any program that commands the legs needs this found first, and a
   watchdog for a missed step either way. **Found and fixed the same day (F-175):** the node saved its whole record
@@ -1985,6 +2378,13 @@ after. Nothing else was left on the dog.
   died of it); `--given_box` develops the rest without it. One 4096-environment leg run takes 6.6 GB.
 - `pgrep -f <script>` matches the shell that runs it: killing by pattern killed my own shell twice (2026-10-20 and
   -21). The queue and its helpers now write and use pid files.
+- The foot-press work used the GPU 22:03 on 2026-10-21 to 12:50 on 2026-10-22 (Lukas's day): seven training starts, four
+  of them stopped within an hour on a design flaw each, and ~150 frozen evaluations. Its queues ran detached on pid
+  files with a watcher reporting at most every 55 min; one `pkill -f` (04:05) matched the calling shell again and cut that
+  command short, without losing a run.
+- **The foot-press plant (F-180-F-182):** the plates are penalty contacts on the foot sphere, the knee and the head; the
+  thighs and calves pass through them. A sprung plate pressed past its travel and the 2 cm overlap cap leaves the foot's
+  centre behind the slab, where its back pushes it on through (the face-only plant lost contact there instead).
 - The leg-model study used the GPU 09:40-11:27 on 2026-10-21 (eval only, three at a time, ~2.4 GB). Its first queue
   read its job list on the same stdin its jobs inherited; it was replaced after three jobs by one that reads on its own
   descriptor and gives every job /dev/null (no job was lost).

@@ -47,6 +47,8 @@ class FootGoals:
         """`down_goal` and `pitch_range` are the handle task's unless given (the key task's are `leg_cfg.KEY_*`)."""
         self.num_envs, self.device, self.generator = num_envs, torch.device(device), generator
         self.down_goal, self.pitch_range = tuple(down_goal), tuple(pitch_range)
+        #: The yaw range goals are drawn in (the press task's is wider, `foot_press_cfg.GOAL_YAW_RANGE`).
+        self.yaw_range = tuple(leg_cfg.GOAL_YAW_RANGE)
         zeros = lambda *shape: torch.zeros(*shape, device=self.device)
         self.start, self.goal, self.current = zeros(num_envs, 3), zeros(num_envs, 3), zeros(num_envs, 3)
         self.timer = zeros(num_envs)
@@ -86,7 +88,7 @@ class FootGoals:
             n = len(pending)
             candidate = torch.stack((self._uniform(leg_cfg.GOAL_RADIUS_RANGE, n),
                                      self._uniform(self.pitch_range, n),
-                                     self._uniform(leg_cfg.GOAL_YAW_RANGE, n)), dim=-1)
+                                     self._uniform(self.yaw_range, n)), dim=-1)
             draw[pending] = candidate
             pending = pending[~admissible(sphere_to_local(candidate))]
             if len(pending) == 0:

@@ -47,7 +47,7 @@ With `--key_inserted`: spawn, look, `walk_to_key` (straight to the turn's stance
 ## The pieces
 
 - **The key** (`assets/combinerbox_lever_v3.stl`, Lukas's; `geometry.py`). A 10 mm shaft with two wards 15 mm across, on
-  a bar 15 x 20 mm and 175 mm long. Beside the bar is a 2 mm plate 35 mm wide, its top flush with the bar's: a flat
+  a bar 15 x 20 mm and 175 mm long. Beside the bar is a 2.5 mm plate 35 mm wide, its top flush with the bar's: a flat
   platform 100 x 50 mm, 48-148 mm out from the shaft. **As drawn it points the wrong way.** With its shaft in the lock
   and the platform up, the lever points to the robot's left, out past the box's edge. The turn Lukas described
   (front-right foot, clockwise, downward) needs it pointing right, toward the box's middle. No rotation of the part

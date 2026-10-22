@@ -1,0 +1,63 @@
+{
+  "id": "20261021T053524_train_seed2_key_finetune_smoke",
+  "title": "Smoke: key fine-tune setup (turn horizontal->45\u00b0, light lock, press limit, geared knee, delay 5-15 ms, armature drawn), 2 iterations",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-21T16:36:20+11:00",
+  "started_utc": "2026-10-21T05:35:24+00:00",
+  "source_dir": "logs/unifp_train/20261021T053524_train_seed2_key_finetune_smoke",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 2,
+  "steps": 100,
+  "git_commit": "cbeb66049f0b4a8c5c23728ee7cea40bd289e802",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 1606,
+  "final_checkpoint": {
+    "file": "model_1606.pt",
+    "sha256": "a4e92155216cc941c5af10565475f64b0a13c502caaba51b2eb7901a584beb8f"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 4.2912139892578125,
+      "last_step": 1606,
+      "mean_last_10": 2.9268821477890015,
+      "min": 1.5625503063201904,
+      "max": 4.2912139892578125,
+      "points": 2
+    },
+    "Train/mean_episode_length": {
+      "last": 30.25,
+      "last_step": 1606,
+      "mean_last_10": 20.375,
+      "min": 10.5,
+      "max": 30.25,
+      "points": 2
+    },
+    "Policy/mean_std": {
+      "last": 0.20215386152267456,
+      "last_step": 1606,
+      "mean_last_10": 0.20158924907445908,
+      "min": 0.2010246366262436,
+      "max": 0.20215386152267456,
+      "points": 2
+    },
+    "Perf/total_fps": {
+      "last": 845.0,
+      "last_step": 1606,
+      "mean_last_10": 813.5,
+      "min": 782.0,
+      "max": 845.0,
+      "points": 2
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

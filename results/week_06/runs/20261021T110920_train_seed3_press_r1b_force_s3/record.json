@@ -1,0 +1,60 @@
+{
+  "id": "20261021T110920_train_seed3_press_r1b_force_s3",
+  "title": "foot-press round 1b, force (stopped at ~50 iterations: the fixed press goal made the force-aware target a 400 N/m spring)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-21T22:12:25+11:00",
+  "started_utc": "2026-10-21T11:09:20+00:00",
+  "source_dir": "logs/unifp_train/20261021T110920_train_seed3_press_r1b_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "running",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "63cedbdf2177b1f2e8b901662c844825566704df",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 2660,
+  "final_checkpoint": null,
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 149.87503051757812,
+      "last_step": 2660,
+      "mean_last_10": 150.62273101806642,
+      "min": 2.16924786567688,
+      "max": 153.8856658935547,
+      "points": 57
+    },
+    "Train/mean_episode_length": {
+      "last": 858.8900146484375,
+      "last_step": 2660,
+      "mean_last_10": 860.5230102539062,
+      "min": 12.263157844543457,
+      "max": 876.52001953125,
+      "points": 57
+    },
+    "Policy/mean_std": {
+      "last": 0.20747056603431702,
+      "last_step": 2660,
+      "mean_last_10": 0.2072844460606575,
+      "min": 0.2004309594631195,
+      "max": 0.20753635466098785,
+      "points": 57
+    },
+    "Perf/total_fps": {
+      "last": 23852.0,
+      "last_step": 2660,
+      "mean_last_10": 23930.3,
+      "min": 10439.0,
+      "max": 26876.0,
+      "points": 57
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

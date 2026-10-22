@@ -122,6 +122,21 @@ def build_parser() -> argparse.ArgumentParser:
                         help="'press' training: the curriculum's starting level, 0-1 (default 0.2).")
     parser.add_argument("--press_tools", nargs="+", choices=("bare", "probe"), default=None,
                         help="'press' training: which tools to draw (default both, equally often).")
+    parser.add_argument("--press_hold_loop", choices=("hybrid", "full", "off"), default="hybrid",
+                        help="--leg_object press: the layer's outer loop on the foot's miss while the plate is pressed "
+                             "(unifp_train/foot_press_env.py): 'hybrid' across the normal and a commanded tangential force; "
+                             "'full' across the normal, as rounds 1-4 of the foot-press task trained; 'off'.")
+    parser.add_argument("--press_plate_face_only", action="store_true",
+                        help="--leg_object press: the plate as its face only, as trained until 2026-10-22 10:55 (the default "
+                             "is the slab with edges and a back).")
+    parser.add_argument("--press_release_from_press_point", action="store_true",
+                        help="--leg_object press: release from the press point wherever the foot is (as the layer did until "
+                             "2026-10-22 10:45; the default backs straight out from the foot).")
+    parser.add_argument("--press_hold_correction", action="store_true",
+                        help="--leg_object press: the same as --press_hold_loop full (the name round 4's evaluations used).")
+    parser.add_argument("--plate_set", choices=("v2", "slide"), default="v2",
+                        help="leg_eval --leg_object press: the frozen plates (unifp_train/foot_press_eval.py): 'v2', 288 "
+                             "presses; 'slide', the same 48 plates at 16 N with a tangential part or a 4 cm slide.")
     parser.add_argument("--press_set", choices=("panel", "force", "recessed"), default="panel",
                         help="'press_eval': the frozen buttons to score (press_cfg.EVAL_*).")
     parser.add_argument("--wipe_fraction", type=float, default=None,
@@ -220,11 +235,14 @@ def build_parser() -> argparse.ArgumentParser:
                         help="--task leg: 'position' is the plan's P0 (no force command, the push a disturbance to "
                              "reject, no force in the critic or the estimator's target); 'force' is P1, UniFP's "
                              "formulation at the foot (unifp_train/leg_env.py).")
-    parser.add_argument("--leg_object", choices=("handle", "key"), default="handle",
+    parser.add_argument("--leg_object", choices=("handle", "key", "press"), default="handle",
                         help="--task leg: 'handle' is a lever door handle at body height (2026-10-19); 'key' is the "
                              "combiner box's lever key in its cam lock, turned 90 degrees down (2026-10-21), which also "
                              "starts each episode standing settled, holds the arm folded at rest and rewards the support "
-                             "feet for their settled places (unifp_train/leg_cfg.py, 'the combiner box's key').")
+                             "feet for their settled places (unifp_train/leg_cfg.py, 'the combiner box's key'); 'press' is "
+                             "the key's stance with plates anywhere the foot reaches, facing any way it can push, pressed "
+                             "with a commanded force profile (unifp_train/foot_press*.py; --handle_fraction is the share "
+                             "of plate episodes).")
     parser.add_argument("--leg_actuator", choices=("unifp", "dcmotor", "knee23", "speedcurve", "knee23curve",
                                                         "dcmotor_armature", "unitree", "unitree_geared"),
                         default="unifp",
@@ -244,6 +262,33 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--key_hold_s", type=float, default=None,
                         help="--leg_object key: how long the task layer holds the foot on the key at the end of the turn "
                              "(leg_cfg.HOLD_S, 2 s as trained; a cam lock stays where it is turned).")
+    parser.add_argument("--key_eval_lock_nm", type=float, nargs="+", default=None,
+                        help="leg_eval --leg_object key: the frozen set's lock frictions, N·m (leg_cfg.KEY_EVAL_FRICTION_NM, "
+                             "0.5 1.5 2.5); with --key_eval_detent_nm its detents (KEY_EVAL_DETENT_NM, 0 1). The set keeps "
+                             "its 108 rows when both keep their counts (3 and 2).")
+    parser.add_argument("--key_eval_detent_nm", type=float, nargs="+", default=None)
+    parser.add_argument("--key_max_force_n", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--leg_object key: the force-aware layer's command cap's limits, N (leg_cfg.KEY_MAX_N_LIMITS, "
+                             "15 55; the cap is 1.8x the lock's rating within them).")
+    parser.add_argument("--key_lock_range_nm", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--leg_object key, training: the lock friction drawn per episode, N·m (leg_cfg.KEY_FRICTION_NM, "
+                             "0.3 2.5); --key_detent_range_nm its cam detent (KEY_DETENT_NM, 0 1).")
+    parser.add_argument("--key_detent_range_nm", type=float, nargs=2, default=None, metavar=("LO", "HI"))
+    parser.add_argument("--key_damage_n", type=float, default=None,
+                        help="--task leg: the contact force counted as damage, N (leg_cfg.DAMAGE_N, 120); a frozen "
+                             "evaluation ends an episode there.")
+    parser.add_argument("--key_press_limit_n", type=float, default=None,
+                        help="--task leg: the force past which contact is penalised (with --key_press_weight, per cm of "
+                             "the overlap it takes through the plant's stiffness; both variants).")
+    parser.add_argument("--key_press_weight", type=float, default=0.0)
+    parser.add_argument("--leg_delay_min_steps", type=int, default=0,
+                        help="--task leg: the least command delay, physics steps of 5 ms (with --leg_delay_steps as the most).")
+    parser.add_argument("--leg_armature_range", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--task leg: draw each environment's leg armature once, uniform in this range (kg·m², hip and "
+                             "thigh), the knees --leg_knee_armature_factor times as much.")
+    parser.add_argument("--leg_knee_armature_factor", type=float, default=3.67)
+    parser.add_argument("--spawn_states_fraction", type=float, default=None,
+                        help="--spawn_states, training: the share of episodes started from a recorded stance (0.5).")
     parser.add_argument("--leg_armature", type=float, default=None,
                         help="--task leg: the legs' armature, kg·m² (trained with 2e-4; unitree_rl_lab's GO2HV 0.01), in any "
                              "--leg_actuator; --leg_knee_armature sets the knees' apart.")
@@ -448,6 +493,8 @@ def main() -> int:
     from unifp_train.rope_env import Go2D1RopeEnv, Go2D1RopeEnvCfg  # noqa: E402
     from unifp_train import leg_actuators, leg_cfg  # noqa: E402
     from unifp_train.leg_env import Go2D1LegEnv, Go2D1LegEnvCfg  # noqa: E402
+    from unifp_train import foot_press_cfg  # noqa: E402
+    from unifp_train.foot_press_env import Go2D1FootPressEnv  # noqa: E402
 
     if args.mode == "hook_eval" and args.task != "hook":
         parser.error("hook_eval needs --task hook")
@@ -489,8 +536,8 @@ def main() -> int:
            "leg": Go2D1LegEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
     if args.task == "leg":
         cfg.leg_variant = args.leg_variant
-        if args.leg_object == "key":
-            cfg.leg_object, cfg.arm_pose, cfg.settled_spawn = "key", "rest", True
+        if args.leg_object in ("key", "press"):
+            cfg.leg_object, cfg.arm_pose, cfg.settled_spawn = args.leg_object, "rest", True
             if args.key_turn_deg is not None:
                 # Read at run time by the plant, the task layer, the approach and the frozen plan (`c.KEY_THETA_*`).
                 start, stop, unlock = args.key_turn_deg
@@ -502,12 +549,37 @@ def main() -> int:
                 leg_cfg.OVERDRIVE_RAD = math.radians(args.key_overdrive_deg)
             if args.key_hold_s is not None:
                 leg_cfg.HOLD_S = args.key_hold_s
+            if args.key_eval_lock_nm is not None:
+                leg_cfg.KEY_EVAL_FRICTION_NM = tuple(args.key_eval_lock_nm)
+            if args.key_eval_detent_nm is not None:
+                leg_cfg.KEY_EVAL_DETENT_NM = tuple(args.key_eval_detent_nm)
+            if args.key_max_force_n is not None:
+                leg_cfg.KEY_MAX_N_LIMITS = tuple(args.key_max_force_n)
+            if args.key_lock_range_nm is not None:
+                leg_cfg.KEY_FRICTION_NM = tuple(args.key_lock_range_nm)
+            if args.key_detent_range_nm is not None:
+                leg_cfg.KEY_DETENT_NM = tuple(args.key_detent_range_nm)
             cfg.stance_weight = leg_cfg.STANCE_WEIGHT
-            cfg.episode_length_s = leg_cfg.KEY_EPISODE_LENGTH_S
+            cfg.press_hold_loop = "full" if args.press_hold_correction else args.press_hold_loop
+            cfg.press_release_from_foot = not args.press_release_from_press_point
+            cfg.press_plate_edges = not args.press_plate_face_only
+            cfg.episode_length_s = (foot_press_cfg.EPISODE_LENGTH_S if args.leg_object == "press"
+                                    else leg_cfg.KEY_EPISODE_LENGTH_S)
             if args.spawn_states:
                 cfg.spawn_states = str(Path(args.spawn_states).resolve())
+                if args.spawn_states_fraction is not None:
+                    cfg.spawn_states_fraction = args.spawn_states_fraction
                 if args.eval_spawn_states:
                     cfg.spawn_states_in_eval, cfg.spawn_states_fraction = True, 1.0
+        if args.task == "leg":
+            if args.key_damage_n is not None:
+                leg_cfg.DAMAGE_N = args.key_damage_n
+            if args.key_press_limit_n is not None:
+                cfg.press_limit_n = args.key_press_limit_n
+            cfg.press_excess_weight = args.key_press_weight
+            if args.leg_armature_range is not None:
+                cfg.leg_armature_range = tuple(args.leg_armature_range)
+                cfg.knee_armature_factor = args.leg_knee_armature_factor
         if args.handle_fraction is not None:
             cfg.handle_fraction = args.handle_fraction
         if args.force_ramp_iterations is not None:
@@ -579,7 +651,11 @@ def main() -> int:
     # `play --task leg --leg_rows ...` loops chosen frozen handles in the viewer, one per environment.
     if args.mode == "leg_eval" or (args.mode == "play" and args.task == "leg" and args.leg_rows):
         from unifp_train import leg_eval
-        eval_plan, eval_rows = (leg_eval.build_key_plan if args.leg_object == "key" else leg_eval.build_plan)("cpu")
+        if args.leg_object == "press":
+            from unifp_train import foot_press_eval
+            eval_plan, eval_rows = foot_press_eval.build_plan("cpu", args.plate_set)
+        else:
+            eval_plan, eval_rows = (leg_eval.build_key_plan if args.leg_object == "key" else leg_eval.build_plan)("cpu")
         # One episode per handle unless --repeats is given: the policy is deterministic, so repeats measure only PhysX.
         repeats = args.repeats if "--repeats" in sys.argv else 1
         if args.leg_bar_radius is not None:
@@ -590,14 +666,15 @@ def main() -> int:
             eval_rows = [dict(eval_rows[i], row=i) for i in keep]
             eval_plan = {"handles": {k: v[keep] for k, v in eval_plan["handles"].items()}}
         eval_rows = eval_rows * repeats
-        eval_plan = {"handles": {k: v.repeat(repeats) for k, v in eval_plan["handles"].items()}}
+        eval_plan = {"handles": {k: v.repeat(repeats, *([1] * (v.dim() - 1))) for k, v in eval_plan["handles"].items()}}
         if args.leg_frames:
             cfg.wrist_camera = cfg.overview_camera = True
             cfg.unifp_markers = False
             if args.leg_object == "key":
                 # The camera is on the head for the key: render that, not the folded arm's.
                 cfg.head_camera_visual, cfg.head_camera, cfg.wrist_camera = True, True, False
-        cfg.episode_length_s = leg_cfg.KEY_EVAL_EPISODE_S if args.leg_object == "key" else leg_cfg.EVAL_EPISODE_S
+        cfg.episode_length_s = {"key": leg_cfg.KEY_EVAL_EPISODE_S, "press": foot_press_cfg.EVAL_EPISODE_S}.get(
+            args.leg_object, leg_cfg.EVAL_EPISODE_S)
     cfg.scene.num_envs = args.num_envs if eval_rows is None else len(eval_rows)
     if args.task == "mechanism":
         for name, value in (("mechanism_fraction", args.mechanism_fraction),
@@ -726,7 +803,7 @@ def main() -> int:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot", armature=armature)
         if args.task == "leg":
             leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
-                                    args.leg_knee_armature)
+                                    args.leg_knee_armature, args.leg_delay_min_steps)
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
     cfg.robot_usd = robot_usd
@@ -753,6 +830,11 @@ def main() -> int:
                 cfg.viewer.eye = (1.15, -1.25, 0.95)
                 cfg.viewer.lookat = (0.38, -0.10, 0.40)
                 cfg.head_camera_visual = True
+            if args.leg_object == "press":
+                # From the front right, the foot's whole workspace in view.
+                cfg.viewer.eye = (1.25, -1.35, 0.85)
+                cfg.viewer.lookat = (0.35, -0.15, 0.25)
+                cfg.head_camera_visual = True
         if rope_rows is not None:
             # From the side, back far enough to hold the robot, the rope and its post 1.5 m ahead: the lean shows.
             cfg.viewer.eye = (0.75, -2.9, 0.75)
@@ -760,7 +842,7 @@ def main() -> int:
 
     env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv, "insertion": Go2D1InsertEnv,
            "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv, "rope": Go2D1RopeEnv,
-           "leg": Go2D1LegEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
+           "leg": Go2D1FootPressEnv if args.leg_object == "press" else Go2D1LegEnv}.get(args.task, Go2D1PosForceEnv)(cfg)
     if args.mode == "ins_eval":
         env.set_evaluation(ins_plan)
     if args.mode in ("press_eval", "wipe_eval", "leg_eval") or (args.mode == "play" and args.task == "leg" and args.leg_rows):
@@ -861,8 +943,15 @@ def main() -> int:
                  "key_turn_deg": [round(math.degrees(v), 3) for v in (leg_cfg.KEY_THETA_START_RAD, leg_cfg.KEY_THETA_END_RAD,
                                                                       leg_cfg.KEY_THETA_UNLOCK_RAD)],
                  "key_overdrive_deg": round(math.degrees(leg_cfg.OVERDRIVE_RAD), 3), "key_hold_s": leg_cfg.HOLD_S,
+                 "key_eval_lock_nm": list(leg_cfg.KEY_EVAL_FRICTION_NM), "key_eval_detent_nm": list(leg_cfg.KEY_EVAL_DETENT_NM),
+                 "key_max_force_n": list(leg_cfg.KEY_MAX_N_LIMITS),
                  "leg_actuator_model": leg_actuators.describe(args.leg_actuator, args.leg_delay_steps, args.leg_armature,
-                                                              args.leg_knee_armature),
+                                                              args.leg_knee_armature, args.leg_delay_min_steps),
+                 "leg_armature_range": (list(cfg.leg_armature_range) if cfg.leg_armature_range is not None else None),
+                 "knee_armature_factor": cfg.knee_armature_factor,
+                 "press_limit_n": cfg.press_limit_n, "press_excess_weight": cfg.press_excess_weight,
+                 "damage_n": leg_cfg.DAMAGE_N, "key_lock_range_nm": list(leg_cfg.KEY_FRICTION_NM),
+                 "key_detent_range_nm": list(leg_cfg.KEY_DETENT_NM),
                  "settled_spawn": cfg.settled_spawn, "stance_weight": cfg.stance_weight,
                  "spawn_states": cfg.spawn_states, "spawn_states_fraction": cfg.spawn_states_fraction,
                  "handle_fraction": cfg.handle_fraction,
@@ -870,7 +959,9 @@ def main() -> int:
                  "arm_look_pose": list(leg_cfg.ARM_LOOK_POSE), "foot_force_range_n": list(leg_cfg.FOOT_FORCE_RANGE_N),
                  "foot_push_n": cfg.foot_push_n, "foot_command_n": cfg.foot_command_n,
                  "foot_force_kp": leg_cfg.FOOT_FORCE_KP, "weights": dict(leg_cfg.REWARD_WEIGHTS),
-                 "handle_weights": dict(leg_cfg.HANDLE_WEIGHTS)}
+                 "handle_weights": dict(leg_cfg.HANDLE_WEIGHTS),
+                 "press": ({k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(foot_press_cfg).items()
+                            if k.isupper()} if args.leg_object == "press" else None)}
                 if args.task == "leg" else None),
         "ground_friction": args.ground_friction if args.ground_friction is not None else robot_mod.GROUND_STATIC_FRICTION,
         "tool_body": cfg.tool_body,
@@ -1526,6 +1617,8 @@ def leg_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) 
     from unifp_isaaclab import interface
     from unifp_train import eval as evaluation, leg_eval
 
+    if env.cfg.leg_object == "press":
+        from unifp_train import foot_press_eval as leg_eval  # noqa: F811 -- the plates' fields, recording and scoring
     run_dir.mkdir(parents=True, exist_ok=True)
     policy = None
     if not args.zero_actions:
@@ -1592,6 +1685,25 @@ def leg_evaluate(args, env, obs, report: dict, run_dir: Path, rows: list[dict]) 
     report["summary"] = result["summary"]
     report["status"] = "evaluated"
     s = result["summary"]
+    if env.cfg.leg_object == "press":
+        print(f"\n[press_eval {env.cfg.leg_variant}] {controller}  success {s['success']}/{s['episodes']}  within {s['within']}  "
+              f"engaged {s['engaged']}  released {s['released']}  stalled {s['stalled']}  touched {s['touched']}  "
+              f"slipped {s['slipped']}  fell {s['fell']}  damaged {s['damaged']}  foot down {s['foot_down']}  {s['reasons']}\n"
+              f"  force bias median {s['force_bias_n_median']} N (relative {s['force_rel_bias_median']}), mean abs error "
+              f"median {s['force_mae_n_median']} N (p90 {s['force_mae_n_p90']}); peak median {s['peak_n_median']} N, p95 "
+              f"{s['peak_n_p95']}, max {s['peak_n_max']}, past 60 N {s['over_60n']}; pressed {s['plane_err_mm_median']} mm from "
+              f"the true contact; at the pre-contact point {s['engage_miss_mm_median']} mm off (p90 {s['engage_miss_mm_p90']}); stance worst-foot median {s['stance_max_cm_median']} cm; tilt {s['max_tilt_deg_median']} deg",
+              flush=True)
+        if "tangent" in s:
+            print(f"  tangential: commanded {s['tangent']['cmd_n_median']} N, held {s['tangent']['mean_n_median']} N "
+                  f"(error {s['tangent']['mae_n_median']} N); slide: commanded {s['slide']['cmd_m_median']} m, the foot "
+                  f"moved {s['slide']['foot_m_median']} m (p10 {s['slide']['foot_m_p10']})", flush=True)
+        for key in ("by_kind", "by_stiffness", "by_level_n", "by_mode"):
+            for row in s[key]:
+                print(f"  {key[3:]} {list(row.values())[0]}: success {row['success']}/{row['of']}  bias "
+                      f"{row['force_bias_n_median']}  mae {row['force_mae_n_median']}  rel {row['force_rel_bias_median']}  "
+                      f"press peak {row['press_peak_n_median']}  peak max {row['peak_n_max']}  {row['reasons']}", flush=True)
+        return 0
     print(f"\n[leg_eval {env.cfg.leg_variant}] {controller}  success {s['success']}/{s['episodes']}  engaged {s['engaged']}  "
           f"opened {s['opened']}  fell {s['fell']}  damaged {s['damaged']}  slipped {s['slipped']}  reasons {s['reasons']}\n"
           f"  peak median {s['peak_n_median']} N (p95 {s['peak_n_p95']})  at stop {s['peak_at_stop_n_median']} N  "

@@ -82,10 +82,22 @@ def meta_for(variant: str, checkpoint: Path, iteration, num_leg_actions: int, la
         "kinematics": {"hip_x": classic_stance.HIP_X, "hip_y": classic_stance.HIP_Y, "thigh_y": classic_stance.THIGH_Y,
                        "link_m": classic_stance.LINK_M, "foot_sphere_x": classic_stance.FOOT_SPHERE_X,
                        "foot_radius_m": classic_stance.FOOT_RADIUS_M},
-        "trained_on": {"legs": "UniFP ideal PD, kp 25 / kd 0.5, URDF limits, armature 2e-4 (F-168)",
-                       "start": "the settled stance (leg_cfg.SETTLED_LEG_POS, base 0.272 m) or recorded walker stops",
-                       "noise": "none", "delay": "none"},
+        "trained_on": trained_on(checkpoint),
     }
+
+
+def trained_on(checkpoint: Path) -> dict:
+    """What the checkpoint's own training run recorded about its legs, key and starts (its run.json), if it is there."""
+    record = checkpoint.parent / "run.json"
+    if not record.exists():
+        return {"note": "no run.json beside the checkpoint"}
+    leg = json.loads(record.read_text()).get("leg") or {}
+    keys = ("variant", "leg_actuator", "leg_actuator_model", "leg_armature_range", "knee_armature_factor", "key_turn_deg",
+            "key_overdrive_deg", "key_hold_s", "key_lock_range_nm", "key_detent_range_nm", "key_max_force_n",
+            "press_limit_n", "press_excess_weight", "spawn_states", "spawn_states_fraction")
+    out = {k: leg[k] for k in keys if k in leg}
+    out["run"] = checkpoint.parent.name
+    return out
 
 
 def export(checkpoint: str | Path, variant: str, out: str | Path, tolerance: float = 1e-4) -> dict:

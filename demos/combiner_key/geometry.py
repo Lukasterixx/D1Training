@@ -2,7 +2,7 @@
 
 **The key** is Lukas's lever key (`assets/combinerbox_lever_v3.stl`, 2026-10-21): a 10 mm round shaft with two wards
 15 mm across, 10 mm long, on a bar 15 mm thick and 20 mm tall that runs from 15 mm behind the shaft to 160 mm out, and a
-2 mm plate 35 mm wide beside the bar from 48 to 148 mm out, its top flush with the bar's: the flat platform, 100 x 50 mm,
+2.5 mm plate 35 mm wide beside the bar from 48 to 148 mm out, its top flush with the bar's: the flat platform, 100 x 50 mm,
 the foot presses. In the STL's own frame the shaft points -x (into the lock), the plate sticks out +x (toward the
 robot), the platform faces +z, and the lever runs along -y -- which, with the shaft in the lock and the platform up,
 is the robot's *left*. The turn Lukas asked for (the front-right foot pushing it clockwise, as the robot sees it, from
