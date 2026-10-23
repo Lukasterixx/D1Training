@@ -3766,10 +3766,273 @@ Presses of 288 / fell / past 60 N, from the dog's rest:
   (sha256 78909359...; numpy to 4.0e-6). Its `start_gate`, from round 4's stands, is pitch -3.8 to +1.0°, which refuses
   the dog's 8.1° rest unless the live program's start flags override it.
 
+### 2026-10-24 · ft6 on the dog: no rattle (F-198)
+
+The other PC ran ft6's export standing, under the same flags as round 4's rattling run:
+
+    d1dogpress --policy checkpoints/leg_press_force_ft6_model_6998.npz --live --presses 0 --start_on_blend \
+      --tilt_limit_deg 40 --start_tol_rad 0.30 --start_pitch_deg -15 5
+
+Its analysis, both columns calculated the same way over the 10 s policy stand:
+
+| | round 4 (rattled) | ft6 |
+| --- | --- | --- |
+| target change a step, FL thigh / RR thigh / RL calf | 0.229 / 0.160 / 0.118 rad | 0.012 / 0.006 / 0.012 rad |
+| joint speed, the same three | 1.03 / 1.03 / 1.01 rad/s | 0.14 / 0.21 / 0.34 rad/s |
+| most nose-up tilt | 20.8° | 16.6° |
+
+- **The run completed normally:** the stand-up, 10 s on the policy, the lie-down and the handback to sport mode. A
+  first attempt stopped at once ("the base is 0.070 m up: stand the dog in sport mode first"), because the dog was still
+  lying, as it should.
+- **The rattle is gone:** 15-25 times less step-to-step change than round 4's. The tilt stayed under simulation's
+  21-22°.
+- **A correction to the log above** ("The rattle on the dog reproduced in simulation") and to F-196: the dog's figures
+  "after the latency cut" there (0.13 / 0.09 rad) were quoted from the other session's report and came from a
+  different time window. Over the whole 10 s stand that run measures 0.23 / 0.16, at the 0.0002-armature row of that
+  table. F-196 is marked so.
+- **What it does not show:** presses. In simulation ft6 presses less accurately than round 4 (F-197). Next, ft6
+  trained on, on the same settings ("ft7").
+
+### 2026-10-24 · ft7: ft6 trained on; the press stalls at ~10 N of error on rima's settings
+
+[ft7](#/week/6/run/20261023T133945_train_seed3_press_ft7_force_s3): ft6's final, 2000 more iterations on the same settings. Its training force error
+stayed at 10.0-10.4 N throughout (round 4: ~4.5 N), and its damage share at 14-18%.
+
+The dog battery (presses of 288 / fell / past 60 N; chatter as the FL / RR thigh's rms target change a step in the
+10 s stand on armature 0.0002 at 15-20 ms):
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| round 4's final | 280 / 0 / 5 | 10 / 83 / 166 | 0 / 62 / 228 | 0.27 / 0.22 rad | 196 / 0 / 5 |
+| ft6 6998 (on the dog) | 208 / 0 / 59 | 36 / 0 / 0 | 90 / 0 / 29 | 0.005 / 0.002 | 24 / 21 / 33 |
+| ft7 8000 | [85 / 77 / 100](#/week/6/run/20261023T145342_leg_eval_seed1_press_ft7_force_8000_hands) | [18 / 0 / 2](#/week/6/run/20261023T145428_leg_eval_seed1_press_ft7_force_8000_hands_light) | [57 / 0 / 39](#/week/6/run/20261023T145510_leg_eval_seed1_press_ft7_force_8000_hands_zero) | [0.005 / 0.003](#/week/6/run/20261023T145554_leg_eval_seed1_press_ft7_force_8000_stand10_light) | [32 / 7 / 38](#/week/6/run/20261023T145719_leg_eval_seed1_press_ft7_force_8000_real) |
+| ft7 8997 | [255 / 0 / 18](#/week/6/run/20261023T144929_leg_eval_seed1_press_ft7_force_8997_hands) | [103 / 0 / 1](#/week/6/run/20261023T145012_leg_eval_seed1_press_ft7_force_8997_hands_light) | [101 / 0 / 30](#/week/6/run/20261023T145054_leg_eval_seed1_press_ft7_force_8997_hands_zero) | [0.006 / 0.003](#/week/6/run/20261023T145136_leg_eval_seed1_press_ft7_force_8997_stand10_light) | [22 / 31 / 61](#/week/6/run/20261023T145301_leg_eval_seed1_press_ft7_force_8997_real) |
+
+- **Checkpoints swing widely.** 8000 fell 77 times on the dog's hands on the trained legs (66 on the palm in front);
+  the final none. A run's last checkpoint is not safe by default.
+- **On light legs the failures are the foot's placing,** not tipping: at 8997, 78 slipped off the palm, 40 never made
+  contact, 66 were off force.
+- **On the trained legs the frozen set is poor:** 22-32 presses and 7-31 falls. These policies do not carry over to
+  heavier legs.
+- **Next: what in rima's recipe holds the press back,** tested in parallel from ft7's final (round A, 800 iterations
+  each). ft8a halves the joint-velocity noise (±0.75 rad/s). ft8b keeps rima's noise with this project's torque
+  penalty (-5e-6).
+  - A first launch of round A resumed from `model_8998.pt`, a name ft7 never saved (its final is 8997): it failed at
+    once ([recorded](#/week/6/run/20261023T145806_train_seed3_press_ft8a_force_s3)).
+  - `logs/unifp_train/press/round.sh` now takes a run directory and resolves its highest checkpoint itself.
+
+### 2026-10-24 · Round A: neither the joint-velocity noise nor the torque penalty holds the press back
+
+From ft7's final, 800 iterations each in parallel, rima's settings otherwise:
+- [ft8a](#/week/6/run/20261023T145846_train_seed3_press_ft8a_force_s3): the joint-velocity noise halved
+  (`--obs_noise_dof_vel 0.75`);
+- [ft8b](#/week/6/run/20261023T145945_train_seed3_press_ft8b_force_s3): this project's torque penalty (-5e-6) instead of rima's -2e-4.
+
+Training's force error stayed at 9.8-9.9 N (ft8a) and 10.0-10.8 (ft8b); ft7's was 9.7-10.7.
+
+Presses of 288 / fell / past 60 N; chatter as rms rad a step:
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter, FL / RR thigh | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| round 4's final | 280 / 0 / 5 | 10 / 83 / 166 | 0 / 62 / 228 | 0.271 / 0.221 | 196 / 0 / 5 |
+| ft7 8997 (from) | [255 / 0 / 18](#/week/6/run/20261023T144929_leg_eval_seed1_press_ft7_force_8997_hands) | [103 / 0 / 1](#/week/6/run/20261023T145012_leg_eval_seed1_press_ft7_force_8997_hands_light) | [101 / 0 / 30](#/week/6/run/20261023T145054_leg_eval_seed1_press_ft7_force_8997_hands_zero) | [0.006 / 0.003](#/week/6/run/20261023T145136_leg_eval_seed1_press_ft7_force_8997_stand10_light) | [22 / 31 / 61](#/week/6/run/20261023T145301_leg_eval_seed1_press_ft7_force_8997_real) |
+| ft8a 9200 | [218 / 0 / 18](#/week/6/run/20261023T161127_leg_eval_seed1_press_ft8a_force_9200_hands) | [114 / 0 / 0](#/week/6/run/20261023T161209_leg_eval_seed1_press_ft8a_force_9200_hands_light) | [58 / 0 / 27](#/week/6/run/20261023T161251_leg_eval_seed1_press_ft8a_force_9200_hands_zero) | [0.006 / 0.003](#/week/6/run/20261023T161334_leg_eval_seed1_press_ft8a_force_9200_stand10_light) | [35 / 7 / 52](#/week/6/run/20261023T161417_leg_eval_seed1_press_ft8a_force_9200_real) |
+| ft8a 9796 | [147 / 0 / 50](#/week/6/run/20261023T160746_leg_eval_seed1_press_ft8a_force_9796_hands) | [57 / 0 / 142](#/week/6/run/20261023T160831_leg_eval_seed1_press_ft8a_force_9796_hands_light) | [88 / 0 / 33](#/week/6/run/20261023T160918_leg_eval_seed1_press_ft8a_force_9796_hands_zero) | [0.012 / 0.005](#/week/6/run/20261023T161001_leg_eval_seed1_press_ft8a_force_9796_stand10_light) | [21 / 16 / 151](#/week/6/run/20261023T161044_leg_eval_seed1_press_ft8a_force_9796_real) |
+| ft8b 9200 | [161 / 1 / 29](#/week/6/run/20261023T161832_leg_eval_seed1_press_ft8b_force_9200_hands) | [147 / 0 / 0](#/week/6/run/20261023T161915_leg_eval_seed1_press_ft8b_force_9200_hands_light) | [80 / 1 / 35](#/week/6/run/20261023T161957_leg_eval_seed1_press_ft8b_force_9200_hands_zero) | [0.004 / 0.004](#/week/6/run/20261023T162040_leg_eval_seed1_press_ft8b_force_9200_stand10_light) | [13 / 18 / 63](#/week/6/run/20261023T162122_leg_eval_seed1_press_ft8b_force_9200_real) |
+| ft8b 9796 | [112 / 3 / 47](#/week/6/run/20261023T161459_leg_eval_seed1_press_ft8b_force_9796_hands) | [40 / 3 / 43](#/week/6/run/20261023T161542_leg_eval_seed1_press_ft8b_force_9796_hands_light) | [91 / 0 / 37](#/week/6/run/20261023T161625_leg_eval_seed1_press_ft8b_force_9796_hands_zero) | [0.004 / 0.003](#/week/6/run/20261023T161708_leg_eval_seed1_press_ft8b_force_9796_stand10_light) | [12 / 7 / 49](#/week/6/run/20261023T161751_leg_eval_seed1_press_ft8b_force_9796_real) |
+
+- **No arm presses better than ft7's final**, and some are worse. ft8a's final strikes the hands past 60 N in 142 of
+  288 on light legs.
+- **The checkpoints keep swinging** by tens of presses from one to the next.
+- **Next (round B), from ft7's final:** ft9a draws the armature 0-0.006 (knees ×3.67) and the delay 0-15 ms instead of
+  exactly zero; ft9b keeps rima's legs with this project's `action_rate` (-0.02 instead of -0.1).
+
+### 2026-10-24 · Round B: a little armature and delay cut the training error; the palm under the foot still fails on light legs
+
+From ft7's final, 800 iterations each in parallel, rima's regularisation (observation noise, `action_rate` -0.1,
+torques -2e-4):
+- [ft9a](#/week/6/run/20261023T162242_train_seed3_press_ft9a_force_s3): leg armature drawn 0-0.006 (knees ×3.67), command delay 0-15 ms;
+- [ft9b](#/week/6/run/20261023T162342_train_seed3_press_ft9b_force_s3): rima's legs (armature 0, no delay) with `action_rate` -0.02.
+
+Training's force error: ft9a fell to 6.0 N (8.4 at its start); ft9b stayed at 9.6-11.3, as ft7's 9.7-10.7.
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter, FL / RR thigh | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| ft7 8997 (from) | [255 / 0 / 18](#/week/6/run/20261023T144929_leg_eval_seed1_press_ft7_force_8997_hands) | [103 / 0 / 1](#/week/6/run/20261023T145012_leg_eval_seed1_press_ft7_force_8997_hands_light) | [101 / 0 / 30](#/week/6/run/20261023T145054_leg_eval_seed1_press_ft7_force_8997_hands_zero) | [0.006 / 0.003](#/week/6/run/20261023T145136_leg_eval_seed1_press_ft7_force_8997_stand10_light) | [22 / 31 / 61](#/week/6/run/20261023T145301_leg_eval_seed1_press_ft7_force_8997_real) |
+| ft9a 9200 | [251 / 1 / 36](#/week/6/run/20261023T173500_leg_eval_seed1_press_ft9a_force_9200_hands) | [65 / 0 / 0](#/week/6/run/20261023T173544_leg_eval_seed1_press_ft9a_force_9200_hands_light) | [72 / 0 / 37](#/week/6/run/20261023T173626_leg_eval_seed1_press_ft9a_force_9200_hands_zero) | [0.003 / 0.003](#/week/6/run/20261023T173708_leg_eval_seed1_press_ft9a_force_9200_stand10_light) | [64 / 4 / 49](#/week/6/run/20261023T173751_leg_eval_seed1_press_ft9a_force_9200_real) |
+| ft9a 9796 | [216 / 2 / 45](#/week/6/run/20261023T173126_leg_eval_seed1_press_ft9a_force_9796_hands) | [96 / 0 / 3](#/week/6/run/20261023T173210_leg_eval_seed1_press_ft9a_force_9796_hands_light) | [66 / 0 / 112](#/week/6/run/20261023T173252_leg_eval_seed1_press_ft9a_force_9796_hands_zero) | [0.004 / 0.002](#/week/6/run/20261023T173337_leg_eval_seed1_press_ft9a_force_9796_stand10_light) | [159 / 2 / 34](#/week/6/run/20261023T173419_leg_eval_seed1_press_ft9a_force_9796_real) |
+| ft9b 9200 | [213 / 0 / 21](#/week/6/run/20261023T174207_leg_eval_seed1_press_ft9b_force_9200_hands) | [78 / 0 / 0](#/week/6/run/20261023T174250_leg_eval_seed1_press_ft9b_force_9200_hands_light) | [78 / 0 / 17](#/week/6/run/20261023T174332_leg_eval_seed1_press_ft9b_force_9200_hands_zero) | [0.005 / 0.002](#/week/6/run/20261023T174414_leg_eval_seed1_press_ft9b_force_9200_stand10_light) | [39 / 19 / 43](#/week/6/run/20261023T174457_leg_eval_seed1_press_ft9b_force_9200_real) |
+| ft9b 9796 | [191 / 0 / 58](#/week/6/run/20261023T173831_leg_eval_seed1_press_ft9b_force_9796_hands) | [55 / 2 / 175](#/week/6/run/20261023T173915_leg_eval_seed1_press_ft9b_force_9796_hands_light) | [78 / 0 / 68](#/week/6/run/20261023T173957_leg_eval_seed1_press_ft9b_force_9796_hands_zero) | [0.005 / 0.003](#/week/6/run/20261023T174041_leg_eval_seed1_press_ft9b_force_9796_stand10_light) | [34 / 25 / 121](#/week/6/run/20261023T174125_leg_eval_seed1_press_ft9b_force_9796_real) |
+
+- **ft9a is the first rima-style fine-tune to hold up on heavier legs:** 159 on the frozen set from the classic stand
+  (ft7: 22), with no rattle (0.004 / 0.002 rad).
+- **On the dog's hands on light legs it is no better** (65-96). Its zero-armature hands strike past 60 N in 112 of 288.
+- **`action_rate` is not what limits the press** (ft9b).
+- **The palm under the foot is where the light-leg presses fail.** On armature 0.0002 at 15-20 ms, ft9a's final
+  presses 0 of its 144 and the palm in front 96 of 144:
+  - on the rigid palm the foot bounces and slides off (63 slipped, the force's spread 10 N);
+  - on the sprung one it does not press at all (bias -5.0 N on 5 N);
+  - on armature 0 it stomps (peaks ~135 N, 93 past the damage limit).
+  - The palm under the foot is a low plate (its face 0.11 m up) facing straight up: about 7% of the training table
+    faces up, and few of those are low.
+- **Next (round C), from ft9a's final:** 30% of plate episodes on the dog's two hands at 3-10 N
+  (`--press_hand_fraction`, new). ft10a keeps ft9a's 0-15 ms delay; ft10b draws 0-20 ms.
+
+### 2026-10-24 · Round C: the dog's hands oversampled; the palm under the foot still fails on light legs, and why
+
+From ft9a's final, 800 iterations each, on ft9a's recipe (armature 0-0.006) with 30% of plate episodes on the dog's two
+hands at 3-10 N (`--press_hand_fraction 0.3`, new: `leg_env.press_hand_fraction`; no tangential part or slide on them):
+- [ft10a](#/week/6/run/20261023T174721_train_seed3_press_ft10a_force_s3): command delay 0-15 ms;
+- [ft10b](#/week/6/run/20261023T174819_train_seed3_press_ft10b_force_s3): command delay 0-20 ms.
+
+Training's force error fell to 4.7-5.0 N; the hands' low levels are now part of that average, so it is not comparable
+with the earlier rounds'.
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter, FL / RR thigh | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| ft9a 9796 (from) | [216 / 2 / 45](#/week/6/run/20261023T173126_leg_eval_seed1_press_ft9a_force_9796_hands) | [96 / 0 / 3](#/week/6/run/20261023T173210_leg_eval_seed1_press_ft9a_force_9796_hands_light) | [66 / 0 / 112](#/week/6/run/20261023T173252_leg_eval_seed1_press_ft9a_force_9796_hands_zero) | [0.004 / 0.002](#/week/6/run/20261023T173337_leg_eval_seed1_press_ft9a_force_9796_stand10_light) | [159 / 2 / 34](#/week/6/run/20261023T173419_leg_eval_seed1_press_ft9a_force_9796_real) |
+| ft10a 10000 | [221 / 3 / 76](#/week/6/run/20261023T185931_leg_eval_seed1_press_ft10a_force_10000_hands) | [105 / 0 / 0](#/week/6/run/20261023T190015_leg_eval_seed1_press_ft10a_force_10000_hands_light) | [91 / 0 / 56](#/week/6/run/20261023T190057_leg_eval_seed1_press_ft10a_force_10000_hands_zero) | [0.004 / 0.002](#/week/6/run/20261023T190142_leg_eval_seed1_press_ft10a_force_10000_stand10_light) | [170 / 6 / 42](#/week/6/run/20261023T190224_leg_eval_seed1_press_ft10a_force_10000_real) |
+| ft10a 10595 | [236 / 0 / 43](#/week/6/run/20261023T185555_leg_eval_seed1_press_ft10a_force_10595_hands) | [83 / 0 / 0](#/week/6/run/20261023T185638_leg_eval_seed1_press_ft10a_force_10595_hands_light) | [16 / 1 / 98](#/week/6/run/20261023T185720_leg_eval_seed1_press_ft10a_force_10595_hands_zero) | [0.002 / 0.002](#/week/6/run/20261023T185807_leg_eval_seed1_press_ft10a_force_10595_stand10_light) | [146 / 2 / 21](#/week/6/run/20261023T185850_leg_eval_seed1_press_ft10a_force_10595_real) |
+| ft10b 10000 | [126 / 6 / 84](#/week/6/run/20261023T190642_leg_eval_seed1_press_ft10b_force_10000_hands) | [96 / 0 / 0](#/week/6/run/20261023T190724_leg_eval_seed1_press_ft10b_force_10000_hands_light) | [54 / 0 / 94](#/week/6/run/20261023T190807_leg_eval_seed1_press_ft10b_force_10000_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T190853_leg_eval_seed1_press_ft10b_force_10000_stand10_light) | [127 / 3 / 28](#/week/6/run/20261023T190936_leg_eval_seed1_press_ft10b_force_10000_real) |
+| ft10b 10595 | [186 / 0 / 85](#/week/6/run/20261023T190305_leg_eval_seed1_press_ft10b_force_10595_hands) | [122 / 0 / 1](#/week/6/run/20261023T190350_leg_eval_seed1_press_ft10b_force_10595_hands_light) | [49 / 0 / 199](#/week/6/run/20261023T190431_leg_eval_seed1_press_ft10b_force_10595_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T190519_leg_eval_seed1_press_ft10b_force_10595_stand10_light) | [171 / 1 / 19](#/week/6/run/20261023T190601_leg_eval_seed1_press_ft10b_force_10595_real) |
+
+- **The palm under the foot on light legs is unchanged:** 0-9 of 144, against the palm in front's 83-113.
+- **On zero-armature legs the hands are struck past 60 N** in 56-199 of 288.
+- **The frozen set from the classic stand holds** (146-171).
+- **How it fails.** Traced on ft10b's final (palm under the foot, 5 N, armature 0.0002 at 15-20 ms):
+  - **Soft palm:** the layer does what it should (the foot on the palm at 4.0 s, contact called by its stall at 4.5 s,
+    5 N commanded), and the force on the palm is 0 N for the whole hold: the foot rests on it without pushing.
+  - **Rigid palm:** it strikes at ~20 N, lifts off to 0 N and strikes again.
+  - The force-aware policy pushes until its own estimate of the foot's force (decoded from its joint history) meets
+    the command. Pressing straight down is what a supporting leg does anyway, and on light legs with a long delay
+    that estimate seems to read a press that is not there. It works on the palm in front, and on every palm on the
+    trained legs.
+- **Next (round D), from ft10b's final:** the delay drawn 10-20 ms instead of from zero. ft11a draws the armature
+  0-0.002 (the dog's corner, F-196); ft11b keeps 0-0.006.
+
+### 2026-10-24 · The force estimate on light legs (F-199)
+
+The trace of round C's light-leg palm presses (the foot resting on the palm at 0 N) suggested the policy's force estimate
+reads a press. Checked on ft10b's final:
+- the dog's hands rerun with the first 96 episodes' frames dumped (all on the palm under the foot):
+  [trained legs](#/week/6/run/20261023T191658_leg_eval_seed1_press_ft10b_force_10595_hands_dump), [armature 0.0002 at 15-20 ms](#/week/6/run/20261023T191331_leg_eval_seed1_press_ft10b_force_10595_hands_light_dump);
+- the decoder's foot force rebuilt from each step's 32-frame history with the export (`leg_policy.LegPolicy.estimate`).
+
+Over the hold, medians over episodes, real / estimated:
+
+| legs | rigid 5 N | rigid 8 N | sprung 5 N | sprung 8 N |
+| --- | --- | --- | --- | --- |
+| trained | 3.5 / 3.1 N | 9.0 / 8.1 | 3.9 / 3.5 | 9.1 / 7.9 |
+| light | 0.0 / 3.2 | 0.2 / 7.4 | 0.0 / 2.9 | 0.0 / 4.3 |
+
+On light legs the policy believes it presses, and so it does not. Round D's ft11a (the armature drawn only 0-0.002) is
+the test of whether a narrower leg range lets the estimate get it right.
+
+### 2026-10-24 · Round D: training on the dog's leg corner gives the best candidate yet
+
+From ft10b's final, 800 iterations each, the command delay drawn 10-20 ms, 30% of plate episodes on the dog's hands:
+- [ft11a](#/week/6/run/20261023T191133_train_seed3_press_ft11a_force_s3): leg armature 0-0.002 (knees ×3.67), the corner the dog's rattle pointed to
+  (F-196);
+- [ft11b](#/week/6/run/20261023T191231_train_seed3_press_ft11b_force_s3): armature 0-0.006.
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter, FL / RR thigh | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| ft10b 10595 (from) | [186 / 0 / 85](#/week/6/run/20261023T190305_leg_eval_seed1_press_ft10b_force_10595_hands) | [122 / 0 / 1](#/week/6/run/20261023T190350_leg_eval_seed1_press_ft10b_force_10595_hands_light) | [49 / 0 / 199](#/week/6/run/20261023T190431_leg_eval_seed1_press_ft10b_force_10595_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T190519_leg_eval_seed1_press_ft10b_force_10595_stand10_light) | [171 / 1 / 19](#/week/6/run/20261023T190601_leg_eval_seed1_press_ft10b_force_10595_real) |
+| ft11a 10800 | [200 / 0 / 86](#/week/6/run/20261023T202602_leg_eval_seed1_press_ft11a_force_10800_hands) | [144 / 0 / 2](#/week/6/run/20261023T202648_leg_eval_seed1_press_ft11a_force_10800_hands_light) | [52 / 0 / 195](#/week/6/run/20261023T202730_leg_eval_seed1_press_ft11a_force_10800_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T202815_leg_eval_seed1_press_ft11a_force_10800_stand10_light) | [120 / 0 / 19](#/week/6/run/20261023T202857_leg_eval_seed1_press_ft11a_force_10800_real) |
+| ft11a 11394 | [211 / 0 / 47](#/week/6/run/20261023T202230_leg_eval_seed1_press_ft11a_force_11394_hands) | [149 / 0 / 0](#/week/6/run/20261023T202315_leg_eval_seed1_press_ft11a_force_11394_hands_light) | [108 / 0 / 26](#/week/6/run/20261023T202357_leg_eval_seed1_press_ft11a_force_11394_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T202438_leg_eval_seed1_press_ft11a_force_11394_stand10_light) | [121 / 1 / 17](#/week/6/run/20261023T202521_leg_eval_seed1_press_ft11a_force_11394_real) |
+| ft11b 10800 | [228 / 0 / 37](#/week/6/run/20261023T203314_leg_eval_seed1_press_ft11b_force_10800_hands) | [148 / 0 / 0](#/week/6/run/20261023T203358_leg_eval_seed1_press_ft11b_force_10800_hands_light) | [4 / 0 / 179](#/week/6/run/20261023T203439_leg_eval_seed1_press_ft11b_force_10800_hands_zero) | [0.002 / 0.002](#/week/6/run/20261023T203527_leg_eval_seed1_press_ft11b_force_10800_stand10_light) | [73 / 0 / 19](#/week/6/run/20261023T203609_leg_eval_seed1_press_ft11b_force_10800_real) |
+| ft11b 11394 | [76 / 0 / 89](#/week/6/run/20261023T202938_leg_eval_seed1_press_ft11b_force_11394_hands) | [46 / 0 / 19](#/week/6/run/20261023T203023_leg_eval_seed1_press_ft11b_force_11394_hands_light) | [45 / 0 / 161](#/week/6/run/20261023T203106_leg_eval_seed1_press_ft11b_force_11394_hands_zero) | [0.002 / 0.002](#/week/6/run/20261023T203151_leg_eval_seed1_press_ft11b_force_11394_stand10_light) | [148 / 4 / 13](#/week/6/run/20261023T203233_leg_eval_seed1_press_ft11b_force_11394_real) |
+
+- **ft11a's final is the best rima-style candidate on every leg model:**
+  - the hands 211 / 149 / 108 on trained / light / zero legs, with no falls;
+  - no rattle (0.003 / 0.002 rad);
+  - the frozen set 121 from the classic stand;
+  - level while it waits: 7.0° median (round 4: 25°; ft7: 16°).
+- **ft11b swings between its checkpoints:** its zero-armature hands are struck past 60 N in 161-179.
+- **The palm under the foot on light legs** rises to 27-30 of 144 (round C: 0-9). The palm in front is at 114-122.
+- **The estimate, checked on ft11a's final** (light legs, the palm under the foot, frames dumped:
+  [run](#/week/6/run/20261023T203928_leg_eval_seed1_press_ft11a_force_11394_hands_light_dump)): over the hold it now reads 1.8-3.3 N against 0-0.3 N real
+  (ft10b's read 2.9-7.4). The rigid palm's failures are now slips (42 of 48); the sprung palm succeeds 19 of 48.
+- **Next (round E), from ft11a's final on the same corner:** ft12a with half of all plate episodes on the hands, ft12b
+  with 30% (a plain continuation); 1000 iterations each.
+
+### 2026-10-24 · Round E: more of the leg corner, and no checkpoint as safe as ft11a's final
+
+From ft11a's final, 1000 iterations each on the same leg corner (armature 0-0.002, delay 10-20 ms):
+[ft12a](#/week/6/run/20261023T203736_train_seed3_press_ft12a_force_s3) with half of the plate episodes on the dog's hands, [ft12b](#/week/6/run/20261023T203835_train_seed3_press_ft12b_force_s3)
+with 30%.
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter, FL / RR thigh | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| ft11a 11394 (from) | [211 / 0 / 47](#/week/6/run/20261023T202230_leg_eval_seed1_press_ft11a_force_11394_hands) | [149 / 0 / 0](#/week/6/run/20261023T202315_leg_eval_seed1_press_ft11a_force_11394_hands_light) | [108 / 0 / 26](#/week/6/run/20261023T202357_leg_eval_seed1_press_ft11a_force_11394_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T202438_leg_eval_seed1_press_ft11a_force_11394_stand10_light) | [121 / 1 / 17](#/week/6/run/20261023T202521_leg_eval_seed1_press_ft11a_force_11394_real) |
+| ft12a 11800 | [268 / 0 / 18](#/week/6/run/20261023T220756_leg_eval_seed1_press_ft12a_force_11800_hands) | [144 / 0 / 97](#/week/6/run/20261023T220838_leg_eval_seed1_press_ft12a_force_11800_hands_light) | [75 / 0 / 141](#/week/6/run/20261023T220920_leg_eval_seed1_press_ft12a_force_11800_hands_zero) | [0.005 / 0.002](#/week/6/run/20261023T221004_leg_eval_seed1_press_ft12a_force_11800_stand10_light) | [146 / 0 / 13](#/week/6/run/20261023T221046_leg_eval_seed1_press_ft12a_force_11800_real) |
+| ft12a 12393 | [264 / 2 / 13](#/week/6/run/20261023T220424_leg_eval_seed1_press_ft12a_force_12393_hands) | [90 / 47 / 5](#/week/6/run/20261023T220507_leg_eval_seed1_press_ft12a_force_12393_hands_light) | [38 / 0 / 23](#/week/6/run/20261023T220550_leg_eval_seed1_press_ft12a_force_12393_hands_zero) | [0.005 / 0.003](#/week/6/run/20261023T220631_leg_eval_seed1_press_ft12a_force_12393_stand10_light) | [186 / 0 / 13](#/week/6/run/20261023T220714_leg_eval_seed1_press_ft12a_force_12393_real) |
+| ft12b 11800 | [207 / 0 / 41](#/week/6/run/20261023T221458_leg_eval_seed1_press_ft12b_force_11800_hands) | [93 / 0 / 4](#/week/6/run/20261023T221541_leg_eval_seed1_press_ft12b_force_11800_hands_light) | [158 / 0 / 42](#/week/6/run/20261023T221623_leg_eval_seed1_press_ft12b_force_11800_hands_zero) | [0.003 / 0.001](#/week/6/run/20261023T221705_leg_eval_seed1_press_ft12b_force_11800_stand10_light) | [98 / 0 / 16](#/week/6/run/20261023T221748_leg_eval_seed1_press_ft12b_force_11800_real) |
+| ft12b 12393 | [139 / 0 / 36](#/week/6/run/20261023T221128_leg_eval_seed1_press_ft12b_force_12393_hands) | [136 / 0 / 82](#/week/6/run/20261023T221211_leg_eval_seed1_press_ft12b_force_12393_hands_light) | [141 / 0 / 118](#/week/6/run/20261023T221252_leg_eval_seed1_press_ft12b_force_12393_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T221335_leg_eval_seed1_press_ft12b_force_12393_stand10_light) | [183 / 0 / 5](#/week/6/run/20261023T221417_leg_eval_seed1_press_ft12b_force_12393_real) |
+
+- **The best numbers come with unsafe ones.**
+  - ft12a's 11800 presses the hands 268 on the trained legs, near round 4's 280, but strikes them past 60 N in 97 and
+    141 on light and zero-armature legs.
+  - ft12a's final falls 47 times on light legs.
+  - ft12b's final presses the frozen set 183 from the classic stand, and strikes the zero-armature hands in 118.
+- **The palm under the foot on light legs** stays at 0-25 of 144.
+- **No checkpoint is as safe on all three leg models as ft11a's final** (no falls, 0-47 past 60 N), and the
+  checkpoints keep swinging.
+- **Next:** ft11a's final polished at a lower learning rate (3e-5, 600 iterations: ft13), and the dog's hands on six
+  checkpoints of rounds D and E not yet evaluated. Then a choice by safety first: no falls on any leg model, the fewest
+  presses past 60 N, then the most presses on the light and zero-armature legs.
+
+### 2026-10-24 · The polish, a checkpoint sweep, and the candidate: ft11a's final (F-200)
+
+[ft13](#/week/6/run/20261023T221912_train_seed3_press_ft13_force_s3) polished ft11a's final at learning rate 3e-5 for 600 iterations on the same leg corner.
+Six checkpoints of rounds D and E not yet evaluated got the dog's hands on all three leg models. Presses of 288 /
+fell / past 60 N:
+
+| checkpoint | the hands, trained legs | the hands, armature 0.0002, 15-20 ms | the hands, armature 0, 5-15 ms | chatter, FL / RR thigh | frozen set, classic stand |
+| --- | --- | --- | --- | --- | --- |
+| round 4's final | 280 / 0 / 5 | 10 / 83 / 166 | 0 / 62 / 228 | 0.271 / 0.221 | 196 / 0 / 5 |
+| ft11a 11000 | [131 / 0 / 28](#/week/6/run/20261023T221912_leg_eval_seed1_press_ft11a_force_11000_hands) | [134 / 0 / 0](#/week/6/run/20261023T222102_leg_eval_seed1_press_ft11a_force_11000_hands_light) | [45 / 0 / 54](#/week/6/run/20261023T222244_leg_eval_seed1_press_ft11a_force_11000_hands_zero) | - | - |
+| ft11a 11200 | [83 / 0 / 29](#/week/6/run/20261023T222433_leg_eval_seed1_press_ft11a_force_11200_hands) | [67 / 0 / 60](#/week/6/run/20261023T222630_leg_eval_seed1_press_ft11a_force_11200_hands_light) | [97 / 1 / 92](#/week/6/run/20261023T222816_leg_eval_seed1_press_ft11a_force_11200_hands_zero) | - | - |
+| ft11a 11394 | [211 / 0 / 47](#/week/6/run/20261023T202230_leg_eval_seed1_press_ft11a_force_11394_hands) | [149 / 0 / 0](#/week/6/run/20261023T202315_leg_eval_seed1_press_ft11a_force_11394_hands_light) | [108 / 0 / 26](#/week/6/run/20261023T202357_leg_eval_seed1_press_ft11a_force_11394_hands_zero) | [0.003 / 0.002](#/week/6/run/20261023T202438_leg_eval_seed1_press_ft11a_force_11394_stand10_light) | [121 / 1 / 17](#/week/6/run/20261023T202521_leg_eval_seed1_press_ft11a_force_11394_real) |
+| ft12a 12000 | [97 / 51 / 10](#/week/6/run/20261023T223004_leg_eval_seed1_press_ft12a_force_12000_hands) | [158 / 3 / 62](#/week/6/run/20261023T223154_leg_eval_seed1_press_ft12a_force_12000_hands_light) | [138 / 2 / 26](#/week/6/run/20261023T223341_leg_eval_seed1_press_ft12a_force_12000_hands_zero) | - | - |
+| ft12a 12200 | [246 / 5 / 9](#/week/6/run/20261023T223527_leg_eval_seed1_press_ft12a_force_12200_hands) | [86 / 116 / 5](#/week/6/run/20261023T223711_leg_eval_seed1_press_ft12a_force_12200_hands_light) | [161 / 7 / 8](#/week/6/run/20261023T223900_leg_eval_seed1_press_ft12a_force_12200_hands_zero) | - | - |
+| ft12b 12000 | [200 / 0 / 7](#/week/6/run/20261023T224045_leg_eval_seed1_press_ft12b_force_12000_hands) | [168 / 0 / 12](#/week/6/run/20261023T224229_leg_eval_seed1_press_ft12b_force_12000_hands_light) | [113 / 0 / 171](#/week/6/run/20261023T224415_leg_eval_seed1_press_ft12b_force_12000_hands_zero) | - | - |
+| ft12b 12200 | [153 / 0 / 56](#/week/6/run/20261023T224607_leg_eval_seed1_press_ft12b_force_12200_hands) | [120 / 0 / 68](#/week/6/run/20261023T224754_leg_eval_seed1_press_ft12b_force_12200_hands_light) | [121 / 0 / 126](#/week/6/run/20261023T224949_leg_eval_seed1_press_ft12b_force_12200_hands_zero) | - | - |
+| ft13 11600 | [214 / 0 / 5](#/week/6/run/20261023T225510_leg_eval_seed1_press_ft13_force_11600_hands) | [31 / 0 / 12](#/week/6/run/20261023T225553_leg_eval_seed1_press_ft13_force_11600_hands_light) | [86 / 0 / 4](#/week/6/run/20261023T225635_leg_eval_seed1_press_ft13_force_11600_hands_zero) | - | - |
+| ft13 11800 | [261 / 0 / 0](#/week/6/run/20261023T225718_leg_eval_seed1_press_ft13_force_11800_hands) | [4 / 0 / 8](#/week/6/run/20261023T225759_leg_eval_seed1_press_ft13_force_11800_hands_light) | [69 / 0 / 125](#/week/6/run/20261023T225841_leg_eval_seed1_press_ft13_force_11800_hands_zero) | - | - |
+| ft13 11993 | [268 / 0 / 1](#/week/6/run/20261023T225924_leg_eval_seed1_press_ft13_force_11993_hands) | [54 / 1 / 2](#/week/6/run/20261023T230005_leg_eval_seed1_press_ft13_force_11993_hands_light) | [104 / 0 / 104](#/week/6/run/20261023T230047_leg_eval_seed1_press_ft13_force_11993_hands_zero) | - | - |
+
+- **The checkpoints swing as before;** the polish did not steady them (ft13's light-leg hands 4-54).
+- **The choice: ft11a's final.** By the stated rule (no falls, then the fewest presses past 60 N, then the most on light
+  and zero-armature legs) ft13's 11600 would win: 21 past 60 N over the three hand sets. But it presses the hands on
+  light legs 31 of 288.
+  - ft11a's final has no falls, 73 past 60 N (47 on the trained legs, 0 on light, 26 on zero) and 257 light and
+    zero-armature presses: 52 more strikes for 140 more presses on the dog's likely legs.
+- **The rest of its battery:**
+  - the 10 s stand ([trained legs](#/week/6/run/20261023T230245_leg_eval_seed1_press_ft11a_force_11394_stand10),
+    [armature 0](#/week/6/run/20261023T230327_leg_eval_seed1_press_ft11a_force_11394_stand10_zero), light legs above): 0.002-0.007 rad a step, no falls in
+    any stand run, waiting 11.9-13.7° median (light legs at most 12.7°; armature 0 past 15° in 51 of 288, at most 23°);
+  - the frozen set from the dog's rest on light legs: [49 / 0 / 94](#/week/6/run/20261023T230409_leg_eval_seed1_press_ft11a_force_11394_dogrest_light)
+    (round 4: 5 / 171 / 85);
+  - the hands at armature 0.003 with 15-20 ms: [111 / 0 / 0](#/week/6/run/20261023T230452_leg_eval_seed1_press_ft11a_force_11394_hands_mid);
+  - the hands on light legs with friction 1 N·m: [28 / 0 / 4](#/week/6/run/20261023T230534_leg_eval_seed1_press_ft11a_force_11394_hands_light_fric1),
+    under-pressed (bias -5 N).
+- **Exported:** `checkpoints/leg_press_force_ft11a_model_11394.npz` (sha256 1ae43769...; numpy to 6.2e-6). Its
+  `start_gate` is round 4's stands' (pitch -3.8 to +1.0°).
+- **For the dog, in order:** the 10 s stand; then a press on the palm in front (`--plate palm_facing`), its strong
+  press. The palm under the foot (`palm_up`) is its weak one on light legs (27 of 144) because of F-199.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
 
+- A press candidate for light legs (F-200, simulation): ft11a's final, from five rounds of rima-style fine-tunes.
+  - From the dog's rest it presses the dog's two hands 211 / 149 / 108 of 288 on trained / light / zero-armature legs,
+    with no falls (round 4: 280 / 10 / 0, with 0 / 83 / 62 falls).
+  - It does not rattle, and it waits 12-14° nose up.
+  - Its weak press is the palm under the foot on light legs (27 of 144), where its force estimate reads a press that is
+    not there (F-199).
+  - `checkpoints/leg_press_force_ft11a_model_11394.npz`.
 - Why the dog sat back (F-194, F-195, simulation): the foot-press policy crouches 17-25° nose up within 0.3 s of every
   start, as the dog did; its tilt stop fired on that posture.
   - On the dog's own hands (a new 288-press set at 5 and 8 N) round 4's final presses 280, palm_up 144 of 144, with no
@@ -3834,6 +4097,13 @@ Presses of 288 / fell / past 60 N, from the dog's rest:
 
 ## Findings this week
 
+- [F-200](../findings.md): trained on the dog's likely leg corner with rima's regularisation and the dog's hands
+  oversampled, the foot-press policy presses those hands on light legs without falling or rattling (149 of 288 against
+  round 4's 10 with 83 falls); the palm under the foot stays weak there (provisional, simulation).
+- [F-199](../findings.md): on light legs with a long delay the force-aware policy's estimate of its foot's force reads
+  a downward press that is not there (0 N real, 3-7 N estimated), so it does not press (provisional, simulation).
+- [F-198](../findings.md): on the real dog the rima-legs fine-tune (ft6) stands its 10 s without the rattle: 0.006-0.012
+  rad a step on the worst joints against round 4's 0.118-0.229 (confirmed, one live run).
 - [F-197](../findings.md): fine-tuned on rima's legs, the foot-press policy stops chattering on every leg model and
   stops falling on light legs, but presses less accurately; exported for a stand-only test (provisional, simulation).
 - [F-196](../findings.md): the dog's rattle is reproduced in simulation by lighter legs and a longer command delay; on

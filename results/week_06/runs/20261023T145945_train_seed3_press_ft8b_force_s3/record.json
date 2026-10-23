@@ -1,0 +1,63 @@
+{
+  "id": "20261023T145945_train_seed3_press_ft8b_force_s3",
+  "title": "Press force ft8b: from ft7 8997, rima's settings with this project's torque penalty (-5e-6)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-24T03:24:22+11:00",
+  "started_utc": "2026-10-23T14:59:45+00:00",
+  "source_dir": "logs/unifp_train/20261023T145945_train_seed3_press_ft8b_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "e372b5b101217be064aeb30efb8e094266f95eeb",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 9796,
+  "final_checkpoint": {
+    "file": "model_9796.pt",
+    "sha256": "52d6c71ca7d5a8a33b8c85b1b59b40c5062d87f8a660896f6639fce1dafe5ac9"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 164.52210998535156,
+      "last_step": 9796,
+      "mean_last_10": 165.76852111816407,
+      "min": 2.1234567165374756,
+      "max": 182.72352600097656,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 745.2000122070312,
+      "last_step": 9796,
+      "mean_last_10": 763.1679992675781,
+      "min": 10.339622497558594,
+      "max": 829.489990234375,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.23188897967338562,
+      "last_step": 9796,
+      "mean_last_10": 0.23156001418828964,
+      "min": 0.19927629828453064,
+      "max": 0.2319011241197586,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 22994.0,
+      "last_step": 9796,
+      "mean_last_10": 23435.3,
+      "min": 8817.0,
+      "max": 23866.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -731,6 +731,10 @@ plant (round 5) learned to push plates facing down at the full 28 N and tipped t
 - **Level-base fine-tunes lose the presses (F-195).** `--tilt_excess_weight`, `--tilt_stages standing` and long waits
   (`--start_delay_steps`) level the stand but lose the dog's palm press (`--plate_set dog`, the live program's two
   hands). Round 4's final stays the policy.
+- **Light legs (F-196 to F-200).** The dog's rattle is reproduced by lighter legs and a longer delay. Trained on rima's
+  regularisation (`--obs_noise`, `--action_rate_weight`, `--torques_weight`) and the dog's leg corner
+  (`--leg_armature_range 0 0.002`, delay 10-20 ms), with its hands oversampled (`--press_hand_fraction`), the policy
+  stops rattling and presses the hands on light legs: `checkpoints/leg_press_force_ft11a_model_11394.npz`.
 
 What it is not: the plates are analytic -- nothing in PhysX touches them, only the foot sphere, the knee and the head
 through penalty forces; the thighs and calves pass through a plate's slab unchecked. The layer is told the plate by an

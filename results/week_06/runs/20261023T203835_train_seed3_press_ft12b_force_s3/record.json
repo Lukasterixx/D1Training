@@ -1,0 +1,63 @@
+{
+  "id": "20261023T203835_train_seed3_press_ft12b_force_s3",
+  "title": "Press force ft12b: from ft11a 11394, the leg corner, 30% on the dog's hands",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-24T09:19:05+11:00",
+  "started_utc": "2026-10-23T20:38:35+00:00",
+  "source_dir": "logs/unifp_train/20261023T203835_train_seed3_press_ft12b_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "e372b5b101217be064aeb30efb8e094266f95eeb",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 12393,
+  "final_checkpoint": {
+    "file": "model_12393.pt",
+    "sha256": "e1f3a41a5dffcb42d778c7ae5c6dd32f9e02c0b385fefaecef5707d137a0087d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 170.57627868652344,
+      "last_step": 12393,
+      "mean_last_10": 169.4426071166992,
+      "min": 2.447134017944336,
+      "max": 183.84912109375,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 714.1099853515625,
+      "last_step": 12393,
+      "mean_last_10": 745.606005859375,
+      "min": 13.512195587158203,
+      "max": 830.5700073242188,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.21354511380195618,
+      "last_step": 12393,
+      "mean_last_10": 0.21328846663236617,
+      "min": 0.19811591506004333,
+      "max": 0.2143559604883194,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 24039.0,
+      "last_step": 12393,
+      "mean_last_10": 23844.5,
+      "min": 7123.0,
+      "max": 25332.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

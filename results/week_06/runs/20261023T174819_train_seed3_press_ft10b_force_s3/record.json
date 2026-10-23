@@ -1,0 +1,63 @@
+{
+  "id": "20261023T174819_train_seed3_press_ft10b_force_s3",
+  "title": "Press force ft10b: from ft9a 9796, armature 0-0.006, delay 0-20 ms, 30% of presses on the dog's hands at 3-10 N",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-24T06:11:27+11:00",
+  "started_utc": "2026-10-23T17:48:19+00:00",
+  "source_dir": "logs/unifp_train/20261023T174819_train_seed3_press_ft10b_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "e372b5b101217be064aeb30efb8e094266f95eeb",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 10595,
+  "final_checkpoint": {
+    "file": "model_10595.pt",
+    "sha256": "eaaae8f5f26be46cdde007b52707cc82ca004a6b44f756d1ebd01f8a8ed8d108"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 173.7178955078125,
+      "last_step": 10595,
+      "mean_last_10": 176.45526885986328,
+      "min": 2.3736376762390137,
+      "max": 182.00531005859375,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 739.1599731445312,
+      "last_step": 10595,
+      "mean_last_10": 775.7039916992187,
+      "min": 13.512195587158203,
+      "max": 851.239990234375,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.20338693261146545,
+      "last_step": 10595,
+      "mean_last_10": 0.20341628342866896,
+      "min": 0.19905272126197815,
+      "max": 0.20795579254627228,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 24176.0,
+      "last_step": 10595,
+      "mean_last_10": 24080.0,
+      "min": 9355.0,
+      "max": 24729.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -144,6 +144,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--obs_noise", action="store_true",
                         help="--task leg, training: unitree_rl_lab's Go2 observation noise on the actor's frame "
                              "(leg_cfg.OBS_NOISE).")
+    parser.add_argument("--obs_noise_dof_vel", type=float, default=None,
+                        help="--obs_noise: the joint velocity's half-width instead of unitree_rl_lab's 1.5 rad/s.")
+    parser.add_argument("--press_hand_fraction", type=float, default=0.0,
+                        help="--leg_object press, training: the share of plate episodes on the live program's two hands "
+                             "(foot_press_cfg.EVAL_DOG_ROWS) at --press_hand_levels_n, no tangential part or slide.")
+    parser.add_argument("--press_hand_levels_n", type=float, nargs=2, default=(3.0, 10.0), metavar=("LO", "HI"))
     parser.add_argument("--press_orientation_weight", type=float, default=None,
                         help="--leg_object press: the weight of UniFP's orientation term (default foot_press_cfg's -4).")
     parser.add_argument("--tilt_excess_weight", type=float, default=0.0,
@@ -599,6 +605,8 @@ def main() -> int:
             cfg.press_release_from_foot = not args.press_release_from_press_point
             cfg.press_plate_edges = not args.press_plate_face_only
             cfg.press_up_cap_n = args.press_up_cap_n
+            cfg.press_hand_fraction = args.press_hand_fraction
+            cfg.press_hand_levels_n = tuple(args.press_hand_levels_n)
             cfg.press_orientation_weight = args.press_orientation_weight
             cfg.tilt_excess_weight = args.tilt_excess_weight
             cfg.tilt_stages = args.tilt_stages
@@ -624,6 +632,8 @@ def main() -> int:
             if args.torques_weight is not None:
                 leg_cfg.REWARD_WEIGHTS["torques"] = args.torques_weight
             cfg.obs_noise = args.obs_noise
+            if args.obs_noise_dof_vel is not None:
+                leg_cfg.OBS_NOISE["dof_vel"] = args.obs_noise_dof_vel
             if args.leg_armature_range is not None:
                 cfg.leg_armature_range = tuple(args.leg_armature_range)
                 cfg.knee_armature_factor = args.leg_knee_armature_factor
@@ -1004,6 +1014,7 @@ def main() -> int:
                  "leg_armature_range": (list(cfg.leg_armature_range) if cfg.leg_armature_range is not None else None),
                  "knee_armature_factor": cfg.knee_armature_factor,
                  "press_up_cap_n": cfg.press_up_cap_n,
+                 "press_hand_fraction": cfg.press_hand_fraction, "press_hand_levels_n": list(cfg.press_hand_levels_n),
                  "obs_noise": dict(leg_cfg.OBS_NOISE) if cfg.obs_noise else None,
                  "press_orientation_weight": cfg.press_orientation_weight, "tilt_excess_weight": cfg.tilt_excess_weight,
                  "tilt_stages": cfg.tilt_stages,

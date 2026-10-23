@@ -104,6 +104,10 @@ class Go2D1FootPressEnv(Go2D1LegEnv):
         span = lambda r, *shape: r[0] + rand(*(shape or (count,))) * (r[1] - r[0])
         sym = lambda a, *shape: (2 * rand(*(shape or (count,))) - 1) * a
         rows = torch.randint(self._table["kind"].shape[0], (count,), device=device)
+        hand = rand(count) < self.cfg.press_hand_fraction
+        if bool(hand.any()):
+            hands = torch.tensor(pc.EVAL_DOG_ROWS, device=device)
+            rows = torch.where(hand, hands[torch.randint(len(hands), (count,), device=device)], rows)
         d = {k: v[rows] for k, v in self._table.items()}
         rigid = rand(count) < pc.RIGID_PROB
         lo, hi = (math.log(v) for v in pc.SOFT_K_N_PER_M)
@@ -131,6 +135,11 @@ class Go2D1FootPressEnv(Go2D1LegEnv):
         angle = rand(count) * 2 * math.pi
         d["slide_dir"] = torch.cos(angle).unsqueeze(-1) * d["t1"] + torch.sin(angle).unsqueeze(-1) * d["t2"]
         d["slide_speed"], d["slide_dist"] = span(pc.SLIDE_SPEED_M_S), span(pc.SLIDE_DIST_M)
+        if bool(hand.any()):
+            # The dog's hands: its levels, no tangential part, no slide.
+            d["levels"] = torch.where(hand.unsqueeze(-1), span(self.cfg.press_hand_levels_n, count, k), d["levels"])
+            d["tan_ratio"] = torch.where(hand.unsqueeze(-1), torch.zeros_like(d["tan_ratio"]), d["tan_ratio"])
+            d["slide"] = d["slide"] & ~hand
         return d
 
     def _place_objects(self, ids: torch.Tensor, d: dict[str, torch.Tensor]) -> None:

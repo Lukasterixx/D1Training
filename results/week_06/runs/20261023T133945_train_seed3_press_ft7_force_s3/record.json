@@ -1,0 +1,63 @@
+{
+  "id": "20261023T133945_train_seed3_press_ft7_force_s3",
+  "title": "Press force ft7: ft6 trained 2000 more iterations on rima's settings",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-24T01:59:35+11:00",
+  "started_utc": "2026-10-23T13:39:45+00:00",
+  "source_dir": "logs/unifp_train/20261023T133945_train_seed3_press_ft7_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "e372b5b101217be064aeb30efb8e094266f95eeb",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8997,
+  "final_checkpoint": {
+    "file": "model_8997.pt",
+    "sha256": "d24104bdd746dd63b57c30718cf6c0b0e4d9a5c8426bbe420d891551b506b1ef"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 165.5287322998047,
+      "last_step": 8997,
+      "mean_last_10": 162.74349670410157,
+      "min": 2.1324615478515625,
+      "max": 178.21412658691406,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 750.8099975585938,
+      "last_step": 8997,
+      "mean_last_10": 754.94599609375,
+      "min": 10.339622497558594,
+      "max": 833.72998046875,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 0.22620292007923126,
+      "last_step": 8997,
+      "mean_last_10": 0.22583145946264266,
+      "min": 0.19990216195583344,
+      "max": 0.23733997344970703,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 23422.0,
+      "last_step": 8997,
+      "mean_last_10": 23388.5,
+      "min": 21051.0,
+      "max": 26906.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

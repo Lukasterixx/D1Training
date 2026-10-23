@@ -7019,7 +7019,10 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-196 — The rattle the dog shows under round 4's foot-press policy is reproduced in simulation by lighter legs and a longer command delay: on the legs the policy trained on (armature 0.01 / 0.037) its targets change by 0.002-0.008 rad a step out to 25 ms of delay, but at UniFP's armature (0.0002 / 0.0007) with 15-20 ms they chatter on the dog's three joints at the dog's size (FL / RR thighs 0.27 / 0.22 rad rms, 2.4 rad/s; the dog 0.23 / 0.18, 1.6 / 2.3), and on those legs the policy falls in 124-135 of 288 presses as it lifts the foot
 
-- **Status:** provisional (simulation against one live run's numbers)
+- **Status:** provisional (simulation against one live run's numbers); corrected 2026-10-24: the dog's rattle after
+  the latency cut is 0.23 / 0.16 rad rms on the FL / RR thighs over the whole 10 s policy stand (the other PC's
+  recalculation), not the 0.13 / 0.09 quoted below from a different time window. It lies at the 0.0002-armature row,
+  not between it and 0.003. Its implication held on the dog ([F-198](#f-198))
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The rattle on the dog reproduced in simulation". The
@@ -7061,4 +7064,89 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - Training on rima's legs and regularisation is what removes the chatter in simulation. Whether it removes it on
     the dog is the stand-only test.
   - If it does, the press needs more training on these legs, and its accuracy has to be scored on the dog's hands.
+
+### F-198 — On the real dog the foot-press policy fine-tuned on rima's legs (ft6) stands its 10 s without the rattle: its leg targets change 0.006-0.012 rad a step on the three worst joints, where round 4's changed 0.118-0.229, its joints move at 0.14-0.34 rad/s instead of ~1.0, and it tilts at most 16.6 degrees nose up (round 4: 20.8; simulation predicted 21-22)
+
+- **Status:** confirmed (one live run on the dog, the stand only)
+- **Week:** 6
+- **Date:** 2026-10-24
+- **Evidence:** the other PC's run of `d1dogpress --policy checkpoints/leg_press_force_ft6_model_6998.npz --live
+  --presses 0 --start_on_blend --tilt_limit_deg 40 --start_tol_rad 0.30 --start_pitch_deg -15 5` and its analysis
+  (2026-10-24; the run's record not yet committed to this repository), against round 4's rattling stand recalculated
+  the same way.
+  - Over the 10 s policy stand, the FL thigh, RR thigh and RL calf:
+    - target change a step: round 4's 0.229 / 0.160 / 0.118 rad, ft6's 0.012 / 0.006 / 0.012;
+    - joint speed: round 4's 1.03 / 1.03 / 1.01 rad/s, ft6's 0.14 / 0.21 / 0.34.
+  - The most nose-up tilt: 20.8° against 16.6°.
+  - The stand-up, the 10 s, the lie-down and the handback to sport mode all completed. A first attempt stopped before
+    anything moved: the dog was lying ("the base is 0.070 m up").
+  - Simulation (F-197): ft6 0.002-0.005 rad a step on every leg model, round 4 0.27 / 0.22 on light legs at 15-20 ms.
+- **Scope:**
+  - One live run, the stand only.
+  - The dog changes ft6's targets 2-6 times more than simulation does, but 15-25 times less than round 4's.
+  - Presses not tried: in simulation ft6 presses less accurately than round 4 (F-197).
+- **Implication:**
+  - The rattle came from the policy having trained on legs heavier, and a loop faster, than the dog's (F-196). rima's
+    legs and regularisation remove it on the dog.
+  - The press has to be trained on those settings before it is tried on the dog.
+
+### F-199 — On light legs with a long command delay the force-aware foot-press policy's own estimate of the force on its foot reads a press that is not there, pressing straight down: on the palm under the foot (5 and 8 N) the real force stays at 0-0.2 N while the estimate reads 2.9-7.4 N, so the policy holds still; on the legs it trained on the same estimate tracks the force (3.1-8.1 N against 3.5-9.1)
+
+- **Status:** provisional (simulation; one policy, the estimate decoded offline from dumped frames)
+- **Week:** 6
+- **Date:** 2026-10-24
+- **Evidence:** [Week 6 log, 2026-10-24](week_06/notes.md), "Round C" and "The force estimate on light legs".
+  - ft10b's final on the dog's hands with the first 96 episodes' frames dumped (all on the palm under the foot):
+    [trained legs](#/week/6/run/20261023T191658_leg_eval_seed1_press_ft10b_force_10595_hands_dump), [armature 0.0002 at 15-20 ms](#/week/6/run/20261023T191331_leg_eval_seed1_press_ft10b_force_10595_hands_light_dump).
+  - The decoder's foot force (`leg_policy.decode_estimates`) is rebuilt from each step's 32-frame history and
+    compared with the plate's normal force over the hold (medians over episodes):
+
+    | legs | rigid 5 N | rigid 8 N | sprung 5 N | sprung 8 N |
+    | --- | --- | --- | --- | --- |
+    | trained | 3.5 real / 3.1 estimated | 9.0 / 8.1 | 3.9 / 3.5 | 9.1 / 7.9 |
+    | light | 0.0 / 3.2 | 0.2 / 7.4 | 0.0 / 2.9 | 0.0 / 4.3 |
+
+  - The light-leg presses of every rima-style fine-tune fail on that palm (0-9 of 144, F-197 onward), the palm in
+    front succeeding (83-113).
+- **Scope:**
+  - One policy (ft10b's final), one palm.
+  - The estimate is the decoder's, which the actor also reads through its latent; the actor's own reading is not
+    separable.
+  - Whether the real dog's legs are this light is not measured (F-196).
+- **Implication:**
+  - Pressing straight down, the force a force-aware policy believes in is the force it does not apply when its leg
+    model is wrong.
+  - On the dog the decoder's estimate already read 19-59 N lying (F-187). A downward press there needs either training
+    on the dog's own leg corner or a measured force: the Go2's foot sensor, or the joint torques.
+
+### F-200 — Trained on the dog's likely leg corner (armature 0-0.002, command delay 10-20 ms) with rima's regularisation and the dog's two hands oversampled, the foot-press policy (ft11a's final) presses those hands from the dog's rest on light legs without falling or rattling (149 of 288, 0 past 60 N; round 4: 10 with 83 falls and 166 past 60 N) and on zero-armature legs (108; round 4: 0, 62 falls), keeps 211 on the legs round 4 trained on (round 4: 280), and waits 12-14 degrees nose up; its weak press is the palm under the foot on light legs (27 of 144)
+
+- **Status:** provisional (simulation; one lineage, checkpoints that swing by tens of presses)
+- **Week:** 6
+- **Date:** 2026-10-24
+- **Evidence:** [Week 6 log, 2026-10-24](week_06/notes.md), rounds A-E and "The polish, a checkpoint sweep, and the
+  candidate".
+  - [The run](#/week/6/run/20261023T191133_train_seed3_press_ft11a_force_s3); its hands on [trained](#/week/6/run/20261023T202230_leg_eval_seed1_press_ft11a_force_11394_hands),
+    [light](#/week/6/run/20261023T202315_leg_eval_seed1_press_ft11a_force_11394_hands_light), [zero-armature](#/week/6/run/20261023T202357_leg_eval_seed1_press_ft11a_force_11394_hands_zero)
+    and [armature-0.003](#/week/6/run/20261023T230452_leg_eval_seed1_press_ft11a_force_11394_hands_mid) legs.
+  - The stands: [trained](#/week/6/run/20261023T230245_leg_eval_seed1_press_ft11a_force_11394_stand10), [light](#/week/6/run/20261023T202438_leg_eval_seed1_press_ft11a_force_11394_stand10_light),
+    [zero](#/week/6/run/20261023T230327_leg_eval_seed1_press_ft11a_force_11394_stand10_zero).
+  - The frozen set: [classic stand](#/week/6/run/20261023T202521_leg_eval_seed1_press_ft11a_force_11394_real) (121 / 1 / 17),
+    [light legs from the dog's rest](#/week/6/run/20261023T230409_leg_eval_seed1_press_ft11a_force_11394_dogrest_light) (49 / 0 / 94).
+  - What did not help, from its lineage:
+    - halving the joint-velocity noise, or this project's torque penalty (round A);
+    - this project's `action_rate` (round B's ft9b);
+    - a lower learning rate (ft13).
+  - What helped: a little armature and delay in training (round B's ft9a: training force error 10 -> 6 N), the hands
+    oversampled (round C), the leg corner (round D).
+- **Scope:**
+  - Simulation.
+  - The dog's legs and loop delay are not measured: "light" is armature 0.0002 at 15-20 ms (F-196's match).
+  - Friction at 1 N·m takes its light-leg hand presses to 28.
+  - The choice of checkpoint departs from the rule stated before the sweep, for 140 more presses at the cost of 52
+    more strikes past 60 N (on the trained and zero-armature legs, none on light).
+  - Its export's `start_gate` is round 4's stands'.
+- **Implication:**
+  - For a press on the dog: this policy, the palm in front first. The palm under the foot needs a measured force
+    (F-199).
 

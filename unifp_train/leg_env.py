@@ -126,6 +126,11 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     press_up_cap_n: float | None = None
     #: Training only: unitree_rl_lab's observation noise on the actor's frame (`leg_cfg.OBS_NOISE`), on the legs' joints.
     obs_noise: bool = False
+    #: `leg_object="press"`, training: this share of plate episodes on one of the live program's two hands
+    #: (`foot_press_cfg.EVAL_DOG_ROWS`, rows of the training table), pressed at `press_hand_levels_n` with no tangential
+    #: part or slide, as the dog presses them (2026-10-24: on light legs the palm under the foot failed every press).
+    press_hand_fraction: float = 0.0
+    press_hand_levels_n: tuple[float, float] = (3.0, 10.0)
     #: `leg_object="press"` only: the tilt terms' weights. None: `foot_press_cfg.ORIENTATION_WEIGHT` (-4, since round 2);
     #: `tilt_excess_weight` 0: off (`leg_rewards.tilt_excess`, its threshold `leg_cfg.TILT_EXCESS_RAD`).
     press_orientation_weight: float | None = None

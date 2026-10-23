@@ -53,6 +53,21 @@ no command delay, unitree_rl_lab's observation noise, `action_rate` -0.1 and tor
 
 Numpy against the checkpoint: actions to 4.0e-6.
 
+`leg_press_force_ft11a_model_11394.npz` (2026-10-24, F-200) is the press candidate for light legs. It comes from rounds A
+to D of fine-tunes from ft6 (`logs/unifp_train/20261023T191133_train_seed3_press_ft11a_force_s3/`, gitignored):
+- **Its recipe:** rima's regularisation (observation noise, `action_rate` -0.1, torques -2e-4); the leg armature drawn
+  0-0.002 and the command delay 10-20 ms (the corner the dog's rattle pointed to, F-196); 30% of plate episodes on the
+  dog's two hands; the geared knee and the 16 N upward cap.
+- **In simulation from the dog's rest:**
+  - it presses the dog's hands 211 / 149 / 108 of 288 on trained / light / zero-armature legs, with no falls;
+  - it does not rattle, and nothing falls in its 10 s stand;
+  - it waits 12-14° nose up;
+  - the palm in front is its strong press (122 of 144 on light legs); the palm under the foot is weak there (27 of 144).
+- **Its `start_gate`** is round 4's stands' (pitch -3.8 to +1.0°): the live program's start flags have to admit the
+  dog's rest.
+
+Numpy against the checkpoint: actions to 6.2e-6.
+
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 
 `p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs

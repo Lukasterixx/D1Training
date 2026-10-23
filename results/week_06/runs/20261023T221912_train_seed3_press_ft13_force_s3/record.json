@@ -1,0 +1,63 @@
+{
+  "id": "20261023T221912_train_seed3_press_ft13_force_s3",
+  "title": "Press force ft13: ft11a's final polished at learning rate 3e-5, 600 iterations, the same leg corner",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-24T10:07:25+11:00",
+  "started_utc": "2026-10-23T22:19:12+00:00",
+  "source_dir": "logs/unifp_train/20261023T221912_train_seed3_press_ft13_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "e372b5b101217be064aeb30efb8e094266f95eeb",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 11993,
+  "final_checkpoint": {
+    "file": "model_11993.pt",
+    "sha256": "d63c8a5d1540993d19109eadbd28d9319c1064ddda61e0b7ec83c9885da89b58"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 171.223876953125,
+      "last_step": 11993,
+      "mean_last_10": 172.37992401123046,
+      "min": 2.447134017944336,
+      "max": 185.48501586914062,
+      "points": 600
+    },
+    "Train/mean_episode_length": {
+      "last": 721.7899780273438,
+      "last_step": 11993,
+      "mean_last_10": 751.5079895019531,
+      "min": 13.512195587158203,
+      "max": 839.510009765625,
+      "points": 600
+    },
+    "Policy/mean_std": {
+      "last": 0.17207691073417664,
+      "last_step": 11993,
+      "mean_last_10": 0.17198719084262848,
+      "min": 0.1718902289867401,
+      "max": 0.20006047189235687,
+      "points": 600
+    },
+    "Perf/total_fps": {
+      "last": 22820.0,
+      "last_step": 11993,
+      "mean_last_10": 23301.5,
+      "min": 11376.0,
+      "max": 24060.0,
+      "points": 600
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}
