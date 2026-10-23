@@ -1,0 +1,75 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": false,
+  "camera": "front",
+  "look_camera_model": "NOT a full calibration: f and k1 fitted to one stand on the dog (2026-10-22), the camera taped 0.61 m from the box's front (tag plane 0.609 m) and the box's 0.63 m width (0.629 m); principal point assumed at the image centre, k2-k4 = 0; checked against the MID-360's door plane (0.603 m) and tilt (4.72 vs 4.7 deg)",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261022T120615_insert_insert_dry",
+    "--task",
+    "insert",
+    "--stage",
+    "insert"
+  ],
+  "started_utc": "20261022T120618",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 6.505,
+      "stop": "the box is out of range: nothing moved"
+    },
+    {
+      "t": 6.508,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 22,
+    "with_tag": 22,
+    "lidar_frames": 22,
+    "found": true,
+    "in_range": false,
+    "text": "the tag is not on a door the box's size: the lidar's face is +2 cm from it and carries on past the door's edges (120%)",
+    "detections": 22,
+    "site": {
+      "distance_m": 0.7125,
+      "bearing_deg": -24.871,
+      "yaw_deg": 180.0
+    },
+    "walk_in_m": 0.447,
+    "lidar_heading": {
+      "used": true,
+      "points": 3999,
+      "span_m": 0.562,
+      "rms_mm": 19.7,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 2.07
+  },
+  "outcome": "the box is out of range: nothing moved"
+}

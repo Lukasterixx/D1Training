@@ -1,0 +1,87 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "running",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T095539_insert_insert_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--live",
+    "--yes"
+  ],
+  "started_utc": "20261021T095542",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 51.186,
+      "stop": "odometry 1.80 s old"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 36,
+    "with_tag": 36,
+    "lidar_frames": 24,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.32 m ahead, +0.30 m left, turned -0 deg: a walk up of 0.44 m",
+    "detections": 36,
+    "site": {
+      "distance_m": 0.7842,
+      "bearing_deg": -22.97,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.435,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.2,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -0.21
+  },
+  "abort": "odometry 1.80 s old",
+  "attempt_events": [
+    {
+      "t": 6.88,
+      "phase": "grip"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unfold",
+      "mm": 90.9
+    },
+    {
+      "phase": "camera_gap",
+      "of": "grip",
+      "mm": 89.3
+    }
+  ]
+}

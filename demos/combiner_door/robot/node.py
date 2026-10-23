@@ -5,10 +5,16 @@
     run_on_dog.sh --stage pull             # the whole attempt as a DRY RUN: the plan drawn in RViz, nothing moves
     run_on_dog.sh --stage unfold --live    # really unfold the arm, then fold it again (Enter at each step)
     run_on_dog.sh --stage grip --live      # ... look, unfold, walk in, reach, grip, open, back off, fold
+    run_on_dog.sh --task key --stage turn  # the key turned by the arm (demos/combiner_key/robot/key_plan.py), dry
+    run_on_dog.sh --task key --stage turn --then_door pull  # the key turned, then the door pulled open from there
+    run_on_dog.sh --task insert --stage insert  # the key handed to the arm and inserted into the lock (insert_plan.py)
 
 What it does is `plan.py`'s (the simulated demo's sequence on the real robot's terms); this file is the robot's I/O:
 
-- in: the head RealSense (`/realsense/color/image_raw`, `camera_info`), the MID-360 (`/livox/lidar`), the odometry
+- in: the look's camera -- the Go2's front camera by default (`/go2_front_camera/image_full/compressed`, P2Dingo's
+  `p2dingo-front-camera`; `--camera front`, since 2026-10-22), or the RealSense with `--camera wrist|head` -- the
+  RealSense on the wrist for the insertion's keyhole view (`/realsense/color/image_raw`, `camera_info`), the MID-360
+  (`/livox/lidar`), the odometry
   (sport mode's `/sportmodestate`, or GLIM's `odom -> base_link` with `--odom tf`), the legs (`/lf/lowstate`, for
   drawing them), the website's joystick switch (`/web_teleop_enabled`), and the arm through `arm_link.py`'s socket;
 - out, only with `--live`: the base on `/api/sport/request` (Move, StopMove), the arm through `arm_link.py`;
@@ -47,16 +53,25 @@ sys.path.insert(0, str(ROOT))
 import d1_hardware  # noqa: E402
 import d1_ik  # noqa: E402
 from demos.combiner.apriltag import TagDetector  # noqa: E402
+from demos.combiner_door import front_camera  # noqa: E402
 from demos.combiner.geometry import GEOMETRY  # noqa: E402
 from demos.combiner_door import mid360, perception  # noqa: E402
 from demos.combiner_door.robot import arm_link, plan, viz  # noqa: E402
+from demos.combiner_key.robot import insert_plan, insert_viz, key_plan, key_viz  # noqa: E402
 
 ARM_LINK_PORT = 8095
 LOG_ROOT = ROOT / "logs/combiner_door_robot"
 #: The leg joints in Unitree's `LowState.motor_state` order.
 LEG_JOINTS = [f"{leg}_{part}_joint" for leg in ("FR", "FL", "RR", "RL") for part in ("hip", "thigh", "calf")]
-SPORT_API = {"balance_stand": 1002, "stop_move": 1003, "move": 1008, "classic_walk": 2049}
+SPORT_API = {"balance_stand": 1002, "stop_move": 1003, "stand_up": 1004, "stand_down": 1005, "move": 1008,
+             "classic_walk": 2049}
+#: The insertion's postures (`plan.Command.posture`) as sport mode's requests: lying is StandDown, P2Dingo's "sit".
+POSTURE_API = {"lie": "stand_down", "stand": "stand_up", "balance": "balance_stand"}
+#: Each task's stages and the module that plans it.
+TASK_STAGES = {"door": plan.STAGES, "key": key_plan.STAGES, "insert": insert_plan.STAGES + ("keyhole",)}
 #: How long the watch's sliding look is, and how often it is redone.
+#: How long the look waits for the front camera's first frame before giving up (P2Dingo's node takes ~5 s to start).
+FRONT_FIRST_FRAME_TIMEOUT_S = 20.0
 WATCH_WINDOW_S = 1.5
 WATCH_PERIOD_S = 0.5
 #: Lidar returns kept: in front of the robot, near enough to matter, base frame.
@@ -196,9 +211,24 @@ class CombinerDoorNode:
                              reliability=ReliabilityPolicy.RELIABLE)
 
         # State the callbacks fill.
-        self.K = None
-        self.detector = None
-        self.frames: list = []            # (t, base pose, [TagDetection])
+        self.K = None                     # the RealSense's intrinsics: the keyhole's; the look's with --camera wrist|head
+        self.detector = None              # the look's tag detector
+        self.look_K = None                # the look camera's field, as RViz draws it
+        self.last_bezel = None            # the insertion's latest keyhole search (`keyhole.Bezel`), drawn on the wrist frames
+        self.keyhole_wide_m = args.keyhole_wide_mm / 1000.0    # the image's own search round the model's (0: none)
+        self._mask = None                 # the gripper's jaw in the wrist frames (`bezel_image.gripper_mask`)
+        self._kh_saved = -math.inf        # when a keyhole search's frame was last kept
+        self._kh = {"body0": None, "searches": 0, "found": 0, "last_log": 0.0}   # `--stage keyhole`'s
+        self.look_size = None
+        self._last_frame_t = {"look": -1.0, "realsense": -1.0}
+        self.front_frames = 0             # frames received from the front camera, counted before any throttle
+        if args.camera == "front":
+            model = front_camera.camera_model()
+            self.detector = TagDetector(model.intrinsic_matrix, fisheye_distortion=model.distortion)
+            self.look_K, self.look_size = front_camera.frustum_matrix(model), (model.width, model.height)
+            log(f"look: the Go2's front camera {model.width}x{model.height} on {front_camera.TOPIC}, lens: "
+                + ("calibrated" if model.calibrated else model.source.split(":")[0]))
+        self.frames: list = []            # (t, base pose, [TagDetection], camera pose in the base)
         self.scans: list = []             # (t, base pose, base-frame points)
         self.last_scan_t = 0.0
         self.odom = None                  # (t, 4x4)
@@ -211,14 +241,26 @@ class CombinerDoorNode:
         self._door_busy = False
 
         # Inputs.
+        # Each heavy input in its own callback group, and the odometry in its own: in the node's one default group every
+        # callback waits for the one before, and the odometry came 0.1-0.4 s apart through a walk (the insertion's
+        # third live run, 2026-10-21) behind the camera's tag detection and the lidar.
+        from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+        self.odom_group, image_group, lidar_group, front_group = (MutuallyExclusiveCallbackGroup() for _ in range(4))
         node.create_subscription(CameraInfo, "/realsense/color/camera_info", self._on_info, qos_profile_sensor_data)
-        node.create_subscription(Image, "/realsense/color/image_raw", self._on_image, qos_profile_sensor_data)
-        node.create_subscription(PointCloud2, "/livox/lidar", self._on_lidar, qos_profile_sensor_data)
+        node.create_subscription(Image, "/realsense/color/image_raw", self._on_image, qos_profile_sensor_data,
+                                 callback_group=image_group)
+        if args.camera == "front":
+            node.create_subscription(CompressedImage, front_camera.TOPIC, self._on_front_image,
+                                     qos_profile_sensor_data, callback_group=front_group)
+        node.create_subscription(PointCloud2, "/livox/lidar", self._on_lidar, qos_profile_sensor_data,
+                                 callback_group=lidar_group)
         node.create_subscription(Bool, "/web_teleop_enabled", self._on_teleop, 10)
         try:
             from unitree_go.msg import LowState, SportModeState
-            node.create_subscription(SportModeState, "/sportmodestate", self._on_sport, qos_profile_sensor_data)
-            node.create_subscription(LowState, "/lf/lowstate", self._on_lowstate, qos_profile_sensor_data)
+            node.create_subscription(SportModeState, "/sportmodestate", self._on_sport, qos_profile_sensor_data,
+                                     callback_group=self.odom_group)
+            node.create_subscription(LowState, "/lf/lowstate", self._on_lowstate, qos_profile_sensor_data,
+                                     callback_group=self.odom_group)
         except ImportError:
             log("no unitree_go messages: sport mode's odometry and the legs are unavailable")
             if args.odom == "sport":
@@ -259,11 +301,16 @@ class CombinerDoorNode:
 
         # The record.
         stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
-        self.run_dir = Path(args.run_dir) if args.run_dir else LOG_ROOT / f"{stamp}_{args.stage}{'_live' if args.live else '_dry'}"
+        task = "" if args.task == "door" else f"{args.task}_"
+        then = f"_door_{args.then_door}" if args.then_door else ""
+        self.run_dir = Path(args.run_dir) if args.run_dir else LOG_ROOT / f"{stamp}_{task}{args.stage}{then}{'_live' if args.live else '_dry'}"
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.trace_file = open(self.run_dir / "trace.csv", "w", newline="")
         self.trace = None
-        self.run = {"mode": "combiner_door_robot", "status": "running", "stage": args.stage, "live": bool(args.live),
+        self.run = {"mode": "combiner_door_robot" if args.task == "door" else "combiner_key_robot", "status": "running",
+                    "task": args.task, "stage": args.stage, "then_door": args.then_door, "live": bool(args.live),
+                    "camera": args.camera,
+                    "look_camera_model": front_camera.camera_model().source if args.camera == "front" else None,
                     "argv": sys.argv[1:], "started_utc": stamp, "odom": args.odom, "events": [],
                     "plan": {"arm_step_deg": plan.ARM_STEP_DEG, "walk_floor": plan.WALK_FLOOR,
                              "walk_cap": plan.WALK_CAP, "carry_s": plan.CARRY_S,
@@ -277,7 +324,14 @@ class CombinerDoorNode:
         self.keys: queue.Queue = queue.Queue()
         threading.Thread(target=self._read_keys, daemon=True).start()
 
-        self.state = "waiting" if args.release else "watch" if args.stage == "watch" else "waiting"
+        # The wrist camera looks from where the arm holds it: live, the arm first goes to the look pose (`_aim`).
+        self.arm_joints, self.arm_links = d1_ik.load_urdf()
+        self.look_q = plan.look_pose_servo_deg(self.arm_joints, self.arm_links) if args.camera == "wrist" else None
+        self.aimed = args.camera != "wrist" or not args.live or args.release
+        self._aim_since: float | None = None
+        self._aim_started: float | None = None
+        self._last_feedback = None
+        self.state = "waiting" if (args.release or not self.aimed) else "watch" if args.stage == "watch" else "waiting"
         self.recovering = False
         self.confirmed: set[str] = set()
         self.abort_reason = ""
@@ -286,6 +340,10 @@ class CombinerDoorNode:
         self.look_started = None
         self.walking = False
         self.stop_sent = 0
+        self.posture = ""
+        self.virtual_drop = 0.0
+        self._odom_stale = False
+        self._last_note = ""
         self._last_watch = 0.0
         self._last_markers = 0.0
 
@@ -301,9 +359,10 @@ class CombinerDoorNode:
     def _on_info(self, msg) -> None:
         if self.K is None:
             self.K = np.asarray(msg.k, dtype=float).reshape(3, 3)
-            self.image_size = (msg.width, msg.height)
-            self.detector = TagDetector(self.K)
-            log(f"camera {msg.width}x{msg.height}, fx {self.K[0, 0]:.1f} fy {self.K[1, 1]:.1f}")
+            if self.args.camera != "front":
+                self.detector = TagDetector(self.K)
+                self.look_K, self.look_size = self.K, (msg.width, msg.height)
+            log(f"RealSense {msg.width}x{msg.height}, fx {self.K[0, 0]:.1f} fy {self.K[1, 1]:.1f}")
 
     def _on_teleop(self, msg) -> None:
         self.web_teleop = bool(msg.data)
@@ -339,30 +398,181 @@ class CombinerDoorNode:
         odom = self._odom_now()
         return None if odom is None else odom[1]
 
-    def _on_image(self, msg) -> None:
-        if self.detector is None:
-            return
+    def _due(self, which: str, now: float) -> bool:
+        """Whether a camera's next frame is wanted: every frame while looking, else 7.5 a second."""
+        if self.state != "looking" and now - self._last_frame_t[which] < 1.0 / 7.5:
+            return False
+        self._last_frame_t[which] = now
+        return True
+
+    def _realsense_shown(self) -> bool:
+        """Whether RViz's camera image is the RealSense's although the look is the front camera's: through the
+        insertion's key phases, where the wrist camera's view of the lock is what there is to watch."""
+        attempt = self.attempt
+        if self.state == "keyhole":
+            return True
+        # `lock_look` too: there the front camera's frames and the wrist's took turns on the one image topic, and
+        # RViz's camera panel flickered between them (Lukas, 2026-10-23).
+        return isinstance(attempt, insert_plan.InsertAttempt) and (str(attempt.phase).startswith("key_")
+                                                                   or attempt.phase == "lock_look")
+
+    def _on_front_image(self, msg) -> None:
+        """The Go2's front camera (JPEG from P2Dingo's front camera node): the look's frames."""
         now = self.now()
-        busy_look = self.state == "looking"
-        if not busy_look and self.frames and now - self.frames[-1][0] < 1.0 / 7.5:
+        self.front_frames += 1
+        if self.detector is None or not self._due("look", now):
             return
         base = self._base_at_input()
         if base is None:
             return
+        import cv2
+
+        bgr = cv2.imdecode(np.frombuffer(msg.data, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if bgr is None:
+            return
+        self._look_frame(now, base, plan.FRONT_CAMERA_POSE_BASE, bgr[..., ::-1], msg.header,
+                         debug=not self._realsense_shown())
+
+    def _on_image(self, msg) -> None:
+        """The RealSense: the insertion's keyhole view, and the look's frames with `--camera wrist|head`."""
+        now = self.now()
+        attempt = self.attempt
+        front = self.args.camera == "front"
+        if self.state == "keyhole":
+            self._keyhole_frame(now, msg)
+            return
+        keyhole = isinstance(attempt, insert_plan.InsertAttempt) and attempt.wants_keyhole(now) and self.K is not None
+        if front and not keyhole and not (self._realsense_shown() and self.pub_image.get_subscription_count() > 0):
+            return
+        if not front and self.detector is None:
+            return
+        if not self._due("realsense", now):
+            return
+        base = self._base_at_input()
+        if base is None:
+            return
+        camera = self._realsense_in_base()
+        if camera is None:
+            return
         channels = 3 if msg.encoding in ("rgb8", "bgr8") else 4 if msg.encoding in ("rgba8", "bgra8") else 1
         image = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, channels)
         rgb = image[..., :3] if msg.encoding.startswith("rgb") else image[..., 2::-1] if channels > 1 else image[..., 0]
+        if keyhole:
+            # The insertion's look at the lock (`demos/combiner_key/keyhole.py`), from where the camera is now.
+            from demos.combiner_key import keyhole as keyhole_finder
+
+            centre, out, u, t = attempt.keyhole_prediction()
+            wide = attempt.keyhole_window_m(self.keyhole_wide_m) if self.keyhole_wide_m > 0 else 0.0
+            t0 = time.monotonic()
+            bezel = keyhole_finder.find_bezel(rgb, self.K, attempt.base_script(base) @ camera, centre, out, u, t,
+                                              wide_m=wide, mask=self._wrist_mask(rgb.shape))
+            searched_ms = round(1000 * (time.monotonic() - t0))
+            attempt.add_keyhole(bezel)
+            self.last_bezel = bezel
+            self.run["events"].append({"t": round(now, 3), "phase": attempt.phase, "searched_ms": searched_ms,
+                                       "keyhole": bezel.as_dict()})
+            self._keep_keyhole_frame(now, attempt, base, camera, rgb)
+        if front:
+            outlines, text = [], ""
+            if isinstance(attempt, insert_plan.InsertAttempt):
+                # The keyhole search drawn on the wrist's frame: the model's bezel, the search area, the last result.
+                outlines, text = insert_viz.keyhole_outlines(attempt.keyhole_prediction(), self.K,
+                                                             attempt.base_script(base) @ camera, self.last_bezel,
+                                                             wide_m=attempt.keyhole_window_m(self.keyhole_wide_m))
+            self._publish_debug(rgb, [], msg.header, outlines, text)
+        else:
+            self._look_frame(now, base, camera, rgb, msg.header)
+
+    def _keep_keyhole_frame(self, now, attempt, base, camera, rgb) -> None:
+        """A keyhole search's frame with what it found drawn, kept in the run's `keyhole/` (at most one a second): what
+        the record's numbers were measured on."""
+        if now - self._kh_saved < 1.0:
+            return
+        self._kh_saved = now
+        outlines, text = insert_viz.keyhole_outlines(attempt.keyhole_prediction(), self.K,
+                                                     attempt.base_script(base) @ camera, self.last_bezel,
+                                                     wide_m=attempt.keyhole_window_m(self.keyhole_wide_m))
+        folder = self.run_dir / "keyhole"
+        folder.mkdir(exist_ok=True)
+        (folder / f"{now:07.2f}_{attempt.phase}.jpg").write_bytes(viz.debug_jpeg(rgb, [], text, outlines=outlines))
+
+    def _wrist_mask(self, shape):
+        """The gripper's jaw in wrist frames of `shape`, left out of the image's search."""
+        from demos.combiner_key import bezel_image
+
+        if self._mask is None or self._mask.shape != tuple(shape[:2]):
+            self._mask = bezel_image.gripper_mask(shape)
+        return self._mask
+
+    def _keyhole_frame(self, now, msg) -> None:
+        """`--stage keyhole`: a wrist frame searched for the bezel from where the arm holds the camera now, against the
+        door the look found; drawn for RViz whatever the arm does (the overlay from its latest pose), searched only
+        while it is still (`_realsense_in_base`). Nothing is commanded: move the arm with the website's arm panel."""
+        if self.K is None or self.fix is None or not self._due("realsense", now):
+            return
+        base = self._base_at_input()
+        drawn = self._camera_drawn()
+        if base is None or drawn is None:
+            return
+        base = base.copy()
+        sport = self.sport_state
+        if sport is not None:
+            body = float(sport.body_height)
+            if self._kh["body0"] is None:
+                self._kh["body0"] = body
+            base[2, 3] -= max(0.0, self._kh["body0"] - body)      # lying down by hand: the base lowered
+        channels = 3 if msg.encoding in ("rgb8", "bgr8") else 4 if msg.encoding in ("rgba8", "bgra8") else 1
+        image = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, channels)
+        rgb = image[..., :3] if msg.encoding.startswith("rgb") else image[..., 2::-1] if channels > 1 else image[..., 0]
+        to_script = plan.invert(self.fix.script_odom) @ base
+        prediction = insert_plan.keyhole_prediction(self.fix)
+        from demos.combiner_key import keyhole as keyhole_finder
+
+        still = self._realsense_in_base()
+        w2c = np.linalg.inv(to_script @ drawn)
+        uv = keyhole_finder._project(self.K, w2c, np.asarray(prediction[0])[None])[0]
+        depth = float((w2c[:3, :3] @ np.asarray(prediction[0]) + w2c[:3, 3])[2])
+        grow = self.K[0, 0] * self.keyhole_wide_m / max(depth, 0.05)   # the image search's window, px
+        in_view = bool(np.isfinite(uv).all() and -grow <= uv[0] < msg.width + grow
+                       and -grow <= uv[1] < msg.height + grow)
+        if still is not None and in_view:
+            centre, out, u, t = prediction
+            self.last_bezel = keyhole_finder.find_bezel(rgb, self.K, to_script @ still, centre, out, u, t,
+                                                        wide_m=self.keyhole_wide_m, mask=self._wrist_mask(rgb.shape))
+            self._kh["searches"] += 1
+            self._kh["found"] += int(self.last_bezel.ok)
+            if now - self._kh["last_log"] >= 1.0:
+                self._kh["last_log"] = now
+                self.run["events"].append({"t": round(now, 3), "keyhole": self.last_bezel.as_dict()})
+        outlines, text = insert_viz.keyhole_outlines(prediction, self.K, to_script @ drawn,
+                                                     self.last_bezel if in_view else None, wide_m=self.keyhole_wide_m)
+        state = "the model's bezel is out of the wrist camera's view" if not in_view else (
+            "arm moving: not searched" if still is None else f"searched {self._kh['found']}/{self._kh['searches']} found")
+        self.note = state
+        self._publish_debug(rgb, [], msg.header, outlines, f"{text} | {state}")
+
+    def _look_frame(self, now, base, camera, rgb, header, debug: bool = True) -> None:
+        """One frame of the look's camera: the tag searched for, kept with where the base and the camera were."""
         found = self.detector.detect(np.ascontiguousarray(rgb))
         with self.lock:
-            self.frames.append((now, base, found))
+            self.frames.append((now, base, found, camera))
             self.frames = [f for f in self.frames if now - f[0] < max(plan.LOOK_S, WATCH_WINDOW_S) + 1.0]
-        if self.pub_image.get_subscription_count() > 0:
-            self.debug_jpeg = viz.debug_jpeg(rgb, found, self._status_line())
-            out = self.msg["CompressedImage"]()
-            out.header = msg.header
-            out.format = "jpeg"
-            out.data = self.debug_jpeg
-            self.pub_image.publish(out)
+        if debug:
+            self._publish_debug(rgb, found, header)
+
+    def _publish_debug(self, rgb, found, header, outlines=(), text: str = "") -> None:
+        if self.pub_image.get_subscription_count() == 0:
+            return
+        try:
+            status = self._status_line()        # read beside the tick, which now runs alongside
+        except (RuntimeError, KeyError, AttributeError):
+            status = ""
+        self.debug_jpeg = viz.debug_jpeg(rgb, found, f"{text} | {status}" if text else status, outlines=outlines)
+        out = self.msg["CompressedImage"]()
+        out.header = header
+        out.format = "jpeg"
+        out.data = self.debug_jpeg
+        self.pub_image.publish(out)
 
     def _on_lidar(self, msg) -> None:
         base = self._base_at_input()
@@ -378,8 +588,8 @@ class CombinerDoorNode:
             self.scans.append((now, base, points[keep]))
             self.scans = [s for s in self.scans if now - s[0] < max(plan.LOOK_S, WATCH_WINDOW_S, plan.WALK_SETTLE_S) + 1.0]
         attempt = self.attempt
-        if attempt is not None and attempt.phase in ("grip", "squeeze", "pull", "hold", "release", "ungrasp") \
-                and not self._door_busy:
+        if attempt is not None and getattr(attempt, "reads_door", True) \
+                and attempt.phase in ("grip", "squeeze", "pull", "hold", "release", "ungrasp") and not self._door_busy:
             self._door_busy = True
             threading.Thread(target=self._read_door, args=(attempt, base, points[keep]), daemon=True).start()
 
@@ -405,9 +615,20 @@ class CombinerDoorNode:
 
     # --- the look -----------------------------------------------------------------------------------------------
 
+    def _make_fix(self, look_odom, frames, scans):
+        """The look's fix: the door pull's, or the key's (its stance in front of the lock, its range check)."""
+        if self.args.task == "key":
+            return key_plan.make_key_fix(look_odom, frames, scans)
+        if self.args.task == "insert":
+            return insert_plan.make_insert_fix(look_odom, frames, scans)
+        return plan.make_fix(look_odom, frames, scans)
+
+    def _confirm_before(self):
+        return getattr(self.attempt, "confirm_before", plan.CONFIRM_BEFORE)
+
     def _look_window(self, since: float):
         with self.lock:
-            frames = [(base, found) for t, base, found in self.frames if t >= since]
+            frames = [(base, found, camera) for t, base, found, camera in self.frames if t >= since]
             scans = [(base, pts) for t, base, pts in self.scans if t >= since]
         return frames, scans
 
@@ -417,13 +638,74 @@ class CombinerDoorNode:
             return
         self._last_watch = now
         frames, scans = self._look_window(now - WATCH_WINDOW_S)
-        fix = plan.make_fix(self.odom[1], frames, scans) if frames else None
+        fix = self._make_fix(self.odom[1], frames, scans) if frames else None
         if fix is not None:
             self.fix = fix
             ok, text = fix.in_range()
             self.note = ("IN RANGE: " if ok else "OUT OF RANGE: ") + text
         else:
-            self.note = "no tag in view" if self.detector is not None else "waiting for the camera"
+            self.note = ("waiting for the camera" if self.detector is None else
+                         f"no tag in view (the front camera needs the box's root >= {plan.FRONT_LOOK_MIN_ROOT_M:.2f} m "
+                         "ahead: step the dog back?)" if self.args.camera == "front" else "no tag in view")
+
+    def _aim(self) -> None:
+        """Live, with the camera on the wrist: the arm to the look pose (`plan.look_pose_servo_deg`), in joint space,
+        until it is there and still; then the look."""
+        if self.look_q is None:
+            self._finish("no arm pose aims the wrist camera at the door (plan.LOOK_*): nothing moved")
+            return
+        try:
+            arm = self._arm()
+        except RuntimeError as exc:
+            self._finish(f"{exc}: nothing moved")
+            return
+        now = self.now()
+        if self._aim_started is None:
+            self._aim_started = now
+            log("aiming the wrist camera: the arm to the look pose " + str(np.round(self.look_q, 1).tolist()))
+        # The jaws shut: open, a finger stands across the middle of the wrist camera's view (Lukas's first look, 2026-10-21).
+        arm.target(list(self.look_q), plan.GRIPPER_SHUT_UNITS, plan.JOINT_SPEED_DEG_S)
+        q, _, age = arm.latest()
+        there = q is not None and age < 0.3 and float(np.max(np.abs(np.asarray(q) - self.look_q))) <= 1.5
+        self._aim_since = (now if self._aim_since is None else self._aim_since) if there else None
+        if self._aim_since is not None and now - self._aim_since >= 0.5:
+            self.aimed = True
+            self.run["events"].append({"t": round(now, 3), "aimed": [round(float(v), 2) for v in q]})
+            log("aimed")
+        elif now - self._aim_started > plan.JOINT_TIMEOUT_S:
+            self._finish("the arm did not reach the look pose")
+
+    def _camera_in_base(self):
+        """Where the look's camera is in the base for a frame now: the front camera's or the head's fixed mount, or the
+        wrist's from the arm's latest measured joints (None while those are stale or the arm is moving)."""
+        if self.args.camera == "front":
+            return plan.FRONT_CAMERA_POSE_BASE
+        return self._realsense_in_base()
+
+    def _realsense_in_base(self):
+        """Where the RealSense is in the base for a frame now: the head's mount with `--camera head`, else the wrist's
+        from the arm's latest measured joints (None while those are stale or the arm is moving)."""
+        if self.args.camera == "head":
+            return plan.CAMERA_POSE_BASE
+        feedback = self.arm_feedback.latest() if self.arm_feedback is not None else (None, None, None)
+        q, _, age = feedback
+        if q is None or age > 0.3:
+            return None
+        q = np.asarray(q, dtype=float)
+        last, self._last_feedback = self._last_feedback, q
+        if last is not None and float(np.max(np.abs(q - last))) > 0.5:
+            return None
+        return plan.wrist_camera_base(self.arm_joints, q)
+
+    def _camera_drawn(self):
+        """Where RViz draws the look camera's field: the front camera's or the head's mount, or the wrist's from the
+        arm's latest feedback."""
+        if self.args.camera == "front":
+            return plan.FRONT_CAMERA_POSE_BASE
+        if self.args.camera == "head":
+            return plan.CAMERA_POSE_BASE
+        q, _, age = self.arm_feedback.latest() if self.arm_feedback is not None else (None, None, None)
+        return None if q is None or age > 1.0 else plan.wrist_camera_base(self.arm_joints, q)
 
     def _start_look(self) -> None:
         self.state = "looking"
@@ -433,10 +715,10 @@ class CombinerDoorNode:
 
     def _finish_look(self) -> None:
         frames, scans = self._look_window(self.look_started)
-        fix = plan.make_fix(self.look_base, frames, scans)
-        record = {"frames": len(frames), "with_tag": sum(1 for _, f in frames if f), "lidar_frames": len(scans)}
-        if fix is None and self.args.stage == "unfold":
-            # The unfold needs no box: the stance is where the dog stands.
+        fix = self._make_fix(self.look_base, frames, scans)
+        record = {"frames": len(frames), "with_tag": sum(1 for f in frames if f[1]), "lidar_frames": len(scans)}
+        if fix is None and self.args.stage in ("unfold", "load"):
+            # The unfold (and the insertion's hand-in) needs no box: the stance is where the dog stands.
             fix = plan.Fix(plan.level(self.look_base), plan.props.BoxSite(plan.NOMINAL_DISTANCE_M, 0.0, 180.0),
                            np.eye(4), mid360.FaceFit(False, why="no tag"), 0, 0, 0.0, 0.0)
             record["found"] = False
@@ -463,7 +745,16 @@ class CombinerDoorNode:
         if self.args.stage == "look":
             self._finish("look only: nothing moved")
             return
-        if not ok and self.args.stage != "unfold" and not self.args.ignore_range:
+        if self.args.stage == "keyhole":
+            if not fix.on_a_door():
+                self._finish("keyhole: the tag the look found is not on the box's door (the charging dock's?): stand "
+                             "the dog in front of the box")
+                return
+            self.state = "keyhole"
+            log("keyhole: the door from this look; every wrist frame searched from where the arm is (nothing is "
+                "commanded: move the arm with the website's arm panel). RViz's Camera panel shows it. Ctrl-C to stop.")
+            return
+        if not ok and self.args.stage not in ("unfold", "load") and not self.args.ignore_range:
             self._finish("the box is out of range: nothing moved")
             return
         self._start_attempt(fix)
@@ -506,14 +797,23 @@ class CombinerDoorNode:
             except RuntimeError as exc:
                 self._finish(f"{exc}: nothing moved")
                 return
-        self.attempt = plan.Attempt(fix, self.args.stage, plan.scaled_timing(self.args.speed_scale, self.args.door_deg),
-                                    fold=not self.args.no_fold)
+        if self.args.task == "insert":
+            self.attempt = insert_plan.InsertAttempt(
+                fix, self.args.stage, dry=not self.args.live,
+                calibration_path=str(ROOT / insert_plan.CALIBRATION_PATH) if self.args.live else None)
+        elif self.args.task == "key":
+            self.attempt = key_plan.KeyAttempt(fix, self.args.stage, fold=not self.args.no_fold,
+                                               speed_scale=self.args.speed_scale)
+        else:
+            self.attempt = plan.Attempt(fix, self.args.stage,
+                                        plan.scaled_timing(self.args.speed_scale, self.args.door_deg),
+                                        fold=not self.args.no_fold)
         if not self.args.live:
             self.virtual_base = self.odom[1].copy()
         self.state = "attempt"
         phases = " -> ".join(p.name for p in self.attempt.script.phases)
         log(f"attempt to {self.args.stage} ({'LIVE' if self.args.live else 'dry run: nothing will move'}): {phases}")
-        if self.args.live and not self.args.yes:
+        if self.args.live and not self.args.yes and "start" not in self.confirmed:
             # One Enter for the whole attempt (`--step`: one before each step that moves something).
             self._pause("start")
         else:
@@ -542,6 +842,24 @@ class CombinerDoorNode:
             if self.odom is None or self.detector is None:
                 self.note = "waiting for odometry and the camera"
                 return
+            if self.args.camera == "front" and self.front_frames == 0:
+                # P2Dingo's node decodes only while subscribed: its first frame comes ~5 s after this node asks (the
+                # stream joined, a keyframe awaited). A look started before it saw nothing (2026-10-22, live).
+                if self.now() > FRONT_FIRST_FRAME_TIMEOUT_S:
+                    self._finish(f"no frame from the front camera in {FRONT_FIRST_FRAME_TIMEOUT_S:.0f} s: is "
+                                 "p2dingo-front-camera running (cd ~/P2Dingo && docker compose up -d front_camera)?")
+                    return
+                self.note = "waiting for the front camera's first frame"
+                return
+            if not self.aimed:
+                if not self.args.yes and "start" not in self.confirmed:
+                    self._pause("start")
+                    return
+                self._aim()
+                return
+            if self.args.stage == "watch":
+                self.state = "watch"
+                return
             self._start_look()
             return
         if self.state == "looking":
@@ -561,15 +879,31 @@ class CombinerDoorNode:
         upcoming = attempt.phase if script.elapsed_s == 0.0 and script.index == 0 else (
             attempt.next_phase() if script.phases[script.index].duration_s - script.elapsed_s <= 0.1 + 1e-9 else "")
         if (self.args.live and self.args.step and not self.args.yes and not self.recovering
-                and upcoming in plan.CONFIRM_BEFORE and upcoming not in self.confirmed):
+                and upcoming in self._confirm_before() and upcoming not in self.confirmed):
             self._pause(upcoming)
             return
+        must = getattr(attempt, "must_confirm", {})
+        if self.args.live and upcoming in must and (id(script), upcoming) not in self.confirmed:
+            # Someone has to do something first (hand the key in, hold it): always asked, --yes or not.
+            self._pause(upcoming, must[upcoming], key=(id(script), upcoming))
+            return
         obs = self._observation()
+        if obs.odom_age_s > 0.5 and not self._odom_stale:
+            log(f"odometry {obs.odom_age_s:.2f} s old in {attempt.phase}")
+            self.run["events"].append({"t": round(obs.now_s, 3), "odom_stale_s": round(obs.odom_age_s, 2),
+                                       "phase": attempt.phase})
+        self._odom_stale = obs.odom_age_s > 0.5
         if self.args.live and attempt.next_phase() == "walk_in" and not self._standing():
             self._abort("the dog is not standing: stand it up first")
             return
         command = attempt.step(obs)
         self._trace(obs, command)
+        self._posture(command.posture)
+        if command.note and command.note != self._last_note:
+            log(command.note)                    # the insertion's hand-in and hand-back countdowns
+        self._last_note = command.note
+        if command.finished and self._then_door(attempt):
+            return
         if command.finished:
             self._finish("attempt finished")
             return
@@ -577,16 +911,44 @@ class CombinerDoorNode:
             self._abort(command.abort)
             return
         if (self.args.live and self.args.step and not self.args.yes and not self.recovering
-                and command.phase in plan.CONFIRM_BEFORE and command.phase not in self.confirmed):
+                and command.phase in self._confirm_before() and command.phase not in self.confirmed):
             # A phase begun early, its last one over as soon as the arm got there: wait before sending its first step.
             self._pause(command.phase)
             return
+        if self.args.live and command.phase in must and (id(attempt.script), command.phase) not in self.confirmed:
+            self._pause(command.phase, must[command.phase], key=(id(attempt.script), command.phase))
+            return
         if command.arm_servo_deg is not None:
             arm = self._arm()
+            if isinstance(arm, VirtualArm) and isinstance(attempt, insert_plan.InsertAttempt):
+                arm.sim.stall_units = insert_plan.BAR_UNITS        # a dry run's key between the jaws
             arm.target(command.arm_servo_deg, command.gripper_units, command.speed_deg_s)
             attempt.sent(command)
             self.arm_sent = command
         self._drive(command.base if command.walking else None)
+
+    def _then_door(self, attempt) -> bool:
+        """`--then_door`: the key's attempt over, the door pull from where it left the dog (`key_plan.DoorAfterKey`) if
+        the robot's own check says the key turned. Whether that took over the run (or ended it)."""
+        if not self.args.then_door or not isinstance(attempt, key_plan.KeyAttempt):
+            return False
+        check = attempt.turn_check()
+        self.run["key_attempt_events"] = attempt.events
+        self.run["key"] = check
+        if not check.get("verified"):
+            self._finish("the key's turn was not verified (the fingers have it at "
+                         f"{check.get('measured_deg')} deg): no door pull")
+            return True
+        self.attempt = key_plan.DoorAfterKey(key_plan.door_fix(attempt.fix), self.args.then_door,
+                                             plan.scaled_timing(self.args.speed_scale, self.args.door_deg),
+                                             fold=not self.args.no_fold)
+        self.confirmed = set()
+        ok, text = self.attempt.fix.in_range(check_tag=False)
+        self.run["door_after_key"] = {"stage": self.args.then_door, "stance": text}
+        self._write_run()
+        log(f"the key turned; on to the door pull to {self.args.then_door} from here: "
+            + " -> ".join(p.name for p in self.attempt.script.phases))
+        return True
 
     def _observation(self) -> plan.Observation:
         now = self.now()
@@ -602,7 +964,27 @@ class CombinerDoorNode:
         # A dry run's door is the real one, shut while the plan opens it: it is drawn, not checked.
         door = self.door_reading if self.args.live else mid360.NO_READING
         return plan.Observation(now, base, odom_age, q, arm_age, scan, door, self.web_teleop,
-                                None if gripper is None else float(gripper))
+                                None if gripper is None else float(gripper), self._body_height())
+
+    def _body_height(self) -> float | None:
+        """Sport mode's body height; a dry run's lowered as StandDown would (`insert_plan.LIE_DROP_EST_M`, over 2 s)."""
+        real = float(self.sport_state.body_height) if self.sport_state is not None else None
+        if self.args.live or real is None:
+            return real
+        goal = -insert_plan.LIE_DROP_EST_M if self.posture == "lie" else 0.0
+        self.virtual_drop += max(-0.01, min(0.01, goal - self.virtual_drop))
+        return real + self.virtual_drop
+
+    def _posture(self, posture: str) -> None:
+        """Sport mode's posture request (`plan.Command.posture`), once each time it changes; live only."""
+        if not posture or posture == self.posture:
+            return
+        self.posture = posture
+        self.run["events"].append({"t": round(self.now(), 3), "posture": posture})
+        log(f"posture: {posture} ({POSTURE_API[posture]})")
+        if self.sport is not None:
+            self._drive(None)
+            self._sport(POSTURE_API[posture])
 
     def _connect_feedback(self) -> None:
         try:
@@ -667,7 +1049,8 @@ class CombinerDoorNode:
         """Sport mode into classic walk, once, as the attempt starts: it places the feet more precisely than the default
         gait (P2Dingo's `cmdvel_to_unitree`, which sends it as its Move stream starts). Sent on its own, seconds before
         the walk (the unfold comes first), not in front of a Move."""
-        if self.sport is not None and plan.STAGES.index(self.args.stage) >= plan.STAGES.index("walk"):
+        stages = TASK_STAGES[self.args.task]
+        if self.sport is not None and stages.index(self.args.stage) >= stages.index("walk"):
             self._sport("classic_walk", {"data": True})
             log("gait: classic walk")
 
@@ -698,11 +1081,14 @@ class CombinerDoorNode:
             self.arm.hold()
         self.run["events"].append({"t": round(self.now(), 3), "stop": why})
 
-    def _pause(self, before: str) -> None:
+    def _pause(self, before: str, what: str = "", key=None) -> None:
         self.state = "paused"
         self.paused_for = before
+        self.paused_key = key if key is not None else before
         self._keep_still()
-        if before == "start":
+        if what:
+            log(f"next: {before}. First {what}; then Enter (a + Enter to abort)")
+        elif before == "start":
             log("Enter to start (it then runs through to the end); a + Enter or Ctrl-C stops it at any time")
         else:
             log(f"next: {before}. Enter to go, a + Enter to abort")
@@ -746,6 +1132,7 @@ class CombinerDoorNode:
                 log("recovering: " + " -> ".join(p.name for p in self.attempt.script.phases))
             elif key == "" and self.state == "paused":
                 self.confirmed.add(self.paused_for)
+                self.confirmed.add(getattr(self, "paused_key", self.paused_for))
                 self.state = "attempt" if self.attempt is not None else "waiting"
                 log(f"go: {self.paused_for}")
                 if self.paused_for == "start":
@@ -769,14 +1156,26 @@ class CombinerDoorNode:
                "base_cmd_wz": round(command.base[2], 3), "walking": int(command.walking),
                "ik_status": command.ik_status, "door_lidar_deg": round(obs.door_reading.angle_deg, 2),
                "door_commanded_deg": round(attempt.commanded_door_deg(), 2), "abort": command.abort}
+        if isinstance(attempt, insert_plan.InsertAttempt):
+            c = attempt.insert_check()
+            off, a, b = c.get("key_mm", (None, None, None))
+            row |= {"key_off_mm": off, "key_u_mm": a, "key_t_mm": b, "body_height_m": obs.body_height_m,
+                    "posture": command.posture, "contact_off_mm": c.get("contact_off_mm"),
+                    "searched_r_mm": c.get("searched_r_mm"), "seated": c.get("seated")}
+        if isinstance(attempt, key_plan.KeyAttempt):
+            check = attempt.turn_check()
+            row |= {"key_measured_deg": check.get("measured_deg"), "key_turn_lag_mm": check.get("lag_mm"),
+                    "key_arc_deg": round(attempt._arc_deg, 2)}
         if self.trace is None:
             self.trace = csv.DictWriter(self.trace_file, fieldnames=list(row))
             self.trace.writeheader()
         self.trace.writerow(row)
+        self.trace_file.flush()          # kept to the last step whatever ends the run (a quit at an abort lost it)
 
     def _write_run(self) -> None:
         if self.attempt is not None:
-            self.run["attempt_events"] = self.attempt.events
+            key = "door_attempt_events" if isinstance(self.attempt, key_plan.DoorAfterKey) else "attempt_events"
+            self.run[key] = self.attempt.events
         (self.run_dir / "run.json").write_text(json.dumps(self.run, indent=2, default=str))
 
     # --- what RViz draws ----------------------------------------------------------------------------------------
@@ -789,6 +1188,12 @@ class CombinerDoorNode:
         extra += f" | ABORTED: {self.abort_reason}" if self.state == "aborted" else ""
         door = self.door_reading.angle_deg
         door_text = f" | door (lidar) {door:.0f} deg" if math.isfinite(door) else ""
+        if isinstance(self.attempt, key_plan.KeyAttempt) or (self.attempt is None and self.args.task == "key"):
+            key = key_viz.status_text(self.attempt)
+            door_text = f" | {key}" if key else ""
+        if isinstance(self.attempt, insert_plan.InsertAttempt) or (self.attempt is None and self.args.task == "insert"):
+            key = insert_viz.status_text(self.attempt)
+            door_text = f" | {key}" if key else ""
         return f"{mode}{extra}{door_text}"
 
     def _publish_tf(self) -> None:
@@ -836,6 +1241,10 @@ class CombinerDoorNode:
                   "abort": self.abort_reason or None, "door_lidar_deg": self.door_reading.angle_deg,
                   "door_commanded_deg": attempt.commanded_door_deg() if attempt is not None else None,
                   "run_dir": str(self.run_dir)}
+        if isinstance(attempt, key_plan.KeyAttempt):
+            status["key"] = attempt.turn_check()
+        if isinstance(attempt, insert_plan.InsertAttempt):
+            status["insert"] = attempt.insert_check()
         if fix is not None:
             status["site"] = {"distance_m": round(fix.site.distance_m, 3), "bearing_deg": round(fix.site.bearing_deg, 2),
                               "yaw_deg": round(fix.site.yaw_deg, 2), "walk_in_m": round(fix.walk_in_m, 3),
@@ -853,9 +1262,13 @@ class CombinerDoorNode:
         self.pub_status.publish(msg)
         if fix is None:
             return
+        key = isinstance(attempt, key_plan.KeyAttempt) or (attempt is None and self.args.task == "key")
+        inserting = isinstance(attempt, insert_plan.InsertAttempt) or (attempt is None and self.args.task == "insert")
+        extra = key_viz.extra_for(attempt) if key else insert_viz.extra_for(attempt) if inserting else None
         markers = viz.scene_markers(self.msg["Marker"], stamp, fix, attempt, self._status_line(), self.note,
-                                    self.door_reading, self.K, getattr(self, "image_size", None),
-                                    plan_door=not self.args.live)
+                                    self.door_reading, self.look_K, self.look_size,
+                                    plan_door=not self.args.live, door_task=not (key or inserting), extra=extra,
+                                    camera_pose=self._camera_drawn())
         array = self.msg["MarkerArray"]()
         array.markers = markers
         self.pub_markers.publish(array)
@@ -873,7 +1286,7 @@ class CombinerDoorNode:
     def spin(self) -> None:
         from rclpy.executors import MultiThreadedExecutor
 
-        executor = MultiThreadedExecutor(num_threads=4)
+        executor = MultiThreadedExecutor(num_threads=5)
         executor.add_node(self.node)
         try:
             executor.spin()
@@ -915,8 +1328,28 @@ def stop_only() -> None:
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    p.add_argument("--stage", choices=plan.STAGES, default="watch",
-                   help="How far to go: watch (default; no attempt), look, unfold, walk, reach, grip, pull.")
+    p.add_argument("--task", choices=tuple(TASK_STAGES), default="door",
+                   help="door (default): the door pull. key: the key turned by the arm (demos/combiner_key/robot/"
+                        "key_plan.py): stand the dog in front of the lock, not the box's middle. insert: the key handed "
+                        "to the arm and inserted into the lock lying down (insert_plan.py).")
+    p.add_argument("--stage", choices=tuple(dict.fromkeys(sum(TASK_STAGES.values(), ()))), default="watch",
+                   help="How far to go: watch (default; no attempt), look, then for the door unfold, walk, reach, grip, "
+                        "pull; for the key unfold, walk, reach, touch, turn; for the insertion load, walk, lie, reach, "
+                        "touch, insert.")
+    p.add_argument("--then_door", choices=key_plan.DOOR_STAGES, default=None,
+                   help="With --task key --stage turn: once the robot's own check says the key turned, on into the door "
+                        "pull to this stage from where the key left the dog (key_plan.DoorAfterKey): the arm folded, it "
+                        "walks over to the door pull's stance (back and sideways, no backing off), refits, unfolds, and "
+                        "goes on as the door pull. --speed_scale and --door_deg apply to it.")
+    p.add_argument("--camera", choices=("front", "wrist", "head"), default="front",
+                   help="The look's camera. front (default, since 2026-10-22): the Go2's own front camera, fixed in the "
+                        "trunk, so no arm move to aim it (P2Dingo's p2dingo-front-camera container must run; NOMINAL "
+                        "lens model). wrist: the RealSense on the D1's bracket (live, the arm first aims it from the look "
+                        "pose). head: the RealSense on P2Dingo's head mount. The insertion's keyhole view is always the "
+                        "RealSense's, on the wrist unless --camera head.")
+    p.add_argument("--keyhole_wide_mm", type=float, default=45.0,
+                   help="The insertion's keyhole: look for the bezel in the wrist image first, this far round the "
+                        "model's place (demos/combiner_key/bezel_image.py); 0 searches only +-12 mm round the model's.")
     p.add_argument("--live", action="store_true", help="Move the robot. Without it nothing is commanded (a dry run).")
     p.add_argument("--yes", action="store_true", help="With --live: start without waiting for Enter.")
     p.add_argument("--step", action="store_true",
@@ -944,6 +1377,15 @@ def parse_args(argv=None):
     args = p.parse_args(argv)
     if args.yes and not args.live:
         p.error("--yes only means something with --live")
+    stages = TASK_STAGES[args.task]
+    if args.stage not in stages:
+        p.error(f"--task {args.task} has the stages {', '.join(stages)}")
+    if args.then_door and (args.task != "key" or args.stage != "turn"):
+        p.error("--then_door follows the key's turn: --task key --stage turn")
+    if args.release and args.task != "door":
+        p.error("--release lets go of the door's lever; after a key attempt, `r` in its own run lifts the hand off")
+    if args.stage == "keyhole" and (args.task != "insert" or args.live):
+        p.error("--stage keyhole is the insertion's keyhole search alone, dry: --task insert, no --live")
     if args.ignore_range and args.live:
         p.error("--ignore_range is for dry runs only")
     if not 1.0 <= args.speed_scale <= 4.0:
@@ -959,7 +1401,8 @@ def main(argv=None) -> int:
         stop_only()
         return 0
     if args.live and args.stage in ("watch", "look") and not args.release:
-        log(f"--stage {args.stage} moves nothing; --live changes nothing")
+        log(f"--stage {args.stage} moves " + ("only the arm, to aim the wrist camera" if args.camera == "wrist"
+                                              else "nothing; --live changes nothing"))
     node = CombinerDoorNode(args)
     log(f"{'LIVE' if args.live else 'dry run'}, stage {args.stage}, record in {node.run_dir}")
     node.spin()

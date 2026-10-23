@@ -1,0 +1,42 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.02,
+    "event": "sport mode",
+    "name": "normal",
+    "stand_height_m": 0.268,
+    "stand_q": [
+      -0.1108,
+      0.7934,
+      -1.8007,
+      0.1112,
+      0.7931,
+      -1.8014,
+      -0.1037,
+      1.0405,
+      -1.8324,
+      0.1045,
+      1.0405,
+      -1.8329
+    ]
+  },
+  {
+    "t": 2.88,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.88,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 8.9,
+    "event": "stop (the dog did not lie down in 6 s (calves [-1.8, -2.65, -2.65, -2.65]))"
+  },
+  {
+    "t": 8.9,
+    "event": "mode lie_down -> done"
+  }
+]

@@ -3,7 +3,8 @@
 The simulated combiner door demo (`../README.md`) as a program on the Go2's Jetson. It runs the same sequence on the same
 code (`plan.py` imports the sim's perception, door script, IK and lidar fit):
 
-1. look with the head RealSense (the tag) and the MID-360 (the door's face);
+1. look with the Go2's own front camera (the tag) and the MID-360 (the door's face), the arm folded (below: "The look's
+   camera"; `--camera wrist` is the RealSense on the D1's wrist, aimed by the arm first, as from 2026-10-21);
 2. unfold the arm from its rest pose;
 3. walk in to the stance;
 4. refit the door with the lidar;
@@ -68,6 +69,28 @@ to the start of the pull takes about 12.6 s (the look excluded); the live pull a
 
 Each stage and `--live` combination: run it dry first and watch the ghost in RViz.
 
+## The look's camera (2026-10-22)
+
+The box's tag is found by the **Go2's front camera** (`--camera front`, the default; `../front_camera.py`). It is fixed
+in the trunk, so the look needs no arm move and nothing between the tag and the base but the URDF's mount. The wrist
+RealSense's look went through the bracket's CAD mount and the arm's joints and put the box 3-5 cm low (2026-10-21);
+the insertion still uses the wrist RealSense, for its keyhole view only.
+
+- **P2Dingo's `p2dingo-front-camera` must run** (`cd ~/P2Dingo && docker compose up -d front_camera`; it is in the
+  boot autostart). `run_on_dog.sh` refuses without it. The node reads `/go2_front_camera/image_full/compressed` (1280x720
+  JPEG, local to the dog). RViz's "Camera" panel shows the front camera's frame with the tag outlined; through the
+  insertion's key phases, the wrist RealSense's.
+- **The lens is not fully calibrated.** `front_camera.ONE_STAND` is fitted to one stand (the camera taped 0.61 m from the
+  box's front; the box's 0.63 m width; checked against the lidar). The lidar's face fit and the refit correct the
+  door's depth and heading as before, not its height.
+- **Stand further back than before: the box's root at least 0.95 m ahead** (`plan.FRONT_LOOK_MIN_ROOT_M`; the door ~0.8 m
+  from the base). The field is only +-27 degrees tall, and the tag leaves the top of it closer in. For the door pull that
+  is 0.95-1.14 m (the walk in is at most 0.45 m); the old no-walk band (0.65-0.76 m) cannot be looked from. A watch that
+  sees no tag says so.
+- **The dock in view is no longer averaged in.** The front camera often sees the box's tag and P2Dingo's dock's (both
+  36h11 id 0) at once. The look groups the detections by where they put the box and keeps the group whose lidar face is
+  the box's door (`plan.make_fix`, `Fix.other_tags`).
+
 ## Before a live run
 
 - **The box, not the dock, in view.** The box's tag is 36h11 id 0, 100 mm: the same tag as P2Dingo's charging dock.
@@ -118,8 +141,9 @@ the jaws where they are, backs the hand straight out along its own approach (ori
   on), so the hand stays still relative to the dog.
 - **The stance is set from the box.** Stand the dog square to the box (within 8 deg), the tag within 12 deg of
   straight ahead, and either:
-  - 0.80-1.15 m from the box's root: it walks straight in until the root is 0.69 m away (the sim's placements);
-  - or 0.65-0.76 m: it does not walk. The arm reaches the lever from anywhere in that band, but the sim only ran
+  - 0.80-1.15 m from the box's root (with the front camera: 0.95-1.14 m, above): it walks straight in until the root is
+    0.69 m away (the sim's placements);
+  - or 0.65-0.76 m (only with `--camera wrist`): it does not walk. The arm reaches the lever from anywhere in that band, but the sim only ran
     0.67-0.71 m, and the record says when it is outside.
 - **The walk in is closed-loop, in classic walk.**
   - ClassicWalk goes out once when you press Enter.
@@ -168,7 +192,8 @@ is its only software stop, and it drops an extended arm (F-028).
   - the lidar's face fit and the camera's field;
   - the status in words.
 - **Door face:** the MID-360's points in the fit's window, green on the face's line.
-- **Head camera:** the RealSense frame with the tag outlined.
+- **Camera:** the look camera's frame with the tag outlined (the front camera's; the wrist RealSense's through the
+  insertion's key phases).
 
 It is P2Dingo's `scripts/p2dingo-rviz.sh` with this directory's `combiner_door_robot.rviz`, this repo mounted into
 the rviz container (`opc-compose.yaml`) and P2Dingo's static-TF helper. It finds the dog's zenoh listener on its WiFi
@@ -179,6 +204,27 @@ dongle (the address `sshuni` caches) before P2Dingo's own search.
 - the `/combiner_door/...` topics in both zenoh allow-lists (`zenoh/robot_bridge.json5`, `zenoh/opc_bridge.json5`);
   the dog's copy is deployed and its zenoh container restarted;
 - an `OPC_COMPOSE_EXTRA` hook in `scripts/p2dingo-rviz.sh`, which lets this view add its compose override.
+
+## The camera on the wrist (`--camera wrist`, the default since 2026-10-21)
+
+Lukas moved the D435i from the head to the D1's wrist bracket. Each tag frame is placed with the camera's pose at
+that moment: forward kinematics of the arm's measured joints and the bracket's mount
+(`demos/cup/pick_demo/assets/mounts/wrist_mount.json`, the CAD: 30 degrees below the approach axis; not measured). A
+frame taken while the arm moves (0.5 degrees between frames), or without fresh arm feedback, is not used.
+- **Live**: before the look the arm goes to the look pose (`plan.look_pose_servo_deg`: the camera 0.25 m ahead,
+  4 cm left and 0.40 m up of the base, aimed at a point 0.80 m ahead, with the image level; the tag is in view with
+  the box's root 0.7-1.4 m ahead). The run's one Enter (none with `--yes`) now comes before that move.
+- **Dry**: the camera looks from wherever the real arm holds it; nothing is moved to aim it.
+- `--camera head` is the old fixed mount, for a camera put back there.
+
+The tag's place now carries the arm's and the bracket's errors (the head mount was rigid): likely millimetres to a
+centimetre. The lidar's refit still takes out the door's depth and heading. The key's insertion finds the lock itself
+with the camera close up (`../../combiner_key/keyhole.py`).
+
+## The key, turned by the arm (`--task key`)
+
+The same program runs the key's push (`demos/combiner_key/robot/key_plan.py`, `d1dogkey`): its own stance (in front of
+the lock), phases, planned and retimed turn, stall abort and lift-off. See `demos/combiner_key/robot/README.md`.
 
 ## Files
 

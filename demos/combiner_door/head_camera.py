@@ -45,6 +45,12 @@ FAR_CLIP_M = 10.0
 #: P2Dingo's colours: the design's default grey and its white parts.
 BRACKET_MESHES = (("realsense_mount_grey", "realsense_mount_grey.stl", (0.61, 0.61, 0.61)),
                   ("realsense_mount_white", "realsense_mount_white.stl", (0.94, 0.94, 0.94)))
+#: The case and its bracket as one box in `base_link` ((x), (y), (z) bounds, m), for keeping the arm off them: the
+#: bracket's STL bounds (x 0.2877-0.3195, z 0.0657-0.0978) and the D435's 90 x 25 x 25 mm case behind its front plate
+#: (x 0.3435), centred on the screw insert and the colour sensor's height. Past the trunk proxy's front (x 0.30) and
+#: above its top (z 0.06): not in the arm's clearance check (`position_only.workspace.clear_of_body`), and the key's
+#: way home after its turn put the fingertips through it on the dog (2026-10-21).
+CLEARANCE_BOX_BASE_M = ((0.2877, 0.3435), (-0.0453, 0.0447), (0.0657, 0.1052))
 
 
 def quat_to_matrix(q) -> np.ndarray:

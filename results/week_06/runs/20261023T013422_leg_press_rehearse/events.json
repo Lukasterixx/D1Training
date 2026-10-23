@@ -1,0 +1,54 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.001,
+    "event": "mode preflight -> policy"
+  },
+  {
+    "t": 5.02,
+    "event": "stage waiting -> lifting"
+  },
+  {
+    "t": 7.02,
+    "event": "stage lifting -> over"
+  },
+  {
+    "t": 7.82,
+    "event": "stage over -> at_pre"
+  },
+  {
+    "t": 8.02,
+    "event": "stage at_pre -> engaged"
+  },
+  {
+    "t": 8.104,
+    "event": "estimated foot force 52.0 N past 25.0 N: releasing"
+  },
+  {
+    "t": 9.22,
+    "event": "stage engaged -> returning"
+  },
+  {
+    "t": 11.82,
+    "event": "stage returning -> foot_down"
+  },
+  {
+    "t": 12.804,
+    "event": "press 1 finished",
+    "stalled": false,
+    "ended_unpressed": null,
+    "engage_miss_m": 0.0
+  },
+  {
+    "t": 12.804,
+    "event": "the policy is done",
+    "presses": 1
+  },
+  {
+    "t": 12.804,
+    "event": "mode policy -> done"
+  }
+]

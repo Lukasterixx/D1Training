@@ -105,9 +105,11 @@ class FixTests(unittest.TestCase):
         box = self.box_ahead(0.95, 0.03, 3.0)
         frames, scans = look(self.base, box)
         fix = plan.make_fix(self.base, frames, scans)
-        self.assertAlmostEqual(fix.walk_in_m, 0.95 - math.sqrt(plan.NOMINAL_DISTANCE_M ** 2 - 0.03 ** 2), places=3)
-        self.assertAlmostEqual(fix.site.distance_m, plan.NOMINAL_DISTANCE_M, places=3)
-        self.assertAlmostEqual(fix.site.bearing_deg, math.degrees(math.atan2(0.03, plan.NOMINAL_DISTANCE_M)), places=1)
+        walk = 0.95 - math.sqrt(plan.NOMINAL_DISTANCE_M ** 2 - 0.03 ** 2)
+        # Sent short by the odometry's under-count (`plan.ODOM_WALK_SCALE`): the dog walks the whole of it.
+        self.assertAlmostEqual(fix.walk_in_m, plan.ODOM_WALK_SCALE * walk, places=3)
+        self.assertAlmostEqual(fix.site.root_m[0], plan.NOMINAL_DISTANCE_M * math.cos(math.atan2(0.03, plan.NOMINAL_DISTANCE_M))
+                               + (1 - plan.ODOM_WALK_SCALE) * walk, places=3)
         self.assertTrue(fix.fit.ok, fix.fit.why)
         self.assertAlmostEqual(fix.site.yaw_deg % 360.0, 183.0, delta=0.5)
         ok, text = fix.in_range()
@@ -127,6 +129,25 @@ class FixTests(unittest.TestCase):
             with self.subTest(forward=forward, left=left, yaw=yaw):
                 self.assertFalse(ok, text)
                 self.assertIn(word, text)
+
+    def test_with_the_dock_in_view_too_the_look_keeps_the_boxs_tag(self):
+        """The front camera's ~100 degree field holds the box's tag and P2Dingo's dock's (also 36h11 id 0, 100 mm) at
+        once (2026-10-22). Averaged, they put the box between them; grouped, the one on a door is kept, whichever was
+        seen more often."""
+        box = self.box_ahead(1.00, 0.10, 0.0)
+        dock = self.box_ahead(1.40, -0.90, 10.0)             # its tag on a stand 2 cm in front of a wall
+        rng = np.random.default_rng(6)
+        frames = [(self.base, [detection(self.base, dock), detection(self.base, box)])] * 12 \
+            + [(self.base, [detection(self.base, dock)])] * 12
+        scans = [(self.base, np.concatenate([face_scan(self.base, box, rng),
+                                             face_scan(self.base, dock @ plan.pose(None, (-0.02, 0.0, 0.0)), rng,
+                                                       half_width=0.9, above=0.8)])) for _ in range(10)]
+        fix = plan.make_fix(self.base, frames, scans)
+        self.assertEqual(fix.other_tags, 1)
+        self.assertTrue(fix.on_a_door())
+        self.assertLess(np.linalg.norm(fix.box_odom[:2, 3] - box[:2, 3]), 0.02)
+        ok, text = fix.in_range()
+        self.assertTrue(ok, text)
 
     def test_a_tag_on_a_stand_is_not_the_box(self):
         # P2Dingo's dock carries the same tag on a stand, 2 cm in front of the wall the lidar sees (as on the dog,
@@ -174,6 +195,119 @@ class FixTests(unittest.TestCase):
         moved, turned = plan.fix_change(fix, refined)
         self.assertLess(moved, plan.REFIT_LIMIT_M)
         self.assertAlmostEqual(turned, 1.5, delta=0.8)
+
+
+class WristCameraTests(unittest.TestCase):
+    """The RealSense on the D1's wrist (2026-10-21): the look from the arm's look pose."""
+
+    def test_the_look_pose_aims_the_wrist_camera_at_a_door_ahead(self):
+        joints, links = d1_ik.load_urdf()
+        q = plan.look_pose_servo_deg(joints, links)
+        self.assertIsNotNone(q)
+        self.assertTrue(np.all(np.abs(q) <= 90.0))
+        camera = plan.wrist_camera_base(joints, q)
+        np.testing.assert_allclose(camera[:3, 3], plan.LOOK_CAMERA_IN_BASE_M, atol=2e-3)
+        self.assertTrue(bool(grasp.arm_clear(joints, d1_ik.from_servo_deg(q)[0].reshape(1, 6))[0]))
+        # The tag in the image with the box's root 0.75-1.3 m ahead, where the looks are (the D435i's colour field, 1280 x
+        # 720 at fx 907).
+        for ahead in (0.75, 0.92, 1.30):
+            box = box_odom(ahead, 0.0, 180.0)
+            tag = (plan.invert(camera) @ plan.invert(plan.base_pose(0.0, 0.0, 0.0)) @ box @ tag_pose_box(GEOMETRY))[:3, 3]
+            u, v = 907.0 * tag[0] / tag[2] + 640.0, 906.0 * tag[1] / tag[2] + 360.0
+            self.assertTrue(0 < u < 1280 and 0 < v < 720, (ahead, u, v))
+
+    def test_the_shut_fingers_stay_off_the_tag_in_the_look(self):
+        """The first live look had an open finger across the tag (0 of 26 frames); the jaws are now shut while it looks,
+        and the tag is aimed into the image's upper half. By the bracket's CAD mount, not measured."""
+        joints, links = d1_ik.load_urdf()
+        camera = plan.wrist_camera_base(joints, plan.look_pose_servo_deg(joints, links))
+        to_camera = plan.invert(plan.wrist_mount())
+        fingers = []
+        for side in (1, -1):
+            for z in np.linspace(grasp.FINGER_SHOULDER_Z_M, grasp.FINGERTIP_Z_M, 5):
+                for y in np.linspace(grasp.FINGER_INNER_Y_M, grasp.FINGER_OUTER_Y_M, 3):
+                    for x in np.linspace(*grasp.FINGER_X_RANGE_M, 3):
+                        p = to_camera @ np.array([x, side * y, z, 1.0])
+                        fingers.append((907.0 * p[0] / p[2] + 640.0, 906.0 * p[1] / p[2] + 360.0))
+        fingers = np.array(fingers)
+        for ahead, left in ((0.90, 0.0), (1.10, 0.0), (1.30, 0.0), (0.95, -0.12), (0.95, 0.12)):
+            tag = (plan.invert(camera) @ plan.invert(plan.base_pose(0.0, 0.0, 0.0)) @ box_odom(ahead, left, 180.0)
+                   @ tag_pose_box(GEOMETRY))[:3, 3]
+            u, v, half = 907.0 * tag[0] / tag[2] + 640.0, 906.0 * tag[1] / tag[2] + 360.0, 906.0 * 0.05 / tag[2]
+            overlap = ((fingers[:, 0] > u - half) & (fingers[:, 0] < u + half) & (fingers[:, 1] > v - half)
+                       & (fingers[:, 1] < v + half))
+            self.assertFalse(overlap.any(), (ahead, left, u, v))
+            self.assertTrue(0 < v - half and v + half < 720, (ahead, left, v))
+
+    def test_a_look_through_the_wrist_camera_finds_the_box_as_the_head_camera_does(self):
+        joints, links = d1_ik.load_urdf()
+        camera = plan.wrist_camera_base(joints, plan.look_pose_servo_deg(joints, links))
+        base = plan.base_pose(0.0, 0.0, 0.0)
+        box = box_odom(0.92, 0.04, 182.0)
+        pose_cam = plan.invert(camera) @ plan.invert(base) @ box @ tag_pose_box(GEOMETRY)
+        found = TagDetection(GEOMETRY.tag_id, np.zeros((4, 2)), pose_cam, 0.1, 120.0)
+        frames, scans = look(base, box)
+        head = plan.make_fix(base, frames, scans)
+        wrist = plan.make_fix(base, [(base, [found], camera)] * len(frames), scans)
+        self.assertAlmostEqual(wrist.site.distance_m, head.site.distance_m, places=6)
+        self.assertAlmostEqual(wrist.site.bearing_deg, head.site.bearing_deg, places=4)
+        self.assertAlmostEqual(wrist.site.yaw_deg, head.site.yaw_deg, places=4)
+
+
+class FrontCameraTests(unittest.TestCase):
+    """The Go2's front camera as the look's camera (2026-10-22): fixed in the trunk, a NOMINAL fisheye lens."""
+
+    @staticmethod
+    def _margin_px(ahead, left, yaw_deg, base_z=plan.BASE_HEIGHT_M, pitch_deg=0.0):
+        from demos.combiner_door import front_camera
+
+        model = front_camera.camera_model()
+        base = plan.base_pose(0.0, 0.0, 0.0, 0.0, math.radians(pitch_deg))
+        base[2, 3] = base_z
+        tag = (plan.invert(base @ plan.FRONT_CAMERA_POSE_BASE) @ box_odom(ahead, left, yaw_deg)
+               @ tag_pose_box(GEOMETRY))
+        half = GEOMETRY.tag_outer_size / 2
+        corners = np.array([(tag @ np.array([dx, dy, 0.0, 1.0]))[:3]
+                            for dx, dy in ((-half, half), (half, half), (half, -half), (-half, -half))])
+        uv = model.project(corners)
+        return float(min(uv[:, 0].min(), model.width - uv[:, 0].max(), uv[:, 1].min(), model.height - uv[:, 1].max()))
+
+    def test_its_mount_is_the_front_camera_modules(self):
+        from demos.combiner_door import front_camera
+
+        np.testing.assert_allclose(plan.FRONT_CAMERA_POSE_BASE, front_camera.optical_pose_base())
+
+    def test_a_look_through_the_front_camera_finds_the_box_as_the_head_camera_does(self):
+        base = plan.base_pose(0.0, 0.0, 0.0)
+        box = box_odom(0.95, 0.04, 182.0)
+        pose_cam = plan.invert(plan.FRONT_CAMERA_POSE_BASE) @ plan.invert(base) @ box @ tag_pose_box(GEOMETRY)
+        found = TagDetection(GEOMETRY.tag_id, np.zeros((4, 2)), pose_cam, 0.1, 150.0)
+        frames, scans = look(base, box)
+        head = plan.make_fix(base, frames, scans)
+        front = plan.make_fix(base, [(base, [found], plan.FRONT_CAMERA_POSE_BASE)] * len(frames), scans)
+        self.assertAlmostEqual(front.site.distance_m, head.site.distance_m, places=6)
+        self.assertAlmostEqual(front.site.bearing_deg, head.site.bearing_deg, places=4)
+        self.assertAlmostEqual(front.site.yaw_deg, head.site.yaw_deg, places=4)
+
+    def test_the_tag_is_whole_from_the_nearest_look_back(self):
+        """`FRONT_LOOK_MIN_ROOT_M` and further, within 0.25 m of straight ahead and 15 deg of square, standing 0.30-0.34 m
+        up and pitched +-2 deg; and not from where the door pull used to look without walking (0.65-0.76 m)."""
+        for ahead in (plan.FRONT_LOOK_MIN_ROOT_M, 1.14, 1.5):
+            for left in (-0.25, 0.0, 0.25):
+                for yaw in (165.0, 180.0, 195.0):
+                    for z in (0.30, 0.34):
+                        for pitch in (-2.0, 2.0):
+                            self.assertGreaterEqual(self._margin_px(ahead, left, yaw, z, pitch), 20.0,
+                                                    (ahead, left, yaw, z, pitch))
+        for ahead in (0.65, 0.76):
+            self.assertLess(self._margin_px(ahead, 0.0, 180.0), 0.0, ahead)
+
+    def test_the_look_is_the_front_cameras_by_default(self):
+        from demos.combiner_door.robot import node
+
+        args = node.parse_args([])
+        self.assertEqual(args.camera, "front")
+        self.assertEqual(node.parse_args(["--camera", "wrist"]).camera, "wrist")
 
 
 class AttemptTests(unittest.TestCase):

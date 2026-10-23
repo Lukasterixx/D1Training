@@ -1,0 +1,239 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "NOT a full calibration: f and k1 fitted to one stand on the dog (2026-10-22), the camera taped 0.61 m from the box's front (tag plane 0.609 m) and the box's 0.63 m width (0.629 m); principal point assumed at the image centre, k2-k4 = 0; checked against the MID-360's door plane (0.603 m) and tilt (4.72 vs 4.7 deg)",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261022T115429_insert_insert_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--live"
+  ],
+  "started_utc": "20261022T115432",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 60.521,
+      "posture": "lie"
+    },
+    {
+      "t": 60.522,
+      "stop": "the lidar puts the door 23 mm and 6.9 deg from where the look did"
+    },
+    {
+      "t": 95.211,
+      "posture": "stand"
+    },
+    {
+      "t": 97.772,
+      "posture": "balance"
+    },
+    {
+      "t": 111.569,
+      "stop": "attempt finished"
+    },
+    {
+      "t": 111.572,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 21,
+    "with_tag": 21,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.21 m ahead, +0.25 m left, turned -1 deg: a walk up of 0.33 m",
+    "detections": 21,
+    "site": {
+      "distance_m": 0.7085,
+      "bearing_deg": -26.247,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.329,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.559,
+      "rms_mm": 6.2,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.22
+  },
+  "abort": "the lidar puts the door 23 mm and 6.9 deg from where the look did",
+  "attempt_events": [
+    {
+      "t": 49.962,
+      "phase": "load"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unfold",
+      "mm": 89.9
+    },
+    {
+      "t": 53.671,
+      "phase": "grip"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "load",
+      "mm": 90.5
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.212,
+        -0.252,
+        0.009
+      ]
+    },
+    {
+      "t": 55.523,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "grip_check",
+      "gripper_units": 0.9,
+      "held": true,
+      "try": 1
+    },
+    {
+      "phase": "camera_gap",
+      "of": "grip",
+      "mm": 91.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.479,
+      "lock_right_m": 0.062,
+      "yaw_off_deg": 0.4,
+      "left_m": 0.008,
+      "carried_m": 0.027,
+      "carry_s": 0.13,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 59.334,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 87.1
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 23.3,
+      "turned_deg": 6.88
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 98.1
+    },
+    {
+      "phase": "recover",
+      "phases": [
+        "home",
+        "stand_up",
+        "stand_settle",
+        "unload",
+        "hand_back",
+        "drop",
+        "fold"
+      ]
+    },
+    {
+      "t": 95.139,
+      "phase": "stand_up"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 70.9
+    },
+    {
+      "t": 97.664,
+      "phase": "stand_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_up",
+      "mm": 70.4
+    },
+    {
+      "t": 98.929,
+      "phase": "unload"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_settle",
+      "mm": 92.7
+    },
+    {
+      "t": 102.527,
+      "phase": "hand_back"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unload",
+      "mm": 94.6
+    },
+    {
+      "t": 106.251,
+      "phase": "drop"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "hand_back",
+      "mm": 94.6
+    },
+    {
+      "t": 107.983,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "drop",
+      "mm": 94.3
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 94.3
+    }
+  ],
+  "outcome": "attempt finished"
+}

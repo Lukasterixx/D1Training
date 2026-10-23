@@ -1,0 +1,129 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.021,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.331,
+    "stand_q": [
+      -0.0335,
+      0.7346,
+      -1.445,
+      0.0015,
+      0.7137,
+      -1.5374,
+      0.0198,
+      0.7764,
+      -1.5033,
+      0.1246,
+      0.6645,
+      -1.4463
+    ]
+  },
+  {
+    "t": 4.52,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 4.52,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 6.02,
+    "event": "lying",
+    "calf": [
+      -2.467,
+      -2.481,
+      -2.531,
+      -2.503
+    ]
+  },
+  {
+    "t": 6.021,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 6.16,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 6.18,
+    "event": "sport mode released"
+  },
+  {
+    "t": 6.18,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 6.6,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 6.6,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 14.12,
+    "event": "not still after 3.0 s",
+    "base_m": 0.261,
+    "roll_pitch_deg": [
+      1.4,
+      -8.1
+    ],
+    "q_minus_trained_settled": [
+      0.069,
+      -0.053,
+      0.083,
+      -0.062,
+      -0.074,
+      0.127,
+      -0.102,
+      -0.162,
+      -0.094,
+      0.103,
+      -0.2,
+      -0.013
+    ]
+  },
+  {
+    "t": 14.121,
+    "event": "STOP: the stand is not the trained one (joints up to 0.20 rad off, tilt 8.1 deg, moving); lying down"
+  },
+  {
+    "t": 14.121,
+    "event": "mode stand_up -> stand_end"
+  },
+  {
+    "t": 15.64,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 20.16,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 31.86,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 31.88,
+    "event": "LowCmd stopped",
+    "sent": 12567
+  },
+  {
+    "t": 33.4,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 35.019,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 35.019,
+    "event": "mode handback -> done"
+  }
+]

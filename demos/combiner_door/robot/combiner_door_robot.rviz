@@ -9,7 +9,8 @@
 #   not), the base's path round the hinge, the grasp point, the hand's target, the lidar's face fit, the camera's
 #   field, and the status in words above the box.
 # - Door face: the MID-360's points in the fit's window, green on the face's line.
-# - Head camera: the RealSense frame with the tag outlined (decoded here from /combiner_door/debug_image/compressed).
+# - Camera: the look camera's frame with the tag outlined (the Go2's front camera; the wrist RealSense's through the
+#   insertion's key phases), decoded here from /combiner_door/debug_image/compressed.
 Panels:
   - Class: rviz_common/Displays
     Help Height: 0
@@ -210,7 +211,7 @@ Visualization Manager:
       Max Value: 1
       Median window: 5
       Min Value: 0
-      Name: Head camera
+      Name: Camera
       Normalize Range: true
       Topic:
         Depth: 2

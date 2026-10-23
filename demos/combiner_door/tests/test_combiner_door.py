@@ -1,18 +1,22 @@
-"""CPU tests for the combiner door demo: the head camera's mount, the lidar's origin, the look and the door's angle.
+"""CPU tests for the combiner door demo: the front and head cameras' mounts, the front camera's lens and its render, the
+lidar's origin, the look and the door's angle.
 
 No simulator. Run from the repository root:
 
     python -m unittest demos.combiner_door.tests.test_combiner_door -v
 """
 import math
+from pathlib import Path
 import unittest
 
 import numpy as np
 
-from demos.combiner.apriltag import TagDetection, invert, tag_pose_box
+from demos.combiner.apriltag import TagDetection, TagDetector, invert, tag_image, tag_pose_box
 from demos.combiner.geometry import GEOMETRY
-from demos.combiner_door import head_camera, mid360, perception
+from demos.combiner_door import front_camera, head_camera, mid360, perception
 from demos.unifp import props
+
+DATA = Path(__file__).resolve().parent / "data"
 
 
 def _rot_z(deg):
@@ -60,6 +64,137 @@ class HeadCamera(unittest.TestCase):
             self.assertLess(elevation, mid360.VERTICAL_FOV_DEG[0])
 
 
+def _render_tag(rotation, position, model, pixels_per_cell=40):
+    """The tag (quiet zone included) at `position`/`rotation` in the front camera's optical frame, as the simulator draws
+    it: an exact pinhole projection of the plane into `front_camera.render_size`'s render, on a grey background, then
+    remapped through the lens (`front_camera.distort_render`)."""
+    import cv2
+
+    width, height, f = front_camera.render_size(model)
+    render_k = np.array([[f, 0.0, width / 2.0], [0.0, f, height / 2.0], [0.0, 0.0, 1.0]])
+    cell = GEOMETRY.tag_outer_size / 10
+    texture_to_tag = np.array([[cell / pixels_per_cell, 0.0, -5 * cell], [0.0, -cell / pixels_per_cell, 5 * cell],
+                               [0.0, 0.0, 1.0]])
+    homography = render_k @ np.column_stack((rotation[:, 0], rotation[:, 1], position)) @ texture_to_tag
+    grey = cv2.warpPerspective(tag_image(pixels_per_cell=pixels_per_cell), homography, (width, height),
+                               flags=cv2.INTER_LINEAR, borderValue=150)
+    return front_camera.distort_render(np.dstack([grey] * 3), model)
+
+
+class FrontCamera(unittest.TestCase):
+    """The Go2's front camera, the look's since 2026-10-22: the URDF's mount and a NOMINAL fisheye lens."""
+
+    def test_the_mount_is_the_urdfs_looking_straight_ahead(self):
+        pose = front_camera.optical_pose_base()
+        np.testing.assert_allclose(pose[:3, 3], (0.330, 0.0, 0.040), atol=1e-9)
+        np.testing.assert_allclose(pose[:3, 2], (1.0, 0.0, 0.0), atol=1e-12)    # optical z: forward
+        np.testing.assert_allclose(pose[:3, 0], (0.0, -1.0, 0.0), atol=1e-12)   # x: image right is the robot's right
+        np.testing.assert_allclose(pose[:3, 1], (0.0, 0.0, -1.0), atol=1e-12)   # y: image down
+
+    def test_the_lens_is_labelled_as_no_full_calibration(self):
+        model = front_camera.camera_model()
+        self.assertEqual((model.width, model.height), (1280, 720))
+        self.assertFalse(model.calibrated)
+        self.assertIn("NOT a full calibration", model.source)
+
+    def test_the_fitted_lens_puts_the_box_where_the_tape_did(self):
+        """The frame `ONE_STAND` was fitted on (the camera taped 0.61 m from the box's front, square to it): the tag's
+        plane 0.61 m off within a centimetre, where the first guess (`NOMINAL`) read 2 cm long."""
+        import cv2
+
+        rgb = cv2.imread(str(DATA / "go2_front_camera_box_0p61m.jpg"))[..., ::-1]
+        for model, tolerance in ((front_camera.ONE_STAND, 0.01), (front_camera.NOMINAL, 0.03)):
+            found = [d for d in TagDetector(model.intrinsic_matrix, fisheye_distortion=model.distortion).detect(rgb)
+                     if d.corners_px[:, 0].mean() < 900]          # not the charging dock's tag (same id) on the right
+            self.assertEqual(len(found), 1)
+            pose = found[0].pose_cam
+            plane = abs(pose[:3, 2] @ pose[:3, 3])
+            self.assertAlmostEqual(plane, 0.61, delta=tolerance)
+        self.assertGreater(abs(plane - 0.61), 0.01)              # NOMINAL's: the fit mattered
+
+    def test_the_lens_model_is_opencvs_fisheye_and_inverts(self):
+        import cv2
+
+        model = front_camera.camera_model()
+        rng = np.random.default_rng(3)
+        points = rng.normal(size=(400, 3))
+        points[:, 2] = np.abs(points[:, 2]) + 0.3
+        uv = model.project(points)
+        cv_uv, _ = cv2.fisheye.projectPoints(points.reshape(-1, 1, 3), np.zeros(3), np.zeros(3),
+                                             model.intrinsic_matrix, np.array(model.distortion).reshape(4, 1))
+        np.testing.assert_allclose(uv, cv_uv.reshape(-1, 2), atol=1e-6)
+        rays = model.rays(uv)
+        np.testing.assert_allclose(rays, points / np.linalg.norm(points, axis=1, keepdims=True), atol=1e-9)
+
+    def test_the_render_holds_the_whole_fisheye_field(self):
+        width, height, _ = front_camera.render_size()
+        map_x, map_y = front_camera.distort_maps()
+        self.assertEqual(map_x.shape, (720, 1280))
+        self.assertGreaterEqual(map_x.min(), 0.0)
+        self.assertLessEqual(map_x.max(), width - 1.0)
+        self.assertGreaterEqual(map_y.min(), 0.0)
+        self.assertLessEqual(map_y.max(), height - 1.0)
+
+    def test_rviz_draws_the_field_through_the_corner_rays(self):
+        model = front_camera.camera_model()
+        k = front_camera.frustum_matrix(model)
+        for u, v in ((0.0, 0.0), (model.width, model.height)):
+            ray = model.rays([[u, v]])[0]
+            np.testing.assert_allclose(((u - k[0, 2]) / k[0, 0], (v - k[1, 2]) / k[1, 1]),
+                                       (ray[0] / ray[2], ray[1] / ray[2]), atol=1e-9)
+
+    def test_a_rendered_tag_is_measured_through_the_lens(self):
+        """The simulator's path end to end: rendered, remapped, found, solved with the lens undistorted. Off the image's
+        centre, a detector that took the lens for a pinhole would be 6-15 cm out."""
+        model = front_camera.camera_model()
+        fisheye = TagDetector(model.intrinsic_matrix, fisheye_distortion=model.distortion)
+        pinhole = TagDetector(model.intrinsic_matrix)
+        facing = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])    # tag x right, y up, z to the camera
+        for position, yaw_deg in (((0.30, -0.20, 0.85), 15.0), ((0.55, -0.25, 0.75), -20.0), ((-0.45, 0.10, 1.2), 10.0)):
+            rotation = _rot_y(yaw_deg) @ facing
+            image = _render_tag(rotation, np.array(position), model)
+            found = fisheye.detect(image)
+            self.assertEqual(len(found), 1, position)
+            self.assertLess(np.linalg.norm(found[0].pose_cam[:3, 3] - position), 0.008, position)
+            naive = pinhole.detect(image)[0]
+            self.assertGreater(np.linalg.norm(naive.pose_cam[:3, 3] - position), 0.03, position)
+
+    def test_the_tag_is_whole_in_the_picture_from_where_the_robot_looks(self):
+        """At every door-pull placement from `LOOK_BACK_M` back, P2Dingo's walking policy standing the base 0.30-0.33 m
+        up (0.314 in the trace) and pitched +-2 deg; from the stance itself the tag runs off the top of the image."""
+        import random
+
+        model = front_camera.camera_model()
+        rng = random.Random(1)
+        half = GEOMETRY.tag_outer_size / 2
+
+        def in_frame(site, back_m, z=0.314, pitch_deg=0.0):
+            base = np.eye(4)
+            base[:3, :3] = _rot_y(pitch_deg)
+            base[:3, 3] = (-back_m, 0.0, z)
+            cam = base @ front_camera.optical_pose_base()
+            tag = perception.site_pose(site) @ tag_pose_box()
+            corners = [(invert(cam) @ tag @ np.array([dx, dy, 0.0, 1.0]))[:3]
+                       for dx, dy in ((-half, half), (half, half), (half, -half), (-half, -half))]
+            return bool(front_camera.in_view(model, np.array(corners), margin_px=20.0).all())
+
+        sites = [props.sample_door_site(rng) for _ in range(200)]
+        for z, pitch in ((0.314, 0.0), (0.30, 2.0), (0.33, -2.0)):
+            self.assertTrue(all(in_frame(site, perception.LOOK_BACK_M, z, pitch) for site in sites), (z, pitch))
+        self.assertEqual(sum(in_frame(site, 0.0) for site in sites), 0)
+
+    def test_the_tag_is_found_in_a_real_frame(self):
+        """A frame of the real camera (P2Dingo's stream, 1280x720, the box's tag 0.4-0.5 m ahead, 2026-10-22). Shows
+        the decoder finds it through the real lens; the range is only checked for plausibility."""
+        import cv2
+
+        model = front_camera.camera_model()
+        rgb = cv2.imread(str(DATA / "go2_front_camera_tag.jpg"))[..., ::-1]
+        found = TagDetector(model.intrinsic_matrix, fisheye_distortion=model.distortion).detect(rgb)
+        self.assertEqual([d.tag_id for d in found], [GEOMETRY.tag_id])
+        self.assertTrue(0.25 < found[0].range_m < 0.9, found[0].range_m)
+
+
 class LidarOrigin(unittest.TestCase):
     def test_on_the_housings_axis_47_mm_above_its_bottom(self):
         from dock import read_binary_stl
@@ -79,7 +214,7 @@ class Look(unittest.TestCase):
         base[:3, :3] = _rot_z(1.2) @ _rot_y(1.5)
         base[:3, 3] = (0.02, -0.01, 0.40)
         box_base = invert(base) @ perception.site_pose(truth)
-        tag_cam = invert(head_camera.optical_pose_base()) @ box_base @ tag_pose_box()
+        tag_cam = invert(front_camera.optical_pose_base()) @ box_base @ tag_pose_box()   # the look's camera
         detection = TagDetection(GEOMETRY.tag_id, np.zeros((4, 2)), tag_cam, 0.0, 100.0)
         site = perception.site_from_pose(perception.box_in_spawn(detection, base))
         self.assertAlmostEqual(site.distance_m, truth.distance_m, places=9)

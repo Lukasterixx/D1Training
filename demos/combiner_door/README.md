@@ -1,7 +1,7 @@
-# The combiner door: found by the head camera, swung open by walking, checked by the lidar
+# The combiner door: found by the front camera, swung open by walking, checked by the lidar
 
-The combiner box's door pull without UniFP, with the robot finding the box itself: the RealSense on the Go2's head finds
-the AprilTag, the MID-360 gives the door's heading, the dog walks in, grips the handle above the tag and walks the door
+The combiner box's door pull without UniFP, with the robot finding the box itself: the Go2's own front camera finds the
+AprilTag (since 2026-10-22; the head RealSense before, below), the MID-360 gives the door's heading, the dog walks in, grips the handle above the tag and walks the door
 open round its hinge, and the lidar reads the door's angle all the way.
 
 On the real dog, the same sequence is `robot/` (`robot/README.md`: `d1dog` on the dog, `d1view` for RViz here).
@@ -34,9 +34,10 @@ decoupled baseline's (`demos/unifp/README.md`). Then `./dashboard.py record <out
 | `walk_settle` (1.5 s) | stands | lidar: door read from here on |
 | the door script | stand, approach, settle, enter, arrive, grip, pull (walk the door to 90°), hold, release, back | lidar: door read at 10 Hz |
 
-- **Why it starts back.** From the door pull's stance the head camera is 0.22 m from the door and cuts the tag off at
-  a quarter of the placements. From 0.15 m back it had it whole at every one; with the box 29.5 mm nearer for the
-  measured lever, the look is 0.18 m back (`perception.LOOK_BACK_M`).
+- **Why it starts back.** From the door pull's stance the tag runs off the top of the front camera's image: its field is
+  ~100 x 53 degrees, and P2Dingo's walking policy stands the base 0.31 m up. From 0.40 m back
+  (`perception.LOOK_BACK_M`) it is whole at all 200 placements tried, the base 0.30-0.33 m up and pitched +-2 deg. (The
+  head RealSense needed 0.18 m: 0.22 m from the door at the stance it cut the tag off at a quarter of them.)
 - **Why it starts folded.** The real arm rests folded against its mechanical stop
   (`d1_hardware.REST_SERVO_DEG`, J1 and J2 1-3 deg inside the URDF's limits here). It unfolds only once the look has
   found the box, standing, in a straight line in joint space, each 10 Hz command at most 4 deg from where the arm is
@@ -78,10 +79,17 @@ hold at 85° or more) beside `success` (the simulator's).
   trained on a bare Go2. The 2024 policy the door pull's baseline uses (`--walker rescue_2024`) cannot be stopped from
   a walk without turning in place and leaning up to 26°, and falls; P2Dingo's stops level.
 - **Arm:** inverse kinematics on the jaw centre through the measured D1 model, bounded to run at 10 Hz (F-152).
-- **Head camera:** P2Dingo's bracket and Intel's case drawn on the head (visual only). The wrist camera is not drawn:
-  this demo assumes the RealSense is on the head.
+- **Front camera** (`front_camera.py`): the Go2's own, at the URDF's mount, a 1280x720 fisheye (`ONE_STAND`: fitted to
+  one stand on the real dog, not a full calibration). Isaac renders a wide pinhole (1714x966) that `distort_render`
+  remaps through the lens model, so the detector sees what the dog streams. **The USD camera needs a real focal
+  length** (`USD_FOCAL_LENGTH`): with Isaac Lab's default (aperture 1.0, focal 0.35 here) Isaac reports the intrinsics
+  asked for and draws the scene ~1.35x too large, the box 17 cm too near. P2Dingo's head bracket is drawn; the RealSense
+  it held is on the wrist since 2026-10-21 and is not drawn there.
 
 ## What it does and does not show
+
+**With the front camera (2026-10-22, seed 1; F-185):** 16 of 16 doors opened, the box placed 6.1 mm off (median, 7.8
+max), no falls. The head RealSense's results below are F-155's.
 
 **Results (2026-10-20, 16 environments, seeds 1 and 2; F-155):** the arm starting folded, the lever as measured (a 140
 x 40 x 17 mm slot, 27 mm off the door).

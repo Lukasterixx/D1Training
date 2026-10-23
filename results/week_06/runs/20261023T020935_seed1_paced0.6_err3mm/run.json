@@ -1,0 +1,176 @@
+{
+  "mode": "combiner_key_holster",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "attempts": 8,
+    "num_envs": 8,
+    "seed": 1,
+    "settle_s": 4.0,
+    "walker": "p2dingo_gait",
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "holster_error_mm": 3.0,
+    "no_overview": true,
+    "run_name": "paced0.6_err3mm",
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "demos/combiner_key/run_holster.py --attempts 8 --headless --no_overview --holster_error_mm 3 --speed 2 --joint_speed 0.6 --run_name paced0.6_err3mm",
+  "git_commit": "880f0dfd0f9c60ed4f28eb8db0f6687413dda1a2",
+  "git_status": "M .gitignore\n M demos/combiner/apriltag.py\n M demos/combiner_door/README.md\n M demos/combiner_door/env.py\n M demos/combiner_door/head_camera.py\n M demos/combiner_door/perception.py\n M demos/combiner_door/robot/README.md\n M demos/combiner_door/robot/combiner_door_robot.rviz\n M demos/combiner_door/robot/node.py\n M demos/combiner_door/robot/plan.py\n M demos/combiner_door/robot/run_on_dog.sh\n M demos/combiner_door/robot/viz.py\n M demos/combiner_door/run_combiner_door.sh\n M demos/combiner_door/tests/test_combiner_door.py\n M demos/combiner_door/tests/test_robot.py\n M demos/combiner_key/README.md\n M demos/combiner_key/asset.py\n M demos/combiner_key/env.py\n M demos/combiner_key/robot/README.md\n M demos/unifp/run_demo.py\n M results/findings.md\n M results/week_06/notes.md\n?? demos/combiner_door/front_camera.py\n?? demos/combiner_door/tests/data/\n?? demos/combiner_key/arm_env.py\n?? demos/combiner_key/arm_turn.py\n?? demos/combiner_key/assets/holster/\n?? demos/combiner_key/bezel_image.py\n?? demos/combiner_key/holster.py\n?? demos/combiner_key/holster_env.py\n?? demos/combiner_key/keyhole.py\n?? demos/combiner_key/plot_arm_turn.py\n?? demos/combiner_key/robot/eval_keyhole_clips.py\n?? demos/combiner_key/robot/fake_go2.py\n?? demos/combiner_key/robot/insert_plan.py\n?? demos/combiner_key/robot/insert_viz.py\n?? demos/combiner_key/robot/key_plan.py\n?? demos/combiner_key/robot/key_viz.py\n?? demos/combiner_key/robot/lowlevel.py\n?? demos/combiner_key/robot/press_layer.py\n?? demos/combiner_key/robot/press_live.py\n?? demos/combiner_key/robot/run_press_on_dog.sh\n?? demos/combiner_key/robot/sport_mode.py\n?? demos/combiner_key/run_arm_turn.py\n?? demos/combiner_key/run_arm_turn.sh\n?? demos/combiner_key/run_holster.py\n?? demos/combiner_key/tests/data/\n?? demos/combiner_key/tests/test_arm_turn.py\n?? demos/combiner_key/tests/test_bezel_image.py\n?? demos/combiner_key/tests/test_holster.py\n?? demos/combiner_key/tests/test_insert_robot.py\n?? demos/combiner_key/tests/test_key_robot.py\n?? demos/combiner_key/tests/test_keyhole.py\n?? logs/combiner_key_holster/\n?? logs/leg_press/\n?? results/week_06/figures/arm_turn_demo_5n.png\n?? results/week_06/figures/arm_turn_lock_sweep.png\n?? results/week_06/figures/holster_draw_frames.png\n?? results/week_06/keyhole_clips/\n?? results/week_06/runs/20261021T060043_lock0.65nm_seed1_first/\n?? results/week_06/runs/20261021T060635_lock0.65nm_seed1_demo/\n?? results/week_06/runs/20261021T060916_lock0.65nm_seed1_demo_k8000/\n?? results/week_06/runs/20261021T061331_lock0.65nm_seed1_placements/\n?? results/week_06/runs/20261021T061751_lock1.04nm_seed1_sweep/\n?? results/week_06/runs/20261021T062130_lock1.43nm_seed1_sweep/\n?? results/week_06/runs/20261021T062509_lock1.82nm_seed1_sweep/\n?? results/week_06/runs/20261021T062849_lock2.21nm_seed1_sweep/\n?? results/week_06/runs/20261021T063342_lock0.65nm_seed1_lagcheck/\n?? results/week_06/runs/20261021T064727_lock0.65nm_seed1_window/\n?? results/week_06/runs/20261021T065244_lock0.65nm_seed1_window_near/\n?? results/week_06/runs/20261021T072733_turn_dry/\n?? results/week_06/runs/20261021T073004_key_reach_live/\n?? results/week_06/runs/20261021T073606_key_walk_live/\n?? results/week_06/runs/20261021T074021_key_walk_live/\n?? results/week_06/runs/20261021T074548_key_walk_live/\n?? results/week_06/runs/20261021T074633_key_reach_live/\n?? results/week_06/runs/20261021T075232_key_reach_live/\n?? results/week_06/runs/20261021T080001_key_reach_live/\n?? results/week_06/runs/20261021T080820_key_reach_live/\n?? results/week_06/runs/20261021T080928_key_turn_live/\n?? results/week_06/runs/20261021T081113_key_reach_live/\n?? results/week_06/runs/20261021T081246_key_turn_live/\n?? results/week_06/runs/20261021T081629_key_turn_live/\n?? results/week_06/runs/20261021T082236_key_turn_live/\n?? results/week_06/runs/20261021T084501_key_turn_door_pull_live/\n?? results/week_06/runs/20261021T084730_pull_live/\n?? results/week_06/runs/20261021T085022_key_turn_door_pull_live/\n?? results/week_06/runs/20261021T095142_insert_insert_dry/\n?? results/week_06/runs/20261021T095354_insert_insert_live/\n?? results/week_06/runs/20261021T095539_insert_insert_live/\n?? results/week_06/runs/20261021T100605_insert_insert_live/\n?? results/week_06/runs/20261021T101715_insert_insert_live/\n?? results/week_06/runs/20261021T102422_insert_insert_dry/\n?? results/week_06/runs/20261021T113412_look_live/\n?? results/week_06/runs/20261021T114128_insert_insert_live/\n?? results/week_06/runs/20261021T115613_pull_live/\n?? results/week_06/runs/20261021T115745_pull_live/\n?? results/week_06/runs/20261021T120314_pull_live/\n?? results/week_06/runs/20261022T102427_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T102639_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T103047_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T103414_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T103637_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T103755_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T103925_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T104056_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T104222_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T104403_door_combiner_door_seed1_combiner_door/\n?? results/week_06/runs/20261022T115135_insert_insert_live/\n?? results/week_06/runs/20261022T115318_insert_look_dry/\n?? results/week_06/runs/20261022T115429_insert_insert_live/\n?? results/week_06/runs/20261022T120615_insert_insert_dry/\n?? results/week_06/runs/20261023T012947_leg_press_live/\n?? results/week_06/runs/20261023T013017_leg_press_live/\n?? results/week_06/runs/20261023T013144_leg_press_rehearse/\n?? results/week_06/runs/20261023T013325_leg_press_live/\n?? results/week_06/runs/20261023T013422_leg_press_rehearse/\n?? results/week_06/runs/20261023T013526_leg_press_rehearse/\n?? results/week_06/runs/20261023T014219_leg_press_rehearse/\n?? results/week_06/runs/20261023T014425_leg_press_live/\n?? results/week_06/runs/20261023T014641_seed1_first/\n?? results/week_06/runs/20261023T015053_leg_press_live/\n?? results/week_06/runs/20261023T015209_seed1_roll_fixed/\n?? results/week_06/runs/20261023T015351_seed1_batch8_err0mm/\n?? results/week_06/runs/20261023T015445_leg_press_live/\n?? results/week_06/runs/20261023T015450_seed1_batch8_err3mm/\n?? results/week_06/runs/20261023T015549_seed1_batch8_err6mm/\n?? results/week_06/runs/20261023T020215_seed1_viewer/\n?? results/week_06/screenshots/2026-10-21_cam_lock_calipers.jpg\n?? tests/test_press_live.py",
+  "holster": {
+    "registration": {
+      "d1_with_holster.stl": {
+        "sha256": "728c7c55f546daff1da9079dff05f4d94ed73ea503556a92fab11eb0302192a5",
+        "bytes": 6992984
+      },
+      "d1_with_lever.stl": {
+        "sha256": "fc163d1050bfb03d12594531531d930e22deabf31757eaffdbe46b682e4423aa",
+        "bytes": 7014184
+      },
+      "d1_with_holster_and_lever.stl": {
+        "sha256": "f957717045ae8c4b1ebedc2e3c1b0e6747faf3d65d62c61df1b626b0bdb14d2f",
+        "bytes": 7032784
+      }
+    },
+    "key_mirrored": true,
+    "grip_along_m": 0.0,
+    "grip_roll": 1,
+    "ik_soft": 0.9,
+    "pre_out_m": 0.045,
+    "slide_m": 0.1,
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "phase_s": {
+      "turn": 1.25,
+      "reach": 1.75,
+      "pre": 1.5,
+      "on": 1.434,
+      "close": 1.0,
+      "draw": 3.401,
+      "hold": 2.0
+    },
+    "jaw_open_m": 0.012,
+    "jaw_hold_m": 0.002
+  },
+  "robot_usd": "/home/lukas/D1Training/generated/go2_d1.usd",
+  "box_usd": "/home/lukas/D1Training/generated/unifp_demos/combiner_0.400_ac02abf3702d.usda",
+  "phases": [
+    "turn",
+    "reach",
+    "pre",
+    "on",
+    "close",
+    "draw",
+    "hold"
+  ],
+  "robot": "the combiner door demo's: the lidar and the RealSenses drawn, not simulated (no wrist mass)",
+  "box": "the combiner box 3 m behind the robot, out of the way",
+  "summary": {
+    "attempts": 8,
+    "drawn": 8,
+    "fell": 0,
+    "holster_error_mm": 3.0,
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "draw_s": 12.34,
+    "draw_near_stopped": [
+      0.077,
+      0.053,
+      0.065,
+      0.059,
+      0.071,
+      0.077,
+      0.059,
+      0.071
+    ],
+    "key_out_mm": [
+      99.45,
+      99.46,
+      99.44,
+      99.52,
+      99.5,
+      99.26,
+      99.48,
+      99.48
+    ],
+    "grasp_miss_mm": [
+      [
+        -0.35,
+        0.62,
+        -0.04
+      ],
+      [
+        2.22,
+        0.42,
+        0.16
+      ],
+      [
+        0.38,
+        0.66,
+        -1.65
+      ],
+      [
+        -1.13,
+        2.02,
+        1.23
+      ],
+      [
+        0.22,
+        0.47,
+        -3.18
+      ],
+      [
+        0.3,
+        -1.8,
+        -0.04
+      ],
+      [
+        -3.04,
+        0.27,
+        -2.44
+      ],
+      [
+        1.39,
+        0.47,
+        -1.52
+      ]
+    ],
+    "grip_err_max_mm": [
+      1.47,
+      1.23,
+      1.5,
+      3.24,
+      2.62,
+      1.69,
+      2.48,
+      1.4
+    ],
+    "torque_use_max": [
+      0.586,
+      0.586,
+      0.588,
+      0.998,
+      0.833,
+      0.607,
+      0.765,
+      0.586
+    ]
+  },
+  "frames": 0
+}

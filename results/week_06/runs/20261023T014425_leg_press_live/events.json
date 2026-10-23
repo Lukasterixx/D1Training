@@ -1,0 +1,80 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.021,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.333,
+    "stand_q": [
+      0.0337,
+      0.7063,
+      -1.4848,
+      -0.0351,
+      0.6952,
+      -1.5297,
+      0.0801,
+      0.7974,
+      -1.5434,
+      -0.0013,
+      0.7495,
+      -1.5254
+    ]
+  },
+  {
+    "t": 8.781,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 8.781,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 10.3,
+    "event": "lying",
+    "calf": [
+      -2.5,
+      -2.503,
+      -2.554,
+      -2.526
+    ]
+  },
+  {
+    "t": 10.301,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 10.44,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 10.46,
+    "event": "sport mode released"
+  },
+  {
+    "t": 10.46,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 10.88,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 10.88,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 15.401,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 15.64,
+    "event": "STOP (tilt roll +4.5 pitch -20.3 deg): damping, every motor kp 0 kd 3.0"
+  },
+  {
+    "t": 15.64,
+    "event": "mode policy -> damping"
+  }
+]

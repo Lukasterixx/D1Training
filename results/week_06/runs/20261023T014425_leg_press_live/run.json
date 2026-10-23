@@ -1,0 +1,72 @@
+{
+  "mode": "leg_press_live",
+  "status": "recorded",
+  "published": "LowCmd, motion switcher and sport requests",
+  "arguments": {
+    "policy": "checkpoints/leg_press_force_r4_model_5999.npz",
+    "live": true,
+    "rehearse": false,
+    "plate": "palm_up",
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "ramp_s": 0.5,
+    "hold_s": 3.0,
+    "standoff": 0.04,
+    "speed": 0.03,
+    "hand_wait_s": 15.0,
+    "presses": 1,
+    "policy_s": 90.0,
+    "tilt_limit_deg": 20.0,
+    "force_abort_n": 25.0,
+    "cmd_hz": 500.0,
+    "topic": "/lowstate",
+    "arm_link_port": 8095,
+    "print_s": 1.0,
+    "run_dir": "/root/D1Training/logs/leg_press"
+  },
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261021T140237_train_seed3_press_r4_force_s3/model_5999.pt",
+    "checkpoint_sha256": "d4da61ca6c655f16c3e436919b38bc4dbf848b511cde420c256d53d3547b0aee",
+    "checkpoint_iteration": 5999
+  },
+  "summary": {
+    "live": true,
+    "rehearse": false,
+    "plate": "palm_up",
+    "plate_contact_m": [
+      0.331,
+      -0.202,
+      0.112
+    ],
+    "plate_n": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "abort_reason": "tilt roll +4.5 pitch -20.3 deg",
+    "end_reason": null,
+    "final_mode": "damping",
+    "sport_mode": "mcf",
+    "handed_back": false,
+    "presses": [],
+    "last_stage": "waiting",
+    "max_tilt_deg": 20.31,
+    "lowcmd_sent": 13282,
+    "events": 14,
+    "steps": 1338,
+    "seconds": 37.64,
+    "policy_steps": 11,
+    "step_period_s": {
+      "median": 0.0208,
+      "p99": 0.0227
+    },
+    "commanded_level_max_n": 0.0,
+    "infer_ms": {
+      "median": 3.01,
+      "p99": 3.18
+    }
+  }
+}

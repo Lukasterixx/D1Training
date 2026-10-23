@@ -463,7 +463,7 @@ class CombinerKeyEnv(door_env.CombinerDoorEnv):
         self.parked_phases = set(PARKED)
         self.position_only_phases = set(POSITION_ONLY)
         self.joint_phases = {"unfold", "fold"}
-        self.leg = LegTurn(self, cfg.leg_variant, cfg.leg_checkpoint)
+        self.leg = self._make_turn(cfg)
         self._link6_ids = torch.tensor([self._link6], dtype=torch.int32, device=self.device)
         self._grip = torch.zeros(n, dtype=torch.bool, device=self.device)
         #: How each environment's key is placed this physics step: "parked", "held" (the spring), "free" (PhysX alone)
@@ -478,6 +478,10 @@ class CombinerKeyEnv(door_env.CombinerDoorEnv):
         self.grip_err_mm, self.grip_err_deg = torch.zeros(n, device=self.device), torch.zeros(n, device=self.device)
         self._hand_offset = np.zeros((n, 3))
         self.handover_states: list[dict] = []
+
+    def _make_turn(self, cfg):
+        """What turns the key: the leg policy (`arm_env.ArmTurnEnv` puts the arm's push here instead)."""
+        return LegTurn(self, cfg.leg_variant, cfg.leg_checkpoint)
 
     # --- the feet's friction, by who has the legs ----------------------------------------------------
 

@@ -618,8 +618,9 @@ def main() -> int:
                                         "and measured speed limits"},
                        "jaws": "UniFP's drive (800 N/m, 15 N)"} if decoupled_run else None),
         "park_arm": bool(args.park_arm),
-        "perception": ({"box": "AprilTag in the head RealSense (demos/combiner_door/head_camera.py: P2Dingo's mount, "
-                                "the measured D435i at 640x480), averaged over the look",
+        "perception": ({"box": "AprilTag in the Go2's front camera (demos/combiner_door/front_camera.py: the URDF's "
+                                "mount, a NOMINAL 1280x720 fisheye drawn by remapping a wide pinhole render), "
+                                "averaged over the look",
                         "look_back_m": look_back_m,
                         "camera_model": env.camera_model.source,
                         "door": "MID-360 ray caster, door angle fitted round the tag (demos/combiner_door/mid360.py); "

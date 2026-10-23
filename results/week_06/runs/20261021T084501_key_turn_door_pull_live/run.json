@@ -1,0 +1,336 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "stopped",
+  "task": "key",
+  "stage": "turn",
+  "then_door": "pull",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T084501_key_turn_door_pull_live",
+    "--task",
+    "key",
+    "--stage",
+    "turn",
+    "--then_door",
+    "pull",
+    "--door_deg",
+    "60",
+    "--live",
+    "--yes"
+  ],
+  "started_utc": "20261021T084505",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 75.882,
+      "stop": "the arm is 22 deg from where the IK wants it: loaded"
+    },
+    {
+      "t": 94.206,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 34,
+    "with_tag": 34,
+    "lidar_frames": 23,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.36 m ahead, +0.12 m left, turned -0 deg: a walk up of 0.38 m",
+    "detections": 34,
+    "site": {
+      "distance_m": 0.6711,
+      "bearing_deg": -13.976,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.378,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 7.5,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -0.94
+  },
+  "key_attempt_events": [
+    {
+      "phase": "plan_push",
+      "poses_solved": 29,
+      "turns": {
+        "60.0": 5.8,
+        "65.0": 15.0,
+        "70.0": 24.2
+      }
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.357,
+        -0.127,
+        0.01
+      ]
+    },
+    {
+      "t": 17.38,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unfold",
+      "mm": 158.1
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "lock_ahead_m": 0.519,
+      "lock_left_m": 0.102,
+      "yaw_off_deg": -0.7,
+      "left_m": 0.031,
+      "carried_m": 0.007,
+      "carry_s": 0.03,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 20.98,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 146.7
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 50.7,
+      "turned_deg": 0.77
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "lock 0.47 m ahead, +0.10 m left of the stance, door -1.5 deg off square, after the walk"
+    },
+    {
+      "phase": "key_out",
+      "solved_here": true,
+      "path_clear": true,
+      "turn_s": 10.74
+    },
+    {
+      "t": 21.98,
+      "phase": "key_out"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 161.5
+    },
+    {
+      "t": 25.996,
+      "phase": "key_above"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_out",
+      "mm": 47.5
+    },
+    {
+      "t": 27.98,
+      "phase": "key_touch"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_above",
+      "mm": 52.4
+    },
+    {
+      "t": 29.98,
+      "phase": "turn"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_touch",
+      "mm": 70.3
+    },
+    {
+      "t": 41.783,
+      "phase": "key_hold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "turn",
+      "mm": 28.8
+    },
+    {
+      "t": 43.281,
+      "phase": "key_lift"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_hold",
+      "mm": 28.9
+    },
+    {
+      "phase": "turn_check",
+      "lag_mm": 14.9,
+      "since": null,
+      "measured_deg": 45.36,
+      "verified": true,
+      "held_s": 1.0
+    },
+    {
+      "t": 44.784,
+      "phase": "key_clear"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_lift",
+      "mm": 28.4
+    },
+    {
+      "t": 47.781,
+      "phase": "home"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_clear",
+      "mm": 35.3
+    },
+    {
+      "t": 50.781,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 59.3
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 160.9
+    }
+  ],
+  "key": {
+    "lag_mm": 14.9,
+    "since": null,
+    "measured_deg": 45.36,
+    "verified": true,
+    "held_s": 1.0
+  },
+  "door_after_key": {
+    "stage": "pull",
+    "stance": "box 0.69 m from the stance at -0.0 deg, door +0.0 deg off square, walk in 0.00 m"
+  },
+  "door_attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        0.065,
+        0.133,
+        -0.001
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "box_distance_m": 0.707,
+      "box_bearing_deg": -2.0,
+      "door_yaw_deg": 178.7,
+      "left_m": 0.018,
+      "carried_m": 0.011,
+      "carry_s": 0.06,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 57.981,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 16.7,
+      "turned_deg": 1.39
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "box 0.73 m from the stance at -1.7 deg, door +0.1 deg off square, walk in 0.00 m (outside the simulated 0.67-0.71 m)"
+    },
+    {
+      "t": 58.981,
+      "phase": "unfold"
+    },
+    {
+      "t": 64.381,
+      "phase": "stand"
+    },
+    {
+      "t": 65.081,
+      "phase": "approach"
+    },
+    {
+      "t": 67.08,
+      "phase": "settle"
+    },
+    {
+      "t": 69.08,
+      "phase": "enter"
+    },
+    {
+      "t": 71.58,
+      "phase": "arrive"
+    },
+    {
+      "t": 72.78,
+      "phase": "grip"
+    },
+    {
+      "t": 73.68,
+      "phase": "pull"
+    },
+    {
+      "phase": "pull",
+      "twist": [
+        -0.114,
+        -0.2,
+        0.344
+      ],
+      "hinge_in_base_m": [
+        0.581,
+        -0.332
+      ],
+      "seconds": 3.04
+    }
+  ],
+  "abort": "the arm is 22 deg from where the IK wants it: loaded"
+}

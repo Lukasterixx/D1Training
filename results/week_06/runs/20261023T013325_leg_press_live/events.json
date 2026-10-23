@@ -1,0 +1,140 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.02,
+    "event": "sport mode",
+    "name": "normal",
+    "stand_height_m": 0.268,
+    "stand_q": [
+      -0.1108,
+      0.7934,
+      -1.8007,
+      0.1112,
+      0.7931,
+      -1.8014,
+      -0.1037,
+      1.0405,
+      -1.8324,
+      0.1045,
+      1.0405,
+      -1.8329
+    ]
+  },
+  {
+    "t": 2.86,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.86,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 4.38,
+    "event": "lying",
+    "calf": [
+      -2.79,
+      -2.78,
+      -2.805,
+      -2.847
+    ]
+  },
+  {
+    "t": 4.38,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 4.4,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 4.42,
+    "event": "sport mode released"
+  },
+  {
+    "t": 4.42,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 4.84,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 4.84,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 9.34,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 11.88,
+    "event": "stage waiting -> lifting"
+  },
+  {
+    "t": 13.88,
+    "event": "stage lifting -> over"
+  },
+  {
+    "t": 14.68,
+    "event": "stage over -> at_pre"
+  },
+  {
+    "t": 17.68,
+    "event": "stage at_pre -> returning",
+    "why": "missed"
+  },
+  {
+    "t": 20.28,
+    "event": "stage returning -> foot_down",
+    "why": "missed"
+  },
+  {
+    "t": 21.261,
+    "event": "press 1 finished",
+    "stalled": false,
+    "ended_unpressed": "missed",
+    "engage_miss_m": null
+  },
+  {
+    "t": 21.261,
+    "event": "the policy is done",
+    "presses": 1
+  },
+  {
+    "t": 21.261,
+    "event": "mode policy -> stand_end"
+  },
+  {
+    "t": 22.78,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 27.3,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 29.88,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 29.9,
+    "event": "LowCmd stopped",
+    "sent": 12520
+  },
+  {
+    "t": 29.92,
+    "event": "SelectMode answered (code 0)"
+  },
+  {
+    "t": 29.94,
+    "event": "sport mode back",
+    "name": "normal"
+  },
+  {
+    "t": 29.94,
+    "event": "mode handback -> done"
+  }
+]

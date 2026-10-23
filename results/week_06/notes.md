@@ -2223,9 +2223,1052 @@ no plate or key estimate comes from a camera; real contact (the plates are penal
 since 10:55); anything outside the reach the table samples; tangential force beyond a 4 N test; more than one fine-tune
 of the lineage.
 
+### 2026-10-21 · The key turned by the arm (simulation)
+
+Lukas: "I am curious if the arm itself can turn the lever. assume the turn is for 45 degrees to -45 degrees and create
+a scripted unlock with visualisation. you can re-use the door detection and apriltag stuff already used for the door
+opening", then "the real lever takes about 5N to rotate in the lock". Asked, he chose simulation first and the foot's
+turn: 45 degrees up to 45 down, clockwise as the robot sees it.
+
+**Built** (`demos/combiner_key/`, its README's "The arm turning the key instead"):
+- `arm_turn.py` (numpy): the push. The hand comes in pitched 60 degrees down onto the platform about the key's
+  direction, jaws shut, the fingers side by side along the key, their tips' lower edge on the platform 0.13 m out from
+  the shaft and 35 mm off the door; the turn is that hand pose rotated rigidly about the shaft (after the isolator
+  handle's push, `demos/combiner/press.py`), the edge 4 mm inside the platform. The stance: the door 0.44 m ahead, the
+  lock 8 cm left of the base (the leg turn's mirrored). And the CPU scan below.
+- `arm_env.py`: `ArmTurnEnv`, the key demo's environment with the key in the lock and the leg turn's slot filled by
+  the arm's: the leg turn's lock plant (`LeverHandle(pad=True)`, the key's sticking friction, stops and weight) against
+  a 5 mm sphere at the fingertips' edge, its force on Link6. The look is the door demo's (head-camera AprilTag, MID-360
+  face fit); the walking policy keeps the legs; an overview camera takes the pictures.
+- `run_arm_turn.py` (`run_arm_turn.sh`), `plot_arm_turn.py`; `env.py` gains a `_make_turn` hook (the leg turn
+  unchanged). `tests/test_arm_turn.py`: 11 tests (the hand's frame, the contact sphere, the targets, the stance, the IK
+  and push over the turn at 0.28-0.33 m); with the key demo's 9, 20 pass.
+
+**On the CPU first** (`python -m demos.combiner_key.arm_turn`; the scan is kept in the
+[first run's record](#/week/6/run/20261021T060043_lock0.65nm_seed1_first)): the hand held level, as the isolator push
+was, does not solve at the key at any stance (the lock is ~0.11 m above the base, the wrist and fingers 0.2 m long);
+pitched 40 degrees it solves at a 0.28 m base but not from 0.31; pitched 60 it solves every 5 degrees of the turn at
+all 72 combinations of door 0.42-0.48 m, lock 6-10 cm left, base 0.28-0.33 m, with and without the wrist camera's 99 g,
+clear of the trunk proxy. The push's quasi-static ceiling (`press.press_capacity`: the arm's weight plus J^T F within
+the published limits) at its worst angle is 1.31-1.50 N·m over that spread, 1.43 at the stance (at +-45 degrees, where
+the push runs sideways and Joint1 binds; Joint2 binds in between, 1.64-1.92), 10-11.5 N at the push point. The arm's
+own weight takes up to 90% of one joint's limit in a corner of the grid (with the camera).
+
+**Runs** (`run_arm_turn.sh --headless [--attempts N --no_overview] [--lock_n N]`; the head camera and lidar look,
+the box spread as in the key demo; lock = the plant's friction, `--lock_n` x 0.13 m):
+
+| lock, N at 0.13 m (N·m) | run | unlocked | furthest key angle | hand's lag in the turn | contact, median | joint at its limit |
+| --- | --- | --- | --- | --- | --- | --- |
+| 5 (0.65), first | [run](#/week/6/run/20261021T060043_lock0.65nm_seed1_first) | 1/1 | 45.25 | 9 mm | 4.8 N | 6.4% of push steps |
+| 5, demo (frames) | [run](#/week/6/run/20261021T060916_lock0.65nm_seed1_demo_k8000) | 1/1 | 45.18 | 9 | 4.8 | |
+| 5, 8 placements | [run](#/week/6/run/20261021T061331_lock0.65nm_seed1_placements) | **8/8** | 45.17-45.20 | 8-10 | 4.8 | 4-6% |
+| 5, check | [run](#/week/6/run/20261021T063342_lock0.65nm_seed1_lagcheck) | 1/1 | 45.18 | 10 | 4.8 | |
+| 8 (1.04) | [run](#/week/6/run/20261021T061751_lock1.04nm_seed1_sweep) | 4/4 | 44.6-44.9 | 13-14 | 7.8-7.9 | 7-11% |
+| 11 (1.43) | [run](#/week/6/run/20261021T062130_lock1.43nm_seed1_sweep) | 4/4 | 42.2-42.8 | 17-20 | 10.1-11.2 | 21-35% |
+| 14 (1.82) | [run](#/week/6/run/20261021T062509_lock1.82nm_seed1_sweep) | 1/4 | 40.2; 6.4, -40.6, -43.4 | 41; 96-147 | | 34-41% |
+| 17 (2.21) | [run](#/week/6/run/20261021T062849_lock2.21nm_seed1_sweep) | 0/4 | -38 to -45 | 122-160 | | 30-67% |
+
+One more ([run](#/week/6/run/20261021T060635_lock0.65nm_seed1_demo)) was stopped by me ~100 s in, before its push, to
+change the contact model; no result. Figures: [`figures/arm_turn_demo_5n.png`](figures/arm_turn_demo_5n.png) (four
+overview frames, the key's angle, the push, each joint against its limit) and
+[`figures/arm_turn_lock_sweep.png`](figures/arm_turn_lock_sweep.png). The push as an animation:
+`logs/combiner_key_arm/20261021T060916_lock0.65nm_seed1_demo_k8000/push.gif` (not committed, 3.6 MB).
+
+- *The look and the stance*: the tag in 27 of 27; the lock's estimate 0.9-10.7 mm off (the tag's depth, as in the
+  key demo). The walk ends within 5 mm of its target, then P2Dingo's gait, stepping in place, drifts the base 2-4 cm in
+  the 1.5 s settle: the push started with the door 0.45-0.48 m ahead (0.44 asked) and the lock 1-6 cm left (8 asked).
+  It turned the key from there; the CPU scan's spread is +-2 cm sideways.
+- *The key follows the command* to a median 0.2-0.3 degrees at 5 N; the push at 5 N is 4.8 N along the key's arc.
+- *The ripple*: the contact force swings 3-6 N about its mean from step to step, and the joints' torques with it. Not
+  the contact: halving its stiffness (16,000 to 8,000 N/m) and damping it harder changed nothing (step-to-step change
+  median 0.38 against 0.39 N). It is the D1's 10 Hz streaming as `motor_model` has it (the firmware's plan restarting
+  from rest at each setpoint, F-045/F-046): with the hand held still above the key the shoulder's torque ripples at
+  10.0 Hz while the base is still (roll 0.04 degrees RMS).
+- *The hold*: in the first run the edge was held 4 mm inside the platform at the stop, and the arm pushed the key into
+  its stop at 11 N with Joint1 at 100%. It now rests on the platform for the hold: 0 N, the shoulder at 52%.
+- *Joint forces past their limits* (to 2.4x, Joint5) appear only in `arm_out`, the swing from home to the first push
+  pose while the IK is still in position-only: constraint forces (a joint at its limit, or the arm against the body), not
+  the drives. None in the push at 5-11 N.
+- *The robot's own check*: its fingertips' edge on the estimated key reads 45 degrees at the hold on keys that never
+  moved (14 and 17 N): the fingers had slid off the platform and followed the command in the air. Every key that turned
+  had the hand at most 20 mm behind its command through the turn; every stalled one 96-160 mm. The runner now requires
+  both (the edge past 30 degrees and the lag under `TRACK_LIMIT_MM` = 30); applied to these traces it is right on all 26
+  attempts but the 14 N one that stopped at 40 degrees (41 mm), which it rejects. The table's runs predate it (their
+  `verified_unlocked` is the edge alone); the check run has it.
+
+**What this shows, and what it does not.**
+- *Shows* (simulation): from the door demo's look and a walked stance, the D1 alone turns the key from 45 degrees up to
+  45 down against a constant 5 N (0.65 N·m) in 11 of 11 attempts, and up to 11 N in 4 of 4; the simulated limit,
+  11-14 N, is where the CPU's quasi-static ceiling (10-11.5 N) puts it. Lukas's 5 N has about twice that margin.
+- *Does not show*: the real arm (the published 3.3 / 3.33 / 1.7 N·m limits; what the firmware lets the servos give is
+  not measured, F-142); the hand in contact (a 5 mm sphere at the fingertips touches the plant; the rest of the hand
+  passes through the key); the real cam's feel (a constant friction from one number; the unlock at 30 degrees is the
+  leg model's); the wrist camera's mass (the robot here draws it; the CPU scan has it, and its weight helps a downward
+  push); where the 5 N was felt (taken at 0.13 m: felt at the key's end, 0.16 m, it is 0.8 N·m, 6.2 N at the push
+  point). One seed.
+- *Next*, if Lukas wants it on the dog: a stage in the combiner door's robot program (dry run with the RViz ghost first),
+  a cleaner swing from home to the first push pose, and the check above.
+
+**Then: close enough is enough.** Lukas, watching it in the viewer: "it gets stuck in a loop for a minute trying to line
+up perfectly in sim, but in reality it will also not line up perfectly so we should just accept a position close enough
+just like in the real door pull". The walk drove each axis at 0.15 m/s until within 12 mm of the stance (P2Dingo's gait
+stands inside 0.1 m/s), so it hunted round the point for the rest of its 12 s. It now stops, and its phase ends, the
+first time the look's estimate puts the door 0.42-0.45 m ahead and the lock 4-12 cm left of the base, facing the door
+to 3 degrees (`arm_turn.ACCEPT_*`): the near part of where the push works on the CPU (`PUSH_*`, door 0.42-0.48 m, lock
+2-12 cm left, every corner solving the whole turn at 0.28-0.33 m with at least 1.31 N·m; two new tests).
+- [First window](#/week/6/run/20261021T064727_lock0.65nm_seed1_window) (0.42-0.48 m): 8/8 unlocked to the stop, the walk
+  over after 1.4-1.8 s; but it stopped at the far edge (0.478 m) and the gait drifted the base 1.5-4 cm back and up to
+  6 cm sideways in the settle, to 0.48-0.52 m: two of those stances do not solve the whole turn on the CPU, though the
+  push worked from them.
+- [Near window](#/week/6/run/20261021T065244_lock0.65nm_seed1_window_near) (0.42-0.45 m, lock 4-12 cm): 8/8 unlocked to
+  the stop (45.16-45.20 degrees), verified by the robot's own check (lag 7.7-9.8 mm), the walk over after 1.6-2.1 s,
+  pushed from 0.46-0.49 m with the lock 1.4-8.7 cm left.
+
+### 2026-10-21 · The key turned by the arm: ready for the dog (not yet run there)
+
+Lukas: "can we make this ready to run on the real arm, just like the door opening did with visualisation".
+
+**Built**: the push as a task of the combiner door's robot program, `node.py --task key` (`d1dogkey`; dry unless
+`--live`), with the door's look, straight walk in, refit, arm link, aborts, keys, record and RViz view. The key's parts are
+`demos/combiner_key/robot/key_plan.py` (`KeyFix`, `KeyAttempt`, `key_phases`) and `key_viz.py` (the key at the angle the
+fingers measure, the push point's arc with the unlock, the walk's and the push's stance areas on the floor); the door's
+`plan.py` gained hooks for them (`make_fix(walk_for, fix_class)`, the phase sets as `Attempt` attributes, `_make_phases`,
+`_prepare`, `_recovery_phases`, `_solve_joint_goal`; refit and reanchor keep the fix's class), `viz.scene_markers` an
+`extra` and `door_task`, `run_on_dog.sh` the run's name (`<stamp>_key_<stage>_...`). The door's 33 robot tests pass
+unchanged. Stages: look, unfold, walk, reach, touch, turn. The stance: the dog in front of the lock, walking straight in
+until the door is 0.435 m ahead; checked after the refit against where the push works (`arm_turn.PUSH_*`).
+
+**What the dry runs on the CPU model found** (`demos/combiner_key/tests/test_key_robot.py`, the arm link's profile
+driving a model servo, the gait's carry):
+- *A wrist flip mid-turn*: the 10 Hz IK, warm-started from its own last solution, jumped Joint4 +84, Joint5 +60 and Joint6
+  -94 degrees in one step halfway through the turn (and the lag abort fired, the arm 52 degrees off). The push's hand
+  passes near the D1's wrist singularity there. The simulation (F-183) did not flip: its IK was seeded differently.
+  Now the turn is planned before anything moves (`_plan_push`, at the attempt's first step, before the arm link has a
+  command): every first pose the seeded search finds, the turn traced every 2.5 degrees with jumps subdivided, the
+  branch whose Joint5 stays furthest from 0 kept (6-12 degrees on the placements tried), and the 10 Hz IK seeded from it.
+- *Too fast for the arm link*: on that branch Joints 4 and 6 swing ~90 degrees each way over 20 degrees of key near 0;
+  at the simulation's 15 degrees/s of key that asked 66 degrees/s, past the arm link's 30, and the arm fell 39 degrees
+  behind. The turn is now retimed from the plan (the key at 10 degrees/s or the fastest joint at 15, eased: at most 22.5):
+  12.7-15.5 s instead of 9; the worst joint lag in the turn 7.2-7.6 degrees (the abort is at 10).
+- *Planning time*: 0.5-1.1 s on the PC at the first step; the full plan again at `key_out` cost 34-78 ms, too close to
+  the arm link's 0.5 s watchdog on the dog's CPU while it streams, so `key_out` only solves its first pose again.
+- Five placements dry: four turned to the stop and verified (lag 7.7-8.6 mm, the fingers' measure 45.2-45.3 degrees),
+  one (the lock 12 cm left, the box 3.5 degrees off square) stopped after the walk with "move the dog left 0.05 m".
+- 12 tests: the fix and range check, every stage to the fold, the walk ending where the push works, the turn verified,
+  a far box off square planned without a flip, every joint under the arm link's speed, a stalled key aborting and the
+  hand lifting off, RViz's key where the fingers put it. The node imports and parses under ROS Humble's Python.
+
+**Not done**: anything on the dog -- not even a dry run with its camera and lidar. Not checked: the real key's place and
+handedness against `geometry.py` (the simulation's key is the STL mirrored, pointing right; the dry run draws it to
+compare), the real D1's push at its limits, the arm's swing to `key_out` on the robot. The procedure is in
+`demos/combiner_key/robot/README.md`: `d1update`, `d1view`, `d1dogkey` (dry), then live `reach`, `touch`, and the turn
+with `--step`.
+
+**Then on the dog, and a walk up** (2026-10-21 evening). Lukas ran `d1dogkey` before `d1update`: the dog's old node
+refused `--task` (no record but an empty run folder). After `d1update` (by me) his live `--stage reach` looked and
+refused: "lock 0.44 m ahead, +0.17 m left of the stance, door -1.4 deg off square, walk in 0.38 m; move the dog left
+0.09 m"; nothing moved. Lukas: "it needs a walk up stage. I don't want to position it myself". The key's `walk` stage
+is now a walk up (`key_plan.KeyAttempt._walk_up`): the look sets the script frame at the push's stance (`stance_for`:
+facing the door, its face 0.45 m ahead at the lock, the lock 7 cm left -- the middle of `arm_turn.PUSH_*`; `plan.make_fix`
+takes a `stance_for` (x, y, yaw) now), and the walk closes on the odometry on all three axes at once, each lifted out of
+sport mode's dead zone, the sideways floor raised when the dog does not move sideways (P2Dingo's docking: no side-step
+at 0.25 m/s from a standstill), stopped early by the gait's carry, stepped again until it stands where the push works
+with 1 cm to spare. The look accepts a stance up to 0.7 m ahead (0.2 m back), 0.4 m across and 25 degrees turned.
+The first version hunted across the stance at +-0.18 m/s (every small error lifted to the floor) and stopped only on its
+timeout, 5 cm off: each axis is now left alone within 2 cm / 2 degrees, and the stop is the carry's distance. Dry, on the CPU
+model with the gait's carry: Lukas's look walks up in 2.6 s with one stop (the lock 0.455 m ahead, 8.4 cm left, 1.4
+degrees off); from the box's middle and from 0.10 m right and 8 degrees off, one stop each; 13 key robot tests and the
+door's 33 pass. Not yet walked on the dog. [Lukas's live look](#/week/6/run/20261021T073004_key_reach_live) (recorded).
+
+**The first live walk up** ([run](#/week/6/run/20261021T073606_key_walk_live), `d1dogkey --stage walk --live`): the
+stance 0.38 m away, 0.10 m across, 3 degrees turned. Lukas: "it walked up to the door fine, but the extended d1 arm kept
+hitting the door, causing it to retry a few times". The first stop was 5 cm short (lock 0.508 m ahead); each of six
+corrective steps moved the base ~3 cm forward and back again (base x -0.05 to -0.01 m and back): the hand, held at the
+door pull's home point with its fingertips 0.42 m ahead of the base, met the door 0.42-0.48 m ahead and pushed the dog
+back. It ended 0.48 m off by its odometry; the refit put the door 43 mm closer (lock 0.44 m ahead, 12 cm left, 1.9
+degrees off), in range, and the arm folded. The key's phases now hold the hand at `KEY_HOME_POINT`: the fingertips 0.24
+m ahead of the base (the arm's furthest point 0.20). Dry, through the walk up the fingers stay 21-22 cm off the door, the
+joint move out to the first push pose 9.4 cm, the push itself 12-22 mm (the platform is 35 mm out); a test checks the
+walk's clearance (>10 cm). 47 robot tests pass. Not yet walked again.
+
+**The second live walk up** ([run](#/week/6/run/20261021T074021_key_walk_live), the arm held back): no contact, but
+Lukas: "the dog still kept moving back and forth at the door. I think we need to accept a wider distance threshold".
+Again six corrective steps: the first stop 5 cm short (lock 0.513 m ahead by the look's fix; the gait carried on 2-3 cm,
+not the `CARRY_S` x 0.25 m/s = 9 cm the stop allowed, and settles back 1-3 cm standing), then steps at sport mode's
+0.18 m/s floor that overshoot a 2-4 cm gap and settle back. And again the refit put the door 42 mm nearer than the
+look's fix (43 mm the first time): the stances it was correcting were already 0.43-0.47 m off, where the push works. The
+walk up now ends once the look's fix has the lock 0.42-0.52 m ahead, 2-12 cm left, the base facing to 4 degrees
+(`WALK_UP_ACCEPT_*`), with at most two corrective steps; the refit's box must then be in `arm_turn.PUSH_*` (door
+0.42-0.48 m), as before. Both live walks' first stops (0.508 and 0.513 m, 7-8 cm left, ~2 degrees) would have ended it
+there; the refit then put them at ~0.47 m. Whether the look's 4 cm is a bias of the fix's depth (the tag's range, as in
+the simulated key demo's 3-11 mm) or of the odometry over the walk is not separated.
+
+**Two more live runs**: a walk up ([run](#/week/6/run/20261021T074548_key_walk_live)) in one stop (lock 0.518 m by the look's
+fix), refit 58 mm nearer, in range; and a reach ([run](#/week/6/run/20261021T074633_key_reach_live)) that walked up in one
+stop (0.489 m by the fix) and aborted at the refit: "the lidar puts the door 63 mm and 0.7 deg from where the look did",
+past the door pull's 6 cm limit (RViz screenshot from Lukas, in the chat). By the refit it stood ~0.43 m off, where the
+push works. Across the four walks up the refit's correction, 42, 43, 58 and 63 mm, is 12-15% of the 0.34-0.47 m walked:
+an odometry scale error (the look's lidar face agreed with the tag to under 3 cm each time, the look's guard). Now the
+walk up is sent 13% short on the odometry (`ODOM_WALK_SCALE` 0.87, estimated from these four) towards a stance 0.44 m
+from the door, ends within 4 cm of where it was sent (a corrective step only past 9 cm: smaller ones overshoot), the refit
+may move the box 10 cm, and the push is planned at the stance for the box as the look has it. Dry, with the odometry
+84-90% of the walk, three placements each land in one stop at 0.443-0.478 m by the refit (in `PUSH_*`); at 92% one of
+three stops 0.04 m too far and says so. The dry runs now model the odometry's error and give the refit the lidar from
+where the base really is. 47 robot tests pass.
+
+**Then** ([run](#/week/6/run/20261021T075232_key_reach_live), live reach): the 13% held -- the refit moved the box 51.6 mm
+over a 0.40 m walk -- but the walk up stopped 6.9 cm short of where it was sent (under the 9 cm a corrective step then
+needed) and the refit had the door 0.52 m off: "move the dog forward 0.08 m". The stop came early by `plan.CARRY_S`
+(0.36 s, P2Dingo's measure in sport mode's default gait); in classic walk, which this program walks in, the dog carried on
+2-3 cm from 0.18-0.25 m/s and settled back 1-1.5 cm in every live walk up. Now the walk up starts from a 0.12 s carry
+(`WALK_UP_CARRY_S`) and learns it from each stop, and takes a corrective step whenever the gap is over 70% of the shortest
+step the gait makes (the door pull's rule; ~6 cm). And the turn now waits for the arm: while a joint is more than 5
+degrees behind its goal the turn's clock holds (3 s held in all aborts, a key not turning) -- with the box 6 degrees off
+square a dry turn lagged 11 degrees, the plan being for the stance the look predicts. Dry, with the classic walk's carry
+and the odometry 84-90% of the walk: four placements land in one stop at 0.443-0.468 m by the refit; turns hold 0-1.1 s
+and verify. 47 robot tests pass.
+
+**Then** ([run](#/week/6/run/20261021T080001_key_reach_live), live reach): the walk up worked -- one stop, 3.1 cm from
+where it was sent, the carry 1.6 cm (0.09 s), the refit 58 mm (13% again), the lock 0.48 m ahead and 9 cm left, in range --
+and `key_out` refused: "the move to the key's first pose crosses the trunk proxy". The waiting hand itself was inside it:
+sent to "0.24 m above the base" by a script-frame height (`KEY_HOME_POINT`, which assumed the box's root 0.358 m below
+the base), it went to 0.207, the base standing 0.391 m over the box's root by the look. The waiting point is now in the
+base's own frame from its measured height (`KEY_HOME_IN_BASE`, 0.20 m ahead, 0.30 up), clear of the trunk proxy from
+every IK start tried.
+
+Checking that found two more things. *The dry tests had the box 0.65 m below the base* -- I had misread `plan.base_pose`,
+which puts the base 0.32 m up in the odometry -- now fixed (the box on a floor 0.30-0.37 m below). And *at the dog's
+height the planned pitch is close to the wrist's singularity*: F-183's CPU scan covered 0.28-0.33 m; at 0.353 m the
+push pitched 60 degrees turned from 5 of 9 stances, Joint5 down to 0.6 degrees of 0 (the dog's plan this run had it at
+5.8), and pitched 50 from 9 of 9; at 0.32 m the reverse. The pitch is now planned per attempt (`key_plan.PITCHES_DEG`,
+50-70 degrees: the one whose turn keeps Joint5 furthest from 0); on the dry geometries it picks 70 (Joint5 >= 19.5
+degrees at 0.32-0.37 m). Planning takes 1.4-2.3 s on the PC, several times that on the dog, after Enter and before the
+unfold. The simulation (F-183) ran the push at 60 degrees on a 0.31 m walker: 70 degrees at 0.353 m is checked on the
+CPU model only (IK, continuity, joint speeds), not its push force or contact. 48 robot tests pass.
+
+**The first live turn** ([run](#/week/6/run/20261021T081629_key_turn_live), `d1dogkey --live --yes`). The plan chose
+70 degrees (Joint5 >= 23.9 from 0; 60 would have been 5.5), the walk up stopped in range (refit 44.7 mm, the lock 0.48 m
+ahead, 9 cm left), the hand went out, touched the platform and turned the key: the fingers' own measure followed the
+command to 1-2 degrees from -45 to +14 degrees (the hand 12 mm off its path at most). Then it aborted, "the key is not
+turning: the arm held 5 deg behind for 3.0 s of the turn": Joint4, the wrist joint the singularity makes fast, ran 5-7
+degrees behind the arm link's command, and the turn's clock-hold (past 5 degrees) had used up its 3 s. Lukas, watching it:
+"I can see its clearly turning the handle, so we should tolerate the lag". The recovery lifted the hand off and folded.
+Now the clock holds only past 8 degrees of lag, and the turn aborts only when the fingers' measure of the key has not
+advanced 2 degrees in 3 s; the arm-lag (10 degrees for 0.6 s) and hand-lag (30 mm) aborts stay. A dry test of an arm
+running behind (every other step) turns to the stop and verifies. **The arm pushed the real key from -45 to +14
+degrees**: the first contact turn on the robot, not yet past the unlock (30) or to the stop.
+
+*Correction (same evening, recording the runs in between)*: four live runs between the reach at 08:00 and this one had
+not been recorded; they are now. Two reaches, [08:08](#/week/6/run/20261021T080820_key_reach_live) and
+[08:11](#/week/6/run/20261021T081113_key_reach_live), walked up in one stop, refit 44.3 and 47.1 mm, the lock 0.47 m ahead and
+8-10 cm left, to above the key and back, finished. A turn at [08:09](#/week/6/run/20261021T080928_key_turn_live) was stopped
+by Lukas during the walk up. And a turn at [08:12](#/week/6/run/20261021T081246_key_turn_live) was the first on the key: the
+refit 57.4 mm, the fingers' measure to **+25 degrees**, then the same abort ("the arm held 6 deg behind for 3.0 s of the
+turn"), the recovery lifting off and folding. So the run above was the second live turn, not the first, and the clock-hold
+budget stopped both.
+
+### 2026-10-21 · The key turned to its stop on the dog, the way home past the head camera, and on to the door pull
+
+**The turn, live** ([run](#/week/6/run/20261021T082236_key_turn_live), `d1dogkey --live --yes`, after the lag change
+above). Planned at 70 degrees (Joint5 >= 24.0 from 0); the walk up 0.34 m in one stop (1.9 cm from
+where it was sent), the refit 50.0 mm and 1.2 degrees, the lock 0.46 m ahead and 8 cm left; key_out solved
+there and clear of the trunk proxy. The third live turn. The turn took 12.1 s; the fingers' measure of the key went -44 -> -35 -> -15 -> +1 ->
++18 -> +35 -> **+45.6 degrees**, the hand at most 17.7 mm off its path (the limit 30), the clock held 1.3 s in all, the
+worst joint 9.8 degrees behind the arm link's command (the loaded abort is 10 for 0.6 s). The robot's check: verified.
+Then key_lift, key_back, home, fold, and the run finished. **The D1 turned Lukas's real key from 45 up to its stop**
+(F-184).
+
+**The camera.** Lukas: "the arm collides with the realsense camera on its way back to its resting position after a
+successful open - we need to have a retract stage before which clears the camera". The head D435i and its bracket stand
+4 cm past the trunk proxy's front (x 0.288-0.3435 m, z 0.066-0.105 m in `base_link`), where the arm's clearance check
+does not look. The record's measured joints through forward kinematics, against that box (the proxy's 3 cm link radius):
+the turn kept 28 mm, the hold 30, the lift 31; `key_back` -- 8 cm back along the hand's approach -- ended at -1, because
+at +45 degrees the approach points right and down ([0.34, 0.64, -0.69] in the base), so backing off took the wrist toward
+the camera; `home`, a straight line from there to the waiting point, then passed in front of the case at its height:
+-30 mm, the fingertips at x 0.341-0.348, z 0.07-0.11 at t = 47.9 s (in the case). The fold stayed 142 mm off.
+Now (`key_plan.key_phases`): `key_back` is gone; after `key_lift` comes **`key_clear`**, straight up from above the
+platform with the hand's orientation held until the jaw centre is 0.20 m above the base (`KEY_CLEAR_ABOVE_BASE_M`), then
+home. The recovery's `key_away` (back along the approach) is the same `key_clear`. Replayed from that run's measured
+lift-off: 31 mm on the way up, 80 home. Dry, over four boxes and base heights 0.30-0.37 m: `key_clear` >= 45 mm, home >=
+79, fold 167; the turn itself 29-45. The box is `head_camera.CLEARANCE_BOX_BASE_M`; the key attempt records its smallest
+margin per phase (`camera_gap` events) from the measured joints. Not added to the arm's clearance proxy everywhere
+(`position_only.workspace`), which the policies' training and the door pull also read: the door pull's own phases are
+not checked against the camera.
+
+**On to the door pull** (Lukas: "I would like an run option that chains this lever open into the door pull. ideally this
+involves moving the dog from its end position from the lever task to the desired position without having to backup and
+walk back in forwards"). `node.py --task key --stage turn --then_door pull` (`d1dogkeydoor`, with `--door_deg 60`): once
+the robot's own check says the key turned (else the run ends there), `key_plan.DoorAfterKey` takes over with no new look.
+Its fix is the key's after its refit, the script frame moved to the door pull's stance (`door_fix`: square to the door,
+the box's root 0.69 m straight ahead, the middle of the simulated placements) -- ~0.07 m back and ~0.18 m right of where
+the key leaves the dog. With the arm folded (the door pull's unfold puts the hand 0.40 m ahead, in the door at the key's
+stance), it walks over with the key's walk up (back, sideways and turning at once), settles, refits and range-checks as the
+door pull does after its walk in, unfolds, and goes on through the door pull's phases. `--then_door walk|reach|grip`
+stops it short. Dry on the CPU model (the odometry 87% of the walk, the classic walk's carry): one stop 1.4 cm from the
+stance, the refit 11.5 mm, the box 0.70 m off at -1.1 degrees, then unfold, reach, grip, a 30-degree pull, release and
+fold; the base never more than 0.12 m behind the stance. The walk-up code is now a mixin both attempts use
+(`key_plan.WalkUp`). 20 key robot tests (new: the way off the key clear of the camera for every stage, the chained pull,
+no pull after an unverified turn, the door's stance from the key's), 14 arm-turn and 33 door robot tests pass. **Not run on
+the dog**: neither `key_clear` nor the chain; nor is the door pull's stance after the walk over checked against a real look.
+
+### 2026-10-21 · The key inserted by the arm on the dog: ready, not yet run there
+
+Lukas: "can we now do the same but with the insertion? the handle will need to put the key in at a 45 degree angle".
+His answers when asked: the key is handed to the gripper; the keyway is the bare cam lock's, under 0.5 mm of play (no
+printed adapter, no lead-in); the robot program first; insertion only, no chaining yet.
+
+**The reach at the dog's height.** The simulation inserts with the hand level, rolled so the key goes in at 45 degrees
+up, the jaws across the bar 25 mm out from the shaft, from a walker standing 0.27-0.31 m over the box. On the CPU arm
+model at the dog's 0.33-0.39 m (its looks put the base 0.353-0.391 m over the box's root), that hand solves from no
+stance at all: 0.40-0.70 m from the door, 0.10 m left to 0.20 m right of the lock, approaches 25 and 60 mm out and
+seated, trunk clear and holdable. The lock is only 3-6 cm above the base there. Two ways out were offered: grip the bar
+160 mm out (17 stances at 0.353 m, but a 1-degree wrist twist moves the shaft ~2.8 mm), or lower the body. Lukas: "Make
+the dog sit, and then insert while it is sitting down". Taken as sport mode's StandDown, which P2Dingo's "sit" sends
+(the trunk lowered level over its planted feet, `P2Dingo/Isaac/go2_omniverse/posture.py`), not Unitree's `Sit` trick,
+which tips the chest up. At 0.13-0.25 m over the box (lying, ~0.20 m lower) the grip at 25 mm solves from 16-46 stances,
+the shoulder at 34-89% of its torque. The insertion's stance is the seated key 0.50 m ahead and the lock 0.10 m right,
+where it solves from 0.13 to 0.22 m at 64-69%.
+
+**Built** (`node.py --task insert`, `d1doginsert`; `demos/combiner_key/robot/insert_plan.py`, `insert_viz.py`):
+- stages load, walk, lie, reach, touch, insert. The key is handed in at the carry pose in front of the dog: the jaws
+  open, the hand already rolled as it inserts. The program always waits for Enter there and before it opens the jaws to
+  hand the key back (`MUST_CONFIRM`, even with `--yes`). Jaws that close on nothing abort.
+- the key turn's look and walk up (`key_plan.WalkUp`) to the insertion's stance, the refit, then StandDown. Held until
+  sport mode's `body_height` is 10 cm or more down and still, then the lidar refits the door from the lowered base and
+  the insertion is planned there: 60 and 25 mm out, at the touch, seated, and 4 mm off across either way, trunk and
+  head camera clear and holdable. The odometry's pose keeps its standing height, so the attempt lowers its own base by
+  the measured drop (`InsertAttempt.base_script`).
+- **by touch, not by position** (the bare keyway's half-millimetre is past anything the robot measures). In along the
+  axis at 2 mm/s until the key's encoder depth falls 3 mm further behind its command than in the first second (the sag).
+  Where it stopped says where it is. Near the shaft's 10 mm out, the shaft is on the face, and an Archimedean spiral
+  (0.4 mm pitch, 1.5 mm/s, out to 4 mm) searches across, pressed 2 mm into the face, until the key drops 1.2 mm. Near
+  seated, it went straight in. Then in to seated, by touch again: stopped at least 8 mm past the face. The jaws open
+  (the door pull's check that they did), the hand backs 6 cm straight out, home, StandUp and BalanceStand, fold. The
+  hand's outer loop is the simulation's (1.5/s, 30 mm), along the axis only before the key goes in.
+- the recovery after an abort: the key straight back out along the axis from where the encoders put it, home, stand
+  up if lying, then the key handed back (Enter) and the fold.
+- the door program: `plan.Command.posture` (sent once a change: StandDown 1005, StandUp 1004, BalanceStand 1002),
+  `plan.Observation.body_height_m`, a hook on each phase change (`Attempt._on_phase_change`); a dry run lowers its own
+  body height as StandDown would (0.20 m, P2Dingo's model, not measured with the D1 on). RViz draws the keyway at 45
+  degrees, the key where the encoders put it, the search's spiral, and the stance window.
+
+**Dry on the CPU model** (`demos/combiner_key/tests/test_insert_robot.py`, 10 tests). The keyway is a model: a rigid
+face, no friction, 0.4 mm of play; the held key's shaft cannot pass the face anywhere else, nor its back face past
+seated. The arm is put back where the key stops. The keyway is put 0.2-3.8 mm off the box's model. Results:
+- one went straight in; three were found by the search at 1.6-3.6 mm out, in 13-67 s. All seated, 52-109 s from the
+  look; the worst joint lag pressing was 1.3 degrees.
+- a keyway 6 mm off aborts with "no keyway within 4 mm", the key backs out, the dog stands, and the key is handed back.
+- every stage short of the insertion hands the key back and folds.
+- jaws closing on nothing abort before the walk; a dog that does not lie down aborts.
+- the plan solves lying for a dog standing 0.33-0.39 m over the box, the shoulder under 0.9.
+- the arm stays off the head camera throughout.
+
+The insertion's 10 and the key turn's 20 robot tests, the key demo's 9, the arm turn's 14 and the door's 45 pass.
+
+**Not run on the dog, and not shown by any of it**:
+- StandDown with the D1 on its back and the key in the hand; the real drop.
+- whether the lidar's refit from the lying base finds the door's face.
+- the real keyway's place: the seated key 17 mm off the door is the printed adapter's model, which the turn's fingers
+  found good only to the platform's ~1 cm. The touch measures the depth.
+- what the D1's position servos push with at 3 mm of lag.
+- whether a printed key goes into a cam lock from a spiral at all, with friction, a round shaft, and the wards' 45
+  degrees set by the hand to the wrist's accuracy (a degree or two at best: the wards have no play to spare either).
+The keyway is a frictionless model, so the dry search's success says the logic works, not that the key will go in.
+
+### 2026-10-21 · The insertion's first live runs: stale odometry after the hand-in; the lock measured
+
+**Two live runs** ([1](#/week/6/run/20261021T095354_insert_insert_live),
+[2](#/week/6/run/20261021T095539_insert_insert_live), `d1doginsert --live --yes`). Both looked (the stance 0.44 m
+away, 0.31 m left, which the walk up accepts), unfolded, and waited for the key: 43 s each. Then the jaws closed on it,
+and about a second later, at the walk's first step, both aborted: "odometry 1.41 s old", "1.80 s old". Nothing walked;
+the second was quit at the prompt. The arm link's log shows the arm streamed at 10 Hz the whole time, so the node's loop
+was not stuck. Its trace was lost after the pause, written buffered and never flushed on the quit.
+
+*Cause (most likely; not seen directly)*: the insertion's hand-in phase is named `grip`, as the door pull's is. The node
+starts the lidar's door-angle reading (`mid360.door_angle`) on every frame through a `grip` phase. The insertion paused
+inside `grip`: the wait for the key began after its first step, since the unfold ends early on arrival. So the reading
+ran back to back for 43 s. It costs 15 ms a frame on the PC over the door's points, several times that on the dog's CPU,
+in a Python thread contending for the interpreter lock with the sport-mode state callback. That callback was already
+held off 0.3-0.5 s once in these runs, while the look's fix was computed. The door pull's own grip lasts about a second.
+Now the reading is the door pull's only (`plan.Attempt.reads_door`, False for the key and the insertion), the trace is
+flushed every step, and odometry over 0.5 s old is logged once in any phase, not only aborted on in a walk.
+
+**The lock, measured** (Lukas, callipers; his photo kept as
+[`screenshots/2026-10-21_cam_lock_calipers.jpg`](screenshots/2026-10-21_cam_lock_calipers.jpg)). The photo: the
+lock's chrome cylinder in a black bezel on the box's white door, the calliper's jaws across the bezel reading 27.5 mm.
+Lukas: the keyway is 8.7 mm deep and the lock's face 4.5 mm proud of the door, "that puts some of it in the door". The
+keyway is "exactly the same as the printed adapter" (its outline: the shaft and the two wards, at 45 degrees); it is
+hard to see in the photo. I first misread it as a C-shaped ring. The insertion now seats the key's back face 5.8 mm
+off the door: the key's 10 mm shaft bottoms out in the 8.7 mm keyway (`insert_plan.LOCK_FACE_OFF_DOOR_M`,
+`KEYWAY_DEPTH_M`). The touch-to-seated travel is 8.7 mm, and seated by touch is 6.7 mm past the face. The model before
+had the printed adapter's 17 mm and the shaft's 10. The key turn's model still has the adapter's 17 mm. Its push landed
+on the platform anyway (the platform 35 mm deep), but that geometry is now known to be 11 mm off. Dry, the insertion
+tests pass with it (the touch at 9.6 mm by the attempt's own model, the keyway found 0.2-3.8 mm off and seated, 41-109 s).
+The play stays at Lukas's earlier "under 0.5 mm": a looser keyway only makes the search shorter.
+
+### 2026-10-21 · The key turned and the door pulled open in one run; the insertion's third live run, and a hand-in without Enter
+
+**Runs found unrecorded** when fetching the dog's records, now recorded:
+- [the door pull alone](#/week/6/run/20261021T084730_pull_live): Lukas's "only the door swing". It aborted after a
+  0.44 m walk in: "the lidar puts the door 63 mm and 0.4 deg from where the look did". Across every door pull the
+  refit's correction is 12-14% of the walk in (13 mm over 0.11 m up to 63 mm over 0.44 m), the same odometry
+  under-count as the key's walk up. This walk was the longest, past the door pull's 60 mm refit limit. Nothing in the
+  door pull's code had changed (Lukas asked); standing the dog 15-20 cm nearer avoids it. The door pull's walk in is not
+  yet sent short as the key's is.
+- **[The key turned, then the door pulled open](#/week/6/run/20261021T085022_key_turn_door_pull_live)** (`d1dogkeydoor
+  --live`). The key: walk up and refit 58.4 mm, turned to the stop, the fingers' measure 46.1 degrees, verified.
+  `key_clear` kept the arm 29.3 mm (the proxy's margin) from the head camera on the way up and 77.6 mm home, with no
+  contact. Then the door pull with no new look:
+  - the walk over in one stop, 1.8 cm from the door pull's stance;
+  - the refit 15.0 mm, the box 0.72 m off at -2.0 degrees;
+  - unfold, reach, grip, a 3.0 s pull (commanded 64 degrees at its end), hold, release, ungrasp, home, fold.
+  The lidar's door reading went past 100 degrees at its maximum, not a believable angle, so it is not evidence of how far
+  the door opened. Lukas watched the run; his account of the door is not in this log.
+- [The same, before it](#/week/6/run/20261021T084501_key_turn_door_pull_live): the key turned and verified (45.4 degrees),
+  the walk over in one stop, the refit 16.7 mm. In the pull, the run aborted: "the arm is 22 deg from where the IK wants
+  it: loaded". The lidar read the door at under 2 degrees: the door did not open, and the hand stayed on the handle.
+  Why it was held is not separated: the latch, the grip or the stance (the box 0.73 m off, outside the simulated
+  0.67-0.71).
+- [A dry insertion on the dog](#/week/6/run/20261021T095142_insert_insert_dry): it ended at `key_in`, "the key went 5 mm
+  past where it should seat without touching anything: no lock there?". A dry run has no lock to touch. A dry run now
+  takes a key that goes all the way in untouched as seated (`InsertAttempt.dry`); a live run still aborts.
+
+**The insertion's third live run** ([run](#/week/6/run/20261021T100605_insert_insert_live), after the door-reading fix
+above). The grip wait now came in 5 s. The odometry during the hand-in was fresh (median 3 ms, against 0.8 s through the
+second run's grip), which supports the door-reading cause. Two new failures:
+- *The key*: the jaws stalled closing at -1.8 units and the grip check passed (empty was then within 3 units of shut,
+  -19.8). As the walk began, servo 6 read -19.4: the jaws were shut on nothing. The key had slipped out or fallen, or
+  the -1.8 stall was on Lukas's fingers holding it. This is not separated.
+- *The odometry in the walk*: 0.12 s old at the median, 0.375 s at the abort ("odometry 0.37 s old"). The key and door
+  walks had 3 ms. The tick kept its 10 Hz. Every callback of the node shared its one default callback group, so the
+  sport-mode state waited behind the camera's tag detection and the lidar. Why this walk and not the key's is not
+  known.
+
+**Changes:**
+- the odometry and the leg states, the camera and the lidar each have their own callback group (five executor
+  threads). Odometry over 0.5 s old is logged in any phase.
+- **the hand-in without Enter** (Lukas: "can you make it automatically grasp so I dont have to press enter while holding
+  the tool in place", then "3 second countdown is plenty"):
+  - `load`: the jaws open and still for 3 s, a countdown in the log, then `grip` closes them.
+  - empty (within 6 units of shut) after closing, they open and count down again, three tries.
+  - a key that leaves the jaws (empty for 0.5 s) before they are meant to let it go aborts "the key is no longer
+    between the jaws". The recovery then folds without handing back.
+  - the hand-back has a 3 s countdown before the jaws open. No Enter anywhere in the insertion now.
+- dry runs' key reads -1.8 units, the dog's one stall, which may not be a hold of the bar.
+
+Insertion tests: 13 (new: a key taken at the second grip, a key that slips out, a lock that is not there live and dry).
+The key turn's 20, the door's 45 pass.
+
+### 2026-10-21 · The insertion's fourth live run: the key held, the dog lay down, and sat back
+
+[Run](#/week/6/run/20261021T101715_insert_insert_live), `d1doginsert --live --yes`, with the countdown hand-in and
+the callback groups:
+- *the hand-in*: the jaws closed on the key at 5.3 units and held it (-1.0 to -1.1 through the walk and lying), the
+  first try.
+- *the odometry*: through the walk 2 ms old at the median, 10 ms at worst (0.12 and 0.375 s in the run before). The
+  separate callback groups fixed it.
+- *the walk up*: 0.42 m in one stop, 1.5 cm from where it was sent; the refit 46.3 mm and 1.7 degrees (11% of the walk).
+  The seated key 0.49 m ahead and 7 cm right, in the window.
+- *StandDown*: sport mode's body height went from 0.315 to 0.067 m, **0.249 m down** (the dry runs assumed 0.20). The
+  odometry saw the base turn 5.4 degrees and move 1 cm. The lidar's refit lying moved the box 26.6 mm and turned it 1.1
+  degrees. After it, the seated key was 0.53 m ahead and 3 cm right, the door +2.0 degrees off square (-2.3 standing):
+  the dog sat ~4 cm back and turned ~4 degrees. Lukas: "sitting down usually moves the robot abit backwards as it sits".
+- *the abort*: the lying window (5-15 cm right) refused 3 cm. On the CPU model at the dog's lying height (0.09-0.13 m
+  over the box's root) the insertion solves over all of 0.40-0.60 m ahead and 0.10 m left to 0.20 m right, the shoulder
+  at 40-87%. The window was stricter than the arm.
+
+Now: lying, no window; the insertion's plan from where the dog lies decides, and its refusal says where the dog is. The
+walk up stops 4 cm nearer (`LIE_BACK_M`) for the dog to lie with the seated key ~0.48 m ahead, where the shoulder is
+under ~60%. The turn is not allowed for, one run giving only its sign. The window after the walk is widened to
+0.38-0.56 m and 0-20 cm. Dry runs drop 0.25 m, and their dog sits 4 cm back and turns 4.5 degrees (the odometry seeing
+only the turn). The 13 insertion tests pass with it: keyways 0.2-3.8 mm off found and seated, 46-114 s from the look.
+
+### 2026-10-21 · The camera on the wrist: the look from the arm, and the keyhole found by the bezel
+
+Lukas moved the D435i from the head to the D1's wrist bracket ("do you think we could segment the keyhole reliably
+(choose the most robust method) so that we can direct the arm better"). His screenshot (in the chat) is the wrist
+camera's view of the box's door: the tag outlined green by the detector, the lock's black bezel left of it, the
+warning label above.
+
+**The mount.** It is the 30-degree version: `demos/cup/pick_demo/assets/mounts/wrist_mount.json` is the bracket's CAD
+(2026-10-09, `bracket.py`: the camera's front 30.00 degrees below the approach axis). It is not measured; the
+horizontal placement it replaced (2026-09-17) was aligned by eye. A horizontal camera, about 5 cm above the key's axis,
+would have the lock below the image at every insertion distance (rows 800-1270 of 720). The 30-degree one keeps it in
+view: row ~300 at 85 mm out, ~500 at 25 mm.
+
+**The look through the wrist** (all three tasks; `node.py --camera wrist`, the default):
+- each tag frame is placed with the camera's pose from the arm's measured joints (`plan.wrist_camera_base`); frames
+  while the arm moves are dropped. `plan.make_fix` takes (base, detections, camera) frames, and the head's two-tuples
+  still work.
+- live, the arm first goes to a look pose (`plan.look_pose_servo_deg`, nearly in the arm's plane: Joint1 -3, Joint4
+  -4, Joint6 +3 degrees). The tag is in view with the box's root 0.7-1.4 m ahead. A centred camera needed Joint1 +45.
+  The one Enter (none with `--yes`) now comes before this move.
+- a dry run looks from wherever the real arm is.
+- the odometry, leg-state, camera and lidar callbacks run in their own groups (above).
+- tests: the look pose solves, is clear of the trunk, and has the tag in view; a look through the wrist camera gives
+  the head camera's fix for the same box.
+
+**The keyhole** (`demos/combiner_key/keyhole.py`; the insertion's new `key_view`):
+- *the method*: model-based. The lock's bezel (a 27.5 mm black disc, the keyway concentric with it) is the known circle
+  on the known plane. Candidate centres within 12 mm of the model are each projected as that circle and scored by the
+  image's contrast across the rim (dark inside, light outside), on a coarse grid then finer, the rim step narrowing
+  2 to 1 to 0.4 mm.
+- *why this, not thresholding or a learned segmenter*:
+  - no thresholds to tune to the light, and no training data;
+  - the circle is projected, so the camera's 30-degree view needs no special handling;
+  - the key and fingers in front of the rim only take points out of the score.
+- *acceptance*: at least 40% of the rim seen, and the best centre 1.5 times the score of the best one 4 mm away.
+- *depth*: not searched. Seen 30 degrees off, depth and place trade off: on rendered frames a 3 mm depth error became a
+  1.5 mm sideways one while the depth was searched. The touch gives the face's depth, and the camera's centre is
+  carried along its ray to it (miss 0.03-0.06 mm on rendered frames).
+- *self-calibration* (`logs/combiner_key_calibration/keyhole.json` on the dog; `d1fetch` brings it back): the residual
+  between where the key seated and where the camera put the keyway, a running mean capped at 6 mm. It mixes the mount's
+  error with how each hand-in put the key in the jaws.
+- *on the CPU model*: rendered frames, from where the arm truly is with the dog sat back and turned. Keyways 3.5-9 mm
+  off the model were seated with no search: the camera's offsets were within 0.3 mm of the truth in the attempt's own
+  frame, and the residual kept was 0.01 mm.
+
+**A fix found on the way.** The hand's outer loop had integrated along the key's axis while `key_pre` moved the hand
+in. It wound up, and the key ran 6 mm past its command into the keyway. It now integrates only in `key_view` once the
+arm settles (all axes) and across the axis while the key goes in. The dry keyway now holds a key inside it against its
+sides, instead of pushing it back out onto the face.
+
+Tests: the keyhole's 4, the insertion's 14, the door's 35 (the wrist camera's 2 new) and the key turn's 20 pass.
+
+**Not run on the dog. Not tested by any of it:**
+- the real image: the bezel's black rubber sheen, the chrome, the wrist's light, blur at 17 cm from a fixed-focus lens;
+- the mount's real error;
+- the look pose on the dog;
+- whether the tag still resolves well from the wrist.
+The keyhole's render is a flat ray-cast, with no lighting and no lens distortion.
+
+### 2026-10-21 · The first look through the wrist camera: a finger across the tag
+
+[Run](#/week/6/run/20261021T113412_look_live), `d1dog --stage look --live`: the arm aimed (reached the look pose,
+-3.0/-6.1/59.0/-3.7/-52.5/2.5 degrees) and looked for 2 s: 26 frames, **no tag in any**. Lukas's screenshot of the
+camera's view at the pose (in the chat): the door, the tag a little above the image's middle, and a dark finger rising
+from the bottom of the image to the tag's centre, the jaws open. Lukas: "the gripper blocks the view: we should have the
+gripper fully closed while looking". The aim had sent the jaws open (the door pull's opening).
+
+Now the jaws are shut through the aim and the look. And the look is aimed lower, at (0.80, 0.04, 0.05) m from the base
+instead of (0.80, 0.04, 0.10), so the tag is in the image's upper half: rows 50-370 of 720 with the box's root 0.9-1.3
+m ahead. By the bracket's CAD mount the fingers are in the lower right of the wrist camera's view whatever the arm does.
+A test checks the shut fingers stay off the tag for boxes 0.9-1.3 m ahead and 0.12 m either side.
+
+*Mount check, rough*: by the CAD mount the open +y finger should be at columns ~420-670 of 1280; in the screenshot it is
+at ~600-920 (its half-scale image doubled). Either the mount is ~3 cm or ~10 degrees off there, or the jaws were not as
+far open as modelled. It is one picture, not a measurement. The keyhole's self-calibration exists for this.
+
+Also recorded: [a dry insertion on the dog](#/week/6/run/20261021T102422_insert_insert_dry) before the camera moved,
+refused at the look: "no door face round the tag in the lidar", the box 0.74 m off at -26 degrees.
+
+### 2026-10-21 · The insertion with the wrist camera: the bezel not where the camera looked, and no touch felt
+
+[Run](#/week/6/run/20261021T114128_insert_insert_live), `d1doginsert --live --yes` (the jaws shut through the look).
+The look found the tag through the wrist camera (the stance 0.37 m ahead, 0.25 m left).
+- *the hand-in*: the first grip closed on nothing (-19.4 units, opened and counted down again); the second held
+  (0.8 units).
+- *the walk and lie-down*: the walk up stopped in one step 1.9 cm off; refit 54.6 mm standing and 21.8 mm lying; the
+  drop 0.248 m. Lying, the seated key was 0.46 m ahead and 5 cm right, the door 3.0 degrees off square. The plan
+  solved, the shoulder at 48-62%.
+- *`key_view`*: 6 frames, **the bezel found in none**: 0-1% of the rim seen dark inside, wherever the search put it.
+- *`key_in`*: the key went in by the encoders from 26 mm out to 3.65 mm *past* seated, at 2 mm/s. The joints stayed
+  0.6-1.3 degrees behind their commands the whole way, never loaded. Then the overrun abort: "the key went 5 mm past
+  where it should seat without touching anything".
+
+Lukas's RViz screenshot at the abort: the wrist camera's frame shows the lock's bezel at the image's *top* edge, cut
+off, a finger from the bottom, and a white block (the key's bar, it seems) beside it. By the bracket's CAD mount the
+bezel should be in the lower half at that pose (row ~600 of 720), so the camera sees it ~25-30 degrees higher than the
+mount says. With the earlier look's finger ~200 px right of where the mount puts it, **the CAD mount is several
+degrees and/or centimetres off**: the keyhole search's 12 mm window cannot reach a bezel that far from where the mount
+projects it.
+
+And *no touch*: by the encoders the key went 8 mm past the lock's face and 4 mm past the door's, with the arm never
+loaded. So the key did not follow the hand: it slid back between the jaws (PLA pinched top and bottom, pushed along
+the shaft, the palm ~4 cm behind the bar), or it missed the box. Every depth the insertion measures assumes the key
+fixed in the hand. The arm's lag cannot see a key that slips.
+
+RViz: the camera's field (the purple frustum) was still drawn from the head's mount; it is now drawn from the wrist
+(the arm's feedback), and the image panel is renamed "Camera (wrist)" (the PC's RViz needs relaunching for the name).
+
+### 2026-10-21 · The door pull through the wrist camera, and its walk in sent short
+
+[Run](#/week/6/run/20261021T115745_pull_live), `d1dogdoor --live --yes`. The arm aimed and looked with the jaws shut:
+the tag was found, the box 0.69 m from the stance at -1.2 degrees, the door -4.6 off square, a walk in of 0.36 m. That
+is the first look through the wrist camera to find the box. After the walk in, the refit and re-anchor put the box
+**0.63 m** off (the door -6.2 degrees off square), under the door pull's 0.65 m: "move the dog back 0.06 m". `r`
+folded the arm.
+
+That is the odometry's under-count, not the camera. Across the door pulls and key walks up the refit has put the door
+12-14% of the walk nearer than the look did, and 13% of 0.36 m is 4.7 cm, plus the gait's carry. The head camera's
+door pulls had walked at most 0.29 m. The door pull's walk in is now sent short as the key's is
+(`plan.ODOM_WALK_SCALE` = 0.87, which `key_plan` now takes from it). The fix's stance is placed at 87% of the walk in,
+so a look's "box ... from the stance" now reads 13% of the walk long; the dog walks the rest. 36 door robot tests pass
+(the look's stance test now expects it).
+
+**Then** ([run](#/week/6/run/20261021T120314_pull_live), the walk in sent short; and
+[one before the change](#/week/6/run/20261021T115613_pull_live), which also walked 5 cm too far, 0.64 m). With the
+walk in sent short the walk landed right: the box 0.70 m off after the refit, which moved it 43.2 mm, the 13% of the
+0.33 m walk the fix now leaves for it. The refit's limit is raised to 8 cm for that. But the hand went in **too low and
+missed the handle**: the pull began, the lidar saw the door stay shut ("the lidar has the door at 3 deg, the script at
+50") and the run aborted. The jaw centre at `arrive` was 0.287 m above the base by the commanded joints. In the head
+camera's nine door pulls it was 0.319-0.341, the same handle. So the wrist camera's look puts the box **3-5 cm low**.
+About 3 degrees of pitch at the tag's 0.7-0.9 m, or centimetres of position, in the mount or the arm's pose at the
+look. The lidar's refit corrects the door's depth and heading, not its height. The same error explains the
+insertion's camera seeing the lock at the top of its image: the hand ~4 cm below the lock is ~20 degrees at 10 cm.
+
+### 2026-10-22 · The look moved to the Go2's front camera; its lens fitted on one stand; Isaac's small-focal bug
+
+Lukas: "for the insertion task, we had troubles with misalignment of the realsense. can we instead use the go2 front
+camera to locate the box (the simulation tests then need to be updated with the higher fov lens etc) and then we use the
+realsense on the arm just for the key insertion part?" On the lens: "use a nominal model for now; calibrate properly
+later". The keyhole search was to stay as it is (no tag-based correction of the wrist mount).
+
+**Why.** The wrist camera's look places the tag through the bracket's CAD mount and the arm's joints. The last door pull
+went in 3-5 cm low and the insertion saw the bezel ~25-30 degrees off where the mount put it (above). The Go2's front
+camera is in the trunk: no arm move to aim it, nothing between tag and base but a fixed mount.
+
+**The camera on ROS.** It had no topic: the head sends H.264 over RTP multicast (230.1.1.1:1720) on the Go2 wire.
+P2Dingo now runs a `p2dingo-front-camera` container that decodes it and publishes `/go2_front_camera/image_full/compressed`
+(1280x720 q90, local to the dog) beside the 960 px topic for the zenoh link. On the way it was found that the dog's new
+USB WiFi dongle, as its default route, had taken the multicast join off the wire: no packet reached FFmpeg, and the
+website's front camera showed "No frames yet". Both now join on the wire through a relay (P2Dingo,
+`maps/server/go2_rtp_relay.py`).
+
+**What changed here.**
+- `demos/combiner_door/front_camera.py`: the URDF's mount ((0.330, 0, 0.040) in `base_link`, looking ahead), the lens
+  as OpenCV's fisheye model, the simulator's render.
+- `apriltag.TagDetector(fisheye_distortion=...)`: corners undistorted onto a pinhole image before IPPE.
+- `perception.box_in_spawn` defaults to the front camera; `plan.FRONT_CAMERA_POSE_BASE`.
+- `node.py --camera front` (the new default; `wrist` and `head` kept): the look reads the front camera's JPEGs, the arm
+  stays folded for it. The RealSense callback now serves only the insertion's keyhole view (wrist pose by the encoders,
+  as before) and the look under `--camera wrist|head`. RViz's camera panel (renamed "Camera") shows the front camera,
+  and the wrist frames through the insertion's key phases. `run_on_dog.sh` refuses if the front camera's container is
+  not running.
+- **Two tags at once.** The front camera's ~100 degree field held the box's tag and P2Dingo's charging dock's (both 36h11
+  id 0, 100 mm) in one frame on the dog. `make_fix` averaged every detection, which would put the box between them. It
+  now groups detections by where they put the box (`TAG_GROUP_M` 0.25 m), makes a fix per group and keeps the one whose
+  lidar face is the box's door (`Fix.on_a_door`, the dock guard's own test); `Fix.other_tags` counts the rest.
+- **Where to stand.** The front camera's field is only +-27 degrees tall, and the tag (0.46 m up the box) leaves its top
+  closer in. Standing 0.30-0.34 m up and pitched +-2 degrees, the whole tag is in view from the box's root 0.95 m ahead
+  (`plan.FRONT_LOOK_MIN_ROOT_M`), the door ~0.8 m off. The door pull's look band becomes 0.95-1.14 m; its no-walk band
+  (0.65-0.76 m) and the key's "0.6 m from the door" cannot be looked from. A watch that sees no tag says to step back.
+
+**The lens, fitted on one stand** (not a full calibration). A first guess, f 830 px from a rough door-width check
+against the MID-360 (`front_camera.NOMINAL`), was replaced when Lukas stood the dog with the camera taped 0.61 m from the
+box's front. Over 20 frames (the tag's corners scattered 0.07 px), f and k1 were searched so that the tag's plane comes
+out 0.61 m off and the box's 0.63 m width, its side edges carried onto that plane, comes out 0.63 m:
+**f 790 px, k1 -0.09** (`ONE_STAND`): plane 0.609 m, width 0.629 m, edges straight to 1.7 mm. f is pinned by the distance
+(15 px is 1 cm of it), k1 by the width (0.03 is 7 mm). Not fitted to and agreeing: the lidar's door plane, 0.603 m from
+the camera's URDF position, and its face tilt, 4.72 degrees where the camera saw the tag 4.7 off square (the dog was
+lying, sport mode 0, trunk pitched 5.6 degrees). Principal point assumed at the centre, k2-k4 zero. `NOMINAL` read the
+same stand 0.629 m and the door 0.605 m. The field is ~100 x 53 degrees. Two real frames are now test fixtures
+(`demos/combiner_door/tests/data/`).
+
+**In simulation** the front camera is rendered as a wide pinhole (1714 x 966) and remapped through the lens
+(`front_camera.distort_render`), so the detector sees the 1280 x 720 fisheye the dog streams. The runs:
+- [first run](#/week/6/run/20261022T102427_door_combiner_door_seed1_combiner_door), look 0.18 m back as for the head
+  camera: the tag in none of 4 attempts, off the top of the image
+  ([frame dump](#/week/6/run/20261022T102639_door_combiner_door_seed1_combiner_door)). P2Dingo's walking policy stands
+  the base at 0.314 m (the trace), not the 0.40 the head camera's look-back test assumed. `perception.LOOK_BACK_M` is now
+  0.40: the tag whole at all 200 placements, base 0.30-0.33 m and +-2 degrees (39 px to spare).
+- [look 0.40 m back](#/week/6/run/20261022T103047_door_combiner_door_seed1_combiner_door): found 4 of 4, but the box
+  **175 mm too near**, no door opened. The remap was consistent (the tag 0.433 m off in the pinhole render and the
+  fisheye alike) and the frame showed the box that near; Isaac reported the intrinsics asked for
+  ([dump](#/week/6/run/20261022T103414_door_combiner_door_seed1_combiner_door)). Not resolution
+  ([1280 x 722 render](#/week/6/run/20261022T103637_door_combiner_door_seed1_combiner_door), 173 mm) and not aspect
+  ([4:3](#/week/6/run/20261022T103925_door_combiner_door_seed1_combiner_door)). The head RealSense in the same scene put
+  the box 8-15 mm off ([side by side](#/week/6/run/20261022T103755_door_combiner_door_seed1_combiner_door)), the prims
+  were where configured ([transforms](#/week/6/run/20261022T104056_door_combiner_door_seed1_combiner_door)). What
+  differed: Isaac Lab's `from_intrinsic_matrix` sets the horizontal aperture to 1.0, which made this wide camera's focal
+  length 0.35 (the head's 0.95). **With focal 1.8 (aperture 5.2) the two agree to 5 mm**
+  ([run](#/week/6/run/20261022T104222_door_combiner_door_seed1_combiner_door): look 6 mm, the door opened).
+  `front_camera.USD_FOCAL_LENGTH`. Any wide simulated camera given Isaac Lab's default aperture is suspect.
+- **[the door pull's 16 placements](#/week/6/run/20261022T104403_door_combiner_door_seed1_combiner_door), seed 1: 16 of 16 doors opened** and verified open by the lidar,
+  no falls; the tag found in all 16 looks, the box placed 6.1 mm off (median, 7.8 max) and 0.13 degrees; the jaws at
+  the lever 6.0 mm from the plan; the door 93 degrees at the end of the hold. The head RealSense's F-155: 16 of 16.
+
+**Tests.** The door's 62 (front camera: mount, lens against `cv2.fisheye`, the render's coverage, a rendered tag measured
+through the lens within 8 mm where a pinhole reading is 3-15 cm out, the look-back, the real frame, the taped stand to 1
+cm; robot: the look through the front camera, the stand distance, the default; the box and the dock in one look), the
+combiner's 56, the key's 63 (23 of them in the Isaac environment) pass.
+
+**On the dog.** The look's path ran live in a throwaway container (the new code copied to `/tmp`, not the dog's
+checkout): 30 frames decoded from the full-resolution topic, 61 lidar scans, but no tag. The room's lights had gone off
+(the frame is black). **Not yet run there with light, not yet through `run_on_dog.sh`.**
+
+**Not done.** A real calibration (`cv2.fisheye.calibrate` on a chessboard); the keyhole search's 12 mm window against the
+wrist mount's error, which this does not touch (Lukas: leave it); the front camera's view with the arm unfolded in front
+of it (the look happens folded; nothing after it needs the camera).
+
+### 2026-10-22 · The insertion through the front camera on the dog: the first frame waited for; walk first, hand in at the stance, no lidar lying
+
+Three live or dry insertion runs with the front camera's look, and what each changed:
+- [live](#/week/6/run/20261022T115135_insert_insert_live): "no tag in the look", **0 frames**. P2Dingo's front camera node
+  decodes only while subscribed and its first frame comes 3-5 s after the request (the stream joined, a keyframe
+  awaited); the look began 0.2 s after this node subscribed and was over in 2 s. The look now waits for the first frame
+  (`FRONT_FIRST_FRAME_TIMEOUT_S`, 20 s, then a message naming the container).
+  [Dry look after it](#/week/6/run/20261022T115318_insert_look_dry): the tag in 21 of 21 frames, the dock's tag (also in
+  view) set aside (21 detections, not 42), the lidar's face 4.9 mm rms, the tag's heading 0.3 deg from it; out of range by
+  0.08 m. The startup line said "NOMINAL lens model" for the fitted one; it now prints the model's own label.
+- [live](#/week/6/run/20261022T115429_insert_insert_live): the key handed in, the walk up 0.33 m, then **"the lidar puts the
+  door 23 mm and 6.9 deg from where the look did"**: the abort is the STANDING refit after the walk (its message; the
+  lying refit's says "from where the walk did"), logged the same millisecond as the lie-down's posture request. Carried
+  at `KEY_CARRY_IN_BASE` (0.28 m ahead, 0.25 up: ~10 cm ahead of and above the MID-360) the hand and key shadow the door
+  the fit looks at, and the leftover points tip the line. Lukas: "we cant trust the lidar after sitting down, as the tool
+  obscures it"; the same holds standing with the key out in front. His choice of the fixes offered: **walk first, then
+  hand in**.
+- Now (`insert_plan.stage_phases`): `walk_in` and `walk_settle` (the refit, a clear view) come first, the arm held at the
+  fold (`_folded_walk`, as `DoorAfterKey` walks); then `unfold`, `load`, `grip` at the stance, the key handed in beside
+  the box. Lying, **no lidar refit** (`_replan_lying`): the fix rides the odometry, plus whatever part of the measured
+  sit-back (`LIE_BACK_M`, 4 cm straight back, the first lie-down; its 4.5 deg of turn the odometry saw) the odometry did
+  not report, applied as drift in the odometry's frame. The record's `refit_lying` event says so, with
+  `odometry_back_mm` and `sit_back_added_mm`. What the prior misses of a sit-back is the keyhole view's and the touch's
+  to take up.
+- Tests: the insertion's 16 (two rewritten for the order: a slip now in `lie_down`, an empty grip aborting before
+  `lie_down`; two new: the arm folded through the walk and its refit, and lying with the sit-back added and the key
+  seated), the key's 42 on the system Python, the door's 62.
+- [Dry, the new order](#/week/6/run/20261022T120615_insert_insert_dry): the dog, left facing P2Dingo's charging dock by
+  the run before, saw only the dock's tag, and the look refused it ("not on a door the box's size... carries on past the
+  door's edges (120%)"): the dock guard, working as meant. The new order is not yet run on the dog.
+
+### 2026-10-23 · The keyhole found in the wrist image first, scored on two hand-held clips
+
+Lukas moved the arm's RealSense round the box by hand with the website's arm panel and recorded two clips through
+P2Dingo's website (`realsense_1792672631585.mp4`, 58 s, daylight; `realsense_1792672717000.mp4`, 40 s, dim red room
+light; 1280x720 at 15 fps, the gripper's jaw always lower right, heavy motion blur in places). Asked for "a reliable
+keyhole finder".
+- `keyhole.find_bezel` cannot run on them (no arm pose), and on the dog it only looks 12 mm round the model's place. So:
+  `demos/combiner_key/bezel_image.py` finds the bezel from the image alone: a dark disc with light all round (8 sectors
+  each side of the rim, one of each allowed lost, on an image pyramid), an ellipse through its rim, five tests (rim
+  support, contrast, light round it, seen, fit).
+- Ground truth: the bezel tracked through each clip from seeds and every frame of the track looked at; 772 + 566 frames,
+  and 66 + 25 with the lock out of view (`results/week_06/keyhole_clips/ground_truth.json`). Two of the tracker's own
+  mistakes caught that way: it followed the "o" of the box's "shoals" for the first 4 s of the second clip, and a clutter
+  blob through 768-868 of the first.
+- What failed on the way, and what fixed it: a mean round the rim let clutter and the logo outrank a small bezel (the
+  sector test); the blurred bezel's ellipse residual over the first gate (a RANSAC ellipse and a median residual); the
+  gripper's rounded jaw against the door, a big dark disc, beat the bezel, and beside the bezel spoiled the light-round
+  test (a fixed mask of the region dark in >85% of both clips' frames); ellipses mostly off the image won (the seen
+  test); the "o" of the logo, the bezel's shape and size (the light-round test at 1.6-2.2 radii, where its letters are).
+  Gates set from the labelled candidates (each about the bezel's own 5th percentile), not from looking at frames.
+- Image alone, no prior (`python3 -m demos.combiner_key.robot.eval_keyhole_clips`): right 754/772 and 565/566, wrong 3/0,
+  missed 15/1, found in 1/66 and 3/25 frames with the lock out of view; 85 ms a frame (PC, every size).
+- `find_bezel(wide_m=0.045)`: the image's find inside the projection of 45 mm round the model's place (its size within
+  0.6-1.6x the model's), its ray onto the door's plane, the rim search centred there; falls back to the model's place when
+  the image finds nothing. Against a model pushed E mm off (a pose made up per frame from the truth's ellipse): at 20 mm
+  the old search is right in 2/152 and 3/114 frames, the new in 146/152 and 102/114; at 40 mm 0 against 144 and 102.
+  40 ms a frame on the PC, 144 ms on the dog's CPU (71 ms without; every size with no window 0.6-0.9 s there).
+- `node.py` uses it on both keyhole paths (`--keyhole_wide_mm`, default 45), the gripper masked; the keyhole stage
+  searches while the model's bezel is within the window of the image (it needed it inside the image).
+- Tests: `demos/combiner_key/tests/test_bezel_image.py` (7 clip frames: daylight, blur, beside the gripper, far, dim; the
+  logo frame refused; a prior choosing between two; the wide search on renders 25-30 mm off, agreeing with the old
+  search near the model, a disc beyond the window ignored), with the keyhole, insertion and door-robot suites: 70 pass.
+- Not yet on the dog. The clips are hand-held and moving; the dog's `key_view` holds still at ~17 cm, which these gates
+  have a margin for (the misses are blur, far and off the image's edge). The mask is fitted to how the jaw sits now.
+- Then on the dog, Lukas's live insertion (20261022T132904, the new finder synced): at `key_view` the RViz frame showed
+  the held key and the jaws where the model put the bezel, the bezel nowhere; 1 frame searched in the 2.5 s (the
+  image's search: "none passed", then "more than 45 mm from the model's"); the key went 5 mm past seated touching
+  nothing: "no lock there?". The topic arrives at 15 Hz (measured on the dog); the node searched ~1 a second.
+- Lukas: "it needs a stage where the wrist pans around", then "the search stage should happen right after the robot sits
+  down while the arm is folded - tilt the wrist up and pan left and right using the base. then continue with the
+  extension and receiving of the tool". Now (`insert_plan`): walk, refit, `lie_down`, `lie_settle`, all folded;
+  **`lock_look`**: servo 5 (the wrist's pitch) up and servo 1 (the arm's base) round to aim the folded wrist camera at the
+  model's bezel (`aim_folded`), then servo 1 +-15 and +-30 degrees; each place held until 3 frames found nothing or 5 s;
+  the first with 3 finds moves the box model across the door onto the bezel and the insertion is planned again; the
+  image's search 80 mm round the model; back to the fold; then `unfold`, `load`, `grip` lying, `key_go`, `key_view` (one
+  place, held for 3 searched frames, not a 2.5 s clock), `key_pre` ... The node records each search's phase and time.
+- Simulation (the harness's renders): the camera 0.48 m from the bezel, 25 px radius, found from the aim; 20/-15 mm off
+  the model moved it 20.2/-15.3 and the key seated with `key_view` seeing nothing. Tests: the order, the aim (only servos
+  1 and 5 move, the pans), the look correcting a hidden-close-up case, neither look finding it; the insertion's 22 and the
+  key, keyhole, bezel and door-robot suites, 72 more, pass. Not on the dog yet; from 0.48 m a degree of the mount's
+  error is 8 mm on the door.
+- [Live, `lock_look`'s first run](#/week/6/run/20261022T135352_insert_insert_live): it found a bezel-sized disc from
+  the aim and the +15 degree pan (the same disc 250 px apart, 72-74 mm across the door from the model); from the aim the
+  rim fit refused it as "not distinct" (4 mm is a fifth of its radius at 0.48 m); the look took ~20 s (each search
+  1.1-1.4 s inside the node, 0.14 s alone on the dog); the key again went 5 mm past seated touching nothing; RViz's
+  camera panel flickered (front and wrist frames on one topic). Lukas: he has been handing the key with its shaft on the
+  gripper's roll axis, and it "always tried inserting to the top right": the robot assumed the simulation's grip, the
+  bar 25 mm out from the shaft. Changes: the robot's key on the roll axis (`KEY_IN_JAWS_LINK6`, the load prompt); a
+  bezel the image found skips the rim's distinctness test; the image search cropped to its window; the find placed at the
+  depth its size gives (the circle projected on the model's door orientation, used past 6% of the range) and the box
+  moved along the normal by it in both looks; `key_in` up to 40 mm past seated until it touches (`IN_SLACK_M`), a touch
+  past half the keyway's depth beyond seated taken as the face; the wrist frame shown through `lock_look`; each search's
+  frame kept in the run's `keyhole/`. Simulation: door 40 mm further than modelled measured 39 mm and seated; 30 mm
+  further with no camera found by the touch and seated. 119 tests pass.
+- [Live, the next run](#/week/6/run/20261022T142556_insert_insert_live) (ended at the hand-in: the jaws closed on
+  nothing): `lock_look` saw the bezel from the aim, ~140 px right of the model's place, and refused it in all 23 searches
+  as "more than 80 mm from the model's" (now 0.3-0.6 s a search with the crop). Lukas: "the search needs to be widened".
+  Measured in its saved frames against the tag (homography of the 100 mm square): the bezel 247-251 mm left of the tag's
+  centre and 35-36 mm below; the box model has 251 and 40. The offset (~66-77 mm right, 35-39 mm down, both runs) is in
+  the box's placement against the wrist camera, not the box. `LOOK_WINDOW_M` 0.08 -> 0.15; `key_view` as wide when the
+  look found nothing. 120 tests pass.
+
+### 2026-10-23 · The foot-press commit pulled; this PC's findings renumbered; the press policy on the dog
+
+- `git pull --ff-only` brought 880f0df (the turn Lukas meant, the key fine-tune, the general foot-press policy:
+  F-176 to F-182), committed elsewhere while this PC held its own uncommitted F-176 to F-179 (the arm's turn in
+  simulation and on the dog, the bezel in the wrist image, the front camera). Those four are renumbered, text unchanged:
+  arm turn in simulation F-176 -> **F-183**, on the dog F-177 -> **F-184**, front camera F-178 -> **F-185**, bezel
+  F-179 -> **F-186**, everywhere they were cited (`findings.md`, this log, `demos/combiner_key/README.md`,
+  `demos/combiner_key/robot/README.md` and `key_plan.py`, `demos/combiner_door/README.md`). Any F-176 to F-179 above
+  this entry now means 880f0df's. The pre-pull files are in `git stash` ("pre-pull local edits ...").
+- `d1update` put `checkpoints/leg_press_force_r4_model_5999.npz` (F-180's round-4 final) on the dog, SHA-256 matching
+  `checkpoints/SHA256SUMS`. Nothing has run with it there. The dog has only the shadow runner, which commands nothing;
+  no program on it drives the legs, and the press task layer (`unifp_train/foot_press.py`) is torch, not on the dog.
+
+### 2026-10-23 · The foot-press policy driving the legs: the program, not yet run live
+
+Lukas: "I want to prepare to deploy and test it on the dog ... I will test by using my hand as the platform wherever
+the dog puts its hand out"; then "build the live runner and press logic, starting at that 5 N cap". The first program
+here that commands the legs (F-187; `demos/combiner_key/robot/README.md`, "The foot-press policy driving the legs").
+
+- `press_layer.py`: `foot_press.PressLayer` and the leg environment's press episode (`_advance_approach`,
+  `_run_layer`, the hybrid `_correct_foot`, `_hold_goals`, the press return) for one robot in numpy; the force the frame
+  carries one step behind the layer, as `_step_forces` writes it; the reset's frame all zeros. The dog's rules: the
+  press waits for Enter at the pre-contact point (15 s, then home); no stall by the end of the travel backs out unpressed
+  (the trained layer presses the air there); levels and the first ramp's start capped at 5 N; a plate facing down
+  refused (F-182). Two hand plates, each a row of the trained table: `palm_up` (contact 0.331, -0.202, 0.112 m, row
+  14027) and `palm_facing` (0.422, -0.198, 0.221, row 10851).
+- `lowlevel.py`: LowCmd and its CRC, the remote's keys, the motion switcher (1001/1002/1003), unitree_rl_lab's FixStand
+  and Passive gains. `press_live.py`: the node (see the README's table); `run_press_on_dog.sh` (refuses to start beside
+  any `d1t-*` container: the door program's arm link has the same name); `fake_go2.py`, a kinematic stand-in on ROS 2.
+  `~/.bashrc`: `d1dogpress`, and `d1fetch` now copies `logs/leg_press/`.
+- `tests/test_press_live.py`, 29 tests, OK. The layers on closed-loop kinematic foot paths agree to 1e-9 in float64; in
+  float32, torch's timer sums 75 steps of 0.02 s short of 1.5 s and ends a hold one step later. The CRC is pinned to
+  Unitree's `crc32_core` compiled with gcc (279564839, 1264208000; a whole LowCmd 736096623). The program on a fake
+  clock: live whole run, dry rehearsal, the confirmation word, the stops (B, tilt, `a`), sport mode already released.
+- Over ROS 2 on the PC (`/opt/ros/humble`, `~/unitree_ros2/install`, `ROS_LOCALHOST_ONLY=1`, domain 77):
+  `python3 demos/combiner_key/robot/fake_go2.py --hand &` then
+  `python3 demos/combiner_key/robot/press_live.py --policy checkpoints/leg_press_force_r4_model_5999.npz --live
+  --arm_link_port 0 --hold_s 2` with `live` and Enters piped in.
+  [First](#/week/6/run/20261023T012947_leg_press_live): stopped at the lie-down, the calves held at -1.8 by the fake's
+  "hand" (its bug; the program stopped as it should, nothing released, no LowCmd).
+  [Second](#/week/6/run/20261023T013017_leg_press_live): the whole sequence, 12,510 LowCmd at 500 Hz, 0 failing the
+  fake's CRC check, 0 while sport mode held the legs, sport mode back at the end; the press "missed" (the kinematic legs
+  follow the policy's targets into the floor: no dynamics, so no meaning).
+  [Third](#/week/6/run/20261023T013325_leg_press_live), the stand-in lying where the dog lies (below): the same, 12,520.
+- On the dog, dry (`run_press_on_dog.sh --policy checkpoints/leg_press_force_r4_model_5999.npz --rehearse --hold_s 2`,
+  Enters piped over SSH; the dog lying in sport mode, nothing sent).
+  [First](#/week/6/run/20261023T013144_leg_press_rehearse): stopped at once, "FR_calf_joint past its limit". One LowState
+  read: the lying calves are -2.79, -2.78, -2.805, -2.847 rad, past the URDF's -2.7227 (the quaternion's w -0.998). Live,
+  that stop would have put the first stand-up into damping: it now applies only while the policy drives, and the dry
+  run never stops on the pose. [Second](#/week/6/run/20261023T013422_leg_press_rehearse): the pretend foot stood on an
+  endless plane at the palm's height (the footfall 9 cm up), and the decoder's force estimate (19 N lying still, 46-59 N
+  as the pretend sequence ran) released the press. The rehearsal's hand is now 10 cm across and met from in front, and
+  the estimate is not used in rehearsals (it is the real robot's, not the pretend foot's).
+  [Third](#/week/6/run/20261023T013526_leg_press_rehearse): every stage, the stall at the palm (z 0.112), 5.0 N held,
+  home onto the footfall; inference 3.0-3.7 ms; the arm link's angles read ("arm measured").
+- What this does not show: anything about the policy on the real legs, the handover's ramps on the dog, this firmware's
+  motion switcher, or the remote's B bit (Unitree's documented layout; a `--rehearse` with B pressed should print
+  `remote: ['B']`). The decoder's foot-force estimate reads 19 N on a dog at rest: its 25 N release is a backstop, not a
+  sensor. Full suite after: 943 tests, the same 1 failure (`test_payload`), 15 skipped.
+
+### 2026-10-23 · The first live run: the dog sat back; the handover made to end where training starts
+
+Lukas ran `d1dogpress --rehearse` (dog lying, 66 s, no Enter; the remote's keys read 0 throughout, so B is still not
+seen: [run](#/week/6/run/20261023T014219_leg_press_rehearse)), then `d1dogpress --live`: "after standing up, the dog
+just collapsed". [The run](#/week/6/run/20261023T014425_leg_press_live) (F-188):
+
+- Preflight: sport mode `mcf`, its stand 0.333 m (calves -1.48 to -1.54). StandDown to calves -2.50 to -2.55,
+  ReleaseMode answered, `/lowcmd` quiet. The stand-up (kp 60/80/80 to that stand) reached 0.298 m, rear calves 0.18 rad
+  short, 4.5° nose up; the blend to kp 25 / kd 0.5 with the stand as target sank it to 0.273 m, 6° nose up, sinking.
+- The policy: 11 steps (0.24 s). First step FL hip +0.37, RR thigh +0.75, RL thigh +0.55 rad off the joints (from
+  the same pose level and still: 0.54; from the trained settled stance: 0.25). The rear knees folded -1.86 -> -2.43
+  against targets ~0.9 rad more extended, base 0.273 -> 0.212 m, pitch -6 -> -20.3°: the tilt stop (20°) put every
+  motor in damping and the dog sank down. `tau_est` against kp (target - q) - kd dq: slopes 0.89-1.07 (the motors do
+  what is asked). Loop period median 20.8 ms, max 25.8.
+- A Ctrl-C at the damping prompt killed the LowCmd writer: rclpy's SIGINT handler shuts its context (`RCLError:
+  publisher's context is invalid`). Harmless there (already damping); mid-policy it would have left the last stiff
+  command on the motors.
+
+Changes (`press_live.py`): the stand-up goes to the policy's default targets, the gains are blended with them kept, and
+the policy starts once every joint is under 0.05 rad/s for 0.3 s, only if within 0.2 rad and 5° of the trained settled
+stance (else it lies down on the stand-up gains); the lie-down ramps from those targets. `--presses 0 --stand_s 10`:
+the policy only holds the stand. Tilt stop 20 -> 15°. `rclpy.init(signal_handler_options=SignalHandlerOptions.NO)`:
+Ctrl-C is a KeyboardInterrupt; a writer that cannot publish says so; SIGTERM in damping exits leaving damping. The
+test stand-ins sag as gravity against kp would (the trained settled offset x 25 / kp). 31 tests OK.
+Against `fake_go2.py` over ROS 2: [stand only](#/week/6/run/20261023T015053_leg_press_live) (settled to 0.000 rad of
+the trained stance, 5 s held, 9,505 LowCmd, 0 bad, sport mode back); [Ctrl-C 2 s into the policy](#/week/6/run/20261023T015445_leg_press_live)
+-> damping, Enter -> handback, 11,519 LowCmd, 0 bad. A first Ctrl-C test (`20261023T015134_leg_press_live`, not
+recordable: killed, `parts/` only) never delivered SIGINT -- a background job in a non-interactive shell ignores it.
+
+Not shown: that the policy holds the real dog from the trained settled stance, or that the real dog settles within
+0.2 rad of it under kp 25 (the first run's numbers suggest so for the rear calves, ~-1.8 rad). Next:
+`d1dogpress --live --presses 0`.
+
+Afterwards the dog did not answer its remote: the Ctrl-C at the damping prompt had exited before the handback, so sport
+mode stayed released (CheckMode `{"name": ""}`, no LowCmd, the dog lying). SelectMode `mcf` sent at Lukas's word
+(answered, CheckMode `mcf` after). `press_live.py` now says on exit when it leaves sport mode released
+(`left_released` in the summary), and `sport_mode.py` (`d1dogsport`, `d1dogsport mcf`) checks or selects it.
+
+### 2026-10-23 · The key holster beside the D1's base: registered, re-angled 6° steeper, the key drawn out in simulation
+
+Lukas: "there are 3 new d1 stl files describing a holster next to the d1 arm base for the arm to aquire the lever in the
+insertion task on the combiner box. can you add it to the sim and verify that the arm can slide out the lever from the
+holster". Part-way, after the first numbers: "is it possible for it to grasp the key in its usual spot using this
+holster or should I redesign the angle of the holster?"; then he re-exported the holster 6° steeper.
+
+**Where it is** (`demos/combiner_key/holster.py`; `python -m demos.combiner_key.holster <the three STLs> --write`
+writes `demos/combiner_key/assets/holster/`). The exports are in the D1-550 CAD's frame, as the wrist bracket's were.
+CAD to `base_link`: x = y_cad, y = -x_cad, z = z_cad + 5 mm. The base flange's holes are 58.0 x 130.0 mm, centred
+within 0.05 mm, as `base_link`'s are (58 across, 130 along x); its underside is at CAD z -5.0 mm; the folded arm spans
+CAD y -0.283 to 0.141 m against `d1.urdf` at rest, x -0.285 to 0.142. So the holster is on the robot's right, beside
+the base. The key in it is **v3 mirrored**, the hand the simulation's insertion and turn use: its bar fits by a rotation
+to 0.026 mm median (0.071 p95; 2.7 max where the export's bodies differ), and v3 as drawn fits only as a reflection.
+*Correction:* earlier in the session I told Lukas the key was v3 as drawn and the holster would not take the mirrored
+one. That came from a fit that was a reflection (determinant -1), and it is wrong. The same reflection is what failed
+the first simulation run (below). The holster is a sleeve round the bar's far 78 mm: a cup round its rounded end, two
+rails behind its back face, and near the open end a C-section (back wall, lips over and under, a hook round the front
+lower edge). Its inner faces stand 0.06-0.34 mm off the bar. The key can only slide out toward its shaft, and the
+simulation models the holster as nine boxes (`HOLSTER_BOXES`).
+
+**The first export: 35° above level** (CPU arm model). The dog's grip is the jaws round the bar's root at the shaft
+(`robot/insert_plan.KEY_IN_JAWS_LINK6`). Gripping there needs the elbow at 92% of its range, past the IK's 90%, and the
+draw then reaches 70-75 mm before Joint1 hits its limit; the bar's far end is 75 mm inside the holster's open end.
+Gripped 20-30 mm along the bar, it draws 90-105 mm. The cause: the folded grip puts the wrist pitch beside Joint1's
+axis, so drawing the hand out swings Joint1 (-0.56 to -2.17 rad over 90 mm). Tilting the holster about its cup traded
+the elbow for the shoulder: 4-8° steeper drew 95-115 mm from the root with every joint at 88-92% of its range; 12° or
+more and Joint2 is at its limit and the grip does not solve; turning it about the vertical did not help consistently.
+Recommended: about 6° steeper.
+
+**The second export: 40.8° above level.** The holster's shape round the key is unchanged (the same bounds in the key's
+frame); the shaft end is 14 mm higher and 10 mm further back. `--check`: from the root, 100 mm drawn with every joint
+within 0.895 of its range, the shoulder at most 32% of its torque, ≥ 46 mm off the trunk proxy, the open fingers
+≥ 11.5 mm off the bar, the key ≥ 11.6 mm off the D1's base and ≥ 15.7 mm off its links. The unfold goes Joint1 first
+with the arm still folded, then the rest. Straight from rest it dips 7 mm into the trunk proxy's 3 cm margin; this way
+it keeps 36 mm and ≥ 7.9 mm off the holster and key. The draw solves with `hand_rotation` roll +1; **roll -1, the
+insertion's own grip (`geometry.GRASP_ROLL`), does not slide onto the bar**. So the key comes out of the holster turned
+180° about its shaft from how the insertion holds it.
+
+**In simulation** (`demos/combiner_key/holster_env.py`, `run_holster.py`). The key demo's robot stands on P2Dingo's
+walking policy. The holster is kinematic, carried with the base every physics step, and its contacts with the robot
+are filtered out. The key is a free body (bar, platform, shaft and wards as colliders), held in the holster's pose
+until `pre`, then left to PhysX. The arm runs the IK at 10 Hz through the D1's planner and servo model. Its sequence:
+`turn` and `reach` in joint space, then `pre` (jaws open 45 mm out along the axis), `on`, `close`, `draw` (100 mm),
+`hold`. Once the jaws close, the key demo's spring grip holds the key where they closed on it. The fingers collide with
+it. `./demos/combiner_key/run_holster.py --headless [--attempts 8 --no_overview] [--holster_error_mm N]`; the last puts
+each attempt's holster and key off from where the draw is planned, uniformly within N mm per axis of the base's frame.
+- [First run](#/week/6/run/20261023T014641_seed1_first): **not drawn**. The key came 50 mm out with the grip's error
+  reaching 55 mm. The IK fell back to position only from its first command (55 of 56 steps), because of the reflected
+  registration. With the key frame left-handed, the hand the control loop built (`hand_rotation`) was the one the CPU
+  check had solved turned 180° about the approach. Fixed by fitting the mirrored key by a rotation; `grip_rotation` is
+  now `hand_rotation` itself, and a test checks it.
+- [One attempt, with frames](#/week/6/run/20261023T015209_seed1_roll_fixed): **drawn 99.5 mm**. The jaws closed
+  0.32 mm and 0.14° from the planned grip, the grip's error peaked at 2.1 mm (0.8 mm at the end), arm torque at 60%
+  (Joint3), the hand at most 6.0 mm behind its command, fingers on the key at most 1.7 N. The base tilted at most 0.9°
+  and stayed 0.309 m up. The IK held the full pose throughout.
+- [8 attempts, holster as planned](#/week/6/run/20261023T015351_seed1_batch8_err0mm): 8/8 drawn, alike within
+  0.02 mm (the scene is deterministic; this is repeatability, not spread).
+- [8 attempts, holster up to 3 mm off](#/week/6/run/20261023T015450_seed1_batch8_err3mm): 8/8. The jaws closed up to
+  3.2 mm from the planned grip, the grip's error peaked at 3.65 mm, torque at most 89%.
+- [8 attempts, holster up to 6 mm off](#/week/6/run/20261023T015549_seed1_batch8_err6mm): 8/8. The jaws closed up to
+  4.7 mm off across the bar (their opening leaves 10.6 mm a side) and 6.5 mm along the approach; the grip's error peaked
+  at 5.6 mm, the fingers pushed at most 5.9 N. In one attempt Joint3 hit its torque limit for 0.9% of the draw (~0.6 s)
+  and the key still came out.
+
+`figures/holster_draw_frames.png` (the one-attempt run's overview camera, front right of the robot and above). 4.1 s
+`turn`: the arm folded, the orange key in the dark holster beside the arm's base on the robot's right. 9.8 s `reach`:
+the forearm raised, the hand above the key's root, jaws open. 11.5 s `on` and 15.4 s `close`: the jaws round the bar's
+root. 18.0 s `draw`: the key 45 mm out, up and forward along the holster's line. 22.3 s `hold`: the key 99.5 mm out,
+clear of the holster beside the base, the arm swung round to the right and back.
+
+What it does and does not show:
+- With the holster where the CAD puts it, or up to 6 mm off, the D1 can take the key by the bar's root and slide it out
+  in PhysX on boxes, on the CPU arm model's kinematics.
+- Not shown: the real arm reaching the holster. Its joint zeros are unvalidated (F-023), and the grip needs 89% of
+  Joint2's and 83-89% of Joint3's range.
+- The grip is a spring (600 N/m, capped at 10 N). It hides misalignment that a rigid real grip would push into the
+  holster with the arm's stiffness. At 4-6 mm off, the real key may bind where the simulated one slid.
+- Not modelled: the cup's curved inside, the holster's mounting and flex, friction beyond 0.3, and the wrist RealSense's
+  99 g (this robot has no wrist mass; with it the elbow and shoulder are nearer their limits).
+- Not checked: getting from the drawn pose to the insertion's start (`insert_plan.KEY_CARRY_IN_BASE`), and the
+  insertion with the hand rolled 180° (the insertion program assumes roll -1).
+- Tests: `demos/combiner_key/tests/test_holster.py` (9: the registration, the boxes against the key, the draw on the
+  CPU model, the insertion's roll failing). The key demo's tests, 81 in all, pass.
+
+### 2026-10-23 · The second live run: the stand only, refused before the policy
+
+`d1dogpress --live --presses 0` ([run](#/week/6/run/20261023T020839_leg_press_live), F-191). Lukas: "It held for a
+bit, but then collapsed momentarily before resuming a stance - then sat down". The policy never ran:
+
+- Stand-up to the default targets on kp 80: 0.303 m, 4.6° nose up, the calves ~0.2 rad more extended than the trained
+  settled stance. Blend to kp 25 / kd 0.5: 0.303 -> 0.287 m in its last 0.2 s (the momentary collapse), then down to
+  rest at 0.261 m, 8.1° nose up, rear thighs 0.16-0.20 rad below the trained stance; still (0.01 rad) from 12.4 s.
+- The gate: "not still after 3.0 s" (velocities at rest read 0.04-0.10 rad/s; the check now uses positions: on this
+  record it calls the dog still at 12.48 s) and 8.1° past its 5°: the dog lay down on the stand-up gains -- the "sat
+  down". Sport mode given back on Enter (SelectMode unanswered, CheckMode `mcf` after).
+- Knee torques at rest front 5.6 / 4.6, rear 11.0 / 9.1 N·m (trained stance: 7.5 / 8.3). Foot loads through the
+  Jacobians: 138 N at the kp-25 rest, 242 N at the kp-80 hold, 171 N in the trained stance; not one weight's, so
+  something besides gravity -- joint friction, likeliest -- holds the dog where it stops.
+- The policy's first step, open loop, from each start: 0.51 rad (kp-25 rest), 0.46 (kp-80 hold), 0.62 (F-188's start),
+  0.25 (trained settled). Not started from this handover again.
+
+### 2026-10-23 · The holster draw made faster: paced by the joints, not eased along the line
+
+Lukas, watching [the draw in the viewer](#/week/6/run/20261023T020215_seed1_viewer) (3/3 drawn): "are we able to make the
+movements faster? I notice in general on the d1 arm that slow movements are choppy and fast movements are clean and
+smooth". The arm model reproduces what he sees. The D1's firmware plans each 10 Hz setpoint from rest (`motor_model`:
+`D1_REPLAN_VELOCITY_RETENTION` 0, fitted to the F-035 streaming sweep, F-045). A joint asked for under ~2.5° a command
+reaches it inside the 100 ms and waits for the next. At the first timing (18.5 s for the whole sequence), the draw moved
+its fastest joint ~2° a command, and that joint sat under a fifth of its mean speed in 28% of 20 ms samples (its
+speed's spread over its mean 0.99).
+
+`run_holster.py --speed S` scales the moves' lengths, and the joint-space unfold's step per command up to 6.5°
+(1.13 rad/s, under the measured 1.21-1.29). `--joint_speed V` paces the slide onto the bar and the draw so the fastest
+joint turns at V rad/s throughout (`holster.joint_paced`, planned on the CPU model), instead of a smoothstep along the
+line, which peaks at 1.5x its mean. The wrist roll turns 1.8 rad through the draw and Joint1 1.6.
+Each attempt now records a `smoothness` per move. 8 attempts each, holster up to 3 mm off:
+
+| moves | sequence | drawn | draw: fastest joint near-stopped | ripple | hand's worst lag | grip's worst error | torque at limit |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| [1x even](#/week/6/run/20261023T020550_seed1_speed1_err3mm) | 18.5 s | 8/8 | 28% | 0.99 | 6.2 mm | 3.6 mm | never |
+| [2x even](#/week/6/run/20261023T020648_seed1_speed2_err3mm) | 11.5 s | 8/8 | 17% | 0.66 | 37 mm | 17 mm | 8.9% of steps |
+| [3x even](#/week/6/run/20261023T020729_seed1_speed3_err3mm) | 9.2 s | **2/8** | 17% | 0.64 | 53 mm | 45 mm | 26% |
+| [2x, paced 0.6 rad/s](#/week/6/run/20261023T020935_seed1_paced0.6_err3mm) | 12.3 s | 8/8 | 8% | 0.52 | 7.9 mm | 3.2 mm | 0.2% |
+| [2x, paced 0.8](#/week/6/run/20261023T021020_seed1_paced0.8_err3mm) | 11.1 s | 8/8 | 6% | 0.52 | 9.9 mm | 3.7 mm | 0.5% |
+| [2x, paced 1.0](#/week/6/run/20261023T021101_seed1_paced1.0_err3mm) | 10.4 s | 8/8 | 5% | 0.49 | 14 mm | 9.5 mm | 2.3% |
+
+Evenly faster lags: the wrist roll and Joint1 reach their ~1.25 rad/s, the hand falls behind the line, and in
+simulation the spring grip takes up what a rigid real grip would push into the holster (17 mm at 2x). Paced, the same
+speed-up keeps the tracking. The default is now 2x with the moves paced at 0.6 rad/s; [shown to Lukas in the viewer](#/week/6/run/20261023T021243_seed1_viewer_paced) (3/3 drawn, 99.4 mm, near-stopped 7.7%). The unfold at 2x still sits
+near-stopped in 19% of samples (49% at 1x): its joint-space moves finish before their phase ends.
+
+What it does and does not show:
+- In the model, a move fast enough per command (above ~2.5° a command on its fastest joint) and paced to stay under
+  the joints' ceiling is both smoother and as accurate as the slow one.
+- The stop-start is the model's fitted replanning (retention 0, provisional in `motor_model`). Lukas's observation on
+  the real arm agrees with it but does not measure it.
+- Not on the real arm. The other joints in a Cartesian move still step a little at a time.
+
+### 2026-10-23 · Next: the foot-press policy fine-tuned for the real stand (to resume on the training PC)
+
+Lukas chose to fine-tune (F-191's second way). Not started here: round 4's `model_5999.pt` (with its critic) is on the
+machine that trained it, `logs/unifp_train/20261021T140237_train_seed3_press_r4_force_s3/`; this PC has only its numpy
+export. Its recorded arguments are in [the run](#/week/6/run/20261021T140237_train_seed3_press_r4_force_s3)
+(`run.json`: `--leg_object press --leg_variant force --leg_actuator unitree_geared --leg_delay_steps 3
+--leg_delay_min_steps 1 --leg_armature_range 0.003 0.02 --handle_fraction 0.7 --num_envs 2048`, resumed from round 3).
+The plan:
+1. Check in Isaac whether round 4's final holds the dog from the real starts (a frozen evaluation with
+   `--spawn_states` built from F-191's record: the kp-25 rest at 0.261 m, 8.1° nose up, and the kp-80 hold at 0.303 m,
+   4.6°; `logs/leg_press/20261023T020839_leg_press_live/press.npz`, joints in Unitree's order, roll/pitch by
+   `leg_policy.roll_pitch`). If it holds there, the gap is the legs' dynamics; if not, the starts too.
+2. Fine-tune from `model_5999.pt` with those starts in the spawn library (jittered), joint friction drawn per
+   environment (the training's leg model has 0.01 N·m; the dog's rising and sinking loads differ by ~100 N, F-191:
+   a few N·m at the knees is the guess to bracket), and the stand-up's handover as the dog does it.
+3. The frozen press set and the key set against round 4, then the export (`export_policy.py`) for the dog and
+   `d1dogpress --live --presses 0` again.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
+
+- The holster draw made faster (F-190, simulation, 8 attempts each): paced at 0.6 rad/s on the fastest joint and the
+  unfold doubled, 12.3 s instead of 18.5, the draw's stop-start 8% instead of 28%, tracking unchanged (lag 7.9 mm, grip
+  3.2 mm); evenly doubled it lagged 37 mm, tripled it drew 2 of 8.
+- Lukas's key holster beside the D1's base, re-angled to 41° (F-189, simulation): the key drawn out by its root in
+  25 of 25 attempts after a registration fix (holster as planned, and up to 3 and 6 mm off per axis); at the first
+  export's 35° the CPU model draws it only 70-75 mm of the 75 needed. `figures/holster_draw_frames.png`.
 
 - A general force-aware foot-press policy (F-180-F-182, simulation): on 288 frozen presses (48 plates across the
   front-right foot's reach x rigid / sprung x 8-28 N) from the dog's stand on the realistic legs, force-aware 197 (seed 3)
@@ -2237,6 +3280,9 @@ of the lineage.
 - The fine-tune on Lukas's turn (F-179, simulation): from the dog's measured stand on the realistic legs, force-aware
   101 / 100 of 108 with no contact past 60 N (max 35 N); 95-105 over 0-15 ms delay and armature 0.003-0.02; the
   matched position-only final 30 / 27. Exported for shadow mode: `checkpoints/leg_key_force_ft045_model_2604.npz`.
+- The key turned by the arm (F-183, simulation, 43 attempts): against Lukas's 5 N (0.65 N·m) 27/27 unlocked to the
+  stop from the head camera and lidar look (16 of them with the walk stopping in a window, not on a point); 4/4 at 8 and 11 N, 1/4 at 14, 0/4 at 17; the arm's quasi-static ceiling
+  10-11.5 N. `figures/arm_turn_demo_5n.png`, `figures/arm_turn_lock_sweep.png`.
 
 - The key policy in shadow mode on the real dog (F-173, one 90 s run, open loop): 50 Hz held (period p99 20.7 ms,
   inference 3.1 ms on the dog), frames as the training code's to 1e-17, targets within 0.013-0.078 rad RMS of a still
@@ -2267,6 +3313,20 @@ of the lineage.
 
 ## Findings this week
 
+- [F-190](../findings.md): the D1's slow moves go stop-start in the model as Lukas sees on the arm (each 10 Hz setpoint
+  planned from rest); pacing the holster draw by its fastest joint at 0.6 rad/s cuts the stop-start from 28% to 8% and
+  the sequence from 18.5 to 12.3 s with no loss of tracking, where an even speed-up lags (provisional, simulation).
+- [F-189](../findings.md): the arm draws the key out of Lukas's holster by the bar's root in 25 of 25 simulated
+  attempts once the holster is 41° above level (it was 35°: 70-75 mm of 75 needed), up to 6 mm misplaced; the key
+  in it is v3 mirrored; it comes out turned 180° about its shaft from the insertion's grip (provisional, simulation).
+- [F-191](../findings.md): under the policy's default targets at kp 25 the real dog rests 8° nose up with the rear thighs
+  0.16-0.20 rad below the trained stance, and the policy's first step from there is twice its trained one (one run).
+- [F-188](../findings.md): the first live run sat back within 0.24 s of the policy taking over a robot
+  sinking through a crouch outside its training starts; the motors delivered the asked PD torque; the handover now
+  settles into the trained stance first (one run).
+- [F-187](../findings.md): the program that drives the dog's legs with the foot-press policy onto a hand (at most
+  5 N): its numpy layer matches training's to 1e-9, its CRC Unitree's, its live sequence runs against a kinematic
+  stand-in with no bad command; dry on the dog it walks the sequence (confirmed as software; not run live).
 - [F-180](../findings.md): a general force-aware foot-press policy holds 197 / 186 of 288 frozen presses (two seeds) with
   the force's error ~2.3 N, against 100 / 58 position-only, and unlocks 104-107 of 108 keys zero-shot, more than the key
   specialist (provisional, simulation).
@@ -2287,6 +3347,15 @@ of the lineage.
   conditions, but 144 N p90 / 342 N on the dog's; a force cap changes nothing (provisional, simulation).
 - [F-176](../findings.md): Lukas's turn is horizontal to 45 down (unlock 30); all key policies trained on 45 up to 45
   down; on his turn force s2 unlocks 108 as trained, 52 on the dog's conditions; a fine-tune is needed (provisional).
+- [F-186](../findings.md): the keyhole found in the wrist image first: on two hand-held clips (daylight, dim red light) the image alone is right in 1319 of 1338 frames with the lock in view, wrong in 3; with the model's place 20-40 mm off, `find_bezel` image-first is right in 95% of frames where the old 12 mm search is right in 0-2% (provisional, two clips, no arm pose, not on the dog).
+- [F-185](../findings.md): through the Go2's front camera (a fisheye fitted on one stand) the door demo's look places the box within 6 mm and opens 16 of 16 in simulation, as the head RealSense did; Isaac renders a USD camera with a 0.35 focal length ~1.35x too large; on the dog the lens fit puts the tag 0.609 m off against a taped 0.61 (provisional, simulation + one stand).
+- [F-184](../findings.md): on the real dog the D1 turned Lukas's lever key from 45 degrees up to its stop (+45.6 by its
+  fingers' measure, verified by the robot's own check) after a walk up and a lidar refit, in one of three live turns;
+  going home it hit the head camera, now cleared by `key_clear` (provisional, one success, dog).
+
+- [F-183](../findings.md): in simulation the D1 alone turns the key 45 degrees up to 45 down against a 5 N lock (11/11
+  from the look), up to 11 N (4/4); 1/4 at 14 N, 0/4 at 17; its fingertip measure needs a lag check (provisional,
+  simulation).
 
 - [F-175](../findings.md): the shadow loop's stalls were its own 30 s save of the whole record (150 ms per 1,500 steps
   on the dog); a per-second flush of only the new steps costs 2.9 ms at most there and the loop holds 20.4 ms max
@@ -2365,7 +3434,8 @@ of the lineage.
   vertices outside both collider boxes) since 81b9c4a's redrawn mount; found running the full suite on 2026-10-20,
   not caused by the leg task. The other 724 tests pass (7 skipped). Still the only failure on 2026-10-21 after 9136aba
   and the key work: 788 tests, 1 failure, 7 skipped; and after the leg-model study: 793, the same 1 failure, 7 skipped. After the shadow runner: 803, the same 1 failure, 7 skipped. After the fine-tune's code (2026-10-21 evening): 804, the same 1 failure, 7 skipped. After the foot-press task
-  (2026-10-22): 827, the same 1 failure, 7 skipped.
+  (2026-10-22): 827, the same 1 failure, 7 skipped. After the foot-press program (2026-10-23): 943, the same 1
+  failure, 15 skipped.
 - The shadow runner on the dog stalls once at ~30 s (0.18 s) and once at ~60 s (0.36-0.40 s) after its first LowState,
   in both runs of 2026-10-21 (F-174). Not diagnosed. Any program that commands the legs needs this found first, and a
   watchdog for a missed step either way. **Found and fixed the same day (F-175):** the node saved its whole record

@@ -1,0 +1,125 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.02,
+    "event": "sport mode",
+    "name": "normal",
+    "stand_height_m": 0.268,
+    "stand_q": [
+      -0.1108,
+      0.7934,
+      -1.8007,
+      0.1112,
+      0.7931,
+      -1.8014,
+      -0.1037,
+      1.0405,
+      -1.8324,
+      0.1045,
+      1.0405,
+      -1.8329
+    ]
+  },
+  {
+    "t": 2.84,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.84,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 4.36,
+    "event": "lying",
+    "calf": [
+      -2.79,
+      -2.78,
+      -2.805,
+      -2.847
+    ]
+  },
+  {
+    "t": 4.36,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 4.38,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 4.4,
+    "event": "sport mode released"
+  },
+  {
+    "t": 4.4,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 4.82,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 4.82,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 9.78,
+    "event": "settled",
+    "base_m": 0.268,
+    "roll_pitch_deg": [
+      0.0,
+      0.0
+    ],
+    "q_minus_trained_settled": [
+      0.0,
+      0.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "t": 9.78,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 11.867,
+    "event": "STOP (Ctrl-C): damping, every motor kp 0 kd 3.0"
+  },
+  {
+    "t": 11.867,
+    "event": "mode policy -> damping"
+  },
+  {
+    "t": 27.859,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 27.88,
+    "event": "LowCmd stopped",
+    "sent": 11519
+  },
+  {
+    "t": 27.901,
+    "event": "SelectMode answered (code 0)"
+  },
+  {
+    "t": 27.923,
+    "event": "sport mode back",
+    "name": "normal"
+  },
+  {
+    "t": 27.923,
+    "event": "mode handback -> done"
+  }
+]

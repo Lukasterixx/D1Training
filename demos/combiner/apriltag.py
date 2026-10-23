@@ -106,14 +106,20 @@ class TagDetector:
     `intrinsic_matrix` it still finds and outlines tags but measures no pose. Pass the intrinsics the
     image was *rendered* with: the simulator draws square pixels about the image centre whatever the
     calibration says (F-070).
+
+    `fisheye_distortion` (k1-k4, OpenCV's `cv2.fisheye` model) is for a fisheye lens, the Go2's front camera
+    (`demos/combiner_door/front_camera.py`): the corners are found in the distorted image, as it is, then
+    undistorted onto a pinhole image with the same K before the pose is solved. `corners_px` stays the
+    corners as found; `reprojection_px` is measured in the undistorted pixels.
     """
 
     def __init__(self, intrinsic_matrix=None, tag_size: float = GEOMETRY.tag_size,
-                 tag_id: int | None = GEOMETRY.tag_id):
+                 tag_id: int | None = GEOMETRY.tag_id, fisheye_distortion=None):
         import cv2
 
         self.cv2 = cv2
         self.K = None if intrinsic_matrix is None else np.asarray(intrinsic_matrix, dtype=float).reshape(3, 3)
+        self.D = None if fisheye_distortion is None else np.asarray(fisheye_distortion, dtype=float).reshape(4, 1)
         self.tag_size = float(tag_size)
         self.tag_id = None if tag_id is None else int(tag_id)
         params = cv2.aruco.DetectorParameters()
@@ -138,11 +144,13 @@ class TagDetector:
             if self.K is None:
                 found.append(TagDetection(int(tag_id), quad, None, math.nan, side))
                 continue
-            ok, rvec, tvec = cv2.solvePnP(points, quad, self.K, None, flags=cv2.SOLVEPNP_IPPE_SQUARE)
+            pinhole = quad if self.D is None else cv2.fisheye.undistortPoints(
+                quad.reshape(1, 4, 2), self.K, self.D, P=self.K).reshape(4, 2)
+            ok, rvec, tvec = cv2.solvePnP(points, pinhole, self.K, None, flags=cv2.SOLVEPNP_IPPE_SQUARE)
             if not ok:
                 continue
             projected, _ = cv2.projectPoints(points, rvec, tvec, self.K, None)
-            error = float(np.sqrt(np.mean(np.sum((projected.reshape(4, 2) - quad) ** 2, axis=1))))
+            error = float(np.sqrt(np.mean(np.sum((projected.reshape(4, 2) - pinhole) ** 2, axis=1))))
             pose = np.eye(4)
             pose[:3, :3] = cv2.Rodrigues(rvec)[0]
             pose[:3, 3] = tvec.flatten()

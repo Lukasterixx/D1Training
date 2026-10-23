@@ -132,3 +132,80 @@ Limits of these results:
   boxes and nothing else of the box. The robot's own check (the foot's measure of the turn) reads false positives when
   the foot slides past the platform.
 - Four box placements, four attempts per condition, one seed.
+
+## The arm turning the key instead (2026-10-21, F-183)
+
+Lukas: "I am curious if the arm itself can turn the lever" -- the foot's turn, 45 degrees up to 45 down, scripted, with
+"the real lever takes about 5N to rotate in the lock". The key starts in the lock; the legs stay with the walking
+policy; nothing is learnt.
+
+    ./demos/combiner_key/run_arm_turn.sh                                         # watch one; frames/ and push.gif
+    ./demos/combiner_key/run_arm_turn.sh --lock_n 10                             # a lock felt as 10 N at the push point
+    ./demos/combiner_key/run_arm_turn.sh --attempts 8 --headless --no_overview   # eight placements, no pictures
+    python demos/combiner_key/plot_arm_turn.py logs/combiner_key_arm/<run> --out <figure>.png
+    python -m demos.combiner_key.arm_turn                                        # the CPU check: IK and push ceiling
+
+| phase | what | arm |
+| --- | --- | --- |
+| `look` | the door demo's: the head camera's tag, the MID-360's face fit | folded |
+| `unfold`, `walk_to_key`, `settle_arm` | toward the door 0.44 m ahead and the lock 8 cm left of the base, stopping the first time the estimate is close enough (door 0.42-0.45 m, lock 4-12 cm left, facing to 3°: `arm_turn.ACCEPT_*`), as the real door pull accepts a range | home point |
+| `arm_out`, `arm_above` | the hand 8 cm out from the platform, then 3 cm above it, pitched 60° down onto it, jaws shut | IK, 10 Hz |
+| `arm_touch` | the fingertips' edge 4 mm into the platform, 0.13 m out from the shaft | IK |
+| `turn` (9 s) | the hand rotated rigidly about the shaft from -45° to +45°, the edge pressing | IK |
+| `arm_hold`, `arm_lift`, `arm_back`, `fold` | resting on the key at its stop, off it, out, folded | IK, then joint space |
+
+- `arm_turn.py` (numpy): the push's geometry, the stance, and the quasi-static scan. A level hand, as the isolator
+  handle's push (`demos/combiner/press.py`) holds it, does not solve at the key: the lock is ~0.11 m above the base.
+- `arm_env.py`: `ArmTurnEnv`, this demo's environment with the leg turn's slot (`_make_turn`) filled by the arm's: the
+  same lock plant (`unifp_train.handle.LeverHandle(pad=True)`) against a 5 mm sphere at the fingertips' lower edge, its
+  force on Link6; an overview camera for the pictures.
+- The robot's own check (`verified_unlocked`): its fingertips' edge on the estimated key past 30° at the hold *and* the
+  hand never more than 30 mm behind its command through the turn. The edge alone reads 45° on a stalled key once the
+  fingers have slid off the platform.
+
+| lock, N at 0.13 m | unlocked | notes |
+| --- | --- | --- |
+| 5 (Lukas's) | **27/27**, all to the stop | the hand 8-10 mm behind its command; 4.8 N along the arc; 16 of them stopping the walk in the window |
+| 8 | 4/4 | 44.6-44.9° |
+| 11 | 4/4 | 42-43°, short of the stop; joints at their limits 21-35% of the push |
+| 14 | 1/4 | the key stalls near -44°, the fingers slide off |
+| 17 | 0/4 | |
+
+On the real dog: `robot/README.md`, "The key turned by the arm on the dog" (`d1dogkey`, dry unless `--live`).
+
+The CPU's ceiling at the stance's spread is 1.31-1.50 N·m (10-11.5 N at the push point). Not shown: the real D1's
+torque, the rest of the hand against the key, the cam's real feel, the wrist camera's mass on the simulated arm, where
+the 5 N was felt. The contact force ripples 3-6 N about its mean: the D1's 10 Hz streaming as `motor_model` has it, not
+the contact model.
+
+## The key drawn out of the holster beside the arm's base (2026-10-23, F-189)
+
+Lukas's holster for the key, beside the D1's base on the robot's right, re-angled 6° steeper after the first export
+(the lever now 41° above level), so the arm can take the key by the bar's root (the dog's insertion grip) and slide it
+out. The key in it is the mirrored v3, the simulation's.
+
+    python -m demos.combiner_key.holster ~/Downloads/d1_with_holster.stl ~/Downloads/d1_with_lever.stl \
+        ~/Downloads/d1_with_holster_and_lever.stl --write         # register a new export into assets/holster/
+    python -m demos.combiner_key.holster --check                  # the draw on the CPU arm model
+    ./demos/combiner_key/run_holster.py --headless                # one attempt in Isaac, frames/ and draw.gif
+    ./demos/combiner_key/run_holster.py --attempts 8 --headless --no_overview --holster_error_mm 6   # misplaced holster
+
+| phase | what | arm |
+| --- | --- | --- |
+| `spawn` (4 s) | stands; the key held in the holster | folded |
+| `turn`, `reach` | Joint1 turned with the arm folded, then unfolded to the hand 45 mm out along the lever's axis, jaws open | joint space |
+| `pre`, `on` | the key left to PhysX in the holster; the open jaws slid along the axis onto the bar's root | IK, 10 Hz |
+| `close` | jaws shut on the bar; the spring grip on from where they closed | IK |
+| `draw`, `hold` | 100 mm out along the holster's axis (its far end needs 75), held | IK |
+
+- `holster.py` (numpy; trimesh to register): the CAD frame on `base_link`, the key's pose, the holster as nine boxes
+  (0.06-0.34 mm off the bar), the draw's points and the hand (`hand_rotation(-n, u, 0, +1)`), the CPU check.
+- `holster_env.py`: the key demo's environment with the holster carried kinematically on the base (its contacts with
+  the robot filtered) and the key as a free body with its bar, platform and shaft as colliders.
+- Timing (F-190): by default the unfold is twice the phase lengths above and the slide onto the bar and the draw are
+  paced so the fastest joint turns at 0.6 rad/s (`--speed 2 --joint_speed 0.6`; the sequence 12.3 s). The D1 plans each
+  10 Hz setpoint from rest, so slow moves go stop-start; even 2x lagged 37 mm. `--speed 1 --joint_speed 0` is the first
+  timing (18.5 s).
+- Results: 25/25 drawn at the first timing (as planned, up to 3 and up to 6 mm off); 8/8 at the default (up to 3 mm off). The key comes out turned 180° about its shaft from
+  the insertion's grip (`geometry.GRASP_ROLL` -1 does not slide onto the bar). Not modelled: the spring grip's give, the
+  holster's mounting, the wrist camera's mass; the real arm's reach to it is not checked.

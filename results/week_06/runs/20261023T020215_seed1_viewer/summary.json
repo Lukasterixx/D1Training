@@ -1,0 +1,261 @@
+{
+  "summary": {
+    "attempts": 3,
+    "drawn": 3,
+    "fell": 0,
+    "holster_error_mm": 0.0,
+    "key_out_mm": [
+      99.45,
+      99.45,
+      99.45
+    ],
+    "grasp_miss_mm": [
+      [
+        -0.32,
+        0.04,
+        0.11
+      ],
+      [
+        -0.32,
+        0.04,
+        0.11
+      ],
+      [
+        -0.32,
+        0.04,
+        0.11
+      ]
+    ],
+    "grip_err_max_mm": [
+      2.13,
+      2.14,
+      2.12
+    ],
+    "torque_use_max": [
+      0.598,
+      0.598,
+      0.598
+    ]
+  },
+  "attempts": [
+    {
+      "batch": 0,
+      "env": 0,
+      "holster_shift_mm": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "pre_solve": "solved",
+      "hand_loop_mm": 0.0,
+      "hand_miss_mm": 0.7,
+      "key_released_at": {
+        "key_out_mm": -0.16,
+        "key_across_mm": 0.18,
+        "key_tilt_deg": 0.02,
+        "grip_err_mm": 0.0,
+        "grip_err_deg": 0.0,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 1
+        }
+      },
+      "grasp": {
+        "grasp_miss_mm": [
+          -0.32,
+          0.04,
+          0.11
+        ],
+        "grasp_miss_deg": 0.14,
+        "jaw_axis_miss_mm": 0.04,
+        "key_out_mm": -0.2,
+        "key_across_mm": 0.39,
+        "key_tilt_deg": 0.0,
+        "grip_err_mm": 0.0,
+        "grip_err_deg": 0.0,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 56
+        }
+      },
+      "drawn": true,
+      "end": {
+        "key_out_mm": 99.45,
+        "key_across_mm": 1.02,
+        "key_tilt_deg": 0.25,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 126
+        }
+      },
+      "min_base_z": 0.3092029392719269,
+      "max_tilt_deg": 0.8970845161088794,
+      "fell": false,
+      "torque_use_max": [
+        0.105,
+        0.361,
+        0.598,
+        0.353,
+        0.367,
+        0.19
+      ],
+      "saturated_share": 0.0,
+      "hand_miss_max_mm": 6.0,
+      "draw_hand_miss_max_mm": 6.0,
+      "grip_err_max_mm": 2.13,
+      "finger_contact_max_n": 1.72,
+      "key_across_in_holster_max_mm": 1.51
+    },
+    {
+      "batch": 1,
+      "env": 0,
+      "holster_shift_mm": [
+        0.0,
+        -0.0,
+        -0.0
+      ],
+      "pre_solve": "solved",
+      "hand_loop_mm": 0.0,
+      "hand_miss_mm": 0.7,
+      "key_released_at": {
+        "key_out_mm": -0.16,
+        "key_across_mm": 0.18,
+        "key_tilt_deg": 0.01,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 1
+        }
+      },
+      "grasp": {
+        "grasp_miss_mm": [
+          -0.32,
+          0.04,
+          0.11
+        ],
+        "grasp_miss_deg": 0.14,
+        "jaw_axis_miss_mm": 0.04,
+        "key_out_mm": -0.2,
+        "key_across_mm": 0.39,
+        "key_tilt_deg": 0.0,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 56
+        }
+      },
+      "drawn": true,
+      "end": {
+        "key_out_mm": 99.45,
+        "key_across_mm": 1.02,
+        "key_tilt_deg": 0.25,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 126
+        }
+      },
+      "min_base_z": 0.3092047870159149,
+      "max_tilt_deg": 0.8978875969448848,
+      "fell": false,
+      "torque_use_max": [
+        0.109,
+        0.361,
+        0.598,
+        0.353,
+        0.368,
+        0.19
+      ],
+      "saturated_share": 0.0,
+      "hand_miss_max_mm": 6.0,
+      "draw_hand_miss_max_mm": 6.0,
+      "grip_err_max_mm": 2.14,
+      "finger_contact_max_n": 1.71,
+      "key_across_in_holster_max_mm": 1.51
+    },
+    {
+      "batch": 2,
+      "env": 0,
+      "holster_shift_mm": [
+        -0.0,
+        -0.0,
+        0.0
+      ],
+      "pre_solve": "solved",
+      "hand_loop_mm": 0.0,
+      "hand_miss_mm": 0.7,
+      "key_released_at": {
+        "key_out_mm": -0.16,
+        "key_across_mm": 0.18,
+        "key_tilt_deg": 0.01,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 1
+        }
+      },
+      "grasp": {
+        "grasp_miss_mm": [
+          -0.32,
+          0.04,
+          0.11
+        ],
+        "grasp_miss_deg": 0.14,
+        "jaw_axis_miss_mm": 0.04,
+        "key_out_mm": -0.2,
+        "key_across_mm": 0.39,
+        "key_tilt_deg": 0.0,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 56
+        }
+      },
+      "drawn": true,
+      "end": {
+        "key_out_mm": 99.45,
+        "key_across_mm": 1.02,
+        "key_tilt_deg": 0.25,
+        "grip_err_mm": 0.77,
+        "grip_err_deg": 0.05,
+        "ik_last": "pose",
+        "ik": {
+          "joint": 60,
+          "pose": 126
+        }
+      },
+      "min_base_z": 0.3092047870159149,
+      "max_tilt_deg": 0.8978875969448848,
+      "fell": false,
+      "torque_use_max": [
+        0.109,
+        0.361,
+        0.598,
+        0.359,
+        0.367,
+        0.191
+      ],
+      "saturated_share": 0.0,
+      "hand_miss_max_mm": 6.0,
+      "draw_hand_miss_max_mm": 6.0,
+      "grip_err_max_mm": 2.12,
+      "finger_contact_max_n": 1.77,
+      "key_across_in_holster_max_mm": 1.51
+    }
+  ]
+}

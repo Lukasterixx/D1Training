@@ -169,8 +169,10 @@ def cloud_msg(cls, field_cls, stamp, frame: str, points, highlight):
 
 # --- the camera's frame -------------------------------------------------------------------------------------------------
 
-def debug_jpeg(rgb, detections, text: str, scale: float = 0.5) -> bytes:
-    """The colour frame at `scale`, the tag outlined with its range, `text` along the top, as JPEG bytes."""
+def debug_jpeg(rgb, detections, text: str, scale: float = 0.5, outlines=()) -> bytes:
+    """The colour frame at `scale`, the tag outlined with its range, `text` along the top, as JPEG bytes. `outlines`:
+    (pixels (N, 2) at full size, BGR, thickness, label or "") drawn as closed polylines, NaN points dropped (the
+    insertion's keyhole: `insert_viz.keyhole_outlines`)."""
     import cv2
 
     image = cv2.cvtColor(np.asarray(rgb, dtype=np.uint8), cv2.COLOR_RGB2BGR) if np.ndim(rgb) == 3 else \
@@ -181,6 +183,15 @@ def debug_jpeg(rgb, detections, text: str, scale: float = 0.5) -> bytes:
         cv2.polylines(image, [quad], True, (60, 220, 60), 2)
         label = f"id {d.tag_id}" + (f"  {d.range_m:.2f} m" if math.isfinite(getattr(d, "range_m", math.nan)) else "")
         cv2.putText(image, label, tuple(int(v) for v in quad[0]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (60, 220, 60), 1)
+    for points, bgr, thickness, label in outlines:
+        pts = np.asarray(points, dtype=float) * scale
+        pts = pts[np.isfinite(pts).all(axis=1)]
+        if len(pts) < 2:
+            continue
+        cv2.polylines(image, [pts.astype(np.int32)], True, bgr, thickness, cv2.LINE_AA)
+        if label:
+            top = pts[np.argmin(pts[:, 1])]
+            cv2.putText(image, label, (int(top[0]) + 4, int(top[1]) - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.42, bgr, 1)
     cv2.rectangle(image, (0, 0), (image.shape[1], 22), (0, 0, 0), -1)
     cv2.putText(image, text[:110], (6, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
     ok, jpeg = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 70])
@@ -267,14 +278,16 @@ def wrap_text(text: str, width: int = 36) -> list[str]:
     return lines
 
 
-def frustum_points(K, size, depth: float = 1.2):
-    """LINE_LIST points of the camera's field, `base_link`, to `depth` metres."""
+def frustum_points(K, size, depth: float = 1.2, camera_pose=None):
+    """LINE_LIST points of the camera's field, `base_link`, to `depth` metres, from `camera_pose` (the head's mount
+    without one)."""
     if K is None or size is None:
         return None
+    camera_pose = plan.CAMERA_POSE_BASE if camera_pose is None else np.asarray(camera_pose)
     w, h = size
     corners = [((u - K[0, 2]) / K[0, 0], (v - K[1, 2]) / K[1, 1]) for u, v in ((0, 0), (w, 0), (w, h), (0, h))]
-    far = [plan.transform(plan.CAMERA_POSE_BASE, [(x * depth, y * depth, depth)])[0] for x, y in corners]
-    apex = plan.CAMERA_POSE_BASE[:3, 3]
+    far = [plan.transform(camera_pose, [(x * depth, y * depth, depth)])[0] for x, y in corners]
+    apex = camera_pose[:3, 3]
     points = []
     for i in range(4):
         points += [apex, far[i], far[i], far[(i + 1) % 4]]
@@ -282,9 +295,10 @@ def frustum_points(K, size, depth: float = 1.2):
 
 
 def scene_markers(cls, stamp, fix: plan.Fix, attempt, status: str, note: str, door: mid360.DoorReading, K=None,
-                  size=None, plan_door: bool = False) -> list:
+                  size=None, plan_door: bool = False, door_task: bool = True, extra=None, camera_pose=None) -> list:
     """The scene. The door is drawn at the lidar's angle when it has one, else the script's; `plan_door` (a dry run,
-    whose real door stays shut while the plan opens it): the script's."""
+    whose real door stays shut while the plan opens it): the script's. `door_task` False: no door pull's base path or
+    grasp. `extra(out, box)`: another task's markers (`demos/combiner_key/robot/key_viz.py`)."""
     out = _Markers(cls, stamp)
     box = perception.site_pose(fix.site)
     commanded = attempt.commanded_door_deg() if attempt is not None else 0.0
@@ -295,10 +309,13 @@ def scene_markers(cls, stamp, fix: plan.Fix, attempt, status: str, note: str, do
     out.add("stance", "ARROW", None, (0.30, 0.03, 0.03), GREEN if ok else RED)
     outline = [(-0.32, -0.16, 0.0), (0.38, -0.16, 0.0), (0.38, 0.16, 0.0), (-0.32, 0.16, 0.0), (-0.32, -0.16, 0.0)]
     out.add("stance", "LINE_STRIP", None, (0.01, 0, 0), GREEN if ok else RED, points=outline)
-    door_deg = attempt.timing.door_deg if attempt is not None else 90.0
-    path = [(*fix.site.base_pose_m(a)[:2], 0.0) for a in np.linspace(0.0, door_deg, 19)]
-    out.add("base_path", "LINE_STRIP", None, (0.012, 0, 0), YELLOW, points=path)
-    out.add("grasp", "SPHERE", plan.pose(None, fix.site.grasp_point_m()), (0.02, 0.02, 0.02), YELLOW)
+    if door_task:
+        door_deg = attempt.timing.door_deg if attempt is not None else 90.0
+        path = [(*fix.site.base_pose_m(a)[:2], 0.0) for a in np.linspace(0.0, door_deg, 19)]
+        out.add("base_path", "LINE_STRIP", None, (0.012, 0, 0), YELLOW, points=path)
+        out.add("grasp", "SPHERE", plan.pose(None, fix.site.grasp_point_m()), (0.02, 0.02, 0.02), YELLOW)
+    if extra is not None:
+        extra(out, box)
     last = getattr(attempt, "last_command", None) if attempt is not None else None
     if last is not None and last.hand_target_script is not None:
         hand = np.asarray(last.hand_target_script)
@@ -309,7 +326,7 @@ def scene_markers(cls, stamp, fix: plan.Fix, attempt, status: str, note: str, do
     segment = plan.face_segment(fix)
     if segment is not None:
         out.add("lidar_face", "LINE_STRIP", None, (0.012, 0, 0), CYAN, points=segment)
-    frustum = frustum_points(K, size)
+    frustum = frustum_points(K, size, camera_pose=camera_pose)
     if frustum is not None:
         out.add("camera", "LINE_LIST", None, (0.004, 0, 0), (0.6, 0.6, 1.0, 0.6), points=frustum, frame="base_link")
     words = [status, note]

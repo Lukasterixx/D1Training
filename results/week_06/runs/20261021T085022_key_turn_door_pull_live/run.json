@@ -1,0 +1,371 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "key",
+  "stage": "turn",
+  "then_door": "pull",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T085022_key_turn_door_pull_live",
+    "--task",
+    "key",
+    "--stage",
+    "turn",
+    "--then_door",
+    "pull",
+    "--door_deg",
+    "60",
+    "--live",
+    "--yes"
+  ],
+  "started_utc": "20261021T085025",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 80.584,
+      "stop": "attempt finished"
+    },
+    {
+      "t": 80.588,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 30,
+    "with_tag": 30,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.41 m ahead, +0.13 m left, turned -7 deg: a walk up of 0.43 m",
+    "detections": 30,
+    "site": {
+      "distance_m": 0.6742,
+      "bearing_deg": -13.218,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.43,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 6.4,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -3.59
+  },
+  "key_attempt_events": [
+    {
+      "phase": "plan_push",
+      "poses_solved": 17,
+      "turns": {
+        "55.0": 0.3,
+        "60.0": 9.0,
+        "65.0": 18.1,
+        "70.0": 27.2
+      }
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.386,
+        -0.186,
+        0.129
+      ]
+    },
+    {
+      "t": 10.681,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unfold",
+      "mm": 156.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "lock_ahead_m": 0.513,
+      "lock_left_m": 0.09,
+      "yaw_off_deg": -1.4,
+      "left_m": 0.014,
+      "carried_m": 0.02,
+      "carry_s": 0.08,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 14.581,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 147.8
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 58.4,
+      "turned_deg": 1.38
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "lock 0.46 m ahead, +0.09 m left of the stance, door -2.7 deg off square, after the walk"
+    },
+    {
+      "phase": "key_out",
+      "solved_here": true,
+      "path_clear": true,
+      "turn_s": 10.37
+    },
+    {
+      "t": 15.582,
+      "phase": "key_out"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 162.5
+    },
+    {
+      "t": 20.581,
+      "phase": "key_above"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_out",
+      "mm": 63.5
+    },
+    {
+      "t": 22.581,
+      "phase": "key_touch"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_above",
+      "mm": 67.0
+    },
+    {
+      "t": 24.581,
+      "phase": "turn"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_touch",
+      "mm": 84.9
+    },
+    {
+      "t": 35.881,
+      "phase": "key_hold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "turn",
+      "mm": 26.6
+    },
+    {
+      "t": 37.381,
+      "phase": "key_lift"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_hold",
+      "mm": 28.4
+    },
+    {
+      "phase": "turn_check",
+      "lag_mm": 17.7,
+      "since": null,
+      "measured_deg": 46.06,
+      "verified": true,
+      "held_s": 1.0
+    },
+    {
+      "t": 38.889,
+      "phase": "key_clear"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_lift",
+      "mm": 27.9
+    },
+    {
+      "t": 41.887,
+      "phase": "home"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_clear",
+      "mm": 29.3
+    },
+    {
+      "t": 44.881,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 77.6
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 162.9
+    }
+  ],
+  "key": {
+    "lag_mm": 17.7,
+    "since": null,
+    "measured_deg": 46.06,
+    "verified": true,
+    "held_s": 1.0
+  },
+  "door_after_key": {
+    "stage": "pull",
+    "stance": "box 0.69 m from the stance at +0.0 deg, door +0.0 deg off square, walk in 0.00 m"
+  },
+  "door_attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        0.074,
+        0.133,
+        0.041
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "box_distance_m": 0.708,
+      "box_bearing_deg": -2.3,
+      "door_yaw_deg": 178.1,
+      "left_m": 0.018,
+      "carried_m": 0.009,
+      "carry_s": 0.05,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 52.084,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 15.0,
+      "turned_deg": 1.0
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "box 0.72 m from the stance at -2.0 deg, door -0.9 deg off square, walk in 0.00 m (outside the simulated 0.67-0.71 m)"
+    },
+    {
+      "t": 53.082,
+      "phase": "unfold"
+    },
+    {
+      "t": 58.381,
+      "phase": "stand"
+    },
+    {
+      "t": 58.981,
+      "phase": "approach"
+    },
+    {
+      "t": 60.981,
+      "phase": "settle"
+    },
+    {
+      "t": 61.381,
+      "phase": "enter"
+    },
+    {
+      "t": 63.881,
+      "phase": "arrive"
+    },
+    {
+      "t": 64.381,
+      "phase": "grip"
+    },
+    {
+      "t": 65.188,
+      "phase": "pull"
+    },
+    {
+      "phase": "pull",
+      "twist": [
+        -0.118,
+        -0.2,
+        0.352
+      ],
+      "hinge_in_base_m": [
+        0.568,
+        -0.336
+      ],
+      "seconds": 2.97
+    },
+    {
+      "t": 68.781,
+      "phase": "hold"
+    },
+    {
+      "phase": "let_go",
+      "hand_script": [
+        0.344,
+        -0.2616,
+        0.6952
+      ],
+      "approach": [
+        0.505,
+        0.863,
+        -0.034
+      ],
+      "jaws_units": 23.2
+    },
+    {
+      "t": 70.281,
+      "phase": "release"
+    },
+    {
+      "t": 71.381,
+      "phase": "ungrasp"
+    },
+    {
+      "t": 73.881,
+      "phase": "home"
+    },
+    {
+      "t": 75.384,
+      "phase": "fold"
+    }
+  ],
+  "outcome": "attempt finished"
+}

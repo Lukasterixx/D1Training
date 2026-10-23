@@ -1,0 +1,99 @@
+{
+  "mode": "combiner_key_arm_turn",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "attempts": 4,
+    "num_envs": 4,
+    "seed": 1,
+    "settle_s": 4.0,
+    "lock_n": 14.0,
+    "lock_friction_nm": null,
+    "lock_detent_nm": 0.0,
+    "walker": "p2dingo_gait",
+    "given_box": false,
+    "no_overview": true,
+    "run_name": "sweep",
+    "enable_cameras": true,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "demos/combiner_key/run_arm_turn.py --headless --attempts 4 --no_overview --lock_n 14 --run_name sweep",
+  "git_commit": "63cedbdf2177b1f2e8b901662c844825566704df",
+  "git_status": "M demos/combiner_key/env.py\n?? demos/combiner_key/arm_env.py\n?? demos/combiner_key/arm_turn.py\n?? demos/combiner_key/plot_arm_turn.py\n?? demos/combiner_key/run_arm_turn.py\n?? demos/combiner_key/run_arm_turn.sh\n?? demos/combiner_key/tests/test_arm_turn.py\n?? logs/combiner_key_arm/\n?? results/week_06/figures/arm_turn_demo_5n.png\n?? results/week_06/runs/20261021T060043_lock0.65nm_seed1_first/\n?? results/week_06/runs/20261021T060635_lock0.65nm_seed1_demo/\n?? results/week_06/runs/20261021T060916_lock0.65nm_seed1_demo_k8000/",
+  "robot_usd": "/home/lukas/D1Training/generated/go2_d1.usd",
+  "box_usd": "/home/lukas/D1Training/generated/unifp_demos/combiner_0.400_ac02abf3702d.usda",
+  "phases": [
+    "look",
+    "unfold",
+    "walk_to_key",
+    "settle_arm",
+    "arm_out",
+    "arm_above",
+    "arm_touch",
+    "turn",
+    "arm_hold",
+    "arm_lift",
+    "arm_back",
+    "fold",
+    "stand"
+  ],
+  "push": {
+    "reach_m": 0.13,
+    "contact_off_door_m": 0.035,
+    "hand_pitch_deg": 60.0,
+    "press_depth_m": 0.004,
+    "turn_deg": [
+      -45.0,
+      45.0
+    ],
+    "turn_s": 9.0,
+    "stance": {
+      "door_ahead_m": 0.44,
+      "lock_left_m": 0.08
+    }
+  },
+  "lock": {
+    "plant": "unifp_train.handle.LeverHandle(pad=True) against a sphere at the fingertips' edge",
+    "friction_nm": 1.82,
+    "as_push_n": 14.0,
+    "detent_nm": 0.0,
+    "unlock_deg": 30.0,
+    "contact_k_n_m": 8000.0,
+    "contact_mu": 0.4,
+    "contact_radius_m": 0.005
+  },
+  "robot": "the combiner door demo's: the lidar and the RealSenses drawn, not simulated (no wrist mass)",
+  "summary": {
+    "attempts": 4,
+    "lock_friction_nm": 1.82,
+    "lock_as_push_n": 14.0,
+    "tag_found": 4,
+    "unlocked": 1,
+    "reached_stop": 0,
+    "verified_unlocked": 4,
+    "fell": 0,
+    "damaged": 0,
+    "success": 1,
+    "max_key_deg": [
+      6.43,
+      40.15,
+      -43.41,
+      -40.58
+    ]
+  },
+  "frames": 0
+}

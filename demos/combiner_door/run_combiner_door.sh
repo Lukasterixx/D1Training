@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The combiner door demo (README.md here): the head RealSense finds the box's AprilTag, the MID-360 gives the door's
+# The combiner door demo (README.md here): the Go2's front camera finds the box's AprilTag, the MID-360 gives the door's
 # heading, the dog walks in, grips the handle above the tag and walks the door open, and the lidar checks the door.
 #
 #   ./demos/combiner_door/run_combiner_door.sh                             # watch one attempt in the viewer

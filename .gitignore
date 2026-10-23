@@ -26,13 +26,21 @@ logs/unifp_train/
 logs/unifp_demos/
 # The combiner door's robot program's records, copied back from the dog by `d1fetch`; the recorded copies are the evidence.
 logs/combiner_door_robot/
+# Wrist RealSense clips recorded through the dog's website (tens of MB); their ground truth is in results/week_06/keyhole_clips/.
+logs/keyhole_clips/
 # The UniFP gait probe's runs (each with its own USD); the recorded copies are the evidence.
 logs/unifp_gait_probe/
 # The leg policy's shadow runs and the knee logger's records from the dog (`d1fetch`), and their PC tests; the recorded
-# copies are the evidence. The combiner key demo's runs likewise.
+# copies are the evidence. The combiner key demo's runs likewise, the leg's and the arm's.
 logs/leg_shadow/
 logs/leg_shadow_pc_test/
 logs/go2_knee/
 logs/combiner_key/
+logs/combiner_key_arm/
+# The wrist camera's keyhole calibration against the key's touch, kept on the dog between runs (`insert_plan.py`).
+logs/combiner_key_calibration/
+# The foot-press program's runs (`d1fetch`, and its PC tests) and the key holster's; the recorded copies are the evidence.
+logs/leg_press/
+logs/combiner_key_holster/
 # Top-level console logs of demo and test runs; the recorded copies are the evidence.
 logs/*.out

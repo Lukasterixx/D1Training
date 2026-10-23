@@ -1,0 +1,115 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "finished",
+  "task": "door",
+  "stage": "pull",
+  "then_door": null,
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T084730_pull_live",
+    "--stage",
+    "pull",
+    "--door_deg",
+    "60",
+    "--live",
+    "--yes"
+  ],
+  "started_utc": "20261021T084733",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 12.448,
+      "stop": "the lidar puts the door 63 mm and 0.4 deg from where the look did"
+    },
+    {
+      "t": 42.884,
+      "stop": "attempt finished"
+    },
+    {
+      "t": 42.886,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 30,
+    "with_tag": 30,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "box 0.69 m from the stance at -7.5 deg, door -2.1 deg off square, walk in 0.44 m",
+    "detections": 30,
+    "site": {
+      "distance_m": 0.6905,
+      "bearing_deg": -7.524,
+      "yaw_deg": 177.88
+    },
+    "walk_in_m": 0.437,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 4.8,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -1.92
+  },
+  "abort": "the lidar puts the door 63 mm and 0.4 deg from where the look did",
+  "attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "t": 5.382,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "walk_in",
+      "short_m": 0.072,
+      "carried_m": -0.003,
+      "step": 0
+    },
+    {
+      "phase": "walk_in",
+      "short_m": -0.01,
+      "carried_m": 0.006,
+      "step": 1
+    },
+    {
+      "t": 11.381,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 63.3,
+      "turned_deg": 0.36
+    },
+    {
+      "phase": "recover"
+    }
+  ],
+  "outcome": "attempt finished"
+}

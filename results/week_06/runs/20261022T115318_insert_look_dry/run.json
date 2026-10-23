@@ -1,0 +1,75 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "insert",
+  "stage": "look",
+  "then_door": null,
+  "live": false,
+  "camera": "front",
+  "look_camera_model": "NOT a full calibration: f and k1 fitted to one stand on the dog (2026-10-22), the camera taped 0.61 m from the box's front (tag plane 0.609 m) and the box's 0.63 m width (0.629 m); principal point assumed at the image centre, k2-k4 = 0; checked against the MID-360's door plane (0.603 m) and tilt (4.72 vs 4.7 deg)",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261022T115318_insert_look_dry",
+    "--task",
+    "insert",
+    "--stage",
+    "look"
+  ],
+  "started_utc": "20261022T115322",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 6.211,
+      "stop": "look only: nothing moved"
+    },
+    {
+      "t": 6.213,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 21,
+    "with_tag": 21,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": false,
+    "text": "the push's stance 0.73 m ahead, -0.45 m left, turned -9 deg: a walk up of 0.86 m; move the dog forward 0.08 m, right 0.10 m",
+    "detections": 21,
+    "site": {
+      "distance_m": 0.733,
+      "bearing_deg": -25.27,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.47,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 4.9,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -0.3
+  },
+  "outcome": "look only: nothing moved"
+}

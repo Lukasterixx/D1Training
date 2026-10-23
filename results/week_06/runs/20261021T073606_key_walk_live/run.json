@@ -1,0 +1,171 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "key",
+  "stage": "walk",
+  "live": true,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T073606_key_walk_live",
+    "--task",
+    "key",
+    "--stage",
+    "turn",
+    "--stage",
+    "walk",
+    "--live"
+  ],
+  "started_utc": "20261021T073610",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 30.384,
+      "stop": "attempt finished"
+    },
+    {
+      "t": 30.387,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 36,
+    "with_tag": 36,
+    "lidar_frames": 25,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.36 m ahead, +0.10 m left, turned -3 deg: a walk up of 0.38 m",
+    "detections": 36,
+    "site": {
+      "distance_m": 0.6344,
+      "bearing_deg": -16.578,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.377,
+    "lidar_heading": {
+      "used": true,
+      "points": 3999,
+      "span_m": 0.56,
+      "rms_mm": 8.2,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -2.94
+  },
+  "outcome": "attempt finished",
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.36,
+        -0.124,
+        0.019
+      ]
+    },
+    {
+      "t": 12.691,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": "False",
+      "lock_ahead_m": 0.508,
+      "lock_left_m": 0.08,
+      "yaw_off_deg": -2.0,
+      "lat_floor": 0.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 1,
+      "close_enough": "False",
+      "lock_ahead_m": 0.497,
+      "lock_left_m": 0.086,
+      "yaw_off_deg": -2.5,
+      "lat_floor": 0.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 2,
+      "close_enough": "False",
+      "lock_ahead_m": 0.49,
+      "lock_left_m": 0.1,
+      "yaw_off_deg": -1.2,
+      "lat_floor": 0.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 3,
+      "close_enough": "False",
+      "lock_ahead_m": 0.48,
+      "lock_left_m": 0.104,
+      "yaw_off_deg": -1.5,
+      "lat_floor": 0.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 4,
+      "close_enough": "False",
+      "lock_ahead_m": 0.482,
+      "lock_left_m": 0.108,
+      "yaw_off_deg": -1.8,
+      "lat_floor": 0.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 5,
+      "close_enough": "False",
+      "lock_ahead_m": 0.478,
+      "lock_left_m": 0.107,
+      "yaw_off_deg": -2.1,
+      "lat_floor": 0.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 6,
+      "close_enough": "False",
+      "lock_ahead_m": 0.479,
+      "lock_left_m": 0.115,
+      "yaw_off_deg": -0.8,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 24.381,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 43.4,
+      "turned_deg": 1.1
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "lock 0.44 m ahead, +0.12 m left of the stance, door -1.9 deg off square, after the walk"
+    },
+    {
+      "t": 25.381,
+      "phase": "fold"
+    }
+  ]
+}

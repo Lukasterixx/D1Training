@@ -1,0 +1,82 @@
+{
+  "method": "cad: Lukas's holster (Fusion 360, 2026-10-23) on the D1 CAD; the CAD frame to base_link by the base flange's holes and underside and the folded arm's extent; the key by the mirrored v3's bar fitted to the export's by a rotation (demos/combiner_key/holster.py)",
+  "measured": false,
+  "cad_to_d1_base": [
+    [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      -1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      0.005
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "key_frame": "asset.key_mesh_points: origin on the shaft's axis at the bar's back face; x n, y u, z t",
+  "key_in_d1_base": [
+    [
+      -0.5627221,
+      -0.7549735,
+      -0.336688,
+      0.0624893
+    ],
+    [
+      0.561211,
+      -0.049862,
+      -0.8261695,
+      -0.0840352
+    ],
+    [
+      0.6069481,
+      -0.6538568,
+      0.4517579,
+      0.0940518
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "key_mirrored": true,
+  "bar_fit_mm": {
+    "median": 0.026,
+    "p95": 0.071,
+    "max": 2.68
+  },
+  "as_drawn_bar_fit_mm": "fits only as a reflection",
+  "inputs": {
+    "d1_with_holster.stl": {
+      "sha256": "728c7c55f546daff1da9079dff05f4d94ed73ea503556a92fab11eb0302192a5",
+      "bytes": 6992984
+    },
+    "d1_with_lever.stl": {
+      "sha256": "fc163d1050bfb03d12594531531d930e22deabf31757eaffdbe46b682e4423aa",
+      "bytes": 7014184
+    },
+    "d1_with_holster_and_lever.stl": {
+      "sha256": "f957717045ae8c4b1ebedc2e3c1b0e6747faf3d65d62c61df1b626b0bdb14d2f",
+      "bytes": 7032784
+    }
+  },
+  "holster_mesh": {
+    "path": "demos/combiner_key/assets/holster/holster_d1_base.stl",
+    "sha256": "4d67645e3621f78f84f1d2ffcc6c95c3532dfe3c75370ff2c7e75bc0eef6d7f4"
+  }
+}

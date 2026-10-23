@@ -1,0 +1,50 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.001,
+    "event": "mode preflight -> policy"
+  },
+  {
+    "t": 5.12,
+    "event": "stage waiting -> lifting"
+  },
+  {
+    "t": 7.12,
+    "event": "stage lifting -> over"
+  },
+  {
+    "t": 7.92,
+    "event": "stage over -> at_pre"
+  },
+  {
+    "t": 8.12,
+    "event": "stage at_pre -> engaged"
+  },
+  {
+    "t": 13.46,
+    "event": "stage engaged -> returning"
+  },
+  {
+    "t": 16.06,
+    "event": "stage returning -> foot_down"
+  },
+  {
+    "t": 17.044,
+    "event": "press 1 finished",
+    "stalled": true,
+    "ended_unpressed": null,
+    "engage_miss_m": 0.0
+  },
+  {
+    "t": 17.044,
+    "event": "the policy is done",
+    "presses": 1
+  },
+  {
+    "t": 17.044,
+    "event": "mode policy -> done"
+  }
+]

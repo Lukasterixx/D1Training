@@ -1,9 +1,10 @@
-"""From the head camera's AprilTag and the MID-360's points to the box placement the door script works from.
+"""From the front camera's AprilTag and the MID-360's points to the box placement the door script works from.
 
 The UniFP door pull and its decoupled baseline are given the box's placement (`props.BoxSite`, the simulator's truth).
 Here the script gets an estimate instead, made as P2Dingo's docking makes its fix (`dock_detector_node.cpp`): the tag
 for the position, the lidar for the heading.
-1. Each camera frame of the look, the tag found in the head camera's image (`demos.combiner.apriltag.TagDetector`,
+1. Each camera frame of the look, the tag found in the Go2's front camera's image (`front_camera`, since 2026-10-22;
+   the head RealSense's before: `demos.combiner.apriltag.TagDetector`,
    OpenCV's 36h11 decoder and IPPE pose), taken through the fixed mount and the base's pose since the attempt began
    (odometry: the simulator's, as the walk uses) into the script's frame, which is the stance, yaw only.
 2. The tag's centre, averaged over the frames: the position. The tag's own heading, averaged: only a seed.
@@ -25,7 +26,7 @@ from demos.combiner.apriltag import box_pose, mean_pose, pose_error
 from demos.combiner.geometry import GEOMETRY
 from demos.unifp import props
 
-from . import head_camera, mid360
+from . import front_camera, head_camera, mid360
 
 
 #: How far behind the door pull's stance the robot starts and looks from, metres. From the stance itself the head
@@ -33,7 +34,12 @@ from . import head_camera, mid360
 #: spare), 0.15 m with more margin (the box 0.70-0.74 m off the stance). With the lever measured 27 mm off the door
 #: (2026-10-20) the placements moved the box 29.5 mm closer so the handle keeps its distance (`props`), and the look
 #: moves back as far, so the camera sees the box from where it did. Further back costs a longer walk in.
-LOOK_BACK_M = 0.18
+#: With the Go2's front camera (2026-10-22, `front_camera.ONE_STAND`) it is 0.40 m: its field is only +-27 deg tall, the
+#: tag (0.46 m up the box) runs off the top of it closer in, and P2Dingo's walking policy stands the base at 0.31 m (the
+#: trace, not the 0.40 the head camera's numbers assumed). From 0.40 m back the tag is whole at all 200 placements, the
+#: base 0.30-0.33 m up and pitched +-2 deg (39 px to spare); from 0.18 m at 200 of 600, and the first sim run with the
+#: front camera found the tag in none of 4 attempts.
+LOOK_BACK_M = 0.40
 
 
 def yaw_of(rot) -> float:
@@ -52,9 +58,11 @@ def base_in_spawn(base_pos, base_quat_wxyz, spawn_pos, spawn_yaw_quat_wxyz) -> n
     return pose
 
 
-def box_in_spawn(detection, base_spawn) -> np.ndarray:
-    """The enclosure frame in the script's frame from one detection, through the head camera's fixed mount."""
-    return np.asarray(base_spawn) @ box_pose(head_camera.optical_pose_base(), detection)
+def box_in_spawn(detection, base_spawn, camera_pose_base=None) -> np.ndarray:
+    """The enclosure frame in the script's frame from one detection, through a fixed mount: the front camera's
+    (default) or `camera_pose_base`."""
+    camera = front_camera.optical_pose_base() if camera_pose_base is None else np.asarray(camera_pose_base)
+    return np.asarray(base_spawn) @ box_pose(camera, detection)
 
 
 def site_from_pose(box_spawn) -> props.BoxSite:

@@ -1,0 +1,240 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "stopped",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": false,
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T095142_insert_insert_dry",
+    "--task",
+    "insert",
+    "--stage",
+    "insert"
+  ],
+  "started_utc": "20261021T095145",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 10.332,
+      "posture": "lie"
+    },
+    {
+      "t": 33.845,
+      "stop": "the key went 5 mm past where it should seat without touching anything: no lock there?"
+    },
+    {
+      "t": 83.034,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 30,
+    "with_tag": 30,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.33 m ahead, +0.33 m left, turned -0 deg: a walk up of 0.46 m",
+    "detections": 30,
+    "site": {
+      "distance_m": 0.7843,
+      "bearing_deg": -22.649,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.463,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.5,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 1.49
+  },
+  "abort": "the key went 5 mm past where it should seat without touching anything: no lock there?",
+  "attempt_events": [
+    {
+      "t": 5.543,
+      "phase": "grip"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unfold",
+      "mm": 99.3
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.327,
+        -0.328,
+        0.001
+      ]
+    },
+    {
+      "t": 6.671,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "grip_check",
+      "gripper_units": -16.533333333333335,
+      "held": true
+    },
+    {
+      "phase": "camera_gap",
+      "of": "grip",
+      "mm": 97.3
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.523,
+      "lock_right_m": 0.077,
+      "yaw_off_deg": -0.1,
+      "left_m": 0.036,
+      "carried_m": 0.064,
+      "carry_s": 0.25,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 9.246,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 103.4
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 10.6,
+      "turned_deg": 0.08
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.51 m ahead, +0.08 m right, door +0.0 deg off square"
+    },
+    {
+      "t": 10.245,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 103.4
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.2
+    },
+    {
+      "t": 13.178,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 103.4
+    },
+    {
+      "phase": "refit_lying",
+      "moved_mm": 2.6,
+      "turned_deg": 0.13
+    },
+    {
+      "phase": "reanchor_lying",
+      "ok": true,
+      "text": "the seated key 0.51 m ahead, +0.08 m right, door +0.1 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "pre",
+          "camera_mm": 160.3,
+          "shoulder_share": 0.61
+        },
+        {
+          "pose": "back",
+          "camera_mm": 159.9,
+          "shoulder_share": 0.51
+        },
+        {
+          "pose": "touch",
+          "camera_mm": 161.8,
+          "shoulder_share": 0.64
+        },
+        {
+          "pose": "seated",
+          "camera_mm": 163.6,
+          "shoulder_share": 0.65
+        },
+        {
+          "pose": "across+",
+          "camera_mm": 167.3,
+          "shoulder_share": 0.63
+        },
+        {
+          "pose": "across-",
+          "camera_mm": 156.6,
+          "shoulder_share": 0.64
+        }
+      ]
+    },
+    {
+      "phase": "key_go",
+      "path_clear": true
+    },
+    {
+      "t": 14.67,
+      "phase": "key_go"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 103.4
+    },
+    {
+      "t": 16.743,
+      "phase": "key_pre"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_go",
+      "mm": 104.0
+    },
+    {
+      "t": 18.743,
+      "phase": "key_in"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_pre",
+      "mm": 160.3
+    }
+  ]
+}

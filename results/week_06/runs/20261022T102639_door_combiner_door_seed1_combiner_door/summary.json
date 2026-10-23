@@ -1,0 +1,76 @@
+{
+  "controller": "combiner_door",
+  "task": "door",
+  "summary": {
+    "attempts": 1,
+    "successes": 0,
+    "falls": 0,
+    "arm_speed_peak_rad_s_median": 0.484,
+    "jaw_centre_error_arrive_m_median": null,
+    "lateral_error_arrive_m_median": null,
+    "finger_contact_grip_n_median": null,
+    "door_at_end_of_hold_deg_median": null,
+    "door_at_end_of_hold_deg": [
+      0.0
+    ],
+    "max_door_deg_median": 0.01,
+    "jaw_centre_error_pull_m_median": null,
+    "finger_contact_pull_n_median": null,
+    "max_base_pose_error_m_median": null,
+    "max_base_yaw_error_deg_median": null,
+    "base_yaw_final_deg_median": -4.198,
+    "tag_found": 0,
+    "look_site_position_mm_median": null,
+    "look_site_position_mm_max": 0.0,
+    "look_site_yaw_deg_median": null,
+    "lidar_read_fraction_median": null,
+    "lidar_error_deg_median": null,
+    "lidar_error_deg_p90_max": 0.0,
+    "verified_open": 0,
+    "verified_agrees_with_success": 1
+  },
+  "attempts": [
+    {
+      "attempt": 0,
+      "fell": false,
+      "phase_start_s": {
+        "spawn": 0.0,
+        "look": 3.98,
+        "no_tag": 4.98
+      },
+      "max_door_deg": 0.01,
+      "final_door_deg": 0.01,
+      "max_handle_deg": -0.0,
+      "final_handle_deg": -0.0,
+      "final_phase": "no_tag",
+      "arm_speed_peak_rad_s": 0.484,
+      "site": {
+        "distance_m": 0.6759,
+        "bearing_deg": 3.47,
+        "yaw_deg": 186.11
+      },
+      "door_at_end_of_hold_deg": null,
+      "base_yaw_final_deg": -4.198,
+      "base_forward_final_m": -0.1768,
+      "base_left_final_m": -0.0006,
+      "ik_counts": {},
+      "grasp": "",
+      "look": {
+        "steps": 50,
+        "frames": 48,
+        "detections": 0,
+        "found": false
+      },
+      "lidar": {
+        "frames_grip_pull_hold": 0,
+        "read": 0,
+        "error_deg_median": null,
+        "error_deg_p90": null,
+        "error_deg_max": null
+      },
+      "lidar_door_at_end_of_hold_deg": null,
+      "verified_open": false,
+      "success": false
+    }
+  ]
+}

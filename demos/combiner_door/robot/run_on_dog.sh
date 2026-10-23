@@ -8,8 +8,12 @@
 #   demos/combiner_door/robot/run_on_dog.sh --stage pull             # the whole attempt as a dry run
 #   demos/combiner_door/robot/run_on_dog.sh --stage unfold --live    # unfold the arm and fold it again
 #   demos/combiner_door/robot/run_on_dog.sh --stage grip --live      # look, unfold, walk in, reach, grip, back off, fold
+#   demos/combiner_door/robot/run_on_dog.sh --task key --stage turn  # the key turned by the arm, dry (key_plan.py)
+#   demos/combiner_door/robot/run_on_dog.sh --task key --stage turn --then_door pull  # then the door pulled from there
+#   demos/combiner_door/robot/run_on_dog.sh --task insert --stage insert  # the key handed to the arm and inserted
 #
-# Every argument goes to node.py (--stage, --live, --yes, --speed_scale, --door_deg, --odom, --no_fold; --help).
+# Every argument goes to node.py (--task, --stage, --then_door, --camera, --live, --yes, --speed_scale, --door_deg, --odom, --no_fold;
+# --help).
 # A live run waits for one Enter after showing its plan, then runs through; `a` + Enter stops it. Keep the Unitree remote
 # in hand. The record is logs/combiner_door_robot/<run>/ (`d1fetch` on the PC copies it back).
 set -euo pipefail
@@ -35,6 +39,9 @@ done
 
 LIVE=0
 STAGE=watch
+TASK=""
+THEN=""
+CAMERA=front
 args=("$@")
 for ((i = 0; i < ${#args[@]}; i++)); do
   case "${args[$i]}" in
@@ -42,12 +49,24 @@ for ((i = 0; i < ${#args[@]}; i++)); do
     --stage) STAGE="${args[$((i + 1))]:-}" ;;
     --stage=*) STAGE="${args[$i]#--stage=}" ;;
     --release) STAGE=release ;;
+    --task) case "${args[$((i + 1))]:-}" in key|insert) TASK="${args[$((i + 1))]}_" ;; esac ;;
+    --task=key|--task=insert) TASK="${args[$i]#--task=}_" ;;
+    --then_door) THEN="_door_${args[$((i + 1))]:-}" ;;
+    --then_door=*) THEN="_door_${args[$i]#--then_door=}" ;;
+    --camera) CAMERA="${args[$((i + 1))]:-}" ;;
+    --camera=*) CAMERA="${args[$i]#--camera=}" ;;
   esac
 done
 
+# The look's default camera is the Go2's front camera, which only P2Dingo's front camera container puts on ROS.
+if [ "$CAMERA" = front ] && [ "$STAGE" != release ] \
+   && ! docker ps -q -f "name=^p2dingo-front-camera$" | grep -q .; then
+  die "the look uses the Go2's front camera and p2dingo-front-camera is not running: cd $P2 && docker compose up -d front_camera (or --camera wrist)"
+fi
+
 STAMP="$(date -u +%Y%m%dT%H%M%S)"
 SUFFIX=dry; [ "$LIVE" = 1 ] && SUFFIX=live
-RUN_DIR="logs/combiner_door_robot/${STAMP}_${STAGE}_${SUFFIX}"
+RUN_DIR="logs/combiner_door_robot/${STAMP}_${TASK}${STAGE}${THEN}_${SUFFIX}"
 mkdir -p "$REPO/$RUN_DIR"
 
 for name in "$NODE_NAME" "$ARM_NAME"; do

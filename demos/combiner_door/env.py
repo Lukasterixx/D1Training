@@ -1,10 +1,12 @@
-"""The combiner door demo's environment: the decoupled door pull, finding the box with the head camera and verifying
-the door with the MID-360.
+"""The combiner door demo's environment: the decoupled door pull, finding the box with the Go2's front camera and
+verifying the door with the MID-360.
 
 On top of `demos.unifp.decoupled.DecoupledDoorEnv` (the walking policy on the legs, inverse kinematics on the arm, the
 door pull's script, scene, placements and record):
-- **The robot starts `LOOK_BACK_M` behind the door pull's stance**, where the head camera sees the whole tag at every
-  placement (from the stance itself it is cut off at a quarter of them). The script's frame is the stance, so the
+- **The robot starts `LOOK_BACK_M` behind the door pull's stance**, where the front camera sees the whole tag at every
+  placement (from the stance itself it is above the top of the image). The front camera (`front_camera`, since
+  2026-10-22; the head RealSense before) is rendered as a wide pinhole and remapped through its fisheye model
+  (`front_camera.distort_render`), so the detector sees the 1280x720 fisheye image the dog streams. The script's frame is the stance, so the
   placements and everything the script does from the stance on are the door pull's.
 - **Before the task: look, then walk in** (`pre_phases`). While standing after the spawn settles, every camera frame of
   the `look` phase is searched for the tag and every lidar frame kept; at its end the box placement the script works
@@ -46,7 +48,7 @@ from demos.unifp import props, script as demo_script
 from demos.unifp.decoupled import DecoupledDoorEnv
 from unifp_isaaclab import interface
 
-from . import head_camera, mid360, perception
+from . import front_camera, head_camera, mid360, perception
 
 LOOK_BACK_M = perception.LOOK_BACK_M
 #: The look, the walk in and the pause after it, seconds. The look is long enough for the lidar's frames to add up
@@ -129,8 +131,9 @@ class CombinerDoorEnv(DecoupledDoorEnv):
         self.joint_phases = set(JOINT_PHASES)
         self.look_back_m = float(getattr(cfg, "look_back_m", LOOK_BACK_M))
         self.door_deg = float(getattr(cfg, "door_deg", props.DOOR_PULL_DEG))
-        self.camera_model = head_camera.camera_model()
-        self.detector = TagDetector(self.camera_model.intrinsic_matrix)
+        self.camera_model = front_camera.camera_model()
+        self.detector = TagDetector(self.camera_model.intrinsic_matrix,
+                                    fisheye_distortion=self.camera_model.distortion)
         count = self.num_envs
         self.truth_sites: list = [None] * count
         self.estimates: list = [None] * count
@@ -154,13 +157,12 @@ class CombinerDoorEnv(DecoupledDoorEnv):
     def _setup_scene(self):
         super()._setup_scene()
         out = head_camera.ROOT / "generated/combiner_door"
+        # The head bracket stays; the D435i it held is on the D1's wrist since 2026-10-21, so no case is drawn there.
         bracket = sim_utils.UsdFileCfg(usd_path=head_camera.build_bracket_usd(out))
         bracket.func(f"{BASE_PRIM}/head_rs_bracket", bracket)
-        case = sim_utils.UsdFileCfg(usd_path=head_camera.build_case_usd(head_camera.ROOT / "generated/pick_demo"))
-        case.func(f"{BASE_PRIM}/head_rs_body", case, translation=head_camera.COLOUR_SENSOR_BASE_M,
-                  orientation=head_camera.OPTICAL_QUAT_BASE_WXYZ)
-        self._head_cam = TiledCamera(head_camera.camera_cfg(head_camera.camera_model(), f"{BASE_PRIM}/head_cam"))
-        self.scene.sensors["head_cam"] = self._head_cam
+        # `_setup_scene` runs inside the parent's __init__, before `self.camera_model` exists.
+        self._front_cam = TiledCamera(front_camera.render_cfg(f"{BASE_PRIM}/front_cam", front_camera.camera_model()))
+        self.scene.sensors["front_cam"] = self._front_cam
         self._lidar = MultiMeshRayCaster(mid360.lidar_cfg(LIDAR_TARGETS, BASE_PRIM))
         self.scene.sensors["mid360"] = self._lidar
 
@@ -265,8 +267,9 @@ class CombinerDoorEnv(DecoupledDoorEnv):
                 continue
             record["frames"] = record.get("frames", 0) + 1
             if rgb is None:
-                rgb = self._head_cam.data.output["rgb"]
-            detections = self.detector.detect(rgb[index, ..., :3].cpu().numpy().astype(np.uint8))
+                rgb = self._front_cam.data.output["rgb"]
+            image = front_camera.distort_render(rgb[index, ..., :3].cpu().numpy().astype(np.uint8), self.camera_model)
+            detections = self.detector.detect(image)
             for detection in detections:
                 self._look_poses[index].append(perception.box_in_spawn(detection, self._base_in_script(index)))
                 record["side_px"] = round(detection.side_px, 1)

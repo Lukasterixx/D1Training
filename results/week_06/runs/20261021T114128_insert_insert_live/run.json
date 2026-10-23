@@ -1,0 +1,406 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "running",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": true,
+  "camera": "wrist",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261021T114128_insert_insert_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--live",
+    "--yes"
+  ],
+  "started_utc": "20261021T114131",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 1.195,
+      "aimed": [
+        -3.1,
+        -8.4,
+        57.7,
+        -4.1,
+        -44.7,
+        2.8
+      ]
+    },
+    {
+      "t": 22.402,
+      "posture": "lie"
+    },
+    {
+      "t": 33.122,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -13.8,
+          6.8,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.61,
+        "runner_up": 2.04,
+        "why": "only 0% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 33.348,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -13.4,
+          5.0,
+          0.0
+        ],
+        "support": 0.014,
+        "score": 1.54,
+        "runner_up": 1.88,
+        "why": "only 1% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 33.601,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -13.8,
+          6.9,
+          0.0
+        ],
+        "support": 0.014,
+        "score": 1.55,
+        "runner_up": 2.07,
+        "why": "only 1% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 33.868,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -13.8,
+          6.7,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.52,
+        "runner_up": 1.84,
+        "why": "only 0% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 34.246,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -12.4,
+          11.9,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.37,
+        "runner_up": 1.42,
+        "why": "only 0% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 34.438,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -14.6,
+          -11.3,
+          0.0
+        ],
+        "support": 0.014,
+        "score": 1.66,
+        "runner_up": 2.45,
+        "why": "only 1% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 34.649,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -14.8,
+          -6.9,
+          0.0
+        ],
+        "support": 0.042,
+        "score": 2.84,
+        "runner_up": 4.53,
+        "why": "only 4% of the rim seen dark inside (needs 40%)"
+      }
+    },
+    {
+      "t": 51.826,
+      "stop": "the key went 5 mm past where it should seat without touching anything: no lock there?"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 29,
+    "with_tag": 28,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.37 m ahead, +0.25 m left, turned +1 deg: a walk up of 0.45 m",
+    "detections": 28,
+    "site": {
+      "distance_m": 0.731,
+      "bearing_deg": -25.505,
+      "yaw_deg": 180.0
+    },
+    "walk_in_m": 0.446,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.2,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": -0.82
+  },
+  "abort": "the key went 5 mm past where it should seat without touching anything: no lock there?",
+  "attempt_events": [
+    {
+      "t": 4.495,
+      "phase": "load"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "unfold",
+      "mm": 115.8
+    },
+    {
+      "t": 8.646,
+      "phase": "grip"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "load",
+      "mm": 100.2
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.376,
+        -0.246,
+        -0.031
+      ]
+    },
+    {
+      "t": 10.742,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "grip_check",
+      "gripper_units": -19.4,
+      "held": false,
+      "try": 1
+    },
+    {
+      "phase": "camera_gap",
+      "of": "grip",
+      "mm": 100.2
+    },
+    {
+      "t": 15.058,
+      "phase": "grip"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "load",
+      "mm": 100.2
+    },
+    {
+      "t": 16.794,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "grip_check",
+      "gripper_units": 0.8,
+      "held": true,
+      "try": 2
+    },
+    {
+      "phase": "camera_gap",
+      "of": "grip",
+      "mm": 100.2
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.488,
+      "lock_right_m": 0.075,
+      "yaw_off_deg": 0.6,
+      "left_m": 0.019,
+      "carried_m": 0.039,
+      "carry_s": 0.16,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 20.946,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 91.5
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 54.6,
+      "turned_deg": 0.97
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.44 m ahead, +0.08 m right, door -0.4 deg off square"
+    },
+    {
+      "t": 22.199,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 101.8
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.2476
+    },
+    {
+      "t": 25.34,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 81.4
+    },
+    {
+      "phase": "refit_lying",
+      "moved_mm": 21.8,
+      "turned_deg": 0.3
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.46 m ahead, +0.05 m right, door +3.0 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "camera_mm": 140.7,
+          "shoulder_share": 0.48
+        },
+        {
+          "pose": "pre",
+          "camera_mm": 140.5,
+          "shoulder_share": 0.58
+        },
+        {
+          "pose": "touch",
+          "camera_mm": 140.3,
+          "shoulder_share": 0.61
+        },
+        {
+          "pose": "seated",
+          "camera_mm": 140.3,
+          "shoulder_share": 0.62
+        },
+        {
+          "pose": "across+",
+          "camera_mm": 145.8,
+          "shoulder_share": 0.61
+        },
+        {
+          "pose": "across-",
+          "camera_mm": 134.8,
+          "shoulder_share": 0.61
+        }
+      ]
+    },
+    {
+      "phase": "key_go",
+      "path_clear": true
+    },
+    {
+      "t": 26.942,
+      "phase": "key_go"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 80.8
+    },
+    {
+      "t": 32.195,
+      "phase": "key_view"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_go",
+      "mm": 76.9
+    },
+    {
+      "phase": "keyhole",
+      "frames": 6,
+      "found": 0,
+      "why_not": [
+        "only 0% of the rim seen dark inside (needs 40%)",
+        "only 1% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "t": 34.694,
+      "phase": "key_pre"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_view",
+      "mm": 132.7
+    },
+    {
+      "t": 36.694,
+      "phase": "key_in"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_pre",
+      "mm": 143.9
+    }
+  ]
+}
