@@ -3682,6 +3682,90 @@ The same 10 s stand from the dog's rest in simulation, actions dumped (`--leg_sh
 - **Nothing falls during the stand.** On light legs the press does: 124 and 135 of 288 fell after the 10 s, while
   lifting the foot or at the pre-contact point.
 
+### 2026-10-23 · Round 4 on light legs, and a fine-tune on rima's legs
+
+Lukas: "yes, run the light legs fine tune", then, of the first attempt's armature 0.0002-0.012: "is this what rima trained
+on? ... I want to replicate rima since I know it works".
+
+**What rima trained on.** It didn't. rima's walking policy trained on unitree_rl_lab's Go2 velocity task
+(`~/unitree_rl_lab-main`, `tasks/locomotion/robots/go2/velocity_env_cfg.py`, `assets/robots/unitree.py`):
+- **Legs and loop:**
+  - the GO2HV curve on all twelve joints, the knee capped at the hip's 23.4 N·m;
+  - kp 25 / kd 0.5 and joint friction 0.01;
+  - no armature set (the USD's: 0 for Isaac Lab's Go2, F-168);
+  - no command delay (the delay buffer's default 0).
+- **Regularisation:**
+  - observation noise on the policy's input: joint velocity ±1.5 rad/s, joint position ±0.01 rad, angular velocity
+    ±0.2 rad/s, gravity ±0.05;
+  - `action_rate` -0.1 and joint torques -2e-4. Ours: -0.02 and -5e-6, and no observation noise at all.
+- **Randomisation:** floor friction 0.3-1.2, base mass -1 to +3 kg, pushes.
+
+**The first attempt stopped.** ft5a and ft5b (armature 0.0002-0.012, delay 0-25 ms; ft5b with `action_rate` -0.2) were
+stopped by hand at iterations ~6137 and ~6108 for rima's setup:
+[ft5a](#/week/6/run/20261023T121418_train_seed3_press_ft5a_force_s3), [ft5b](#/week/6/run/20261023T121519_train_seed3_press_ft5b_force_s3).
+
+**Round 4's final on light legs**, from the dog's rest:
+
+| condition | presses | fell | past 60 N |
+| --- | --- | --- | --- |
+| [the dog's hands, armature 0.0002, 15-20 ms](#/week/6/run/20261023T122815_leg_eval_seed1_press_r4_force_5999_hands_light) | 10 of 288 | 83 | 166 |
+| [the dog's hands, armature 0, 5-15 ms](#/week/6/run/20261023T122903_leg_eval_seed1_press_r4_force_5999_hands_zero) | 0 of 288 | 62 | 228 |
+| [the frozen set, armature 0.0002, 15-20 ms](#/week/6/run/20261023T122952_leg_eval_seed1_press_r4_force_5999_dogrest_light) | 5 of 288 | 171 | 85 |
+| [10 s stand, armature 0.0002, 15-20 ms](#/week/6/run/20261023T122649_leg_eval_seed1_press_r4_force_5999_stand10_light) | (no presses) | 135, after the stand | |
+| [10 s stand, armature 0, 5-15 ms](#/week/6/run/20261023T122732_leg_eval_seed1_press_r4_force_5999_stand10_zero) | (no presses) | 146, after the stand | |
+
+- **On light legs round 4 cannot press:** the dog's hands 0-10 of 288, struck past 60 N in most.
+- **It stands,** with nothing falling in the 10 s. It chatters at 15-20 ms (FL thigh 0.27 rad rms) but not at 5-15 ms
+  (0.004).
+- **Its presses on the dog rest on the legs being as heavy as it trained on** (armature 0.003-0.02), which nothing
+  has measured.
+
+**ft6, the fine-tune on rima's legs.** From round 4's final, 1000 iterations alone:
+- rima's legs and regularisation: armature 0, no command delay, unitree_rl_lab's observation noise (`--obs_noise`, new:
+  `leg_cfg.OBS_NOISE`), `action_rate` -0.1 and torques -2e-4 (`--action_rate_weight`, `--torques_weight`, new);
+- kept from ours: the geared knee, because the dog's rear knees measured 20-27 N·m in F-188, past rima's 23.4, and
+  the crouch needs ~21-24; the 16 N upward cap; round 4's stands and layer;
+- not replicated: rima's floor friction and base mass randomisation (not in this environment).
+
+A first launch never started: argparse took `--torques_weight -2e-4` for an option, so no run directory was made. Its
+queue went on and made round 4's baselines above.
+
+    logs/unifp_train/press/train_one.sh force <round 4 model_5999.pt> press_ft6_force_s3 1000 --press_up_cap_n 16 \
+      --press_hold_correction --press_release_from_press_point --press_plate_face_only --leg_armature_range 0 0 \
+      --leg_delay_min_steps 0 --leg_delay_steps 0 --obs_noise --action_rate_weight -0.1 --torques_weight -0.0002
+
+### 2026-10-24 · ft6 on rima's legs: no rattle, safer but weaker presses; exported for a stand-only test
+
+[ft6](#/week/6/run/20261023T123207_train_seed3_press_ft6_force_s3) trained 1000 iterations. In training its force error fell 15.7 -> 10.3 N and its
+damage share 75% -> 21% (round 4 at the end of its own: ~4.5 N, 3-14%), still falling.
+
+The step-to-step change of the targets while standing 10 s from the dog's rest, FL / RR thigh, rms:
+
+| legs | round 4's final | ft6 6600 | ft6 6998 |
+| --- | --- | --- | --- |
+| armature 0.0002, 15-20 ms | 0.27 / 0.22 rad | [0.005 / 0.004](#/week/6/run/20261023T131315_leg_eval_seed1_press_ft6_force_6600_stand10_light) | [0.005 / 0.002](#/week/6/run/20261023T130733_leg_eval_seed1_press_ft6_force_6998_stand10_light) |
+| armature 0, 5-15 ms | 0.004 / 0.005 | [0.003 / 0.002](#/week/6/run/20261023T131358_leg_eval_seed1_press_ft6_force_6600_stand10_zero) | [0.003 / 0.001](#/week/6/run/20261023T130817_leg_eval_seed1_press_ft6_force_6998_stand10_zero) |
+| trained (0.01 / 0.037), 5-15 ms | 0.002 / 0.001 | [0.002 / 0.002](#/week/6/run/20261023T131730_leg_eval_seed1_press_ft6_force_6600_stand10) | [0.002 / 0.001](#/week/6/run/20261023T131152_leg_eval_seed1_press_ft6_force_6998_stand10) |
+
+Presses of 288 / fell / past 60 N, from the dog's rest:
+
+| | round 4's final | ft6 6600 | ft6 6998 |
+| --- | --- | --- | --- |
+| the dog's hands, trained legs | 280 / 0 / 5 | [225 / 0 / 23](#/week/6/run/20261023T131646_leg_eval_seed1_press_ft6_force_6600_hands) | [208 / 0 / 59](#/week/6/run/20261023T131108_leg_eval_seed1_press_ft6_force_6998_hands) |
+| the dog's hands, armature 0.0002, 15-20 ms | 10 / 83 / 166 | [123 / 0 / 15](#/week/6/run/20261023T131440_leg_eval_seed1_press_ft6_force_6600_hands_light) | [36 / 0 / 0](#/week/6/run/20261023T130900_leg_eval_seed1_press_ft6_force_6998_hands_light) |
+| the dog's hands, armature 0, 5-15 ms | 0 / 62 / 228 | [82 / 0 / 30](#/week/6/run/20261023T131522_leg_eval_seed1_press_ft6_force_6600_hands_zero) | [90 / 0 / 29](#/week/6/run/20261023T130942_leg_eval_seed1_press_ft6_force_6998_hands_zero) |
+| frozen set, armature 0.0002, 15-20 ms | 5 / 171 / 85 | [32 / 2 / 72](#/week/6/run/20261023T131604_leg_eval_seed1_press_ft6_force_6600_dogrest_light) | [11 / 8 / 45](#/week/6/run/20261023T131026_leg_eval_seed1_press_ft6_force_6998_dogrest_light) |
+| frozen set, classic stand, trained legs | 196 / 0 / 5 | [48 / 2 / 31](#/week/6/run/20261023T131812_leg_eval_seed1_press_ft6_force_6600_real) | [24 / 21 / 33](#/week/6/run/20261023T131234_leg_eval_seed1_press_ft6_force_6998_real) |
+
+- **The rattle is gone on every leg model,** and nothing falls in the 10 s stand. Its falls (8-12 of 288 in the stand
+  runs) come at ~15 s, mid-press. Its waiting tilt reaches 21-22°: every stand is past 15°, none past 30°.
+- **On light legs it is safe where round 4 is not:** the hands with no falls, against 62-83.
+- **It is not accurate.** Its press failures are mostly off force and under-pressing (bias -1.5 to -11.6 N). The frozen
+  set's harder presses mostly fail (24-48 from the classic stand, against 196).
+- **Exported for a stand-only test** of whether the dog still rattles: `checkpoints/leg_press_force_ft6_model_6998.npz`
+  (sha256 78909359...; numpy to 4.0e-6). Its `start_gate`, from round 4's stands, is pitch -3.8 to +1.0°, which refuses
+  the dog's 8.1° rest unless the live program's start flags override it.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
@@ -3750,6 +3834,10 @@ The same 10 s stand from the dog's rest in simulation, actions dumped (`--leg_sh
 
 ## Findings this week
 
+- [F-197](../findings.md): fine-tuned on rima's legs, the foot-press policy stops chattering on every leg model and
+  stops falling on light legs, but presses less accurately; exported for a stand-only test (provisional, simulation).
+- [F-196](../findings.md): the dog's rattle is reproduced in simulation by lighter legs and a longer command delay; on
+  the legs it trained on round 4 does not chatter (provisional, simulation against one live run).
 - [F-195](../findings.md): fine-tuned for a level base, the foot-press policy stops the crouch (no 10 s stand past
   15°) but loses the dog's own hand presses: tilt penalised everywhere, tip-overs and strikes past 60 N; only while
   standing, over-presses the palm under the foot (42-64 of 144 against round 4's 144) (provisional, simulation).

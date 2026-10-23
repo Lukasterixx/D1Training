@@ -98,6 +98,14 @@ puts a hand there, and it presses at most 5 N. The first program here that comma
   applies, and the dog's kp-25 rest (0.20 rad, 8.1° nose up) fails it. In simulation round 4 presses from that rest as
   from its trained stands (F-192: 197 of 288, none fell; the dog's own two hands 280 of 288, F-195).
 
+**For the rattle (2026-10-24, F-196, F-197):** `checkpoints/leg_press_force_ft6_model_6998.npz` is round 4's final
+fine-tuned on rima's legs: armature 0, no delay, unitree_rl_lab's observation noise and penalties.
+- **In simulation it stands without chattering** on light legs and on the trained ones.
+- **Nothing falls in its 10 s stand.** Its waiting tilt reaches 21-22°: past the default 15° stop, under 30°.
+- **It is for a stand-only test** (`--presses 0`), not for presses: it presses the dog's hands worse than round 4.
+- **Its export's `start_gate`** (pitch -3.8 to +1.0°) refuses the dog's rest unless the program's start flags
+  override it.
+
 `checkpoints/leg_press_force_ft2a_model_6598.npz` (F-193) is a fine-tune from the dog's handover starts. It is not
 better than round 4's, and it crouches too (past 15° in 238 of 288 10 s stands): not for the dog. The level-base
 fine-tunes after it (F-195) stood level but lost the palm press, and are not exported.

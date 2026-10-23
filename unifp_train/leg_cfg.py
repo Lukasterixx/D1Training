@@ -87,6 +87,11 @@ FOOT_FORCE_KP = 400.0
 EPISODE_LENGTH_S = 16.0
 #: Base height and orientation limits that end an episode (UniFP's tilt limits, plus a floor for the trunk).
 MIN_BASE_HEIGHT_M = 0.14
+#: `--obs_noise` (training, the actor's frame only): uniform noise of these half-widths on the raw quantities, before
+#: UniFP's scales -- unitree_rl_lab's Go2 velocity task (`tasks/locomotion/robots/go2/velocity_env_cfg.py`, the
+#: policy group's Unoise; Isaac Lab adds an observation's noise before its scale), which the walking policy that runs
+#: on the dog (rima's) trained with. Its gravity vector's 0.05 stands here on UniFP's roll and pitch (rad).
+OBS_NOISE = {"roll_pitch": 0.05, "ang_vel": 0.2, "dof_pos": 0.01, "dof_vel": 1.5}
 #: `tilt_excess` (off unless weighted, `run_unifp_train.py --tilt_excess_weight`): the tilt from upright it starts at.
 #: 2026-10-23: the foot-press policy sat back 17-25 degrees nose up within 0.3 s of every start, waiting, in simulation as
 #: on the dog (F-188), where the live program stops at 15.

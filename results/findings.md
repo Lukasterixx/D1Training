@@ -7040,3 +7040,25 @@ result that changes a conclusion gets a new entry, and the old one is marked
     ~25 ms. Score it on the 10 s stand's chatter and on the dog's hands on light legs.
   - Until then, round 4 should not press on the dog: on light legs it tips as it lifts the foot.
 
+### F-197 — Fine-tuned on rima's legs and regularisation (leg armature 0, no command delay, unitree_rl_lab's observation noise and penalties; geared knee kept), round 4's foot-press policy stops chattering on every leg model tried (FL thigh 0.002-0.005 rad rms a step while standing, where round 4 shows 0.27 on light legs at 15-20 ms) and stops falling on light legs (the dog's hands 0 falls, against round 4's 62-83), but presses less accurately: the dog's hands 36-225 of 288 depending on legs and checkpoint, against round 4's 280 on the legs it trained on
+
+- **Status:** provisional (simulation; one run, 1000 iterations, not converged)
+- **Week:** 6
+- **Date:** 2026-10-24
+- **Evidence:** [Week 6 log, 2026-10-24](week_06/notes.md), "ft6 on rima's legs".
+  - [The run](#/week/6/run/20261023T123207_train_seed3_press_ft6_force_s3).
+  - Standing: [light legs](#/week/6/run/20261023T130733_leg_eval_seed1_press_ft6_force_6998_stand10_light), [trained legs](#/week/6/run/20261023T131152_leg_eval_seed1_press_ft6_force_6998_stand10).
+  - The hands: [trained legs](#/week/6/run/20261023T131108_leg_eval_seed1_press_ft6_force_6998_hands), [light](#/week/6/run/20261023T130900_leg_eval_seed1_press_ft6_force_6998_hands_light),
+    [light, at 6600](#/week/6/run/20261023T131440_leg_eval_seed1_press_ft6_force_6600_hands_light).
+  - Round 4's light-leg baselines: [the hands](#/week/6/run/20261023T122815_leg_eval_seed1_press_r4_force_5999_hands_light),
+    [the stand](#/week/6/run/20261023T122649_leg_eval_seed1_press_r4_force_5999_stand10_light).
+- **Scope:**
+  - Simulation.
+  - Not converged: training's force error still falling at 10 N.
+  - rima's floor friction and base mass randomisation not replicated; the knee not rima's.
+  - The dog's legs are not measured (F-196).
+- **Implication:**
+  - Training on rima's legs and regularisation is what removes the chatter in simulation. Whether it removes it on
+    the dog is the stand-only test.
+  - If it does, the press needs more training on these legs, and its accuracy has to be scored on the dog's hands.
+

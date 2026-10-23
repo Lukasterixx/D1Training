@@ -1,0 +1,63 @@
+{
+  "id": "20261023T123207_train_seed3_press_ft6_force_s3",
+  "title": "Press force fine-tune ft6 on rima's legs: armature 0, no delay, unitree_rl_lab obs noise, action_rate -0.1, torques -2e-4, geared knee (from r4 5999)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-24T00:19:12+11:00",
+  "started_utc": "2026-10-23T12:32:07+00:00",
+  "source_dir": "logs/unifp_train/20261023T123207_train_seed3_press_ft6_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "02ebbb96ba04b46027168f4bd0b66876e4fa9aa4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 6998,
+  "final_checkpoint": {
+    "file": "model_6998.pt",
+    "sha256": "8cdabb7cd5e8afeffa0267a35d61b6250a3314c6989c13924ed0d91a1a0ae77d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 146.56838989257812,
+      "last_step": 6998,
+      "mean_last_10": 146.59655303955077,
+      "min": 1.652260184288025,
+      "max": 169.19346618652344,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 670.6699829101562,
+      "last_step": 6998,
+      "mean_last_10": 671.1249938964844,
+      "min": 10.339622497558594,
+      "max": 819.7100219726562,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.21847942471504211,
+      "last_step": 6998,
+      "mean_last_10": 0.21803111732006072,
+      "min": 0.2005881667137146,
+      "max": 0.22011439502239227,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 23571.0,
+      "last_step": 6998,
+      "mean_last_10": 23494.9,
+      "min": 21311.0,
+      "max": 25594.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

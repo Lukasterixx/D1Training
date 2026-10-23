@@ -40,6 +40,19 @@ gate uses, so the dog's own rest is admitted. In simulation it presses no better
 past the live program's 15° stop as round 4's does (F-194): kept for the record, not for the dog. Round 4's final is the
 press policy (Lukas, 2026-10-23). Numpy against the checkpoint: actions to 7.1e-6.
 
+`leg_press_force_ft6_model_6998.npz` (2026-10-24, F-197) is round 4's final fine-tuned on rima's legs: leg armature 0,
+no command delay, unitree_rl_lab's observation noise, `action_rate` -0.1 and torques -2e-4, the geared knee and the
+16 N upward cap kept; 1000 iterations; `logs/unifp_train/20261023T123207_train_seed3_press_ft6_force_s3/`, gitignored.
+- **For a stand-only test of the dog's rattle.** In simulation it stands without chattering on every leg model tried
+  (FL thigh 0.002-0.005 rad rms a step, where round 4 shows 0.27 on light legs with 15-20 ms), and nothing falls in the
+  10 s stand.
+- **Not for presses.** It presses the dog's hands 208 of 288 on the trained legs (round 4: 280), with 59 contacts
+  past 60 N.
+- **Its `start_gate`** is round 4's stands' (0.462 rad, pitch -3.8 to +1.0°). It refuses the dog's 8.1° nose-up rest
+  unless the live program's own start flags override it.
+
+Numpy against the checkpoint: actions to 4.0e-6.
+
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 
 `p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs

@@ -124,6 +124,8 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     #: the robot is not standing on (round 5 tipped at 33-42 N of contact), and two fine-tunes from round 4 learned to
     #: push the frozen set's 28 N there and fell (2026-10-23). None: the levels as drawn (rounds 1-5).
     press_up_cap_n: float | None = None
+    #: Training only: unitree_rl_lab's observation noise on the actor's frame (`leg_cfg.OBS_NOISE`), on the legs' joints.
+    obs_noise: bool = False
     #: `leg_object="press"` only: the tilt terms' weights. None: `foot_press_cfg.ORIENTATION_WEIGHT` (-4, since round 2);
     #: `tilt_excess_weight` 0: off (`leg_rewards.tilt_excess`, its threshold `leg_cfg.TILT_EXCESS_RAD`).
     press_orientation_weight: float | None = None
@@ -679,9 +681,20 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
 
     def _get_observations(self) -> dict:
         dof_pos, dof_vel = self._dof()
+        ang_vel = self._robot.data.root_ang_vel_b
+        noisy = self.cfg.obs_noise and self._evaluation is None
+        if noisy:
+            n, k = leg_cfg.OBS_NOISE, interface.NUM_ACTIONS - 6
+            u = lambda shape, half: (2 * torch.rand(shape, device=self.device) - 1) * half
+            dof_pos, dof_vel = dof_pos.clone(), dof_vel.clone()
+            dof_pos[:, :k] += u((self.num_envs, k), n["dof_pos"])
+            dof_vel[:, :k] += u((self.num_envs, k), n["dof_vel"])
+            ang_vel = ang_vel + u((self.num_envs, 3), n["ang_vel"])
         actor = interface.single_obs(
-            self._robot.data.root_quat_w, self._robot.data.root_ang_vel_b,
+            self._robot.data.root_quat_w, ang_vel,
             dof_pos, dof_vel, self._actions, self._gait_phase, self._commands)
+        if noisy:
+            actor[:, :2] += u((self.num_envs, 2), leg_cfg.OBS_NOISE["roll_pitch"])
         actor = torch.clip(actor, -interface.CLIP_OBSERVATIONS, interface.CLIP_OBSERVATIONS)
         yaw = self._base_yaw_quat()
         feet_forces = self._contact_forces(self._feet_contacts)

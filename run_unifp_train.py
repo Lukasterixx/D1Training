@@ -135,6 +135,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--press_up_cap_n", type=float, default=None,
                         help="--leg_object press, training: cap the commanded force's upward component (a plate facing "
                              "down) at this, N (F-182). Off by default.")
+    parser.add_argument("--action_rate_weight", type=float, default=None,
+                        help="--task leg: the weight of UniFP's action_rate term, the squared change of the actions "
+                             "between steps (leg_cfg.REWARD_WEIGHTS: -0.02).")
+    parser.add_argument("--torques_weight", type=float, default=None,
+                        help="--task leg: the weight of the legs' squared torques (leg_cfg.REWARD_WEIGHTS: -5e-6; "
+                             "unitree_rl_lab's Go2: -2e-4).")
+    parser.add_argument("--obs_noise", action="store_true",
+                        help="--task leg, training: unitree_rl_lab's Go2 observation noise on the actor's frame "
+                             "(leg_cfg.OBS_NOISE).")
     parser.add_argument("--press_orientation_weight", type=float, default=None,
                         help="--leg_object press: the weight of UniFP's orientation term (default foot_press_cfg's -4).")
     parser.add_argument("--tilt_excess_weight", type=float, default=0.0,
@@ -609,6 +618,12 @@ def main() -> int:
             if args.key_press_limit_n is not None:
                 cfg.press_limit_n = args.key_press_limit_n
             cfg.press_excess_weight = args.key_press_weight
+            if args.action_rate_weight is not None:
+                # Read when the environment builds its weights; recorded with them (`leg.weights`).
+                leg_cfg.REWARD_WEIGHTS["action_rate"] = args.action_rate_weight
+            if args.torques_weight is not None:
+                leg_cfg.REWARD_WEIGHTS["torques"] = args.torques_weight
+            cfg.obs_noise = args.obs_noise
             if args.leg_armature_range is not None:
                 cfg.leg_armature_range = tuple(args.leg_armature_range)
                 cfg.knee_armature_factor = args.leg_knee_armature_factor
@@ -989,6 +1004,7 @@ def main() -> int:
                  "leg_armature_range": (list(cfg.leg_armature_range) if cfg.leg_armature_range is not None else None),
                  "knee_armature_factor": cfg.knee_armature_factor,
                  "press_up_cap_n": cfg.press_up_cap_n,
+                 "obs_noise": dict(leg_cfg.OBS_NOISE) if cfg.obs_noise else None,
                  "press_orientation_weight": cfg.press_orientation_weight, "tilt_excess_weight": cfg.tilt_excess_weight,
                  "tilt_stages": cfg.tilt_stages,
                  "tilt_excess_deg": round(math.degrees(leg_cfg.TILT_EXCESS_RAD), 3),

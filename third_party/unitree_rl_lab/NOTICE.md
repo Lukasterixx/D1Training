@@ -11,3 +11,4 @@ Adapted into this repository, with changes described in each file's docstring:
 | `motor_model.py`, `unitree_actuators.py` | `source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree_actuators.py` |
 | `position_only/deploy.py` | `source/unitree_rl_lab/unitree_rl_lab/utils/export_deploy_cfg.py` |
 | Randomisation and observation-noise values in `position_only/env_cfg.py` | `tasks/locomotion/robots/go2/velocity_env_cfg.py` |
+| Observation-noise values in `unifp_train/leg_cfg.py` (`OBS_NOISE`) | `tasks/locomotion/robots/go2/velocity_env_cfg.py` |
