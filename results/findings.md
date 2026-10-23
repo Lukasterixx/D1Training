@@ -7017,3 +7017,26 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - For the dog, two separate things: ft4 can stand under the live program's 15° stop (a stand-only test of the
     policy on the real legs); presses are round 4's, which needs the stop at ~40° (its largest tilt p95 36°).
 
+### F-196 — The rattle the dog shows under round 4's foot-press policy is reproduced in simulation by lighter legs and a longer command delay: on the legs the policy trained on (armature 0.01 / 0.037) its targets change by 0.002-0.008 rad a step out to 25 ms of delay, but at UniFP's armature (0.0002 / 0.0007) with 15-20 ms they chatter on the dog's three joints at the dog's size (FL / RR thighs 0.27 / 0.22 rad rms, 2.4 rad/s; the dog 0.23 / 0.18, 1.6 / 2.3), and on those legs the policy falls in 124-135 of 288 presses as it lifts the foot
+
+- **Status:** provisional (simulation against one live run's numbers)
+- **Week:** 6
+- **Date:** 2026-10-23
+- **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The rattle on the dog reproduced in simulation". The
+  10 s stand from the dog's rest with actions dumped:
+  - trained legs: [5-15 ms](#/week/6/run/20261023T111930_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay1to3), [20 ms](#/week/6/run/20261023T112137_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay4to4),
+    [25 ms](#/week/6/run/20261023T112220_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay5to5);
+  - armature 0.003: [15-20 ms](#/week/6/run/20261023T112603_leg_eval_seed1_press_r4_force_5999_stand10_arm0.003_delay3to4);
+  - armature 0.0002: [5-15 ms](#/week/6/run/20261023T112519_leg_eval_seed1_press_r4_force_5999_stand10_arm0.0002_delay1to3), [15-20 ms](#/week/6/run/20261023T112646_leg_eval_seed1_press_r4_force_5999_stand10_arm0.0002_delay3to4).
+  The dog's numbers are the other PC's analysis of its run (2026-10-23).
+- **Scope:**
+  - The dog's armature and loop delay are not measured; the match identifies a direction, not values.
+  - One live run.
+  - The falls on light legs are in the frozen v2 set's presses, not the dog's hands.
+- **Implication:**
+  - The rattle is the policy's sensitivity to legs lighter than it trained on, made worse by delay. The latency cut
+    helped for that reason, and a filter on the dog would treat the symptom.
+  - The fix that should hold for the press is a fine-tune with the armature drawn down to ~0.0002 and the delay out to
+    ~25 ms. Score it on the 10 s stand's chatter and on the dog's hands on light legs.
+  - Until then, round 4 should not press on the dog: on light legs it tips as it lifts the foot.
+

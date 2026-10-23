@@ -3649,6 +3649,39 @@ changed here:
 - **the settle gate:** the default 0.20 rad / 5° refuses the dog's kp-25 rest (8.1° nose up), from which round 4 presses
   as from its trained stands in simulation.
 
+### 2026-10-23 · The rattle on the dog reproduced in simulation: light legs and a long command delay, not the policy alone
+
+The other PC's live run (round 4's final, `--presses 0`, the stop at 40°) held the full 10 s at 20-25° nose up, as
+simulation predicts (F-194). It rattled: the FL and RR thighs and the RL calf flip their targets almost every step:
+- before its latency cut: rms 0.23 / 0.18 rad on the FL / RR thighs, 1.6 / 2.3 rad/s;
+- after it (the command 4.0 ms after the step starts): rms 0.13 / 0.09 rad.
+
+The same 10 s stand from the dog's rest in simulation, actions dumped (`--leg_shadow_dump 96`, the waiting from 0.6 to
+10 s). The step-to-step change of the targets, rms:
+
+| legs, command delay | FL thigh | RR thigh | RL calf | FL / RR thigh speed, rms |
+| --- | --- | --- | --- | --- |
+| trained (armature 0.01 / 0.037), 0 ms ([run](#/week/6/run/20261023T112012_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay0to0)) | 0.003 rad | 0.002 | 0.002 | 0.34 / 0.10 rad/s |
+| trained, 5-15 ms ([run](#/week/6/run/20261023T111930_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay1to3)) | 0.002 | 0.001 | 0.001 | 0.09 / 0.05 |
+| trained, 15 ms ([run](#/week/6/run/20261023T112054_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay3to3)) | 0.002 | 0.002 | 0.001 | 0.03 / 0.06 |
+| trained, 20 ms ([run](#/week/6/run/20261023T112137_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay4to4)) | 0.007 | 0.006 | 0.004 | 0.07 / 0.08 |
+| trained, 25 ms ([run](#/week/6/run/20261023T112220_leg_eval_seed1_press_r4_force_5999_stand10_actions_delay5to5)) | 0.008 | 0.008 | 0.005 | 0.08 / 0.11 |
+| armature 0.003 / 0.011, 5-15 ms ([run](#/week/6/run/20261023T112437_leg_eval_seed1_press_r4_force_5999_stand10_arm0.003_delay1to3)) | 0.002 | 0.002 | 0.001 | 0.09 / 0.06 |
+| armature 0.003 / 0.011, 15-20 ms ([run](#/week/6/run/20261023T112603_leg_eval_seed1_press_r4_force_5999_stand10_arm0.003_delay3to4)) | 0.034 | 0.028 | 0.016 | 0.32 / 0.32 |
+| armature 0.0002 / 0.0007, 5-15 ms ([run](#/week/6/run/20261023T112519_leg_eval_seed1_press_r4_force_5999_stand10_arm0.0002_delay1to3)) | 0.004 | 0.005 | 0.003 | 0.16 / 0.16 |
+| armature 0.0002 / 0.0007, 15-20 ms ([run](#/week/6/run/20261023T112646_leg_eval_seed1_press_r4_force_5999_stand10_arm0.0002_delay3to4)) | 0.27 | 0.22 | 0.11 | 2.4 / 2.4 |
+| the dog, before / after the latency cut | 0.23 / 0.13 | 0.18 / 0.09 | | 1.6 / 2.3, then 1.0 / 1.0 |
+
+- **On the legs it trained on, the policy does not chatter**, out to 25 ms of delay (0.002-0.008 rad).
+- **On light legs with 15-20 ms it does,** on the dog's three joints (the FL and RR thighs, the RL calf) and at the
+  dog's size. A quarter of those stands rattle (FL thigh rms past 0.15 rad in 23% of 96).
+- **Armature 0.0002 is UniFP's original value.** unitree_rl_lab leaves the Go2's at its robot file's 0 (F-168), which
+  is what rima's walking policy trained on. Round 4 trained on 0.003-0.02.
+- **The dog's legs are not identified.** Its rattle after the cut lies between armature 0.003 and 0.0002 at 15-20 ms:
+  lighter legs, a longer delay or both. Neither is measured.
+- **Nothing falls during the stand.** On light legs the press does: 124 and 135 of 288 fell after the 10 s, while
+  lifting the foot or at the pre-contact point.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
