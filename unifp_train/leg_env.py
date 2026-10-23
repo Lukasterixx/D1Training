@@ -124,6 +124,17 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     #: the robot is not standing on (round 5 tipped at 33-42 N of contact), and two fine-tunes from round 4 learned to
     #: push the frozen set's 28 N there and fell (2026-10-23). None: the levels as drawn (rounds 1-5).
     press_up_cap_n: float | None = None
+    #: `leg_object="press"` only: the tilt terms' weights. None: `foot_press_cfg.ORIENTATION_WEIGHT` (-4, since round 2);
+    #: `tilt_excess_weight` 0: off (`leg_rewards.tilt_excess`, its threshold `leg_cfg.TILT_EXCESS_RAD`).
+    press_orientation_weight: float | None = None
+    tilt_excess_weight: float = 0.0
+    #: Where those two apply: "all" (every step, ft3) or "standing" (plate episodes waiting on the foot-down command or
+    #: with the foot back down, on top of foot_press_cfg's -4 everywhere): F-188's sit-back came while the dog stood.
+    tilt_stages: str = "all"
+    #: Policy steps a plate episode waits on the foot-down command before the approach starts: drawn in this range in
+    #: training (0.3-1 s until 2026-10-23; the dog waits 10 s and more), fixed at the second in a frozen evaluation.
+    start_delay_steps: tuple[int, int] = (15, 50)
+    eval_start_delay_steps: int = 25
 
 
 class Go2D1LegEnv(Go2D1PosForceEnv):
@@ -981,10 +992,11 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         if len(ids) > 0:
             if self._evaluation is not None:
                 draw = {k: v[ids] for k, v in self._evaluation["handles"].items()}
-                self._start_delay[ids] = 25
+                self._start_delay[ids] = self.cfg.eval_start_delay_steps
             else:
                 draw = self._draw_objects(ids)
-                self._start_delay[ids] = torch.randint(15, 50, (len(ids),), device=self.device)
+                lo, hi = self.cfg.start_delay_steps
+                self._start_delay[ids] = torch.randint(lo, hi, (len(ids),), device=self.device)
             self._place_objects(ids, draw)
 
     def _draw_objects(self, ids: torch.Tensor) -> dict[str, torch.Tensor]:

@@ -7,6 +7,7 @@ import importlib.util
 import json
 import math
 import tempfile
+import types
 import unittest
 from pathlib import Path
 
@@ -80,6 +81,23 @@ class TheLibrary(unittest.TestCase):
                 counts["round4"] += 1
         for name, share in build.SHARES.items():
             self.assertAlmostEqual(counts[name] / len(library), share, delta=0.03)
+
+
+class TiltTerm(unittest.TestCase):
+    def test_hinge_past_the_threshold(self):
+        import torch
+        from unifp_train import leg_rewards
+        tilts = torch.tensor([0.0, 5.0, 10.0, 25.0, -25.0])
+        g = torch.stack((torch.sin(torch.deg2rad(tilts)), torch.zeros(5), -torch.cos(torch.deg2rad(tilts))), dim=-1)
+        state = types.SimpleNamespace(projected_gravity_b=g)
+        saved = leg_cfg.TILT_EXCESS_RAD
+        try:
+            leg_cfg.TILT_EXCESS_RAD = math.radians(10.0)
+            out = leg_rewards.tilt_excess(state)
+        finally:
+            leg_cfg.TILT_EXCESS_RAD = saved
+        np.testing.assert_allclose(out.numpy(), np.radians([0.0, 0.0, 0.0, 15.0, 15.0]), atol=1e-5)
+        self.assertIn("tilt_excess", leg_rewards.TERMS)
 
 
 class StartGate(unittest.TestCase):

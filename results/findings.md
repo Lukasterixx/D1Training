@@ -6830,7 +6830,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-191 — Under the policy's own default targets at kp 25 / kd 0.5 the real dog does not settle into the stance the policy trained from: it comes to rest 8.1 degrees nose up at 0.261 m with the rear thighs 0.16-0.20 rad lower (0.272 m, level in training), and from that rest, or from the stand-up hold at kp 80, the policy's first step asks ~0.5 rad of the rear thighs where it asks 0.25 from the trained stance -- close to what it asked in F-188 before the rear gave way
 
-- **Status:** confirmed (one live run on the dog; the policy's response computed offline, open loop)
+- **Status:** confirmed (one live run on the dog; the policy's response computed offline, open loop); see
+  [F-194](#f-194): the policy's ~0.5 rad first step starts the crouch it takes from every start in simulation
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The second live run: the stand only".
@@ -6877,7 +6878,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-192 — Simulating the dog's handover (lying, the stand-up on kp 80, the blend to kp 25) reproduces its kp-80 hold (0.306 m and 4.9 degrees nose up, the dog 0.303 and 4.6) and the direction of its kp-25 rest, but sinks further (0.215 m against 0.261); from every stance that handover gives, at rest or sinking at up to 0.18 m/s, round 4's force-aware final presses 197-203 of 288 frozen presses without a fall, as it does from its trained stands (196): in simulation the start stance does not explain F-188, and 1 N·m of leg joint friction costs more (197 -> 139)
 
-- **Status:** provisional (simulation)
+- **Status:** provisional (simulation); its scope's last point and its implication superseded by [F-194](#f-194): the
+  simulated policy does sit back as the dog did, from every start
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The handover simulated, round 4's final from the dog's
@@ -6918,7 +6920,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-193 — Fine-tuning round 4's foot-press final on the dog's handover starts brings back round 5's tipping on upward presses (19-33 of 288 fell, peaks to 67 N median, with leg friction 0-2 N·m) unless the training caps the upward force; with it capped at 16 N the fine-tune stands (0 falls on the dog's plate kinds) but presses no better than round 4 on walls and plates facing up (79-126 against 80-129 of 144) and transfers worse to the key (88 against 107), and its first step from the dog's rest is round 4's (0.51 rad); exported for the dog with a start gate that admits that rest
 
-- **Status:** provisional (simulation; one seed per arm, deterministic evaluations)
+- **Status:** provisional (simulation; one seed per arm, deterministic evaluations); its implication's last point
+  superseded by [F-194](#f-194): the stand-only test would stop on the policy's own crouch
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The handover simulated, round 4's final from the dog's
@@ -6955,4 +6958,62 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - For the start stance, no fine-tune improved on round 4 in simulation. The export is useful for the gate it
     carries: it lets the live program start from the dog's own rest, the test that says whether the start or the
     legs' dynamics made F-188.
+
+### F-194 — The foot-press policy sits back in simulation just as the dog did in F-188: within 0.14-0.30 s of every start, still waiting on the foot-down command, its base drops ~12 cm to 0.22 m and pitches 17-25 degrees nose up on ~21 N·m at the support knees (the dog: 0.273 -> 0.212 m, 20 degrees at the stop, 20-27 N·m), and it presses from that posture (each episode's largest tilt median 30-32 degrees, up to 42); the live program's 15-degree tilt stop fired on the policy's trained posture, not on a fall
+
+- **Status:** confirmed in simulation (the traces of evaluations already recorded); one live run to compare
+- **Week:** 6
+- **Date:** 2026-10-23
+- **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "Why the dog sat back: the policy's own crouch". The
+  per-step traces (`leg_trace.npz`) of round 4's final:
+  - from [the classic stand](#/week/6/run/20261023T032947_leg_eval_seed1_press_r4_force_5999_real_control): base 0.338 -> 0.219 m in the first 0.5 s, pitch
+    22° nose up, past 15° in 288 of 288 at 0.30 s (median); one episode -12.8° at 0.18 s, -14.6° at 0.24 s, -21.4° at
+    0.42 s, all before its approach starts at 0.48 s;
+  - from [the dog's kp-25 rest](#/week/6/run/20261023T023140_leg_eval_seed1_press_r4_force_5999_dogrest): 0.271 -> 0.215 m, 25°, past 15° at 0.18 s in 99%;
+  - from [the simulated hold](#/week/6/run/20261023T023220_leg_eval_seed1_press_r4_force_5999_simhold): 0.313 -> 0.218 m, 23°, at 0.26 s in 100%;
+  - from [the sink in motion](#/week/6/run/20261023T023608_leg_eval_seed1_press_r4_force_5999_simmoving): 25°, at 0.14 s in 100%.
+  - While waiting (0.2-0.48 s): support-knee torque median 20-21 N·m (p90 23-24).
+  - Through the episode: median pitch by stage -13 to -19° waiting, -24° lifting, -26 to -30° pressing, -21° returning,
+    -9° with the foot back down. Each episode's largest tilt: median 30-32°, p95 37-38°, at most 42°.
+  - ft2a's final, the exported fine-tune ([from the dog's rest](#/week/6/run/20261023T042653_leg_eval_seed1_press_ft2a_force_6598_dogrest)): 15.6°
+    median in the first 0.5 s, past 15° in 73%.
+  - F-188's dog: 0.273 -> 0.212 m, rear knees -1.86 -> -2.43 rad, 20.3° nose up at 0.24 s when the stop fired,
+    20-27 N·m measured.
+- **Scope:**
+  - The comparison is with one live run's 0.24 s. Whether the real dog would have held the crouch, as the simulated
+    one does, was not seen: the stop cut it.
+  - The posture is what the training rewarded: UniFP's orientation term at -4 costs a 25° crouch ~0.7 a second, against
+    ~10 a second of positive reward; the base height term costs the 12 cm drop 0.01 a second.
+  - Found late: F-192 and F-193 judged the simulated starts by falls, not by tilt.
+- **Implication:**
+  - Under the live program's 15° stop every run of round 4's final or ft2a's is stopped within ~0.3 s, from any start.
+  - F-192's "nothing modelled here reproduces it" and F-193's stand-only test are superseded.
+  - The fine-tune Lukas chose (2026-10-23) targets a level base: the tilt penalised past a hinge, long waits on the
+    foot-down command, each candidate scored on how many episodes pass 15°.
+
+### F-195 — Fine-tuned for a level base, the foot-press policy stops the crouch but loses the dog's own presses: penalising the tilt everywhere (ft3a, ft3c) levels it (6-9 degrees) and drops the dog's two hands to 75-174 of 288 with up to 30 tip-overs and 87 contacts past 60 N; penalising it only while standing (ft4) passes no 10 s stand past 15 degrees (round 4: 284 of 288) but over-presses the palm under the foot (42-64 of 144, up to 29 past 120 N), where round 4's final presses all 144
+
+- **Status:** provisional (simulation; one seed per recipe)
+- **Week:** 6
+- **Date:** 2026-10-23
+- **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md): "The fine-tune for a level base", "ft3a trained on (ft3c)",
+  "Level only while standing (ft4)".
+  - The dog's hands (`--plate_set dog`, 288 presses at 5 and 8 N from the dog's rest):
+    - [round 4's final](#/week/6/run/20261023T084229_leg_eval_seed1_press_r4_force_5999_hands): 280, palm_up 144 of 144, 0 fell, 5 past 60 N;
+    - [ft3a](#/week/6/run/20261023T084352_leg_eval_seed1_press_ft3a_force_6998_hands): 75;
+    - [ft3c](#/week/6/run/20261023T084438_leg_eval_seed1_press_ft3c_force_7997_hands): 174, 30 fell on palm_up, 87 past 60 N;
+    - [ft4](#/week/6/run/20261023T092414_leg_eval_seed1_press_ft4_force_6998_hands): 178, palm_up 64, 29 past 120 N.
+  - The 10 s stand: [round 4](#/week/6/run/20261023T061421_leg_eval_seed1_press_r4_force_5999_dogrest_stand10) 284 of 288 past 15° while waiting;
+    [ft3a](#/week/6/run/20261023T074333_leg_eval_seed1_press_ft3a_force_6998_dogrest_stand10), [ft3c](#/week/6/run/20261023T083405_leg_eval_seed1_press_ft3c_force_7997_dogrest_stand10) and
+    [ft4](#/week/6/run/20261023T092458_leg_eval_seed1_press_ft4_force_6998_dogrest_stand10) 0.
+- **Scope:**
+  - Simulation; one seed per recipe, 600-2000 iterations from round 4.
+  - Every fine-tune shares ft2a's recipe (the dog's starts, the 16 N upward cap, round 4's layer), and ft2a already
+    lost palm_up presses (108 of 144). Which of its parts costs that press is not separated.
+  - Leg friction at 1 N·m costs every policy most of the hand presses (round 4: 84).
+- **Implication:**
+  - Round 4's crouch is how it presses the dog's hands cleanly in simulation. A level base costs that press with these
+    recipes.
+  - For the dog, two separate things: ft4 can stand under the live program's 15° stop (a stand-only test of the
+    policy on the real legs); presses are round 4's, which needs the stop at ~40° (its largest tilt p95 36°).
 

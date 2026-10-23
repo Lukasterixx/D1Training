@@ -78,6 +78,12 @@ def orientation(state: rewards.TaskState) -> torch.Tensor:
     return torch.sum(torch.square(state.projected_gravity_b[:, :2]), dim=1)
 
 
+def tilt_excess(state: rewards.TaskState) -> torch.Tensor:
+    """The base's tilt from upright past `leg_cfg.TILT_EXCESS_RAD`, rad: a hinge where `orientation`'s square is soft."""
+    tilt = torch.acos((-state.projected_gravity_b[:, 2]).clamp(-1.0, 1.0))
+    return (tilt - leg_cfg.TILT_EXCESS_RAD).clamp(min=0.0)
+
+
 def base_height(state: rewards.TaskState) -> torch.Tensor:
     return torch.square(state.root_pos_w[:, 2] - leg_cfg.BASE_HEIGHT_TARGET)
 
@@ -179,6 +185,7 @@ TERMS = {
     "lin_vel_z": rewards.lin_vel_z,
     "ang_vel_xy": rewards.ang_vel_xy,
     "orientation": orientation,
+    "tilt_excess": tilt_excess,
     "base_height": base_height,
     "collision": rewards.collision,
     "dof_pos_limits": dof_pos_limits,

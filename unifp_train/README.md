@@ -726,6 +726,11 @@ plant (round 5) learned to push plates facing down at the full 28 N and tipped t
   may carry its velocities) tip on upward presses unless `--press_up_cap_n` caps the upward force in training. Capped at
   16 N, ft2a stands but presses no better than round 4.
 - Exported as `checkpoints/leg_press_force_ft2a_model_6598.npz`, with a `start_gate` that admits the dog's rest.
+- **The sit-back is the policy's own posture (F-194).** Every start crouches 17-25° nose up within 0.3 s in simulation,
+  as on the dog, so the live program's 15° stop ends every run.
+- **Level-base fine-tunes lose the presses (F-195).** `--tilt_excess_weight`, `--tilt_stages standing` and long waits
+  (`--start_delay_steps`) level the stand but lose the dog's palm press (`--plate_set dog`, the live program's two
+  hands). Round 4's final stays the policy.
 
 What it is not: the plates are analytic -- nothing in PhysX touches them, only the foot sphere, the knee and the head
 through penalty forces; the thighs and calves pass through a plate's slab unchecked. The layer is told the plate by an

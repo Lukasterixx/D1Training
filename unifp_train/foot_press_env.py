@@ -68,6 +68,10 @@ class Go2D1FootPressEnv(Go2D1LegEnv):
         #: stall, the foot ever on the plate.
         self._err_sum, self._err_count = zeros(n), zeros(n)
         self._terms["press_force"] = press_force
+        # The tilt terms while standing only (`cfg.tilt_stages == "standing"`).
+        standing = lambda: (self._handle_env & ((self._stage == leg_env.WAITING) | (self._stage == FOOT_DOWN))).float()
+        self._terms["orientation_standing"] = lambda state: leg_rewards.orientation(state) * standing()
+        self._terms["tilt_excess_standing"] = lambda state: leg_rewards.tilt_excess(state) * standing()
 
     def _weight_table(self, handles: bool) -> dict[str, float]:
         weights = dict(leg_cfg.REWARD_WEIGHTS)
@@ -78,7 +82,17 @@ class Go2D1FootPressEnv(Go2D1LegEnv):
                 weights["press_force"] = pc.PRESS_FORCE_WEIGHT
         if self.cfg.stance_weight > 0.0:
             weights["support_stance"] = self.cfg.stance_weight
-        weights["orientation"] = pc.ORIENTATION_WEIGHT
+        if self.cfg.tilt_stages == "standing":
+            weights["orientation"] = pc.ORIENTATION_WEIGHT
+            if self.cfg.press_orientation_weight is not None:
+                weights["orientation_standing"] = self.cfg.press_orientation_weight
+            if self.cfg.tilt_excess_weight != 0.0:
+                weights["tilt_excess_standing"] = self.cfg.tilt_excess_weight
+            return weights
+        weights["orientation"] = (pc.ORIENTATION_WEIGHT if self.cfg.press_orientation_weight is None
+                                  else self.cfg.press_orientation_weight)
+        if self.cfg.tilt_excess_weight != 0.0:
+            weights["tilt_excess"] = self.cfg.tilt_excess_weight
         return weights
 
     # --- placing plates -----------------------------------------------------------------------------------------------

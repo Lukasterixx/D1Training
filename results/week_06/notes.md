@@ -3468,10 +3468,197 @@ On the dog: `demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/l
 - If it sits back as in F-188, the gap is the legs' dynamics, which no start-stance fine-tune here addresses. The joint
   friction is the candidate to measure first.
 
+### 2026-10-23 · Why the dog sat back: the policy's own crouch, in simulation too; the fine-tune turned to a level base
+
+Lukas: "so no improvement has been made by this fine tuning? why did the dog then fall over?" Looking again at the
+evaluations' per-step traces, not their fall counts, shows the answer (F-194).
+
+Simulation sits back exactly as the dog did. Within 0.14-0.30 s of every start, still waiting on the foot-down command
+(the frozen evaluation's approach starts at 0.48 s), round 4's final drops ~12 cm to 0.22 m and pitches 17-25° nose up,
+with the support knees at ~21 N·m:
+- from the classic stand: 0.338 -> 0.219 m, 22°;
+- from the dog's rest: 0.271 -> 0.215 m, 25°;
+- from the simulated hold: 0.313 -> 0.218 m, 23°.
+
+The dog in F-188: 0.273 -> 0.212 m, 20° when the stop fired at 0.24 s, 20-27 N·m. In simulation the robot then presses
+from that posture: median pitch -26 to -30° while pressing, each episode's largest tilt 30-32° (median), at most 42°.
+
+So the live program's 15° tilt stop fired on the policy's trained posture, not on a fall. Every run of round 4's final or
+ft2a's would stop the same way (ft2a crouches less, 15.6°, but still past 15° in 73% from the dog's rest).
+
+- **The earlier entries were wrong here.** They judged the starts by falls; "nothing modelled here reproduces it"
+  (F-192) and the stand-only test proposed with ft2a (F-193) are superseded, marked so in the findings.
+- **The posture is what the training rewarded.** UniFP's orientation term at -4 costs a 25° crouch ~0.7 a second, against
+  ~10 a second of positive reward. The base height term (-2) costs the 12 cm drop 0.01 a second. Training waited only
+  0.3-1 s before each approach.
+
+Lukas chose a fine-tune for a level base over a wider tilt stop. Its pieces, new today:
+- `leg_rewards.tilt_excess`, the tilt from upright past `--tilt_excess_deg` in radians, weighted by
+  `--tilt_excess_weight`;
+- `--press_orientation_weight`, which overrides foot_press_cfg's -4;
+- `--start_delay_steps LO HI`, the waiting drawn per episode in training;
+- `--eval_start_delay_steps`: 500 is a stand-only evaluation, 10 s on the foot-down command like `--presses 0`;
+- in the press evaluation, `max_tilt_waiting_deg` per episode, and in its summary `tilt_over_15` and
+  `tilt_waiting_over_15`, the episodes the live program's stop would end.
+
+### 2026-10-23 · The fine-tune for a level base: the crouch gone, the presses down by a fifth
+
+Two fine-tunes from round 4's `model_5999`, 1000 iterations in parallel, on ft2a's recipe (the dog's handover starts,
+the upward force capped at 16 N) plus two changes:
+- **Long waits:** each plate episode waits 15-250 policy steps (0.3-5 s) on the foot-down command before its approach.
+- **A harsher tilt penalty:**
+  - [ft3a](#/week/6/run/20261023T061625_train_seed3_press_ft3a_force_s3): orientation -20 and `tilt_excess` -20 per rad past 10°, about 9 a second at
+    25°;
+  - [ft3b](#/week/6/run/20261023T061725_train_seed3_press_ft3b_force_s3): -40 and -60 past 8°, about 25 a second at 25°.
+
+    logs/unifp_train/press/train_one.sh force <round 4 model_5999.pt> press_ft3a_force_s3 1000 \
+      --spawn_states demos/combiner_key/assets/dog_stand_20261023/ft_starts.json --spawn_states_fraction 0.85 \
+      --press_up_cap_n 16 --press_hold_correction --press_release_from_press_point --press_plate_face_only \
+      --start_delay_steps 15 250 --press_orientation_weight -20 --tilt_excess_weight -20 --tilt_excess_deg 10
+    # ft3b: --press_orientation_weight -40 --tilt_excess_weight -60 --tilt_excess_deg 8
+
+In training the tilt terms fell to a mean of ~6° (ft3a) and ~5° (ft3b) within ~150 iterations. The press force error
+rose to 7.9 and 9.1 N and was still coming down at the end (6.1 and 6.8; ft2a 5.3).
+
+Presses of 288 / fell / episodes past the live program's 15° stop (for evaluations made before the metric, from their
+traces):
+
+| policy | classic stand | the dog's rest | 10 s standing from the dog's rest | the dog's rest, friction 1 N·m | the sink in motion |
+| --- | --- | --- | --- | --- | --- |
+| round 4's final | [196 / 0 / 288](#/week/6/run/20261023T032947_leg_eval_seed1_press_r4_force_5999_real_control) | [197 / 0 / 284](#/week/6/run/20261023T023140_leg_eval_seed1_press_r4_force_5999_dogrest) | [0 / 0 / 284](#/week/6/run/20261023T061421_leg_eval_seed1_press_r4_force_5999_dogrest_stand10) | [139 / 0 / 283](#/week/6/run/20261023T023342_leg_eval_seed1_press_r4_force_5999_dogrest_fric1) | [203 / 0 / 287](#/week/6/run/20261023T023608_leg_eval_seed1_press_r4_force_5999_simmoving) |
+| ft2a's final | [185 / 0 / 287](#/week/6/run/20261023T042611_leg_eval_seed1_press_ft2a_force_6598_real) | [203 / 0 / 284](#/week/6/run/20261023T042653_leg_eval_seed1_press_ft2a_force_6598_dogrest) | [0 / 0 / 283](#/week/6/run/20261023T061541_leg_eval_seed1_press_ft2a_force_6598_dogrest_stand10) | [148 / 0 / 283](#/week/6/run/20261023T042734_leg_eval_seed1_press_ft2a_force_6598_dogrest_fric1) | [194 / 0 / 287](#/week/6/run/20261023T044554_leg_eval_seed1_press_ft2a_force_6598_simmoving) |
+| ft3a 6600 | [157 / 2 / 10](#/week/6/run/20261023T074539_leg_eval_seed1_press_ft3a_force_6600_real) | [157 / 0 / 9](#/week/6/run/20261023T074621_leg_eval_seed1_press_ft3a_force_6600_dogrest) | [0 / 0 / 11](#/week/6/run/20261023T074703_leg_eval_seed1_press_ft3a_force_6600_dogrest_stand10) | [131 / 1 / 3](#/week/6/run/20261023T074744_leg_eval_seed1_press_ft3a_force_6600_dogrest_fric1) | [154 / 5 / 50](#/week/6/run/20261023T074825_leg_eval_seed1_press_ft3a_force_6600_simmoving) |
+| ft3a 6998 | [154 / 8 / 4](#/week/6/run/20261023T074208_leg_eval_seed1_press_ft3a_force_6998_real) | [174 / 5 / 7](#/week/6/run/20261023T074251_leg_eval_seed1_press_ft3a_force_6998_dogrest) | [0 / 3 / 3](#/week/6/run/20261023T074333_leg_eval_seed1_press_ft3a_force_6998_dogrest_stand10) | [129 / 7 / 6](#/week/6/run/20261023T074416_leg_eval_seed1_press_ft3a_force_6998_dogrest_fric1) | [156 / 4 / 33](#/week/6/run/20261023T074457_leg_eval_seed1_press_ft3a_force_6998_simmoving) |
+| ft3b 6600 | [118 / 12 / 0](#/week/6/run/20261023T075237_leg_eval_seed1_press_ft3b_force_6600_real) | [119 / 15 / 0](#/week/6/run/20261023T075319_leg_eval_seed1_press_ft3b_force_6600_dogrest) | [0 / 11 / 0](#/week/6/run/20261023T075401_leg_eval_seed1_press_ft3b_force_6600_dogrest_stand10) | [102 / 17 / 0](#/week/6/run/20261023T075442_leg_eval_seed1_press_ft3b_force_6600_dogrest_fric1) | [117 / 9 / 17](#/week/6/run/20261023T075524_leg_eval_seed1_press_ft3b_force_6600_simmoving) |
+| ft3b 6998 | [97 / 14 / 15](#/week/6/run/20261023T074907_leg_eval_seed1_press_ft3b_force_6998_real) | [138 / 14 / 14](#/week/6/run/20261023T074949_leg_eval_seed1_press_ft3b_force_6998_dogrest) | [0 / 4 / 4](#/week/6/run/20261023T075032_leg_eval_seed1_press_ft3b_force_6998_dogrest_stand10) | [109 / 4 / 7](#/week/6/run/20261023T075113_leg_eval_seed1_press_ft3b_force_6998_dogrest_fric1) | [122 / 13 / 47](#/week/6/run/20261023T075155_leg_eval_seed1_press_ft3b_force_6998_simmoving) |
+
+The 10 s stand scores no presses by construction: its episodes end before a press can finish. It is there for the
+waiting.
+
+Largest tilt while waiting, median over episodes, from the dog's rest: round 4's final 26.4° (284 of 288 past 15° in
+the 10 s stand), ft2a's 15.8° (238), ft3a's 6.7° (0), ft3b's 6.7-6.8° (0).
+
+- **The crouch is gone.** Neither ft3 checkpoint passes 15° while waiting from a start at rest. Over whole episodes
+  ft3a passes it in 3-11 of 288; its episodes' largest tilt is 8-9° (median), against round 4's 30-32°.
+  - From the moving sink, 29-50 episodes pass 15° while waiting, at the start: those stances are already 5-15° nose
+    up and moving. The dog's handover waits until it is still.
+- **Presses drop by a fifth.** On the classic stand and from the dog's rest ft3a scores 154-174, against round 4's
+  196-197. From the dog's rest at 6600 it loses 60
+  presses round 4 makes:
+  - mostly over-pressed (force bias +4.0 N on them), on low, close plates (contact 0.17 m up and 0.32 m ahead,
+    medians, against 0.19 and 0.38 for all);
+  - with more slips off the plate (45-49 against round 4's 0-4);
+  - plates facing up, the dog's `palm_up` kind, lose the most: 39-46 of 72 against 56-61.
+- **The falls are all 28 N upward presses**, the refusal test above the training cap (2-8 for ft3a, 12-15 for ft3b);
+  nothing falls on the other three kinds. The dog refuses upward presses.
+- **ft3b is too harsh.** It presses 97-138 and falls more.
+- **Next:** ft3a's force error was still falling, so ft3a's final trained on alone for 1000 more iterations, the same
+  recipe ("ft3c").
+
+### 2026-10-23 · ft3a trained on (ft3c), and the dog's own two hands as a plate set: the level policies are not safe on them
+
+[ft3c](#/week/6/run/20261023T075739_train_seed3_press_ft3c_force_s3) is ft3a's final trained on alone for 1000 more iterations on the same recipe.
+Presses / fell / past 15°:
+
+| checkpoint | classic stand | the dog's rest | 10 s standing from it | the dog's rest, friction 1 N·m | the sink in motion |
+| --- | --- | --- | --- | --- | --- |
+| 7600 | [145 / 1 / 1](#/week/6/run/20261023T083610_leg_eval_seed1_press_ft3c_force_7600_real) | [164 / 4 / 3](#/week/6/run/20261023T083651_leg_eval_seed1_press_ft3c_force_7600_dogrest) | [0 / 0 / 2](#/week/6/run/20261023T083732_leg_eval_seed1_press_ft3c_force_7600_dogrest_stand10) | [46 / 145 / 8](#/week/6/run/20261023T083813_leg_eval_seed1_press_ft3c_force_7600_dogrest_fric1) | [157 / 3 / 26](#/week/6/run/20261023T083856_leg_eval_seed1_press_ft3c_force_7600_simmoving) |
+| 7997 | [147 / 0 / 0](#/week/6/run/20261023T083241_leg_eval_seed1_press_ft3c_force_7997_real) | [216 / 3 / 5](#/week/6/run/20261023T083323_leg_eval_seed1_press_ft3c_force_7997_dogrest) | [0 / 0 / 0](#/week/6/run/20261023T083405_leg_eval_seed1_press_ft3c_force_7997_dogrest_stand10) | [145 / 5 / 10](#/week/6/run/20261023T083446_leg_eval_seed1_press_ft3c_force_7997_dogrest_fric1) | [209 / 3 / 16](#/week/6/run/20261023T083528_leg_eval_seed1_press_ft3c_force_7997_simmoving) |
+
+- **The final looks like a recovery.** It is level (largest tilt 6-9° median, none past 15° while waiting) and presses
+  216 from the dog's rest (189 on the three kinds the dog uses, round 4 191).
+- **But it is fragile.**
+  - At 7600 with friction it sank in 145 episodes once its foot was back down: the base level, 0.29 -> 0.14 m.
+  - The final's falls are tip-overs toward the front right (roll +45°) while lifting, 1.7-3 s in. They are toward low,
+    upward-facing plates at (0.17, -0.24, 0.17) and (0.30, -0.22, 0.17) m, near the dog's `palm_up` hand at
+    (0.33, -0.20, 0.11).
+
+**The dog's hands as a plate set** (`--plate_set dog`, new: `foot_press_cfg.EVAL_DOG_*`):
+- the live program's two plates (`press_layer.PLATES`, rows 14027 and 10851 of the training table), rigid and sprung,
+  at its 5 N cap and 8 N;
+- 36 times each with their own estimate errors: 288 presses;
+- v2's rows are unchanged (0 of 288 differ from yesterday's evaluation).
+
+From the dog's rest:
+
+| policy | presses | palm_up | palm_facing | fell | past 60 N | past 15° |
+| --- | --- | --- | --- | --- | --- | --- |
+| round 4's final | [280](#/week/6/run/20261023T084229_leg_eval_seed1_press_r4_force_5999_hands) | 144 / 144 | 136 / 144 | 0 | 5 | 288 |
+| ft2a 6598 | [252](#/week/6/run/20261023T084311_leg_eval_seed1_press_ft2a_force_6598_hands) | 108 | 144 | 0 | 34 | 288 |
+| ft3a 6998 | [75](#/week/6/run/20261023T084352_leg_eval_seed1_press_ft3a_force_6998_hands) | 67 | 8 | 0 | 87 | 0 |
+| ft3c 7997 | [174](#/week/6/run/20261023T084438_leg_eval_seed1_press_ft3c_force_7997_hands) | 48 | 126 | 30, all on palm_up | 87 | 35 |
+| round 4's final, friction 1 N·m | [84](#/week/6/run/20261023T084523_leg_eval_seed1_press_r4_force_5999_hands_fric1) | 51 | 33 | 0 (59 slipped) | 18 | 288 |
+| ft3c 7997, friction 1 N·m | [59](#/week/6/run/20261023T084606_leg_eval_seed1_press_ft3c_force_7997_hands_fric1) | 54 | 5 | 7 | 51 | 13 |
+
+- **Round 4's final presses the dog's hands almost perfectly** in simulation: 141 of 144 at 5 N, median error 1.2 N.
+  Its only fault for the dog is the crouch.
+- **The level policies are not safe there.** They strike the hand past 60 N in 87 of 288, and ft3c tips over in 30 of
+  its 144 palm_up presses.
+- **Leg friction costs all of them most of the hands** (84 and 59): round 4 by slipping off, ft3c by over-pressing.
+- **Not shipped.**
+- **What I take from it.** Penalising the tilt in every stage made the policy press a new way, and 2000 iterations did
+  not relearn it. F-188's sit-back came while the dog stood. Next ("ft4"): the tilt penalised hard only while a plate
+  episode stands (waiting, or the foot back down), round 4's -4 elsewhere (`--tilt_stages standing`, new).
+
+### 2026-10-23 · Level only while standing (ft4): it stands level, and over-presses the palm under the foot
+
+[ft4](#/week/6/run/20261023T084844_train_seed3_press_ft4_force_s3): from round 4's `model_5999`, 1000 iterations alone, on ft2a's recipe with waits of
+0.3-5 s, and the tilt penalised hard (orientation -40, `tilt_excess` -60 per rad past 8°) only while a plate episode
+stands (`--tilt_stages standing`). Round 4's -4 is kept everywhere.
+
+    logs/unifp_train/press/train_one.sh force <round 4 model_5999.pt> press_ft4_force_s3 1000 \
+      --spawn_states demos/combiner_key/assets/dog_stand_20261023/ft_starts.json --spawn_states_fraction 0.85 \
+      --press_up_cap_n 16 --press_hold_correction --press_release_from_press_point --press_plate_face_only \
+      --start_delay_steps 15 250 --tilt_stages standing --press_orientation_weight -40 --tilt_excess_weight -60 \
+      --tilt_excess_deg 8
+
+Presses / fell; then the median largest tilt while waiting and with the foot back down, and the episodes past 15° in
+each:
+
+| | round 4's final | ft4 6600 | ft4 6998 |
+| --- | --- | --- | --- |
+| the dog's hands | 280 / 0; 25.0°, 288; 12.3°, 79 | [180 / 0](#/week/6/run/20261023T092908_leg_eval_seed1_press_ft4_force_6600_hands); 6.8°, 0; 2.5°, 0 | [178 / 0](#/week/6/run/20261023T092414_leg_eval_seed1_press_ft4_force_6998_hands); 6.8°, 0; 1.7°, 0 |
+| 10 s standing from the dog's rest | 0 fell; 26.4°, 284 | [0 fell](#/week/6/run/20261023T092951_leg_eval_seed1_press_ft4_force_6600_dogrest_stand10); 6.8°, 0 | [1 fell](#/week/6/run/20261023T092458_leg_eval_seed1_press_ft4_force_6998_dogrest_stand10); 6.8°, 0 |
+| the dog's rest | 197 / 0 | [177 / 0](#/week/6/run/20261023T093032_leg_eval_seed1_press_ft4_force_6600_dogrest) | [178 / 2](#/week/6/run/20261023T092539_leg_eval_seed1_press_ft4_force_6998_dogrest) |
+| classic stand | 196 / 0 | [147 / 0](#/week/6/run/20261023T093112_leg_eval_seed1_press_ft4_force_6600_real) | [146 / 5](#/week/6/run/20261023T092620_leg_eval_seed1_press_ft4_force_6998_real) |
+| the dog's hands, friction 1 N·m | 84 / 0 | [70 / 0](#/week/6/run/20261023T093154_leg_eval_seed1_press_ft4_force_6600_hands_fric1) | [163 / 1](#/week/6/run/20261023T092702_leg_eval_seed1_press_ft4_force_6998_hands_fric1) |
+| the dog's rest, friction 1 N·m | 139 / 0 | [139 / 0](#/week/6/run/20261023T093236_leg_eval_seed1_press_ft4_force_6600_dogrest_fric1) | [165 / 0](#/week/6/run/20261023T092745_leg_eval_seed1_press_ft4_force_6998_dogrest_fric1) |
+| the sink in motion | 203 / 0 | [175 / 0](#/week/6/run/20261023T093318_leg_eval_seed1_press_ft4_force_6600_simmoving) | [171 / 7](#/week/6/run/20261023T092826_leg_eval_seed1_press_ft4_force_6998_simmoving) |
+
+- **It stands level.** None of the 10 s stands from the dog's rest passes 15° while waiting (round 4: 284 of 288), and
+  the foot back down sits at 1.7-2.7°. While pressing it still crouches (largest tilt 27° median).
+- **It does not press the palm under the foot as round 4 does:** 42-64 of 144 against 144. It over-presses (bias
+  +3.6 to +4.4 N on 5 and 8 N commands; press peak median 12 N), and 15-29 presses strike past 120 N, the damage limit.
+  On the palm in front it scores 114-138 against 136.
+- **Every fine-tune on ft2a's recipe lost that press:** ft2a 108, ft3a 67, ft3c 48, ft4 42-64. Round 4's final is
+  the only policy here that presses both hands cleanly; the recipe's common changes (the dog's starts, the cap, the
+  long waits) are not separated.
+- **Not shipped.** Stopped here to ask Lukas how to go on.
+
+### 2026-10-23 · Back to round 4's final
+
+Lukas: "Ok let's go back to doing the policy that worked. Can you commit and push?"
+
+Round 4's final (`checkpoints/leg_press_force_r4_model_5999.npz`, F-180) stays the foot-press policy. It presses the
+dog's two hands 280 of 288 in simulation from the dog's rest. The fine-tunes of today are recorded and not used.
+
+For the dog the live program has two things in its way (`demos/combiner_key/robot/README.md` says so); neither is
+changed here:
+- **the tilt stop:** `--tilt_limit_deg 15` ends every run on the policy's own crouch, which reaches 36° (p95) in
+  simulation;
+- **the settle gate:** the default 0.20 rad / 5° refuses the dog's kp-25 rest (8.1° nose up), from which round 4 presses
+  as from its trained stands in simulation.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
 
+- Why the dog sat back (F-194, F-195, simulation): the foot-press policy crouches 17-25° nose up within 0.3 s of every
+  start, as the dog did; its tilt stop fired on that posture.
+  - On the dog's own hands (a new 288-press set at 5 and 8 N) round 4's final presses 280, palm_up 144 of 144, with no
+    falls.
+  - Level-base fine-tunes stop the crouch (ft4: no 10 s stand past 15°, round 4: 284 of 288) but lose the palm press
+    (42-64 of 144) or tip over.
 - The foot-press policy from the dog's handover (F-192, F-193, simulation, frozen v2 set of 288 presses):
   - Simulating the handover gives the dog's kp-80 hold (0.306 m, 4.9° nose up; the dog 0.303 m, 4.6°) and sinks
     further at kp 25 (0.215 m against the dog's 0.261).
@@ -3530,6 +3717,12 @@ On the dog: `demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/l
 
 ## Findings this week
 
+- [F-195](../findings.md): fine-tuned for a level base, the foot-press policy stops the crouch (no 10 s stand past
+  15°) but loses the dog's own hand presses: tilt penalised everywhere, tip-overs and strikes past 60 N; only while
+  standing, over-presses the palm under the foot (42-64 of 144 against round 4's 144) (provisional, simulation).
+- [F-194](../findings.md): the foot-press policy sits back 17-25° nose up within 0.3 s of every start in simulation,
+  as the dog did in F-188 (0.22 m, ~21 N·m at the knees), and presses from that posture (up to 42°): the live program's
+  15° stop fired on the trained posture, not on a fall; supersedes part of F-192 and F-193 (confirmed in simulation).
 - [F-193](../findings.md): fine-tuned on the dog's handover starts, the foot-press policy tips on upward presses
   (19-33 of 288) unless training caps the upward force; capped at 16 N it stands, but presses no better than round 4
   where the dog presses and asks the same 0.5 rad first step; exported with a start gate that admits the dog's rest

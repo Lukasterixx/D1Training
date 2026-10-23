@@ -36,8 +36,9 @@ iterations from round 4's `model_5999`, 85% of episodes from `demos/combiner_key
 (the simulated handover's sink, the dog's kp-25 rest and the path to it, round 4's stands), the upward force capped at
 16 N in training, no leg friction; `logs/unifp_train/20261023T033438_train_seed3_press_ft2a_force_s3/`, gitignored. Its
 meta carries a `start_gate` (the stances it trained from: 0.402 rad, pitch -15.9 to +1.0°) that `press_live.py`'s settle
-gate uses, so the dog's own rest is admitted. In simulation it presses no better than round 4's final. Numpy against the
-checkpoint: actions to 7.1e-6.
+gate uses, so the dog's own rest is admitted. In simulation it presses no better than round 4's final, and it sits back
+past the live program's 15° stop as round 4's does (F-194): kept for the record, not for the dog. Round 4's final is the
+press policy (Lukas, 2026-10-23). Numpy against the checkpoint: actions to 7.1e-6.
 
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 

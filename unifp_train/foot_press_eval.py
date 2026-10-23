@@ -40,22 +40,30 @@ TORQUE_FIELDS = leg_eval.TORQUE_FIELDS
 def build_plan(device, plate_set: str = "v2") -> tuple[dict, list[dict]]:
     """`v2`: the 288 presses (module docstring); `slide`: the same 48 plates, rigid, 16 N, once with a tangential part and
     once sliding along the plate (`foot_press_cfg.EVAL_SLIDE_*`)."""
-    if plate_set not in ("v2", "slide"):
+    if plate_set not in ("v2", "slide", "dog"):
         raise ValueError(f"plate set {plate_set!r}")
-    table = foot_press.PlateTable(size=4000, seed=pc.EVAL_TABLE_SEED)
+    if plate_set == "dog":
+        # The live program's hands, rows of the training table, each repeated with its own estimate errors.
+        table = foot_press.PlateTable(size=pc.TABLE_SIZE, seed=pc.TABLE_SEED)
+        g = np.random.default_rng(pc.EVAL_SEED)
+        picks = [row for row in pc.EVAL_DOG_ROWS for _ in range(pc.EVAL_DOG_REPEATS)]
+    else:
+        table = foot_press.PlateTable(size=4000, seed=pc.EVAL_TABLE_SEED)
+        g = np.random.default_rng(pc.EVAL_SEED)
+        picks = []
+        for kind in range(len(pc.KINDS)):
+            idx = np.flatnonzero(table.columns["kind"] == kind)
+            picks += sorted(g.choice(idx, size=pc.EVAL_PLATES_PER_KIND, replace=False).tolist())
     cols = table.columns
-    g = np.random.default_rng(pc.EVAL_SEED)
-    picks = []
-    for kind in range(len(pc.KINDS)):
-        idx = np.flatnonzero(cols["kind"] == kind)
-        picks += sorted(g.choice(idx, size=pc.EVAL_PLATES_PER_KIND, replace=False).tolist())
     m = len(picks)
     err_plane = g.uniform(-pc.EST_ERROR_PLANE_M, pc.EST_ERROR_PLANE_M, (m, 2))
     err_normal = g.uniform(-pc.EST_ERROR_NORMAL_M, pc.EST_ERROR_NORMAL_M, m)
     err_tilt = g.uniform(-pc.EST_ERROR_TILT_RAD, pc.EST_ERROR_TILT_RAD, (m, 2))
     way = g.uniform(0.0, 2 * math.pi, m)                   # drawn after the errors, so v2's draws are unchanged
     rows, sel = [], []
-    conditions = ([(k, t, lv, "press") for k, t in pc.EVAL_STIFFNESS for lv in pc.EVAL_FORCES_N] if plate_set == "v2" else
+    conditions = ([(k, t, lv, "press") for k, t in pc.EVAL_STIFFNESS
+                   for lv in (pc.EVAL_DOG_LEVELS_N if plate_set == "dog" else pc.EVAL_FORCES_N)]
+                  if plate_set in ("v2", "dog") else
                   [(pc.EVAL_STIFFNESS[0][0], 0.0, pc.EVAL_SLIDE_LEVEL_N, mode) for mode in ("tangent", "slide")])
     for j, i in enumerate(picks):
         for k_soft, travel, level, mode in conditions:
@@ -244,6 +252,10 @@ def score_episode(trace: dict, env: int, row: dict, dt: float = interface.POLICY
         "foot_down": bool(down.any()),
         "stance_max_cm": _r(float(np.nanmax(stance)), 2) if np.isfinite(stance).any() else None,
         "max_tilt_deg": _r(math.degrees(float(np.max(np.abs(np.concatenate((roll, pitch)))))), 2),
+        # While waiting on the foot-down command, before the approach: what the dog's stand-only run sees.
+        "max_tilt_waiting_deg": _r(math.degrees(float(np.max(np.maximum(np.abs(roll), np.abs(pitch))[stage == 0])))
+                                   if (stage == 0).any() else None, 2),
+        "min_pitch_deg": _r(math.degrees(float(pitch.min())), 2),
     }
 
 
@@ -283,6 +295,11 @@ def score(trace: dict, rows: list[dict]) -> dict:
         "engage_miss_mm_p90": _quantile([e["engage_miss_mm"] for e in episodes], 0.9),
         "stance_max_cm_median": _median([e["stance_max_cm"] for e in episodes]),
         "max_tilt_deg_median": _median([e["max_tilt_deg"] for e in episodes]),
+        "max_tilt_deg_p95": _quantile([e["max_tilt_deg"] for e in episodes], 0.95),
+        "max_tilt_waiting_deg_median": _median([e["max_tilt_waiting_deg"] for e in episodes]),
+        # The live program's stop (`press_live`, --tilt_limit_deg 15): episodes it would have ended.
+        "tilt_over_15": sum((e["max_tilt_deg"] or 0.0) > 15.0 for e in episodes),
+        "tilt_waiting_over_15": sum((e["max_tilt_waiting_deg"] or 0.0) > 15.0 for e in episodes),
         "by_kind": group("kind"), "by_stiffness": group("stiffness"), "by_level_n": group("level_n"),
         "by_mode": group("mode"),
     }

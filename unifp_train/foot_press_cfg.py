@@ -182,4 +182,11 @@ EVAL_SLIDE_LEVEL_N = 16.0
 EVAL_TANGENT_RATIO = 0.25
 EVAL_SLIDE_M = 0.04
 EVAL_SLIDE_SPEED_M_S = 0.025
+#: The "dog" set (2026-10-23): the live program's two hands (`demos/combiner_key/robot/press_layer.PLATES`, rows of the
+#: training table: palm_up, the palm facing up under the foot; palm_facing, the palm 0.42 m ahead facing the dog), rigid
+#: and sprung (`EVAL_STIFFNESS`) at the program's 5 N cap and 8 N, `EVAL_DOG_REPEATS` times each with their own estimate
+#: errors: 288 presses.
+EVAL_DOG_ROWS = (14027, 10851)
+EVAL_DOG_LEVELS_N = (5.0, 8.0)
+EVAL_DOG_REPEATS = 36
 KINDS = ("tilted", "wall", "level_up", "level_down")

@@ -135,11 +135,27 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--press_up_cap_n", type=float, default=None,
                         help="--leg_object press, training: cap the commanded force's upward component (a plate facing "
                              "down) at this, N (F-182). Off by default.")
+    parser.add_argument("--press_orientation_weight", type=float, default=None,
+                        help="--leg_object press: the weight of UniFP's orientation term (default foot_press_cfg's -4).")
+    parser.add_argument("--tilt_excess_weight", type=float, default=0.0,
+                        help="--leg_object press: weight of the tilt past --tilt_excess_deg (rad, a hinge). 0: off.")
+    parser.add_argument("--tilt_excess_deg", type=float, default=None,
+                        help="--tilt_excess_weight's threshold, degrees from upright (default leg_cfg's 10).")
+    parser.add_argument("--tilt_stages", choices=("all", "standing"), default="all",
+                        help="--leg_object press: where --press_orientation_weight and --tilt_excess_weight apply: every "
+                             "step, or only while a plate episode stands (waiting, or the foot back down), the -4 kept "
+                             "everywhere.")
+    parser.add_argument("--start_delay_steps", type=int, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--task leg: policy steps a plate episode waits on its foot-down command before the "
+                             "approach, drawn in [LO, HI) in training (15 50).")
+    parser.add_argument("--eval_start_delay_steps", type=int, default=None,
+                        help="--task leg: the same, fixed, in a frozen evaluation (25); e.g. 500 for 10 s of standing.")
     parser.add_argument("--press_hold_correction", action="store_true",
                         help="--leg_object press: the same as --press_hold_loop full (the name round 4's evaluations used).")
-    parser.add_argument("--plate_set", choices=("v2", "slide"), default="v2",
+    parser.add_argument("--plate_set", choices=("v2", "slide", "dog"), default="v2",
                         help="leg_eval --leg_object press: the frozen plates (unifp_train/foot_press_eval.py): 'v2', 288 "
-                             "presses; 'slide', the same 48 plates at 16 N with a tangential part or a 4 cm slide.")
+                             "presses; 'slide', the same 48 plates at 16 N with a tangential part or a 4 cm slide; 'dog', "
+                             "the live program's two hands at 5 and 8 N, 288 presses.")
     parser.add_argument("--press_set", choices=("panel", "force", "recessed"), default="panel",
                         help="'press_eval': the frozen buttons to score (press_cfg.EVAL_*).")
     parser.add_argument("--wipe_fraction", type=float, default=None,
@@ -574,6 +590,11 @@ def main() -> int:
             cfg.press_release_from_foot = not args.press_release_from_press_point
             cfg.press_plate_edges = not args.press_plate_face_only
             cfg.press_up_cap_n = args.press_up_cap_n
+            cfg.press_orientation_weight = args.press_orientation_weight
+            cfg.tilt_excess_weight = args.tilt_excess_weight
+            cfg.tilt_stages = args.tilt_stages
+            if args.tilt_excess_deg is not None:
+                leg_cfg.TILT_EXCESS_RAD = math.radians(args.tilt_excess_deg)
             cfg.episode_length_s = (foot_press_cfg.EPISODE_LENGTH_S if args.leg_object == "press"
                                     else leg_cfg.KEY_EPISODE_LENGTH_S)
             if args.spawn_states:
@@ -591,6 +612,10 @@ def main() -> int:
             if args.leg_armature_range is not None:
                 cfg.leg_armature_range = tuple(args.leg_armature_range)
                 cfg.knee_armature_factor = args.leg_knee_armature_factor
+            if args.start_delay_steps is not None:
+                cfg.start_delay_steps = tuple(args.start_delay_steps)
+            if args.eval_start_delay_steps is not None:
+                cfg.eval_start_delay_steps = args.eval_start_delay_steps
             if args.leg_friction_range is not None:
                 cfg.leg_friction_range = tuple(args.leg_friction_range)
                 cfg.knee_friction_factor = args.leg_knee_friction_factor
@@ -964,6 +989,10 @@ def main() -> int:
                  "leg_armature_range": (list(cfg.leg_armature_range) if cfg.leg_armature_range is not None else None),
                  "knee_armature_factor": cfg.knee_armature_factor,
                  "press_up_cap_n": cfg.press_up_cap_n,
+                 "press_orientation_weight": cfg.press_orientation_weight, "tilt_excess_weight": cfg.tilt_excess_weight,
+                 "tilt_stages": cfg.tilt_stages,
+                 "tilt_excess_deg": round(math.degrees(leg_cfg.TILT_EXCESS_RAD), 3),
+                 "start_delay_steps": list(cfg.start_delay_steps), "eval_start_delay_steps": cfg.eval_start_delay_steps,
                  "leg_friction_range": (list(cfg.leg_friction_range) if cfg.leg_friction_range is not None else None),
                  "knee_friction_factor": cfg.knee_friction_factor,
                  "press_limit_n": cfg.press_limit_n, "press_excess_weight": cfg.press_excess_weight,

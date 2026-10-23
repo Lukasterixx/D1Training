@@ -88,15 +88,19 @@ The general force-aware foot-press policy (`checkpoints/leg_press_force_r4_model
 ported to numpy (`press_layer.py`), on the real legs: the front-right foot goes out to a pre-contact point, the operator
 puts a hand there, and it presses at most 5 N. The first program here that commands the legs.
 
-`checkpoints/leg_press_force_ft2a_model_6598.npz` (2026-10-23, F-193) is that policy fine-tuned from the dog's handover
-starts (its kp-25 rest, the simulated sink). Its `start_gate` admits the dog's own rest (0.20 rad, 8.1° nose up), which
-the default gate refused in the second live run. In simulation it presses no better than round 4's, and round 4's
-handles the same starts (F-192). The first live test of it, the stand only, says whether the start or the legs'
-dynamics made F-188:
+**Round 4's export is the policy to use (Lukas, 2026-10-23).** What the first live run showed (F-188, F-194):
+- **It crouches by design.** In simulation, from every start, it sits back 17-25° nose up within 0.3 s while still
+  waiting, the base dropping to ~0.22 m on ~21 N·m at the support knees. It presses from that posture: each episode's
+  largest tilt is 30° (median), p95 36°, at most 42°. The dog's 0.24 s in F-188 matched it (0.212 m, 20°, 20-27 N·m).
+- **So the default stop ends every run.** `--tilt_limit_deg 15` fired on that posture, not on a fall. Round 4 needs
+  the stop above its own range, ~40°.
+- **The settle gate refuses the dog's rest for it.** Its export has no `start_gate`, so the default 0.20 rad / 5°
+  applies, and the dog's kp-25 rest (0.20 rad, 8.1° nose up) fails it. In simulation round 4 presses from that rest as
+  from its trained stands (F-192: 197 of 288, none fell; the dog's own two hands 280 of 288, F-195).
 
-    demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/leg_press_force_ft2a_model_6598.npz --live --presses 0
-
-(`d1dogpress` passes round 4's export; a second `--policy` after it wins only if the alias puts its own first.)
+`checkpoints/leg_press_force_ft2a_model_6598.npz` (F-193) is a fine-tune from the dog's handover starts. It is not
+better than round 4's, and it crouches too (past 15° in 238 of 288 10 s stands): not for the dog. The level-base
+fine-tunes after it (F-195) stood level but lost the palm press, and are not exported.
 
     d1update                       # the program and the export on the dog
     d1dogpress                     # dry: nothing sent, the policy open loop beside sport mode

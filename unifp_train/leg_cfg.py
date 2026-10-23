@@ -87,6 +87,10 @@ FOOT_FORCE_KP = 400.0
 EPISODE_LENGTH_S = 16.0
 #: Base height and orientation limits that end an episode (UniFP's tilt limits, plus a floor for the trunk).
 MIN_BASE_HEIGHT_M = 0.14
+#: `tilt_excess` (off unless weighted, `run_unifp_train.py --tilt_excess_weight`): the tilt from upright it starts at.
+#: 2026-10-23: the foot-press policy sat back 17-25 degrees nose up within 0.3 s of every start, waiting, in simulation as
+#: on the dog (F-188), where the live program stops at 15.
+TILT_EXCESS_RAD = 0.1745
 
 # --- the door handles -----------------------------------------------------------------------------------------------
 #

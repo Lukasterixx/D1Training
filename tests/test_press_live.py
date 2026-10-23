@@ -45,7 +45,8 @@ class RepeatedConstants(unittest.TestCase):
         line = re.search(r"^WAITING, LIFTING, OVER, AT_PRE, ENGAGED, MISSED, RETURNING, FOOT_DOWN = (.*)$", src, re.M)
         self.assertEqual(tuple(int(v) for v in line.group(1).split(",")),
                          (pl.WAITING, pl.LIFTING, pl.OVER, pl.AT_PRE, pl.ENGAGED, pl.MISSED, pl.RETURNING, pl.FOOT_DOWN))
-        self.assertIn("self._start_delay[ids] = 25", src)
+        self.assertIn("eval_start_delay_steps: int = 25", src)             # the frozen evaluation's wait
+        self.assertIn("self._start_delay[ids] = self.cfg.eval_start_delay_steps", src)
         self.assertEqual(pl.EVAL_START_DELAY_STEPS, 25)
 
     def test_joint_limits_against_task_cfg(self):
