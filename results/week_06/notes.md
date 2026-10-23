@@ -3259,10 +3259,227 @@ The plan:
 3. The frozen press set and the key set against round 4, then the export (`export_policy.py`) for the dog and
    `d1dogpress --live --presses 0` again.
 
+### 2026-10-23 · The handover simulated, round 4's final from the dog's starts, and a first fine-tune for them that tipped
+
+Lukas: "another agent on another pc tested the policy and determined the start stance needs fine tuning. its committed
+and pushed to main. can you run the training, and once satisfied commit and push back to main so the other pc can test
+it". This takes up the plan above ("Next: the foot-press policy fine-tuned for the real stand"), steps 1 and 2.
+
+**The handover simulated** (`run_unifp_train.py leg_handover`, new: `unifp_train/leg_handover.py`). Every robot goes
+through what `press_live._stand_up` does to the dog, with nothing else acting:
+1. Lying in the dog's pose (the calves from the run's "lying" event, the hips and thighs from the stand-in's LowState),
+   held on the stand-up gains for 1.5 s, then passive for 0.42 s.
+2. The stand-up to the policy's default targets: kp 60/80/80 ramped in over 0.5 s, targets smoothstepped over 2.5 s.
+3. Held for 1 s, blended to kp 25 / kd 0.5 over 1 s, then the gate's 3 s.
+
+The legs are the realistic ones (unitree_geared, armature 0.01 / 0.037, 1-3 steps of delay), with leg joint friction
+drawn per robot. That friction is `--leg_friction_range`, also new: PhysX 5.6's static and dynamic friction effort in
+N·m, solved implicitly, the knees ×1.917.
+
+    python run_unifp_train.py leg_handover --task leg --leg_object press --leg_variant force --headless --num_envs 64 \
+      --small_physx --leg_actuator unitree_geared --leg_armature 0.01 --leg_knee_armature 0.037 \
+      --leg_delay_min_steps 1 --leg_delay_steps 3 --leg_friction_range 0 2
+
+| run | lying | friction (hip, thigh) | hold, kp 80 | rest, kp 25, 3 s after the blend |
+| --- | --- | --- | --- | --- |
+| [first](#/week/6/run/20261023T022841_leg_handover_seed1_handover_friction0to4) | slumped (kp 20: calves to the -2.72 limit, base 0.08 m) | 0-4 N·m | 0.303 m, 4.7° nose up | 0.209 m, 11.8° nose up |
+| [lying held](#/week/6/run/20261023T023034_leg_handover_seed1_handover_lie_held_friction0to2) | held on the stand-up gains, then passive | 0-2 | 0.306 m, 4.9° | 0.215 m, 13.5° |
+| [with velocities](#/week/6/run/20261023T023526_leg_handover_seed1_handover_moving_friction0to2) | as above; the sink's states saved with their velocities | 0-2 | 0.306 m, 4.9° | 0.215 m, 13.5° |
+| the dog (F-191) | | | 0.303 m, 4.6° | 0.261 m, 8.1° |
+
+- **The hold matches the dog's.** It is within 3 mm and 0.3°, with or without friction. Standing up from lying with
+  the feet planted where the lying left them (rear hips at ±0.3-0.5 rad) is what gives the stance at kp 80.
+- **At kp 25 the simulated robot sinks further than the dog:** 0.215 m against 0.261. Its joints move the way the dog's
+  did. Medians of q minus the trained settled stance, in Unitree's order (FR, FL, RR, RL), dog in brackets:
+  - hips +0.07, -0.06, -0.18, +0.19 (+0.069, -0.062, -0.102, +0.103);
+  - thighs -0.11, -0.14, -0.27, -0.28 (-0.053, -0.074, -0.162, -0.200);
+  - rear calves -0.26 (-0.094, -0.013).
+- **So the dog's rest is the stand-up's stance sinking.** It is not the trained settled stance (0.272 m, level), which
+  only a drop at the default targets reaches.
+- **The friction model doesn't hold it up.** More friction lowers the rest and levels it: in the second run, 0.221 m
+  and 14.4° at 0.4 N·m or less, 0.210 m and 12.4° at 1.7 or more. PhysX's friction slows the sink but doesn't stop it
+  short the way the dog stopped. Whatever holds the dog at 0.261 m isn't this model.
+- **The sink is as fast as F-188's start.** It falls at up to 0.18 m/s (median 0.035) between 1.0 and 1.6 s after the
+  hold, so F-188's 0.15 m/s is inside it.
+
+**Round 4's final from those starts.** `logs/unifp_train/press/eval_start.sh` runs the frozen v2 set on the realistic
+legs, on the final layer and plant, every episode from one of the stances. The stances are in
+`demos/combiner_key/assets/dog_stand_20261023/`:
+- `kp25_rest.json`: the dog's rest, its base height from the export's kinematics so every foot clears by 2 mm;
+- `sim_handover_hold.json`, `sim_handover_sink.json`, `sim_handover_moving.json`: the third run's states.
+
+A moving stance starts with all its velocity in an evaluation (`leg_env._reset_idx`, new).
+
+| start | presses of 288 | fell | force error, median |
+| --- | --- | --- | --- |
+| classic stand ([control today](#/week/6/run/20261023T032947_leg_eval_seed1_press_r4_force_5999_real_control)) | 196 | 0 | 2.3 N |
+| [the dog's kp-25 rest](#/week/6/run/20261023T023140_leg_eval_seed1_press_r4_force_5999_dogrest) | 197 | 0 | 2.2 |
+| [the simulated hold](#/week/6/run/20261023T023220_leg_eval_seed1_press_r4_force_5999_simhold) | 202 | 0 | 2.2 |
+| [the sink, at rest](#/week/6/run/20261023T023301_leg_eval_seed1_press_r4_force_5999_simsink) | 197 | 0 | 2.3 |
+| [the sink in motion](#/week/6/run/20261023T023608_leg_eval_seed1_press_r4_force_5999_simmoving) | 203 | 0 | 2.1 |
+| [the dog's rest, leg friction 1 N·m](#/week/6/run/20261023T023342_leg_eval_seed1_press_r4_force_5999_dogrest_fric1) | 139 | 0 | 3.7 |
+| [the sink in motion, friction 1 N·m](#/week/6/run/20261023T023650_leg_eval_seed1_press_r4_force_5999_simmoving_fric1) | 165 | 2 | 3.1 |
+| [the dog's rest, floor μ 0.5](#/week/6/run/20261023T023732_leg_eval_seed1_press_r4_force_5999_dogrest_mu05) | 215 | 0 | 1.9 |
+| [the sink in motion, μ 0.5](#/week/6/run/20261023T023814_leg_eval_seed1_press_r4_force_5999_simmoving_mu05) | 195 | 0 | 2.3 |
+| [the sink in motion, μ 0.4, friction 1 N·m](#/week/6/run/20261023T023859_leg_eval_seed1_press_r4_force_5999_simmoving_mu04_fric1) | 147 | 0 | 3.7 |
+
+What these show and don't:
+- **In simulation the starts aren't the problem.** From every stance the handover gives, at rest or sinking, round 4's
+  final presses as it does from the stands it trained on, and never falls.
+- **Leg joint friction is what costs it.** 1 N·m (1.9 at the knees) takes 58 presses off the dog's rest, mostly
+  through under-pressing (bias -2.3 N). A slipperier floor barely matters.
+- **Not why the dog sat back in F-188.** Sinking starts at the same speed don't reproduce it in simulation, and nothing
+  modelled here does. The friction is a guess (F-191), not a measurement.
+- **The control.** Round 4's final on the classic stand under today's code scores 196, the same per plate kind as
+  yesterday's [196](#/week/6/run/20261021T234043_leg_eval_seed1_press_r4_force_5999_real_edges). The new code (friction, spawn velocities, the probe)
+  changes nothing it was scored on.
+
+**The first fine-tune tipped.** [The run](#/week/6/run/20261023T023944_train_seed3_press_ft1_force_s3) trained 1000 iterations from round 4's
+`model_5999.pt` on round 4's recipe and layer (`--press_hold_correction --press_release_from_press_point
+--press_plate_face_only`), with leg friction 0-2 N·m. 85% of its episodes started from `ft_starts.json`:
+- 1,539 stances: the simulated sink (46%); the dog's rest and the path to it from the simulated hold, ±0.06 rad (36%);
+  round 4's sport stands and walker stops (19%);
+- a moving stance starts with a uniform share of its velocity;
+- built by `build_starts.py` beside it.
+
+    logs/unifp_train/press/train_one.sh force logs/unifp_train/20261021T140237_train_seed3_press_r4_force_s3/model_5999.pt \
+      press_ft1_force_s3 1000 --spawn_states demos/combiner_key/assets/dog_stand_20261023/ft_starts.json \
+      --spawn_states_fraction 0.85 --leg_friction_range 0 2 --press_hold_correction --press_release_from_press_point \
+      --press_plate_face_only
+    # train_one.sh adds: --num_envs 2048 --handle_fraction 0.7 --foot_push_n 15 --resume_leg_std 0.2
+    #   --fixed_learning_rate 1e-4 --entropy_coef 0.002 --seed 3 --leg_actuator unitree_geared
+    #   --leg_delay_min_steps 1 --leg_delay_steps 3 --leg_armature_range 0.003 0.02
+
+Presses of 288 / fell:
+
+| checkpoint | classic stand | the dog's rest | the dog's rest, friction 1 N·m | sink in motion, friction 1 N·m |
+| --- | --- | --- | --- | --- |
+| round 4's final | 196 / 0 | 197 / 0 | 139 / 0 | 165 / 2 |
+| 6200 | [158 / 0](#/week/6/run/20261023T033028_leg_eval_seed1_press_ft1_force_6200_real) | [187 / 0](#/week/6/run/20261023T033109_leg_eval_seed1_press_ft1_force_6200_dogrest) | | |
+| 6400 | [186 / 5](#/week/6/run/20261023T033151_leg_eval_seed1_press_ft1_force_6400_real) | [200 / 9](#/week/6/run/20261023T033233_leg_eval_seed1_press_ft1_force_6400_dogrest) | | |
+| 6600 | [130 / 21](#/week/6/run/20261023T032120_leg_eval_seed1_press_ft1_force_6600_real) | [172 / 19](#/week/6/run/20261023T032202_leg_eval_seed1_press_ft1_force_6600_dogrest) | [141 / 4](#/week/6/run/20261023T032243_leg_eval_seed1_press_ft1_force_6600_dogrest_fric1) | [130 / 11](#/week/6/run/20261023T032325_leg_eval_seed1_press_ft1_force_6600_simmoving_fric1) |
+| 6998 | [130 / 23](#/week/6/run/20261023T031428_leg_eval_seed1_press_ft1_force_6998_real) | [157 / 32](#/week/6/run/20261023T031511_leg_eval_seed1_press_ft1_force_6998_dogrest) | [142 / 25](#/week/6/run/20261023T031554_leg_eval_seed1_press_ft1_force_6998_dogrest_fric1) | [136 / 30](#/week/6/run/20261023T031636_leg_eval_seed1_press_ft1_force_6998_simmoving_fric1) |
+
+Against round 4's final elsewhere:
+- settled stance: [163 / 29](#/week/6/run/20261023T032407_leg_eval_seed1_press_ft1_force_6600_real_settled) and
+  [155 / 27](#/week/6/run/20261023T031719_leg_eval_seed1_press_ft1_force_6998_real_settled), against 207 / 0;
+- slide set: [41](#/week/6/run/20261023T032613_leg_eval_seed1_press_ft1_force_6600_slide) and [39](#/week/6/run/20261023T031927_leg_eval_seed1_press_ft1_force_6998_slide) of 96, against 56;
+- key zero-shot from the dog's 0.33 m stand: [37](#/week/6/run/20261023T032653_leg_eval_seed1_press_ft1_force_6600_key_dog33) (2 fell) and
+  [90](#/week/6/run/20261023T032006_leg_eval_seed1_press_ft1_force_6998_key_dog33) of 108, against 107;
+- sink in motion without friction ([168 / 16](#/week/6/run/20261023T032449_leg_eval_seed1_press_ft1_force_6600_simmoving),
+  [155 / 26](#/week/6/run/20261023T031801_leg_eval_seed1_press_ft1_force_6998_simmoving)) and with μ 0.4 and friction
+  ([143 / 16](#/week/6/run/20261023T032531_leg_eval_seed1_press_ft1_force_6600_simmoving_mu04_fric1),
+  [101 / 33](#/week/6/run/20261023T031844_leg_eval_seed1_press_ft1_force_6998_simmoving_mu04_fric1)).
+
+- **Every fall is on a plate facing down,** the foot pushing up. The peak force there rose from round 4's 17 N (median)
+  to 67 N by 6998, and the falls began at 6400. This is round 5's tipping (F-182) again, now at 16 and 8 N too. Plates
+  facing down are 1.3% of the training table and a quarter of the frozen set, and training rewards tracking up to 35 N
+  in every direction.
+- **On the other three kinds nothing falls,** but there are fewer presses than round 4's final in every condition
+  without friction (122-165 of 216 against 174-191), and no more with it (123-142 against 130-148). The training-time
+  force error stayed near 5 N, and episodes were shorter (670-737 steps against round 4's ~785).
+- **Not shipped.**
+
+### 2026-10-23 · The fine-tune with the upward force capped: no falls, no better than round 4; exported for the dog
+
+Two fine-tunes from round 4's `model_5999.pt` trained in parallel, 600 iterations each, on the first's recipe and starts:
+- **[ft2a](#/week/6/run/20261023T033438_train_seed3_press_ft2a_force_s3):** no leg friction;
+- **[ft2b](#/week/6/run/20261023T033538_train_seed3_press_ft2b_force_s3):** friction 0-1 N·m, half the first's range.
+
+Both run with `--press_up_cap_n 16` (new: `leg_env.Go2D1LegEnvCfg.press_up_cap_n`, training only). It caps the commanded
+force's upward component at 16 N: on a plate facing down, the levels are scaled down to it. 16 N keeps the frozen set's
+8 and 16 N upward presses in range, and leaves its 28 N ones as the refusal test F-182 says they are.
+
+    logs/unifp_train/press/train_one.sh force <round 4 model_5999.pt> press_ft2a_force_s3 600 \
+      --spawn_states demos/combiner_key/assets/dog_stand_20261023/ft_starts.json --spawn_states_fraction 0.85 \
+      --press_up_cap_n 16 --press_hold_correction --press_release_from_press_point --press_plate_face_only
+    # ft2b: the same and --leg_friction_range 0 1
+
+Presses of 288 / fell, against round 4's 196 / 0, 197 / 0, 139 / 0 and 165 / 2:
+
+| checkpoint | classic stand | the dog's rest | the dog's rest, friction 1 N·m | sink in motion, friction 1 N·m |
+| --- | --- | --- | --- | --- |
+| ft2a 6200 | [176 / 1](#/week/6/run/20261023T043143_leg_eval_seed1_press_ft2a_force_6200_real) | [212 / 0](#/week/6/run/20261023T043224_leg_eval_seed1_press_ft2a_force_6200_dogrest) | [146 / 0](#/week/6/run/20261023T043305_leg_eval_seed1_press_ft2a_force_6200_dogrest_fric1) | [127 / 1](#/week/6/run/20261023T043347_leg_eval_seed1_press_ft2a_force_6200_simmoving_fric1) |
+| ft2a 6400 | [159 / 0](#/week/6/run/20261023T042858_leg_eval_seed1_press_ft2a_force_6400_real) | [171 / 0](#/week/6/run/20261023T042939_leg_eval_seed1_press_ft2a_force_6400_dogrest) | [118 / 0](#/week/6/run/20261023T043020_leg_eval_seed1_press_ft2a_force_6400_dogrest_fric1) | [109 / 0](#/week/6/run/20261023T043102_leg_eval_seed1_press_ft2a_force_6400_simmoving_fric1) |
+| ft2a 6598 | [185 / 0](#/week/6/run/20261023T042611_leg_eval_seed1_press_ft2a_force_6598_real) | [203 / 0](#/week/6/run/20261023T042653_leg_eval_seed1_press_ft2a_force_6598_dogrest) | [148 / 0](#/week/6/run/20261023T042734_leg_eval_seed1_press_ft2a_force_6598_dogrest_fric1) | [148 / 0](#/week/6/run/20261023T042816_leg_eval_seed1_press_ft2a_force_6598_simmoving_fric1) |
+| ft2b 6200 | [175 / 1](#/week/6/run/20261023T043958_leg_eval_seed1_press_ft2b_force_6200_real) | [203 / 0](#/week/6/run/20261023T044039_leg_eval_seed1_press_ft2b_force_6200_dogrest) | [160 / 0](#/week/6/run/20261023T044120_leg_eval_seed1_press_ft2b_force_6200_dogrest_fric1) | [160 / 0](#/week/6/run/20261023T044202_leg_eval_seed1_press_ft2b_force_6200_simmoving_fric1) |
+| ft2b 6400 | [180 / 0](#/week/6/run/20261023T043714_leg_eval_seed1_press_ft2b_force_6400_real) | [191 / 1](#/week/6/run/20261023T043755_leg_eval_seed1_press_ft2b_force_6400_dogrest) | [154 / 1](#/week/6/run/20261023T043836_leg_eval_seed1_press_ft2b_force_6400_dogrest_fric1) | [161 / 2](#/week/6/run/20261023T043917_leg_eval_seed1_press_ft2b_force_6400_simmoving_fric1) |
+| ft2b 6598 | [152 / 1](#/week/6/run/20261023T043428_leg_eval_seed1_press_ft2b_force_6598_real) | [180 / 2](#/week/6/run/20261023T043510_leg_eval_seed1_press_ft2b_force_6598_dogrest) | [144 / 1](#/week/6/run/20261023T043552_leg_eval_seed1_press_ft2b_force_6598_dogrest_fric1) | [151 / 1](#/week/6/run/20261023T043633_leg_eval_seed1_press_ft2b_force_6598_simmoving_fric1) |
+
+The rest of the battery for the two closest to round 4. Round 4, then ft2a 6598, then ft2b 6400:
+
+| | round 4's final | ft2a 6598 | ft2b 6400 |
+| --- | --- | --- | --- |
+| settled stance | 207 / 0 | [211 / 2](#/week/6/run/20261023T044513_leg_eval_seed1_press_ft2a_force_6598_real_settled) | [206 / 0](#/week/6/run/20261023T044828_leg_eval_seed1_press_ft2b_force_6400_real_settled) |
+| sink in motion | 203 / 0 | [194 / 0](#/week/6/run/20261023T044554_leg_eval_seed1_press_ft2a_force_6598_simmoving) | [198 / 1](#/week/6/run/20261023T044909_leg_eval_seed1_press_ft2b_force_6400_simmoving) |
+| slide set, of 96 | 56 / 1 | [53 / 0](#/week/6/run/20261023T044635_leg_eval_seed1_press_ft2a_force_6598_slide) | [52 / 0](#/week/6/run/20261023T044951_leg_eval_seed1_press_ft2b_force_6400_slide) |
+| key zero-shot, of 108 | 107 | [88](#/week/6/run/20261023T044715_leg_eval_seed1_press_ft2a_force_6598_key_dog33) | [93](#/week/6/run/20261023T045030_leg_eval_seed1_press_ft2b_force_6400_key_dog33) |
+
+- **The cap stopped most of the tipping.** ft2a's final fell only in two of the settled stance's 28 N upward presses,
+  the refusal test above its cap. ft2b still tipped on upward presses at 16 and 28 N (peaks of 95-115 N) in three of
+  the four conditions. Friction in training made it worse there.
+- **No fine-tune presses better than round 4 where the dog presses.** On walls and plates facing up (the dog's
+  `palm_facing` and `palm_up`), ft2a's final and round 4 score about the same:
+
+  | | classic stand | the dog's rest | dog's rest, friction 1 N·m | sink in motion, friction 1 N·m |
+  | --- | --- | --- | --- | --- |
+  | round 4's final | 117 | 129 | 80 | 93 (2 fell, on walls) |
+  | ft2a's final | 115 | 126 | 79 | 87 (none fell) |
+
+  Out of 144. At 8 N, the level nearest the dog's 5 N, they are even without friction (59 / 58, 63 / 64 of 72) and
+  round 4 is ahead with it (43 / 32, 48 / 34).
+- **The high contacts.** Past 60 N, ft2a has 12 against round 4's 3-5. Its extras are all on plates facing down. The six
+  on plates facing up are the same six plates for both policies, with the same 122 N p95.
+- **The overall gains are on the capped upward presses,** which the cap made trackable at 8 and 16 N (20-28 of 72
+  against round 4's 6-22). The dog's press layer refuses upward presses.
+
+**The first step from the dog's rest, open loop.** Each policy's largest joint target off the measured joints, from an
+empty history with zero commands, as `press_live._policy` starts. Round 4's numbers reproduce F-191's:
+
+| start | round 4's final | ft1 6998 | ft2a 6200 | ft2a 6598 | ft2b 6200 | ft2b 6400 |
+| --- | --- | --- | --- | --- | --- | --- |
+| trained settled stance | 0.25 rad | 0.41 | 0.28 | 0.32 | 0.27 | 0.26 |
+| the dog's kp-25 rest | 0.51 | 0.63 | 0.52 | 0.51 | 0.51 | 0.50 |
+| the dog's rest, levelled | 0.45 | 0.61 | 0.48 | 0.48 | 0.48 | 0.47 |
+| the simulated kp-80 hold | 0.46 | 0.55 | 0.48 | 0.50 | 0.50 | 0.42 |
+| the simulated kp-25 rest | 0.80 | 0.79 | 0.72 | 0.78 | 0.70 | 0.65 |
+
+Training from these starts doesn't change how hard the policy corrects them: the 0.5 rad is the stance correction
+itself. In simulation, round 4's final makes the same 0.5 rad step from the same rest and stands (F-192). The step's
+size alone is not what F-188 went wrong on.
+
+**Exported for the dog: ft2a's final** (`checkpoints/leg_press_force_ft2a_model_6598.npz`, sha256 44bcea01...;
+numpy to 7e-6 of the checkpoint):
+- It is the fine-tune Lukas asked for, trained from the dog's handover starts, and falls on none of the dog's plate
+  kinds in any condition.
+- It is not better than round 4's final in simulation, and is worse on the key (88 of 108).
+- Its meta carries a `start_gate` (new: `export_policy.start_gate`, read by `press_live._stand_up`): the stances its
+  training started from, 0.402 rad (p95 of each stance's largest joint offset from the settled stance) and pitch -15.9
+  to +1.0°.
+- That gate admits the dog's kp-25 rest (0.20 rad, 8.1° nose up), which the default gate (0.20 rad, 5°) refused in
+  the second live run. Round 4's export has no gate and keeps the default.
+- Checked: the program's fake-clock tests run on this export (10 of 10) as on round 4's. The kinematic stand-in
+  under twice the load stops on the RR calf's limit within 10 policy ticks with either policy: the stand-in's sag
+  model, not the policy.
+
+On the dog: `demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/leg_press_force_ft2a_model_6598.npz
+--live --presses 0` first, then `--live` with a hand. What the first run will say:
+- If the dog stands from its rest under this policy, the start was the gap.
+- If it sits back as in F-188, the gap is the legs' dynamics, which no start-stance fine-tune here addresses. The joint
+  friction is the candidate to measure first.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
 
+- The foot-press policy from the dog's handover (F-192, F-193, simulation, frozen v2 set of 288 presses):
+  - Simulating the handover gives the dog's kp-80 hold (0.306 m, 4.9° nose up; the dog 0.303 m, 4.6°) and sinks
+    further at kp 25 (0.215 m against the dog's 0.261).
+  - From every stance it gives, at rest or sinking, round 4's final presses 197-203 without a fall, as from its stands
+    (196). Leg joint friction at 1 N·m takes it to 139.
+  - A fine-tune on those starts tipped on upward presses (19-33 fell). With the upward force capped at 16 N in
+    training it stands, but presses no better than round 4 where the dog presses.
+  - Exported for the dog with a start gate admitting its rest: `checkpoints/leg_press_force_ft2a_model_6598.npz`.
 - The holster draw made faster (F-190, simulation, 8 attempts each): paced at 0.6 rad/s on the fastest joint and the
   unfold doubled, 12.3 s instead of 18.5, the draw's stop-start 8% instead of 28%, tracking unchanged (lag 7.9 mm, grip
   3.2 mm); evenly doubled it lagged 37 mm, tripled it drew 2 of 8.
@@ -3313,6 +3530,13 @@ The plan:
 
 ## Findings this week
 
+- [F-193](../findings.md): fine-tuned on the dog's handover starts, the foot-press policy tips on upward presses
+  (19-33 of 288) unless training caps the upward force; capped at 16 N it stands, but presses no better than round 4
+  where the dog presses and asks the same 0.5 rad first step; exported with a start gate that admits the dog's rest
+  (provisional, simulation).
+- [F-192](../findings.md): the dog's handover simulated reproduces its kp-80 hold and the direction of its kp-25 rest
+  (sinking further); from every stance it gives, round 4's final presses as from its trained stands without a fall, so
+  the start stance does not explain F-188 in simulation, and 1 N·m of leg friction costs more (provisional, simulation).
 - [F-190](../findings.md): the D1's slow moves go stop-start in the model as Lukas sees on the arm (each 10 Hz setpoint
   planned from rest); pacing the holster draw by its fastest joint at 0.6 rad/s cuts the stop-start from 28% to 8% and
   the sequence from 18.5 to 12.3 s with no loss of tracking, where an even speed-up lags (provisional, simulation).

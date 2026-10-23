@@ -1,0 +1,63 @@
+{
+  "id": "20261023T023944_train_seed3_press_ft1_force_s3",
+  "title": "Press force fine-tune for the dog's handover: its starts and leg friction 0-2 N\u00b7m (from r4 5999)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-23T14:14:51+11:00",
+  "started_utc": "2026-10-23T02:39:44+00:00",
+  "source_dir": "logs/unifp_train/20261023T023944_train_seed3_press_ft1_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "70fad7b62a1116b1395789b0dcfcd22aa2fe6ad6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 6998,
+  "final_checkpoint": {
+    "file": "model_6998.pt",
+    "sha256": "b44e77b04f01d72ab5a710e8ee2b0d6e265109dde9b200ab6791377ffdbbcda0"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 143.3125,
+      "last_step": 6998,
+      "mean_last_10": 149.27110290527344,
+      "min": 2.278754234313965,
+      "max": 176.29364013671875,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 632.3400268554688,
+      "last_step": 6998,
+      "mean_last_10": 657.0489990234375,
+      "min": 12.11111068725586,
+      "max": 810.5999755859375,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.27972930669784546,
+      "last_step": 6998,
+      "mean_last_10": 0.2796110361814499,
+      "min": 0.2004670947790146,
+      "max": 0.28254303336143494,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 23684.0,
+      "last_step": 6998,
+      "mean_last_10": 23887.3,
+      "min": 18726.0,
+      "max": 26839.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

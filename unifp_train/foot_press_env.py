@@ -105,6 +105,10 @@ class Go2D1FootPressEnv(Go2D1LegEnv):
         d["segments"] = torch.randint(pc.SEGMENTS[0], pc.SEGMENTS[1] + 1, (count,), device=device)
         d["levels"], d["ramps"], d["holds"] = span(pc.FORCE_LEVELS_N, count, k), span(pc.RAMP_S, count, k), \
             span(pc.SEG_HOLD_S, count, k)
+        if self.cfg.press_up_cap_n is not None:
+            # The foot pushes along -n: its upward part on a plate facing down is capped (F-182).
+            up = (-d["n"][:, 2]).clamp(min=1e-3)
+            d["levels"] = torch.minimum(d["levels"], (self.cfg.press_up_cap_n / up).unsqueeze(-1))
         tangential = (rand(count) < pc.TANGENT_PROB).float().unsqueeze(-1)
         d["tan_ratio"] = rand(count, k) * pc.TANGENT_RATIO * tangential
         angle = rand(count) * 2 * math.pi

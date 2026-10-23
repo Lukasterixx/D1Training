@@ -88,6 +88,16 @@ The general force-aware foot-press policy (`checkpoints/leg_press_force_r4_model
 ported to numpy (`press_layer.py`), on the real legs: the front-right foot goes out to a pre-contact point, the operator
 puts a hand there, and it presses at most 5 N. The first program here that commands the legs.
 
+`checkpoints/leg_press_force_ft2a_model_6598.npz` (2026-10-23, F-193) is that policy fine-tuned from the dog's handover
+starts (its kp-25 rest, the simulated sink). Its `start_gate` admits the dog's own rest (0.20 rad, 8.1° nose up), which
+the default gate refused in the second live run. In simulation it presses no better than round 4's, and round 4's
+handles the same starts (F-192). The first live test of it, the stand only, says whether the start or the legs'
+dynamics made F-188:
+
+    demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/leg_press_force_ft2a_model_6598.npz --live --presses 0
+
+(`d1dogpress` passes round 4's export; a second `--policy` after it wins only if the alias puts its own first.)
+
     d1update                       # the program and the export on the dog
     d1dogpress                     # dry: nothing sent, the policy open loop beside sport mode
     d1dogpress --rehearse          # dry: a pretend foot walks the whole sequence (prompts, stall, press, return)
@@ -103,7 +113,7 @@ Live, from sport mode's stand with the arm folded:
 | preflight | CheckMode gives the sport mode's name; the stand is read from the encoders (the base above 0.25 m) | sport mode |
 | `lie_down` | sport StandDown; the calves below -2.3 rad, or the run stops before anything is released | sport mode |
 | `release` | ReleaseMode, then CheckMode until it reports none; `/lowcmd` listened to 0.4 s for anyone else | none |
-| `stand_up` | from where it lies to the policy's default targets (2.5 s), held 1 s, gains blended to the policy's with the targets kept (1 s), held until every joint is under 0.05 rad/s (up to 3 s): gravity settles it into the trained settled stance; more than 0.2 rad or 5° off it, it lies down instead | kp 60/80/80, kd 5/4/4 -> 25 / 0.5 |
+| `stand_up` | from where it lies to the policy's default targets (2.5 s), held 1 s, gains blended to the policy's with the targets kept (1 s), held until no joint moves 0.01 rad over 15 ticks (up to 3 s); off the trained starts it lies down instead: by default more than 0.2 rad or 5° from the trained settled stance, or, for an export with a `start_gate` (the stances its training started from, `export_policy.start_gate`), past its joint bound or pitch range (roll still 5°) | kp 60/80/80, kd 5/4/4 -> 25 / 0.5 |
 | `policy` | Enter lifts the foot to the pre-contact point; Enter again (the hand there) presses: in at 3 cm/s until the foot stalls, ramped to 5 N over 0.5 s, held 3 s, off, out, home | kp 25, kd 0.5 |
 | `stand_end`, `lie_end` | back to the stand, then to where it lay, then damping 1.5 s | -> kp 60/80/80 -> kp 0, kd 3 |
 | `handback` | on Enter: SelectMode with the name from preflight, then CheckMode until it reports it | sport mode |

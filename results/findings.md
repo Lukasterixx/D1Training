@@ -6874,3 +6874,85 @@ result that changes a conclusion gets a new entry, and the old one is marked
   ~2.5° a command and under its ~1.25 rad/s, rather than evenly along the line; `holster.joint_paced` does it for the
   draw and could do it for the insertion's moves. Worth a check on the real arm: stream a slow and a paced move and
   compare the 9 Hz feedback.
+
+### F-192 — Simulating the dog's handover (lying, the stand-up on kp 80, the blend to kp 25) reproduces its kp-80 hold (0.306 m and 4.9 degrees nose up, the dog 0.303 and 4.6) and the direction of its kp-25 rest, but sinks further (0.215 m against 0.261); from every stance that handover gives, at rest or sinking at up to 0.18 m/s, round 4's force-aware final presses 197-203 of 288 frozen presses without a fall, as it does from its trained stands (196): in simulation the start stance does not explain F-188, and 1 N·m of leg joint friction costs more (197 -> 139)
+
+- **Status:** provisional (simulation)
+- **Week:** 6
+- **Date:** 2026-10-23
+- **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The handover simulated, round 4's final from the dog's
+  starts, and a first fine-tune for them that tipped"; `unifp_train/leg_handover.py` (`run_unifp_train.py
+  leg_handover`), `leg_env` `leg_friction_range` and spawn velocities, `demos/combiner_key/assets/dog_stand_20261023/`.
+  - The handover, 64 robots on the realistic legs, leg friction drawn 0-4 and 0-2 N·m:
+    [lying slumped](#/week/6/run/20261023T022841_leg_handover_seed1_handover_friction0to4), [lying held](#/week/6/run/20261023T023034_leg_handover_seed1_handover_lie_held_friction0to2),
+    [with the sink's velocities](#/week/6/run/20261023T023526_leg_handover_seed1_handover_moving_friction0to2). The hold is 0.303-0.306 m and 4.7-4.9° nose up
+    with or without friction. The rest is 0.209-0.215 m and 11.8-13.5° nose up. Every joint moves off the trained settled
+    stance the way the dog's did (front hips +0.07 / -0.06 against +0.069 / -0.062; rear thighs -0.27 / -0.28 against
+    -0.16 / -0.20).
+  - Round 4's final (`model_5999`) on the frozen v2 set, final layer and plant, realistic legs, every episode from:
+    - [the dog's kp-25 rest](#/week/6/run/20261023T023140_leg_eval_seed1_press_r4_force_5999_dogrest): 197, 0 fell;
+    - [the simulated hold](#/week/6/run/20261023T023220_leg_eval_seed1_press_r4_force_5999_simhold): 202, 0;
+    - [the sink at rest](#/week/6/run/20261023T023301_leg_eval_seed1_press_r4_force_5999_simsink): 197, 0;
+    - [the sink in motion](#/week/6/run/20261023T023608_leg_eval_seed1_press_r4_force_5999_simmoving): 203, 0;
+    - against its classic stand, 196 ([today's control](#/week/6/run/20261023T032947_leg_eval_seed1_press_r4_force_5999_real_control), the same per plate
+      kind as yesterday's).
+  - With leg friction at 1 N·m (1.9 at the knees):
+    - [the dog's rest](#/week/6/run/20261023T023342_leg_eval_seed1_press_r4_force_5999_dogrest_fric1): 139, 0 fell, force bias -2.3 N;
+    - [the sink in motion](#/week/6/run/20261023T023650_leg_eval_seed1_press_r4_force_5999_simmoving_fric1): 165, 2 fell, on walls.
+  - On a floor of μ 0.5: 215 and 195, 0 fell ([rest](#/week/6/run/20261023T023732_leg_eval_seed1_press_r4_force_5999_dogrest_mu05),
+    [moving](#/week/6/run/20261023T023814_leg_eval_seed1_press_r4_force_5999_simmoving_mu05)).
+- **Scope:** simulation only.
+  - The lying pose's hips and thighs are from another day's LowState.
+  - PhysX's joint friction slows the simulated sink but does not stop it where the dog stopped. Neither it nor
+    anything else here holds the robot at 0.261 m, so the depth of the dog's rest is not explained.
+  - The friction values are a bracket, not a measurement.
+  - One evaluation seed, deterministic.
+  - It does not say what made the real dog sit back in F-188: simulated starts sinking as fast do not.
+- **Implication:**
+  - The settle gate's 0.20 rad and 5° (F-188's fix) refuses the dog's own rest, a start round 4's final handles in
+    simulation as well as its trained ones.
+  - A policy fine-tuned for the start stance is not what simulation says is missing. What the dog does that the
+    simulated legs do not is: the friction F-191 suspects, or something else in its legs.
+  - Measuring the legs' friction is the next useful number, e.g. the torque at which each joint starts to move under
+    a slow kp ramp.
+
+### F-193 — Fine-tuning round 4's foot-press final on the dog's handover starts brings back round 5's tipping on upward presses (19-33 of 288 fell, peaks to 67 N median, with leg friction 0-2 N·m) unless the training caps the upward force; with it capped at 16 N the fine-tune stands (0 falls on the dog's plate kinds) but presses no better than round 4 on walls and plates facing up (79-126 against 80-129 of 144) and transfers worse to the key (88 against 107), and its first step from the dog's rest is round 4's (0.51 rad); exported for the dog with a start gate that admits that rest
+
+- **Status:** provisional (simulation; one seed per arm, deterministic evaluations)
+- **Week:** 6
+- **Date:** 2026-10-23
+- **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The handover simulated, round 4's final from the dog's
+  starts, and a first fine-tune for them that tipped" and "The fine-tune with the upward force capped: no falls, no
+  better than round 4; exported for the dog".
+  - The first fine-tune: [1000 iterations](#/week/6/run/20261023T023944_train_seed3_press_ft1_force_s3) with friction 0-2 N·m.
+    - Falls: [5](#/week/6/run/20261023T033151_leg_eval_seed1_press_ft1_force_6400_real) by 6400, then
+      [19](#/week/6/run/20261023T032202_leg_eval_seed1_press_ft1_force_6600_dogrest)-[32](#/week/6/run/20261023T031511_leg_eval_seed1_press_ft1_force_6998_dogrest) from the dog's rest, all on
+      plates facing down.
+    - Also [37](#/week/6/run/20261023T032653_leg_eval_seed1_press_ft1_force_6600_key_dog33)-[90](#/week/6/run/20261023T032006_leg_eval_seed1_press_ft1_force_6998_key_dog33) of 108 on the key.
+  - The capped ones, 600 iterations each: [ft2a](#/week/6/run/20261023T033438_train_seed3_press_ft2a_force_s3) without friction and
+    [ft2b](#/week/6/run/20261023T033538_train_seed3_press_ft2b_force_s3) with 0-1 N·m. ft2a's final against round 4's:
+    - [185 / 0](#/week/6/run/20261023T042611_leg_eval_seed1_press_ft2a_force_6598_real) on the classic stand (196 / 0);
+    - [203 / 0](#/week/6/run/20261023T042653_leg_eval_seed1_press_ft2a_force_6598_dogrest) from the dog's rest (197 / 0);
+    - [148 / 0](#/week/6/run/20261023T042734_leg_eval_seed1_press_ft2a_force_6598_dogrest_fric1) from it with friction (139 / 0);
+    - [148 / 0](#/week/6/run/20261023T042816_leg_eval_seed1_press_ft2a_force_6598_simmoving_fric1) from the moving sink with friction (165 / 2);
+    - [211 / 2](#/week/6/run/20261023T044513_leg_eval_seed1_press_ft2a_force_6598_real_settled) from the settled stance (207 / 0);
+    - [53 / 0](#/week/6/run/20261023T044635_leg_eval_seed1_press_ft2a_force_6598_slide) of 96 on the slide set (56 / 1);
+    - [88](#/week/6/run/20261023T044715_leg_eval_seed1_press_ft2a_force_6598_key_dog33) of 108 on the key (107).
+    - ft2b fell on upward presses in three of the four conditions.
+  - The first step, open loop, from the dog's rest: 0.50-0.52 rad for every capped checkpoint, against round 4's
+    0.51 and 0.25 from the trained settled stance.
+  - Export: `checkpoints/leg_press_force_ft2a_model_6598.npz`, its `start_gate` 0.402 rad and pitch -15.9 to +1.0°.
+- **Scope:**
+  - Simulation, the frozen v2 set and the dog's starts.
+  - Friction is a bracket, not a measurement (F-192).
+  - The cap's 16 N is a choice under round 5's 33-42 N tipping, not a computed limit.
+  - One seed per arm; the checkpoints differ from each other by ±20 presses.
+  - The dog's own presses (5 N at most, `palm_up` and `palm_facing`) are not in the frozen set: its 8 N, upward-facing
+    and wall rows are the nearest.
+- **Implication:**
+  - A fine-tune of a general foot policy must keep F-182's directional cap in its training, or it learns to push
+    upward presses past where the robot stands.
+  - For the start stance, no fine-tune improved on round 4 in simulation. The export is useful for the gate it
+    carries: it lets the live program start from the dog's own rest, the test that says whether the start or the
+    legs' dynamics made F-188.
+

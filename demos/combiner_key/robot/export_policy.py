@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -83,6 +84,7 @@ def meta_for(variant: str, checkpoint: Path, iteration, num_leg_actions: int, la
                        "link_m": classic_stance.LINK_M, "foot_sphere_x": classic_stance.FOOT_SPHERE_X,
                        "foot_radius_m": classic_stance.FOOT_RADIUS_M},
         "trained_on": trained_on(checkpoint),
+        "start_gate": start_gate(checkpoint),
     }
 
 
@@ -94,10 +96,37 @@ def trained_on(checkpoint: Path) -> dict:
     leg = json.loads(record.read_text()).get("leg") or {}
     keys = ("variant", "leg_actuator", "leg_actuator_model", "leg_armature_range", "knee_armature_factor", "key_turn_deg",
             "key_overdrive_deg", "key_hold_s", "key_lock_range_nm", "key_detent_range_nm", "key_max_force_n",
-            "press_limit_n", "press_excess_weight", "spawn_states", "spawn_states_fraction")
+            "press_limit_n", "press_excess_weight", "spawn_states", "spawn_states_fraction", "leg_friction_range",
+            "knee_friction_factor", "press_up_cap_n")
     out = {k: leg[k] for k in keys if k in leg}
     out["run"] = checkpoint.parent.name
     return out
+
+
+#: The start gate's joint bound is this percentile of the library's stances' largest joint offset from the settled
+#: stance, and its pitch bounds the library's own widened by `GATE_PITCH_MARGIN_DEG`.
+GATE_PERCENTILE, GATE_PITCH_MARGIN_DEG = 95.0, 1.0
+
+
+def start_gate(checkpoint: Path) -> dict | None:
+    """The stances the policy trained from, as bounds the dog's settle gate can check (`press_live._stand_up`): the
+    largest joint offset from `leg_cfg.SETTLED_LEG_POS` (rad) and the pitch range (degrees, + nose down) of the training
+    run's spawn library, the settled stance included. None (the gate's own defaults) without a library."""
+    from unifp_train import leg_cfg
+
+    record = checkpoint.parent / "run.json"
+    leg = (json.loads(record.read_text()).get("leg") or {}) if record.exists() else {}
+    library = Path(leg.get("spawn_states") or "")
+    if not leg.get("spawn_states") or not library.exists():
+        return None
+    states = json.loads(library.read_text())
+    settled = np.asarray(leg_cfg.SETTLED_LEG_POS)
+    off = [float(np.abs(np.asarray(s["legs"]) - settled).max()) for s in states]
+    pitch = [0.0] + [math.degrees(s["pitch"]) for s in states]
+    return {"library": library.name, "stances": len(states),
+            "max_off_settled_rad": round(float(np.percentile(off, GATE_PERCENTILE)), 3),
+            "pitch_deg": [round(min(pitch) - GATE_PITCH_MARGIN_DEG, 1), round(max(pitch) + GATE_PITCH_MARGIN_DEG, 1)],
+            "rule": f"p{GATE_PERCENTILE:g} of each stance's largest joint offset; pitch range +-{GATE_PITCH_MARGIN_DEG} deg"}
 
 
 def export(checkpoint: str | Path, variant: str, out: str | Path, tolerance: float = 1e-4) -> dict:

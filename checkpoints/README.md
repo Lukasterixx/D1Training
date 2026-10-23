@@ -31,6 +31,14 @@ pushes, on the same legs, delay, armature and sport-mode stands; `logs/unifp_tra
 gitignored). It takes a foot goal and a force command from a task layer; its waiting command (the foot on its
 footfall) is the key policy's. Numpy against the checkpoint: actions to 8.6e-6.
 
+`leg_press_force_ft2a_model_6598.npz` (2026-10-23) is that policy fine-tuned for the dog's handover (F-193): 600
+iterations from round 4's `model_5999`, 85% of episodes from `demos/combiner_key/assets/dog_stand_20261023/ft_starts.json`
+(the simulated handover's sink, the dog's kp-25 rest and the path to it, round 4's stands), the upward force capped at
+16 N in training, no leg friction; `logs/unifp_train/20261023T033438_train_seed3_press_ft2a_force_s3/`, gitignored. Its
+meta carries a `start_gate` (the stances it trained from: 0.402 rad, pitch -15.9 to +1.0°) that `press_live.py`'s settle
+gate uses, so the dog's own rest is admitted. In simulation it presses no better than round 4's final. Numpy against the
+checkpoint: actions to 7.1e-6.
+
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 
 `p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs

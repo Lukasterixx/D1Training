@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("mode", choices=("smoke", "play", "train", "manifest", "eval", "hook_eval", "mech_eval", "ins_eval",
-                                         "press_eval", "wipe_eval", "rope_eval", "leg_eval"),
+                                         "press_eval", "wipe_eval", "rope_eval", "leg_eval", "leg_handover"),
                         help="'play' drives the new environment with an existing UniFP checkpoint, "
                              "which checks the whole loop -- observation, action mapping, reward -- "
                              "against a policy already known to work on this robot. 'train' runs "
@@ -132,6 +132,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--press_release_from_press_point", action="store_true",
                         help="--leg_object press: release from the press point wherever the foot is (as the layer did until "
                              "2026-10-22 10:45; the default backs straight out from the foot).")
+    parser.add_argument("--press_up_cap_n", type=float, default=None,
+                        help="--leg_object press, training: cap the commanded force's upward component (a plate facing "
+                             "down) at this, N (F-182). Off by default.")
     parser.add_argument("--press_hold_correction", action="store_true",
                         help="--leg_object press: the same as --press_hold_loop full (the name round 4's evaluations used).")
     parser.add_argument("--plate_set", choices=("v2", "slide"), default="v2",
@@ -287,6 +290,11 @@ def build_parser() -> argparse.ArgumentParser:
                         help="--task leg: draw each environment's leg armature once, uniform in this range (kg·m², hip and "
                              "thigh), the knees --leg_knee_armature_factor times as much.")
     parser.add_argument("--leg_knee_armature_factor", type=float, default=3.67)
+    parser.add_argument("--leg_friction_range", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--task leg: draw each environment's leg joint friction (PhysX static and dynamic effort, "
+                             "N·m, hip and thigh) uniform in this range, the knees --leg_knee_friction_factor times as "
+                             "much. LO = HI fixes it.")
+    parser.add_argument("--leg_knee_friction_factor", type=float, default=1.917)
     parser.add_argument("--spawn_states_fraction", type=float, default=None,
                         help="--spawn_states, training: the share of episodes started from a recorded stance (0.5).")
     parser.add_argument("--leg_armature", type=float, default=None,
@@ -508,6 +516,8 @@ def main() -> int:
         parser.error("wipe_eval needs --task wipe")
     if args.mode == "rope_eval" and args.task != "rope":
         parser.error("rope_eval needs --task rope")
+    if args.mode == "leg_handover" and (args.task != "leg" or args.leg_object != "press"):
+        parser.error("leg_handover needs --task leg --leg_object press")
     if args.mode == "leg_eval" and args.task != "leg":
         parser.error("leg_eval needs --task leg")
 
@@ -563,6 +573,7 @@ def main() -> int:
             cfg.press_hold_loop = "full" if args.press_hold_correction else args.press_hold_loop
             cfg.press_release_from_foot = not args.press_release_from_press_point
             cfg.press_plate_edges = not args.press_plate_face_only
+            cfg.press_up_cap_n = args.press_up_cap_n
             cfg.episode_length_s = (foot_press_cfg.EPISODE_LENGTH_S if args.leg_object == "press"
                                     else leg_cfg.KEY_EPISODE_LENGTH_S)
             if args.spawn_states:
@@ -580,6 +591,9 @@ def main() -> int:
             if args.leg_armature_range is not None:
                 cfg.leg_armature_range = tuple(args.leg_armature_range)
                 cfg.knee_armature_factor = args.leg_knee_armature_factor
+            if args.leg_friction_range is not None:
+                cfg.leg_friction_range = tuple(args.leg_friction_range)
+                cfg.knee_friction_factor = args.leg_knee_friction_factor
         if args.handle_fraction is not None:
             cfg.handle_fraction = args.handle_fraction
         if args.force_ramp_iterations is not None:
@@ -949,6 +963,9 @@ def main() -> int:
                                                               args.leg_knee_armature, args.leg_delay_min_steps),
                  "leg_armature_range": (list(cfg.leg_armature_range) if cfg.leg_armature_range is not None else None),
                  "knee_armature_factor": cfg.knee_armature_factor,
+                 "press_up_cap_n": cfg.press_up_cap_n,
+                 "leg_friction_range": (list(cfg.leg_friction_range) if cfg.leg_friction_range is not None else None),
+                 "knee_friction_factor": cfg.knee_friction_factor,
                  "press_limit_n": cfg.press_limit_n, "press_excess_weight": cfg.press_excess_weight,
                  "damage_n": leg_cfg.DAMAGE_N, "key_lock_range_nm": list(leg_cfg.KEY_FRICTION_NM),
                  "key_detent_range_nm": list(leg_cfg.KEY_DETENT_NM),
@@ -1014,6 +1031,12 @@ def main() -> int:
     elif args.mode == "leg_eval":
         status = leg_evaluate(args, env, obs, report, run_dir, eval_rows)
         write_json(run_dir / "run.json", report)
+        report["run_dir"] = str(run_dir)
+    elif args.mode == "leg_handover":
+        from unifp_train import leg_handover
+        status = leg_handover.run(env, args, report, run_dir)
+        write_json(run_dir / "run.json", report)
+        report.pop("handover", None)
         report["run_dir"] = str(run_dir)
     elif args.mode in ("press_eval", "wipe_eval"):
         status = contact_evaluate(args, env, obs, report, run_dir, eval_rows)

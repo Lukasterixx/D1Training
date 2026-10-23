@@ -717,6 +717,16 @@ the final layer and plant, not retrained: 196 / 207 and 56 of 96 slides with not
 plant (round 5) learned to push plates facing down at the full 28 N and tipped the robot (F-182). Exported:
 `checkpoints/leg_press_force_r4_model_5999.npz`.
 
+**The dog's handover (2026-10-23, F-192, F-193).**
+- `run_unifp_train.py leg_handover` (`leg_handover.py`) simulates what the live program does to the legs before the
+  policy starts. It gives the dog's kp-80 hold, and sinks further than the dog at kp 25.
+- Round 4's final presses as well from every stance that handover gives (197-203, none fell). Leg joint friction
+  (`--leg_friction_range`, PhysX's friction effort in N·m) costs it more: 139 at 1 N·m.
+- Fine-tunes on those starts (`--spawn_states demos/combiner_key/assets/dog_stand_20261023/ft_starts.json`; a stance
+  may carry its velocities) tip on upward presses unless `--press_up_cap_n` caps the upward force in training. Capped at
+  16 N, ft2a stands but presses no better than round 4.
+- Exported as `checkpoints/leg_press_force_ft2a_model_6598.npz`, with a `start_gate` that admits the dog's rest.
+
 What it is not: the plates are analytic -- nothing in PhysX touches them, only the foot sphere, the knee and the head
 through penalty forces; the thighs and calves pass through a plate's slab unchecked. The layer is told the plate by an
 estimate with drawn errors; no camera sees it. Plates facing down are its weak kind (22 of 72); the base rears ~30

@@ -85,7 +85,9 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     head_camera: bool = False
     #: Stances to start from as well as the settled one (a json list of {legs (UniFP order), base_z, roll, pitch}: the
     #: walking policy's stops, `demos/combiner_key/assets/walker_stances.json`), in this share of episodes, the joints
-    #: jittered by `spawn_state_jitter` rad. Empty: the settled stance only.
+    #: jittered by `spawn_state_jitter` rad. Empty: the settled stance only. A stance may carry its motion too
+    #: (`joint_vel`, UniFP order, and `root_vel`, world linear then angular, as `leg_handover` saves the handover's
+    #: sink, 2026-10-23); it starts with that motion scaled by a uniform draw in [0, 1] (all of it in an evaluation).
     spawn_states: str = ""
     spawn_states_fraction: float = 0.5
     spawn_state_jitter: float = 0.03
@@ -100,6 +102,12 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     #: `knee_armature_factor` times as much (a knee geared 1.917 more reflects 1.917^2, F-168). Empty: as configured.
     leg_armature_range: tuple[float, float] | None = None
     knee_armature_factor: float = 3.67
+    #: Draw each environment's leg joint friction once at start-up, uniform in this range (N·m, hip and thigh; PhysX's
+    #: static and dynamic friction effort, solved implicitly, so a joint sticks under less), the knees
+    #: `knee_friction_factor` times as much (a friction behind the knee's 1.917 gearing, reflected). 2026-10-23: the
+    #: real dog stops where it stops at kp 25 (F-191). Empty: as configured (unitree_rl_lab's 0.01).
+    leg_friction_range: tuple[float, float] | None = None
+    knee_friction_factor: float = 1.917
     #: `leg_object="press"` only: the outer loop on the foot's miss while the plate is pressed
     #: (`foot_press_env._correct_foot`): "full", the whole miss across the normal, as rounds 1-4 of the foot-press task
     #: trained; "off", none once contact is called; "hybrid" (since 2026-10-22 05:25), the miss across the normal
@@ -111,6 +119,11 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     #: `leg_object="press"` only: the plate as a slab with edges and a back (`foot_press.PlateSet.edges`, since
     #: 2026-10-22 10:55); False: its face only, as trained before.
     press_plate_edges: bool = True
+    #: `leg_object="press"` only, training: the commanded force's upward component (pushing up on a plate facing down)
+    #: capped at this, N; the levels on such plates scaled down to it. F-182: pushing the lifted foot up loads the corner
+    #: the robot is not standing on (round 5 tipped at 33-42 N of contact), and two fine-tunes from round 4 learned to
+    #: push the frozen set's 28 N there and fell (2026-10-23). None: the levels as drawn (rounds 1-5).
+    press_up_cap_n: float | None = None
 
 
 class Go2D1LegEnv(Go2D1PosForceEnv):
@@ -210,6 +223,8 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._episode_sums = {name: zeros(n) for name in self._weights}
         if cfg.leg_armature_range is not None:
             self._draw_leg_armature()
+        if cfg.leg_friction_range is not None:
+            self._draw_leg_friction()
 
     def _draw_leg_armature(self) -> None:
         """Each environment's leg armature, once (a start-up randomisation: writing it costs a copy of every joint's)."""
@@ -220,6 +235,17 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         armature = draw * (1.0 + (self.cfg.knee_armature_factor - 1.0) * knee)
         self._robot.write_joint_armature_to_sim(armature, joint_ids=legs.tolist())
         self._leg_armature_drawn = armature
+
+    def _draw_leg_friction(self) -> None:
+        """Each environment's leg joint friction, once: static and dynamic effort alike (N·m), the knees scaled."""
+        lo, hi = self.cfg.leg_friction_range
+        legs = self._order[:12]
+        draw = lo + (hi - lo) * torch.rand(self.num_envs, 1, device=self.device)
+        knee = torch.tensor([1.0 if k % 3 == 2 else 0.0 for k in range(12)], device=self.device)
+        friction = draw * (1.0 + (self.cfg.knee_friction_factor - 1.0) * knee)
+        self._robot.write_joint_friction_coefficient_to_sim(friction, joint_dynamic_friction_coeff=friction,
+                                                            joint_ids=legs.tolist())
+        self._leg_friction_drawn = friction
 
     def _weight_table(self, handles: bool) -> dict[str, float]:
         weights = dict(leg_cfg.REWARD_WEIGHTS)
@@ -887,6 +913,8 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._arm_pose[env_ids] = pose
         joint_pos = self._robot.data.default_joint_pos[env_ids].clone()
         joint_pos[:, self._order[12:18]] = pose
+        joint_vel = self._robot.data.default_joint_vel[env_ids].clone()
+        root_vel = torch.zeros(count, 6, device=self.device)
         if self.cfg.settled_spawn:
             # Standing, settled: the legs bent as gravity holds them at the default targets, the base at its height.
             joint_pos[:, self._order[:12]] = torch.as_tensor(leg_cfg.SETTLED_LEG_POS, device=self.device)
@@ -902,7 +930,9 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
                     self._spawn_library = {
                         "legs": torch.tensor([s["legs"] for s in states], device=self.device),
                         "z": torch.tensor([s["base_z"] for s in states], device=self.device),
-                        "rp": torch.tensor([[s["roll"], s["pitch"]] for s in states], device=self.device)}
+                        "rp": torch.tensor([[s["roll"], s["pitch"]] for s in states], device=self.device),
+                        "qd": torch.tensor([s.get("joint_vel", [0.0] * 12) for s in states], device=self.device),
+                        "v": torch.tensor([s.get("root_vel", [0.0] * 6) for s in states], device=self.device)}
                 lib = self._spawn_library
                 pick = torch.rand(count, device=self.device) < self.cfg.spawn_states_fraction
                 if bool(pick.any()):
@@ -915,9 +945,13 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
                     roll, pitch = lib["rp"][which, 0], lib["rp"][which, 1]
                     cr, sr, cp, sp = torch.cos(roll / 2), torch.sin(roll / 2), torch.cos(pitch / 2), torch.sin(pitch / 2)
                     root[rows, 3:7] = torch.stack((cr * cp, sr * cp, cr * sp, -sr * sp), dim=-1)
+                    # A moving stance starts with a share of its motion in training, all of it in a frozen evaluation.
+                    motion = (torch.ones if self._evaluation is not None else torch.rand)(k, 1, device=self.device)
+                    joint_vel[rows.unsqueeze(-1), self._order[:12].unsqueeze(0)] = lib["qd"][which] * motion
+                    root_vel[rows] = lib["v"][which] * motion
             self._robot.write_root_pose_to_sim(root[:, :7], env_ids)
-            self._robot.write_root_velocity_to_sim(torch.zeros_like(root[:, 7:]), env_ids)
-        self._robot.write_joint_state_to_sim(joint_pos, self._robot.data.default_joint_vel[env_ids].clone(), env_ids=env_ids)
+            self._robot.write_root_velocity_to_sim(root_vel, env_ids)
+        self._robot.write_joint_state_to_sim(joint_pos, joint_vel, env_ids=env_ids)
         self._goals.reset(env_ids)
         self._push_cmd.reset(env_ids)
         self._push_ext.reset(env_ids)

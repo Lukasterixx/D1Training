@@ -69,7 +69,9 @@ TARGET_MARGIN_RAD, ABORT_MARGIN_RAD = 0.05, 0.02
 #: The stand-up's and lie-down's timing (s).
 STAND_S, STAND_HOLD_S, GAIN_BLEND_S = 2.5, 1.0, 1.0
 #: After the blend the policy starts once no joint has moved this far over this many ticks (at most this long), and
-#: only if the stand is within these of the trained settled stance.
+#: only if the stand is within these of the trained settled stance. A policy exported with a `start_gate` (the stances
+#: its training started from, `export_policy.start_gate`) replaces the joint bound and the pitch's by its own; roll
+#: stays bounded by SETTLED_TILT_DEG.
 SETTLED_MOVE_RAD, SETTLED_TICKS, SETTLE_MAX_S = 0.01, 15, 3.0
 SETTLED_TOL_RAD, SETTLED_TILT_DEG = 0.20, 5.0
 END_BLEND_S, END_STAND_S, LIE_S, DAMP_S = 0.5, 1.0, 2.5, 1.5
@@ -545,10 +547,15 @@ class PressRun:
             self.event("settled" if still else f"not still after {SETTLE_MAX_S} s",
                        base_m=round(height, 3), roll_pitch_deg=np.round(rp, 1).tolist(),
                        q_minus_trained_settled=np.round(off, 3).tolist())
-            if np.abs(off).max() > SETTLED_TOL_RAD or np.abs(rp).max() > SETTLED_TILT_DEG or not still:
+            gate = self.meta.get("start_gate") or {}
+            tol = float(gate.get("max_off_settled_rad", SETTLED_TOL_RAD))
+            pitch_lo, pitch_hi = gate.get("pitch_deg", (-SETTLED_TILT_DEG, SETTLED_TILT_DEG))
+            if (np.abs(off).max() > tol or abs(rp[0]) > SETTLED_TILT_DEG or not pitch_lo <= rp[1] <= pitch_hi
+                    or not still):
                 # Not the policy's to take: lie down on the stand-up gains, not damping from a stand.
                 self.abort_reason = (f"the stand is not the trained one (joints up to {np.abs(off).max():.2f} rad "
-                                     f"off, tilt {np.abs(rp).max():.1f} deg, {'still' if still else 'moving'})")
+                                     f"off of {tol:.2f}, roll {rp[0]:+.1f} deg, pitch {rp[1]:+.1f} deg of "
+                                     f"{pitch_lo:+.1f}..{pitch_hi:+.1f}, {'still' if still else 'moving'})")
                 self.event(f"STOP: {self.abort_reason}; lying down")
                 self.from_q, self.from_kp, self.from_kd = state["q"].copy(), self.kp, self.kd
                 self.set_mode("stand_end")

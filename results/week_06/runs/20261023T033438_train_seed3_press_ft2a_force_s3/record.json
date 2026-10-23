@@ -1,0 +1,63 @@
+{
+  "id": "20261023T033438_train_seed3_press_ft2a_force_s3",
+  "title": "Press force fine-tune ft2a: the dog's handover starts, upward force capped at 16 N (from r4 5999)",
+  "notes": "",
+  "week": 6,
+  "recorded_at": "2026-10-23T15:26:33+11:00",
+  "started_utc": "2026-10-23T03:34:38+00:00",
+  "source_dir": "logs/unifp_train/20261023T033438_train_seed3_press_ft2a_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "70fad7b62a1116b1395789b0dcfcd22aa2fe6ad6",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 6598,
+  "final_checkpoint": {
+    "file": "model_6598.pt",
+    "sha256": "8a5a4838d55e21c93b46f30c35517c4940969cd18d5c950e23bd0e3bb0c3b904"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 159.9594268798828,
+      "last_step": 6598,
+      "mean_last_10": 159.6917297363281,
+      "min": 1.777428388595581,
+      "max": 180.91383361816406,
+      "points": 600
+    },
+    "Train/mean_episode_length": {
+      "last": 761.1199951171875,
+      "last_step": 6598,
+      "mean_last_10": 730.2109985351562,
+      "min": 10.078431129455566,
+      "max": 811.719970703125,
+      "points": 600
+    },
+    "Policy/mean_std": {
+      "last": 0.25292596220970154,
+      "last_step": 6598,
+      "mean_last_10": 0.2525846064090729,
+      "min": 0.20063860714435577,
+      "max": 0.2531319856643677,
+      "points": 600
+    },
+    "Perf/total_fps": {
+      "last": 9729.0,
+      "last_step": 6598,
+      "mean_last_10": 9822.8,
+      "min": 8361.0,
+      "max": 26792.0,
+      "points": 600
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

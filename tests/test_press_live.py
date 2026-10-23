@@ -564,6 +564,7 @@ class Program(unittest.TestCase):
     def test_a_stand_not_the_trained_one_lies_down(self):
         robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta, sag=2.0), FakeOperator()   # twice the load
         run = press_live.PressRun(args(live=True, run_dir=self.tmp.name), robot, op)
+        run.meta.pop("start_gate", None)                     # the default gate, whatever the export carries
         modes = []
         self.drive(run, robot, op, until=lambda r: r.mode == "done",
                    script=lambda k, r, rb, o: (modes.append(r.mode) if not modes or modes[-1] != r.mode else None,
@@ -571,6 +572,22 @@ class Program(unittest.TestCase):
         self.assertNotIn("policy", modes)
         self.assertIn("not the trained one", run.abort_reason)
         self.assertEqual(modes[-4:], ["stand_end", "lie_end", "damping", "handback"])
+
+    def test_the_exports_start_gate_admits_its_trained_stances(self):
+        robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta, sag=2.0), FakeOperator()   # refused by the defaults
+        run = press_live.PressRun(args(live=True, presses=0, stand_s=1.0, run_dir=self.tmp.name), robot, op)
+        run.meta["start_gate"] = {"max_off_settled_rad": 1.0, "pitch_deg": [-15.9, 1.0]}
+        self.drive(run, robot, op, until=lambda r: r.mode in ("policy", "done"),
+                   script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight", "damping")))
+        self.assertEqual(run.mode, "policy")
+        self.assertIsNone(run.abort_reason)
+        run.meta["start_gate"]["pitch_deg"] = [-15.9, -10.0]                  # a level stand is outside this one
+        robot2, op2 = FakeRobot(run.meta, sag=2.0), FakeOperator()
+        run2 = press_live.PressRun(args(live=True, presses=0, stand_s=1.0, run_dir=self.tmp.name), robot2, op2)
+        run2.meta["start_gate"] = run.meta["start_gate"]
+        self.drive(run2, robot2, op2, until=lambda r: r.mode == "done",
+                   script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight", "damping")))
+        self.assertIn("pitch +0.0 deg of -15.9..-10.0", run2.abort_reason)
 
     def test_live_needs_the_word(self):
         robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
