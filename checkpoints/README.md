@@ -53,7 +53,7 @@ no command delay, unitree_rl_lab's observation noise, `action_rate` -0.1 and tor
 
 Numpy against the checkpoint: actions to 4.0e-6.
 
-`leg_press_force_ft11a_model_11394.npz` (2026-10-24, F-200) is the press candidate for light legs. It comes from rounds A
+`leg_press_force_ft11a_model_11394.npz` (2026-10-24, F-227) is the press candidate for light legs. It comes from rounds A
 to D of fine-tunes from ft6 (`logs/unifp_train/20261023T191133_train_seed3_press_ft11a_force_s3/`, gitignored):
 - **Its recipe:** rima's regularisation (observation noise, `action_rate` -0.1, torques -2e-4); the leg armature drawn
   0-0.002 and the command delay 10-20 ms (the corner the dog's rattle pointed to, F-196); 30% of plate episodes on the

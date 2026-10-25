@@ -7022,7 +7022,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 - **Status:** provisional (simulation against one live run's numbers); corrected 2026-10-24: the dog's rattle after
   the latency cut is 0.23 / 0.16 rad rms on the FL / RR thighs over the whole 10 s policy stand (the other PC's
   recalculation), not the 0.13 / 0.09 quoted below from a different time window. It lies at the 0.0002-armature row,
-  not between it and 0.003. Its implication held on the dog ([F-198](#f-198))
+  not between it and 0.003. Its implication held on the dog ([F-225](#f-198))
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The rattle on the dog reproduced in simulation". The
@@ -7065,9 +7065,9 @@ result that changes a conclusion gets a new entry, and the old one is marked
     the dog is the stand-only test.
   - If it does, the press needs more training on these legs, and its accuracy has to be scored on the dog's hands.
 
-### F-198 — On the real dog the foot-press policy fine-tuned on rima's legs (ft6) stands its 10 s without the rattle: its leg targets change 0.006-0.012 rad a step on the three worst joints, where round 4's changed 0.118-0.229, its joints move at 0.14-0.34 rad/s instead of ~1.0, and it tilts at most 16.6 degrees nose up (round 4: 20.8; simulation predicted 21-22)
+### F-225 — On the real dog the foot-press policy fine-tuned on rima's legs (ft6) stands its 10 s without the rattle: its leg targets change 0.006-0.012 rad a step on the three worst joints, where round 4's changed 0.118-0.229, its joints move at 0.14-0.34 rad/s instead of ~1.0, and it tilts at most 16.6 degrees nose up (round 4: 20.8; simulation predicted 21-22)
 
-- **Status:** confirmed (one live run on the dog, the stand only)
+- **Status:** confirmed (one live run on the dog, the stand only). Numbered F-198 when written (commit 8d99415, another machine); renumbered F-225 on 2026-10-25 when merged with the robot program's F-198 to F-224, written in parallel. The same stand test as F-204, recorded twice.
 - **Week:** 6
 - **Date:** 2026-10-24
 - **Evidence:** the other PC's run of `d1dogpress --policy checkpoints/leg_press_force_ft6_model_6998.npz --live
@@ -7090,9 +7090,9 @@ result that changes a conclusion gets a new entry, and the old one is marked
     legs and regularisation remove it on the dog.
   - The press has to be trained on those settings before it is tried on the dog.
 
-### F-199 — On light legs with a long command delay the force-aware foot-press policy's own estimate of the force on its foot reads a press that is not there, pressing straight down: on the palm under the foot (5 and 8 N) the real force stays at 0-0.2 N while the estimate reads 2.9-7.4 N, so the policy holds still; on the legs it trained on the same estimate tracks the force (3.1-8.1 N against 3.5-9.1)
+### F-226 — On light legs with a long command delay the force-aware foot-press policy's own estimate of the force on its foot reads a press that is not there, pressing straight down: on the palm under the foot (5 and 8 N) the real force stays at 0-0.2 N while the estimate reads 2.9-7.4 N, so the policy holds still; on the legs it trained on the same estimate tracks the force (3.1-8.1 N against 3.5-9.1)
 
-- **Status:** provisional (simulation; one policy, the estimate decoded offline from dumped frames)
+- **Status:** provisional (simulation; one policy, the estimate decoded offline from dumped frames). Numbered F-199 when written (commit 8d99415, another machine); renumbered F-226 on 2026-10-25 when merged with the robot program's F-198 to F-224, written in parallel.
 - **Week:** 6
 - **Date:** 2026-10-24
 - **Evidence:** [Week 6 log, 2026-10-24](week_06/notes.md), "Round C" and "The force estimate on light legs".
@@ -7119,9 +7119,9 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - On the dog the decoder's estimate already read 19-59 N lying (F-187). A downward press there needs either training
     on the dog's own leg corner or a measured force: the Go2's foot sensor, or the joint torques.
 
-### F-200 — Trained on the dog's likely leg corner (armature 0-0.002, command delay 10-20 ms) with rima's regularisation and the dog's two hands oversampled, the foot-press policy (ft11a's final) presses those hands from the dog's rest on light legs without falling or rattling (149 of 288, 0 past 60 N; round 4: 10 with 83 falls and 166 past 60 N) and on zero-armature legs (108; round 4: 0, 62 falls), keeps 211 on the legs round 4 trained on (round 4: 280), and waits 12-14 degrees nose up; its weak press is the palm under the foot on light legs (27 of 144)
+### F-227 — Trained on the dog's likely leg corner (armature 0-0.002, command delay 10-20 ms) with rima's regularisation and the dog's two hands oversampled, the foot-press policy (ft11a's final) presses those hands from the dog's rest on light legs without falling or rattling (149 of 288, 0 past 60 N; round 4: 10 with 83 falls and 166 past 60 N) and on zero-armature legs (108; round 4: 0, 62 falls), keeps 211 on the legs round 4 trained on (round 4: 280), and waits 12-14 degrees nose up; its weak press is the palm under the foot on light legs (27 of 144)
 
-- **Status:** provisional (simulation; one lineage, checkpoints that swing by tens of presses)
+- **Status:** provisional (simulation; one lineage, checkpoints that swing by tens of presses). Numbered F-200 when written (commit 8d99415, another machine); renumbered F-227 on 2026-10-25 when merged with the robot program's F-198 to F-224, written in parallel.
 - **Week:** 6
 - **Date:** 2026-10-24
 - **Evidence:** [Week 6 log, 2026-10-24](week_06/notes.md), rounds A-E and "The polish, a checkpoint sweep, and the
@@ -7148,5 +7148,5 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - Its export's `start_gate` is round 4's stands'.
 - **Implication:**
   - For a press on the dog: this policy, the palm in front first. The palm under the foot needs a measured force
-    (F-199).
+    (F-226).
 
