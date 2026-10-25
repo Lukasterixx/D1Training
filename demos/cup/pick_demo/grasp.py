@@ -269,10 +269,10 @@ def top_down_rotation(heading, up, tilt_deg: float = 0.0) -> np.ndarray:
     return np.column_stack([x, y, z])
 
 
-def solve_link6(joints, links, pos, rot, seeds, offset=JAW_CENTRE_LINK6):
+def solve_link6(joints, links, pos, rot, seeds, offset=JAW_CENTRE_LINK6, soft=SOFT_LIMIT_FACTOR):
     """First seed that converges, clears the trunk proxy (`arm_clear`) and can be held against gravity."""
     for seed in seeds:
-        result = d1_ik.solve(joints, pos, rot, q0=seed, body="Link6", offset=offset, max_iterations=300)
+        result = d1_ik.solve(joints, pos, rot, q0=seed, body="Link6", offset=offset, max_iterations=300, soft=soft)
         if (result.converged and bool(arm_clear(joints, result.q)[0])
                 and holdable(joints, links, result.q)):
             return result

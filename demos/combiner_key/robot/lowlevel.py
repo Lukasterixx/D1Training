@@ -11,8 +11,9 @@ Sources:
   * The motion switcher's API ids (1001 check, 1002 select, 1003 release) and its request and response topics are
     `unitree_ros2`'s `g1_motion_switch_client.hpp`; the Go2's sport API ids are those P2Dingo and the door program use.
   * The remote's 40 bytes in `LowState.wireless_remote` are Unitree's `xRockerBtnDataStruct` (2 header bytes, a
-    16-bit key field, then the sticks); the key bits are `unitree_legged_sdk`'s `joystick.h`. Not yet read on this dog:
-    `press_live.py`'s dry run prints the buttons it decodes, to check them before a live run.
+    16-bit key field, then the sticks); the key bits are `unitree_legged_sdk`'s `joystick.h`. Read on this dog once
+    (`logs/leg_press/20261023T133243_leg_press_live`, `/lowstate`, 60-68 s, the dog lying in damping with sport mode
+    released): 32 (L2), 288 (L2 + A) and 512 (B), the bits this layout gives. Never on `/lf/lowstate`.
   * The stand-up and damping gains are unitree_rl_lab's Go2 deploy config (`deploy/robots/go2/config/config.yaml`,
     Apache-2.0): FixStand kp 60/80/80, kd 5/4/4; Passive kd 3.
 """
@@ -130,6 +131,23 @@ def remote_keys(wireless_remote) -> set[str]:
         return set()
     bits = raw[2] | (raw[3] << 8)
     return {name for k, name in enumerate(KEYS) if bits & (1 << k)}
+
+
+class RemoteButtons:
+    """The remote's A and B as every live program's two buttons, the same in each: B is `a` + Enter (stop), A is
+    Enter at a prompt (`live` + Enter where one is asked) and, after a stop, `r` + Enter (back to the start).
+
+    Each counts once, as it goes down. B counts with any other key held (L2 + B is sport mode's own damping, a stop
+    too); A only on its own, since L1/L2 + A are sport mode's (L2 + A stands the dog up or lies it down)."""
+
+    def __init__(self):
+        self.held: set[str] = set()
+
+    def update(self, keys: set[str]) -> list[str]:
+        """The presses ("A", "B") in these keys (`remote_keys` of a `LowState`) that the last ones did not have."""
+        keys = set(keys)
+        down, self.held = keys - self.held, keys
+        return [k for k in ("B", "A") if k in down and (k == "B" or keys == {"A"})]
 
 
 # --- the motion switcher and the sport API ---------------------------------------------------------------------------

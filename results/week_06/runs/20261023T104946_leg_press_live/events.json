@@ -1,0 +1,129 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.042,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.338,
+    "stand_q": [
+      0.0541,
+      0.6453,
+      -1.4803,
+      -0.0497,
+      0.7131,
+      -1.4826,
+      0.0393,
+      0.7862,
+      -1.5028,
+      0.0141,
+      0.6704,
+      -1.4529
+    ]
+  },
+  {
+    "t": 30.16,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 30.16,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 31.68,
+    "event": "lying",
+    "calf": [
+      -2.478,
+      -2.455,
+      -2.568,
+      -2.507
+    ]
+  },
+  {
+    "t": 31.68,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 31.82,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 31.84,
+    "event": "sport mode released"
+  },
+  {
+    "t": 31.84,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 32.26,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 32.26,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 38.161,
+    "event": "settled",
+    "base_m": 0.231,
+    "roll_pitch_deg": [
+      6.3,
+      -12.3
+    ],
+    "q_minus_trained_settled": [
+      0.068,
+      -0.187,
+      0.067,
+      -0.043,
+      -0.058,
+      0.145,
+      -0.161,
+      -0.275,
+      -0.251,
+      0.131,
+      -0.239,
+      -0.077
+    ]
+  },
+  {
+    "t": 38.161,
+    "event": "STOP: the stand is not the trained one (joints up to 0.28 rad off of 0.30, roll +6.3 deg, pitch -12.3 deg of -12.0..+5.0, still); lying down"
+  },
+  {
+    "t": 38.161,
+    "event": "mode stand_up -> stand_end"
+  },
+  {
+    "t": 39.681,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 44.2,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 49.701,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 49.721,
+    "event": "LowCmd stopped",
+    "sent": 8677
+  },
+  {
+    "t": 51.24,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 52.88,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 52.88,
+    "event": "mode handback -> done"
+  }
+]

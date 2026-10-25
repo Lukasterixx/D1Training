@@ -13,9 +13,9 @@ import d1_hardware
 import d1_ik
 from demos.combiner.apriltag import TagDetection, tag_pose_box
 from demos.combiner.geometry import GEOMETRY
-from demos.combiner_door import perception
+from demos.combiner_door import mid360, perception
 from demos.combiner_door.robot import plan, viz
-from demos.combiner_door.robot.arm_link import SimulatedArm
+from demos.combiner_door.robot.arm_link import SimulatedArm, SimulatedLink
 from demos.cup.pick_demo import grasp
 from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6
 from demos.unifp import script as demo_script
@@ -27,6 +27,12 @@ LEVER_STALL_UNITS = 6.8
 def box_odom(x, y, yaw_deg):
     """The enclosure on the floor at (x, y), its door facing `yaw_deg` (180: facing a robot looking along +x)."""
     return plan.pose(plan.rot_z(math.radians(yaw_deg)), (x, y, 0.0))
+
+
+def door_box(x, y, yaw_deg):
+    """`box_odom` for the door pull: (x, y) as from the simulated demo's stance, moved to where the dog stands
+    (`plan.STANCE_BACK_M` further from the door, `plan.STANCE_RIGHT_M` toward the hinge)."""
+    return box_odom(x + plan.STANCE_BACK_M, y + plan.STANCE_RIGHT_M, yaw_deg)
 
 
 def detection(base, box):
@@ -47,9 +53,21 @@ def face_scan(base, box, rng, noise_m=0.01, door_deg=0.0, half_width=0.30, above
     return points + rng.normal(0.0, noise_m, points.shape)
 
 
-def walk(base, command, moving, dt=0.1):
+def side_scan(base, box, rng, noise_m=0.01):
+    """Lidar returns (base frame) on the box's hinge-side wall at the tag's heights: near 90 deg open, the door's outer
+    face stands nearly in line with it (the dog's look of 2026-10-25 02:26 UTC)."""
+    g = GEOMETRY
+    xs, zs = np.meshgrid(np.arange(-g.depth / 2, g.depth / 2, 0.012),
+                         np.arange(g.tag_centre[2] - 0.10, g.tag_centre[2] + 0.36, 0.012))
+    wall = np.stack([xs.ravel(), np.full(xs.size, g.hinge_side * g.width / 2), zs.ravel()], axis=-1)
+    points = plan.transform(plan.invert(base) @ box, wall)
+    return points + rng.normal(0.0, noise_m, points.shape)
+
+
+def walk(base, command, moving, dt=0.1, counted=1.0):
     """A dry run's base: walks the command; stopped, it carries on as the real gait does (`plan.CARRY_S` of the speed it
-    had, over that long). Returns the base and the speed it is going at."""
+    had, over that long). `counted`: the share of the step's translation the odometry counts (its yaw whole). Returns the
+    base and the speed it is going at."""
     if command is None:
         decay = max(0.0, 1.0 - dt / plan.CARRY_S)
         command = moving = tuple(v * decay for v in moving)
@@ -57,8 +75,8 @@ def walk(base, command, moving, dt=0.1):
         moving = tuple(command)
     x, y, yaw = plan.planar(base)
     vx, vy, wz = command
-    return plan.base_pose(x + dt * (math.cos(yaw) * vx - math.sin(yaw) * vy),
-                          y + dt * (math.sin(yaw) * vx + math.cos(yaw) * vy), yaw + dt * wz), moving
+    return plan.base_pose(x + counted * dt * (math.cos(yaw) * vx - math.sin(yaw) * vy),
+                          y + counted * dt * (math.sin(yaw) * vx + math.cos(yaw) * vy), yaw + dt * wz), moving
 
 
 def look(base, box, frames=20, scans=10, seed=0):
@@ -66,7 +84,7 @@ def look(base, box, frames=20, scans=10, seed=0):
     return ([(base, [detection(base, box)])] * frames, [(base, face_scan(base, box, rng)) for _ in range(scans)])
 
 
-def finger_points(q_servo, base_s, travel=demo_script.JAW_LEVER_OPEN_M):
+def finger_points(q_servo, base_s, travel=d1_hardware.GRIPPER_FULL_TRAVEL_M):
     """Points through both fingers' volume (`grasp.FINGER_*`, each finger `travel` open), script frame."""
     joints, _ = d1_ik.load_urdf()
     pos, rot = d1_ik.tool_pose(joints, d1_ik.from_servo_deg(q_servo)[0], body="Link6", offset=(0.0, 0.0, 0.0))
@@ -99,16 +117,17 @@ class FixTests(unittest.TestCase):
         self.base = plan.base_pose(1.3, -0.4, 0.3)
 
     def box_ahead(self, forward, left, yaw_off_deg):
-        return self.base @ plan.pose(None, (0, 0, -plan.BASE_HEIGHT_M)) @ box_odom(forward, left, 180.0 + yaw_off_deg)
+        return self.base @ plan.pose(None, (0, 0, -plan.BASE_HEIGHT_M)) @ door_box(forward, left, 180.0 + yaw_off_deg)
 
-    def test_a_look_puts_the_stance_at_the_nominal_distance(self):
+    def test_a_look_puts_the_stance_at_its_distance(self):
         box = self.box_ahead(0.95, 0.03, 3.0)
         frames, scans = look(self.base, box)
         fix = plan.make_fix(self.base, frames, scans)
-        walk = 0.95 - math.sqrt(plan.NOMINAL_DISTANCE_M ** 2 - 0.03 ** 2)
+        left = 0.03 + plan.STANCE_RIGHT_M
+        walk = 0.95 + plan.STANCE_BACK_M - math.sqrt(plan.STANCE_DISTANCE_M ** 2 - left ** 2)
         # Sent short by the odometry's under-count (`plan.ODOM_WALK_SCALE`): the dog walks the whole of it.
         self.assertAlmostEqual(fix.walk_in_m, plan.ODOM_WALK_SCALE * walk, places=3)
-        self.assertAlmostEqual(fix.site.root_m[0], plan.NOMINAL_DISTANCE_M * math.cos(math.atan2(0.03, plan.NOMINAL_DISTANCE_M))
+        self.assertAlmostEqual(fix.site.root_m[0], math.sqrt(plan.STANCE_DISTANCE_M ** 2 - left ** 2)
                                + (1 - plan.ODOM_WALK_SCALE) * walk, places=3)
         self.assertTrue(fix.fit.ok, fix.fit.why)
         self.assertAlmostEqual(fix.site.yaw_deg % 360.0, 183.0, delta=0.5)
@@ -116,6 +135,30 @@ class FixTests(unittest.TestCase):
         self.assertTrue(ok, text)
         # The box's root is where it was put, in odom, and the script frame's z puts it at the plinth's height.
         self.assertLess(np.linalg.norm(fix.box_odom[:2, 3] - box[:2, 3]), 0.005)
+
+    def test_the_stance_keeps_the_dog_clear_of_a_door_swinging_past_its_turn(self):
+        """Lukas, 2026-10-25: near the end of the pull the door swung into the dog's face. The base turns about the
+        hinge with the door, so the door reaches the dog only by swinging on past that turn (15-30 deg in both live
+        pulls after the insertion). From the door pull's stance (`plan.STANCE_*`) it touches the dog's front only past
+        35 deg; from the simulated demo's, under 25."""
+        front = np.array([(0.37, 0.05), (0.37, -0.05), (0.30, 0.13), (0.30, -0.13)])     # the head, the trunk's corners
+
+        def touches_after(box):
+            for deg in np.arange(0.0, 90.0, 0.5):
+                door = viz.door_pose(box, deg)
+                face = door[:2, :2] @ np.array([GEOMETRY.door_x + GEOMETRY.door_thickness / 2, 0.0]) + door[:2, 3]
+                along = door[:2, 1]
+                s = np.clip((front - face) @ along, -GEOMETRY.width / 2, GEOMETRY.width / 2)
+                if np.linalg.norm(front - (face + s[:, None] * along), axis=1).min() < 0.01:
+                    return deg
+            return 90.0
+
+        base = plan.base_pose(0.0, 0.0, 0.0)
+        stance = plan.make_fix(base, *look(base, door_box(plan.NOMINAL_DISTANCE_M, 0.0, 180.0)))
+        self.assertEqual(stance.walk_in_m, 0.0)
+        self.assertGreater(touches_after(perception.site_pose(stance.site)), 35.0)
+        self.assertLess(touches_after(box_odom(plan.NOMINAL_DISTANCE_M, 0.0, 180.0)), 25.0)
+        self.assertLess(abs(stance.site.grasp_point_m(0.0, 0.0)[1]), 0.03)     # the grip about straight ahead
 
     def test_no_tag_no_fix(self):
         self.assertIsNone(plan.make_fix(self.base, [(self.base, [])] * 5, []))
@@ -134,7 +177,7 @@ class FixTests(unittest.TestCase):
         """The front camera's ~100 degree field holds the box's tag and P2Dingo's dock's (also 36h11 id 0, 100 mm) at
         once (2026-10-22). Averaged, they put the box between them; grouped, the one on a door is kept, whichever was
         seen more often."""
-        box = self.box_ahead(1.00, 0.10, 0.0)
+        box = self.box_ahead(1.00, 0.03, 0.0)
         dock = self.box_ahead(1.40, -0.90, 10.0)             # its tag on a stand 2 cm in front of a wall
         rng = np.random.default_rng(6)
         frames = [(self.base, [detection(self.base, dock), detection(self.base, box)])] * 12 \
@@ -255,7 +298,8 @@ class WristCameraTests(unittest.TestCase):
 
 
 class FrontCameraTests(unittest.TestCase):
-    """The Go2's front camera as the look's camera (2026-10-22): fixed in the trunk, a NOMINAL fisheye lens."""
+    """The Go2's front camera as the look's camera (2026-10-22): fixed in the trunk, its fisheye lens calibrated
+    (2026-10-24)."""
 
     @staticmethod
     def _margin_px(ahead, left, yaw_deg, base_z=plan.BASE_HEIGHT_M, pitch_deg=0.0):
@@ -309,6 +353,69 @@ class FrontCameraTests(unittest.TestCase):
         self.assertEqual(args.camera, "front")
         self.assertEqual(node.parse_args(["--camera", "wrist"]).camera, "wrist")
 
+    def test_the_close_and_the_lock_follow_only_what_they_can(self):
+        from demos.combiner_door.robot import node
+
+        self.assertTrue(node.parse_args(["--stage", "pull", "--then_close"]).then_close)
+        args = node.parse_args(["--task", "insert", "--stage", "insert", "--then_door", "pull", "--then_close"])
+        self.assertTrue(args.then_close)
+        self.assertEqual(node.parse_args(["--task", "insert", "--stage", "insert", "--lock"]).lock_from_deg, 45.0)
+        for argv in (["--stage", "grip", "--then_close"], ["--task", "insert", "--stage", "insert", "--then_close"],
+                     ["--stage", "pull", "--lock"], ["--task", "insert", "--stage", "insert", "--lock", "--then_door",
+                                                     "pull"]):
+            with self.subTest(argv=argv), self.assertRaises(SystemExit):
+                node.parse_args(argv)
+
+
+def approach_staging(box):
+    """The close's staging pose in front of `box`'s open door (`approach.STAGE_ROOT_M`)."""
+    from demos.combiner_door.robot import approach
+
+    return approach.staging_pose("door", box)
+
+
+class LinkedArm:
+    """A dry run's arm as the node drives it (`node.py`): each command's goal through `plan.ArmSender` (joint moves as
+    timed paths, the rest followed) to `arm_link.SimulatedLink`, the link's player on a model servo. `q`, `gripper`,
+    `stall_units` and `gripper_rate` are the servo's; setting `q` moves the arm under the link's command (a lock face
+    pushing it back)."""
+
+    def __init__(self, start, gripper: float = 40.8, gripper_rate: float = 70.0):
+        self.link = SimulatedLink(start, gripper, gripper_rate)
+        self.sender = plan.ArmSender()
+
+    def drive(self, command, attempt) -> None:
+        joint = command.phase in attempt.joint_phases or command.phase == "fold"
+        self.link.handle(self.sender.message(command.arm_servo_deg, command.gripper_units, joint, self.link.arm.q))
+
+    @property
+    def q(self):
+        return self.link.arm.q
+
+    @q.setter
+    def q(self, value):
+        self.link.arm.q = np.asarray(value, dtype=float).copy()
+
+    @property
+    def gripper(self):
+        return self.link.arm.gripper
+
+    @property
+    def stall_units(self):
+        return self.link.arm.stall_units
+
+    @stall_units.setter
+    def stall_units(self, value):
+        self.link.arm.stall_units = value
+
+    @property
+    def gripper_rate(self):
+        return self.link.arm.gripper_rate
+
+    @gripper_rate.setter
+    def gripper_rate(self, value):
+        self.link.arm.gripper_rate = value
+
 
 class AttemptTests(unittest.TestCase):
     def run_attempt(self, stage, timing=None, max_steps=1200, arm=None, watch=None, expect_abort=False):
@@ -317,11 +424,11 @@ class AttemptTests(unittest.TestCase):
         the phases in order, the arm's last joints and (base, jaw centre, grasp point) at the arrival; with
         `expect_abort`, the attempt and the abort's reason."""
         base = plan.base_pose(0.0, 0.0, 0.0)
-        box = box_odom(0.92, 0.0, 181.0)
+        box = door_box(0.92, 0.0, 181.0)
         frames, scans = look(base, box)
         fix = plan.make_fix(base, frames, scans)
         attempt = plan.Attempt(fix, stage, timing or plan.scaled_timing(1.0, 30.0))
-        arm = arm or SimulatedArm(d1_hardware.REST_SERVO_DEG)
+        arm = arm or LinkedArm(d1_hardware.REST_SERVO_DEG)
         joints, _ = d1_ik.load_urdf()
         phases, at_arrive, moving = [], None, (0.0, 0.0, 0.0)
         for step in range(max_steps):
@@ -336,7 +443,7 @@ class AttemptTests(unittest.TestCase):
             if not phases or phases[-1] != command.phase:
                 phases.append(command.phase)
             if command.arm_servo_deg is not None:
-                arm.step(command.arm_servo_deg, command.gripper_units, command.speed_deg_s)
+                arm.drive(command, attempt)
                 attempt.sent(command)
             if watch is not None:
                 watch(attempt, command, arm, base)
@@ -369,7 +476,7 @@ class AttemptTests(unittest.TestCase):
         # so the first walk in stopped 8 cm short. Corrective steps take it within the tolerance; the attempt then
         # re-anchors where the dog stopped.
         base = plan.base_pose(0.0, 0.0, 0.0)
-        fix = plan.make_fix(base, *look(base, box_odom(0.92, 0.0, 180.0)))
+        fix = plan.make_fix(base, *look(base, door_box(0.92, 0.0, 180.0)))
         attempt = plan.Attempt(fix, "walk")
         q, on = np.asarray(d1_hardware.REST_SERVO_DEG, dtype=float), 0.0
         for step in range(3000):
@@ -394,7 +501,7 @@ class AttemptTests(unittest.TestCase):
         # On the dog (2026-10-20) the walk ended 1.5 cm past the stance and the refit moved the box 3.5 cm along its
         # normal; the look's tag guard then read that 3.5 cm as a tag 3 cm off its door, and aborted.
         base = plan.base_pose(0.0, 0.0, 0.0)
-        box = box_odom(0.95, 0.0, 180.0)
+        box = door_box(0.85, 0.0, 180.0)
         fix = plan.make_fix(base, *look(base, box))
         stance = fix.script_odom @ plan.pose(None, (0.015, 0.0, plan.BASE_HEIGHT_M - fix.script_odom[2, 3]))
         actual_box = box @ plan.pose(None, (-0.035, 0.0, 0.0))        # 3.5 cm further than the look had it
@@ -409,13 +516,14 @@ class AttemptTests(unittest.TestCase):
 
     def test_reanchoring_keeps_the_box_where_it_is(self):
         base = plan.base_pose(0.3, -0.2, 0.4)
-        box = base @ plan.pose(None, (0, 0, -plan.BASE_HEIGHT_M)) @ box_odom(0.92, 0.0, 182.0)
+        box = base @ plan.pose(None, (0, 0, -plan.BASE_HEIGHT_M)) @ door_box(0.92, 0.0, 182.0)
         fix = plan.make_fix(base, *look(base, box))
         stopped = base @ plan.pose(plan.rot_z(math.radians(3.0)), (0.15, 0.01, 0.0))
         moved = plan.reanchor(fix, stopped)
         self.assertLess(np.linalg.norm(moved.box_odom[:2, 3] - fix.box_odom[:2, 3]), 1e-6)
         self.assertAlmostEqual(moved.site.yaw_deg % 360, (fix.site.yaw_deg - 3.0) % 360, places=4)
-        self.assertAlmostEqual(moved.site.distance_m, math.hypot(0.92 - 0.15 * math.cos(0) - 0.0, 0.01) , delta=0.01)
+        self.assertAlmostEqual(moved.site.distance_m, math.hypot(0.92 + plan.STANCE_BACK_M - 0.15,
+                                                                 plan.STANCE_RIGHT_M - 0.01), delta=0.01)
 
     def test_the_walk_in_ends_short_by_the_carry(self):
         attempt, _, _, _ = self.run_attempt("walk")
@@ -424,7 +532,7 @@ class AttemptTests(unittest.TestCase):
 
     def test_a_loaded_arm_aborts_the_pull(self):
         base = plan.base_pose(0.0, 0.0, 0.0)
-        box = box_odom(0.92, 0.0, 180.0)
+        box = door_box(0.92, 0.0, 180.0)
         fix = plan.make_fix(base, *look(base, box))
         attempt = plan.Attempt(fix, "grip", plan.scaled_timing(1.5, 30.0))
         q = np.asarray(d1_hardware.REST_SERVO_DEG, dtype=float)
@@ -444,7 +552,7 @@ class AttemptTests(unittest.TestCase):
 
     def test_stale_feedback_and_tilt_abort(self):
         base = plan.base_pose(0.0, 0.0, 0.0)
-        box = box_odom(0.92, 0.0, 180.0)
+        box = door_box(0.92, 0.0, 180.0)
         fix = plan.make_fix(base, *look(base, box))
         q = np.asarray(d1_hardware.REST_SERVO_DEG, dtype=float)
         self.assertIn("arm feedback", plan.Attempt(fix, "unfold").step(plan.Observation(0.0, base, 0.0, q, 2.0)).abort)
@@ -459,7 +567,7 @@ class AttemptTests(unittest.TestCase):
                                             approach_script=attempt.fix.site.approach_unit(0.0),
                                             object_axis_script=attempt.fix.site.lever_axis_unit(0.0, 0.0))
         attempt.recover()
-        self.assertEqual([p.name for p in attempt.script.phases], ["release", "ungrasp", "home", "fold"])
+        self.assertEqual([p.name for p in attempt.script.phases], ["release", "ungrasp", "home", "tuck", "fold"])
 
     def test_letting_go_keeps_the_fingers_off_the_lever_and_its_hub(self):
         # 2026-10-20, live: after the pull the hand went straight from the lever to the home point and the fingers,
@@ -473,6 +581,7 @@ class AttemptTests(unittest.TestCase):
                     return
                 door = viz.door_pose(perception.site_pose(attempt.fix.site), attempt.commanded_door_deg())
                 points = plan.transform(plan.invert(door), finger_points(arm.q, attempt.base_script(base)))
+                points[:, 2] -= plan.GRASP_RAISE_M      # the lever where the jaws close on it (the dog's, Lukas)
                 lever, hub = lever_and_hub_clearance(points)
                 w = worst.setdefault(command.phase, [math.inf, math.inf])
                 w[:] = [min(w[0], float(lever.min())), min(w[1], float(hub.min()))]
@@ -504,7 +613,34 @@ class AttemptTests(unittest.TestCase):
             return phases[:names.index("release")] + [demo_script.door_phases(timing)[-2], back, phases[-1]]
 
         old = closest(script_ending)
-        self.assertLess(min(old["back"]), 0.0)          # into the lever or the hub on the way home
+        # Into the lever or the hub on the way home as the link's profile drove it (a straight line in joint space);
+        # sent as the holster draw's paced joint move (`plan.ArmSender`, 2026-10-24) it passes 7 mm off the lever,
+        # still short of the 10 mm the ungrasp keeps.
+        self.assertLess(min(old["back"]), 0.010)
+
+    def test_the_jaws_open_fully_for_every_handle_grab_and_the_key_keeps_its_own(self):
+        """Lukas, 2026-10-25: "I want it open fully for all handle grabs": open on the handle is the widest a command
+        opens the jaws (`d1_hardware.GRIPPER_UNITS_OPEN`), the pull's reach and its letting go; the key's attempts
+        keep the script's opening for the key and the holster."""
+        sent = {}
+
+        def watch(attempt, command, arm, base):
+            if command.gripper_units is not None:
+                sent.setdefault(command.phase, set()).add(round(command.gripper_units, 2))
+
+        self.run_attempt("pull", timing=plan.scaled_timing(1.0, 60.0), watch=watch)
+        for phase in ("approach", "settle", "enter", "arrive", "ungrasp"):
+            self.assertEqual(sent[phase], {d1_hardware.GRIPPER_UNITS_OPEN}, phase)
+        self.assertEqual(sent["pull"], {plan.GRIPPER_SHUT_UNITS})
+        self.assertEqual(min(sent["grip"]), plan.GRIPPER_SHUT_UNITS)       # the script's ramp, fully open to shut
+        self.assertEqual(max(sent["grip"]), d1_hardware.GRIPPER_UNITS_OPEN)
+        self.assertEqual(min(sent["release"]), LEVER_STALL_UNITS)           # from where they hold the lever
+        self.assertEqual(max(sent["release"]), d1_hardware.GRIPPER_UNITS_OPEN)
+        from demos.combiner_key.robot import insert_plan, key_plan
+
+        for cls in (insert_plan.InsertAttempt, key_plan.KeyAttempt):
+            self.assertFalse(cls.handle_jaws, cls)
+        self.assertTrue(key_plan.DoorClose.handle_jaws)
 
     def test_the_arm_stays_on_its_goal_through_a_60_deg_pull_and_hold(self):
         # The base carries on turning after the pull's twist stops; held at the pull's angle, the hand's goal swung 8.9
@@ -537,23 +673,26 @@ class AttemptTests(unittest.TestCase):
 
     def test_an_arm_that_does_not_get_there_waits_out_the_clock(self):
         # 3 deg off on the wrist for good: the settle runs its whole clock, as every phase did before.
-        stuck, phase, steps = SimulatedArm(d1_hardware.REST_SERVO_DEG), [""], {}
-        real_step = stuck.step
+        import dataclasses
 
-        def step(target, gripper=None, speed=30.0, dt=0.1):
+        stuck, phase, steps = LinkedArm(d1_hardware.REST_SERVO_DEG), [""], {}
+        real_drive = stuck.drive
+
+        def drive(command, attempt):
             off = np.array([0.0, 0.0, 0.0, 0.0, 3.0, 0.0]) if phase[0] == "settle" else 0.0
-            real_step(np.asarray(target) + off, gripper, speed, dt)
+            real_drive(dataclasses.replace(command, arm_servo_deg=list(np.asarray(command.arm_servo_deg) + off)),
+                       attempt)
 
         def watch(attempt, command, arm, base):
             phase[0] = attempt.phase
             steps[command.phase] = steps.get(command.phase, 0) + 1
 
-        stuck.step = step
+        stuck.drive = drive
         self.run_attempt("reach", arm=stuck, watch=watch)
         self.assertAlmostEqual(0.1 * steps["settle"], plan.scaled_timing(1.0, 30.0).settle_s, delta=0.15)
 
     def test_the_hand_leaves_the_lever_only_once_the_jaws_are_open(self):
-        slow = SimulatedArm(d1_hardware.REST_SERVO_DEG, gripper_rate=12.0)
+        slow = LinkedArm(d1_hardware.REST_SERVO_DEG, gripper_rate=12.0)
         opened_at = []
 
         def watch(attempt, command, arm, base):
@@ -570,14 +709,71 @@ class AttemptTests(unittest.TestCase):
         self.assertIn("the jaws did not open", why)
         self.assertEqual(attempt.phase, "release")
 
+    def test_letting_go_of_the_handle_keeps_the_height_it_was_held_at(self):
+        """Lukas, 2026-10-25: the jaws turned the handle down as the hand left it. The arm sags 11-15 mm below its goal
+        on the handle (every release of 2026-10-24/25); the release's goal at the hand's measured height pressed the
+        lever down by that much while the jaws held it, and the hand dropped onto it once they opened. A sagging arm
+        (Joint2 1.5 deg below its servo, 12 mm at the jaw centre, reported where it is) now stays at the height it
+        held the lever at while the jaws open, slowly and from where they grip it, and stays there with them open
+        before it backs out."""
+        from unittest import mock
+
+        sag = np.array([0.0, 1.5, 0.0, 0.0, 0.0, 0.0])
+
+        class Sagging(LinkedArm):
+            @property
+            def q(self):
+                return self.link.arm.q + sag
+
+            @q.setter
+            def q(self, value):
+                self.link.arm.q = np.asarray(value, dtype=float) - sag
+
+        joints, _ = d1_ik.load_urdf()
+        height = lambda q: d1_ik.tool_pose(joints, d1_ik.from_servo_deg(q)[0], body="Link6",
+                                           offset=JAW_CENTRE_LINK6)[0][2]
+
+        def let_go():
+            seen = {"z": [], "units": [], "release_steps": 0}
+
+            def watch(attempt, command, arm, base):
+                if command.phase in ("release", "ungrasp"):
+                    seen.setdefault("z0", height(arm.q))
+                    seen["z"].append(height(arm.q))
+                if command.phase == "release":
+                    seen["release_steps"] += 1
+                    seen["units"].append(command.gripper_units)
+                    seen["opened"] = attempt._jaw_from
+            attempt, _, _, _ = self.run_attempt("pull", timing=plan.scaled_timing(1.0, 60.0), arm=Sagging(
+                d1_hardware.REST_SERVO_DEG), watch=watch)
+            return attempt, seen
+
+        attempt, seen = let_go()
+        let_go_event = next(e for e in attempt.events if e.get("phase") == "let_go")
+        self.assertTrue(10.0 < let_go_event["sag_mm"] < 20.0, let_go_event)   # the sag, and the hold's tracking lag
+        drop = 1000 * (seen["z0"] - min(seen["z"]))
+        self.assertLess(drop, 3.0)
+        # The jaws: from where they gripped the lever to fully open in `LET_GO_RAMP_S`, then still with the hand.
+        units = seen["units"]
+        self.assertAlmostEqual(units[0], LEVER_STALL_UNITS, delta=0.1)
+        self.assertTrue(all(b >= a for a, b in zip(units, units[1:])))
+        ramp = round(plan.LET_GO_RAMP_S / 0.1)
+        self.assertAlmostEqual(units[ramp], d1_hardware.GRIPPER_UNITS_OPEN, delta=0.01)
+        self.assertLess(units[ramp - 2], d1_hardware.GRIPPER_UNITS_OPEN - 5.0)
+        self.assertGreaterEqual(0.1 * seen["release_steps"], plan.LET_GO_S - 0.1)
+
+        with mock.patch.object(plan, "LET_GO_SAG_MAX_M", 0.0):              # held at its measured height
+            _, before = let_go()
+        self.assertGreater(1000 * (before["z0"] - min(before["z"])), 10.0)
+
     def test_the_release_lets_go_from_where_the_arm_is(self):
         # `--release` from the pose the arm was left holding the lever in (2026-10-20).
         base = plan.base_pose(0.0, 0.0, 0.0)
-        fix = plan.make_fix(base, *look(base, box_odom(0.92, 0.0, 180.0)))
+        fix = plan.make_fix(base, *look(base, door_box(0.92, 0.0, 180.0)))
         held = [29.8, 27.9, 12.3, 38.2, -50.7, 67.3]
         attempt = plan.release(fix, base, held)
-        self.assertEqual([p.name for p in attempt.script.phases], ["release", "ungrasp", "home", "fold"])
-        arm = SimulatedArm(held, gripper=LEVER_STALL_UNITS)
+        self.assertEqual([p.name for p in attempt.script.phases], ["release", "ungrasp", "home", "tuck", "fold"])
+        arm = LinkedArm(held, gripper=LEVER_STALL_UNITS)
         joints, _ = d1_ik.load_urdf()
         start = np.asarray(attempt._held["hand"])
         approach = np.asarray(attempt._held["approach"])
@@ -587,7 +783,7 @@ class AttemptTests(unittest.TestCase):
             self.assertEqual(command.abort, "", command.phase)
             if command.finished:
                 break
-            arm.step(command.arm_servo_deg, command.gripper_units, command.speed_deg_s)
+            arm.drive(command, attempt)
             attempt.sent(command)
             if command.phase in ("release", "ungrasp"):
                 jaw, _ = d1_ik.tool_pose(joints, d1_ik.from_servo_deg(arm.q)[0], body="Link6", offset=JAW_CENTRE_LINK6)
@@ -602,7 +798,7 @@ class AttemptTests(unittest.TestCase):
         # Aborted while unfolding (2026-10-20, the arm's reports went quiet): the hand is nowhere near the lever, so
         # the recovery is the fold alone, not a Cartesian open-and-back-out.
         base = plan.base_pose(0.0, 0.0, 0.0)
-        fix = plan.make_fix(base, *look(base, box_odom(0.92, 0.0, 180.0)))
+        fix = plan.make_fix(base, *look(base, door_box(0.92, 0.0, 180.0)))
         attempt = plan.Attempt(fix, "grip", plan.scaled_timing(1.5, 30.0))
         self.assertEqual(attempt.arm.grasp_note, "pitch 0 deg, roll +1")       # planned before anything moves
         q = np.asarray(d1_hardware.REST_SERVO_DEG, dtype=float)
@@ -611,13 +807,33 @@ class AttemptTests(unittest.TestCase):
             q = np.asarray(plan.step_towards(q, command.arm_servo_deg))
         self.assertEqual(command.phase, "unfold")
         attempt.recover()
-        self.assertEqual([p.name for p in attempt.script.phases], ["fold"])
+        self.assertEqual([p.name for p in attempt.script.phases], ["tuck", "fold"])
+
+    def test_the_fold_keeps_the_arm_off_the_lidar(self):
+        """From the homes the dog measured as its two live pulls began to fold (2026-10-24), the arm link's paths to
+        the fold (`plan.joint_path`) stay off the trunk and the lidar's boxes through `tuck`; straight to the fold they
+        cross the cage's (both stalled there on the dog, the shoulder at -40 to -50 deg)."""
+        joints, _ = d1_ik.load_urdf()
+
+        def worst(legs):
+            margin, q0 = math.inf, legs[0]
+            for goal in legs[1:]:
+                for q in plan.joint_path(q0, goal):
+                    margin = min(margin, grasp.proxy_margin(joints, d1_ik.from_servo_deg(q)[0]))
+                q0 = goal
+            return margin
+
+        fold = np.asarray(plan.FOLD_SERVO_DEG)
+        for home in ([14, 21, 23, 43, -65, 69], [13, 21, 24, 41, -65, 69], [40, 20, 37, 36, -57, 70]):
+            home = np.asarray(home, dtype=float)
+            self.assertLess(worst([home, fold]), 0.0, home)
+            self.assertGreater(worst([home, plan.tuck_servo_deg(), fold]), 0.04, home)
 
     def test_the_fold_waits_for_the_arm(self):
         # An arm slower than the clock: the fold phase runs on until it is folded (2026-10-20: on the clock alone it
         # ended 23 deg short), and gives up after JOINT_TIMEOUT_S.
         base = plan.base_pose(0.0, 0.0, 0.0)
-        fix = plan.make_fix(base, *look(base, box_odom(0.92, 0.0, 180.0)))
+        fix = plan.make_fix(base, *look(base, door_box(0.92, 0.0, 180.0)))
         for slow, stuck in ((1.0, False), (4.0, True)):
             attempt = plan.Attempt(fix, "unfold")
             q, why = np.asarray(d1_hardware.REST_SERVO_DEG, dtype=float), ""
@@ -637,13 +853,229 @@ class AttemptTests(unittest.TestCase):
                     self.assertLess(np.max(np.abs(q - np.asarray(plan.FOLD_SERVO_DEG))), plan.JOINT_ARRIVED_DEG)
 
     def test_a_box_a_little_far_needs_no_walk(self):
-        # 2026-10-20: 0.73 m off, a walk of 4 cm (under what sport mode can do) was refused with "back 0.16 m".
+        # 2026-10-20: 0.73 m off, a walk of 4 cm (under what sport mode can do) was refused with "back 0.16 m". Now
+        # 2.5 cm past the stance (`plan.STANCE_*`), short of the arm's reach.
         base = plan.base_pose(0.0, 0.0, 0.0)
-        fix = plan.make_fix(base, *look(base, box_odom(0.73, 0.0, 180.0)))
+        fix = plan.make_fix(base, *look(base, door_box(plan.NOMINAL_DISTANCE_M + 0.025, 0.0, 180.0)))
         ok, text = fix.in_range()
         self.assertEqual(fix.walk_in_m, 0.0)
         self.assertTrue(ok, text)
-        self.assertIn("outside the simulated", text)
+
+    def run_close(self, door_deg=76.0, drift=(0.0, 0.0, 0.0), expect_abort=False, push_counted=1.0, frame_stops=False,
+                  pulled_ajar_deg=0.0, shut_from_unlock=False):
+        """A dry 60 deg pull, the door run on to `door_deg`, then closed from a look at its tag (`key_plan.DoorClose`)
+        from the door pull's staging pose in front of the open door, the real box `drift` (x m, y m, yaw deg) from where
+        the pull's odometry has it (the odometry's error over the pull). The lidar reads the door at the script's angle
+        through the close. Returns the close's attempt, its phases, the arm's last joints, the base (script frame), the
+        IK's statuses, the jaws' worst miss of their goal through grip, push and hold, the grip's goal against the real
+        handle (m) and the real box (odom), and the hand's goal's furthest from the grip's in the base frame through push
+        and hold (m), and the grip's goal in the base frame; with `expect_abort`, the attempt and the reason. `push_counted`: the share of the base's translation
+        the odometry counts through push and hold (the dog's fell 24 cm short of the hinge's arc over 70 deg).
+        `frame_stops`: the base stands once its turn has the door shut (the door on its frame, the hand on it).
+        `pulled_ajar_deg`: the pull took the door that far ajar as shut (after an unlock); `shut_from_unlock`: the close's
+        shut from the unlock's look of the shut door (`plan.shut_reference`), as `node.py` takes it."""
+        from demos.combiner_door.robot import approach
+        from demos.combiner_key.robot import key_plan
+
+        timing = plan.scaled_timing(1.0, 60.0)
+        pull, _, q, _ = self.run_attempt("pull", timing=timing)
+        dx, dy, dyaw = drift
+        box = plan.pose(plan.rot_z(math.radians(dyaw)), (dx, dy, 0.0)) @ door_box(0.92, 0.0, 181.0)
+        opened = box @ plan.about_hinge(door_deg)          # the box whose shut door stands where the open one does
+        # The node's look, from the staging pose (`approach.STAGE_ROOT_M`), the box's side in the lidar too.
+        base = plan.base_pose(*approach.staging_pose("door", opened))
+        frames, scans = look(base, opened)
+        rng = np.random.default_rng(2)
+        scans = [(b, np.concatenate([pts, side_scan(b, box, rng)])) for b, pts in scans]
+        hinge = pull.box_odom() @ np.append(GEOMETRY.hinge, 1.0)
+        fix = plan.make_fix(base, frames, scans, pulled_hinge_xy=(hinge[0], hinge[1]))
+        ok, text = fix.in_range()
+        self.assertTrue(ok, text)
+        pulled = pull.box_odom() @ plan.about_hinge(pulled_ajar_deg)
+        if shut_from_unlock:
+            pulled, _, _ = plan.shut_reference(pulled, pull.box_odom())
+        attempt = key_plan.DoorClose(fix, "pull", timing, pulled_box_odom=pulled)
+        joints, _ = d1_ik.load_urdf()
+        moving, arm, rng = (0.0, 0.0, 0.0), LinkedArm(q), np.random.default_rng(1)
+        phases, statuses, miss, grip_off, grip_b, goal_drift = [], set(), 0.0, None, None, 0.0
+        for step in range(4000):
+            arm.stall_units = LEVER_STALL_UNITS if attempt.phase in attempt.holding_phases else None
+            reading = mid360.DoorReading(attempt.commanded_door_deg(), 100, 0.005, 0.0)
+            # The settle's lidar frames, of the open door, for the refit after the walk up.
+            scan = (base, face_scan(base, opened, rng)) if attempt.phase == "walk_settle" else None
+            command = attempt.step(plan.Observation(0.1 * step, base, 0.0, arm.q.copy(), 0.0, scan=scan,
+                                                    door_reading=reading, gripper_units=arm.gripper))
+            if command.finished:
+                break
+            if expect_abort and command.abort:
+                return attempt, command.abort
+            self.assertEqual(command.abort, "", command.phase)
+            if not phases or phases[-1] != command.phase:
+                phases.append(command.phase)
+            if command.phase == "grip" and grip_off is None:
+                handle = np.asarray(perception.site_from_pose(plan.invert(attempt.fix.script_odom) @ opened)
+                                    .grasp_point_m()) + (0.0, 0.0, plan.GRASP_RAISE_M)       # where the jaws close on it
+                grip_off = float(np.linalg.norm(np.asarray(command.hand_target_script) - handle))
+            goal_b = plan.transform(plan.invert(attempt.base_script(base)), command.hand_target_script)[0] \
+                if command.hand_target_script is not None else None
+            if command.phase == "grip":
+                grip_b = goal_b
+            if command.phase in ("push", "hold"):
+                goal_drift = max(goal_drift, float(np.linalg.norm(goal_b - grip_b)))
+            if command.phase in ("grip", "push", "hold"):
+                statuses.add(command.ik_status)
+                pos, _ = d1_ik.tool_pose(joints, d1_ik.from_servo_deg(arm.q)[0], body="Link6", offset=JAW_CENTRE_LINK6)
+                jaw = plan.transform(attempt.base_script(base), pos)[0]
+                miss = max(miss, float(np.linalg.norm(jaw - np.asarray(command.hand_target_script))))
+            if command.arm_servo_deg is not None:
+                arm.drive(command, attempt)
+                attempt.sent(command)
+            walking = command.walking and not (frame_stops and command.phase in ("push", "hold") and
+                                               attempt._door_from_base(plan.planar(attempt.base_script(base))) <= 0.0)
+            if not walking and frame_stops and command.phase == "push":
+                moving = (0.0, 0.0, 0.0)                               # stopped by the frame: no carry
+            base, moving = walk(base, command.base if walking else None, moving,
+                                counted=push_counted if command.phase in ("push", "hold") else 1.0)
+        else:
+            self.fail("the close did not finish")
+        if expect_abort:
+            self.fail("the close did not abort")
+        return (attempt, phases, arm.q, plan.planar(attempt.base_script(base)), statuses, miss, grip_off, box, goal_drift,
+                grip_b)
+
+    def test_the_door_is_closed_from_a_look_at_its_tag(self):
+        """Lukas, 2026-10-25: "close the door - first by grabbing the handle again, then pushing it closed while
+        moving", and "this phase should use the apriltag to grab it just like on the open" (the close from the pull's
+        fix had reached 15 cm short of the handle). From a look at the open door's tag, swung on past the pull's 60 deg
+        (15-30 on the dog) and the box off where the pull's odometry has it (12 cm, as the dog's under-counted the
+        pull's turn round the hinge): the walk up to the stance in front of it, the handle grabbed where it is with the
+        hand's pose held, the door walked to `CLOSE_TO_DEG` round the hinge, let go, folded."""
+        from demos.combiner_key.robot import key_plan
+
+        hinge = np.append(GEOMETRY.hinge, 1.0)
+        for door_deg, drift in ((64.0, (0.0, 0.0, 0.0)), (76.0, (0.10, -0.07, 0.0)), (88.0, (0.10, -0.07, 1.5))):
+            with self.subTest(door_deg=door_deg, drift=drift):
+                attempt, phases, q, base, statuses, miss, grip_off, box, _, _ = self.run_close(door_deg, drift)
+                self.assertEqual(phases, [p.name for p in plan.close_phases(attempt)])
+                check = attempt.close_check()
+                self.assertTrue(check["closed"], check)
+                self.assertLess(abs(check["from_deg"] - door_deg), 1.0 + abs(drift[2]))
+                self.assertTrue(attempt.refit.ok, attempt.refit.why)          # the refit on the open door's face
+                self.assertAlmostEqual(check["hinge_moved_mm"], 1000 * math.hypot(*drift[:2]), delta=12.0)
+                self.assertLess(grip_off, 0.003)                    # the jaws sent to the real handle
+                self.assertLess(np.linalg.norm((attempt.box_odom() @ hinge - box @ hinge)[:2]), 0.012)
+                self.assertEqual(statuses, {"pose"})
+                self.assertLess(miss, 0.006)
+                # Walked back round the hinge to its end, past shut (`CLOSE_PAST_DEG`).
+                self.assertLess(abs(attempt._door_from_base(base) - (plan.CLOSE_TO_DEG - plan.CLOSE_PAST_DEG)), 8.0)
+                self.assertLess(np.max(np.abs(q - np.asarray(plan.FOLD_SERVO_DEG))), plan.FOLD_ARRIVED_DEG + 0.05)
+
+    def test_the_open_doors_look_is_guarded_by_its_hinge_not_its_edges(self):
+        """2026-10-25 02:26 UTC on the dog: the tag on the door 79 deg open, refused as a tag on a stand (42% of the face
+        past the door's edges: the box's side, in line with the door near 90 deg). The close's look checks its hinge
+        against the pull's instead; a tag elsewhere (the dock's) is still refused."""
+        rng = np.random.default_rng(3)
+        box = door_box(0.92, 0.0, 181.0)
+        hinge = box @ np.append(GEOMETRY.hinge, 1.0)
+        for door_deg in (79.0, 88.0):
+            with self.subTest(door_deg=door_deg):
+                opened = box @ plan.about_hinge(door_deg)
+                base = plan.base_pose(*approach_staging(opened))
+                frames, scans = look(base, opened)
+                scans = [(b, np.concatenate([pts, side_scan(b, box, rng)])) for b, pts in scans]
+                plain = plan.make_fix(base, frames, scans)
+                self.assertFalse(plain.on_a_door())                         # as on the dog
+                self.assertGreater(plain.beyond_edges, plan.BEYOND_LIMIT)
+                fix = plan.make_fix(base, frames, scans, pulled_hinge_xy=(hinge[0], hinge[1]))
+                self.assertTrue(fix.on_a_door())
+                self.assertLess(fix.hinge_off_m(), 0.02)
+                # The same look with the pull's hinge 0.5 m away: not the door the pull opened.
+                far = plan.make_fix(base, frames, scans, pulled_hinge_xy=(hinge[0] + 0.5, hinge[1]))
+                ok, text = far.in_range()
+                self.assertFalse(ok)
+                self.assertIn("not on the door the pull opened", text)
+
+    def test_the_push_keeps_the_hand_where_it_gripped_whatever_the_odometry_counts(self):
+        """2026-10-25 02:37 UTC on the dog: through the push the odometry fell 24 cm short of the hinge's arc, the hand's
+        goal went 18 cm sideways after it and the IK ran out at 19 deg. Holding the door, the base is on the arc by its
+        turn: with the odometry counting 70% of the walk, the goal stays where it gripped, the whole pose throughout."""
+        for counted in (1.0, 0.7):
+            with self.subTest(counted=counted):
+                attempt, _, _, base, statuses, miss, _, _, drift, _ = self.run_close(76.0, push_counted=counted)
+                check = attempt.close_check()
+                self.assertTrue(check["closed"], check)
+                self.assertEqual(statuses, {"pose"})
+                self.assertLess(drift, 0.02)
+                self.assertLess(miss, 0.006)
+                if counted < 1.0:
+                    self.assertGreater(check["odometry_off_arc_mm"], 100.0)
+
+    def test_the_push_goes_past_shut_and_ends_where_the_frame_stops_the_door(self):
+        """Lukas, 2026-10-25: "the closing stops 20 degrees from fully closed. it should attempt to close it the full 90
+        degrees and accept that the spring will push it back out 5 or 10" (the door lagged the base 16-19 deg through
+        the push). The push aims `CLOSE_PAST_DEG` past shut; a frame that stops the base at shut ends it there as done,
+        not as an abort, the hand's whole pose held."""
+        attempt, _, _, base, statuses, miss, _, _, drift, _ = self.run_close(80.0, frame_stops=True)
+        check = attempt.close_check()
+        self.assertTrue(check["closed"], check)
+        self.assertEqual(check["ended"], "the base stopped turning")
+        self.assertLess(abs(attempt._door_from_base(base)), 3.0)               # stopped at shut
+        self.assertEqual(statuses, {"pose"})
+        self.assertLess(drift, 0.02)
+        self.assertEqual(attempt.commanded_door_deg(), plan.CLOSE_TO_DEG)
+
+    def test_after_an_unlock_the_close_takes_the_shut_door_from_the_unlocks_look(self):
+        """Lukas, 2026-10-25: "now lets chain it together with the door unlocking". Unlocked, the door hangs ajar on its
+        spring when the pull looks, and the pull takes it as shut: the close's angle read against the pull's box is
+        short by that much; against the unlock's look of the shut door (`plan.shut_reference`), it is the door's."""
+        attempt, *_ = self.run_close(76.0, pulled_ajar_deg=8.0)
+        self.assertAlmostEqual(attempt.close["from_deg"], 68.0, delta=1.0)
+        attempt, *_ = self.run_close(76.0, pulled_ajar_deg=8.0, shut_from_unlock=True)
+        self.assertAlmostEqual(attempt.close["from_deg"], 76.0, delta=1.0)
+        self.assertTrue(attempt.close_check()["closed"])
+
+    def test_the_shut_reference_turns_the_pulls_box_about_its_hinge_only_when_ajar(self):
+        hinge = np.append(GEOMETRY.hinge, 1.0)
+        shut = door_box(0.92, 0.0, 181.0)
+        pulled = plan.pose(None, (0.10, -0.06, 0.0)) @ shut @ plan.about_hinge(9.0)   # ajar, the odometry moved on
+        box, ajar, used = plan.shut_reference(pulled, shut)
+        self.assertTrue(used)
+        self.assertAlmostEqual(ajar, 9.0, places=6)
+        np.testing.assert_allclose(box @ hinge, pulled @ hinge, atol=1e-9)        # the pull's hinge
+        np.testing.assert_allclose(box[:3, :3], shut[:3, :3], atol=1e-9)          # the unlock's heading
+        for off in (0.0, -3.0, 25.0):                                             # shut, closed past, too far: not used
+            with self.subTest(off=off):
+                box, ajar, used = plan.shut_reference(shut @ plan.about_hinge(off), shut)
+                self.assertFalse(used)
+                np.testing.assert_allclose(box, shut @ plan.about_hinge(off), atol=1e-9)
+
+    def test_the_close_grips_nearer_than_from_the_pulls_stance(self):
+        """Lukas, 2026-10-25: "the dog needs to walk closer to the door to avoid the arm extending too far". On the dog
+        the close gripped 0.582 m ahead of the base, the pull 0.529: its walk up had stopped 4 cm short and the refit
+        put the box 2 cm further. From its own stance, `CLOSE_STANCE_NEARER_M` nearer, the dry close grips that much
+        nearer than from the pull's at least (0.475 against 0.558 m: from the nearer staging pose the pull's stance
+        needs no walk, and the walk to the close's carries on past it)."""
+        from unittest import mock
+
+        with mock.patch.object(plan, "CLOSE_STANCE_NEARER_M", 0.0):
+            *_, from_pulls = self.run_close(76.0)
+        attempt, *_, grip_b = self.run_close(76.0)
+        reanchor = [e for e in attempt.events if e.get("phase") == "reanchor"]
+        self.assertTrue(reanchor and reanchor[0]["ok"], reanchor)
+        self.assertGreater(from_pulls[0] - grip_b[0], plan.CLOSE_STANCE_NEARER_M - 0.01)
+
+    def test_a_door_nearly_shut_is_not_pushed(self):
+        attempt, why = self.run_close(10.0, expect_abort=True)
+        self.assertIn("nothing to push closed", why)
+        self.assertEqual(attempt.phase, "unfold")
+
+    def test_the_box_turned_about_the_hinge_has_its_shut_door_where_the_door_is(self):
+        site = plan.props.BoxSite(0.8, 4.0, 178.0)
+        for door_deg in (0.0, 30.0, 76.0):
+            turned = perception.site_from_pose(perception.site_pose(site) @ plan.about_hinge(door_deg))
+            np.testing.assert_allclose(turned.grasp_point_m(), site.grasp_point_m(0.0, door_deg), atol=1e-9)
+            np.testing.assert_allclose(turned.lever_axis_unit(0.0, 0.0), site.lever_axis_unit(0.0, door_deg), atol=1e-9)
+            np.testing.assert_allclose(turned.hinge_xy_m(), site.hinge_xy_m(), atol=1e-9)
 
     def test_confirmations_name_real_phases(self):
         names = {p.name for stage in plan.STAGES[2:] for p in plan.attempt_phases(stage)}
@@ -681,6 +1113,136 @@ class ProfileTests(unittest.TestCase):
         for _ in range(50):
             command = np.asarray(profile.step(np.full(6, 80.0), stuck, 0.1, 30.0))
         self.assertLessEqual(float(np.max(np.abs(command - stuck))), LEAD_DEG + 1e-9)
+
+
+class FollowAndSendTests(unittest.TestCase):
+    """Every arm motion the holster draw's way (Lukas, 2026-10-24): `arm_link.Follower` for a goal that moves each
+    step, and `plan.ArmSender`, which sends joint moves as paced timed paths."""
+
+    def test_a_moving_goal_is_commanded_as_it_moves_where_the_profile_brakes_on_each(self):
+        from demos.combiner_door.robot.arm_link import Follower, Profile
+
+        goals = [np.array([3.0 * i, 0, 0, 0, 0, 0]) for i in range(1, 31)]      # 30 deg/s, a step a command
+        follower, profile, q_f, q_p, f_steps, p_steps = Follower(np.zeros(6)), Profile(np.zeros(6)), \
+            np.zeros(6), np.zeros(6), [], []
+        for goal in goals:
+            follower.goal = goal
+            c = np.asarray(follower.step(q_f, 0.0, 0.1))
+            f_steps.append(float(c[0] - q_f[0]))
+            q_f = c
+            c = np.asarray(profile.step(goal, q_p, 0.1, 45.0))
+            p_steps.append(float(c[0] - q_p[0]))
+            q_p = c
+        self.assertTrue(np.allclose(f_steps, 3.0))                             # each command the goal itself
+        self.assertGreaterEqual(sum(st < 2.5 for st in p_steps), 3)           # the profile's under the firmware's 2.5
+        self.assertGreater(goals[-1][0] - q_p[0], 1.0)                        # and behind the goal at the end
+
+    def test_a_far_goal_is_approached_at_the_link_s_top_speed_and_an_arm_held_back_makes_it_wait(self):
+        from demos.combiner_door.robot.arm_link import LEAD_DEG, MAX_SPEED_DEG_S, Follower
+
+        follower = Follower(np.zeros(6))
+        follower.goal = np.array([90.0, 0, 0, 0, 0, 0])
+        c = follower.step(np.zeros(6), 0.0, 0.1)
+        self.assertAlmostEqual(c[0], MAX_SPEED_DEG_S * 0.1)
+        for _ in range(10):
+            c = follower.step(np.zeros(6), 0.0, 0.1)                         # the arm does not move
+        self.assertLessEqual(c[0], LEAD_DEG + MAX_SPEED_DEG_S * 0.1 + 1e-9)
+        self.assertGreater(follower.waited, 0)
+
+    def test_the_sender_sends_a_joint_move_once_as_a_paced_path_and_follows_the_rest(self):
+        sender, start = plan.ArmSender(), np.zeros(6)
+        goal = np.array([60.0, -20.0, 5.0, 0.0, 30.0, 0.0])
+        first = sender.message(goal, 10.0, True, start)
+        self.assertEqual(first["type"], "path")
+        path = np.asarray(first["q"])
+        np.testing.assert_allclose(path[0], start)
+        np.testing.assert_allclose(path[-1], goal)
+        self.assertLessEqual(float(np.abs(np.diff(path, axis=0)).max()), plan.JOINT_SPEED_DEG_S * 0.1 + 1e-6)
+        moving = np.abs(np.diff(path[:, 1]))                                   # a joint that moves 20 deg of 60
+        self.assertGreaterEqual(float(np.median(moving[moving > 0.05])), 3.5)  # at the full pace, not a third of it
+        again = sender.message(goal, 12.0, True, path[3])
+        self.assertEqual(again, {"type": "keepalive", "gripper": 12.0})
+        near = sender.message(goal + 2.0, 12.0, False, goal)
+        self.assertEqual(near["type"], "follow")
+        jump = sender.message(goal + 20.0, 12.0, False, goal)
+        self.assertEqual(jump["type"], "path")                               # a jump is a joint move too
+
+    def test_the_simulated_link_plays_what_the_sender_sends(self):
+        from demos.combiner_door.robot.arm_link import SimulatedLink
+
+        link, sender = SimulatedLink(np.zeros(6)), plan.ArmSender()
+        goal = np.array([40.0, 0, 0, 0, 0, 0])
+        for _ in range(40):
+            link.handle(sender.message(goal, None, True, link.q))
+        self.assertEqual(link.paths, 1)
+        self.assertLess(float(np.max(np.abs(link.q - goal))), 0.5)
+        for i in range(1, 11):
+            link.handle(sender.message(goal + i, None, False, link.q))
+        self.assertIsNotNone(link.follower)
+        self.assertLess(float(np.max(np.abs(link.q - (goal + 10)))), 1.5)
+
+
+class PathPlayerTests(unittest.TestCase):
+    """The arm link's timed paths (`arm_link.PathPlayer`, `check_path`): the path's own points by the clock, waiting for
+    an arm held back, the lead allowing for the report's age."""
+
+    def _path(self, n=31, step=3.4):
+        return np.array([[i * step, 0, 0, 0, 0, 0] for i in range(n)], dtype=float)
+
+    def test_it_plays_each_point_at_its_time_without_slowing_between_them(self):
+        from demos.combiner_door.robot.arm_link import PathPlayer
+
+        path = self._path()
+        player, commands = PathPlayer(path, 0.1), []
+        q = path[0]
+        while not player.done:
+            commands.append(player.step(q, 0.0, 0.1))
+            q = np.asarray(commands[-1])                       # the arm follows its command
+        steps = np.abs(np.diff([path[0][0]] + [c[0] for c in commands]))
+        self.assertTrue(np.allclose(steps, 3.4))              # every command a full step: no braking between points
+        self.assertTrue(np.allclose(commands[-1], path[-1]))
+
+    def test_an_arm_held_back_makes_the_path_wait(self):
+        from demos.combiner_door.robot.arm_link import LEAD_DEG, PathPlayer
+
+        player = PathPlayer(self._path(), 0.1)
+        stuck = np.zeros(6)
+        for _ in range(40):
+            command = np.asarray(player.step(stuck, 0.0, 0.1))
+        self.assertLessEqual(float(np.max(np.abs(command - stuck))), LEAD_DEG + 3.4 + 1e-9)
+        self.assertFalse(player.done)
+        self.assertGreater(player.waited, 30)
+
+    def test_a_stale_report_allows_more_lead_up_to_its_cap(self):
+        from demos.combiner_door.robot.arm_link import LEAD_DEG, PATH_LEAD_MAX_DEG, PathPlayer
+
+        # One step (3.4 deg at 0.1 s) is allowed on top of the lead, and the path's speed times the report's age.
+        for age, cap in ((0.0, LEAD_DEG + 3.4), (0.05, LEAD_DEG + 5.1), (0.5, PATH_LEAD_MAX_DEG)):
+            player = PathPlayer(self._path(), 0.1)
+            stuck = np.zeros(6)
+            for _ in range(20):
+                command = np.asarray(player.step(stuck, age, 0.1))
+            lead = float(np.max(np.abs(command - stuck)))
+            self.assertLessEqual(lead, cap + 1e-9)
+            self.assertGreater(lead, cap - 3.4 - 1e-9)
+
+    def test_at_5_hz_a_lagging_arm_does_not_make_it_wait_every_other_step(self):
+        from demos.combiner_door.robot.arm_link import PathPlayer, SimulatedArm
+
+        path = self._path(n=16, step=8.6)
+        player, arm = PathPlayer(path, 0.2), SimulatedArm(path[0])
+        while not player.done:
+            arm.step_command(player.step(arm.q, 0.0, 0.2), None, 0.2)
+        self.assertEqual(player.waited, 0)
+
+    def test_a_path_is_refused_away_from_the_arm_or_too_fast(self):
+        from demos.combiner_door.robot.arm_link import check_path
+
+        path = self._path()
+        self.assertIsNone(check_path(path, 0.1, path[0]))
+        self.assertIn("start", check_path(path, 0.1, path[0] + 15.0))
+        self.assertIn("faster", check_path(self._path(step=5.0), 0.1, np.zeros(6)))
+        self.assertIsNotNone(check_path(path[:1], 0.1, path[0]))
 
 
 class ShapingTests(unittest.TestCase):

@@ -11,8 +11,11 @@
 #   demos/combiner_door/robot/run_on_dog.sh --task key --stage turn  # the key turned by the arm, dry (key_plan.py)
 #   demos/combiner_door/robot/run_on_dog.sh --task key --stage turn --then_door pull  # then the door pulled from there
 #   demos/combiner_door/robot/run_on_dog.sh --task insert --stage insert  # the key handed to the arm and inserted
+#   demos/combiner_door/robot/run_on_dog.sh --stage pull --then_close  # the door pulled open, closed, then locked
+#   demos/combiner_door/robot/run_on_dog.sh --task insert --stage insert --lock  # the key in to lock the door
 #
-# Every argument goes to node.py (--task, --stage, --then_door, --camera, --live, --yes, --speed_scale, --door_deg, --odom, --no_fold;
+# Every argument goes to node.py (--task, --stage, --then_door, --then_close, --lock, --camera, --live, --yes, --speed_scale,
+# --door_deg, --odom, --no_fold;
 # --help).
 # A live run waits for one Enter after showing its plan, then runs through; `a` + Enter stops it. Keep the Unitree remote
 # in hand. The record is logs/combiner_door_robot/<run>/ (`d1fetch` on the PC copies it back).
@@ -41,6 +44,7 @@ LIVE=0
 STAGE=watch
 TASK=""
 THEN=""
+CLOSE=""
 CAMERA=front
 args=("$@")
 for ((i = 0; i < ${#args[@]}; i++)); do
@@ -53,6 +57,8 @@ for ((i = 0; i < ${#args[@]}; i++)); do
     --task=key|--task=insert) TASK="${args[$i]#--task=}_" ;;
     --then_door) THEN="_door_${args[$((i + 1))]:-}" ;;
     --then_door=*) THEN="_door_${args[$i]#--then_door=}" ;;
+    --then_close) CLOSE="_close" ;;
+    --lock) CLOSE="_lock" ;;
     --camera) CAMERA="${args[$((i + 1))]:-}" ;;
     --camera=*) CAMERA="${args[$i]#--camera=}" ;;
   esac
@@ -66,7 +72,7 @@ fi
 
 STAMP="$(date -u +%Y%m%dT%H%M%S)"
 SUFFIX=dry; [ "$LIVE" = 1 ] && SUFFIX=live
-RUN_DIR="logs/combiner_door_robot/${STAMP}_${TASK}${STAGE}${THEN}_${SUFFIX}"
+RUN_DIR="logs/combiner_door_robot/${STAMP}_${TASK}${STAGE}${THEN}${CLOSE}_${SUFFIX}"
 mkdir -p "$REPO/$RUN_DIR"
 
 for name in "$NODE_NAME" "$ARM_NAME"; do

@@ -32,7 +32,7 @@ def key_markers(out, box, theta_deg: float) -> None:
         out.add("key", "CUBE", frame @ plan.pose(None, centre), size, KEY_ORANGE)
     arc = [plan.transform(box, [at.platform_point(d)])[0] for d in np.linspace(at.START_DEG, at.END_DEG, 31)]
     out.add("key_arc", "LINE_STRIP", None, (0.006, 0, 0), viz.YELLOW, points=arc)
-    out.add("key_arc", "SPHERE", plan.pose(None, plan.transform(box, [at.platform_point(kg.UNLOCK_DEG)])[0]),
+    out.add("key_arc", "SPHERE", plan.pose(None, plan.transform(box, [at.platform_point(at.UNLOCK_DEG)])[0]),
             (0.015, 0.015, 0.015), viz.GREEN)
 
 
@@ -41,7 +41,9 @@ def stance_markers(out, box) -> None:
     the box as the fix has it, its yaw taken as the script frame's (the push wants the door square to within 4 deg)."""
     lock = plan.transform(box, [kg.LOCK])[0]
     floor = float(np.asarray(box)[2, 3])
-    for (ahead, left), colour in (((at.PUSH_DOOR_AHEAD_M, at.PUSH_LOCK_LEFT_M), viz.YELLOW),):
+    from .key_plan import PUSH_DOOR_AHEAD_M, PUSH_LOCK_LEFT_M
+
+    for (ahead, left), colour in (((PUSH_DOOR_AHEAD_M, PUSH_LOCK_LEFT_M), viz.YELLOW),):
         corners = [(lock[0] - a, lock[1] - l, floor) for a, l in
                    ((ahead[0], left[0]), (ahead[1], left[0]), (ahead[1], left[1]), (ahead[0], left[1]), (ahead[0], left[0]))]
         out.add("key_stance", "LINE_STRIP", None, (0.008, 0, 0), colour, points=corners)

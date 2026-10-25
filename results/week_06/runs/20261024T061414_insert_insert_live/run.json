@@ -1,0 +1,942 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261024T061414_insert_insert_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--live",
+    "--yes"
+  ],
+  "started_utc": "20261024T061417",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 11.543,
+      "posture": "lie"
+    },
+    {
+      "t": 19.916,
+      "phase": "lock_look",
+      "searched_ms": 692,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          54.77,
+          -24.82,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 41.83,
+        "runner_up": 43.27,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            739.0,
+            397.5
+          ],
+          "axes_px": [
+            24.8,
+            24.2
+          ],
+          "angle_deg": 86.7,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.546,
+          "why": "",
+          "out_mm": 7.9,
+          "out_used": false,
+          "range_m": 0.5136,
+          "model_range_m": 0.5038,
+          "model_r_px": 24.6
+        }
+      }
+    },
+    {
+      "t": 20.66,
+      "phase": "lock_look",
+      "searched_ms": 645,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          54.8,
+          -23.84,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 41.39,
+        "runner_up": 43.89,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            739.0,
+            397.7
+          ],
+          "axes_px": [
+            24.9,
+            24.2
+          ],
+          "angle_deg": 85.2,
+          "support": 1.0,
+          "contrast": 0.75,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.549,
+          "why": "",
+          "out_mm": 8.0,
+          "out_used": false,
+          "range_m": 0.5138,
+          "model_range_m": 0.504,
+          "model_r_px": 24.6
+        }
+      }
+    },
+    {
+      "t": 21.34,
+      "phase": "lock_look",
+      "searched_ms": 717,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          55.01,
+          -22.92,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 41.26,
+        "runner_up": 42.62,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            739.0,
+            397.9
+          ],
+          "axes_px": [
+            24.8,
+            24.2
+          ],
+          "angle_deg": 90.0,
+          "support": 1.0,
+          "contrast": 0.75,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.555,
+          "why": "",
+          "out_mm": 8.2,
+          "out_used": false,
+          "range_m": 0.514,
+          "model_range_m": 0.5043,
+          "model_r_px": 24.6
+        }
+      }
+    },
+    {
+      "t": 49.136,
+      "phase": "key_view",
+      "searched_ms": 598,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          -3.9,
+          -5.65,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 65.23,
+        "runner_up": 46.81,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            883.8,
+            183.5
+          ],
+          "axes_px": [
+            86.7,
+            73.4
+          ],
+          "angle_deg": 142.5,
+          "support": 1.0,
+          "contrast": 0.77,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.735,
+          "why": "",
+          "out_mm": 0.0,
+          "out_used": false,
+          "range_m": 0.1639,
+          "model_range_m": 0.1666,
+          "model_r_px": 78.2
+        }
+      }
+    },
+    {
+      "t": 50.205,
+      "phase": "key_view",
+      "searched_ms": 697,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          -1.97,
+          -2.83,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 61.11,
+        "runner_up": 46.75,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            846.9,
+            196.5
+          ],
+          "axes_px": [
+            84.6,
+            73.2
+          ],
+          "angle_deg": 144.4,
+          "support": 1.0,
+          "contrast": 0.78,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.013,
+          "score": 0.767,
+          "why": "",
+          "out_mm": 0.6,
+          "out_used": false,
+          "range_m": 0.164,
+          "model_range_m": 0.1654,
+          "model_r_px": 77.5
+        }
+      }
+    },
+    {
+      "t": 51.134,
+      "phase": "key_view",
+      "searched_ms": 657,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          -3.11,
+          -9.11,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 51.39,
+        "runner_up": 44.06,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            805.0,
+            213.5
+          ],
+          "axes_px": [
+            82.4,
+            72.1
+          ],
+          "angle_deg": 144.1,
+          "support": 1.0,
+          "contrast": 0.78,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.71,
+          "why": "",
+          "out_mm": -0.6,
+          "out_used": false,
+          "range_m": 0.1634,
+          "model_range_m": 0.1661,
+          "model_r_px": 76.3
+        }
+      }
+    },
+    {
+      "t": 51.833,
+      "phase": "key_pre",
+      "searched_ms": 959,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          -5.41,
+          -5.66,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 62.96,
+        "runner_up": 45.5,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            815.4,
+            214.9
+          ],
+          "axes_px": [
+            82.8,
+            73.2
+          ],
+          "angle_deg": 147.2,
+          "support": 1.0,
+          "contrast": 0.78,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.729,
+          "why": "",
+          "out_mm": -0.3,
+          "out_used": false,
+          "range_m": 0.1625,
+          "model_range_m": 0.1655,
+          "model_r_px": 75.9
+        }
+      }
+    },
+    {
+      "t": 83.451,
+      "posture": "stand"
+    },
+    {
+      "t": 85.993,
+      "posture": "balance"
+    },
+    {
+      "t": 89.971,
+      "stop": "attempt finished"
+    },
+    {
+      "t": 89.975,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 22,
+    "with_tag": 22,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.29 m ahead, +0.25 m left, turned -10 deg: a walk up of 0.39 m",
+    "detections": 22,
+    "site": {
+      "distance_m": 0.7093,
+      "bearing_deg": -25.548,
+      "yaw_deg": 180.0
+    },
+    "walk_in_m": 0.387,
+    "lidar_heading": {
+      "used": true,
+      "points": 3998,
+      "span_m": 0.56,
+      "rms_mm": 6.3,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.23
+  },
+  "outcome": "attempt finished",
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.242,
+        -0.302,
+        0.182
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": false,
+      "seated_ahead_m": 0.509,
+      "lock_right_m": 0.047,
+      "yaw_off_deg": -1.9,
+      "left_m": 0.041,
+      "carried_m": 0.023,
+      "carry_s": 0.09,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 10.368,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 183.0
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 41.6,
+      "turned_deg": 1.41
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.47 m ahead, +0.05 m right, door -3.3 deg off square"
+    },
+    {
+      "t": 11.369,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 183.4
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.2547
+    },
+    {
+      "t": 14.52,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 182.9
+    },
+    {
+      "phase": "refit_lying",
+      "used": true,
+      "odometry_back_mm": -8.0,
+      "sit_back_added_mm": 48.0,
+      "scans": 14,
+      "moved_mm": 18.5,
+      "turned_deg": 0.54
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.50 m ahead, +0.01 m right, door +0.9 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "deg": 0.0,
+          "camera_mm": 162.1,
+          "shoulder_share": 0.51,
+          "j6_rad": 1.528
+        },
+        {
+          "pose": "pre",
+          "deg": 0.0,
+          "camera_mm": 162.3,
+          "shoulder_share": 0.62,
+          "j6_rad": 1.525
+        },
+        {
+          "pose": "touch",
+          "deg": 0.0,
+          "camera_mm": 162.8,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.523
+        },
+        {
+          "pose": "seated",
+          "deg": 0.0,
+          "camera_mm": 162.9,
+          "shoulder_share": 0.67,
+          "j6_rad": 1.522
+        },
+        {
+          "pose": "across+",
+          "deg": 0.0,
+          "camera_mm": 166.9,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.51
+        },
+        {
+          "pose": "across-",
+          "deg": 0.0,
+          "camera_mm": 158.8,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.536
+        },
+        {
+          "pose": "touch_wrist+",
+          "deg": 10.0,
+          "camera_mm": 163.8,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.348
+        },
+        {
+          "pose": "seated_wrist+",
+          "deg": 10.0,
+          "camera_mm": 163.9,
+          "shoulder_share": 0.67,
+          "j6_rad": 1.347
+        },
+        {
+          "pose": "across_wrist+",
+          "deg": 10.0,
+          "camera_mm": 167.8,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.334
+        },
+        {
+          "pose": "touch_wrist-",
+          "deg": -10.0,
+          "camera_mm": 161.8,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.698
+        },
+        {
+          "pose": "seated_wrist-",
+          "deg": -10.0,
+          "camera_mm": 161.9,
+          "shoulder_share": 0.67,
+          "j6_rad": 1.697
+        },
+        {
+          "pose": "across_wrist-",
+          "deg": -10.0,
+          "camera_mm": 157.8,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.711
+        },
+        {
+          "pose": "turned45",
+          "deg": 55.0,
+          "camera_mm": 162.9,
+          "shoulder_share": 0.67,
+          "j6_rad": 0.562
+        }
+      ],
+      "wrist_search_deg": [
+        -10.0,
+        10.0
+      ]
+    },
+    {
+      "phase": "plan_look",
+      "aim_servo_deg": [
+        3.4,
+        -90.0,
+        90.0,
+        -3.1,
+        -21.5,
+        3.1
+      ],
+      "places": 5,
+      "left_out": []
+    },
+    {
+      "t": 15.996,
+      "phase": "lock_look"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 183.4
+    },
+    {
+      "phase": "lock_look",
+      "places": 5,
+      "places_tried": 1,
+      "frames": 3,
+      "found": 3,
+      "why_not": [],
+      "range_m": 0.5138,
+      "model_range_m": 0.5038,
+      "out_mm": 0.0,
+      "place": 0,
+      "pan_deg": 0.0,
+      "moved_mm": [
+        54.8,
+        -23.8
+      ],
+      "spread_mm": [
+        0.2,
+        1.9
+      ],
+      "image_r_px": 24.5
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "deg": 0.0,
+          "camera_mm": 162.9,
+          "shoulder_share": 0.53,
+          "j6_rad": 1.386
+        },
+        {
+          "pose": "pre",
+          "deg": 0.0,
+          "camera_mm": 163.5,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.371
+        },
+        {
+          "pose": "touch",
+          "deg": 0.0,
+          "camera_mm": 165.3,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.362
+        },
+        {
+          "pose": "seated",
+          "deg": 0.0,
+          "camera_mm": 166.2,
+          "shoulder_share": 0.68,
+          "j6_rad": 1.357
+        },
+        {
+          "pose": "across+",
+          "deg": 0.0,
+          "camera_mm": 170.0,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.343
+        },
+        {
+          "pose": "across-",
+          "deg": 0.0,
+          "camera_mm": 160.8,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.38
+        },
+        {
+          "pose": "touch_wrist+",
+          "deg": 10.0,
+          "camera_mm": 166.3,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.186
+        },
+        {
+          "pose": "seated_wrist+",
+          "deg": 10.0,
+          "camera_mm": 167.2,
+          "shoulder_share": 0.68,
+          "j6_rad": 1.18
+        },
+        {
+          "pose": "across_wrist+",
+          "deg": 10.0,
+          "camera_mm": 170.9,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.166
+        },
+        {
+          "pose": "touch_wrist-",
+          "deg": -10.0,
+          "camera_mm": 164.4,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.538
+        },
+        {
+          "pose": "seated_wrist-",
+          "deg": -10.0,
+          "camera_mm": 165.2,
+          "shoulder_share": 0.68,
+          "j6_rad": 1.533
+        },
+        {
+          "pose": "across_wrist-",
+          "deg": -10.0,
+          "camera_mm": 159.8,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.556
+        },
+        {
+          "pose": "turned45",
+          "deg": 55.0,
+          "camera_mm": 166.2,
+          "shoulder_share": 0.68,
+          "j6_rad": 0.397
+        }
+      ],
+      "wrist_search_deg": [
+        -10.0,
+        10.0
+      ]
+    },
+    {
+      "t": 24.067,
+      "phase": "h_turn"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lock_look",
+      "mm": 183.4
+    },
+    {
+      "t": 27.067,
+      "phase": "h_reach"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "h_turn",
+      "mm": 183.9
+    },
+    {
+      "t": 29.867,
+      "phase": "h_lower"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "h_reach",
+      "mm": 246.9
+    },
+    {
+      "t": 31.867,
+      "phase": "h_on"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "h_lower",
+      "mm": 197.2
+    },
+    {
+      "t": 35.286,
+      "phase": "grip"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "h_on",
+      "mm": 197.2
+    },
+    {
+      "t": 36.268,
+      "phase": "h_draw"
+    },
+    {
+      "phase": "grip_check",
+      "gripper_units": 28.7,
+      "held": true,
+      "try": 1
+    },
+    {
+      "phase": "camera_gap",
+      "of": "grip",
+      "mm": 221.0
+    },
+    {
+      "t": 41.567,
+      "phase": "h_out"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "h_draw",
+      "mm": 187.3
+    },
+    {
+      "phase": "drawn",
+      "drawn_mm": 94.8
+    },
+    {
+      "phase": "key_go",
+      "path_clear": true,
+      "key_margin_mm": 71.1
+    },
+    {
+      "t": 43.067,
+      "phase": "key_go"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "h_out",
+      "mm": 187.7
+    },
+    {
+      "t": 48.069,
+      "phase": "key_view"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_go",
+      "mm": 87.4
+    },
+    {
+      "phase": "keyhole",
+      "frames": 3,
+      "found": 3,
+      "why_not": [],
+      "offset_mm": [
+        -2.82,
+        -4.33
+      ],
+      "spread_mm": [
+        1.93,
+        6.28
+      ],
+      "support": 1.0,
+      "calibration_mm": [
+        0.29,
+        1.32
+      ]
+    },
+    {
+      "t": 51.872,
+      "phase": "key_pre"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_view",
+      "mm": 155.4
+    },
+    {
+      "t": 53.869,
+      "phase": "key_in"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_pre",
+      "mm": 166.6
+    },
+    {
+      "phase": "wrist_held",
+      "deg": -3.15
+    },
+    {
+      "phase": "seated",
+      "off_mm": -1.43
+    },
+    {
+      "phase": "touched",
+      "off_mm": -1.43,
+      "seated": true,
+      "commanded_off_mm": -7.0
+    },
+    {
+      "t": 69.868,
+      "phase": "key_search"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_in",
+      "mm": 159.3
+    },
+    {
+      "t": 69.967,
+      "phase": "key_seat"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_search",
+      "mm": 161.3
+    },
+    {
+      "t": 70.067,
+      "phase": "key_turn"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_seat",
+      "mm": 161.9
+    },
+    {
+      "phase": "turned",
+      "deg": 40.3,
+      "planned_deg": 45.0
+    },
+    {
+      "t": 75.067,
+      "phase": "release"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_turn",
+      "mm": 159.9
+    },
+    {
+      "t": 76.367,
+      "phase": "key_back"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "release",
+      "mm": 157.7
+    },
+    {
+      "t": 79.367,
+      "phase": "home"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "key_back",
+      "mm": 148.5
+    },
+    {
+      "t": 83.291,
+      "phase": "stand_up"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 70.5
+    },
+    {
+      "t": 85.873,
+      "phase": "stand_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_up",
+      "mm": 67.6
+    },
+    {
+      "t": 87.122,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_settle",
+      "mm": 93.7
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 75.2
+    }
+  ]
+}

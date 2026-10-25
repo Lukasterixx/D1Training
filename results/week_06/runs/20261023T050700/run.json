@@ -1,0 +1,167 @@
+{
+  "mode": "arm_command_rate",
+  "status": "finished",
+  "arm_moved": true,
+  "what": "the arm held at its fold, commanded its own pose in 20 s blocks; report timing beside it",
+  "analysis": {
+    "silent": {
+      "hz": 0.0,
+      "gripper_every": 1,
+      "commands": 0,
+      "moved_max_deg": 0.1,
+      "current_servo_angle": {
+        "n": 179,
+        "rate_hz": 8.99,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.114
+      },
+      "arm_Feedback/1": {
+        "n": 179,
+        "rate_hz": 8.99,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.114
+      },
+      "arm_Feedback/3": {
+        "n": 200,
+        "rate_hz": 9.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.101
+      }
+    },
+    "10hz": {
+      "hz": 10.0,
+      "gripper_every": 1,
+      "commands": 200,
+      "moved_max_deg": 0.3,
+      "current_servo_angle": {
+        "n": 143,
+        "rate_hz": 7.28,
+        "gaps": 12,
+        "in_gaps_s": 5.04,
+        "max_s": 0.708
+      },
+      "arm_Feedback/1": {
+        "n": 321,
+        "rate_hz": 16.06,
+        "gaps": 2,
+        "in_gaps_s": 0.7,
+        "max_s": 0.4
+      },
+      "arm_Feedback/3": {
+        "n": 200,
+        "rate_hz": 9.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.103
+      }
+    },
+    "5hz": {
+      "hz": 5.0,
+      "gripper_every": 1,
+      "commands": 100,
+      "moved_max_deg": 0.3,
+      "current_servo_angle": {
+        "n": 166,
+        "rate_hz": 8.3,
+        "gaps": 3,
+        "in_gaps_s": 1.13,
+        "max_s": 0.411
+      },
+      "arm_Feedback/1": {
+        "n": 255,
+        "rate_hz": 12.76,
+        "gaps": 1,
+        "in_gaps_s": 0.3,
+        "max_s": 0.303
+      },
+      "arm_Feedback/3": {
+        "n": 200,
+        "rate_hz": 9.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.101
+      }
+    },
+    "2hz": {
+      "hz": 2.0,
+      "gripper_every": 1,
+      "commands": 40,
+      "moved_max_deg": 0.3,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 8.99,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.116
+      },
+      "arm_Feedback/1": {
+        "n": 219,
+        "rate_hz": 10.94,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.113
+      },
+      "arm_Feedback/3": {
+        "n": 199,
+        "rate_hz": 9.9,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.201
+      }
+    },
+    "10hz_no_gripper": {
+      "hz": 10.0,
+      "gripper_every": 0,
+      "commands": 200,
+      "moved_max_deg": 0.3,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.122
+      },
+      "arm_Feedback/1": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.122
+      },
+      "arm_Feedback/3": {
+        "n": 1,
+        "stopped": true
+      }
+    },
+    "10hz_again": {
+      "hz": 10.0,
+      "gripper_every": 1,
+      "commands": 200,
+      "moved_max_deg": 0.3,
+      "current_servo_angle": {
+        "n": 146,
+        "rate_hz": 7.33,
+        "gaps": 10,
+        "in_gaps_s": 4.24,
+        "max_s": 0.711
+      },
+      "arm_Feedback/1": {
+        "n": 331,
+        "rate_hz": 16.56,
+        "gaps": 1,
+        "in_gaps_s": 0.3,
+        "max_s": 0.3
+      },
+      "arm_Feedback/3": {
+        "n": 199,
+        "rate_hz": 9.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.102
+      }
+    }
+  }
+}

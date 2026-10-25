@@ -17,9 +17,11 @@ record). What is the insertion's:
   tips the chest up. Standing, the base is 0.35-0.39 m over the box's root on the dog and the lock only 3-6 cm above it:
   the level, rolled hand solves from no stance there (the CPU model, 2026-10-21, 0.40-0.70 m from the door and 0.10 m
   left to 0.20 m right). Lying, the base ~0.20 m lower, it solves from 29-46 stances with the shoulder at 34-67% of its
-  torque. The drop is measured (sport mode's `body_height`). **No lidar refit lying** (Lukas, 2026-10-22: the held key
-  obscures the door): the fix is carried through the lie-down by the odometry, plus whatever part of the measured
-  sit-back (`LIE_BACK_M`, 4 cm straight back) the odometry did not report (`_replan_lying`).
+  torque. The drop is measured (sport mode's `body_height`). The fix is carried through the lie-down by the odometry,
+  plus whatever part of the measured sit-back (`LIE_BACK_M`, 4 cm straight back) the odometry did not report, then
+  **refitted on the lidar lying** (`_replan_lying`; Lukas, 2026-10-24: "you may do the lidar fit again"). It was off
+  from 2026-10-22, when the key was handed in before the dog lay down and shadowed the door; since then the key comes
+  after `lock_look`, so the arm is folded and empty through `lie_settle`.
 - **The insertion is by touch, not by position.** The cam lock's own keyway has under 0.5 mm of play round the key (no
   printed lead-in, Lukas, 2026-10-21); nothing the robot measures puts the key that close (the look's depth was 3-11 mm
   off in simulation; the D1 sags ~16 mm holding it out there). So: the key to 25 mm out on the keyway's axis
@@ -50,10 +52,11 @@ import d1_hardware
 import d1_ik
 from demos.combiner_door import perception
 from demos.combiner_door.robot import plan
-from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6, _seeds, path_clear, solve_link6
+from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6, _seeds, arm_clear, holdable, solve_link6
 from demos.unifp import decoupled_arm, script as demo_script
 
 from .. import geometry as kg
+from .. import holster
 from . import key_plan as kp
 
 STAGES = ("watch", "look", "load", "walk", "lie", "reach", "touch", "insert")
@@ -120,6 +123,60 @@ SEATED_OFF_DOOR_M = LOCK_FACE_OFF_DOOR_M + SHAFT_M - TRAVEL_M
 KEY_IN_JAWS_LINK6 = (0.0, 0.0, kg.KEY_ORIGIN_LINK6[2])
 #: The jaw centre from the key's origin, along the key and out of the door (`env._key_point`'s, the grip above).
 JAW_FROM_KEY = (KEY_IN_JAWS_LINK6[0], KEY_IN_JAWS_LINK6[2] - kg.JAW_CENTRE_Z_M)
+#: The holster's grip on the dog holds the shaft this far along the bar (toward the platform) from the jaw centre, not
+#: on it. The draw puts the jaws within 1.4 mm of its planned grip by the encoders (Lukas's live runs, 2026-10-24 05:08
+#: and 05:11 UTC), yet they close on the bar's free end past the shaft, the shaft just beyond the fingers, "consistently"
+#: (his photos). The key then went in to the right of the keyhole. Taking the draw that much deeper instead ran the
+#: wrist motor into the shoulder motor on the dog (Lukas: "can we instead add the offset the insertion phase itself").
+#: So the insertion holds the jaws this far short of the shaft. 18 mm (half a 26 mm finger and the 10 mm shaft's radius,
+#: read off the photos) pressed 8 mm left of the keyhole (Lukas, 2026-10-24), so 10 mm; Lukas's trials then found 6 mm
+#: ("I find this to be the successful offset after a few tests": `--shaft_along_mm 6`). The hand-in's grip is at the
+#: shaft (`KEY_IN_JAWS_LINK6`). A run nudges where the key lands on top of this (`InsertAttempt.key_right_m`,
+#: `key_up_m`; `node.py --key_right_mm`, `--key_up_mm`).
+#: Since 2026-10-25 the dog's draw takes the bar that much further along instead (`DOG_GRIP_ALONG_M`), so the jaws close
+#: round the shaft (Lukas's photo: "It grabs the lever like this each time... it would be good to grab it more
+#: cleanly", the fingers past the bar's end): the shaft on the jaws' axis, as the turn (Joint6 alone) takes it. On the
+#: CPU model the v5 draw solves with the grip 6 and 10 mm along, every joint within 0.920 and 0.887 of its range
+#: (0.968 at the shaft). (On v4 the jaws 18 mm along ran the wrist into the shoulder on the dog; v5's lever is 15 mm
+#: further out.)
+#: Then 2 mm back up the lever's axis, away from the holster (Lukas, 2026-10-25: "make the arm grab the lever from its
+#: holster 2mm further up its axis (away from the holster)"): 4 mm along, so the shaft sits 2 mm along the bar from
+#: the jaws' axis (`HOLSTER_SHAFT_ALONG_M`), and the insertion and its turn take the key there, off Joint6's axis.
+DOG_GRIP_ALONG_M = 0.004
+HOLSTER_SHAFT_ALONG_M = 0.006 - DOG_GRIP_ALONG_M
+#: The holster key's landing nudges by default (`InsertAttempt.key_right_m`, `key_up_m`), to the robot's left and up,
+#: m; `--key_right_mm`, `--key_up_mm` replace them. With the grip 4 mm along the key hit the keyway's bottom right and
+#: did not go in (Lukas, 2026-10-25: "can you make it insert the key up 2mm and to the left 2mm"), so they were 2 and
+#: 2; then "expose this as a launch argument" and "undo the -2, 2 default, make it 0,0": 0, set per run instead.
+HOLSTER_KEY_LEFT_M = 0.0
+HOLSTER_KEY_UP_M = 0.0
+#: And this much further onto the bar along the hand's approach: with the grip 6 mm along, the fingertips stopped
+#: 3.5 mm short of the bar's back face, where they are meant to be (Lukas's photo and measure, 2026-10-25: "There is a
+#: 3.5mm gap to where the end of the pincers are supposed to be"). The CPU model: the draw solves, every joint within
+#: 0.944 of its range, the open hand 29.6 mm off the key as it slides on.
+DOG_GRIP_ONTO_M = 0.0035
+#: The lock taken this much further from the robot (into the door) than the box's model and the door's fit put it
+#: (`InsertAttempt._box`; the door's fit, the stance and the look's correction of the model are not moved). Lukas,
+#: 2026-10-24: "it thinks the door is about a cm closer than it actually is ... and hence it always starts its
+#: insertion wiggle very early". His 1 cm was not taken up: the key went straight in and stopped at 1.41, 0.40 and
+#: -1.43 mm out of the model's seated in his runs of 05:54, 05:57 and 06:14 UTC (the 6 mm grip; he called it
+#: "successful"), and stalled at -2.6 in the 06:16 one, so the model's depth is within ~3 mm. 10 mm deeper, a seated
+#: key would stop 10 mm short of the model's seated and be taken for one on the face. The early wiggle was the wrist's
+#: search running from the start of `key_in`, 25 mm out (`WRIST_START_M`). A run sets it (`InsertAttempt.key_in_m`,
+#: `node.py --key_in_mm`).
+#: The default since 2026-10-25 is the grip's 3.5 mm. Until then the holster's grip held the key 3.5 mm further out of the jaws than
+#: `KEY_IN_JAWS_LINK6` (the fingertips short of the bar's back face, Lukas's measure), and the key seated straight in at
+#: -1.4 to +2.2 mm of the model's seated (seven runs, 05:54-22:53 UTC). With the grip onto the bar (`DOG_GRIP_ONTO_M`),
+#: Lukas's run of 23:27 UTC stopped at -4.61 mm, past the half keyway's -4.35 that is taken as seated, and searched
+#: across the face for a minute: the lock is that much further in than the box's model has it.
+LOCK_DEEPER_M = 0.0035
+
+
+def key_in_jaws_link6(along_m: float = 0.0, roll: int = kg.GRASP_ROLL, up_m: float = 0.0) -> tuple[float, float, float]:
+    """The key's origin in Link6 with its shaft `along_m` along the bar and `up_m` up its top side from the jaw centre:
+    Link6's x is `roll` times the bar and y is `-roll` times the top side (`geometry.KEY_AXES_LINK6`, roll -1; the
+    holster's +1 is that turned 180 deg about the shaft)."""
+    return (roll * along_m, KEY_IN_JAWS_LINK6[1] - roll * up_m, KEY_IN_JAWS_LINK6[2])
 
 # --- the insertion ----------------------------------------------------------------------------------------------------
 
@@ -187,6 +244,9 @@ PRESS_M = 0.002
 SEARCH_PITCH_M = 0.0004
 SEARCH_SPEED_M_S = 0.0015
 SEARCH_R_M = 0.004
+#: Without the spiral (`InsertAttempt.spiral` False): how long the key stays pressed where it touched, the wrist's
+#: search turning it (10 of its 2 s periods), before the search gives up.
+PRESS_ONLY_S = 20.0
 ENTER_M = 0.0012
 BACK_OUT_M = 0.06
 #: The hand's outer loop (the simulation's, `env.HAND_LOOP_*`): the jaw centre's miss as the encoders put it, integrated
@@ -211,13 +271,158 @@ POSTURE_TIMEOUT_S = 10.0
 GRIP_S, PRE_S, IN_S, SEARCH_S, SEAT_S, RELEASE_S, BACK_S, HOME_S, DROP_S = 1.0, 2.0, 45.0, 120.0, 12.0, 1.0, 3.0, 3.0, 1.5
 LIE_S, LIE_SETTLE_S, STAND_S, STAND_SETTLE_S = 3.0, 1.5, 3.0, 1.0
 #: Asked before with `--step`.
-CONFIRM_BEFORE = ("unfold", "walk_in", "lie_down", "key_go", "key_in", "key_search", "release", "stand_up", "fold")
+CONFIRM_BEFORE = ("unfold", "h_turn", "walk_in", "lie_down", "key_go", "key_in", "key_search", "key_turn", "release",
+                  "h_return",
+                  "stand_up",
+                  "fold")
+#: Where the key comes from (`InsertAttempt.key_source`): Lukas's holster beside the arm's base on the robot's right
+#: (`demos/combiner_key/holster.py`, F-189, F-198), drawn out by the arm once the dog lies in front of the lock (Lukas,
+#: 2026-10-24: "the unholstering can happen once the dog has sat down in front ot the keyhole"); or handed in.
+KEY_SOURCES = ("holster", "hand")
+#: The holster draw's phases (`holster_phases`) and their lengths: Joint1 turned at the fold, the arm unfolded to above
+#: the waiting point and down to it (joint goals, `holster.draw_plan`), the open jaws slid onto the bar's root, closed
+#: (`grip`, checked as the hand-in's), the key drawn out along the holster's axis.
+H_TURN_S, H_REACH_S, H_LOWER_S, H_ON_S, H_DRAW_S = 4.0, 4.0, 2.0, 3.0, 5.0
+#: The walk up's finish for the insertion (`InsertAttempt._close_enough`), and how many times it walks up again when the
+#: refit after it puts the stance out of range (`_out_of_range_after_walk`). Lukas's run of 2026-10-24 23:41 UTC (the
+#: look 9 degrees off square, his others 1-3): the walk up stopped 2.0 degrees off (the key's 4 accepted it), the refit
+#: turned the door 2.2 more, and the range check (`key_plan.YAW_LIMIT_DEG`, 4) aborted at 4.0 ("its never done it
+#: before?").
+INSERT_ACCEPT_YAW_DEG = 2.0
+INSERT_REWALKS = 1
+#: The draw is `holster.py`'s for v5 (Lukas's holster with a mouth, 2026-10-24): `holster.SLIDE_M` along the axis
+#: (`h_draw`), then `holster.EXIT_M` out through the mouth at `holster.EXIT_DEG` (`h_exit`), held `H_OUT_S` at the end
+#: (`h_out`) so the arm is there before the key goes to the lock (Lukas: "the lever isnt pulled fully out of the
+#: holster before it is moved towards the lock"); Joint1 and Joint5 to `holster.DRAW_SOFT_J1_J5` of their range out
+#: of the holster and back (`WIDE_PHASES`). How far the encoders put the jaws along the axis is recorded
+#: (`check["drawn_mm"]`, the plan's 93.1 mm). (v4's draw on the dog was 100 mm along the axis; an abort short of 96
+#: mm was removed after Lukas's run of 06:10 UTC: "It has cleared it by 2cm".)
+H_EXIT_S, H_OUT_S, H_CLEAR_S = 2.0, 3.0, 2.0
+HOLSTER_PHASES = ("h_turn", "h_reach", "h_lower", "h_on", "grip", "h_draw", "h_exit", "h_out")
+#: The draw's own outer loop (`_goal_servo`): the jaw centre's miss by the encoders, integrated across the holster's
+#: axis through `h_draw` (the target moving along it) and all of it through `h_out` (still), and held through `h_exit`
+#: and `h_clear`; its value at the end of `h_out` is where the return starts from. Lukas's run of 2026-10-24 21:54 UTC:
+#: at the end of a 1.5 s `h_out` the encoders put the jaws 88.7 mm out of the planned 93.1 and 4.2 mm off the axis
+#: (the arm's sag, 4-5 mm off all through the draw), so the lever's end, with the grip's 6 mm, was at the mouth's lip.
+#: Then `h_clear` lifts the key `holster.CLEAR_M` away from the mouth (`holster.clear_direction`) before `key_go`.
+DRAW_LOOP_PHASES = ("h_draw", "h_exit", "h_out", "h_clear")
+RETURN_LOOP_PHASES = ("h_unclear", "h_align", "h_enter", "h_back")
+#: Its gain, 1/s: slower than the insertion's `LOOP_GAIN`, which integrates only once the arm has settled. At 1.5 the
+#: arm's lag behind the command made it overshoot (a 1.5-degree shoulder sag: +1.5 to -1.3 mm across through
+#: `h_out`); at 0.8 it ends within 0.8 mm, against 3.0-3.6 mm without it (the dry tests, 2026-10-25).
+DRAW_LOOP_GAIN = 0.8
+DRAW_LOOP_MAX_M = 0.015
+#: The key put back in the holster once it has turned the lock (Lukas, 2026-10-24: "make it so that the arm puts the
+#: lever back in the holster after unlocking the door"; the key comes out of the lock turned, "Pull out at 45 deg"):
+#: `key_back` with the jaws shut, straight out along the keyway's axis; `h_return`, a joint move to where the draw
+#: ended (the IK's joints at the end of `h_clear`); then the draw played the other way: down from the lift to the exit
+#: (`h_unclear`), into the mouth (`h_enter`) and
+#: down the channel to the grip (`h_back`), the jaws open (`h_open`), the hand off the bar to the waiting point
+#: (`h_off`), up and to the turned fold (`h_raise`, `h_unreach`), as the holster's recovery goes. Then the dog stands
+#: and the arm folds. In the holster's simulation the mouth took the key in from a draw planned up to 5 mm off it
+#: (8 of 8 at 0, 3 and 5 mm, 2026-10-24); on the dog the hand is stiffer than the simulation's spring grip.
+#: `InsertAttempt.reholster` False (`node.py --leave_key`): the key let go in the lock instead and the hand backed away.
+#: `h_back` is slower than the draw: Lukas's run of 2026-10-24 22:24 UTC aborted in it on the arm's lag (Joints 1, 4,
+#: 5 and 6 10-24 degrees behind a moving target, the key going in), which the way back no longer aborts on (Lukas:
+#: "can you make it not abort when returning? it did a successful holstering and stopped mid putting it back").
+H_RETURN_S, H_ENTER_S, H_BACK_S, H_OPEN_S = 4.0, 4.0, 8.0, 1.0
+#: Held at the exit (`h_align`) before going in, the draw's loop integrating all of the miss as through `h_out`; then
+#: in more slowly, the loop across the axis (Lukas, 2026-10-25: "when returning the key, theres a very close call where
+#: it begins contact with the upper angled wall of the mouth before sliding in... so it doesnt catch an edge"). His run
+#: of 22:53 UTC: `h_enter` began with the arm still coming down from the lift, and with the draw's end value alone the
+#: key reached the channel 3.6 mm toward its top wall (the walls 0.4 mm off the bar there); down the channel it ran
+#: within 1-2 mm of the axis.
+H_ALIGN_S = 2.0
+#: Then folded before the dog stands (`h_unturn`: Joint1 back with the elbow still open; `h_fold`: the elbow shut; the
+#: unfold's first leg undone), and held folded through the stand: on the way back of the run of 22:19 UTC the stand's
+#: phases took the arm to the carry pose in front of the dog, and the fold from there dragged the fingers through the
+#: lidar's box (the chain's proxy 33 mm inside it). On the CPU model this way back keeps the hand 63.6 mm off the
+#: lidar and 20.2 mm off the holstered key (straight to the fold: 11.5).
+RETURN_PHASES = ("h_return", "h_unclear", "h_align", "h_enter", "h_back", "h_open", "h_off", "h_raise", "h_unreach",
+                 "h_unturn", "h_fold")
+#: The return's phases at the holster, where an abort opens the jaws and slides off the bar (`_recover_at_holster`);
+#: before it (`h_return`, `h_enter`: the key out of the channel) it is handed back.
+RETURN_AT_HOLSTER = ("h_back", "h_open", "h_off", "h_raise", "h_unreach")
+#: Folding after the key is back: an abort there finishes the fold (`h_fold`) and stands, the arm held folded.
+RETURN_FOLDING = ("h_unturn", "h_fold")
+#: Joint1 and Joint5 to `holster.DRAW_SOFT_J1_J5` of their range: out of the holster and back.
+WIDE_PHASES = {"h_draw", "h_exit", "h_out", "h_clear", "h_return", "h_unclear", "h_align", "h_enter", "h_back", "h_open",
+               "h_off"}
+#: The wrist's search while the key is pushed in (Lukas, 2026-10-24: "rotating the wrist 10 degrees in either direction
+#: while pushing so its more likely to go in"): the hand rolled about the key's shaft by `WRIST_SEARCH_DEG` times a sine
+#: of period `WRIST_SEARCH_PERIOD_S` through `key_in` and `key_search`; held at the angle the key went in at for the
+#: seat. The jaw centre and the key's origin are on the roll's axis, so the shaft does not move: only the wards turn.
+WRIST_SEARCH_DEG = 10.0
+WRIST_SEARCH_PERIOD_S = 2.0
+#: The search begins with the key this far off the lock's face by the model (`TRAVEL_M` out of seated), or once it has
+#: touched: from the start of `key_in`, 16 mm before the face, it looked to Lukas like a door 1 cm nearer than it is.
+WRIST_START_M = 0.004
+#: Each side of the search is as wide as the plan can hold (`_plan_insert`): the first of these, rolled that way, whose
+#: touch, seat and spiral edge all solve. The holster's grip runs Joint6 near its end at the lock, and the higher the
+#: lock over the lying base the further: on the CPU model -10 deg needs more than `HOLSTER_J6_SOFT` from a dog standing
+#: 0.39 m over the box's root (the dog stands 0.35-0.39; Lukas's live run of 2026-10-24 13:22 aborted on it).
+WRIST_SEARCH_STEPS_DEG = (10.0, 7.5, 5.0, 2.5, 0.0)
+WRIST_SEARCH_PHASES = ("key_in", "key_search")
+#: The holster's grip is the hand-in's turned 180 deg, which puts Joint6 near the end of its range at the lock: 2.08 rad
+#: at the touch against the IK's soft limit of 2.12 (0.9 of the URDF's 2.35), and 2.27 rolled -10 deg. The holster
+#: grip's attempt lets Joint6 alone go to `HOLSTER_J6_SOFT` of its range (2.30 rad, 2.7 deg inside the hard limit
+#: `d1_hardware` clamps to); the other joints keep 0.9.
+HOLSTER_J6_SOFT = 0.98
 #: What the log says through the hand-in and the hand-back countdowns.
 LOAD_TEXT = ("put the key in the open jaws (the fingers on the bar right at the shaft, so the shaft points ahead on the "
-             "gripper's axis, the lever up and to the right at 45 degrees, its platform facing up-left) and hold it "
+             "gripper's axis, the lever level and to the right, its platform facing up) and hold it "
              "there: they close in {n} s")
 HAND_BACK_TEXT = "take hold of the key: the jaws open in {n} s"
-REACTIVE = {"key_in", "key_search", "key_seat", "key_back"}
+REACTIVE = {"key_in", "key_search", "key_seat", "key_close", "key_turn", "key_back"}
+#: The turn once seated (Lukas, 2026-10-24: "I have a feeling the arm can turn the lock at its unholstering grip: after
+#: inserting, try rotating 45 degrees before backing away"): Joint6 alone turned from the angle the key went in at
+#: (Lukas: "assume the key is in the roll axis perfectly, so you only need to rotate the wrist": the jaw centre stays
+#: where it was seated, `_target`'s `pivot`), clockwise as the robot sees it (the lever down at its right: `geometry.lever_dir_box`), by
+#: `InsertAttempt.turn_deg` (`ARM_LEVER.end_deg`, the v4 lock's 45; it unlocks at its 30), over `TURN_RAMP_S`, then
+#: held to `TURN_S`. Then the jaws open and the hand backs away: the key stays in the lock, turned. The plan
+#: (`_plan_insert`) takes the first of the turn, 5 deg less, ... down to `TURN_MIN_DEG` whose seated pose with Joint6
+#: turned that far beyond the wrist search's widest the arm holds; none: no turn. The lock holding the key back shows as the arm's
+#: lag (`plan.ARM_LAG_DEG`): an abort, the jaws opened where they are and the hand backed away, the key left in it.
+TURN_RAMP_S, TURN_S = 4.0, 5.0
+TURN_MIN_DEG = 30.0
+#: The unlock's turn is commanded this much past `turn_deg` (`InsertAttempt.turn_extra_deg`, `node.py
+#: --turn_extra_deg`): on the dog a 45-degree command did not turn the key the full 45 (Lukas, 2026-10-25: "if it is
+#: commanded 45, lets command it 50 to compensate"; then "make the default overturn 10 degrees actually": 55). The
+#: plan's step-down (5 deg at a time to `TURN_MIN_DEG`) starts from the sum. The lock's turn back to level is not
+#: extended.
+UNLOCK_OVERTURN_DEG = 10.0
+#: **Locking** (`InsertAttempt.lock`; `node.py --lock`, and the door close's chain, `--then_close`). Lukas, 2026-10-25:
+#: "insert it at -45 degrees since it is already unlocked and then push the key in while wiggling it. instead of
+#: turning it instantly, push until the arm travels no further (door needs some force to fight the spring) and then
+#: holding this position begin rotating from -45 to 0". The unlock turned the cylinder `ARM_LEVER.end_deg` clockwise
+#: from level (`geometry.Lever`: positive clockwise as the robot sees it) and the key came out there, so the keyway
+#: takes the key only at that angle: the whole insertion (the plan, the wiggle about it) is rolled `lock_from_deg`
+#: (45, Lukas's -45 in his sense) and the turn is back to level. Between the seat and the turn, `key_close`: the key
+#: pressed straight on to `LOCK_BEYOND_FACE_M` beyond the box's front face, or until it stops following its command
+#: (`CONTACT_LAG_M` for `CONTACT_HOLD_S`), at `key_in`'s pace; held there, pressing, through the turn, which goes to
+#: level whatever angle the wiggle had the key in at. Until 2026-10-25 it pushed the key round the door's closing arc
+#: until it stopped (aborting after `CLOSE_MAX_DEG`), which on the dog with the door already shut went on until the IK
+#: ran out, the box moving (`LOCK_BEYOND_FACE_M`'s note). The phase's clock is still `CLOSE_S`.
+CLOSE_LOCK_FROM_HINGE_M = abs(kg.LOCK[1] - plan.GEOMETRY.hinge[1])
+CLOSE_SPEED_DEG_S = math.degrees(IN_SPEED_M_S / CLOSE_LOCK_FROM_HINGE_M)
+CLOSE_MAX_DEG = 15.0
+CLOSE_S = CLOSE_MAX_DEG / CLOSE_SPEED_DEG_S + 4.0
+#: Locked: the encoders put the key this near level after the turn back (`lock_check`): past the lock's unlock angle
+#: (`ARM_LEVER.unlock_deg`) from the end, the way back.
+LOCKED_DEG = kg.ARM_LEVER.end_deg - kg.ARM_LEVER.unlock_deg
+#: Locking, the key is pressed straight in until its shaft's tip is `LOCK_BEYOND_FACE_M` beyond the box's front face, as
+#: the lidar saw it lying down before the arm came out (`_refit_lying`; without a face there, the standing refit and
+#: the sit-back), then turned (`key_close`, `_press_off`). Lukas, 2026-10-25: "it kept pushing until the arm was fully
+#: outstretched, even moving the box. we need a better condition to start turning. make it go a certain distance beyond
+#: the front face of the box according to the lidar (scanned before the arm covers the lidar)", and "expose this as a
+#: launch argument" (`node.py --lock_beyond_face_mm`). In that run the close had pushed the door shut, the key went 37 mm
+#: past seated in `key_in`, was taken as pushing the door shut (the handover then), and `key_close` carried it on round
+#: the arc for 35 s until the IK ran out. Seated, the tip is 7.7 mm beyond the face (the keyway's 4.2 behind it and
+#: `LOCK_DEEPER_M`). A key that stops first, past half the keyway out of seated, is in: pressed as far as it goes, it
+#: turns there. Further out it touched the lock's face, and the search follows. No abort for going on.
+LOCK_BEYOND_FACE_M = 0.012
+#: The press is at its depth once its command has been there this long (the arm's lag along the axis is 1.5-3 mm).
+PRESS_DWELL_S = 1.0
 
 
 # --- the look --------------------------------------------------------------------------------------------------------
@@ -227,8 +432,8 @@ def _frames(box):
     box = np.asarray(box)
     rot = box[:3, :3]
     seated = box @ np.array([kg.LOCK[0] + SEATED_OFF_DOOR_M, kg.LOCK[1], kg.LOCK[2], 1.0])
-    return (seated[:3], rot @ np.asarray(kg.OUT_OF_DOOR_BOX), rot @ np.asarray(kg.lever_dir_box(kg.INSERT_DEG)),
-            rot @ np.asarray(kg.lever_top_box(kg.INSERT_DEG)))
+    return (seated[:3], rot @ np.asarray(kg.OUT_OF_DOOR_BOX), rot @ np.asarray(kg.lever_dir_box(kg.ARM_LEVER.insert_deg)),
+            rot @ np.asarray(kg.lever_top_box(kg.ARM_LEVER.insert_deg)))
 
 
 def insert_stance(box) -> tuple[float, float, float]:
@@ -271,10 +476,11 @@ class InsertFix(kp.KeyFix):
         return not problems, text + ("" if not problems else "; move the dog " + ", ".join(problems))
 
 
-def keyhole_prediction(fix):
+def keyhole_prediction(fix, box=None):
     """Where the model puts the bezel's front centre, out of the door, along the key and up its top side, in `fix`'s
-    script frame: what `keyhole.find_bezel` searches round (an attempt's, and `node.py --stage keyhole`'s)."""
-    box = perception.site_pose(fix.site)
+    script frame: what `keyhole.find_bezel` searches round (an attempt's, with its `_box`; and `node.py --stage
+    keyhole`'s)."""
+    box = perception.site_pose(fix.site) if box is None else box
     _, out, u, t = _frames(box)
     centre = box @ np.array([kg.LOCK[0] + LOCK_FACE_OFF_DOOR_M, kg.LOCK[1], kg.LOCK[2], 1.0])
     return centre[:3], out, u, t
@@ -300,7 +506,7 @@ def make_insert_fix(look_odom, frames, scans) -> InsertFix | None:
 
 def carry_rotation(yaw: float) -> np.ndarray:
     """Link6's axes, in a frame turned `yaw` from the base's, holding the key as it inserts into a door square ahead."""
-    th = math.radians(kg.INSERT_DEG)
+    th = math.radians(kg.ARM_LEVER.insert_deg)
     c, s = math.cos(yaw), math.sin(yaw)
     ahead = np.array([c, s, 0.0])
     u = np.array([s * math.cos(th), -c * math.cos(th), -math.sin(th)])       # right and up, at 45 degrees
@@ -314,21 +520,28 @@ def carry_point(base, base_z: float) -> tuple[float, float, float]:
     return (base[0] + c * x - s * y, base[1] + s * x + c * y, base_z + z)
 
 
-def jaw_for(box, off: float, a: float = 0.0, b: float = 0.0) -> np.ndarray:
+def jaw_for(box, off: float, a: float = 0.0, b: float = 0.0, along_m: float = 0.0, bar=None, up_m: float = 0.0,
+            top=None) -> np.ndarray:
     """The jaw centre (script frame) holding the key with its back face `off` out of seated along the keyway's axis and
-    `a`, `b` across it (along the key, up its top side)."""
+    `a`, `b` across it (along the key, up its top side), the shaft `along_m` along the bar and `up_m` up its top side
+    from the jaws; the bar and its top side along `bar` and `top` (the wrist's search rolls them about the shaft) or the
+    keyway's u and t."""
     seated, out, u, t = _frames(box)
     origin = seated + off * out + a * u + b * t
-    return origin + JAW_FROM_KEY[0] * u + JAW_FROM_KEY[1] * out
+    bar = u if bar is None else np.asarray(bar, dtype=float)
+    top = t if top is None else np.asarray(top, dtype=float)
+    return origin + JAW_FROM_KEY[0] * u - along_m * bar - up_m * top + JAW_FROM_KEY[1] * out
 
 
-def key_in_hand(joints, servo_deg, base_s) -> tuple[np.ndarray, np.ndarray]:
+def key_in_hand(joints, servo_deg, base_s, along_m: float = 0.0, roll: int = kg.GRASP_ROLL,
+                up_m: float = 0.0) -> tuple[np.ndarray, np.ndarray]:
     """(the key's origin, its (u, n, t) axes as columns), script frame, by forward kinematics of `servo_deg`, the key
-    where the hand was given it (`KEY_IN_JAWS_LINK6`, `geometry.KEY_AXES_LINK6`)."""
+    where the hand holds it (`key_in_jaws_link6`; `geometry.KEY_AXES_LINK6`, turned 180 deg about the shaft for roll
+    +1)."""
     q = d1_ik.from_servo_deg(servo_deg)[0]
     pos, rot = d1_ik.tool_pose(joints, q, body="Link6", offset=(0.0, 0.0, 0.0))
-    origin = pos + rot @ np.asarray(KEY_IN_JAWS_LINK6)
-    axes = rot @ np.asarray(kg.KEY_AXES_LINK6).T
+    origin = pos + rot @ np.asarray(key_in_jaws_link6(along_m, roll, up_m))
+    axes = rot @ np.diag([-roll, -roll, 1.0]) @ np.asarray(kg.KEY_AXES_LINK6).T
     return plan.transform(base_s, [origin])[0], base_s[:3, :3] @ axes
 
 
@@ -341,7 +554,7 @@ def stage_phases(stage: str, attempt) -> list:
     index = STAGES.index(stage)
     carry = lambda st, u: carry_point(st["base"], st["base_z"])
     carried_ = carried()
-    key = dict(approach=lambda st: tuple(attempt.key_axes()[0]), object_axis=lambda st: tuple(attempt.key_axes()[1]),
+    key = dict(approach=lambda st: tuple(attempt.key_axes()[0]), object_axis=lambda st: tuple(attempt.key_bar()),
                servo=True)
     at_key = lambda name, seconds, jaw=JAW_SHUT_M: Phase(name, seconds, path=lambda st, u: attempt._target(), jaw_m=jaw,
                                                          **key)
@@ -359,15 +572,28 @@ def stage_phases(stage: str, attempt) -> list:
         phases += [Phase("lie_down", LIE_S, path=carry, jaw_m=JAW_SHUT_M, **carried_),
                    Phase("lie_settle", LIE_SETTLE_S, path=carry, jaw_m=JAW_SHUT_M, **carried_),
                    Phase("lock_look", LOOK_S, path=carry, jaw_m=JAW_SHUT_M, **carried_)]
-    phases += [Phase("unfold", plan.UNFOLD_S, path=carry, jaw_m=JAW_OPEN_M)] + load_phases()
+    if getattr(attempt, "key_source", "hand") == "holster":
+        phases += holster_phases(attempt)
+    else:
+        phases += [Phase("unfold", plan.UNFOLD_S, path=carry, jaw_m=JAW_OPEN_M)] + load_phases()
     if index >= STAGES.index("reach"):
         phases += [Phase("key_go", plan.UNFOLD_S, path=lambda st, u: attempt._target(), jaw_m=JAW_SHUT_M),
                    at_key("key_view", VIEW_S),
                    Phase("key_pre", PRE_S, target=lambda st: attempt._target(), jaw_m=JAW_SHUT_M, **key)]
         if index >= STAGES.index("touch"):
             phases.append(at_key("key_in", IN_S))
+        put_back = stage == "insert" and getattr(attempt, "reholster", False) and \
+            getattr(attempt, "key_source", "hand") == "holster"
         if stage == "insert":
-            phases += [at_key("key_search", SEARCH_S), at_key("key_seat", SEAT_S), at_key("release", RELEASE_S, JAW_OPEN_M)]
+            phases += [at_key("key_search", SEARCH_S), at_key("key_seat", SEAT_S)]
+            if getattr(attempt, "lock", False):
+                phases.append(at_key("key_close", CLOSE_S))
+            phases.append(at_key("key_turn", TURN_S))
+            if put_back:
+                # The key, turned, out of the lock in the hand and back into the holster (`RETURN_PHASES`).
+                return (phases + [at_key("key_back", BACK_S, JAW_SHUT_M)] + return_phases(attempt)
+                        + stand_phases(JAW_OPEN_M) + [Phase("fold", plan.FOLD_S, path=carry, jaw_m=JAW_OPEN_M)])
+            phases.append(at_key("release", RELEASE_S, JAW_OPEN_M))
         phases += [at_key("key_back", BACK_S, JAW_OPEN_M if stage == "insert" else JAW_SHUT_M),
                    Phase("home", HOME_S, path=carry, jaw_m=JAW_OPEN_M if stage == "insert" else JAW_SHUT_M, **carried_)]
     if stage == "insert":
@@ -375,6 +601,48 @@ def stage_phases(stage: str, attempt) -> list:
     if index >= STAGES.index("lie"):
         phases += stand_phases()
     return phases + hand_back_phases()
+
+
+def holster_phases(attempt) -> list:
+    """The key drawn out of the holster (`HOLSTER_PHASES`): its points the holster's, fixed in the base's frame, put in
+    the script frame each step from where the base is (`InsertAttempt._holster_point`)."""
+    Phase = demo_script.Phase
+    point = lambda name: (lambda st, u: attempt._holster_point(name))
+    line = lambda a, b: (lambda st, u: attempt._holster_point(a, b, u * u * (3.0 - 2.0 * u)))
+    hand = dict(approach=lambda st: attempt._holster_axis("approach"), object_axis=lambda st: attempt._holster_axis("bar"),
+                servo=True)
+    opened, shut = holster.JAW_OPEN_M, JAW_SHUT_M
+    return [Phase("h_turn", H_TURN_S, path=point("pre"), jaw_m=opened, **hand),
+            Phase("h_reach", H_REACH_S, path=point("pre"), jaw_m=opened, **hand),
+            Phase("h_lower", H_LOWER_S, path=point("pre"), jaw_m=opened, **hand),
+            Phase("h_on", H_ON_S, path=line("pre", "grip"), jaw_m=opened, **hand),
+            Phase("grip", GRIP_S, path=point("grip"), jaw_m=shut, **hand),
+            Phase("h_draw", H_DRAW_S, path=line("grip", "out"), jaw_m=shut, **hand),
+            Phase("h_exit", H_EXIT_S, path=line("out", "exit"), jaw_m=shut, **hand),
+            Phase("h_out", H_OUT_S, path=point("exit"), jaw_m=shut, **hand),
+            Phase("h_clear", H_CLEAR_S, path=line("exit", "clear"), jaw_m=shut, **hand)]
+
+
+def return_phases(attempt) -> list:
+    """The key put back (`RETURN_PHASES`): to where the draw ended, then the draw undone, the jaws open, off the bar and
+    folded back as the unfold came (the holster's points as `holster_phases`' are)."""
+    Phase = demo_script.Phase
+    point = lambda name: (lambda st, u: attempt._holster_point(name))
+    line = lambda a, b: (lambda st, u: attempt._holster_point(a, b, u * u * (3.0 - 2.0 * u)))
+    hand = dict(approach=lambda st: attempt._holster_axis("approach"), object_axis=lambda st: attempt._holster_axis("bar"),
+                servo=True)
+    opened, shut = holster.JAW_OPEN_M, JAW_SHUT_M
+    return [Phase("h_return", H_RETURN_S, path=point("clear"), jaw_m=shut, **hand),
+            Phase("h_unclear", H_CLEAR_S, path=line("clear", "exit"), jaw_m=shut, **hand),
+            Phase("h_align", H_ALIGN_S, path=point("exit"), jaw_m=shut, **hand),
+            Phase("h_enter", H_ENTER_S, path=line("exit", "out"), jaw_m=shut, **hand),
+            Phase("h_back", H_BACK_S, path=line("out", "grip"), jaw_m=shut, **hand),
+            Phase("h_open", H_OPEN_S, path=point("grip"), jaw_m=opened, **hand),
+            Phase("h_off", H_ON_S, path=line("grip", "pre"), jaw_m=opened, **hand),
+            Phase("h_raise", H_LOWER_S, path=point("pre"), jaw_m=opened, **hand),
+            Phase("h_unreach", H_REACH_S, path=point("pre"), jaw_m=opened, **hand),
+            Phase("h_unturn", H_TURN_S, path=point("pre"), jaw_m=opened, **hand),
+            Phase("h_fold", H_LOWER_S, path=point("pre"), jaw_m=opened, **hand)]
 
 
 def carried() -> dict:
@@ -485,14 +753,46 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
     dry: bool = False
     #: Where the camera's calibration against the touch is kept (`CALIBRATION_PATH` on the dog), or None: not kept.
     calibration_path: str | None = None
+    #: Where the key comes from (`KEY_SOURCES`): drawn out of the holster lying down, or handed in.
+    key_source: str = "hand"
+    #: Where the key lands at the lock, moved from where the model of the grip puts it: to the robot's right and up, m
+    #: (Lukas's trial and error on the dog, `node.py --key_right_mm`, `--key_up_mm`). The grip's model is the shaft
+    #: `HOLSTER_SHAFT_ALONG_M` along the bar from the jaws for the holster, on their axis handed in; the nudges move
+    #: the shaft in it the other way (`shaft_along`, `shaft_up`), so the jaws go that way and the wrist's search still
+    #: turns about the shaft. None: the key source's default (`HOLSTER_KEY_LEFT_M`, `HOLSTER_KEY_UP_M` from the holster,
+    #: 0 handed in).
+    key_right_m: float | None = None
+    key_up_m: float | None = None
+    #: The lock taken this much further in (toward the door) than `LOCK_DEEPER_M` puts it, m (`node.py --key_in_mm`).
+    key_in_m: float = 0.0
+    #: The turn once seated, deg clockwise (`TURN_S`); 0: none, the key released where it went in.
+    turn_deg: float = kg.ARM_LEVER.end_deg
+    #: Unlocking, commanded this much past `turn_deg` (`UNLOCK_OVERTURN_DEG`); not with no turn (`turn_deg` 0).
+    turn_extra_deg: float = UNLOCK_OVERTURN_DEG
+    #: From the holster, the key put back in it after the turn (`RETURN_PHASES`); False: let go in the lock.
+    reholster: bool = True
+    #: Lock the door instead (`CLOSE_SPEED_DEG_S`'s note): the key in at `lock_from_deg` clockwise (the angle the unlock
+    #: left the cylinder at), pressed to `lock_beyond_face_m` beyond the box's front face (`key_close`), turned back to
+    #: level holding it there. `turn_deg` is then not used.
+    lock: bool = False
+    lock_from_deg: float = kg.ARM_LEVER.end_deg
+    #: Locking, how far beyond the box's front face (the lidar's) the key's tip is pressed before it turns, m
+    #: (`LOCK_BEYOND_FACE_M`, `node.py --lock_beyond_face_mm`).
+    lock_beyond_face_m: float = LOCK_BEYOND_FACE_M
+    #: The spiral across the lock's face when the key stops on it (`key_search`); False keeps the key pressed where it
+    #: touched, the wrist's search (the wiggle) alone, for `PRESS_ONLY_S` (Lukas, 2026-10-25: "I want no_wiggle to
+    #: still wiggle but not apply the translational spiralling"; `node.py --no_spiral`, alias `--no_wiggle`).
+    spiral: bool = True
 
-    joint_phases = {"unfold", "key_go", "fold"}
+    joint_phases = {"unfold", "key_go", "fold", "h_turn", "h_reach", "h_lower", "h_return", "h_raise", "h_unreach",
+                    "h_unturn", "h_fold"}
     dwell_phases = frozenset()
     position_only_phases = {"walk_in", "walk_settle"}
     #: The arm's lag abort (`plan.ARM_LAG_DEG`) while the key presses on the lock.
-    holding_phases = {"key_in", "key_search", "key_seat"}
+    holding_phases = {"key_in", "key_search", "key_seat", "key_close", "key_turn", "key_back"}
     #: Where an abort backs the key out along the keyway's axis before anything else.
-    at_the_lever_phases = {"key_view", "key_pre", "key_in", "key_search", "key_seat", "release", "key_back"}
+    at_the_lever_phases = {"key_view", "key_pre", "key_in", "key_search", "key_seat", "key_close", "key_turn", "release",
+                           "key_back"}
     walking_phases = {"walk_in"}
     release_held_phases = frozenset()
     refit_limit_m = kp.REFIT_LIMIT_M
@@ -501,12 +801,43 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
     #: lidar's door-angle thread ran back to back through the 43 s wait to hand the key in, and the odometry went 1.4
     #: and 1.8 s stale (Lukas's first two live runs, 2026-10-21).
     reads_door = False
+    grasp_raise_m = 0.0                 # not the handle (`plan.GRASP_RAISE_M`)
+    handle_jaws = False                 # the key's and the holster's jaw openings (`plan.Attempt.gripper_units`)
+
+    @property
+    def record_key(self) -> str | None:
+        """Where the node's record keeps this attempt's events: locking, beside an unlock's (`node._write_run`)."""
+        return "lock_attempt_events" if self.lock else None
 
     def _make_phases(self) -> list:
         return stage_phases(self.stage, self)
 
     def _prepare(self) -> None:
-        self.arm.grasp, self.arm.grasp_note = (0.0, kg.GRASP_ROLL), "the key's grip (pitch 0, roll -1)"
+        if self.key_source not in KEY_SOURCES:
+            raise ValueError(f"key_source is one of {KEY_SOURCES}, not {self.key_source!r}")
+        # The holster's grip holds the key turned 180 deg about its shaft from the hand-in's (`holster.GRIP_ROLL` +1:
+        # the insertion's roll -1 does not slide onto the bar there), so the whole attempt holds the hand that way: at the
+        # lock the lever then points as the hand-in's does.
+        self.grip_roll = holster.GRIP_ROLL if self.key_source == "holster" else kg.GRASP_ROLL
+        holstered = self.key_source == "holster"
+        if self.key_right_m is None:
+            self.key_right_m = -HOLSTER_KEY_LEFT_M if holstered else 0.0
+        if self.key_up_m is None:
+            self.key_up_m = HOLSTER_KEY_UP_M if holstered else 0.0
+        self.shaft_along = (HOLSTER_SHAFT_ALONG_M if holstered else 0.0) - float(self.key_right_m)
+        self.shaft_up = -float(self.key_up_m)
+        self.lock_deeper = LOCK_DEEPER_M + float(self.key_in_m)
+        self.arm.grasp, self.arm.grasp_note = (0.0, self.grip_roll), f"the key's grip (pitch 0, roll {self.grip_roll:+d})"
+        self.arm.soft = ((d1_ik.SOFT_LIMIT_FACTOR,) * 5 + (HOLSTER_J6_SOFT,) if self.key_source == "holster"
+                         else d1_ik.SOFT_LIMIT_FACTOR)
+        self._soft = self.arm.soft
+        self._draw = (holster.draw_plan(grip_along_m=DOG_GRIP_ALONG_M, grip_onto_m=DOG_GRIP_ONTO_M)
+                      if self.key_source == "holster" else None)
+        # The roll the key goes in at (`lock`: the angle the unlock left the cylinder at), which the wiggle is about.
+        self._roll0 = float(self.lock_from_deg) if self.lock else 0.0
+        self._close = {"deg": 0.0, "held": False}  # `key_close`: the door's closing turn about its hinge, deg
+        self._wrist = {"theta": self._roll0, "t0": None, "held": False}
+        self._wrist_span = (WRIST_SEARCH_DEG, WRIST_SEARCH_DEG)   # (+, -) degrees, as far as `_plan_insert` solves
         self._blocked = ""
         self._body0: float | None = None          # sport mode's body height as the attempt began, standing
         self._drop = 0.0                           # how far below that the base is now
@@ -514,12 +845,15 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         self._posture = ""
         self._posture_phase, self._posture_t = "", 0.0
         self._grips = 0
+        self._rewalks = 0                          # walks up again after the refit (`_out_of_range_after_walk`)
         self._slip_since: float | None = None
         self._in_t0 = 0.0
         self.camera_gaps_mm: dict[str, float] = {}
         self._folded_walk = True                   # the arm holds the fold until `unfold` begins (the walk comes first)
         self._stand_odom: np.ndarray | None = None  # the base in odom as it began to lie down
+        self._lie_scans: list = []                 # (base in odom, points) through `lie_settle`, for the lying refit
         self._loop = np.zeros(3)
+        self._hloop = np.zeros(3)                  # the draw's outer loop (`DRAW_LOOP_PHASES`), script frame
         self._q_pre: np.ndarray | None = None
         self._ins = {"off": VIEW_OFF_M, "a": 0.0, "b": 0.0}
         self._view = Places([(VIEW_OFF_M, 0.0, 0.0)])   # `key_view`: one place, the key `VIEW_OFF_M` out on the axis
@@ -536,10 +870,17 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         self._contact_since: float | None = None
         self._measured_key: tuple | None = None    # (off, a, b) by the encoders
         self._recovery_target: dict | None = None
-        self.check = {"held": None, "lie_drop_m": None, "plan": None, "look": None, "vision": None,
+        self.check = {"key_source": self.key_source, "key_right_mm": round(1000 * self.key_right_m, 2),
+                      "key_up_mm": round(1000 * self.key_up_m, 2), "key_in_mm": round(1000 * self.key_in_m, 2),
+                      "lock_deeper_mm": round(1000 * self.lock_deeper, 2), "shaft_along_mm": round(1000 * self.shaft_along, 2),
+                      "shaft_up_mm": round(1000 * self.shaft_up, 2), "drawn_mm": None, "turn_deg": None,
+                      "turned_deg": None, "left_in_lock": False, "held": None, "lie_drop_m": None, "plan": None, "look": None,
+                      "vision": None, "spiral": self.spiral, "wrist_search_deg": None, "wrist_at_entry_deg": None,
                       "contact_off_mm": None,
                       "entered_at_mm": None,
-                      "searched_r_mm": 0.0, "seated": None, "measured_off_mm": None, "released": False}
+                      "searched_r_mm": 0.0, "seated": None, "measured_off_mm": None, "released": False,
+                      "lock": bool(self.lock), "lock_from_deg": self._roll0 if self.lock else None, "closed_deg": None,
+                      "closed": None}
         self.search_path: list = []
 
     # --- frames -------------------------------------------------------------------------------------------------
@@ -558,15 +899,60 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
 
     def key_axes(self):
         """(into the door, along the key at insertion), script frame: the hand's approach and bar at the key."""
-        _, out, u, _ = _frames(perception.site_pose(self.fix.site))
+        _, out, u, _ = _frames(self._box())
         return -out, u
+
+    def key_bar(self) -> np.ndarray:
+        """The bar's axis the hand is held to at the key: `key_axes`'s, rolled about the way in by the wrist's search
+        angle (`WRIST_SEARCH_DEG`)."""
+        into, bar = self.key_axes()
+        return decoupled_arm.axis_angle(into, math.radians(self._wrist["theta"])) @ bar
+
+    def _box(self) -> np.ndarray:
+        """The box's pose (script frame) the insertion works to: the fix's, moved `lock_deeper` into the door along its
+        normal, so the lock's face, the seated key and the bezel are that much further from the robot."""
+        box = perception.site_pose(self.fix.site).copy()
+        box[:3, 3] -= self.lock_deeper * (box[:3, :3] @ np.asarray(kg.OUT_OF_DOOR_BOX))
+        closing = getattr(self, "_close", {"deg": 0.0})["deg"]
+        if closing:
+            # `key_close`: the door, and the lock and key in it, turned that far shut about the hinge.
+            hinge = np.asarray(plan.GEOMETRY.hinge)
+            turn = plan.pose(plan.rot_z(math.radians(-plan.GEOMETRY.hinge_axis_z * closing)))
+            box = box @ plan.pose(None, hinge) @ turn @ plan.pose(None, -hinge)
+        return box
+
+    def _offset_axes(self) -> tuple[np.ndarray, np.ndarray]:
+        """The bar and its top side the shaft's offset in the jaws is taken along (`jaw_for`): rolled with the wrist's
+        search, but not with the turn (`pivot`, the angle it began at): the turn is Joint6's alone, about the jaw
+        centre."""
+        into, bar = self.key_axes()
+        t = _frames(self._box())[3]
+        turn = decoupled_arm.axis_angle(into, math.radians(self._wrist.get("pivot", self._wrist["theta"])))
+        return turn @ bar, turn @ t
+
+    def _holster_point(self, a: str, b: str | None = None, f: float = 0.0) -> tuple:
+        """A point of the holster draw (`holster.draw_plan`'s `pre`, `grip`, `out`; `f` of the way from `a` to `b`), in
+        the script frame from where the base is now. The holster rides on the base, lying or standing."""
+        d = self._draw
+        p = d[a] if b is None else d[a] + f * (d[b] - d[a])
+        base_s = self._base_s if self._base_s is not None else np.eye(4)
+        return tuple(float(v) for v in plan.transform(base_s, [p])[0])
+
+    def _holster_axis(self, which: str) -> tuple:
+        """The draw's hand, as the approach (along the key's shaft) or the bar (along the lever) in the script frame."""
+        axes = self._draw["axes"]
+        v = -axes["n"] if which == "approach" else axes["u"]
+        base_s = self._base_s if self._base_s is not None else np.eye(4)
+        return tuple(float(x) for x in base_s[:3, :3] @ v)
 
     def _grasp_rotation(self, to_base):
         return carry_rotation(0.0)                  # base frame: the key held as it inserts, ahead
 
     def _target(self) -> tuple[float, float, float]:
         """The jaw centre for the insertion's state (`_ins`), or the planned first pose's before it is planned."""
-        point = jaw_for(perception.site_pose(self.fix.site), self._ins["off"], self._ins["a"], self._ins["b"])
+        bar, top = self._offset_axes()
+        point = jaw_for(self._box(), self._ins["off"], self._ins["a"], self._ins["b"],
+                        self.shaft_along, bar, self.shaft_up, top)
         return tuple(float(v) for v in point)
 
     # --- the step -----------------------------------------------------------------------------------------------
@@ -579,10 +965,13 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             self._drop = max(0.0, self._body0 - float(obs.body_height_m))
             self._heights = [h for h in self._heights if obs.now_s - h[0] <= 1.0] + [(obs.now_s, obs.body_height_m)]
         before = self.phase
+        if before == "lie_settle" and obs.scan is not None:
+            self._lie_scans.append(obs.scan)
         base_s = self.base_script(obs.base_odom)
         if obs.arm_servo_deg is not None:
-            origin, _ = key_in_hand(self.arm.joints, obs.arm_servo_deg, base_s)
-            seated, out, u, t = _frames(perception.site_pose(self.fix.site))
+            origin, _ = key_in_hand(self.arm.joints, obs.arm_servo_deg, base_s, self.shaft_along, self.grip_roll,
+                                    self.shaft_up)
+            seated, out, u, t = _frames(self._box())
             rel = origin - seated
             self._measured_key = (float(rel @ out), float(rel @ u), float(rel @ t))
         step_dt, why = self._react(before, obs, dt)
@@ -593,7 +982,8 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         empty = obs.gripper_units is not None and obs.gripper_units <= plan.GRIPPER_SHUT_UNITS + GRIP_EMPTY_UNITS
         if before == "grip" and out.phase != "grip" and not out.abort:
             self._grip_check(obs, empty, out)
-        elif self.check["held"] and out.phase not in ("grip", "release", "drop", "fold", "done") and not out.abort:
+        elif (self.check["held"] and not self.check["released"]
+              and out.phase not in ("grip", "release", "h_open", "drop", "fold", "done") and not out.abort):
             # The key must stay between the jaws until they let it go.
             self._slip_since = (obs.now_s if self._slip_since is None else self._slip_since) if empty else None
             if self._slip_since is not None and obs.now_s - self._slip_since >= SLIP_S:
@@ -616,6 +1006,10 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         self.events.append({"phase": "grip_check", "gripper_units": obs.gripper_units, "held": not empty,
                             "try": self._grips})
         if not empty:
+            return
+        if self.key_source == "holster":
+            out.abort = (f"the jaws closed on nothing at the holster (servo 6 at {obs.gripper_units:.1f} units, shut "
+                         f"{plan.GRIPPER_SHUT_UNITS:.1f}): no key there, or the hand is off the bar")
             return
         if self._grips >= LOAD_TRIES:
             out.abort = (f"the jaws closed on nothing {self._grips} times (servo 6 at {obs.gripper_units:.1f} units, "
@@ -668,6 +1062,7 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             return (self._skip(), "") if done else (dt, "")
         if phase == "lock_look":
             return self._look_step(obs, dt)
+        self._wrist_step(phase, obs.now_s)
         if self._measured_key is None or phase not in REACTIVE:
             return dt, ""
         off_m, a_m, b_m = self._measured_key
@@ -677,13 +1072,19 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             if self._stopped(off_m, obs):
                 # Stopped with its back face within half the keyway's depth of seated: straight in. Otherwise on the
                 # lock's face: near the shaft's length out, or past seated where the door is further than modelled.
-                self._found(off_m, seated=-TRAVEL_M / 2 < off_m < TRAVEL_M / 2)
+                # Locking, any stop past half the keyway out is in: the press's end (`LOCK_BEYOND_FACE_M`).
+                self._found(off_m, seated=(off_m < TRAVEL_M / 2) if self.lock else -TRAVEL_M / 2 < off_m < TRAVEL_M / 2)
                 return self._skip(), ""
             if self.dry and ins["off"] < -OVERRUN_M:
                 self._found(off_m, seated=True)
                 self.events.append({"phase": "dry", "note": "no lock to touch: taken as seated"})
                 return self._skip(), ""
-            if ins["off"] < -IN_SLACK_M or current.duration_s - elapsed <= dt + 1e-9:
+            if self.lock and (ins["off"] <= self._press_off() or current.duration_s - elapsed <= dt + 1e-9):
+                # Locking, at the press's depth (or the phase's end) without a stop: in, and no abort however far that
+                # is (`LOCK_BEYOND_FACE_M`); `key_close` holds it there, then the turn.
+                self._found(off_m, seated=True)
+                return self._skip(), ""
+            if not self.lock and (ins["off"] < -IN_SLACK_M or current.duration_s - elapsed <= dt + 1e-9):
                 return 0.0, (f"the key went {1000 * IN_SLACK_M:.0f} mm past where it should seat without touching "
                              "anything: no lock there?")
             return dt, ""
@@ -693,10 +1094,19 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
                 return self._skip(), ""
             contact /= 1000.0
             if off_m <= contact - ENTER_M:
+                self._hold_wrist()
                 self.check["entered_at_mm"] = [round(1000 * ins["a"], 2), round(1000 * ins["b"], 2)]
                 self.events.append({"phase": "entered", "across_mm": self.check["entered_at_mm"],
                                     "off_mm": round(1000 * off_m, 2)})
                 return self._skip(), ""
+            if not self.spiral:
+                # `--no_spiral`: pressed where it touched, `PRESS_M` in, the wrist's search alone.
+                if elapsed >= PRESS_ONLY_S:
+                    return 0.0, (f"the key touched {1000 * contact:.1f} mm out of seated and never went further in "
+                                 f"{PRESS_ONLY_S:.0f} s of the wrist's search (no spiral)")
+                a0, b0 = self._search_ab
+                ins.update(off=contact - PRESS_M, a=a0, b=b0)
+                return dt, ""
             r = SEARCH_PITCH_M * self._spiral / (2 * math.pi)
             if r > SEARCH_R_M:
                 return 0.0, (f"no keyway within {1000 * SEARCH_R_M:.0f} mm of where the look put it: the key touched "
@@ -727,10 +1137,64 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
                 return 0.0, (f"the key did not stop at seated: {1000 * (contact - off_m):.1f} mm past the lock's face "
                              f"and its command {1000 * (contact - ins['off']):.1f}")
             return dt, ""
+        if phase == "key_close":
+            c = self._close
+            if not self.check["seated"] or c["held"]:
+                return self._skip(), ""
+            # Locking: straight in to the press's depth (`LOCK_BEYOND_FACE_M`), or as far as the key goes, then the turn.
+            target = self._press_off()
+            ins["off"] = max(target, ins["off"] - IN_SPEED_M_S * dt)
+            c["at_s"] = c.get("at_s", 0.0) + (dt if ins["off"] <= target + 1e-9 else 0.0)
+            stopped = self._stopped(off_m, obs)
+            if stopped or c["at_s"] >= PRESS_DWELL_S or current.duration_s - elapsed <= dt + 1e-9:
+                c["held"] = True
+                how = "stopped" if stopped else "at depth" if c["at_s"] >= PRESS_DWELL_S else "on the clock"
+                beyond = self._beyond_face(off_m)
+                self.check.update(closed=True, pressed_mm_beyond_face=round(1000 * beyond, 1), pressed=how)
+                self.events.append({"phase": "pressed", "how": how, "off_mm": round(1000 * off_m, 2),
+                                    "beyond_face_mm": round(1000 * beyond, 1),
+                                    "target_beyond_face_mm": round(1000 * self.lock_beyond_face_m, 1)})
+                return self._skip(), ""
+            return dt, ""
+        if phase == "key_turn":
+            if not self._turn or not self.check["seated"] or (self.lock and not self._close["held"]):
+                return self._skip(), ""
+            w = self._wrist
+            if "turn_from" not in w:
+                w["turn_from"] = w["pivot"] = w["theta"]
+                if not self.lock:
+                    ins["off"] = off_m              # no press while it turns: where the key stopped seated (locking,
+                                                    # the press holds the door shut against its spring)
+            f = min(1.0, elapsed / TURN_RAMP_S)
+            # Locking, to level (`_roll0 + _turn`, 0 for the whole turn) from wherever the key went in.
+            turn = (self._roll0 + self._turn - w["turn_from"]) if self.lock else self._turn
+            w["theta"] = w["turn_from"] + turn * f * f * (3.0 - 2.0 * f)
+            return dt, ""
         if phase == "key_back":
             ins["off"] += BACK_OUT_M / current.duration_s * dt
             return dt, ""
         return dt, ""
+
+    def _wrist_step(self, phase: str, now_s: float) -> None:
+        """The wrist's search angle this step: a sine through `WRIST_SEARCH_PHASES` until the key goes in, then held;
+        not begun until the key is `WRIST_START_M` off the lock's face, or has touched it."""
+        w = self._wrist
+        if w["held"] or phase not in WRIST_SEARCH_PHASES:
+            return
+        near = (self._measured_key is not None and self._measured_key[0] <= TRAVEL_M + WRIST_START_M)
+        if w["t0"] is None and not (near or phase != "key_in" or self.check["contact_off_mm"] is not None):
+            return
+        if w["t0"] is None:
+            w["t0"] = now_s
+        wave = math.sin(2 * math.pi * (now_s - w["t0"]) / WRIST_SEARCH_PERIOD_S)
+        w["theta"] = self._roll0 + wave * (self._wrist_span[0] if wave >= 0.0 else self._wrist_span[1])
+
+    def _hold_wrist(self) -> None:
+        """The key is in: the wrist kept at the angle it went in at."""
+        if not self._wrist["held"]:
+            self._wrist["held"] = True
+            self.check["wrist_at_entry_deg"] = round(self._wrist["theta"], 2)
+            self.events.append({"phase": "wrist_held", "deg": round(self._wrist["theta"], 2)})
 
     def _stopped(self, off_m: float, obs: plan.Observation) -> bool:
         """Whether the key has stopped following its command along the axis: its measured depth `CONTACT_LAG_M` further
@@ -763,7 +1227,17 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             self.events.append({"phase": "vision_at_touch", "face_off_model_mm": round(1000 * (off_m - TRAVEL_M), 2),
                                 "search_centre_mm": [round(1000 * v, 2) for v in self._search_ab]})
 
+    def _press_off(self) -> float:
+        """Locking, the key's depth (its back face from seated, out of the door positive) whose tip is
+        `lock_beyond_face_m` beyond the box's front face (the fix's, which the lidar puts there lying down)."""
+        return SHAFT_M - SEATED_OFF_DOOR_M + self.lock_deeper - self.lock_beyond_face_m
+
+    def _beyond_face(self, off_m: float) -> float:
+        """How far beyond the box's front face the key's tip is at depth `off_m`."""
+        return SHAFT_M - SEATED_OFF_DOOR_M + self.lock_deeper - off_m
+
     def _seated(self, off_m: float) -> None:
+        self._hold_wrist()
         self.check.update(seated=True, measured_off_mm=round(1000 * off_m, 2))
         self.events.append({"phase": "seated", "off_mm": round(1000 * off_m, 2)})
         if self._vision is not None and self._measured_key is not None:
@@ -779,7 +1253,7 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
     def keyhole_prediction(self):
         """Where the model puts the bezel's front centre, out of the door, along the key and up its top side (script
         frame): what `keyhole.find_bezel` searches round."""
-        return keyhole_prediction(self.fix)
+        return keyhole_prediction(self.fix, self._box())
 
     def _looking(self):
         return {"key_view": self._view, "lock_look": self._look}.get(self.phase)
@@ -920,7 +1394,7 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             servo[0] = float(np.clip(servo[0] + pan, -90.0, 90.0))
             q = d1_ik.from_servo_deg(servo)[0]
             margin = kp.camera_margin(self.arm.joints, q)
-            clear = bool(path_clear(self.arm.joints, d1_ik.from_servo_deg(last)[0], q)[0])
+            clear = bool(plan.joint_path_clear(self.arm.joints, d1_ik.from_servo_deg(last)[0], q)[0])
             if margin < LOOK_MARGIN_M or not clear:
                 left_out.append({"pan_deg": pan, "camera_mm": round(1000 * margin, 1), "path_clear": clear})
                 continue
@@ -933,6 +1407,26 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
     # --- the phases' hooks ------------------------------------------------------------------------------------------
 
     def _on_phase_change(self, before: str, phase: str, obs: plan.Observation) -> str:
+        if self._draw is not None:
+            self.arm.soft = holster.draw_soft(self._soft) if phase in WIDE_PHASES else self._soft
+        if phase == "h_draw":
+            self._hloop = np.zeros(3)
+        if before == "h_out":
+            self.check["draw_loop_mm"] = [round(1000 * v, 1) for v in self._hloop]
+            self._draw["loop"] = self._hloop.copy()
+            return self._drawn_check(obs)
+        if before == "h_clear":
+            self._draw["exit_q"] = np.asarray(self.arm.q, dtype=float).copy()     # `h_return`'s goal
+        if phase == "h_unclear":
+            self._hloop = np.asarray(self._draw.get("loop", np.zeros(3)), dtype=float).copy()
+        if before == "h_back" and obs.arm_servo_deg is not None:
+            self.check["returned_mm"] = round(1000 * self._along_holster(obs.arm_servo_deg), 1)
+        if before == "h_fold":
+            self._folded_walk = True                 # held folded from here (the stand, the last fold)
+        if before == "h_open":
+            self.check["released"] = True
+            self.check["reholstered"] = True
+            self.events.append({"phase": "reholstered", "returned_mm": self.check.get("returned_mm")})
         if phase == "lie_down":
             self._stand_odom = np.asarray(obs.base_odom).copy()
         if before == "lie_settle":
@@ -942,29 +1436,56 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         if before == "key_view":
             self._use_vision()
             self._ins["off"] = PRE_OFF_M
-        if phase in ("key_in", "key_seat"):
+        if phase in ("key_in", "key_seat", "key_close"):
             self._lag0, self._contact_since, self._in_t0 = None, None, obs.now_s
+        if before == "key_turn" and self._turn and obs.arm_servo_deg is not None:
+            _, axes = key_in_hand(self.arm.joints, obs.arm_servo_deg, self.base_script(obs.base_odom), self.shaft_along,
+                                  self.grip_roll, self.shaft_up)
+            _, _, u, t = _frames(self._box())
+            self.check["turned_deg"] = round(math.degrees(math.atan2(-(axes[:, 0] @ t), axes[:, 0] @ u)), 1)
+            self.events.append({"phase": "turned", "deg": self.check["turned_deg"], "planned_deg": self._turn})
         if phase == "key_back":
             if self._measured_key is not None:
                 self._ins["off"] = self._measured_key[0]   # back out from where the key is, not where it was sent
             self.check["released"] = self.check["released"] or before == "release"
         return ""
 
-    def _replan_lying(self, obs: plan.Observation) -> str:
-        """Lying down: the fix carried to where the base lies by the odometry, the window checked, and the insertion
-        planned from there (`_plan_insert`). No lidar refit: lying, the key held out in front shadows the door (Lukas,
-        2026-10-22: "we cant trust the lidar after sitting down, as the tool obscures it"). The standing refit, before the
-        key is handed in, is the last lidar word; what the odometry misses of the sit-back (~2 cm and a few degrees in the
-        first lie-downs) is left to the keyhole view and the touch.
+    def _drawn_check(self, obs: plan.Observation) -> str:
+        """After `h_out`: how far the encoders put the jaws along the holster's axis from the grip (`check["drawn_mm"]`),
+        recorded only."""
+        servo = obs.arm_servo_deg if obs.arm_servo_deg is not None else self._measured
+        if servo is None or self._draw is None:
+            return ""
+        self.check["drawn_mm"] = round(1000 * self._along_holster(servo), 1)
+        self.events.append({"phase": "drawn", "drawn_mm": self.check["drawn_mm"]})
+        return ""
 
-        In its place, the sit-back as measured (`LIE_BACK_M`, the first lie-down: ~4 cm straight back, which sport mode's
+    def _along_holster(self, servo) -> float:
+        """How far the encoders put the jaw centre out along the holster's axis from the grip, m."""
+        q = d1_ik.from_servo_deg(servo)[0]
+        pos, rot = d1_ik.tool_pose(self.arm.joints, q, body="Link6", offset=(0.0, 0.0, 0.0))
+        return float((pos + rot @ np.asarray(JAW_CENTRE_LINK6) - self._draw["grip"]) @ self._draw["axes"]["out"])
+
+    def _replan_lying(self, obs: plan.Observation) -> str:
+        """Lying down: the fix carried to where the base lies by the odometry and refitted on the lidar, and the
+        insertion planned from there (`_plan_insert`).
+
+        First the sit-back as measured (`LIE_BACK_M`, the first lie-down: ~4 cm straight back, which sport mode's
         odometry did not see, and ~4.5 deg of turn, which it did): whatever part of `LIE_BACK_M` the odometry did not
         report between standing and lying is added, back along the standing heading. The odometry goes on reporting the
         base that far ahead of where it is for the rest of the attempt, so the box is moved as far ahead in its frame
-        (the base-relative box is then the true one), and the fix re-anchored on the odometry's own pose."""
+        (the base-relative box is then the true one).
+
+        Then the lidar's word on the rest (`plan.refine_fix` on `lie_settle`'s scans, each from its base lowered by the
+        drop: the odometry keeps the standing height): the door's face moved along its normal and turned, the tag's place
+        along it and its height kept. The arm is folded and empty through `lie_settle` (the key comes after
+        `lock_look`), so nothing of the robot's shadows the door. (Off from 2026-10-22 to -24, while the key was handed in
+        before the dog lay down: "we cant trust the lidar after sitting down, as the tool obscures it".) Past the
+        standing refit's limits it aborts; with no face found the sit-back alone stands. Then the fix is re-anchored on
+        the odometry's own pose."""
         import dataclasses
 
-        event = {"phase": "refit_lying", "used": False, "why": "skipped: the key in the hand shadows the door lying down"}
+        event = {"phase": "refit_lying", "used": False}
         if self._stand_odom is not None:
             x0, y0, yaw0 = plan.planar(self._stand_odom)
             x1, y1, _ = plan.planar(obs.base_odom)
@@ -973,6 +1494,23 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             drift = plan.pose(None, (extra * math.cos(yaw0), extra * math.sin(yaw0), 0.0))
             self.fix = dataclasses.replace(self.fix, script_odom=drift @ np.asarray(self.fix.script_odom))
             event.update(odometry_back_mm=round(1000 * seen_back, 1), sit_back_added_mm=round(1000 * extra, 1))
+        scans = []
+        for base, points in self._lie_scans:
+            lowered = np.asarray(base, dtype=float).copy()
+            lowered[2, 3] -= self._drop
+            scans.append((lowered, points))
+        refined, fit = plan.refine_fix(self.fix, scans)
+        event["scans"] = len(scans)
+        if not fit.ok:
+            event["why"] = f"no face ({fit.why}); the sit-back alone"
+        else:
+            moved_m, turned_deg = plan.fix_change(self.fix, refined)
+            event.update(used=True, moved_mm=round(1000 * moved_m, 1), turned_deg=round(turned_deg, 2))
+            if moved_m > self.refit_limit_m or turned_deg > self.refit_limit_deg:
+                self.events.append(event)
+                return (f"abort: lying, the lidar puts the door {1000 * moved_m:.0f} mm and {turned_deg:.1f} deg from "
+                        "where the odometry carried it")
+            self.fix = refined
         self.events.append(event)
         self.fix = plan.reanchor(self.fix, obs.base_odom)
         ahead, right, off = seated_from(self.fix, (0.0, 0.0, 0.0))
@@ -987,66 +1525,183 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
 
     def _plan_insert(self, base_s) -> None:
         """From the lying base (`base_s`, script frame): the key's poses on the keyway's axis -- 60 and 25 mm out, at
-        the touch, seated, and seated `SEARCH_R_M` off across it either way -- solved with the hand rolled as it holds
-        the key, clear of the trunk proxy and the head camera, holdable; each warm-started from the last. The first
-        (25 mm out) is `key_go`'s goal. `_blocked` says why not."""
+        the touch, seated, and the spiral's edge (`SEARCH_R_M` off across the keyway) either way -- solved with the hand
+        as it holds the key, clear of the trunk proxy and the head camera, holdable; each warm-started from the last.
+        The first (25 mm out) is `key_go`'s goal. Then, each way, the wrist's search as far as `WRIST_SEARCH_STEPS_DEG`
+        allows (`_rolled`). `_blocked` says why not; a side of the search that holds no roll only narrows it
+        (`_wrist_span`, `check["wrist_search_deg"]`)."""
         to_base = plan.invert(base_s)
-        box = perception.site_pose(self.fix.site)
+        box = self._box()
         into, bar = self.key_axes()
-        rot = decoupled_arm.hand_rotation(to_base[:3, :3] @ into, to_base[:3, :3] @ bar, 0.0, kg.GRASP_ROLL)
-        q, rows = None, []
+        # Locking, every pose with the key rolled `_roll0` (the angle the unlock left the cylinder at).
+        roll = decoupled_arm.axis_angle(into, math.radians(self._roll0))
+        bar, top = roll @ bar, roll @ _frames(box)[3]
+        rot = decoupled_arm.hand_rotation(to_base[:3, :3] @ into, to_base[:3, :3] @ bar, 0.0, self.grip_roll)
         r = SEARCH_R_M
-        for name, (off, a, b) in (("view", (VIEW_OFF_M, 0, 0)), ("pre", (PRE_OFF_M, 0, 0)),
-                                  ("touch", (TRAVEL_M, 0, 0)), ("seated", (0.0, 0, 0)), ("across+", (TRAVEL_M, r, r)),
-                                  ("across-", (TRAVEL_M, -r, -r))):
-            point = plan.transform(to_base, [jaw_for(box, off, a, b)])[0]
+        q, rows, solved = None, [], {}
+        places = {"view": (VIEW_OFF_M, 0, 0), "pre": (PRE_OFF_M, 0, 0), "touch": (TRAVEL_M, 0, 0), "seated": (0.0, 0, 0),
+                  "across+": (TRAVEL_M, r, r), "across-": (TRAVEL_M, -r, -r)}
+        for name, (off, a, b) in places.items():
+            point = plan.transform(to_base, [jaw_for(box, off, a, b, self.shaft_along, bar, self.shaft_up, top)])[0]
             seeds = _seeds(point, [self.arm.q] if q is None else [q])
-            result = solve_link6(self.arm.joints, self.arm.links, point, rot, seeds, self.arm.offset)
+            result = solve_link6(self.arm.joints, self.arm.links, point, rot, seeds, self.arm.offset, self.arm.soft)
             if result is None:
                 self._blocked = (f"lying down, the arm cannot hold the key {name} ({1000 * off:.0f} mm out of seated): "
                                  "no IK pose clear of the trunk and holdable from here")
                 self.events.append({"phase": "plan_insert", "failed": name})
                 return
             q = np.asarray(result.q, dtype=float)
-            camera = kp.camera_margin(self.arm.joints, q)
-            torque = float(np.max(np.abs(_gravity(self.arm, q))))
-            rows.append({"pose": name, "camera_mm": round(1000 * camera, 1), "shoulder_share": round(torque, 2)})
-            if camera < 0.0:
-                self._blocked = f"lying down, holding the key {name} the arm would be {-1000 * camera:.0f} mm into the head camera"
+            row = self._pose_row(name, 0.0, q)
+            if row["camera_mm"] < 0.0:
+                self._blocked = (f"lying down, holding the key {name} the arm would be {-row['camera_mm']:.0f} mm into "
+                                 "the head camera")
                 return
+            rows.append(row)
+            solved[name] = q
             if name == "view":
                 self._q_pre = q                     # `key_go`'s goal
+        span = []
+        for sign, tag in ((1.0, "+"), (-1.0, "-")):
+            for amp in WRIST_SEARCH_STEPS_DEG:
+                side = [self._rolled(solved[base], sign * amp, f"{name}{tag}", places[base], base_s)
+                        for base, name in (("touch", "touch_wrist"), ("seated", "seated_wrist"), (f"across{tag}", "across_wrist"))]
+                if all(row is not None for row in side):
+                    span.append(amp)
+                    rows += side
+                    break
+        self._wrist_span = (span[0], span[1])
+        self.check["wrist_search_deg"] = [-span[1], span[0]]
+        self._turn = 0.0
+        # Unlocking, clockwise from where the key went in; locking, back to level (the other way): each checked from the
+        # wrist search's far side that way, Joint6 alone.
+        sign = -1.0 if self.lock else 1.0
+        full = float(self.lock_from_deg if self.lock else
+                     self.turn_deg + (self.turn_extra_deg if self.turn_deg > 0.0 else 0.0))
+        amp = full
+        while amp > 0.0 and amp >= min(TURN_MIN_DEG, full) - 1e-9:
+            reach = amp + (span[1] if self.lock else span[0])
+            row = self._rolled(solved["seated"], sign * reach, f"turned{sign * amp:g}")
+            if row is not None:
+                self._turn = sign * amp
+                rows.append(row)
+                break
+            amp -= 5.0
+        self.check["turn_deg"] = self._turn
         self.check["plan"] = rows
-        self.events.append({"phase": "plan_insert", "poses": rows})
+        self.events.append({"phase": "plan_insert", "poses": rows, "wrist_search_deg": [-span[1], span[0]]})
+
+    def _pose_row(self, name: str, deg: float, q) -> dict:
+        camera = kp.camera_margin(self.arm.joints, q)
+        torque = float(np.max(np.abs(_gravity(self.arm, q))))
+        return {"pose": name, "deg": deg, "camera_mm": round(1000 * camera, 1), "shoulder_share": round(torque, 2),
+                "j6_rad": round(float(q[5]), 3)}
+
+    def _rolled(self, q, deg: float, name: str, place=None, base_s=None) -> dict | None:
+        """`q` with the hand rolled `deg` about the key's shaft, or None if that leaves the joint limits (`arm.soft`),
+        the trunk proxy's clearance, the holdable or the head camera's clearance. With the key's shaft on Joint6's axis
+        (the hand-in's grip, no nudge) the roll is Joint6 alone, `deg` the other way: no IK (a pose out of reach cost the dog's
+        planner ~20 s of failing seeds, Lukas's run of 2026-10-24 13:34). With it off the axis (`shaft_along`,
+        `shaft_up`: the holster's grip, the nudges) the jaws swing round the shaft: the IK for the key at `place` (off, a, b) from the lying base
+        `base_s`, seeded from `q` alone."""
+        rolled = np.asarray(q, dtype=float).copy()
+        rolled[5] -= math.radians(deg)
+        if (self.shaft_along or self.shaft_up) and place is not None:
+            to_base = plan.invert(base_s)
+            box = self._box()
+            into, bar = self.key_axes()
+            turn = decoupled_arm.axis_angle(into, math.radians(self._roll0 + deg))
+            bar = turn @ bar
+            point = plan.transform(to_base, [jaw_for(box, *place, self.shaft_along, bar, self.shaft_up,
+                                                     turn @ _frames(box)[3])])[0]
+            rot = decoupled_arm.hand_rotation(to_base[:3, :3] @ into, to_base[:3, :3] @ bar, 0.0, self.grip_roll)
+            result = solve_link6(self.arm.joints, self.arm.links, point, rot, [rolled], self.arm.offset, self.arm.soft)
+            if result is None:
+                return None
+            rolled = np.asarray(result.q, dtype=float)
+        lows, highs = d1_ik.joint_limits(self.arm.joints, self.arm.soft)
+        if not (lows[5] <= rolled[5] <= highs[5]):
+            return None
+        if not (bool(arm_clear(self.arm.joints, rolled)[0]) and holdable(self.arm.joints, self.arm.links, rolled)):
+            return None
+        row = self._pose_row(name, deg, rolled)
+        return row if row["camera_mm"] >= 0.0 else None
 
     def _solve_joint_goal(self, phase: str, end_b, to_base) -> np.ndarray:
+        goals = {"h_turn": "turned", "h_reach": "above", "h_lower": "q_pre", "h_raise": "above", "h_unreach": "turned"}
+        if phase in goals and self._draw is not None:
+            q = np.asarray(self._draw[goals[phase]], dtype=float).copy()
+            if phase in ("h_turn", "h_unreach"):
+                # The fold's own wrist and elbow as the arm reports them (the commandable fold, not the rest pose's),
+                # the elbow opened as `holster.unfold_stages` has it.
+                folded = d1_ik.from_servo_deg(plan.FOLD_SERVO_DEG)[0]
+                q[1:] = folded[1:]
+                q[2] += holster.TURN_ELBOW_RAD
+            self.arm.q = q.copy()                # the IK through `h_on` carries on from the waiting point's branch
+            return q
+        if phase == "h_return":
+            return self._return_goal()
+        if phase in RETURN_FOLDING:
+            q = np.asarray(d1_ik.from_servo_deg(plan.FOLD_SERVO_DEG)[0], dtype=float)
+            if phase == "h_unturn":
+                q[2] += holster.TURN_ELBOW_RAD           # Joint1 home first, the elbow still open
+            self.arm.q = q.copy()
+            return q
         if phase != "key_go":
             return super()._solve_joint_goal(phase, end_b, to_base)
         start = self.arm.q.copy()
         if self._q_pre is None:
             self._blocked = self._blocked or "the insertion was not planned"
             return start
-        clear = bool(path_clear(self.arm.joints, start, self._q_pre)[0])
-        self.events.append({"phase": "key_go", "path_clear": clear})
+        # The move the node sends (`plan.joint_path`, each joint paced on its own), not a straight line.
+        clear = bool(plan.joint_path_clear(self.arm.joints, start, self._q_pre)[0])
+        key_margin = key_path_margin(self.arm.joints, plan.joint_path_rad(start, self._q_pre), self.grip_roll,
+                                     self.shaft_along, self.shaft_up)
+        self.events.append({"phase": "key_go", "path_clear": clear, "key_margin_mm": round(1000 * key_margin, 1)})
         if not clear:
             self._blocked = "the move to the key's first pose crosses the trunk proxy"
+            return start
+        if key_margin < 0.0:
+            self._blocked = (f"on the move to the key's first pose the key in the hand would pass {-1000 * key_margin:.0f} "
+                             "mm into the trunk or the lidar")
             return start
         self.arm.q = self._q_pre.copy()
         return self._q_pre
 
+    def _return_goal(self) -> np.ndarray:
+        """`h_return`'s goal: the joints where the draw ended (`exit_q`), if the move there (`plan.joint_path`) keeps the
+        arm off the trunk proxy and the held key off the trunk and the lidar; else blocked, the key handed back."""
+        start = self.arm.q.copy()
+        goal = self._draw.get("exit_q") if self._draw is not None else None
+        if goal is None:
+            self._blocked = self._blocked or "the draw's end was not recorded: nowhere to put the key back from"
+            return start
+        clear = bool(plan.joint_path_clear(self.arm.joints, start, goal)[0])
+        key_margin = key_path_margin(self.arm.joints, plan.joint_path_rad(start, goal), self.grip_roll,
+                                     self.shaft_along, self.shaft_up)
+        self.events.append({"phase": "h_return", "path_clear": clear, "key_margin_mm": round(1000 * key_margin, 1)})
+        if not clear:
+            self._blocked = "the move back to the holster crosses the trunk proxy"
+            return start
+        if key_margin < 0.0:
+            self._blocked = (f"on the move back to the holster the key in the hand would pass {-1000 * key_margin:.0f} "
+                             "mm into the trunk or the lidar")
+            return start
+        self.arm.q = np.asarray(goal, dtype=float).copy()
+        return self.arm.q.copy()
+
     def _across(self, v) -> np.ndarray:
         """`v` (script frame) without its part along the keyway's axis."""
-        _, out, _, _ = _frames(perception.site_pose(self.fix.site))
+        _, out, _, _ = _frames(self._box())
         v = np.asarray(v, dtype=float)
         return v - (v @ out) * out
 
     def _goal_servo(self, cmd, base_s, measured, st):
         """The parent's, its point moved by the hand's outer loop at the key: the jaw centre's miss as the encoders put
         it, integrated (all of it on the way to `key_pre`'s point, across the axis only once the key goes in). Folded
-        until `unfold` begins: the walk up comes first."""
+        until `unfold` (or the holster draw's `h_turn`) begins: the walk up comes first."""
         import dataclasses
 
-        if cmd.phase == "unfold":
+        if cmd.phase in ("unfold", "h_turn"):
             self._folded_walk = False
         if cmd.phase == "lock_look":
             # The wrist camera's first look: the aim and the pans, the arm still folded; the fold again once it is over.
@@ -1057,6 +1712,25 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             self.status = "joint"
             return np.asarray(plan.FOLD_SERVO_DEG)
 
+        if cmd.phase in DRAW_LOOP_PHASES + RETURN_LOOP_PHASES and self._draw is not None:
+            # The draw's outer loop (`DRAW_LOOP_PHASES`): across the holster's axis while the hand moves along it, all
+            # of the miss while it holds at the exit.
+            q = d1_ik.from_servo_deg(measured)[0]
+            pos, rot = d1_ik.tool_pose(self.arm.joints, q, body="Link6", offset=(0.0, 0.0, 0.0))
+            jaw = plan.transform(base_s, [pos + rot @ np.asarray(JAW_CENTRE_LINK6)])[0]
+            miss = np.asarray(cmd.point) - jaw
+            out = base_s[:3, :3] @ np.asarray(self._draw["axes"]["out"])
+            if cmd.phase in ("h_draw", "h_enter", "h_back"):
+                miss = miss - float(miss @ out) * out
+            # All of it where the target holds still (`h_out`, `h_align`); across the axis while the hand moves along
+            # it (the arm's lag is along its path: up to 24 degrees on the way back at `h_back`'s first 5 s); not while
+            # it comes down from the lift (`h_unclear`), the draw's end value held.
+            if cmd.phase in ("h_draw", "h_out", "h_align", "h_enter", "h_back"):
+                self._hloop = self._hloop + DRAW_LOOP_GAIN * 0.1 * miss
+                norm = float(np.linalg.norm(self._hloop))
+                if norm > DRAW_LOOP_MAX_M:
+                    self._hloop *= DRAW_LOOP_MAX_M / norm
+            cmd = dataclasses.replace(cmd, point=tuple(np.asarray(cmd.point) + self._hloop))
         if cmd.phase in self.at_the_lever_phases and cmd.phase != "release":
             q = d1_ik.from_servo_deg(measured)[0]
             pos, rot = d1_ik.tool_pose(self.arm.joints, q, body="Link6", offset=(0.0, 0.0, 0.0))
@@ -1077,6 +1751,32 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             cmd = dataclasses.replace(cmd, point=tuple(np.asarray(cmd.point) + self._loop))
         return super()._goal_servo(cmd, base_s, measured, st)
 
+    def _close_enough(self, base) -> bool:
+        """The walk up's finish (`key_plan.WalkUp`), turned within `INSERT_ACCEPT_YAW_DEG`, not the key's 4: the
+        refit after it may turn the door a couple of degrees more, against the range check's `key_plan.YAW_LIMIT_DEG`."""
+        x, y, yaw = base
+        return (math.hypot(x, y) <= kp.WALK_UP_ACCEPT_M
+                and abs(math.degrees(plan.wrap(yaw))) <= INSERT_ACCEPT_YAW_DEG)
+
+    def _out_of_range_after_walk(self, text: str) -> str:
+        """The refit after the walk up put the stance out of range: up to `INSERT_REWALKS` times, the stance again from
+        the refitted box (`insert_stance`, as the odometry counts it: `key_plan.ODOM_WALK_SCALE`) and the walk up and
+        its refit again, standing, the arm folded; then the abort."""
+        if self._rewalks >= INSERT_REWALKS:
+            return text + (f" (after {self._rewalks} more walk up)" if self._rewalks else "")
+        x, y, yaw = insert_stance(perception.site_pose(self.fix.site))
+        k = kp.ODOM_WALK_SCALE
+        self.fix = plan.reanchor(self.fix, np.asarray(self.fix.script_odom) @ plan.base_pose(k * x, k * y, yaw))
+        self._rewalks += 1
+        self._walk = None
+        self._settle_scans = []
+        walk = [p for p in self._make_phases() if p.name in ("walk_in", "walk_settle")]
+        self.script = demo_script.DemoScript(walk + self.script.phases[self.script.index:])
+        self.script.reset(demo_script.HOME_POINT, JAW_SHUT_M)
+        self.events.append({"phase": "rewalk", "why": text, "to": [round(k * x, 3), round(k * y, 3),
+                                                                  round(math.degrees(yaw), 1)]})
+        return ""
+
     def _walk_up_note(self, actual) -> dict:
         ahead, right, off = seated_from(self.fix, actual)
         return {"seated_ahead_m": round(ahead, 3), "lock_right_m": round(right, 3), "yaw_off_deg": round(off, 1)}
@@ -1085,6 +1785,16 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         if self._blocked:
             return self._blocked
         return super()._abort(obs, phase)
+
+    def _lag_joints(self, phase: str) -> tuple:
+        """Joint6 left out while the wrist searches: its sine (±10 deg in 2 s) runs up to ~17 deg ahead of the D1,
+        which pauses its reports and motion (F-200), and a gap there is the roll's, not a load's. Lukas's run of
+        2026-10-24 13:34 aborted 21 s into `key_in` on it ("the arm is 16 deg from where the IK wants it: loaded"),
+        servo 6 commanded 101.5 and at 119. The key's depth (`_stopped`) is on the roll's axis, so the touch still
+        sees the face."""
+        if phase in WRIST_SEARCH_PHASES and not self._wrist["held"]:
+            return (0, 1, 2, 3, 4)
+        return super()._lag_joints(phase)
 
     # --- recovery ---------------------------------------------------------------------------------------------------
 
@@ -1099,6 +1809,25 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         carry = lambda st, u: carry_point(st["base"], st["base_z"])
         jaw = JAW_SHUT_M if held else JAW_OPEN_M
         phases = []
+        if last is not None and last.phase in RETURN_FOLDING:
+            # The key back in the holster, the arm folding: the fold finished (`h_fold`, then held folded), stood up.
+            phases = [Phase("h_fold", H_LOWER_S, path=carry, jaw_m=JAW_OPEN_M)]
+            if self._posture == "lie":
+                phases += stand_phases(JAW_OPEN_M)
+            self.script = demo_script.DemoScript(phases + [Phase("fold", plan.FOLD_S, path=carry, jaw_m=JAW_OPEN_M)])
+            self.script.reset(last.hand_target_script or demo_script.HOME_POINT, JAW_OPEN_M)
+            self._joint_goal = self._held = self.held_rotation = None
+            self._joint_wait_s = 0.0
+            self._lag_since = self._door_since = self._ik_since = None
+            self._blocked = ""
+            self.events.append({"phase": "recover", "phases": [p.name for p in self.script.phases]})
+            return
+        if last is not None and last.phase in HOLSTER_PHASES + RETURN_AT_HOLSTER and self._draw is not None and not (
+                held and last.phase == "h_draw" and self.script.finished):
+            # At the holster: the jaws opened (the key, if half out, stays in the holster's sleeve), the hand slid off the
+            # bar's root along the holster's axis to the waiting point's distance beyond where it is, then the way it came.
+            self.events.append({"phase": "recover_at_holster", "from": last.phase})
+            return self._recover_at_holster(last)
         if last is not None and last.phase in self.at_the_lever_phases and self._measured is not None:
             base_s = self._base_s if self._base_s is not None else np.eye(4)
             q = d1_ik.from_servo_deg(self._measured)[0]
@@ -1106,6 +1835,15 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
             hand = plan.transform(base_s, [pos + rot @ np.asarray(JAW_CENTRE_LINK6)])[0]
             approach = base_s[:3, :3] @ rot[:, 2]
             axis = base_s[:3, :3] @ rot[:, 0]
+            if held and (last.phase == "key_turn" or (last.phase == "key_back" and self.reholster)):
+                # Turned, or part way, or held back coming out: the jaws opened where they are, the key left in the
+                # lock, and the hand backed away empty.
+                here = tuple(float(v) for v in hand)
+                phases.append(Phase("key_letgo", RELEASE_S, target=lambda st: here, jaw_m=JAW_OPEN_M,
+                                    approach=lambda st: tuple(approach), object_axis=lambda st: tuple(-axis), servo=True))
+                held, jaw = False, JAW_OPEN_M
+                self.check["left_in_lock"] = True
+                self.events.append({"phase": "left_in_lock"})
             back = tuple(float(v) for v in hand - BACK_OUT_M * approach)
             phases.append(Phase("key_out", BACK_S, target=lambda st: back, jaw_m=jaw, approach=lambda st: tuple(approach),
                                 object_axis=lambda st: tuple(-axis), servo=True))
@@ -1123,6 +1861,71 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         self._blocked = ""
         self.events.append({"phase": "recover", "phases": [p.name for p in phases]})
 
+    def _recover_at_holster(self, last) -> None:
+        Phase = demo_script.Phase
+        hand = dict(approach=lambda st: self._holster_axis("approach"), object_axis=lambda st: self._holster_axis("bar"),
+                    servo=True)
+        base_s = self._base_s if self._base_s is not None else np.eye(4)
+        if self._measured is not None:
+            q = d1_ik.from_servo_deg(self._measured)[0]
+            pos, rot = d1_ik.tool_pose(self.arm.joints, q, body="Link6", offset=(0.0, 0.0, 0.0))
+            here_b = pos + rot @ np.asarray(JAW_CENTRE_LINK6)
+        else:
+            here_b = self._draw["grip"]
+        off_b = here_b + holster.PRE_OUT_M * self._draw["axes"]["out"]
+        to_s = lambda p: tuple(float(v) for v in plan.transform(base_s, [p])[0])
+        here_s, off_s = to_s(here_b), to_s(off_b)
+        phases = [Phase("h_letgo", RELEASE_S, target=lambda st: here_s, jaw_m=holster.JAW_OPEN_M, **hand),
+                  Phase("h_off", H_ON_S, target=lambda st: off_s, jaw_m=holster.JAW_OPEN_M, **hand),
+                  Phase("h_raise", H_LOWER_S, path=lambda st, u: off_s, jaw_m=holster.JAW_OPEN_M, **hand),
+                  Phase("h_unreach", H_REACH_S, path=lambda st, u: off_s, jaw_m=holster.JAW_OPEN_M, **hand)]
+        if last.phase in ("h_turn", "h_reach", "h_lower", "h_raise", "h_unreach"):
+            # Before the jaws were round the bar, or after they left it: up and folded, nothing to let go of.
+            phases = phases[2:] if last.phase != "h_turn" else []
+        if self._posture == "lie":
+            phases += stand_phases(holster.JAW_OPEN_M)
+        phases.append(Phase("fold", plan.FOLD_S, path=lambda st, u: off_s, jaw_m=holster.JAW_OPEN_M))
+        self.script = demo_script.DemoScript(phases)
+        self.script.reset(here_s, holster.JAW_OPEN_M)
+        self._joint_goal = self._held = self.held_rotation = None
+        self._joint_wait_s = 0.0
+        self._lag_since = self._door_since = self._ik_since = None
+        self._blocked = ""
+        self.events.append({"phase": "recover", "phases": [p.name for p in phases]})
+
+    def unlock_check(self) -> dict:
+        """Whether the door may be pulled after this insertion (`node.py --then_door`), by what the robot measured: the
+        key seated, turned at least the lock's `geometry.ARM_LEVER.unlock_deg` by the encoders, and the jaws empty
+        (put back in the holster, or let go in the lock). {"verified", "why", and the check}."""
+        check = self.insert_check()
+        turned = check.get("turned_deg")
+        unlock = kg.ARM_LEVER.unlock_deg
+        why = ""
+        if not check.get("seated"):
+            why = "the key did not seat"
+        elif turned is None or turned < unlock:
+            why = f"the key turned {turned} deg, under the {unlock:g} the lock unlocks at"
+        elif not (check.get("reholstered") or check.get("released") or check.get("left_in_lock")):
+            why = "the key is still in the hand"
+        return {"verified": not why, "why": why, **check}
+
+    def lock_check(self) -> dict:
+        """Whether this insertion locked the door, by what the robot measured: the key seated, pressed to its depth or as
+        far as it went (`key_close`), the key turned back to within `LOCKED_DEG` of level by the encoders, and the jaws empty
+        or the key back in the holster. {"verified", "why", and the check}."""
+        check = self.insert_check()
+        turned = check.get("turned_deg")
+        why = ""
+        if not check.get("seated"):
+            why = "the key did not seat"
+        elif not check.get("closed"):
+            why = "the key was not pressed home"
+        elif turned is None or abs(turned) > LOCKED_DEG:
+            why = f"the key is at {turned} deg, not within {LOCKED_DEG:g} of level"
+        elif not (check.get("reholstered") or check.get("released") or check.get("left_in_lock")):
+            why = "the key is still in the hand"
+        return {"verified": not why, "why": why, **check}
+
     def insert_check(self) -> dict:
         """What the robot measures of the insertion: the key held, the drop lying down, the plan's poses, where the key
         touched and entered, how far the search went, seated or not, and the key's depth now."""
@@ -1130,6 +1933,30 @@ class InsertAttempt(kp.WalkUp, plan.Attempt):
         if self._measured_key is not None:
             out["key_mm"] = [round(1000 * v, 2) for v in self._measured_key]
         return out
+
+
+def key_path_margin(joints, configs, roll: int, along_m: float = 0.0, up_m: float = 0.0) -> float:
+    """How far the held key's bar and shaft stay outside the trunk's box and the lidar's (`BODY_BOX_B`,
+    `CLEARANCE_BOXES_B`) through the joint move's `configs` (radians; `plan.joint_path_rad`, as the node sends it), m;
+    negative: that far in. The key is where the hand holds it (`key_in_jaws_link6`, `along_m`, `up_m`), its
+    bar from 15 mm behind the shaft to 160 mm (and `holster.LEVER_EXTRA_M`) along the lever, which is `roll` times
+    Link6's x (the hand's grip roll: -1 the hand-in's, `geometry.KEY_AXES_LINK6`; +1 the holster's)."""
+    from position_only.workspace import BODY_BOX_B, CLEARANCE_BOXES_B
+
+    boxes = [np.array(b, dtype=float) for b in (BODY_BOX_B, *CLEARANCE_BOXES_B)]
+    length = 0.160 + holster.LEVER_EXTRA_M
+    along = np.linspace(-0.015, length, 12)
+    worst = np.inf
+    for q in np.asarray(configs, dtype=float):
+        pos, rot = d1_ik.tool_pose(joints, q, body="Link6", offset=(0.0, 0.0, 0.0))
+        origin = pos + rot @ np.asarray(key_in_jaws_link6(along_m, roll, up_m))
+        pts = origin + np.outer(along, roll * rot[:, 0])
+        for box in boxes:
+            lo, hi = box[:, 0], box[:, 1]
+            outside = np.linalg.norm(np.maximum(np.maximum(lo - pts, pts - hi), 0.0), axis=1)
+            inside = np.minimum(pts - lo, hi - pts).min(axis=1)
+            worst = min(worst, float(np.where(outside > 0, outside, -np.maximum(inside, 0.0)).min()))
+    return worst
 
 
 def _gravity(arm, q) -> np.ndarray:

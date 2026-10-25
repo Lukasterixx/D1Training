@@ -139,10 +139,12 @@ Live, from sport mode's stand with the arm folded:
 
 LowCmd goes out at 500 Hz (the latest command repeated, unitree_rl_lab's rate), reliable QoS as unitree_ros2's examples.
 
-**Stops.** Ctrl-C, `a` + Enter, the remote's **B** (not yet seen on this dog: the one rehearsal with the dog read no
-key at all), a roll or pitch past 15°, a joint past its limit while the policy
-drives, or a LowState older than 0.1 s: every motor kp 0 / kd 3 at once (the dog sinks down), then Enter gives the legs
-back to sport mode (a second Ctrl-C leaves them damping). `q` + Enter ends gently (released, home, lie down). The
+**Stops.** Ctrl-C, `a` + Enter, the remote's **B** (its bit read on the dog once, while a live run waited in damping:
+`20261023T133243_leg_press_live` recorded L2, L2 + A and B; B has not yet stopped a run), a roll or pitch past 15°, a
+joint past its limit while the policy drives, or a LowState older than 0.1 s: every motor kp 0 / kd 3 at once (the dog sinks down), then Enter gives the legs
+back to sport mode (a second Ctrl-C leaves them damping). The remote's **A** is Enter everywhere, `live` + Enter at the
+confirmation included (`lowlevel.RemoteButtons`, the same in every live program): A starts it, B stops it, A again gives
+the legs back to sport mode. `q` + Enter ends gently (released, home, lie down). The
 decoder's estimate of the foot's force past 25 N for 0.1 s releases the press. Lying, sport mode folds the calves past
 the URDF's -2.72 rad (-2.78 to -2.85 on the dog), so the limits are not checked in the stand-up and lie-down.
 
@@ -169,7 +171,7 @@ The motors did what was asked (`tau_est` within ~5% of kp (target - q) - kd dq).
 trained stance first, and Ctrl-C no longer kills the LowCmd writer (rclpy's SIGINT handler is off).
 
 Not shown: anything the policy does with the real legs beyond those 0.24 s. It has never driven them; the stand-in has no dynamics; the
-handover's ramps, the release's behaviour on this firmware and the remote's B bit are untried on the dog. For the first
+handover's ramps, the release's behaviour on this firmware and a stop by the remote's B are untried on the dog. For the first
 live runs: the dog on the floor with room around it, someone at its side ready to catch it, Ctrl-C at hand, and a dry
 `--rehearse` first to see the remote's B printed as `remote: ['B']`.
 
@@ -242,15 +244,32 @@ arm leaves home.
 - *The robot's own check* (`turn_check`, in the status, the record and RViz's text): the fingertips' edge on the
   estimated key past 30° at the hold, and the hand never more than 30 mm behind its command through the turn.
 
-**On into the door pull** (`--then_door pull`, `d1dogkeydoor`; `walk`, `reach` or `grip` to stop it short): once the
-robot's own check says the key turned (else the run ends there), the door pull takes over from where the key left the dog
-(`key_plan.DoorAfterKey`), with no new look and no backing off to walk in straight. Its stance is the key's fix moved to
-the door pull's (`door_fix`: square to the door, the box's root 0.69 m ahead), ~0.07 m back and ~0.18 m right of the
-key's. The arm stays folded (the door pull's home, 0.40 m ahead, is in the door at the key's stance), the dog walks
-over with the key's walk up (back, sideways and turning at once), settles, and the door pull's refit and range check run
-there as after its own walk in; then its unfold, reach, grip, pull, release and fold, at `--door_deg` and
-`--speed_scale`. The record has both: `key_attempt_events`, `key` (the turn's check), `door_attempt_events`. Dry on the
-CPU model only so far.
+**Locking** (`--task insert --stage insert --lock`, and `--then_close` after a door pull; 2026-10-25): the same
+insertion rolled to `--lock_from_deg` (45, where the unlock left the cylinder, clockwise as the robot sees it), the
+wiggle about that; once seated, `key_close` pushes the key round the door's closing arc about the hinge (the door's
+spring holds it 5-10 deg open) at 2 mm/s at the lock until it stops following, and `key_turn` turns it back to level
+holding the door there; then back into the holster. `lock_check` in the record. See
+`../../combiner_door/robot/README.md`, "Closing and locking". On the dog (2026-10-25 05:07 UTC) the door's spring was
+weaker than the key's press: the key pushed the door shut ahead of it in `key_in` and aborted 40 mm past seated
+(`IN_SLACK_M`). A handover to `key_close`'s arc followed (F-217), which in the whole chain, the door already shut, pushed
+on until the IK ran out, the box moving (F-221). Since then the key is pressed straight in until its tip is
+`--lock_beyond_face_mm` (default 12; seated it is 7.7) beyond the box's front face as the lidar saw it lying down, or
+until it stops in the keyway, then turned; no abort for going on. A door left ajar needs it raised (dry: 100 pushes a
+door 8 deg ajar onto its frame).
+
+**On into the door pull** (`--then_door pull`, `d1dogkeydoor`, and `d1doginsert --then_door pull` after the
+insertion; `walk`, `reach` or `grip` to stop it short): once the robot's own check says the key turned (else the run ends
+there), the run becomes the door pull, from a new look. Unlocked, the door swings open up to ~10 degrees, so nothing is
+carried over from the key's fix but where to look from. The dog stands 1.5 s, sport mode is put back into classic walk
+(the insertion's StandDown, StandUp and BalanceStand leave it in the default gait), and it backs up with the arm folded
+to the door pull's staging pose (`approach.door_after_key`: square to the door as the key found it, the box's root
+0.75 m ahead, `approach.STAGE_ROOT_M`, since 2026-10-25; a look there that finds no tag walks on back to 1.05 m). It looks there, and the door pull goes on as from any look: its range
+check (a door ajar past 8 degrees asks for a turn, so the approach walks again, square to the door as it now is), its
+unfold, its own straight walk in, refit, reach, grip, pull, release and fold, at `--door_deg` and `--speed_scale`. Until
+2026-10-25 the door pull walked over from the key's fix with no new look (`DoorAfterKey`); the one live try, after the
+insertion, ended 0.65 m from the box after the refit, outside its range. The record has `key_attempt_events`, `key` or
+`insert` (the check), `approaches` (the walk back first), `door_after_key`, `door_attempt_events`. Dry on the CPU model
+only so far.
 
 **Before a live run**, as the door's (`../../combiner_door/robot/README.md`, "Before a live run"): the box's tag in view
 and the dock not; the dog standing; nothing else commanding the legs, the joysticks or the arm (E-STOP in the website's
@@ -298,13 +317,54 @@ through it, a thread back to back for the whole 43 s wait. The door reading is n
 | `touch` | ... `key_in` (in along the axis at 2 mm/s until the key stops following its command), `key_back`, ... |
 | `insert` | ... `key_in`; `key_search` (a spiral across the keyway pressed 2 mm into the face, out to 4 mm); `key_seat`; `release`; `key_back`; `home`; `stand_up`, `stand_settle`; `fold` |
 
+**The key from the holster, and the wrist's search** (2026-10-24; `--key_source holster`, the default, or `hand` for
+the hand-in). Lying in front of the lock, after `lock_look`, the arm draws the key out of the holster beside its base
+instead of being handed it: `h_turn` (Joint1 turned at the fold), `h_reach` (joint move to 8 cm above the waiting
+point), `h_lower` (down to it), `h_on` (the jaws fully open, 30 mm, slid onto the bar's root), `grip` (they close,
+checked as the hand-in's: closed on nothing, it aborts and backs off the way it came, `h_letgo`, `h_off`, `h_raise`,
+`h_unreach`, then stands and folds), `h_draw` (90 mm out along the holster's axis). The holster's moves are
+`holster.draw_plan`, the plan `holster.check` verifies against the holster, the key and the arm (F-198, F-199, the
+lever 1 cm longer). `key_go` then takes the key to the lock, checked for the key's whole bar against the trunk and
+clearance boxes (`key_path_margin`) as well as the arm. `--stage load` draws it and hands it back.
+
+The grip at the holster is the hand-in's turned 180 deg about the shaft (roll +1; roll -1 does not slide onto the bar
+there), so the whole attempt holds the hand that way and the lever points at the lock as the hand-in's does. That puts
+Joint6 near the end of its range at the lock: the holster attempt lets Joint6 alone go to 0.98 of its range (2.30 rad,
+2.7 deg inside the hard limit; `HOLSTER_J6_SOFT`), and the plan's rows carry `j6_rad` (2.27 rad at most on the model).
+
+Through `key_in` and `key_search` the hand rolls about the key's shaft by ±10 deg (`WRIST_SEARCH_DEG`, a sine of period
+2 s), the shaft itself still: only the wards turn. Once the key is in it holds the angle it went in at
+(`check["wrist_at_entry_deg"]`) through the seat. The plan solves the touch and the seat at ±10 deg and the spiral's
+edge at ±10 deg before anything moves; a side that does not solve narrows to 7.5, 5, 2.5 or 0 deg (`WRIST_SEARCH_STEPS_DEG`, `check["wrist_search_deg"]`). The unlock's turn is commanded `--turn_extra_deg` (10) past `--turn_deg`: 55 for the lock's 45, which the dog fell short of. `--no_spiral` (alias `--no_wiggle`, `InsertAttempt.spiral`) keeps the wiggle but drops the spiral: a key stopped on the face stays pressed where it touched, wiggling, for `PRESS_ONLY_S` (20 s), then the search gives up: the holster's grip at a dog standing 0.37 m or more over the box's root holds −7.5 deg, from 0.40 m −5 (CPU model; a live run on 2026-10-24 aborted there before). Not validated on the dog: no run there has had a holster yet, and the wrist
+search has not met a real keyway.
+
+**Every arm motion the holster draw's way** (2026-10-24; Lukas: "ensure all the arm motions use the same method of
+smooth commands as the unholstering does"). The node no longer sends a `target` each step for the link's `Profile`,
+which slowed to stop on every one (and whose steps under 2.5° the firmware stops after, F-045). It sends what
+`plan.ArmSender` decides:
+- a joint move (`unfold`, `key_go`, `fold`, the holster's `h_turn`, `h_reach` and `h_lower`, and any goal more than
+  6° from the last: the look's places, `home`'s wrist) as one timed path, each joint paced on its own at 40°/s and
+  300°/s² (`plan.joint_path`, the holster draw's `holster.joint_move`);
+- every other goal followed as it moves (`arm_link.Follower`, the link's new `follow`): each command is the goal
+  itself, as a path's points are, at most 45°/s from the last and never more than a path's lead ahead of the arm.
+
+The clearance checks (`key_go`'s arm and key, the look's moves, the key turn's `key_out`) now check that paced path,
+not a straight line. The door, key and insertion dry runs drive a simulated link the same way (`LinkedArm`). This
+covers the door pull and the key turn too, since all three share the node.
+
+**Planning lying down without the wait** (2026-10-24). Lukas: "there is a long wait between sitting down and beginning
+the wrist camera search". The insertion is planned when `lie_settle` ends. A side of the wrist search that the arm
+could not reach cost the dog ~20 s of failing IK seeds (21.3 s in the run at 13:34). The roll is Joint6 alone, since
+the key's shaft is on its axis, so the rolled poses are now the unrolled ones with Joint6 turned (`_rolled`), checked
+for limits, the trunk, holding and the head camera, with no IK: 0.04 s on the PC at every height, against 0.55 s.
+
 **Why lying down.** Standing, the base is 0.35-0.39 m over the box's root on the dog, and the lock only 3-6 cm above
 it. The CPU arm model finds the level, rolled hand from no stance there (0.40-0.70 m from the door, 0.10 m left to
 0.20 m right). The simulation's walker stood 0.27-0.31 m. Lying (StandDown, the base ~0.20 m lower), 29-46 stances
 work with the shoulder at 34-67% of its torque. Unitree's `Sit` (1009) tips the chest up instead. The drop is
 measured from sport mode's `body_height`.
 
-**Walk first, hand in at the stance, no lidar lying** (2026-10-22). Carried out in front (0.28 m ahead, 0.25 m up, about
+**Walk first, hand in at the stance, no lidar lying** (2026-10-22; the refit lying is back since 2026-10-24, below). Carried out in front (0.28 m ahead, 0.25 m up, about
 10 cm ahead of and above the MID-360), the key and hand shadow the door: the refit after a walk with the key in hand
 turned the door 6.9 degrees and aborted the run. So the dog walks up with the arm folded, refits with a clear view, and
 only then unfolds for the key; you hand it in standing beside the box. Lying, the key is in front again, so there is
@@ -312,6 +372,15 @@ no refit there (Lukas: "we cant trust the lidar after sitting down, as the tool 
 odometry, plus the part of the measured sit-back (4 cm straight back, `LIE_BACK_M`; the first lie-down's 4.5 degrees of
 turn the odometry saw) it did not report. Whatever of the sit-back that misses is left to the keyhole view and the
 touch search.
+
+**The lidar refit lying again** (2026-10-24; Lukas: "you may do the lidar fit again"). Since the key comes after
+`lock_look`, the arm is folded and empty through `lie_settle`, so the refit lying is back. After the sit-back is added,
+`plan.refine_fix` runs on `lie_settle`'s scans, each from its base lowered by the measured drop (the odometry keeps
+the standing height). It moves the door's face along its normal and turns it, keeping the tag's place along the face
+and **its height**. It aborts past the standing refit's limits (8 cm, 6°). With no face found, the sit-back alone
+stands (`refit_lying` event: `used`, `scans`, `moved_mm`, `turned_deg`). On the CPU model, 80 mm of sit-back where 40
+are allowed for is measured as 39.9 mm. It does not correct the box's height. A wrist camera that looks too low or
+too high at `lock_look` is not something it can fix.
 
 **Lie down folded, look for the lock, then the key** (2026-10-23). In Lukas's live run (2026-10-22 13:29 UTC) the wrist
 camera at `key_view` saw the held key and the jaws where the model put the bezel, the bezel nowhere, and the key then
@@ -377,7 +446,7 @@ seated, it went straight in. Seated is by touch too: stopped again at least 6.7 
 depth and miss is the forward kinematics of the arm's encoders, with the key where it was handed in. A key that turns
 or slides between the fingers is not seen.
 
-**Dry on the CPU model** (`../tests/test_insert_robot.py`, 13 tests): the arm link's profile driving a model servo, the
+**Dry on the CPU model** (`../tests/test_insert_robot.py`; 13 tests at first, 31 now): the arm link's profile driving a model servo, the
 gait's carry, the odometry's 13% short count, StandDown lowering the base 0.20 m, and a model keyway: rigid, no
 friction, 0.4 mm of play, put 0.2-3.8 mm off where the box's model has it. Every stage short of the insertion hands the
 key back and folds. The touch finds the face. The search found the keyway each time and the key seated, 13-67 s
@@ -446,3 +515,23 @@ and dim red room light, heavy motion blur in places), ground truth tracked throu
 - `find_bezel` with the model's place pushed E mm off the truth (a made-up pose per frame, the clips have no arm pose):
   0-10 mm, the model's search alone and image first are both right in 146-147/152 and 102/114 frames; 20 mm, the model's
   alone 2/152 and 3/114, image first 146/152 and 102/114; 30-40 mm, 0 against 144/152 and 101-102/114.
+
+## The holster draw's arm motion on the dog (no holster yet)
+
+`holster_dog.py`, launched by `run_holster_on_dog.sh` (`d1dogholster` on the PC). The simulation's holster draw
+(`demos/combiner_key/holster.py`, `holster_env.py`; F-189, F-190) as the real arm's motion: Joint1 turned at the fold,
+unfolded beside the base on the robot's right, the open jaws slid onto where the key's root would be, shut, drawn
+100 mm out along the holster's axis, then all of it undone and folded. No camera, no lidar, no legs.
+
+    d1update                       # this PC's tree to the dog
+    d1dogholster                   # dry: the plan, the real arm's start check, the motion on a simulated arm
+    d1dogholster --live --step     # the real arm, an Enter before every move
+    d1dogholster --live            # the real arm, one Enter
+    d1fetch                        # logs/holster_dog/ back, then ./dashboard.py record ...
+
+Sit the dog with the remote and leave the arm folded first: it refuses to start otherwise (Joint1-3 within 10° of the
+fold, the wrist within 25°). `a` + Enter or the remote's B holds the arm where it is; then `r` + Enter or A takes it
+back to where it started (`holster_dog.recovery`: on the way out, what it has played so far, backwards; from `back`
+on, the rest of the plan's way back), and `q` + Enter or Ctrl-C quits with it held. A is Enter at every prompt. The
+remote is read from `/lf/lowstate` (the launcher now runs the program with ROS); not yet tried on the dog. The hand passes ~10 mm from the D1's
+own base on the CPU model while at the bar's place; that is the model's margin, not the real arm's.

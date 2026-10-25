@@ -138,6 +138,9 @@ class LeverHandle:
             setattr(self, name, zeros(num_envs))
         #: The key's (`place(..., pad=True)`): box contact, a sticking friction, a start stop at `theta_min`.
         self.pad = torch.zeros(num_envs, dtype=torch.bool, device=self.device)
+        #: The key's bar and platform for that contact, (lo, hi) per axis in `leg_cfg.KEY_*`'s frame: `leg_cfg`'s (v3,
+        #: the foot's key) unless set (the arm's turn sets v4's, `demos/combiner_key/geometry.LEVER_V4`).
+        self.key_boxes: tuple | None = None
         self.inertia.fill_(1e-3)
         self.theta, self.omega = zeros(num_envs), zeros(num_envs)
         #: Outputs of the last `step`, averaged over its sub-steps: the force on the foot (world), the bar's and the
@@ -247,7 +250,7 @@ class LeverHandle:
         faces = torch.cat((-eye, eye), dim=0)                          # -e0 -e1 -e2 +e0 +e1 +e2
         best_overlap = torch.full_like(local[:, 0], -1e9)
         best_normal, best_point = torch.zeros_like(local), torch.zeros_like(local)
-        for box in (leg_cfg.KEY_BAR_BOX, leg_cfg.KEY_PAD_BOX):
+        for box in (self.key_boxes or (leg_cfg.KEY_BAR_BOX, leg_cfg.KEY_PAD_BOX)):
             lo = torch.tensor([b[0] for b in box], device=foot.device, dtype=foot.dtype)
             hi = torch.tensor([b[1] for b in box], device=foot.device, dtype=foot.dtype)
             q = torch.maximum(torch.minimum(local, hi), lo)

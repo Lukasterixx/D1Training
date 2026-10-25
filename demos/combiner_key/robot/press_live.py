@@ -22,7 +22,8 @@ LIVE (`--live`, after a typed confirmation), with the dog standing in sport mode
 
 Stops: Ctrl-C, `a` + Enter, the remote's B, a tilt past `--tilt_limit_deg`, a joint past its limit, or a LowState older
 than 0.1 s put every motor in damping at once (the dog sinks down) and wait for Enter to give the legs back to sport
-mode. `q` + Enter (or `--policy_s` running out) ends gently: the press released, the foot home, then step 5. The
+mode. The remote's A is Enter (and `live` + Enter at the confirmation), as in every live program here
+(`lowlevel.RemoteButtons`): A goes, B stops, A again gives the dog back to sport mode, where it started. `q` + Enter (or `--policy_s` running out) ends gently: the press released, the foot home, then step 5. The
 decoder's estimate of the foot's force past `--force_abort_n` for 0.1 s releases the press.
 
 Not validated: this program has run only against `fake_go2.py` on the PC (a kinematic stand-in, no dynamics); the
@@ -197,6 +198,11 @@ class LiveIO:
         ll.fill_legs(msg, q, kp, kd)
         with self.lock:
             self.msg = msg
+        # Out now, not at the writer's next slot (up to 2 ms later); the writer repeats it until the next command.
+        try:
+            self.lowcmd.publish(msg)
+        except Exception as error:
+            self.error = repr(error)
         if not self.writing:
             self.writing = True
             self.thread.start()
@@ -270,7 +276,10 @@ class PressRun:
         self.profile = pl.Profile(levels=[args.force_n], ramps=[args.ramp_s], holds=[args.hold_s],
                                   standoff=args.standoff, speed=args.speed)
         self.task = self._new_task()
-        self.state, self.state_rx, self.lock = None, 0.0, threading.Lock()
+        self.state, self.state_msg, self.state_rx, self.lock = None, None, 0.0, threading.Lock()
+        self.tick_now = 0.0
+        #: This tick's time from its start to the command's send (ms).
+        self.send_ms = math.nan
         self.arm = None
         if args.arm_link_port:
             try:
@@ -293,6 +302,7 @@ class PressRun:
         self.rehearse_foot = None
         self.last_print = 0.0
         self.last_keys: set[str] = set()
+        self.buttons = ll.RemoteButtons()
         self.max_tilt_deg = 0.0
         self.handed_back = False
         self.confirming = self.asked_handback = False
@@ -308,7 +318,7 @@ class PressRun:
         self.rows: dict[str, list] = {k: [] for k in (
             "t", "dt", "state_age", "mode", "stage", "phase", "level", "stalled", "q", "dq", "tau_est", "quat", "gyro",
             "rpy", "foot_force", "arm_q", "arm_measured", "foot", "foot_v", "height", "commands", "frame", "action",
-            "target", "kp", "kd", "sent", "estimate", "infer_ms", "goal", "offset", "go", "remote")}
+            "target", "kp", "kd", "sent", "estimate", "infer_ms", "goal", "offset", "go", "remote", "send_ms")}
         self.last_tick = None
         suffix = "_live" if self.live else ("_rehearse" if args.rehearse else "")
         self.run_dir = Path(args.run_dir) / f"{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}_leg_press{suffix}"
@@ -324,7 +334,13 @@ class PressRun:
     # --- input -----------------------------------------------------------------------------------------------------
 
     def on_state(self, msg) -> None:
-        state = {"q": np.array([msg.motor_state[i].q for i in range(12)]),
+        """Keeps the message only: at 500 Hz the conversion is done once per policy step instead (`_convert`)."""
+        with self.lock:
+            self.state_msg, self.state_rx = msg, time.monotonic()
+
+    @staticmethod
+    def _convert(msg) -> dict:
+        return {"q": np.array([msg.motor_state[i].q for i in range(12)]),
                  "dq": np.array([msg.motor_state[i].dq for i in range(12)]),
                  "tau_est": np.array([msg.motor_state[i].tau_est for i in range(12)]),
                  "quat": np.array(msg.imu_state.quaternion, dtype=float),
@@ -332,8 +348,6 @@ class PressRun:
                  "rpy": np.array(msg.imu_state.rpy, dtype=float),
                  "foot_force": np.array(msg.foot_force, dtype=float),
                  "keys": ll.remote_keys(msg.wireless_remote)}
-        with self.lock:
-            self.state, self.state_rx = state, time.monotonic()
 
     def event(self, what: str, **extra) -> None:
         t = 0.0 if self.start is None else time.monotonic() - self.start
@@ -371,11 +385,12 @@ class PressRun:
     # --- the loop --------------------------------------------------------------------------------------------------
 
     def tick(self) -> None:
-        now = time.monotonic()
+        now = self.tick_now = time.monotonic()
         with self.lock:
-            state, age = self.state, now - self.state_rx
-        if state is None:
+            msg, age = self.state_msg, now - self.state_rx
+        if msg is None:
             return
+        state = self.state = self._convert(msg)
         if self.start is None:
             self.start = now
             self.event("first LowState")
@@ -388,8 +403,11 @@ class PressRun:
             self.reported_writer = True
             self.event(f"LowCmd can no longer be sent ({self.io.error}): the motors keep the last command; "
                        "switch the dog off or select sport mode from the app")
-        if self.live and "B" in keys and self.mode in DRIVEN:
-            self.abort("the remote's B")
+        for press in self.buttons.update(keys):
+            if press == "B":                    # `a` + Enter
+                self.abort("the remote's B")
+            else:                               # Enter, and `live` + Enter at the live run's confirmation
+                self.typed, self.go = "live", True
         if age > STALE_S and self.mode in DRIVEN:
             self.abort(f"LowState {age:.2f} s old")
         for line in (self.operator.drain() if self.operator else []):
@@ -457,14 +475,16 @@ class PressRun:
             log("LIVE. The dog will lie down, sport mode will be released, and this program will stand it up and "
                 f"drive its legs. Plate {self.args.plate} (contact {self.plate.contact.tolist()} m, normal "
                 f"{np.round(self.plate.n, 3).tolist()}), {self.args.force_n} N for {self.args.hold_s} s (cap "
-                f"{self.args.max_force_n} N). Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter to go.")
+                f"{self.args.max_force_n} N). Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the "
+                "remote's A) to go.")
             self.go = False
             self.confirming = True
             return
         if self.confirming and self.go:
             self.go = False
             if self.typed != "live":
-                log(f"{self.typed!r} is not 'live': nothing done. Type live + Enter to go, or Ctrl-C")
+                log(f"{self.typed!r} is not 'live': nothing done. Type live + Enter (or the remote's A) to go, "
+                    "or Ctrl-C")
                 return
             self.confirming = False
             self.io.sport_request(ll.SPORT_STAND_DOWN)
@@ -533,6 +553,14 @@ class PressRun:
         self._record(state, sent=True, target=self.default_q, kp=kp, kd=kd)
         if s < 1.0:
             return
+        if self.args.start_on_blend and not self.settle_q:
+            # The policy takes the robot as the blend reaches its gains, moving or not, as F-192's simulated handover
+            # starts it: held at kp 25 on the default targets alone the dog sinks on for ~1.3 s and rolls (0.303 ->
+            # 0.231 m, roll +0.8 -> +6.3 deg on 2026-10-23 10:50 UTC), which the simulation's handover never did.
+            self.settle_q = [state["q"].copy()] * SETTLED_TICKS
+            self.still_ticks = SETTLED_TICKS
+            self._gate(state, still=True, label="taken at the blend")
+            return
         # Still: no joint moved more than SETTLED_MOVE_RAD over the last SETTLED_TICKS ticks. Not the velocities: at
         # rest on the dog they read 0.04-0.10 rad/s (2026-10-23, the second live run), past any useful threshold.
         self.settle_q.append(state["q"].copy())
@@ -541,26 +569,36 @@ class PressRun:
         self.still_ticks = SETTLED_TICKS if still else 0
         waited = t - STAND_S - STAND_HOLD_S - GAIN_BLEND_S
         if self.still_ticks >= SETTLED_TICKS or waited > SETTLE_MAX_S:
-            off = state["q"] - self.settled_q
-            _, height = feet(state["q"], state["quat"], self.meta)
-            rp = np.degrees(leg_policy.roll_pitch(state["quat"]))
-            self.event("settled" if still else f"not still after {SETTLE_MAX_S} s",
-                       base_m=round(height, 3), roll_pitch_deg=np.round(rp, 1).tolist(),
-                       q_minus_trained_settled=np.round(off, 3).tolist())
-            gate = self.meta.get("start_gate") or {}
-            tol = float(gate.get("max_off_settled_rad", SETTLED_TOL_RAD))
-            pitch_lo, pitch_hi = gate.get("pitch_deg", (-SETTLED_TILT_DEG, SETTLED_TILT_DEG))
-            if (np.abs(off).max() > tol or abs(rp[0]) > SETTLED_TILT_DEG or not pitch_lo <= rp[1] <= pitch_hi
-                    or not still):
-                # Not the policy's to take: lie down on the stand-up gains, not damping from a stand.
-                self.abort_reason = (f"the stand is not the trained one (joints up to {np.abs(off).max():.2f} rad "
-                                     f"off of {tol:.2f}, roll {rp[0]:+.1f} deg, pitch {rp[1]:+.1f} deg of "
-                                     f"{pitch_lo:+.1f}..{pitch_hi:+.1f}, {'still' if still else 'moving'})")
-                self.event(f"STOP: {self.abort_reason}; lying down")
-                self.from_q, self.from_kp, self.from_kd = state["q"].copy(), self.kp, self.kd
-                self.set_mode("stand_end")
-                return
-            self._start_policy(state)
+            self._gate(state, still)
+
+    def _gate(self, state, still: bool, label: str | None = None) -> None:
+        """Start the policy if the stand is one it trained from (or the operator's bounds admit it); else lie down."""
+        off = state["q"] - self.settled_q
+        _, height = feet(state["q"], state["quat"], self.meta)
+        rp = np.degrees(leg_policy.roll_pitch(state["quat"]))
+        self.event(label or ("settled" if still else f"not still after {SETTLE_MAX_S} s"),
+                   base_m=round(height, 3), roll_pitch_deg=np.round(rp, 1).tolist(),
+                   q_minus_trained_settled=np.round(off, 3).tolist())
+        gate = self.meta.get("start_gate") or {}
+        tol = float(gate.get("max_off_settled_rad", SETTLED_TOL_RAD))
+        pitch_lo, pitch_hi = gate.get("pitch_deg", (-SETTLED_TILT_DEG, SETTLED_TILT_DEG))
+        # The operator's bounds, if given, replace the export's (round 4 has none, and F-192 has it pressing from the
+        # dog's kp-25 rest, 0.20 rad and 8.1 degrees nose up, that the default refuses).
+        if self.args.start_tol_rad is not None:
+            tol = float(self.args.start_tol_rad)
+        if self.args.start_pitch_deg is not None:
+            pitch_lo, pitch_hi = (float(v) for v in self.args.start_pitch_deg)
+        if (np.abs(off).max() > tol or abs(rp[0]) > SETTLED_TILT_DEG or not pitch_lo <= rp[1] <= pitch_hi
+                or not still):
+            # Not the policy's to take: lie down on the stand-up gains, not damping from a stand.
+            self.abort_reason = (f"the stand is not the trained one (joints up to {np.abs(off).max():.2f} rad "
+                                 f"off of {tol:.2f}, roll {rp[0]:+.1f} deg, pitch {rp[1]:+.1f} deg of "
+                                 f"{pitch_lo:+.1f}..{pitch_hi:+.1f}, {'still' if still else 'moving'})")
+            self.event(f"STOP: {self.abort_reason}; lying down")
+            self.from_q, self.from_kp, self.from_kd = state["q"].copy(), self.kp, self.kd
+            self.set_mode("stand_end")
+            return
+        self._start_policy(state)
 
     def _start_policy(self, state) -> None:
         self.obs.reset()
@@ -571,7 +609,7 @@ class PressRun:
         if self.args.presses == 0:
             log(f"the policy holds the stand for {self.args.stand_s:.0f} s (q + Enter ends it sooner)")
         else:
-            log("the policy holds the stand. Enter: lift the foot to the pre-contact point")
+            log("the policy holds the stand. Enter (A): lift the foot to the pre-contact point")
 
     def _foot_now(self, state=None):
         state = state or self.state
@@ -616,14 +654,18 @@ class PressRun:
         frame = self.obs.frame(state["quat"], state["gyro"], state["q"], state["dq"], arm_q, np.zeros(6), commands)
         stack = self.obs.step(frame)
         t0 = time.perf_counter()
-        action = self.policy.act(stack)[0]
-        estimate = self.policy.estimate(stack)[0]
-        infer_ms = 1000.0 * (time.perf_counter() - t0)
+        # The command goes out as soon as the action exists: the encoder runs once, and the estimate (for the record and
+        # the force release) is decoded after the send (2026-10-23: before, both ran twice ahead of every command).
+        latent = self.policy.encoder(np.atleast_2d(stack))
+        action = self.policy.actor(np.concatenate((np.atleast_2d(stack)[:, -self.policy.num_single_obs:], latent), -1))[0]
         legs = self.obs.record_action(action)
         target = np.clip(self.obs.leg_targets_unitree(legs), JOINT_LIMITS[:, 0] + TARGET_MARGIN_RAD,
                          JOINT_LIMITS[:, 1] - TARGET_MARGIN_RAD)
         if self.mode == "policy":           # an abort this tick has already sent damping
             self._send(target, self.kp, self.kd)
+        infer_ms = 1000.0 * (time.perf_counter() - t0)      # state to command out, this program's part
+        self.send_ms = 1000.0 * (time.monotonic() - self.tick_now)
+        estimate = self.policy.decoder(latent)[0]
         est = leg_policy.decode_estimates(self.meta, estimate)
         force_est = float(np.linalg.norm(est["foot_force"]))
         # Not in a rehearsal: the estimate is of the real robot, not of the pretend foot.
@@ -657,7 +699,7 @@ class PressRun:
                     self.task, self.down_for, self.go = self._new_task(), 0.0, False
                     if self.args.rehearse:
                         self.rehearse_foot = None
-                    log(f"press {len(self.press_results)} of {self.args.presses} done. Enter: lift the foot again")
+                    log(f"press {len(self.press_results)} of {self.args.presses} done. Enter (A): lift the foot again")
                 else:
                     self._end_policy(state)
 
@@ -672,7 +714,7 @@ class PressRun:
         self.event(f"stage {pl.STAGE_NAMES[before]} -> {name}", **({"why": task.ended_unpressed}
                                                                  if task.ended_unpressed else {}))
         if task.stage == pl.AT_PRE:
-            log(f"the foot is out. Put your hand there ({self.args.plate}), then Enter to press "
+            log(f"the foot is out. Put your hand there ({self.args.plate}), then Enter (A) to press "
                 f"({self.args.hand_wait_s:.0f} s, then it goes home)")
         elif task.stage == pl.ENGAGED:
             log(f"pressing: in at {self.profile.speed} m/s until the foot stalls, then {self.profile.levels[0]} N")
@@ -719,7 +761,7 @@ class PressRun:
         if not self.asked_handback:
             self.asked_handback = True
             self.go = False
-            log(f"damping. Enter: give the legs back to sport mode (SelectMode {self.sport_name!r}); "
+            log(f"damping. Enter (A): give the legs back to sport mode (SelectMode {self.sport_name!r}); "
                 "it may stand the dog up by itself")
         if self.go:
             self.go = False
@@ -758,7 +800,7 @@ class PressRun:
 
     def _record(self, state, *, sent, target, kp, kd, arm_q=None, measured=False, foot=None, foot_v=None,
                 height=math.nan, commands=None, frame=None, action=None, estimate=None, infer_ms=math.nan) -> None:
-        now = time.monotonic()
+        now = self.tick_now                 # the tick's start: the period between rows, not including the step's work
         task = self.task
         nan3 = np.full(3, math.nan)
         row = {"t": now - self.start, "dt": (now - self.last_tick) if self.last_tick else 0.0,
@@ -775,7 +817,8 @@ class PressRun:
                "kd": np.broadcast_to(np.asarray(kd, dtype=float), (12,)), "sent": float(sent),
                "estimate": np.full(12, math.nan) if estimate is None else estimate, "infer_ms": infer_ms,
                "goal": task.commanded_goal(), "offset": task.offset, "go": float(self.go),
-               "remote": float(sum(1 << k for k, name in enumerate(ll.KEYS) if name in state["keys"]))}
+               "remote": float(sum(1 << k for k, name in enumerate(ll.KEYS) if name in state["keys"])),
+               "send_ms": self.send_ms if self.mode == "policy" else math.nan}
         for key, value in row.items():
             self.rows[key].append(np.asarray(value, dtype=float))
 
@@ -854,7 +897,16 @@ def main() -> int:
                         "policy only holds the stand for --stand_s")
     parser.add_argument("--stand_s", type=float, default=10.0)
     parser.add_argument("--policy_s", type=float, default=90.0, help="the policy's longest run before the foot goes home")
-    parser.add_argument("--tilt_limit_deg", type=float, default=15.0)
+    parser.add_argument("--tilt_limit_deg", type=float, default=15.0,
+                        help="the stop on roll or pitch; round 4 crouches to ~30 degrees by design (F-194): 40 for it")
+    parser.add_argument("--start_on_blend", action="store_true",
+                        help="start the policy as the gains reach its own, not after the stand settles (F-192's handover)")
+    parser.add_argument("--start_tol_rad", type=float, default=None,
+                        help="the stand's largest joint offset from the trained settled stance the policy may start from "
+                             "(default: the export's start_gate, else 0.20)")
+    parser.add_argument("--start_pitch_deg", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="the stand's pitch range the policy may start from, nose up negative (default: the "
+                             "export's start_gate, else -5 5)")
     parser.add_argument("--force_abort_n", type=float, default=25.0,
                         help="the decoder's foot-force estimate past this for 0.1 s releases the press")
     parser.add_argument("--cmd_hz", type=float, default=500.0, help="LowCmd's rate (the latest command repeated)")
@@ -919,7 +971,7 @@ def main() -> int:
     except KeyboardInterrupt:
         run.abort("Ctrl-C")
         if run.live and run.mode == "damping":
-            log("damping. Enter: give the legs back to sport mode; Ctrl-C again leaves the motors damping")
+            log("damping. Enter (A): give the legs back to sport mode; Ctrl-C again leaves the motors damping")
             try:
                 while rclpy.ok() and run.mode != "done":
                     rclpy.spin_once(node, timeout_sec=0.002)

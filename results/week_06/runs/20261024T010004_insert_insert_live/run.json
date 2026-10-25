@@ -1,0 +1,725 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "stopped",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "NOT a full calibration: f and k1 fitted to one stand on the dog (2026-10-22), the camera taped 0.61 m from the box's front (tag plane 0.609 m) and the box's 0.63 m width (0.629 m); principal point assumed at the image centre, k2-k4 = 0; checked against the MID-360's door plane (0.603 m) and tilt (4.72 vs 4.7 deg)",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261024T010004_insert_insert_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--live"
+  ],
+  "started_utc": "20261024T010008",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 15.492,
+      "posture": "lie"
+    },
+    {
+      "t": 23.861,
+      "phase": "lock_look",
+      "searched_ms": 1135,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -12.2,
+          13.1,
+          0.0
+        ],
+        "support": 0.139,
+        "score": 5.03,
+        "runner_up": 11.46,
+        "why": "only 14% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: seen, support"
+        }
+      }
+    },
+    {
+      "t": 25.047,
+      "phase": "lock_look",
+      "searched_ms": 1248,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -12.5,
+          12.8,
+          0.0
+        ],
+        "support": 0.125,
+        "score": 4.52,
+        "runner_up": 10.36,
+        "why": "only 12% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: few, isolation, out, support"
+        }
+      }
+    },
+    {
+      "t": 26.356,
+      "phase": "lock_look",
+      "searched_ms": 1355,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -14.8,
+          10.8,
+          0.0
+        ],
+        "support": 0.181,
+        "score": 4.97,
+        "runner_up": 10.57,
+        "why": "only 18% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: seen, support"
+        }
+      }
+    },
+    {
+      "t": 30.534,
+      "phase": "lock_look",
+      "searched_ms": 1263,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -13.2,
+          -6.5,
+          0.0
+        ],
+        "support": 0.236,
+        "score": 5.87,
+        "runner_up": 15.36,
+        "why": "only 24% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 32.001,
+      "phase": "lock_look",
+      "searched_ms": 1457,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -14.8,
+          -7.8,
+          0.0
+        ],
+        "support": 0.139,
+        "score": 5.35,
+        "runner_up": 14.64,
+        "why": "only 14% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 33.52,
+      "phase": "lock_look",
+      "searched_ms": 1240,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -9.3,
+          -0.1,
+          0.0
+        ],
+        "support": 0.125,
+        "score": 4.39,
+        "runner_up": 14.85,
+        "why": "only 12% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 36.142,
+      "phase": "lock_look",
+      "searched_ms": 1187,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -13.8,
+          -5.3,
+          0.0
+        ],
+        "support": 0.139,
+        "score": 4.52,
+        "runner_up": 14.34,
+        "why": "only 14% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 37.373,
+      "phase": "lock_look",
+      "searched_ms": 1426,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -9.9,
+          0.5,
+          0.0
+        ],
+        "support": 0.125,
+        "score": 4.47,
+        "runner_up": 14.43,
+        "why": "only 12% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 40.147,
+      "phase": "lock_look",
+      "searched_ms": 930,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          14.8,
+          -14.8,
+          0.0
+        ],
+        "support": 0.083,
+        "score": 4.13,
+        "runner_up": 7.25,
+        "why": "only 8% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: seen, support"
+        }
+      }
+    },
+    {
+      "t": 41.156,
+      "phase": "lock_look",
+      "searched_ms": 903,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          14.7,
+          -14.8,
+          0.0
+        ],
+        "support": 0.042,
+        "score": 3.25,
+        "runner_up": 5.51,
+        "why": "only 4% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: seen, support"
+        }
+      }
+    },
+    {
+      "t": 43.149,
+      "phase": "lock_look",
+      "searched_ms": 843,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          14.8,
+          -14.8,
+          0.0
+        ],
+        "support": 0.042,
+        "score": 3.36,
+        "runner_up": 6.21,
+        "why": "only 4% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: contrast, seen, support"
+        }
+      }
+    },
+    {
+      "t": 47.276,
+      "phase": "lock_look",
+      "searched_ms": 1020,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -1.1,
+          -8.0,
+          0.0
+        ],
+        "support": 0.069,
+        "score": 4.7,
+        "runner_up": 15.49,
+        "why": "only 7% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 48.478,
+      "phase": "lock_look",
+      "searched_ms": 985,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -0.9,
+          -8.0,
+          0.0
+        ],
+        "support": 0.056,
+        "score": 4.63,
+        "runner_up": 15.51,
+        "why": "only 6% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 49.501,
+      "phase": "lock_look",
+      "searched_ms": 1281,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          1.3,
+          -8.0,
+          0.0
+        ],
+        "support": 0.069,
+        "score": 4.93,
+        "runner_up": 15.59,
+        "why": "only 7% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 50.814,
+      "phase": "lock_look",
+      "searched_ms": 941,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          2.1,
+          -3.7,
+          0.0
+        ],
+        "support": 0.083,
+        "score": 5.02,
+        "runner_up": 15.3,
+        "why": "only 8% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 54.815,
+      "phase": "lock_look",
+      "searched_ms": 772,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -4.6,
+          13.0,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.73,
+        "runner_up": 5.94,
+        "why": "only 0% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: isolation, seen, support"
+        }
+      }
+    },
+    {
+      "t": 55.652,
+      "phase": "lock_look",
+      "searched_ms": 652,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -9.8,
+          7.3,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.64,
+        "runner_up": 5.64,
+        "why": "only 0% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: out, seen, support"
+        }
+      }
+    },
+    {
+      "t": 56.369,
+      "phase": "lock_look",
+      "searched_ms": 922,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -9.5,
+          4.0,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.75,
+        "runner_up": 6.4,
+        "why": "only 0% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: seen, support"
+        }
+      }
+    },
+    {
+      "t": 58.219,
+      "phase": "lock_look",
+      "searched_ms": 957,
+      "keyhole": {
+        "ok": false,
+        "offset_mm": [
+          -8.2,
+          12.8,
+          0.0
+        ],
+        "support": 0.0,
+        "score": 1.76,
+        "runner_up": 6.07,
+        "why": "only 0% of the rim seen dark inside (needs 40%)",
+        "how": "model",
+        "image": {
+          "ok": false,
+          "why": "none passed: seen, support"
+        }
+      }
+    },
+    {
+      "t": 65.248,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 22,
+    "with_tag": 22,
+    "lidar_frames": 21,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.60 m ahead, -0.40 m left, turned -6 deg: a walk up of 0.72 m",
+    "detections": 22,
+    "site": {
+      "distance_m": 0.7114,
+      "bearing_deg": -26.392,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.323,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 6.2,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.23
+  },
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.224,
+        -0.233,
+        -0.029
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.483,
+      "lock_right_m": 0.082,
+      "yaw_off_deg": -0.1,
+      "left_m": 0.018,
+      "carried_m": 0.029,
+      "carry_s": 0.12,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 14.421,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 172.5
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 34.2,
+      "turned_deg": 0.16
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.45 m ahead, +0.08 m right, door -0.2 deg off square"
+    },
+    {
+      "t": 15.421,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 183.2
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.2516
+    },
+    {
+      "t": 18.52,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 183.2
+    },
+    {
+      "phase": "refit_lying",
+      "used": false,
+      "why": "skipped: the key in the hand shadows the door lying down",
+      "odometry_back_mm": -1.7,
+      "sit_back_added_mm": 41.7
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.49 m ahead, +0.06 m right, door +3.3 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "camera_mm": 169.7,
+          "shoulder_share": 0.51,
+          "j6_rad": 2.124
+        },
+        {
+          "pose": "pre",
+          "camera_mm": 169.4,
+          "shoulder_share": 0.62,
+          "j6_rad": 2.11
+        },
+        {
+          "pose": "touch",
+          "camera_mm": 171.0,
+          "shoulder_share": 0.65,
+          "j6_rad": 2.101
+        },
+        {
+          "pose": "touch_wrist+",
+          "camera_mm": 171.0,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.927
+        },
+        {
+          "pose": "touch_wrist-",
+          "camera_mm": 171.1,
+          "shoulder_share": 0.65,
+          "j6_rad": 2.276
+        },
+        {
+          "pose": "seated",
+          "camera_mm": 172.2,
+          "shoulder_share": 0.66,
+          "j6_rad": 2.095
+        },
+        {
+          "pose": "seated_wrist+",
+          "camera_mm": 172.2,
+          "shoulder_share": 0.66,
+          "j6_rad": 1.921
+        },
+        {
+          "pose": "seated_wrist-",
+          "camera_mm": 172.2,
+          "shoulder_share": 0.66,
+          "j6_rad": 2.27
+        },
+        {
+          "pose": "across+",
+          "camera_mm": 176.6,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.914
+        },
+        {
+          "pose": "across-",
+          "camera_mm": 165.5,
+          "shoulder_share": 0.65,
+          "j6_rad": 2.287
+        }
+      ]
+    },
+    {
+      "phase": "plan_look",
+      "aim_servo_deg": [
+        7.7,
+        -90.0,
+        90.0,
+        -3.1,
+        -22.1,
+        3.1
+      ],
+      "places": 5,
+      "left_out": []
+    },
+    {
+      "t": 20.021,
+      "phase": "lock_look"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 183.2
+    },
+    {
+      "phase": "lock_look",
+      "place": 0,
+      "frames": 3,
+      "found": 0,
+      "why_not": [
+        "only 12% of the rim seen dark inside (needs 40%)",
+        "only 14% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "phase": "lock_look",
+      "place": 1,
+      "frames": 3,
+      "found": 0,
+      "why_not": [
+        "only 14% of the rim seen dark inside (needs 40%)",
+        "only 24% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "phase": "lock_look",
+      "place": 2,
+      "frames": 3,
+      "found": 0,
+      "why_not": [
+        "only 4% of the rim seen dark inside (needs 40%)",
+        "only 8% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "phase": "lock_look",
+      "place": 3,
+      "frames": 3,
+      "found": 0,
+      "why_not": [
+        "only 6% of the rim seen dark inside (needs 40%)",
+        "only 7% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "phase": "lock_look",
+      "place": 4,
+      "frames": 3,
+      "found": 0,
+      "why_not": [
+        "only 0% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "phase": "lock_look",
+      "places": 5,
+      "places_tried": 5,
+      "frames": 15,
+      "found": 0,
+      "why_not": [
+        "only 0% of the rim seen dark inside (needs 40%)",
+        "only 12% of the rim seen dark inside (needs 40%)",
+        "only 14% of the rim seen dark inside (needs 40%)"
+      ]
+    },
+    {
+      "t": 61.423,
+      "phase": "h_turn"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lock_look",
+      "mm": 182.8
+    }
+  ]
+}

@@ -44,3 +44,11 @@ logs/leg_press/
 logs/combiner_key_holster/
 # Top-level console logs of demo and test runs; the recorded copies are the evidence.
 logs/*.out
+# The D1 arm's timing tests, the front camera's calibration captures and the holster motion's dog runs, copied back by
+# `d1fetch`; the recorded copies under results/week_NN/runs/ are the evidence.
+logs/arm_command_rate/
+logs/arm_feedback_timing/
+logs/front_camera_calibration/
+logs/holster_dog/
+# graphify's knowledge graph, rebuilt by `graphify update .`.
+graphify-out/

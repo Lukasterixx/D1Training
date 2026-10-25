@@ -1,0 +1,23 @@
+# graphify reads this instead of .gitignore. The graph is code only (AST, no LLM tokens):
+# run outputs, logs and the docs/notes/images are left out.
+graphify-out/
+generated/
+__pycache__/
+.pytest_cache/
+logs/
+checkpoints/
+results/week_*/runs/
+results/week_*/external/
+
+*.json
+*.yaml
+*.yml
+*.md
+*.txt
+*.html
+*.pdf
+*.png
+*.jpg
+*.svg
+# Vendored minified libraries (three.min.js in the cup UI).
+*.min.js

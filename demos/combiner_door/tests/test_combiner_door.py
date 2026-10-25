@@ -82,7 +82,8 @@ def _render_tag(rotation, position, model, pixels_per_cell=40):
 
 
 class FrontCamera(unittest.TestCase):
-    """The Go2's front camera, the look's since 2026-10-22: the URDF's mount and a NOMINAL fisheye lens."""
+    """The Go2's front camera, the look's since 2026-10-22: the URDF's mount and a fisheye lens, calibrated on the A3
+    ChArUco board since 2026-10-24."""
 
     def test_the_mount_is_the_urdfs_looking_straight_ahead(self):
         pose = front_camera.optical_pose_base()
@@ -91,11 +92,26 @@ class FrontCamera(unittest.TestCase):
         np.testing.assert_allclose(pose[:3, 0], (0.0, -1.0, 0.0), atol=1e-12)   # x: image right is the robot's right
         np.testing.assert_allclose(pose[:3, 1], (0.0, 0.0, -1.0), atol=1e-12)   # y: image down
 
-    def test_the_lens_is_labelled_as_no_full_calibration(self):
+    def test_the_look_uses_the_calibrated_lens(self):
         model = front_camera.camera_model()
+        self.assertIs(model, front_camera.CALIBRATED)
         self.assertEqual((model.width, model.height), (1280, 720))
-        self.assertFalse(model.calibrated)
-        self.assertIn("NOT a full calibration", model.source)
+        self.assertTrue(model.calibrated)
+        self.assertFalse(front_camera.ONE_STAND.calibrated)
+        self.assertIn("NOT a full calibration", front_camera.ONE_STAND.source)
+
+    def test_the_calibrated_lens_puts_the_box_near_where_the_tape_did(self):
+        """The one-stand frame, which the board's calibration never saw: the tag's plane within a centimetre of the
+        taped 0.61 m (0.616; the lidar's 0.603)."""
+        import cv2
+
+        rgb = cv2.imread(str(DATA / "go2_front_camera_box_0p61m.jpg"))[..., ::-1]
+        model = front_camera.CALIBRATED
+        found = [d for d in TagDetector(model.intrinsic_matrix, fisheye_distortion=model.distortion).detect(rgb)
+                 if d.corners_px[:, 0].mean() < 900]              # not the charging dock's tag (same id) on the right
+        self.assertEqual(len(found), 1)
+        pose = found[0].pose_cam
+        self.assertAlmostEqual(abs(pose[:3, 2] @ pose[:3, 3]), 0.61, delta=0.01)
 
     def test_the_fitted_lens_puts_the_box_where_the_tape_did(self):
         """The frame `ONE_STAND` was fitted on (the camera taped 0.61 m from the box's front, square to it): the tag's
@@ -117,8 +133,12 @@ class FrontCamera(unittest.TestCase):
 
         model = front_camera.camera_model()
         rng = np.random.default_rng(3)
-        points = rng.normal(size=(400, 3))
+        points = rng.normal(size=(1000, 3))
         points[:, 2] = np.abs(points[:, 2]) + 0.3
+        angle = np.arctan2(np.hypot(points[:, 0], points[:, 1]), points[:, 2])
+        self.assertTrue(np.isnan(model.project(points[angle > model.fold_angle_rad])).all())
+        points = points[angle <= model.max_angle_rad()]             # k1-k4 are fitted to the image's field
+        self.assertGreater(len(points), 300)
         uv = model.project(points)
         cv_uv, _ = cv2.fisheye.projectPoints(points.reshape(-1, 1, 3), np.zeros(3), np.zeros(3),
                                              model.intrinsic_matrix, np.array(model.distortion).reshape(4, 1))
@@ -145,17 +165,20 @@ class FrontCamera(unittest.TestCase):
 
     def test_a_rendered_tag_is_measured_through_the_lens(self):
         """The simulator's path end to end: rendered, remapped, found, solved with the lens undistorted. Off the image's
-        centre, a detector that took the lens for a pinhole would be 6-15 cm out."""
+        centre, a detector that took the lens for a pinhole would be 6-15 cm out. At 1.2 m the tag is ~50 px across and
+        its corners' noise is ~1 cm of range: 20 poses within 2-3 cm of the far one read 1-14 mm out (3-21 through
+        `ONE_STAND`), so it is held to 15 mm, the near two to 8."""
         model = front_camera.camera_model()
         fisheye = TagDetector(model.intrinsic_matrix, fisheye_distortion=model.distortion)
         pinhole = TagDetector(model.intrinsic_matrix)
         facing = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])    # tag x right, y up, z to the camera
-        for position, yaw_deg in (((0.30, -0.20, 0.85), 15.0), ((0.55, -0.25, 0.75), -20.0), ((-0.45, 0.10, 1.2), 10.0)):
+        for position, yaw_deg, tolerance in (((0.30, -0.20, 0.85), 15.0, 0.008), ((0.55, -0.25, 0.75), -20.0, 0.008),
+                                             ((-0.45, 0.10, 1.2), 10.0, 0.015)):
             rotation = _rot_y(yaw_deg) @ facing
             image = _render_tag(rotation, np.array(position), model)
             found = fisheye.detect(image)
             self.assertEqual(len(found), 1, position)
-            self.assertLess(np.linalg.norm(found[0].pose_cam[:3, 3] - position), 0.008, position)
+            self.assertLess(np.linalg.norm(found[0].pose_cam[:3, 3] - position), tolerance, position)
             naive = pinhole.detect(image)[0]
             self.assertGreater(np.linalg.norm(naive.pose_cam[:3, 3] - position), 0.03, position)
 

@@ -116,6 +116,8 @@ class ArmTurn:
         n, device = env.num_envs, env.device
         self.env, self.num_envs, self.device = env, n, device
         self._handle = handle.LeverHandle(n, device, k=CONTACT_K_N_PER_M, c=CONTACT_C_N_S_PER_M)
+        # The arm's lever's bar and platform (`geometry.ARM_LEVER`, v4 since 2026-10-24), not the foot's (`leg_cfg`).
+        self._handle.key_boxes = (at.KEY_BAR_BOX, at.KEY_PAD_BOX)
         zeros = lambda *shape: torch.zeros(*shape, device=device)
         self.active = torch.zeros(n, dtype=torch.bool, device=device)
         self._contact_local = torch.as_tensor(at.contact_link6(), dtype=torch.float32, device=device).expand(n, 3).contiguous()
@@ -128,17 +130,18 @@ class ArmTurn:
 
     def start(self, index: int, door_w, normal_w, right_w, est_door_w, est_right_w, friction: float, detent: float) -> None:
         c = leg_cfg
+        unlock = math.radians(at.UNLOCK_DEG)
         ids = torch.tensor([index], device=self.device)
         t = lambda v: torch.as_tensor(np.asarray(v, dtype=np.float32), device=self.device).reshape(1, -1)
         one = lambda v: torch.full((1,), float(v), device=self.device)
         self._handle.reset(ids)
         self._handle.place(ids, door=t(door_w), normal=t(normal_w), u0=t(right_w), standoff=one(c.KEY_AIM_OFF_DOOR_M),
-                           length=one(c.KEY_BAR_BOX[0][1]), inner=one(0.0), radius=one(c.KEY_TOP_M),
+                           length=one(at.KEY_BAR_BOX[0][1]), inner=one(0.0), radius=one(at.KEY_TOP_M),
                            inertia=one(np.mean(c.KEY_INERTIA_KG_M2)), rest_nm=one(0.0), full_nm=one(0.0),
                            damping=one(np.mean(c.KEY_DAMPING)), friction=one(friction),
-                           theta_max=one(math.radians(at.END_DEG)), theta_latch=one(c.KEY_THETA_UNLOCK_RAD),
+                           theta_max=one(math.radians(at.END_DEG)), theta_latch=one(unlock),
                            mu=one(CONTACT_MU), theta_min=one(math.radians(at.START_DEG)), pad=True,
-                           detent_nm=one(detent), detent_from=one(c.KEY_THETA_UNLOCK_RAD - c.KEY_DETENT_SPAN_RAD),
+                           detent_nm=one(detent), detent_from=one(unlock - c.KEY_DETENT_SPAN_RAD),
                            gravity_nm=one(c.KEY_GRAVITY_NM))
         self.est_pivot[ids], self.est_u0[ids] = t(est_door_w), t(est_right_w)
         self.peak_n[ids], self.max_theta[ids] = 0.0, math.radians(at.START_DEG)
@@ -173,7 +176,7 @@ class ArmTurn:
         """The turn as the robot measures it: the key angle its fingertips' edge implies on the estimated key, resting
         on the platform `PUSH_REACH_M` out (`handle.measured_theta`). Meaningful only while it presses."""
         reach = torch.full((self.num_envs,), at.PUSH_REACH_M, device=self.device)
-        clearance = torch.full((self.num_envs,), leg_cfg.KEY_TOP_M, device=self.device)
+        clearance = torch.full((self.num_envs,), at.KEY_TOP_M, device=self.device)
         return torch.rad2deg(handle.measured_theta(self.tip_edge(), self.est_pivot, self.est_u0, reach, clearance))
 
     def physics_step(self, dt: float) -> None:
@@ -195,6 +198,7 @@ class ArmTurn:
 class ArmTurnEnv(key_env.CombinerKeyEnv):
     def __init__(self, cfg, render_mode=None, **kwargs):
         cfg.key_inserted = True
+        self.slot_deg = at.START_DEG          # the lock's slot drawn at the arm's lever's insertion angle
         super().__init__(cfg, render_mode, **kwargs)
         self.parked_phases = {"spawn", "look", "no_tag", "stand"}
         self.position_only_phases = {"walk_to_key", "settle_arm"}

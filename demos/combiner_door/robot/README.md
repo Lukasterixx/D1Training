@@ -45,16 +45,22 @@ the arm link, which leaves the arm holding where it is. `d1dog --help` lists the
 
 **Letting go** is the same at the end of every stage that reaches the lever, in a recovery (`r`) and in `--release`:
 
-- **release:** the jaws open where the hand is. The hand is held at the pose the arm *measures* itself at as it begins,
-  not at the IK's goal: after the pull the door's load and the gait's carry can have the hand off its goal, and the
-  lever is where the jaws are. The hand does not move until servo 6 reports the jaws open (within 4 units of the
-  command, or stopped more than half way open). If they have not opened 2 s after the release's clock, it stops with
-  the hand where it is.
+- **release:** the jaws open where the hand is. Across the door, the hand is held where the arm *measures* itself as
+  it begins, not at the IK's goal: after the pull the door's load and the gait's carry can have the hand off its goal,
+  and the lever is where the jaws are. In height and wrist, it keeps what it was commanded on the handle. The arm sags
+  11-15 mm below its goal reaching out there, so a goal at the measured height pressed the lever down while the jaws
+  still held it, and the hand dropped onto it once they opened. The jaws open slowly, from where they grip the lever
+  to fully open over 1.5 s (`LET_GO_RAMP_S`), and the hand stays still with them open until 2 s (`LET_GO_S`). It does
+  not move until servo 6 reports the jaws open (within 4 units of the command, or stopped more than half way open).
+  If they have not opened 4 s after the release's clock, it stops with the hand where it is.
 - **ungrasp:** the hand backs straight off the lever along its own approach, by the 12 cm standoff, at the enter's pace,
   its orientation held. The fingertips stand 20 mm past the jaw centre, in the 27 mm gap behind the lever and beside its
   63 mm hub; going straight out, they clear the lever's front after 29 mm and never move towards the hub. If the IK
   cannot hold the hand's orientation, the hand stops rather than turn its wrist.
-- **home**, from 12 cm out, then the fold.
+- **home**, from 12 cm out, then the fold in two joint moves: **tuck** (the shoulder and wrist to the fold, the elbow
+  still 30 deg open), then **fold** (the elbow shut). Straight to the fold the elbow got there first and the shoulder
+  swung the shut forearm back onto the lidar (both live pulls of 2026-10-25; on the CPU model 29 mm into the cage's
+  box). Through the tuck the arm stays 45 mm or more off it.
 
 Before (2026-10-20, live), the door script's release went straight from the lever to the home point. That crossed in
 front of the hub with the fingers still behind the lever, and they pushed the door on the way out. On the CPU model the
@@ -80,12 +86,13 @@ the insertion still uses the wrist RealSense, for its keyhole view only.
   boot autostart). `run_on_dog.sh` refuses without it. The node reads `/go2_front_camera/image_full/compressed` (1280x720
   JPEG, local to the dog). RViz's "Camera" panel shows the front camera's frame with the tag outlined; through the
   insertion's key phases, the wrist RealSense's.
-- **The lens is not fully calibrated.** `front_camera.ONE_STAND` is fitted to one stand (the camera taped 0.61 m from the
-  box's front; the box's 0.63 m width; checked against the lidar). The lidar's face fit and the refit correct the
-  door's depth and heading as before, not its height.
-- **Stand further back than before: the box's root at least 0.95 m ahead** (`plan.FRONT_LOOK_MIN_ROOT_M`; the door ~0.8 m
-  from the base). The field is only +-27 degrees tall, and the tag leaves the top of it closer in. For the door pull that
-  is 0.95-1.14 m (the walk in is at most 0.45 m); the old no-walk band (0.65-0.76 m) cannot be looked from. A watch that
+- **The lens is calibrated** (`front_camera.CALIBRATED`, 2026-10-24, F-206): an A3 ChArUco board
+  (`charuco_9x6_40mm_A3.pdf`) filmed through P2Dingo's web app, fitted by `calibrate_front_camera.py`. On the 0.61 m
+  taped stand it reads 0.616 m; its pitch there (6.8° against the lidar's 4.7°) is not explained. The lidar's face
+  fit and the refit correct the door's depth and heading as before, not its height.
+- **Stand further back than before: the box's root at least 0.98 m ahead** (`plan.FRONT_LOOK_MIN_ROOT_M`; the door ~0.82 m
+  from the base; 0.95 before the lens was calibrated). The field is only 25 degrees above the axis, and the tag leaves
+  the top of it closer in. For the door pull that is 0.98-1.14 m (the walk in is at most 0.45 m); the old no-walk band (0.65-0.76 m) cannot be looked from. A watch that
   sees no tag says so.
 - **The dock in view is no longer averaged in.** The front camera often sees the box's tag and P2Dingo's dock's (both
   36h11 id 0) at once. The look groups the detections by where they put the box and keeps the group whose lidar face is
@@ -108,13 +115,20 @@ the insertion still uses the wrist RealSense, for its keyhole view only.
 - **The Unitree remote in hand.**
 
 **At the keyboard during a live run.** It looks, prints the plan, and waits for one Enter; then it runs through to
-the end and exits by itself (`--step` makes it wait before each step that moves something; `--yes` not at all).
+the end and exits by itself (`--step` makes it wait before each step that moves something; `--yes` not at all). One
+Enter covers the whole chain: the stages it goes on to (`--then_door`, `--then_close`, a walk to a new look) do not ask
+again (`started`).
 
 - **Enter** starts the attempt.
 - **a** + Enter stops at once: the base stands and the arm holds where it is, grip included.
 - **r** + Enter, after a stop: recovers. If the hand may be at the lever it opens the jaws and backs out first; it
   always ends by folding the arm.
 - **q** + Enter or Ctrl-C quits with the arm where it is.
+
+The remote does the same with two buttons, as in every live program here (`lowlevel.RemoteButtons`, read from
+`/lf/lowstate`): **A** is Enter, and **r** + Enter once stopped; **B** is **a** + Enter. A counts only pressed on its own
+(L1/L2 + A are sport mode's); B counts with anything held. Not yet tried on the dog: the remote's bits have been read
+there on `/lowstate` (the foot press), not on `/lf/lowstate`.
 
 **If you quit with the arm still holding the lever:** `d1dog --release --live`. It does no look and no attempt: it opens
 the jaws where they are, backs the hand straight out along its own approach (orientation held), then goes home and folds.
@@ -139,18 +153,22 @@ the jaws where they are, backs the hand straight out along its own approach (ori
   walks about 0.7 m round the hinge, ending about 0.7 m to the side and turned 60 deg: clear that space. Through the
   hold the door follows how far the dog has actually turned (up to 10 deg past the pull, as far as the gait carries
   on), so the hand stays still relative to the dog.
-- **The stance is set from the box.** Stand the dog square to the box (within 8 deg), the tag within 12 deg of
-  straight ahead, and either:
-  - 0.80-1.15 m from the box's root (with the front camera: 0.95-1.14 m, above): it walks straight in until the root is
-    0.69 m away (the sim's placements);
-  - or 0.65-0.76 m (only with `--camera wrist`): it does not walk. The arm reaches the lever from anywhere in that band, but the sim only ran
-    0.67-0.71 m, and the record says when it is outside.
+- **The stance is set from the box.** Since 2026-10-25 it is 6 cm further from the door than the sim's and 10 cm
+  toward the hinge (`plan.STANCE_*`): the handle about straight ahead, the box's root 0.75 m ahead and 0.10 m to the
+  dog's left. Near the end of a pull the door swings on past the dog's turn (15-30 deg on the dog), and from the sim's
+  stance it reached the dog's face after 22.5 deg; from this one, after 38 (30-46 across the tolerances below). Stand
+  the dog square to the box (within 8 deg), in line with the handle (within 5 cm of the stance's line: RViz's text says
+  how far left or right to move it), and either:
+  - 0.87-1.20 m from the box's root (with the front camera: 0.98-1.20 m, above): it walks straight in until the root is
+    0.75 m away;
+  - or 0.71-0.80 m (only with `--camera wrist`): it does not walk. The arm reaches the lever with its full pose from
+    0.03 to 0.11 m behind the sim's stance and 0.05 to 0.15 m right of it (the CPU model); the sim only ran its own.
 - **The walk in is closed-loop, in classic walk.**
   - ClassicWalk goes out once when you press Enter.
   - The dog walks straight at 0.2 m/s with its heading held, and stops early by the carry it has seen.
   - It then stands 1 s, measures, and takes up to three corrective steps while more than 3 cm short.
   - The attempt then re-anchors where the dog actually stopped: the lidar refit places the box from there, and it
-    goes on only if the box is 0.65-0.76 m off.
+    goes on only if the box is 0.71-0.80 m off.
 - **The pull is one continuous turn about the hinge.** The base and the door turn together, which in the base's frame is a
   constant twist. It is streamed at the gait's slowest usable speed for the whole pull (about 0.1 m/s back, 0.2 m/s
   sideways, 0.36-0.39 rad/s: 60 deg in about 3 s), and the script's door angle follows how far the dog has actually turned. The
@@ -159,7 +177,7 @@ the jaws where they are, backs the hand straight out along its own approach (ori
 - **The arm moves smoothly** (`arm_link.Profile`): a steady 10 Hz stream, 60 deg/s^2 up to 30 deg/s and back down into
   the goal, never more than 10 deg ahead of the arm. For a reach, the unfold already turns the hand to the grasp's
   orientation. When the IK misses the hand's pose for a step, the goal holds rather than switching wrists.
-- **Joint moves wait for the arm.** The unfold and the fold go at 40 deg/s in joint space (the Cartesian phases at
+- **Joint moves wait for the arm.** The unfold, the tuck and the fold go at 40 deg/s in joint space (the Cartesian phases at
   most 30), and end once the arm is there; past their clock they wait until it is within 2 deg (20 s at most).
 
 ## What stops an attempt
@@ -220,6 +238,92 @@ frame taken while the arm moves (0.5 degrees between frames), or without fresh a
 The tag's place now carries the arm's and the bracket's errors (the head mount was rigid): likely millimetres to a
 centimetre. The lidar's refit still takes out the door's depth and heading. The key's insertion finds the lock itself
 with the camera close up (`../../combiner_key/keyhole.py`).
+
+## Out of range: the approach (2026-10-24)
+
+A box the look sees but finds out of the task's range is no longer refused (Lukas: "make it so that the box is never
+out of range as long as the dog sees the qr code"). Live, the dog walks to a **staging pose** first (`approach.py`): the
+task's own stance (the door pull's, the key's push, the insertion's) moved straight back until the box's root is 0.75 m
+ahead (`approach.STAGE_ROOT_M`; for the door pull that is its stance itself), square to the box, and the root no more
+than 0.10 m to the side (`approach.LOOK_SIDE_M`: the tag on the door's centreline in view; the key's and the insertion's
+stances, in front of the lock 0.35 m to the side, saw no tag from 0.75 m, F-220). Lukas, 2026-10-25: the
+distance the close looked at the open door from, which saw the tag in both runs, for every look the program walks to. A
+look there that finds no tag walks on back to 1.05 m (`approach.STAGE_FAR_ROOT_M`, the lens model's band) once and
+looks again. It walks forward or back, sideways and turning at once (the key's
+walk up, with the odometry's 13% under-count allowed for), the arm left where it is, and stops within 8 cm and 6 degrees.
+Then it looks again, and the task's own walk in, refit and range check carry on from that look. Up to three approaches;
+at most 3 m each. Not walked to: a tag the lidar says is not on a door the box's size (the charging dock). A dry run
+says how far a live one would walk, and stops. The way there is not checked for obstacles.
+
+The same walk takes the dog back after the key (`--then_door`, `approach.door_after_key`, 2026-10-25): standing 1.5 s
+first, classic walk sent again, the arm folded, to the door pull's staging pose from the key's fix; then the door pull's
+own look there. The unlocked door has swung open by then (~10 degrees), so the key's fix is not used for the pull.
+
+## Closing and locking (`--then_close`, `--lock`, 2026-10-25)
+
+Lukas: "a chain of events that close the door - first by grabbing the handle again, then pushing it closed while moving,
+then scanning the door again (it has a spring in the last 10 degrees of closing that makes it stay open 5-10 degrees)
+then sit down in front of the keyhole, unholster the lever, insert it ... and then push the key in while wiggling it".
+
+```bash
+d1dog --stage pull --then_close --live                                 # open, close, lock
+d1doginsert --then_door pull --then_close --live                       # unlock, open, close, lock
+d1doginsert --lock --live                                              # lock alone (the door pushed shut by the key)
+```
+
+1. **The close** (`key_plan.DoorClose`, `plan.close_phases`), reached from a look at the tag as the pull is (Lukas,
+   2026-10-25: "this phase should use the apriltag to grab it just like on the open"):
+   - The dog backs up, folded, to the door pull's staging pose in front of the open door (the pull's box turned about
+     the hinge to the lidar's last angle; `approach.ApproachAttempt`), the root 0.75 m ahead (`approach.STAGE_ROOT_M`);
+     a look there that finds no tag backs up to 1.05 m and looks again. The look's
+     guard against the dock is its hinge within 0.30 m of the pull's (`plan.OPEN_DOOR_HINGE_LIMIT_M`), not the door's
+     edges, which the box's side carries on past near 90 deg open (F-215). From where the pull leaves it the front camera
+     cannot see the whole tag: it stands 0.2-0.4 m from the lens and runs off the top of the image; 0.3-0.4 m further
+     back it is whole at 60-76 deg.
+   - There it looks. The tag's enclosure pose is the box whose shut door stands where the open door does
+     (`plan.about_hinge`), so the pull's range check, approach, walk up on three axes, settle and lidar refit (now of
+     the open door's face) go on from that look unchanged. The door's angle is the look's heading against the pull's
+     box; the box itself is the look's turned back about the hinge by it (the hinge stays put, so the push's centre
+     is where the look has it whatever the odometry did). The record's `close_from_look` has the angle and how far the
+     look moved the hinge from the pull's (`hinge_moved_mm`: the odometry's error through the pull and the walk back).
+     After an unlock (`--task insert --stage insert --then_door pull --then_close`) the pull took the door hanging ajar
+     on its spring as shut; the close then takes shut from the unlock's look instead, turned about the pull's hinge, when
+     the two differ by 0-20 deg (`plan.shut_reference`; the record's `close_reference`).
+   - `unfold`, `walk_in`, `walk_settle`, `stand`, then the pull's reach onto the handle where the look has it
+     (`approach`, `settle`, `enter`, `arrive`, `grip`); the hand faces the way the base has turned.
+   - The close's stance is 5 cm nearer the door than the pull's (`plan.CLOSE_STANCE_NEARER_M`, `plan.CloseFix`).
+   - While the hand holds the door (`push`, `hold`), the base is placed on the hinge's arc by its own turn, not by the
+     odometry's position, which fell 24 cm short of it over a 70-deg push and took the hand's goal out of reach (F-216).
+   - `push`: the pull's turn about the hinge reversed, from wherever the base stands to shut (`CLOSE_TO_DEG`, 0) and on
+     past it by 15 deg of the base's turn (`CLOSE_PAST_DEG`): the door lags the base (16-19 deg by the lidar, and pushed
+     to 5 it stopped ~20 short of shut, Lukas). Past shut, the base stalling or the arm loaded is the door on its frame:
+     the push ends there, done. The spring then holds it 5-10 deg open, which the lock's key pushes shut. The hand keeps
+     its grip in the base's frame through the push and the `hold`; then the pull's letting go, `tuck` and `fold`. A door under 15 deg (the lidar's after the pull, or the look's) is not pushed.
+   - Before (the close of 2026-10-25 12:35, `20261025T013412_pull_close_live`) the close reached from the pull's fix
+     through the odometry and the lidar's door angle (`door_look`, `door_align`): 15 cm short of the handle and 7 cm
+     under it (Lukas). By the hinge's geometry the pull's 60 deg turn should have carried the base 12.6 cm further than
+     the odometry counted; the jaws stood as high in the base as at the pull's grip (0.305 m against 0.308), so the
+     7 cm was the handle standing higher against the trunk than at the pull, which no plan from the pull's fix sees.
+2. **Looking again**: the dog backs up to the insertion's staging pose (the door now 5-10 deg open on its spring) and
+   looks; the insertion's range check, approach and walk up go on from that look.
+3. **The lock** (`InsertAttempt.lock`, the insertion's whole sequence lying down, the key from the holster):
+   - The key goes in at `--lock_from_deg` (45, the angle the unlock turned the cylinder to: `geometry.Lever` counts
+     clockwise as the robot sees it positive, so this is Lukas's "-45"), the wiggle +-10 deg about it.
+   - The key is pressed straight in at `key_in`'s 2 mm/s until its tip is `--lock_beyond_face_mm` (12; seated, 7.7)
+     beyond the box's front face as the lidar saw it lying down, or until it stops in the keyway (`key_close`); no
+     abort for going on. Until 2026-10-25 a seated key was pushed round the door's arc until it stopped, which with
+     the door already shut pushed the box until the IK ran out (F-221). A door left ajar needs the argument raised.
+   - Holding it there, `key_turn` turns the key back to level, then it comes out and goes back in the holster.
+   - The record's `lock` (`lock_check`): seated, closed, the encoders' key within 15 deg of level, the key back.
+
+In the dry tests the close looks at the open door (64-88 deg, the box up to 12 cm and 1.5 deg off where the pull's
+odometry has it), walks up, refits on the open door's face, sends the jaws to within 1 mm of the real handle, holds them
+within 3 mm of their goal through the push with the hand's whole pose and folds at the end; the lock pushes a door 8
+and 10 deg open shut and turns the key to level, stops at once on a shut door (0.6 deg), and aborts on one that has not
+stopped after 15 deg. The close from the look and the lock are not run on the dog (the dry tests' tag is seen by the
+head camera's model; the front camera's view of the open door is only the geometry above). Not modelled: the door's
+spring against the touch (the dry door stays put until `key_close`), and whether the real door's lidar angle is good past
+80 deg (the pulls of 2026-10-24 had readings of 118-132 among 77-89).
 
 ## The key, turned by the arm (`--task key`)
 

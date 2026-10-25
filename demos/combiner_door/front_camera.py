@@ -12,17 +12,26 @@ y down, z forward) at (0.330, 0, 0.040), looking straight ahead. The lens behind
 
 **The lens** is a wide one with plain barrel distortion (P2Dingo's live view, 2026-10-22), 1280x720 as the head streams
 it, ~100 x 53 degrees. It is modelled as OpenCV's fisheye (equidistant, `cv2.fisheye`): r = f * theta_d, theta_d = theta * (1 + k1 theta^2
-+ k2 theta^4 + k3 theta^6 + k4 theta^8). **NOT A FULL CALIBRATION** (Lukas, 2026-10-22: "use a nominal model for now;
-calibrate properly later"). `ONE_STAND` is fitted to one stand on the dog: the camera taped 0.61 m from the box's front,
++ k2 theta^4 + k3 theta^6 + k4 theta^8).
+
+`CALIBRATED` (2026-10-24, the look's lens since) is `cv2.fisheye.calibrate` on two videos of the A3 ChArUco board taped
+to the box's door, the dog walked around it (`calibrate_front_camera.py`; `logs/front_camera_calibration/`): 474 views,
+0.22 px rms, f 805/807 px, the principal point (636.0, 352.6), 4 and 7 px off the image's centre. Holding either clip out,
+the fit's rays move 0.05-0.1 degrees over most of the image; at the image's very corners the second clip alone carries the
+fit (the first alone is 2-6 degrees off there). On the stand below, which it was not fitted to, it reads the tag's plane
+0.616 m off (taped 0.61, lidar 0.603) and the tag 6.8 degrees off square where the lidar saw 4.72: the pitch is open.
+The lens's optical origin is still the URDF's, not measured.
+
+Before it (Lukas, 2026-10-22: "use a nominal model for now; calibrate properly later"), `ONE_STAND` was fitted to one stand on the dog: the camera taped 0.61 m from the box's front,
 square to it, 20 frames. f and k1 were searched so that the box's tag lies on a plane 0.61 m off (0.609 fitted) and the
 box's 0.63 m width, its two side edges carried onto that plane, comes out 0.63 m (0.629), the edges straight (1.7 mm).
 f is pinned by the distance (15 px = 1 cm of it), k1 by the width (0.03 = 7 mm of it). Two checks it was not fitted to:
 the MID-360 put the door's plane 0.603 m from the camera's URDF position, and the camera saw the tag 4.7 degrees off
 square where the lidar saw the face tilted 4.72 (so the camera's mount agrees with the lidar's in pitch). The principal
 point is assumed at the image centre and k2-k4 at 0: with two quantities measured, two parameters fitted. Before it
-(`NOMINAL`, f 830, k1 0, from a rough door-edge check) the same stand read 0.629 m and a 0.605 m door. Replace it with a
-calibration (OpenCV's `cv2.fisheye.calibrate` on a chessboard, the same model) before trusting a height from it far
-off the image's centre.
+(`NOMINAL`, f 830, k1 0, from a rough door-edge check) the same stand read 0.629 m and a 0.605 m door. Against
+`CALIBRATED`, `ONE_STAND`'s rays are 0.6 degrees off at the image's centre (the principal point) and up to 1.8 at its
+corners.
 
 **On the dog** the frames come from P2Dingo's `p2dingo-front-camera` container: the head's H.264 multicast decoded and
 published as JPEG. `TOPIC` is its local full-resolution topic (q90); the 960 px one is for the zenoh link to the PC.
@@ -36,6 +45,7 @@ Numpy at import; `distort_render` imports OpenCV, `render_cfg` Isaac, when calle
 from __future__ import annotations
 
 from dataclasses import dataclass
+import functools
 import math
 
 import numpy as np
@@ -86,14 +96,24 @@ class FisheyeModel:
         t2 = theta * theta
         return theta * (1.0 + t2 * (k1 + t2 * (k2 + t2 * (k3 + t2 * k4))))
 
+    @functools.cached_property
+    def fold_angle_rad(self) -> float:
+        """The angle off axis where theta_d stops growing (pi/2 if it never does). k1-k4 are fitted to the image's field
+        only: past this angle the polynomial turns back and a point there would land inside the image (`CALIBRATED`:
+        65.5 degrees, the image's corners 60.6)."""
+        theta = np.linspace(0.0, math.pi / 2, 9001)
+        rising = np.diff(self._theta_d(theta)) > 0
+        return float(math.pi / 2 if rising.all() else theta[np.argmin(rising)])
+
     def project(self, points_cam) -> np.ndarray:
-        """Pixels (N, 2) of points (N, 3) in the optical frame (z forward); NaN behind the camera."""
+        """Pixels (N, 2) of points (N, 3) in the optical frame (z forward); NaN behind the camera or past
+        `fold_angle_rad`."""
         p = np.atleast_2d(np.asarray(points_cam, dtype=float))
         r = np.hypot(p[:, 0], p[:, 1])
         theta = np.arctan2(r, p[:, 2])
         scale = np.where(r > 1e-12, self._theta_d(theta) / np.maximum(r, 1e-12), 1.0 / np.maximum(p[:, 2], 1e-12))
         uv = np.column_stack((self.fx * p[:, 0] * scale + self.cx, self.fy * p[:, 1] * scale + self.cy))
-        uv[p[:, 2] <= 0.0] = np.nan
+        uv[(p[:, 2] <= 0.0) | (theta > self.fold_angle_rad)] = np.nan
         return uv
 
     def rays(self, uv) -> np.ndarray:
@@ -133,10 +153,19 @@ ONE_STAND = FisheyeModel(
            "image centre, k2-k4 = 0; checked against the MID-360's door plane (0.603 m) and tilt (4.72 vs 4.7 deg)",
     calibrated=False)
 
+#: `cv2.fisheye.calibrate` on the A3 ChArUco board (module docstring): f 805/807 px, the principal point off centre.
+CALIBRATED = FisheyeModel(
+    width=1280, height=720, fx=804.92, fy=806.89, cx=636.00, cy=352.61,
+    distortion=(-0.0735966, -0.0457706, 0.0624108, -0.0494117),
+    source="cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front "
+           "camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; "
+           "the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+    calibrated=True)
+
 
 def camera_model() -> FisheyeModel:
-    """The model the look measures with and the simulator draws: `ONE_STAND` until a calibration replaces it."""
-    return ONE_STAND
+    """The model the look measures with and the simulator draws: `CALIBRATED`."""
+    return CALIBRATED
 
 
 def optical_pose_base() -> np.ndarray:
@@ -149,11 +178,13 @@ def optical_pose_base() -> np.ndarray:
 
 def frustum_matrix(model: FisheyeModel) -> np.ndarray:
     """A pinhole K whose image corners look along the fisheye's corner rays: what RViz's camera field (a pyramid,
-    `viz.frustum_points`) is drawn with. The fisheye's own K would draw it ~20% too narrow at the corners."""
-    corner = model.rays([[0.0, 0.0]])[0]
-    fx = model.cx / (-corner[0] / corner[2])
-    fy = model.cy / (-corner[1] / corner[2])
-    return np.array([[fx, 0.0, model.cx], [0.0, fy, model.cy], [0.0, 0.0, 1.0]])
+    `viz.frustum_points`) is drawn with. The fisheye's own K would draw it ~20% too narrow at the corners. Fitted to the
+    top-left and bottom-right corners, as the principal point is not at the image's centre."""
+    top_left, bottom_right = model.rays([[0.0, 0.0], [float(model.width), float(model.height)]])
+    x0, y0 = top_left[:2] / top_left[2]
+    x1, y1 = bottom_right[:2] / bottom_right[2]
+    fx, fy = model.width / (x1 - x0), model.height / (y1 - y0)
+    return np.array([[fx, 0.0, -x0 * fx], [0.0, fy, -y0 * fy], [0.0, 0.0, 1.0]])
 
 
 def in_view(model: FisheyeModel, points_cam, margin_px: float = 0.0) -> np.ndarray:

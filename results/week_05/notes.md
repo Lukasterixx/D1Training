@@ -1,6 +1,6 @@
 # Week 5 — 12–18 October 2026
 
-**Status:** in progress
+**Status:** complete
 **Focus:** Train tool variants and connect tagged targets to learned physical box phases
 
 ## Planned
@@ -70,6 +70,13 @@ stall, 392:1 and 230 g.
   F-140 and F-141 each gained a "Followed by: F-142" line. Nothing was retrained or run.
 - **A stale doc fixed on the way.** `docs/position_only_environment.md` still gave the arm's speed limits as the URDF's
   1.05/1.73 rad/s, "unverified". The code has used F-033's measured 1.21–1.29 rad/s since Week 1, and the doc now says so.
+
+### 2026-10-24 · Weekly update 5 covers this week and Week 6
+
+No update was written on 2026-10-16. `Weekly_Update_Lukas_5_20261024.docx` covers Weeks 5 and 6 together; how it was
+put together and how Update 4's planned tasks were marked is in the [Week 6 log](../week_06/notes.md), "Weekly update 5
+(Weeks 5-6), and a figure for it". This week's work in it is F-139-F-142 (the CAD lengths and F-141's rope retrain
+are logged in Week 4, 2026-10-09).
 
 ## Results
 

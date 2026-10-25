@@ -13,6 +13,7 @@ Contact and rest offsets are 1 mm and 0 on every collider, as the insertion demo
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 import struct
 
@@ -130,6 +131,39 @@ def _box(stage, path, lo, hi, mat=None, physics_mat=None, visible=True):
     return prim
 
 
+def matrix_quat(rot) -> tuple[float, float, float, float]:
+    """(w, x, y, z) of a rotation matrix (columns: the turned frame's axes)."""
+    import numpy as np
+
+    m = np.asarray(rot, dtype=float)
+    w = math.sqrt(max(0.0, 1.0 + m[0, 0] + m[1, 1] + m[2, 2])) / 2.0
+    x = math.copysign(math.sqrt(max(0.0, 1.0 + m[0, 0] - m[1, 1] - m[2, 2])) / 2.0, m[2, 1] - m[1, 2])
+    y = math.copysign(math.sqrt(max(0.0, 1.0 - m[0, 0] + m[1, 1] - m[2, 2])) / 2.0, m[0, 2] - m[2, 0])
+    z = math.copysign(math.sqrt(max(0.0, 1.0 - m[0, 0] - m[1, 1] + m[2, 2])) / 2.0, m[1, 0] - m[0, 1])
+    return w, x, y, z
+
+
+def _turned_box(stage, path, centre, axes, half, mat=None, physics_mat=None, visible=True):
+    """`_box` turned: centred on `centre`, its edges along `axes`' columns, `half` its half sizes."""
+    from pxr import Gf, UsdGeom, UsdShade
+
+    shape = UsdGeom.Cube.Define(stage, path)
+    shape.CreateSizeAttr(1.0)
+    shape.CreateExtentAttr([Gf.Vec3f(-0.5), Gf.Vec3f(0.5)])
+    shape.AddTranslateOp().Set(Gf.Vec3d(*[float(v) for v in centre]))
+    w, x, y, z = matrix_quat(axes)
+    shape.AddOrientOp().Set(Gf.Quatf(w, Gf.Vec3f(x, y, z)))
+    shape.AddScaleOp().Set(Gf.Vec3f(*[2.0 * float(v) for v in half]))
+    prim = shape.GetPrim()
+    if mat is not None:
+        UsdShade.MaterialBindingAPI.Apply(prim).Bind(mat[0])
+    if physics_mat is not None:
+        _collider(prim, physics_mat)
+    if not visible:
+        UsdGeom.Imageable(prim).MakeInvisible()
+    return prim
+
+
 def build_key_usd(output, friction: float = 0.3) -> Path:
     """The key: a rigid body of `KEY_MASS_KG`, three box colliders in its prim frame, the STL drawn over them."""
     from pxr import Gf, UsdGeom, UsdPhysics, UsdShade
@@ -224,54 +258,61 @@ def _mesh(stage, path, triangles, mat) -> None:
     mesh.CreateDisplayColorAttr([Gf.Vec3f(*mat[1])])
 
 
-def build_holster_key_usd(output, friction: float = 0.3) -> Path:
-    """The key for the holster (`holster.py`): the simulation's (v3 mirrored, `key_mesh_points`), a rigid body of
-    `KEY_MASS_KG`, its colliders `holster.KEY_BOXES` (the bar, the platform, the shaft and wards) so that it rests in
-    the holster and slides in it."""
-    from pxr import Gf, UsdGeom, UsdPhysics, UsdShade
+#: Where the holster's key is stretched along the lever (`build_holster_key_usd`): past the jaws' 13 mm and the wards',
+#: short of the platform's 48 mm.
+STRETCH_FROM_M = 0.030
 
-    from .holster import KEY_BOXES
+
+def build_holster_key_usd(output, friction: float = 0.3) -> Path:
+    """The key for the holster (`holster.py`): Lukas's v4 lever (2026-10-24, `holster.LEVER_V4_PATH`, in its own key
+    frame), with no platform since v5 (`holster.KEY_BOXES`), a rigid body of `holster.V5_MASS_KG`, its colliders
+    `holster.key_boxes()` (the bar, the shaft and its wards) so that it rests in the holster and slides in it, its STL
+    drawn over them. (Until 2026-10-24 it was v3 mirrored, drawn `holster.LEVER_EXTRA_M` longer: every point more than
+    `STRETCH_FROM_M` along the lever moved out.)"""
+    import numpy as np
+    from pxr import UsdPhysics
+
+    from .holster import LEVER_V4_PATH, V5_MASS_KG, key_boxes
 
     output, stage, root = _stage(output, "Key")
     UsdPhysics.RigidBodyAPI.Apply(root)
-    UsdPhysics.MassAPI.Apply(root).CreateMassAttr(KEY_MASS_KG)
-    root.SetCustomDataByKey("description", "Lukas's lever key (combinerbox_lever v3, mirrored), for the holster; "
+    UsdPhysics.MassAPI.Apply(root).CreateMassAttr(V5_MASS_KG)
+    root.SetCustomDataByKey("description", "Lukas's lever key v4, no platform (v5, 2026-10-24), for the holster; "
                                            "demos/combiner_key/holster.py")
     plastic = _material(stage, "Key", "PrintedPLA", (0.93, 0.42, 0.12), 0.0, 0.55)
     contact = _physics_material(stage, "Key", friction)
-    for name, (lo, hi) in KEY_BOXES.items():
+    for name, (lo, hi) in key_boxes().items():
         _box(stage, f"/Key/{name.capitalize()}", lo, hi, physics_mat=contact, visible=False)
-    points, counts, indices = key_mesh_points()
-    mesh = UsdGeom.Mesh.Define(stage, "/Key/Visual")
-    mesh.CreatePointsAttr([Gf.Vec3f(*p) for p in points])
-    mesh.CreateFaceVertexCountsAttr(counts)
-    mesh.CreateFaceVertexIndicesAttr(indices)
-    mesh.CreateSubdivisionSchemeAttr("none")
-    mesh.CreateExtentAttr(UsdGeom.PointBased(mesh).ComputeExtent(mesh.GetPointsAttr().Get()))
-    UsdShade.MaterialBindingAPI.Apply(mesh.GetPrim()).Bind(plastic[0])
-    mesh.CreateDisplayColorAttr([Gf.Vec3f(*plastic[1])])
+    _mesh(stage, "/Key/Visual", np.asarray(read_stl(LEVER_V4_PATH)), plastic)
+    if "platform" in key_boxes():
+        # v4's platform, which its STL left out: drawn as its box.
+        lo, hi = key_boxes()["platform"]
+        _box(stage, "/Key/PlatformVisual", lo, hi, mat=plastic)
     stage.GetRootLayer().Save()
     return output
 
 
 def build_holster_usd(output, friction: float = 0.3) -> Path:
-    """The holster (`holster.py`) in the holstered key's frame: a rigid body the environment makes kinematic and
-    carries with the robot's base, its colliders `holster.HOLSTER_BOXES`, Lukas's mesh drawn over them."""
+    """The holster (`holster.py`) in its own frame (`holster.holster_in_d1_base`): a rigid body the environment makes kinematic and
+    carries with the robot's base, its colliders `holster.HOLSTER_BOXES` and v5's mouth's walls (`holster.mouth_plates`,
+    turned boxes), Lukas's mesh drawn over them."""
     import numpy as np
     from pxr import UsdPhysics
 
-    from .holster import HOLSTER_BOXES, HOLSTER_MESH_PATH, key_in_d1_base
+    from .holster import HOLSTER_BOXES, HOLSTER_MESH_PATH, holster_in_d1_base, mouth_plates
 
     output, stage, root = _stage(output, "Holster")
     UsdPhysics.RigidBodyAPI.Apply(root)
     UsdPhysics.MassAPI.Apply(root).CreateMassAttr(0.03)
-    root.SetCustomDataByKey("description", "Lukas's key holster beside the D1's base (2026-10-23); "
-                                           "demos/combiner_key/holster.py")
+    root.SetCustomDataByKey("description", "Lukas's key holster beside the D1's base on the Go2's rails, with a mouth "
+                                           "(v5, 2026-10-24); demos/combiner_key/holster.py")
     printed = _material(stage, "Holster", "PrintedPETG", (0.16, 0.17, 0.19), 0.0, 0.45)
     contact = _physics_material(stage, "Holster", friction)
     for name, (lo, hi) in HOLSTER_BOXES.items():
         _box(stage, f"/Holster/{name.capitalize()}", lo, hi, physics_mat=contact, visible=False)
-    to_key = np.linalg.inv(key_in_d1_base())
+    for name, (centre, axes, half) in mouth_plates().items():
+        _turned_box(stage, f"/Holster/Mouth{name.capitalize()}", centre, axes, half, physics_mat=contact, visible=False)
+    to_key = np.linalg.inv(holster_in_d1_base())
     triangles = np.asarray(read_stl(HOLSTER_MESH_PATH)) @ to_key[:3, :3].T + to_key[:3, 3]
     _mesh(stage, "/Holster/Visual", triangles, printed)
     stage.GetRootLayer().Save()

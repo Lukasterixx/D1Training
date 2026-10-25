@@ -157,7 +157,7 @@ def main() -> int:
                        "stance": {"door_ahead_m": at.ARM_DOOR_AHEAD_M, "lock_left_m": at.LOCK_LEFT_OF_BASE_M}},
               "lock": {"plant": "unifp_train.handle.LeverHandle(pad=True) against a sphere at the fingertips' edge",
                        "friction_nm": friction, "as_push_n": round(friction / at.PUSH_REACH_M, 2),
-                       "detent_nm": args.lock_detent_nm, "unlock_deg": kg.UNLOCK_DEG,
+                       "detent_nm": args.lock_detent_nm, "unlock_deg": at.UNLOCK_DEG,
                        "contact_k_n_m": arm_env.CONTACT_K_N_PER_M, "contact_mu": arm_env.CONTACT_MU,
                        "contact_radius_m": at.CONTACT_RADIUS_M},
               "robot": "the combiner door demo's: the lidar and the RealSenses drawn, not simulated (no wrist mass)"}
@@ -253,10 +253,10 @@ def main() -> int:
                                 "lidar": look.get("lidar_heading"), "tag_only": look.get("tag_only")},
                        **record, **worst[i], "fell": fell,
                        "max_key_deg": round(max_deg, 2) if max_deg is not None else None,
-                       "unlocked": max_deg is not None and max_deg >= kg.UNLOCK_DEG,
+                       "unlocked": max_deg is not None and max_deg >= at.UNLOCK_DEG,
                        "reached_stop": max_deg is not None and max_deg >= at.END_DEG - 1.0,
                        "turn_hand_lag_max_mm": round(p["lag_mm"], 1),
-                       "verified_unlocked": ((held.get("measured_deg") or -90.0) >= kg.UNLOCK_DEG
+                       "verified_unlocked": ((held.get("measured_deg") or -90.0) >= at.UNLOCK_DEG
                                              and p["lag_mm"] < arm_env.TRACK_LIMIT_MM),
                        "peak_contact_n": round(float(env.leg.peak_n[i]), 2),
                        "turn_contact_n_median": round(float(np.median(p["turn_contact_n"])), 2) if p["turn_contact_n"] else None,

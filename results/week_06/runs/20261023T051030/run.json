@@ -1,0 +1,188 @@
+{
+  "mode": "arm_command_rate",
+  "status": "finished",
+  "arm_moved": true,
+  "what": "the arm held at its fold, commanded its own pose in 20 s blocks; report timing beside it",
+  "analysis": {
+    "silent": {
+      "hz": 0.0,
+      "gripper_every": 1,
+      "commands": 0,
+      "moved_max_deg": 0.1,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.113
+      },
+      "arm_Feedback/1": {
+        "n": 179,
+        "rate_hz": 8.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.222
+      },
+      "arm_Feedback/3": {
+        "n": 199,
+        "rate_hz": 9.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.101
+      }
+    },
+    "10hz_gripper_every_5th": {
+      "hz": 10.0,
+      "gripper_every": 5,
+      "commands": 200,
+      "moved_max_deg": 0.2,
+      "current_servo_angle": {
+        "n": 177,
+        "rate_hz": 8.86,
+        "gaps": 1,
+        "in_gaps_s": 0.41,
+        "max_s": 0.409
+      },
+      "arm_Feedback/1": {
+        "n": 180,
+        "rate_hz": 8.97,
+        "gaps": 1,
+        "in_gaps_s": 0.31,
+        "max_s": 0.308
+      },
+      "arm_Feedback/3": {
+        "n": 3,
+        "rate_hz": 0.11,
+        "gaps": 2,
+        "in_gaps_s": 17.48,
+        "max_s": 11.463
+      }
+    },
+    "10hz": {
+      "hz": 10.0,
+      "gripper_every": 1,
+      "commands": 200,
+      "moved_max_deg": 0.2,
+      "current_servo_angle": {
+        "n": 139,
+        "rate_hz": 6.95,
+        "gaps": 15,
+        "in_gaps_s": 6.2,
+        "max_s": 0.61
+      },
+      "arm_Feedback/1": {
+        "n": 303,
+        "rate_hz": 15.18,
+        "gaps": 4,
+        "in_gaps_s": 1.2,
+        "max_s": 0.3
+      },
+      "arm_Feedback/3": {
+        "n": 195,
+        "rate_hz": 9.96,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.102
+      }
+    },
+    "10hz_gripper_every_10th": {
+      "hz": 10.0,
+      "gripper_every": 10,
+      "commands": 200,
+      "moved_max_deg": 0.2,
+      "current_servo_angle": {
+        "n": 179,
+        "rate_hz": 8.99,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.133
+      },
+      "arm_Feedback/1": {
+        "n": 180,
+        "rate_hz": 8.99,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.132
+      },
+      "arm_Feedback/3": {
+        "n": 1,
+        "stopped": true
+      }
+    },
+    "10hz_no_gripper": {
+      "hz": 10.0,
+      "gripper_every": 0,
+      "commands": 200,
+      "moved_max_deg": 0.2,
+      "current_servo_angle": {
+        "n": 181,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.121
+      },
+      "arm_Feedback/1": {
+        "n": 181,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.121
+      },
+      "arm_Feedback/3": {
+        "n": 0,
+        "stopped": true
+      }
+    },
+    "silent_after": {
+      "hz": 0.0,
+      "gripper_every": 1,
+      "commands": 0,
+      "moved_max_deg": 0.2,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.116
+      },
+      "arm_Feedback/1": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.116
+      },
+      "arm_Feedback/3": {
+        "n": 197,
+        "rate_hz": 9.95,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.101
+      }
+    },
+    "10hz_gripper_every_5th_again": {
+      "hz": 10.0,
+      "gripper_every": 5,
+      "commands": 200,
+      "moved_max_deg": 0.2,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.128
+      },
+      "arm_Feedback/1": {
+        "n": 181,
+        "rate_hz": 9.01,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.128
+      },
+      "arm_Feedback/3": {
+        "n": 1,
+        "stopped": true
+      }
+    }
+  }
+}

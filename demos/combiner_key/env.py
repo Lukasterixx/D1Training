@@ -991,10 +991,12 @@ class CombinerKeyEnv(door_env.CombinerDoorEnv):
             if self.sites[index] is None:
                 continue
             m = self._truth_env(index)
-            # The slot frame: +x into the door, +y along the key at the insertion angle, +z across it.
-            u, n, t = (np.asarray(v) for v in kg.key_rotation_box(kg.INSERT_DEG))
+            # The slot frame: +x into the door, +y along the key at the insertion angle, +z across it. The arm's turn
+            # (`arm_env`) sets its own lever's angle (`slot_deg`).
+            slot_deg = getattr(self, "slot_deg", kg.INSERT_DEG)
+            u, n, t = (np.asarray(v) for v in kg.key_rotation_box(slot_deg))
             frame = m[:3, :3] @ np.column_stack([-n, u, -t])
-            pos = m[:3, :3] @ np.asarray(kg.key_origin_box(kg.INSERT_DEG)) + m[:3, 3]
+            pos = m[:3, :3] @ np.asarray(kg.key_origin_box(slot_deg)) + m[:3, 3]
             state[row, :3] = torch.as_tensor(pos, dtype=torch.float32, device=self.device) + self.scene.env_origins[index]
             state[row, 3:7] = torch.as_tensor(_matrix_quat(frame), dtype=torch.float32, device=self.device)
         state[:, 7:] = 0.0

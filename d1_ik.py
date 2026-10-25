@@ -140,12 +140,14 @@ def joint_limits(joints, soft: float = SOFT_LIMIT_FACTOR):
     """(low, high) arrays in radians for the six arm joints.
 
     `soft` shrinks each range about its midpoint, matching the task's
-    `soft_joint_pos_limit_factor`. Pass 1.0 for the raw URDF limits.
+    `soft_joint_pos_limit_factor`. Pass 1.0 for the raw URDF limits, or six
+    factors for one per joint.
     """
+    factors = np.broadcast_to(np.asarray(soft, dtype=float), (len(ARM_JOINTS),))
     lows, highs = [], []
-    for name in ARM_JOINTS:
+    for name, factor in zip(ARM_JOINTS, factors):
         low, high = joints[name]["limits"]
-        mid, half = (low + high) / 2.0, (high - low) / 2.0 * soft
+        mid, half = (low + high) / 2.0, (high - low) / 2.0 * factor
         lows.append(mid - half)
         highs.append(mid + half)
     return np.array(lows), np.array(highs)

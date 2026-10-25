@@ -68,15 +68,24 @@ class Targets(unittest.TestCase):
         np.testing.assert_allclose(at.jaw_centre(tip, r), link6 + r @ np.asarray(JAW_CENTRE_LINK6), atol=1e-12)
 
     def test_the_turn_runs_from_the_start_stop_to_the_end_stop(self):
+        """The arm's lever (v4 in the changed lock, 2026-10-24): in level, round 45 degrees clockwise, unlocked at 30."""
         angles = [at.turn_angle(u) for u in np.linspace(0, 1, 21)]
-        self.assertEqual(angles[0], kg.INSERT_DEG)
-        self.assertEqual(angles[-1], kg.TURN_END_DEG)
+        self.assertEqual(angles[0], kg.ARM_LEVER.insert_deg)
+        self.assertEqual(angles[-1], kg.ARM_LEVER.end_deg)
+        self.assertEqual((at.START_DEG, at.END_DEG, at.UNLOCK_DEG), (0.0, 45.0, 30.0))
         self.assertTrue(all(b >= a for a, b in zip(angles, angles[1:])))
 
     def test_the_key_shape_is_the_plants(self):
-        self.assertEqual(at.KEY_TOP_M, leg_cfg.KEY_TOP_M)
-        self.assertEqual(at.KEY_BAR_BOX, leg_cfg.KEY_BAR_BOX)
-        self.assertEqual(at.KEY_PAD_BOX, leg_cfg.KEY_PAD_BOX)
+        """v3 is the foot's plant's own (`leg_cfg`); the arm's (v4) is v3 10 mm longer between the shaft and the platform."""
+        v3, v4 = kg.LEVER_V3, kg.LEVER_V4
+        self.assertEqual(v3.top_m, leg_cfg.KEY_TOP_M)
+        self.assertEqual(v3.bar_box, leg_cfg.KEY_BAR_BOX)
+        self.assertEqual(v3.pad_box, leg_cfg.KEY_PAD_BOX)
+        self.assertEqual((at.KEY_BAR_BOX, at.KEY_PAD_BOX), (kg.ARM_LEVER.bar_box, kg.ARM_LEVER.pad_box))
+        self.assertAlmostEqual(v4.bar_box[0][1] - v3.bar_box[0][1], 0.010, places=9)
+        for i in (0, 1):
+            self.assertAlmostEqual(v4.pad_box[0][i] - v3.pad_box[0][i], 0.010, places=9)
+        self.assertTrue(v4.pad_box[0][0] < at.PUSH_REACH_M < v4.pad_box[0][1])
 
     def test_lukas_lock_as_a_torque(self):
         self.assertAlmostEqual(at.lock_torque_nm(5.0), 0.65, places=9)

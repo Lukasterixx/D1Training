@@ -1,0 +1,274 @@
+{
+  "mode": "holster_dog",
+  "live": true,
+  "step": false,
+  "joint_speed_rad_s": 0.75,
+  "holster_registration": {
+    "d1_with_holster.stl": {
+      "sha256": "728c7c55f546daff1da9079dff05f4d94ed73ea503556a92fab11eb0302192a5",
+      "bytes": 6992984
+    },
+    "d1_with_lever.stl": {
+      "sha256": "fc163d1050bfb03d12594531531d930e22deabf31757eaffdbe46b682e4423aa",
+      "bytes": 7014184
+    },
+    "d1_with_holster_and_lever.stl": {
+      "sha256": "f957717045ae8c4b1ebedc2e3c1b0e6747faf3d65d62c61df1b626b0bdb14d2f",
+      "bytes": 7032784
+    }
+  },
+  "fold_servo_deg": [
+    2.1,
+    -90.0,
+    90.0,
+    -3.1,
+    4.1,
+    3.1
+  ],
+  "argv": [
+    "/root/D1Training/demos/combiner_key/robot/holster_dog.py",
+    "--run_dir",
+    "/root/D1Training/logs/holster_dog/20261023T044227_live",
+    "--live"
+  ],
+  "status": "finished",
+  "moves": [
+    {
+      "move": "turn",
+      "ticks": 30,
+      "planned_s": 2.4,
+      "wall_s": 3.02,
+      "path_lag_max_deg": 28.33,
+      "end_error_deg": 1.1
+    },
+    {
+      "move": "reach",
+      "ticks": 33,
+      "planned_s": 2.3,
+      "wall_s": 3.32,
+      "path_lag_max_deg": 42.99,
+      "end_error_deg": 0.93
+    },
+    {
+      "move": "lower",
+      "ticks": 10,
+      "planned_s": 0.7,
+      "wall_s": 1.01,
+      "path_lag_max_deg": 13.03,
+      "end_error_deg": 1.0
+    },
+    {
+      "move": "on",
+      "ticks": 26,
+      "planned_s": 1.9,
+      "wall_s": 2.62,
+      "path_lag_max_deg": 28.84,
+      "end_error_deg": 1.24
+    },
+    {
+      "move": "close",
+      "ticks": 10,
+      "planned_s": 1.0,
+      "wall_s": 1.01,
+      "path_lag_max_deg": 0.45,
+      "end_error_deg": 0.45
+    },
+    {
+      "move": "draw",
+      "ticks": 30,
+      "planned_s": 2.5,
+      "wall_s": 3.02,
+      "path_lag_max_deg": 11.41,
+      "end_error_deg": 1.25
+    },
+    {
+      "move": "hold",
+      "ticks": 20,
+      "planned_s": 2.0,
+      "wall_s": 2.01,
+      "path_lag_max_deg": 1.25,
+      "end_error_deg": 1.25
+    },
+    {
+      "move": "back",
+      "ticks": 34,
+      "planned_s": 2.5,
+      "wall_s": 3.42,
+      "path_lag_max_deg": 23.77,
+      "end_error_deg": 0.77
+    },
+    {
+      "move": "open",
+      "ticks": 10,
+      "planned_s": 1.0,
+      "wall_s": 1.01,
+      "path_lag_max_deg": 0.49,
+      "end_error_deg": 0.39
+    },
+    {
+      "move": "off",
+      "ticks": 26,
+      "planned_s": 1.9,
+      "wall_s": 2.62,
+      "path_lag_max_deg": 15.71,
+      "end_error_deg": 1.08
+    },
+    {
+      "move": "raise",
+      "ticks": 8,
+      "planned_s": 0.7,
+      "wall_s": 0.8,
+      "path_lag_max_deg": 9.57,
+      "end_error_deg": 1.0
+    },
+    {
+      "move": "unreach",
+      "ticks": 29,
+      "planned_s": 2.3,
+      "wall_s": 2.92,
+      "path_lag_max_deg": 21.7,
+      "end_error_deg": 1.4
+    },
+    {
+      "move": "fold",
+      "ticks": 34,
+      "planned_s": 2.4,
+      "wall_s": 3.42,
+      "path_lag_max_deg": 38.17,
+      "end_error_deg": 1.1
+    }
+  ],
+  "why": "",
+  "events": [
+    {
+      "t_s": 4.51,
+      "kind": "move",
+      "move": "turn",
+      "ticks": 30,
+      "planned_s": 2.4,
+      "wall_s": 3.02,
+      "path_lag_max_deg": 28.33,
+      "end_error_deg": 1.1
+    },
+    {
+      "t_s": 7.82,
+      "kind": "move",
+      "move": "reach",
+      "ticks": 33,
+      "planned_s": 2.3,
+      "wall_s": 3.32,
+      "path_lag_max_deg": 42.99,
+      "end_error_deg": 0.93
+    },
+    {
+      "t_s": 8.83,
+      "kind": "move",
+      "move": "lower",
+      "ticks": 10,
+      "planned_s": 0.7,
+      "wall_s": 1.01,
+      "path_lag_max_deg": 13.03,
+      "end_error_deg": 1.0
+    },
+    {
+      "t_s": 11.45,
+      "kind": "move",
+      "move": "on",
+      "ticks": 26,
+      "planned_s": 1.9,
+      "wall_s": 2.62,
+      "path_lag_max_deg": 28.84,
+      "end_error_deg": 1.24
+    },
+    {
+      "t_s": 12.45,
+      "kind": "move",
+      "move": "close",
+      "ticks": 10,
+      "planned_s": 1.0,
+      "wall_s": 1.01,
+      "path_lag_max_deg": 0.45,
+      "end_error_deg": 0.45
+    },
+    {
+      "t_s": 15.47,
+      "kind": "move",
+      "move": "draw",
+      "ticks": 30,
+      "planned_s": 2.5,
+      "wall_s": 3.02,
+      "path_lag_max_deg": 11.41,
+      "end_error_deg": 1.25
+    },
+    {
+      "t_s": 17.49,
+      "kind": "move",
+      "move": "hold",
+      "ticks": 20,
+      "planned_s": 2.0,
+      "wall_s": 2.01,
+      "path_lag_max_deg": 1.25,
+      "end_error_deg": 1.25
+    },
+    {
+      "t_s": 20.91,
+      "kind": "move",
+      "move": "back",
+      "ticks": 34,
+      "planned_s": 2.5,
+      "wall_s": 3.42,
+      "path_lag_max_deg": 23.77,
+      "end_error_deg": 0.77
+    },
+    {
+      "t_s": 21.92,
+      "kind": "move",
+      "move": "open",
+      "ticks": 10,
+      "planned_s": 1.0,
+      "wall_s": 1.01,
+      "path_lag_max_deg": 0.49,
+      "end_error_deg": 0.39
+    },
+    {
+      "t_s": 24.53,
+      "kind": "move",
+      "move": "off",
+      "ticks": 26,
+      "planned_s": 1.9,
+      "wall_s": 2.62,
+      "path_lag_max_deg": 15.71,
+      "end_error_deg": 1.08
+    },
+    {
+      "t_s": 25.34,
+      "kind": "move",
+      "move": "raise",
+      "ticks": 8,
+      "planned_s": 0.7,
+      "wall_s": 0.8,
+      "path_lag_max_deg": 9.57,
+      "end_error_deg": 1.0
+    },
+    {
+      "t_s": 28.25,
+      "kind": "move",
+      "move": "unreach",
+      "ticks": 29,
+      "planned_s": 2.3,
+      "wall_s": 2.92,
+      "path_lag_max_deg": 21.7,
+      "end_error_deg": 1.4
+    },
+    {
+      "t_s": 31.68,
+      "kind": "move",
+      "move": "fold",
+      "ticks": 34,
+      "planned_s": 2.4,
+      "wall_s": 3.42,
+      "path_lag_max_deg": 38.17,
+      "end_error_deg": 1.1
+    }
+  ]
+}

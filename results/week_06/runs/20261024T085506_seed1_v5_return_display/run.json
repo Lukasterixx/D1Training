@@ -1,0 +1,140 @@
+{
+  "mode": "combiner_key_holster",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "attempts": 1,
+    "num_envs": 1,
+    "seed": 1,
+    "settle_s": 4.0,
+    "walker": "p2dingo_gait",
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "holster_error_mm": 0.0,
+    "no_return": false,
+    "no_overview": false,
+    "run_name": "v5_return_display",
+    "enable_cameras": true,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": false,
+    "hide_ui": false,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "demos/combiner_key/run_holster.py --run_name v5_return_display",
+  "git_commit": "e372b5b101217be064aeb30efb8e094266f95eeb",
+  "git_status": "M CLAUDE.md\n M d1_hardware.py\n M d1_ik.py\n M demos/combiner_door/README.md\n M demos/combiner_door/front_camera.py\n M demos/combiner_door/perception.py\n M demos/combiner_door/robot/README.md\n M demos/combiner_door/robot/arm_link.py\n M demos/combiner_door/robot/node.py\n M demos/combiner_door/robot/plan.py\n M demos/combiner_door/tests/test_combiner_door.py\n M demos/combiner_door/tests/test_robot.py\n M demos/combiner_key/arm_env.py\n M demos/combiner_key/arm_turn.py\n M demos/combiner_key/asset.py\n M demos/combiner_key/assets/holster/holster_d1_base.stl\n M demos/combiner_key/assets/holster/registration.json\n M demos/combiner_key/env.py\n M demos/combiner_key/geometry.py\n M demos/combiner_key/holster.py\n M demos/combiner_key/holster_env.py\n M demos/combiner_key/robot/README.md\n M demos/combiner_key/robot/insert_plan.py\n M demos/combiner_key/robot/insert_viz.py\n M demos/combiner_key/robot/key_plan.py\n M demos/combiner_key/robot/key_viz.py\n M demos/combiner_key/robot/lowlevel.py\n M demos/combiner_key/robot/press_live.py\n M demos/combiner_key/run_arm_turn.py\n M demos/combiner_key/run_holster.py\n M demos/combiner_key/tests/test_arm_turn.py\n M demos/combiner_key/tests/test_holster.py\n M demos/combiner_key/tests/test_insert_robot.py\n M demos/combiner_key/tests/test_key_robot.py\n M demos/cup/pick_demo/grasp.py\n M demos/unifp/decoupled_arm.py\n M results/findings.md\n M results/week_05/notes.md\n M results/week_06/notes.md\n M tests/test_d1_hardware.py\n M tests/test_press_live.py\n M unifp_train/handle.py\n?? .claude/\n?? .graphifyignore\n?? charuco_9x6_40mm_A3.pdf\n?? demos/combiner_door/calibrate_front_camera.py\n?? demos/combiner_door/robot/approach.py\n?? demos/combiner_door/robot/arm_command_rate_test.py\n?? demos/combiner_door/robot/arm_feedback_timing.py\n?? demos/combiner_door/robot/run_command_rate_test_on_dog.sh\n?? demos/combiner_door/tests/test_approach.py\n?? demos/combiner_door/tests/test_calibrate_front_camera.py\n?? demos/combiner_key/assets/holster/holster_v4_d1_base.stl\n?? demos/combiner_key/assets/lever_v4.stl\n?? demos/combiner_key/robot/holster_dog.py\n?? demos/combiner_key/robot/run_holster_on_dog.sh\n?? graphify-out/\n?? logs/arm_command_rate/\n?? logs/arm_feedback_timing/\n?? logs/front_camera_calibration/\n?? logs/holster_dog/\n?? results/week_06/figures/front_camera_calibration_coverage.png\n?? results/week_06/figures/weekly_update_figures.py\n?? results/week_06/figures/weekly_update_foot_force_vs_position.png\n?? results/week_06/runs/20261023T031352_dry/\n?? results/week_06/runs/20261023T031423_dry/\n?? results/week_06/runs/20261023T034223_live/\n?? results/week_06/runs/20261023T034310_live/\n?? results/week_06/runs/20261023T034355_live/\n?? results/week_06/runs/20261023T034454_live/\n?? results/week_06/runs/20261023T034609_seed1_viewer_paced/\n?? results/week_06/runs/20261023T040014_seed1_viewer_lever10mm/\n?? results/week_06/runs/20261023T040312_seed1_lever10mm_err3mm/\n?? results/week_06/runs/20261023T040803_seed1_lever10mm_above_err3mm/\n?? results/week_06/runs/20261023T040911_dry/\n?? results/week_06/runs/20261023T041550_live/\n?? results/week_06/runs/20261023T043033_dry/\n?? results/week_06/runs/20261023T043122_live/\n?? results/week_06/runs/20261023T044116_dry/\n?? results/week_06/runs/20261023T044227_live/\n?? results/week_06/runs/20261023T044408_live/\n?? results/week_06/runs/20261023T044507_live/\n?? results/week_06/runs/20261023T045523_idle_stack_on/\n?? results/week_06/runs/20261023T045750_dry/\n?? results/week_06/runs/20261023T045925_live/\n?? results/week_06/runs/20261023T050700/\n?? results/week_06/runs/20261023T051030/\n?? results/week_06/runs/20261023T051828_dry/\n?? results/week_06/runs/20261023T052811_live/\n?? results/week_06/runs/20261023T053309_dry/\n?? results/week_06/runs/20261023T054555_dry/\n?? results/week_06/runs/20261023T054616_live/\n?? results/week_06/runs/20261023T104946_leg_press_live/\n?? results/week_06/runs/20261023T105328_leg_press_live/\n?? results/week_06/runs/20261023T121755_dry/\n?? results/week_06/runs/20261023T132955_leg_press/\n?? results/week_06/runs/20261023T133220_leg_press_live/\n?? results/week_06/runs/20261023T133243_leg_press_live/\n?? results/week_06/runs/20261023T133428_leg_press_live/\n?? results/week_06/runs/20261023T133506_leg_press_live/\n?? results/week_06/runs/20261023T133729_leg_press_rehearse/\n?? results/week_06/runs/20261024T010004_insert_insert_live/\n?? results/week_06/runs/20261024T022159_insert_insert_live/\n?? results/week_06/runs/20261024T023431_insert_insert_live/\n?? results/week_06/runs/20261024T023816_insert_insert_live/\n?? results/week_06/runs/20261024T042418_seed1_v4_lever_rail_holster/\n?? results/week_06/runs/20261024T042551_seed1_v4_err3mm/\n?? results/week_06/runs/20261024T050857_insert_insert_live/\n?? results/week_06/runs/20261024T051120_insert_insert_live/\n?? results/week_06/runs/20261024T052724_insert_insert_live/\n?? results/week_06/runs/20261024T054143_insert_insert_live/\n?? results/week_06/runs/20261024T055000_insert_insert_live/\n?? results/week_06/runs/20261024T055416_insert_insert_live/\n?? results/week_06/runs/20261024T055717_insert_insert_live/\n?? results/week_06/runs/20261024T061025_insert_insert_live/\n?? results/week_06/runs/20261024T061414_insert_insert_live/\n?? results/week_06/runs/20261024T061625_insert_insert_live/\n?? results/week_06/runs/20261024T124011_calibrate/\n?? results/week_06/screenshots/2026-10-24_ft6_foot_on_palm.jpg\n?? results/week_06/screenshots/2026-10-24_insert_h_turn_rviz.png\n?? results/week_06/screenshots/2026-10-24_insert_lying_abort_rviz.png\n?? tests/test_remote_buttons.py",
+  "holster": {
+    "registration": {
+      "holster_with_lever2.stl": {
+        "sha256": "511acd9522d7ecfb8125ac1c91b9297c48e739be4f0d712e5bc8433e1d9f1016",
+        "bytes": 196784
+      },
+      "lever2.stl": {
+        "sha256": "6b8965365b8d30ac34fa068db74ee11b394c00659b0f930b401c6f7502aa9002",
+        "bytes": 41684
+      }
+    },
+    "key_mirrored": true,
+    "grip_along_m": 0.0,
+    "grip_roll": 1,
+    "design": "v5",
+    "ik_soft": 0.9,
+    "draw_soft_j1_j5": 0.97,
+    "pre_out_m": 0.065,
+    "slide_m": 0.075,
+    "exit_m": 0.02,
+    "exit_deg": 25.0,
+    "turn_elbow_rad": -0.3490658503988659,
+    "put_back": true,
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "phase_s": {
+      "turn": 1.25,
+      "reach": 2.0,
+      "lower": 1.0,
+      "pre": 1.5,
+      "on": 2.552,
+      "close": 1.0,
+      "draw": 2.824,
+      "exit": 0.248,
+      "hold": 2.0,
+      "enter": 0.248,
+      "back": 2.824,
+      "open": 1.0,
+      "off": 2.552,
+      "away": 1.5
+    },
+    "jaw_open_m": 0.03,
+    "jaw_hold_m": 0.002
+  },
+  "robot_usd": "/home/lukas/D1Training/generated/go2_d1.usd",
+  "box_usd": "/home/lukas/D1Training/generated/unifp_demos/combiner_0.400_ac02abf3702d.usda",
+  "phases": [
+    "turn",
+    "reach",
+    "lower",
+    "pre",
+    "on",
+    "close",
+    "draw",
+    "exit",
+    "hold",
+    "enter",
+    "back",
+    "open",
+    "off",
+    "away"
+  ],
+  "robot": "the combiner door demo's: the lidar and the RealSenses drawn, not simulated (no wrist mass)",
+  "box": "the combiner box 3 m behind the robot, out of the way",
+  "summary": {
+    "attempts": 1,
+    "drawn": 1,
+    "put_back": 1,
+    "back_key_out_mm": [
+      0.01
+    ],
+    "back_key_across_mm": [
+      2.38
+    ],
+    "return_across_in_holster_max_mm": [
+      4.7
+    ],
+    "fell": 0,
+    "holster_error_mm": 0.0,
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "draw_s": 22.5,
+    "draw_near_stopped": [
+      0.05
+    ],
+    "key_out_mm": [
+      93.0
+    ],
+    "grasp_miss_mm": [
+      [
+        -0.72,
+        -0.38,
+        1.8
+      ]
+    ],
+    "grip_err_max_mm": [
+      1.98
+    ],
+    "torque_use_max": [
+      0.668
+    ]
+  },
+  "frames": 94
+}

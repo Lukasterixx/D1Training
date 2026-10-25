@@ -32,7 +32,8 @@ def held_key_markers(out, attempt) -> None:
         return
     if attempt.check.get("held") is False:
         return
-    origin, axes = ip.key_in_hand(attempt.arm.joints, attempt._measured, attempt._base_s)
+    origin, axes = ip.key_in_hand(attempt.arm.joints, attempt._measured, attempt._base_s, attempt.shaft_along,
+                                  attempt.grip_roll, attempt.shaft_up)
     door_face = origin - ip.SEATED_OFF_DOOR_M * axes[:, 1]
     frame = plan.pose(axes, door_face)
     bar = at.KEY_BAR_BOX

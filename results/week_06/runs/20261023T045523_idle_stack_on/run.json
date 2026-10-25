@@ -1,0 +1,72 @@
+{
+  "mode": "arm_feedback_timing",
+  "status": "finished",
+  "read_only": true,
+  "condition": "arm folded and idle, nothing commanding it, P2Dingo's stack up (front camera, RealSense, Livox, XM125, zenoh, arm bridge)",
+  "summary": {
+    "arrival": {
+      "current_servo_angle": {
+        "n": 540,
+        "rate_hz": 8.997,
+        "p50_s": 0.111,
+        "p90_s": 0.1116,
+        "p99_s": 0.1125,
+        "max_s": 0.1148,
+        "gaps_over_0.25s": 0,
+        "time_in_gaps_s": 0
+      },
+      "arm_Feedback/1": {
+        "n": 539,
+        "rate_hz": 8.98,
+        "p50_s": 0.1111,
+        "p90_s": 0.1117,
+        "p99_s": 0.1127,
+        "max_s": 0.2219,
+        "gaps_over_0.25s": 0,
+        "time_in_gaps_s": 0
+      },
+      "arm_Feedback/3": {
+        "n": 596,
+        "rate_hz": 9.935,
+        "p50_s": 0.1005,
+        "p90_s": 0.1006,
+        "p99_s": 0.101,
+        "max_s": 0.201,
+        "gaps_over_0.25s": 0,
+        "time_in_gaps_s": 0
+      }
+    },
+    "source": {
+      "current_servo_angle": {
+        "n": 540,
+        "rate_hz": 8.997,
+        "p50_s": 0.111,
+        "p90_s": 0.1116,
+        "p99_s": 0.1125,
+        "max_s": 0.1147,
+        "gaps_over_0.25s": 0,
+        "time_in_gaps_s": 0
+      },
+      "arm_Feedback/1": {
+        "n": 539,
+        "rate_hz": 8.98,
+        "p50_s": 0.111,
+        "p90_s": 0.1116,
+        "p99_s": 0.1125,
+        "max_s": 0.2219,
+        "gaps_over_0.25s": 0,
+        "time_in_gaps_s": 0
+      },
+      "arm_Feedback/3": {
+        "n": 596,
+        "rate_hz": 9.935,
+        "p50_s": 0.1005,
+        "p90_s": 0.1006,
+        "p99_s": 0.1008,
+        "max_s": 0.2009,
+        "gaps_over_0.25s": 0,
+        "time_in_gaps_s": 0
+      }
+    }
+  }
+}

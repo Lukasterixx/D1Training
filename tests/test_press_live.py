@@ -479,7 +479,7 @@ class FakeOperator:
 def args(**kw):
     base = dict(policy=str(POLICY), live=False, rehearse=False, plate="palm_up", force_n=5.0, max_force_n=5.0,
                 ramp_s=0.5, hold_s=1.0, standoff=0.04, speed=0.03, hand_wait_s=15.0, presses=1, policy_s=90.0,
-                tilt_limit_deg=15.0, force_abort_n=1e9, stand_s=10.0, cmd_hz=500.0, topic="/lowstate", arm_link_port=0, print_s=1e9,
+                tilt_limit_deg=15.0, force_abort_n=1e9, stand_s=10.0, start_tol_rad=None, start_pitch_deg=None, start_on_blend=False, cmd_hz=500.0, topic="/lowstate", arm_link_port=0, print_s=1e9,
                 run_dir=None)
     base.update(kw)
     return types.SimpleNamespace(**base)
@@ -590,6 +590,28 @@ class Program(unittest.TestCase):
                    script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight", "damping")))
         self.assertIn("pitch +0.0 deg of -15.9..-10.0", run2.abort_reason)
 
+    def test_the_operators_start_bounds_admit_it(self):
+        robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta, sag=2.0), FakeOperator()
+        run = press_live.PressRun(args(live=True, presses=0, stand_s=2.0, start_tol_rad=0.5, start_pitch_deg=(-15.0, 5.0),
+                                       run_dir=self.tmp.name), robot, op)
+        modes = []
+        self.drive(run, robot, op, until=lambda r: r.mode == "done",
+                   script=lambda k, r, rb, o: (modes.append(r.mode) if not modes or modes[-1] != r.mode else None,
+                                               k % 30 == 0 and self.enter_on(r, o, ("preflight", "damping"))))
+        self.assertIn("policy", modes)               # admitted (the doubled load then sinks the stand-in's calves)
+        self.assertNotIn("not the trained one", run.abort_reason or "")
+
+    def test_start_on_blend(self):
+        robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
+        run = press_live.PressRun(args(live=True, presses=0, stand_s=2.0, start_on_blend=True, run_dir=self.tmp.name),
+                                  robot, op)
+        self.drive(run, robot, op, until=lambda r: r.mode == "done",
+                   script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight", "damping")))
+        events = [e["event"] for e in run.events]
+        self.assertIn("taken at the blend", events)
+        self.assertNotIn("settled", events)
+        self.assertIsNone(run.abort_reason)
+
     def test_live_needs_the_word(self):
         robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
         run = press_live.PressRun(args(live=True, run_dir=self.tmp.name), robot, op)
@@ -631,6 +653,26 @@ class Program(unittest.TestCase):
     def test_stop_on_a(self):
         run = self.stop_case(lambda rb, o: o.lines.append("a"))
         self.assertIn("operator", run.abort_reason)
+
+    def test_the_remote_alone_starts_it_stops_it_and_gives_it_back(self):
+        """A as `live` + Enter and every Enter, B as `a` + Enter, then A: sport mode back, where it started."""
+        robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
+        run = press_live.PressRun(args(live=True, run_dir=self.tmp.name), robot, op)
+
+        def script(k, r, rb, o):
+            if rb.keys:
+                rb.keys = []                       # down for one LowState, then let go
+                return
+            stage = pl.STAGE_NAMES[r.task.stage] if r.mode == "policy" else ""
+            if stage == "at_pre":
+                rb.keys = ["B"]
+            elif k % 30 == 0 and (r.mode in ("preflight", "damping") or stage == "waiting") and not r.go:
+                rb.keys = ["A"]
+        self.drive(run, robot, op, until=lambda r: r.mode == "done", script=script)
+        self.assertIn("B", run.abort_reason)
+        self.assertTrue(run.handed_back)
+        self.assertEqual(robot.mode, run.sport_name)
+        self.assertTrue(robot.lying)                # it lay down, so the confirmation took
 
     def test_already_released_does_not_start(self):
         robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()

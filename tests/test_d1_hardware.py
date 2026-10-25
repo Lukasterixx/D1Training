@@ -389,6 +389,13 @@ class CommandModeTests(unittest.TestCase):
         self.client.set_all_joint_angles([0.0] * 6, mode=1)
         self.assertEqual(self.sent[-1][1]["mode"], 1)
 
+    def test_every_command_carries_the_gripper(self):
+        """F-202: the arm ignores a funcode 2 command without `angle6`."""
+        self.client.set_all_joint_angles([0.0] * 6, gripper=5.0)
+        self.assertEqual(self.sent[-1][1]["angle6"], 5.0)
+        self.client.set_all_joint_angles([0.0] * 6)
+        self.assertIn("angle6", self.sent[-1][1])
+
 
 class CommandPacingTests(unittest.TestCase):
     """Motion commands must never out-run the arm's 10 Hz control cycle (F-032)."""

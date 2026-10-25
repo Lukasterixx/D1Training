@@ -3,16 +3,12 @@ range check from synthetic tag poses and lidar returns, a dry attempt through ev
 driving a model servo and the gait's carry, the robot's own check of the turn, the stall abort and the lift-off. numpy
 only (no ROS, no simulator)."""
 from __future__ import annotations
-
 import math
 import unittest
-
 import numpy as np
-
 import d1_hardware
-from demos.combiner_door.robot import plan
-from demos.combiner_door.robot.arm_link import SimulatedArm
-from demos.combiner_door.tests.test_robot import LEVER_STALL_UNITS, box_odom, face_scan, look, walk
+from demos.combiner_door.robot import approach, plan, viz
+from demos.combiner_door.tests.test_robot import LEVER_STALL_UNITS, LinkedArm, box_odom, face_scan, look, walk
 from demos.combiner_key import arm_turn as at
 from demos.combiner_key import geometry as kg
 from demos.combiner_door import perception
@@ -90,37 +86,64 @@ def walk_classic(base, command, moving, dt=0.1):
 #: The odometry's share of the walk in the dry runs: `key_plan.ODOM_WALK_SCALE`, sport mode's on the dog's four live
 #: walks up.
 ODOM_SCALE = kp.ODOM_WALK_SCALE
+#: How far the box's door swings open once the key has unlocked it (Lukas, 2026-10-25: "almost 10 degrees").
+DOOR_AJAR_DEG = 10.0
+
+
+def after_walk_back(base, true_base, box, then_door):
+    """`node.py --then_door` once a walk back (`approach.door_after_key`) or an approach is over: the door pull's look
+    at `box` from where the base truly stands (`base`: the odometry's), then its attempt to `then_door` if in range,
+    or the approach to look again from. Returns (attempt, the look's range text)."""
+    fix = plan.make_fix(base, *look(base, base @ plan.invert(true_base) @ box))
+    ok, text = fix.in_range()
+    if ok:
+        return kp.SteppingDoorAttempt(fix, then_door, plan.scaled_timing(1.0, 30.0)), text
+    target = approach.odometry_target(plan.planar(base), approach.staging_pose("door", fix.box_odom))
+    return approach.ApproachAttempt(approach.staging_fix(fix, target), "walk"), text
 
 
 class KeyAttemptTests(unittest.TestCase):
     def run_attempt(self, stage, max_steps=2000, stall_in_turn=False, expect_abort=False, lock=(0.78, 0.08, 180.0),
-                    watch=None, odom_scale=ODOM_SCALE, box=None, slow_in_turn=False, then_door=None):
+                    watch=None, odom_scale=ODOM_SCALE, box=None, slow_in_turn=False, then_door=None,
+                    ajar_deg=DOOR_AJAR_DEG):
         """A dry key attempt: the arm link's profile driving a model servo, the base walking with the gait's carry, its
         odometry reporting `odom_scale` of the walk (sport mode's, as the dog's walks up suggest), and the lidar's frames
         through the settle from where the base really stands, so the refit takes the odometry's error out.
         `stall_in_turn`: the arm stops following once the turn is a second in (a key that does not turn). `then_door`:
-        on into the door pull to that stage once the turn is verified (`DoorAfterKey`, as `node.py --then_door`), the
-        jaws stalling on the lever while they hold it; that attempt is left in `self.door`."""
+        on into the door pull to that stage once the turn is verified, as `node.py --then_door`: the door swings
+        `ajar_deg` open, the dog backs up to look again (`approach.door_after_key`, then `after_walk_back`), the jaws
+        stalling on the lever while they hold it; the door pull's attempt is left in `self.door`, the walks in
+        `self.walks`, the looks' range texts in `self.looks`."""
         base = plan.base_pose(0.0, 0.0, 0.0)
         box = box_for_lock(*lock) if box is None else box
         fix = kp.make_key_fix(base, *look(base, box))
         true_base, rng = base, np.random.default_rng(3)
         attempt = kp.KeyAttempt(fix, stage)
-        arm = SimulatedArm(d1_hardware.REST_SERVO_DEG)
+        arm = LinkedArm(d1_hardware.REST_SERVO_DEG)
         phases, moving, turn_steps = [], (0.0, 0.0, 0.0), 0
-        self.door = None
+        self.door, self.walks, self.looks = None, [], []
         for step in range(max_steps):
             scan = (base, face_scan(true_base, box, rng)) if attempt.phase == "walk_settle" else None
             if self.door is not None:
                 arm.stall_units = LEVER_STALL_UNITS if attempt.phase in plan.HOLDING_PHASES else None
             obs = plan.Observation(0.1 * step, base, 0.0, arm.q.copy(), 0.0, scan=scan, gripper_units=arm.gripper)
             command = attempt.step(obs)
-            if command.finished and then_door and self.door is None and attempt.turn_check().get("verified"):
-                key, attempt = attempt, kp.DoorAfterKey(kp.door_fix(attempt.fix), then_door, plan.scaled_timing(1.0, 30.0))
-                self.door = attempt
+            if command.finished and then_door and not self.walks and attempt.turn_check().get("verified"):
+                key, attempt = attempt, approach.door_after_key(attempt.fix, plan.planar(base))
+                self.walks.append(attempt)
+                box = viz.door_pose(box, ajar_deg)              # unlocked, the door swings open
+                continue
+            if command.finished and isinstance(attempt, approach.ApproachAttempt):
+                self.assertLessEqual(len(self.walks), approach.MAX_APPROACHES, self.looks)
+                attempt, text = after_walk_back(base, true_base, box, then_door)
+                self.looks.append(text)
+                if isinstance(attempt, approach.ApproachAttempt):
+                    self.walks.append(attempt)
+                else:
+                    self.door = attempt
                 continue
             if command.finished:
-                if self.door is not None:
+                if self.walks:
                     attempt = key
                 break
             if command.abort:
@@ -133,7 +156,7 @@ class KeyAttemptTests(unittest.TestCase):
             stalled = stall_in_turn and command.phase == "turn" and turn_steps > 10
             stalled = stalled or (slow_in_turn and command.phase == "turn" and step % 2 == 1)
             if command.arm_servo_deg is not None and not stalled:
-                arm.step(command.arm_servo_deg, command.gripper_units, command.speed_deg_s)
+                arm.drive(command, attempt)
                 attempt.sent(command)
             if watch is not None:
                 watch(attempt, command, arm, base)
@@ -159,8 +182,8 @@ class KeyAttemptTests(unittest.TestCase):
     def test_the_walk_ends_where_the_push_works(self):
         attempt, _, _, _ = self.run_attempt("walk")
         ahead, left, _ = kp.lock_from_base(attempt.fix)
-        self.assertTrue(at.PUSH_DOOR_AHEAD_M[0] <= ahead <= at.PUSH_DOOR_AHEAD_M[1], ahead)
-        self.assertTrue(at.PUSH_LOCK_LEFT_M[0] <= left <= at.PUSH_LOCK_LEFT_M[1], left)
+        self.assertTrue(kp.PUSH_DOOR_AHEAD_M[0] <= ahead <= kp.PUSH_DOOR_AHEAD_M[1], ahead)
+        self.assertTrue(kp.PUSH_LOCK_LEFT_M[0] <= left <= kp.PUSH_LOCK_LEFT_M[1], left)
 
     def test_the_arm_stays_off_the_door_through_the_walk_up(self):
         """Lukas's first live walk up hit the door with the door pull's home point (0.42 m ahead of the base)."""
@@ -207,8 +230,8 @@ class KeyAttemptTests(unittest.TestCase):
                 attempt, phases, _, _ = self.run_attempt("turn", lock=lock)
                 self.assertTrue(attempt.turn_check()["verified"], attempt.turn_check())
                 ahead, left, off = kp.lock_from_base(attempt.fix)
-                self.assertTrue(at.PUSH_DOOR_AHEAD_M[0] <= ahead <= at.PUSH_DOOR_AHEAD_M[1], ahead)
-                self.assertTrue(at.PUSH_LOCK_LEFT_M[0] <= left <= at.PUSH_LOCK_LEFT_M[1], left)
+                self.assertTrue(kp.PUSH_DOOR_AHEAD_M[0] <= ahead <= kp.PUSH_DOOR_AHEAD_M[1], ahead)
+                self.assertTrue(kp.PUSH_LOCK_LEFT_M[0] <= left <= kp.PUSH_LOCK_LEFT_M[1], left)
 
     def test_the_turn_reaches_the_stop_and_the_robots_check_says_so(self):
         attempt, phases, _, _ = self.run_attempt("turn")
@@ -276,7 +299,7 @@ class KeyAttemptTests(unittest.TestCase):
                 break
             self.assertEqual(command.abort, "", command.phase)
             if command.arm_servo_deg is not None:
-                arm.step(command.arm_servo_deg, command.gripper_units, command.speed_deg_s)
+                arm.drive(command, attempt)
                 attempt.sent(command)
             base, moving = walk(base, command.base if command.walking else None, moving)
         else:
@@ -296,26 +319,25 @@ class KeyAttemptTests(unittest.TestCase):
                 self.assertGreater(min(gaps.values()), 0.0, gaps)
                 self.assertGreater(min(gaps["key_clear"], gaps["home"], gaps["fold"]), 30.0, gaps)
 
-    def test_the_door_pull_follows_the_turn_walking_over_without_backing_off(self):
-        """`node.py --then_door pull`: from where the key left it, the dog walks over to the door pull's stance (back
-        ~0.07 m and right ~0.18 m) with the arm folded, refits there, unfolds and pulls the door."""
-        folded, xs = [], []
+    def test_the_door_pull_follows_the_turn_from_a_new_look_after_backing_up(self):
+        """`node.py --then_door pull`: the key turned, the door swings 10 degrees open; the dog backs up with the arm
+        folded to where the box's root is `approach.STAGE_ROOT_M` ahead, looks again, and pulls the door from that
+        look (its own unfold, walk in and refit)."""
+        folded = []
 
         def watch(attempt, command, arm, base):
-            if isinstance(attempt, kp.DoorAfterKey) and command.phase in ("walk_in", "walk_settle"):
+            if isinstance(attempt, approach.ApproachAttempt):
                 folded.append(float(np.max(np.abs(np.asarray(arm.q) - plan.FOLD_SERVO_DEG))))
-                xs.append(plan.planar(attempt.base_script(base))[0])
 
         attempt, phases, arm, _ = self.run_attempt("turn", lock=(0.80, 0.07, 180.0), watch=watch, then_door="pull",
-                                                   max_steps=4000)
+                                                   max_steps=6000)
         door = self.door
-        self.assertIsNotNone(door, "no door pull after the turn")
+        self.assertIsNotNone(door, f"no door pull after the turn: {self.looks}")
         self.assertTrue(attempt.turn_check()["verified"])
+        self.assertEqual(self.walks[0].script.phases[0].name, "pause")    # stands first, for classic walk
         names = [p.name for p in plan.attempt_phases("pull", plan.scaled_timing(1.0, 30.0))]
-        order = [n for n in names if n in ("walk_in", "walk_settle")] + [n for n in names if n not in ("walk_in", "walk_settle")]
-        self.assertEqual(phases[-len(order):], order)
-        self.assertLess(max(folded), 1.0)                         # the arm folded until the dog is over
-        self.assertGreater(min(xs), -0.12)                        # no backing off to walk in straight
+        self.assertEqual(phases[-len(names):], names)
+        self.assertLess(max(folded), 1.0)                         # the arm folded through the walks
         reanchor = [e for e in door.events if e.get("phase") == "reanchor"]
         self.assertTrue(reanchor and reanchor[0]["ok"], reanchor)
         self.assertTrue(door._pull is not None and door._pull["done"])
@@ -324,19 +346,7 @@ class KeyAttemptTests(unittest.TestCase):
     def test_no_door_pull_after_a_turn_that_was_not_verified(self):
         attempt, why, _, _ = self.run_attempt("turn", stall_in_turn=True, expect_abort=True, then_door="pull")
         self.assertIsNone(self.door)
-
-    def test_the_door_pulls_stance_from_the_keys(self):
-        base = plan.base_pose(0.0, 0.0, 0.0)
-        fix = plan.reanchor(kp.make_key_fix(base, *look(base, box_for_lock(0.46, 0.07))), base)
-        door = kp.door_fix(fix)
-        self.assertIs(type(door), plan.Fix)
-        self.assertAlmostEqual(door.site.distance_m, plan.NOMINAL_DISTANCE_M, places=6)
-        self.assertAlmostEqual(door.site.bearing_deg, 0.0, places=6)
-        self.assertAlmostEqual(door.site.yaw_deg, 180.0, places=6)
-        self.assertTrue(door.in_range(check_tag=False)[0])
-        x, y, _ = plan.planar(plan.invert(fix.script_odom) @ door.script_odom)
-        self.assertLess(x, 0.0)                                   # back from the key's stance
-        self.assertLess(y, -0.10)                                 # and to its right: the handle is right of the lock
+        self.assertEqual(self.walks, [])
 
     def test_confirmations_name_real_phases(self):
         names = {p.name for p in kp.key_phases("turn")}
@@ -396,3 +406,58 @@ class KeyVizTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SteppingDoorTests(unittest.TestCase):
+    """`key_plan.SteppingDoorAttempt`, the door pull after the key (`node.py --then_door`): its walk in on all three axes,
+    and one more walk up when the refit after it puts the stance out of range (Lukas's run of 2026-10-25 00:50 UTC: the
+    look 3 cm off the stance's line, the straight walk in, 5 cm off and the abort)."""
+
+    def run_door(self, cls, side_m, stage="grip", max_steps=1500):
+        """The door pull to `stage` from a look 0.26 m behind its stance and `side_m` to its left, the base walking with
+        the gait's carry and the odometry's under-count, the lidar's frames through the settle from the true base.
+        Returns (attempt, phases, abort or "")."""
+        box = box_odom(0.0, 0.0, 180.0)
+        sx, sy, syaw = approach.task_stance("door", box)
+        c, s = math.cos(syaw), math.sin(syaw)
+        true_base = plan.base_pose(sx - 0.26 * c - side_m * s, sy - 0.26 * s + side_m * c, syaw)
+        base = true_base.copy()
+        fix = plan.make_fix(base, *look(base, box))
+        attempt = cls(fix, stage, plan.scaled_timing(1.0, 30.0))
+        arm = LinkedArm(d1_hardware.REST_SERVO_DEG)
+        rng, moving, phases = np.random.default_rng(4), (0.0, 0.0, 0.0), []
+        for step in range(max_steps):
+            arm.stall_units = LEVER_STALL_UNITS if attempt.phase in plan.HOLDING_PHASES else None
+            scan = (base, face_scan(true_base, box, rng)) if attempt.phase == "walk_settle" else None
+            command = attempt.step(plan.Observation(0.1 * step, base, 0.0, arm.q.copy(), 0.0, scan=scan,
+                                                    gripper_units=arm.gripper))
+            if command.finished:
+                return attempt, phases, ""
+            if command.abort:
+                return attempt, phases, command.abort
+            if not phases or phases[-1] != command.phase:
+                phases.append(command.phase)
+            if command.arm_servo_deg is not None:
+                arm.drive(command, attempt)
+                attempt.sent(command)
+            before = plan.planar(true_base)
+            true_base, moving = walk_classic(true_base, command.base if command.walking else None, moving)
+            after = plan.planar(true_base)
+            x, y, yaw = plan.planar(base)
+            base = plan.base_pose(x + ODOM_SCALE * (after[0] - before[0]), y + ODOM_SCALE * (after[1] - before[1]),
+                                  yaw + (after[2] - before[2]))
+        self.fail(f"{stage} did not finish")
+
+    def test_a_look_off_the_stance_s_line_is_walked_onto_it(self):
+        attempt, phases, why = self.run_door(kp.SteppingDoorAttempt, 0.04)
+        self.assertEqual(why, "")
+        self.assertIn("grip", phases)
+        reanchor = [e for e in attempt.events if e.get("phase") == "reanchor"]
+        self.assertTrue(reanchor[-1]["ok"], reanchor)
+
+    def test_the_straight_walk_in_alone_aborts_where_the_stepping_one_does_not(self):
+        _, _, why = self.run_door(plan.Attempt, 0.06)
+        self.assertIn("after the walk in", why)
+        attempt, phases, why = self.run_door(kp.SteppingDoorAttempt, 0.06)
+        self.assertEqual(why, "", [e for e in attempt.events if e.get("phase") in ("refit", "reanchor", "rewalk")])
+        self.assertIn("grip", phases)

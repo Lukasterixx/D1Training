@@ -1,0 +1,359 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "finished",
+  "task": "door",
+  "stage": "pull",
+  "then_door": null,
+  "then_close": true,
+  "lock": false,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261025T013412_pull_close_live",
+    "--stage",
+    "pull",
+    "--then_close",
+    "--live"
+  ],
+  "started_utc": "20261025T013416",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 73.371,
+      "stop": "the operator stopped it"
+    },
+    {
+      "t": 109.365,
+      "stop": "the door was not pushed closed: no lock"
+    },
+    {
+      "t": 109.377,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 21,
+    "with_tag": 21,
+    "lidar_frames": 21,
+    "found": true,
+    "in_range": true,
+    "text": "box 0.80 m from the stance at +5.0 deg (-3 cm left of the stance's line), door -1.4 deg off square, walk in 0.29 m",
+    "detections": 21,
+    "site": {
+      "distance_m": 0.8003,
+      "bearing_deg": 4.989,
+      "yaw_deg": 178.633
+    },
+    "walk_in_m": 0.29,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.4,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.81
+  },
+  "approaches": [
+    {
+      "t": 5.859,
+      "from": [
+        0.382,
+        0.713,
+        -0.087
+      ],
+      "staging": [
+        0.155,
+        0.653,
+        -0.09
+      ],
+      "distance_m": 0.234,
+      "turn_deg": -0.2,
+      "why": "box 0.83 m from the stance at +1.3 deg (-8 cm left of the stance's line), door -0.1 deg off square, walk in 0.00 m; move the dog back 0.08 m, or forward 0.07 m, right 0.08 m",
+      "events": [
+        {
+          "phase": "walk_up",
+          "from": [
+            0.191,
+            0.069,
+            0.004
+          ]
+        },
+        {
+          "phase": "walk_up",
+          "step": 0,
+          "close_enough": true,
+          "left_m": 0.024,
+          "carried_m": 0.044,
+          "carry_s": 0.24,
+          "lat_floor": 0.2
+        }
+      ],
+      "ended": [
+        0.161,
+        0.668,
+        -0.062
+      ]
+    }
+  ],
+  "pull_attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.327,
+        0.003,
+        0.026
+      ]
+    },
+    {
+      "t": 18.562,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "left_m": 0.021,
+      "carried_m": 0.021,
+      "carry_s": 0.12,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 22.062,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 51.5,
+      "turned_deg": 0.48
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "box 0.73 m from the stance at +7.3 deg (-1 cm left of the stance's line), door -0.9 deg off square, walk in 0.00 m"
+    },
+    {
+      "t": 23.064,
+      "phase": "stand"
+    },
+    {
+      "t": 24.562,
+      "phase": "approach"
+    },
+    {
+      "t": 26.562,
+      "phase": "settle"
+    },
+    {
+      "t": 26.981,
+      "phase": "enter"
+    },
+    {
+      "t": 29.477,
+      "phase": "arrive"
+    },
+    {
+      "t": 30.162,
+      "phase": "grip"
+    },
+    {
+      "t": 31.162,
+      "phase": "pull"
+    },
+    {
+      "phase": "pull",
+      "twist": [
+        -0.077,
+        -0.2,
+        0.346
+      ],
+      "hinge_in_base_m": [
+        0.578,
+        -0.223
+      ],
+      "seconds": 3.02
+    },
+    {
+      "t": 34.862,
+      "phase": "hold"
+    },
+    {
+      "phase": "let_go",
+      "hand_script": [
+        0.3481,
+        -0.1336,
+        0.6985
+      ],
+      "approach": [
+        0.529,
+        0.849,
+        -0.014
+      ],
+      "jaws_units": 23.0
+    },
+    {
+      "t": 36.364,
+      "phase": "release"
+    },
+    {
+      "t": 37.662,
+      "phase": "ungrasp"
+    },
+    {
+      "t": 40.162,
+      "phase": "home"
+    },
+    {
+      "t": 41.662,
+      "phase": "tuck"
+    },
+    {
+      "t": 45.262,
+      "phase": "fold"
+    }
+  ],
+  "close_attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "phase": "door_look",
+      "door_deg": 76.31,
+      "how": "lidar, 20 of 20 readings",
+      "base_deg": 60.81,
+      "readings": 20
+    },
+    {
+      "t": 58.062,
+      "phase": "door_align"
+    },
+    {
+      "phase": "door_align",
+      "twist": [
+        -0.128,
+        -0.2,
+        0.373
+      ],
+      "hinge_in_base_m": [
+        0.536,
+        -0.344
+      ],
+      "seconds": 0.72
+    },
+    {
+      "t": 58.762,
+      "phase": "unfold"
+    },
+    {
+      "t": 62.362,
+      "phase": "approach"
+    },
+    {
+      "t": 64.362,
+      "phase": "settle"
+    },
+    {
+      "t": 66.363,
+      "phase": "enter"
+    },
+    {
+      "t": 68.863,
+      "phase": "arrive"
+    },
+    {
+      "t": 69.269,
+      "phase": "grip"
+    },
+    {
+      "t": 70.264,
+      "phase": "push"
+    },
+    {
+      "phase": "push",
+      "twist": [
+        0.155,
+        0.2,
+        -0.359
+      ],
+      "hinge_in_base_m": [
+        0.557,
+        -0.432
+      ],
+      "seconds": 3.56
+    },
+    {
+      "phase": "recover"
+    },
+    {
+      "phase": "let_go",
+      "hand_script": [
+        0.4634,
+        -0.0203,
+        0.6539
+      ],
+      "approach": [
+        0.926,
+        0.357,
+        -0.123
+      ],
+      "jaws_units": -19.4
+    },
+    {
+      "t": 100.062,
+      "phase": "ungrasp"
+    },
+    {
+      "t": 102.563,
+      "phase": "home"
+    },
+    {
+      "t": 104.062,
+      "phase": "tuck"
+    },
+    {
+      "t": 108.062,
+      "phase": "fold"
+    }
+  ],
+  "abort": "the operator stopped it",
+  "close": {
+    "from_deg": 76.30730113197166,
+    "to_deg": 5.0,
+    "how": "lidar, 20 of 20 readings",
+    "base_deg": 60.81,
+    "aligned_deg": 15.5,
+    "pushed": false,
+    "readings": 20,
+    "closed": false
+  },
+  "outcome": "the door was not pushed closed: no lock"
+}

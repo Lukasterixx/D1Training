@@ -362,6 +362,9 @@ class D1Client:
     def set_all_joint_angles(self, angles_deg, mode: int = 0, gripper=None) -> str:
         """funcode 2. Six arm angles in degrees; the gripper is held where it is unless `gripper` is given.
 
+        `angle6` is always sent: the arm does not execute a funcode 2 command without it, and stops publishing its
+        status while it gets them (F-202; tried on the dog, 2026-10-23).
+
         `gripper` is servo 6 in the protocol's own units (`GRIPPER_UNITS_RANGE`), carried in the same
         message as the arm angles. That is deliberate: a separate funcode 1 for the gripper would spend
         one of the ten command slots a second the arm allows (F-032), and would let the jaw and the arm

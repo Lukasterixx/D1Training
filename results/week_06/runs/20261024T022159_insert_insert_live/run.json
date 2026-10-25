@@ -1,0 +1,162 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "running",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": null,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261024T022159_insert_insert_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--live"
+  ],
+  "started_utc": "20261024T022203",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 16.272,
+      "posture": "lie"
+    },
+    {
+      "t": 39.46,
+      "stop": "lying down, the arm cannot hold the key touch_wrist- (9 mm out of seated): no IK pose clear of the trunk and holdable from here (the seated key 0.47 m ahead, +0.09 m right, door -5.1 deg off square)"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 22,
+    "with_tag": 22,
+    "lidar_frames": 21,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.29 m ahead, +0.24 m left, turned -2 deg: a walk up of 0.38 m",
+    "detections": 22,
+    "site": {
+      "distance_m": 0.7191,
+      "bearing_deg": -25.904,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.379,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 6.0,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.33
+  },
+  "abort": "lying down, the arm cannot hold the key touch_wrist- (9 mm out of seated): no IK pose clear of the trunk and holdable from here (the seated key 0.47 m ahead, +0.09 m right, door -5.1 deg off square)",
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.288,
+        -0.247,
+        0.03
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.495,
+      "lock_right_m": 0.082,
+      "yaw_off_deg": -2.4,
+      "left_m": 0.015,
+      "carried_m": 0.019,
+      "carry_s": 0.08,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 15.168,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 181.4
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 55.5,
+      "turned_deg": 0.7
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.44 m ahead, +0.08 m right, door -2.8 deg off square"
+    },
+    {
+      "t": 16.168,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 182.7
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.247
+    },
+    {
+      "t": 19.268,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 182.4
+    },
+    {
+      "phase": "refit_lying",
+      "used": true,
+      "odometry_back_mm": 4.3,
+      "sit_back_added_mm": 35.7,
+      "scans": 13,
+      "moved_mm": 8.6,
+      "turned_deg": 0.35
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.47 m ahead, +0.09 m right, door -5.1 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "failed": "touch_wrist-"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 182.7
+    }
+  ]
+}

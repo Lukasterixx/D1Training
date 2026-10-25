@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """The key drawn out of Lukas's holster beside the D1's base (`holster.py`, `holster_env.py`): the robot stands on the
 walking policy, the arm unfolds to the holster, slides its open jaws onto the bar's root, closes, and draws the key out
-along the holster's axis.
+along the holster's axis and out through its mouth (v5); then puts it back the same way, lets go and slides off it.
 
     ./demos/combiner_key/run_holster.py                                    # watch one, pictures in frames/
     ./demos/combiner_key/run_holster.py --speed 1 --joint_speed 0          # the first, slower moves (stop-start on the D1)
     ./demos/combiner_key/run_holster.py --attempts 8 --headless --no_overview
     ./demos/combiner_key/run_holster.py --attempts 8 --headless --no_overview --holster_error_mm 5   # a misplaced holster
+    ./demos/combiner_key/run_holster.py --no_return                       # the draw alone
 
 Writes `logs/combiner_key_holster/<stamp>_seed<S>[_<name>]/` (`run.json`, `summary.json`, `trace.csv`, `frames/`,
 `draw.gif`); then `./dashboard.py record <dir> --title "..."`.
 
 An attempt **draws the key** when, at the end of the hold, the key is out along the holster's axis by more than its
 bar's far end started inside the holster's open end (`holster_env.OUT_MM`), still in the hand (the grip's spring within
-`GRIP_HELD_MM`), and the robot is standing.
+`GRIP_HELD_MM`), and the robot is standing. It **puts it back** when, after the jaws have let go and the hand has slid
+off, the key is within `holster_env.BACK_MM` of holstered along the axis and across it, and the robot is standing.
 """
 from __future__ import annotations
 
@@ -53,6 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--holster_error_mm", type=float, default=0.0,
                    help="Put each attempt's holster (and the key in it) off from where the draw is planned, uniformly "
                         "within this on each axis of the base's frame, mm. The plan never sees it.")
+    p.add_argument("--no_return", action="store_true", help="The draw alone: the key not put back.")
     p.add_argument("--no_overview", action="store_true", help="No overview camera (no frames): for batches.")
     p.add_argument("--run_name", default="")
     return p
@@ -97,9 +100,13 @@ def main() -> int:
              "command": " ".join(sys.argv), "git_commit": git("rev-parse", "HEAD"), "git_status": git("status", "--short"),
              "holster": {"registration": registration["inputs"], "key_mirrored": registration["key_mirrored"],
                          "grip_along_m": holster.GRIP_ALONG_M, "grip_roll": holster.GRIP_ROLL,
-                         "ik_soft": holster.IK_SOFT, "pre_out_m": holster.PRE_OUT_M, "slide_m": holster.SLIDE_M,
-                         "speed": args.speed, "joint_speed": args.joint_speed,
-                         "phase_s": {p.name: round(p.duration_s, 3) for p in holster_env.holster_phases(args.speed, args.joint_speed)},
+                         "design": registration.get("design", "v4"),
+                         "ik_soft": holster.IK_SOFT, "draw_soft_j1_j5": holster.DRAW_SOFT_J1_J5,
+                         "pre_out_m": holster.PRE_OUT_M, "slide_m": holster.SLIDE_M, "exit_m": holster.EXIT_M,
+                         "exit_deg": holster.EXIT_DEG, "turn_elbow_rad": holster.TURN_ELBOW_RAD,
+                         "put_back": not args.no_return, "speed": args.speed, "joint_speed": args.joint_speed,
+                         "phase_s": {p.name: round(p.duration_s, 3) for p in
+                                     holster_env.holster_phases(args.speed, args.joint_speed, not args.no_return)},
                          "jaw_open_m": holster.JAW_OPEN_M, "jaw_hold_m": holster.JAW_HOLD_M}}
     (out_dir / "run.json").write_text(json.dumps(early, indent=2))
 
@@ -107,7 +114,7 @@ def main() -> int:
         go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd", d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
         out_usd_path=str(ROOT / "generated/go2_d1.usd"), mount_pos=ARM_MOUNT_POS_M, arm_mass_kg=3.152).usd_path
     args.joint_speed = args.joint_speed or None
-    phases = holster_env.holster_phases(args.speed, args.joint_speed)
+    phases = holster_env.holster_phases(args.speed, args.joint_speed, not args.no_return)
     total_s = sum(p.duration_s for p in phases)
 
     cfg = demo_env.UniFPDemoEnvCfg()
@@ -177,7 +184,8 @@ def main() -> int:
         worst = {i: {"min_base_z": 9.0, "max_tilt_deg": 0.0} for i in range(env.num_envs)}
         draw = {i: {"use_max": np.zeros(6), "steps": 0, "saturated_steps": 0, "hand_miss_max_mm": 0.0,
                     "draw_hand_miss_max_mm": 0.0, "grip_err_max_mm": 0.0, "finger_contact_max_n": 0.0,
-                    "key_across_max_mm": 0.0} for i in range(env.num_envs)}
+                    "key_across_max_mm": 0.0, "return_torque_max": 0.0, "return_hand_miss_max_mm": 0.0,
+                    "return_across_max_mm": 0.0, "return_grip_err_max_mm": 0.0} for i in range(env.num_envs)}
         last_phase = [""] * env.num_envs
         with torch.no_grad():
             for step in range(steps):
@@ -205,13 +213,15 @@ def main() -> int:
                     w["min_base_z"] = min(w["min_base_z"], float(base[i, 2]))
                     w["max_tilt_deg"] = max(w["max_tilt_deg"], math.degrees(float(np.abs(rp[i]).max())))
                     drawing = phase in holster_env.DRAW_PHASES
+                    returning = phase in holster_env.RETURN_PHASES
                     out_mm, across_mm, tilt_deg = env.key_out_mm(i)
                     d = draw[i]
                     spawn_rot = holster_env.door_env.head_camera.quat_to_matrix(env._spawn_yaw_quat[i].cpu().numpy())
                     sent = (env._spawn_pos[i].cpu().numpy() + spawn_rot @ np.asarray(command.point)
                             if command is not None else None)
                     hand_mm = (1000 * float(np.linalg.norm(sent - (centre[i] - env.scene.env_origins[i]).cpu().numpy()))
-                               if sent is not None and phase in ("pre", "on", "close", "draw", "hold") else None)
+                               if sent is not None and phase in ("pre", "on", "close", "draw", "exit", "hold", "enter",
+                                                                 "back", "open", "off") else None)
                     finger_n = float(fingers[i]) if fingers is not None else None
                     if drawing:
                         d["use_max"] = np.maximum(d["use_max"], use[i])
@@ -227,7 +237,15 @@ def main() -> int:
                             d["finger_contact_max_n"] = max(d["finger_contact_max_n"], finger_n)
                         if phase in ("pre", "on", "close", "draw") and out_mm < holster_env.OUT_MM:
                             d["key_across_max_mm"] = max(d["key_across_max_mm"], across_mm)
-                    if drawing or step % 5 == 0:
+                    if returning:
+                        d["return_torque_max"] = max(d["return_torque_max"], float(use[i].max()))
+                        if hand_mm is not None:
+                            d["return_hand_miss_max_mm"] = max(d["return_hand_miss_max_mm"], hand_mm)
+                        if phase in ("enter", "back"):
+                            d["return_grip_err_max_mm"] = max(d["return_grip_err_max_mm"], float(env.grip_err_mm[i]))
+                            if out_mm < holster_env.OUT_MM:
+                                d["return_across_max_mm"] = max(d["return_across_max_mm"], across_mm)
+                    if drawing or returning or step % 5 == 0:
                         rows.append({"batch": batch, "env": i, "t_s": round(step * interface.POLICY_DT, 2), "phase": phase,
                                      "base_z": round(float(base[i, 2]), 4),
                                      "roll_deg": round(math.degrees(float(rp[i, 0])), 2),
@@ -241,7 +259,8 @@ def main() -> int:
                                         enumerate(data.joint_pos[i, env._arm_ids].cpu().numpy())},
                                      **{f"use_j{j + 1}": round(float(use[i, j]), 3) for j in range(6)},
                                      "ik": env.ik_status[i], "key_mode": env.key_mode[i], "wall_ms": round(wall_ms, 2)})
-                    if (i == 0 and batch == 0 and env._overview is not None and drawing and step % frame_every == 0):
+                    if (i == 0 and batch == 0 and env._overview is not None and (drawing or returning)
+                            and step % frame_every == 0):
                         frames.append(_save_frame(env, out_dir, len(frames), step * interface.POLICY_DT, phase,
                                                   rows[-1]))
         for i in range(count):
@@ -258,20 +277,35 @@ def main() -> int:
                        "draw_hand_miss_max_mm": round(d["draw_hand_miss_max_mm"], 1),
                        "grip_err_max_mm": round(d["grip_err_max_mm"], 2),
                        "finger_contact_max_n": round(d["finger_contact_max_n"], 2),
-                       "key_across_in_holster_max_mm": round(d["key_across_max_mm"], 2)}
+                       "key_across_in_holster_max_mm": round(d["key_across_max_mm"], 2),
+                       "return_torque_max": round(d["return_torque_max"], 3),
+                       "return_hand_miss_max_mm": round(d["return_hand_miss_max_mm"], 1),
+                       "return_across_in_holster_max_mm": round(d["return_across_max_mm"], 2),
+                       "return_grip_err_max_mm": round(d["return_grip_err_max_mm"], 2)}
             attempt["smoothness"] = _smoothness([r for r in rows if r["batch"] == batch and r["env"] == i])
-            attempt["drawn"] = bool(end["key_out_mm"] > holster_env.OUT_MM and end["grip_err_mm"] < GRIP_HELD_MM
-                                    and env.key_mode[i] == "held" and not fell)
+            drawn = record.get("drawn") or (end if args.no_return else {})
+            attempt["drawn_key"] = drawn
+            attempt["drawn"] = bool(drawn and drawn["key_out_mm"] > holster_env.OUT_MM
+                                    and drawn["grip_err_mm"] < GRIP_HELD_MM and not fell
+                                    and (not args.no_return or env.key_mode[i] == "held"))
+            back, rest = record.get("back"), record.get("grasp")
+            attempt["put_back"] = (None if args.no_return else bool(
+                back and rest and abs(back["key_out_mm"]) < holster_env.BACK_MM
+                and abs(back["key_across_mm"] - rest["key_across_mm"]) < holster_env.BACK_MM and not fell))
             attempts.append(attempt)
         remaining -= count
         batch += 1
 
     summary = {"attempts": len(attempts), "drawn": sum(1 for a in attempts if a["drawn"]),
+               "put_back": None if args.no_return else sum(1 for a in attempts if a["put_back"]),
+               "back_key_out_mm": [a.get("back", {}).get("key_out_mm") for a in attempts],
+               "back_key_across_mm": [a.get("back", {}).get("key_across_mm") for a in attempts],
+               "return_across_in_holster_max_mm": [a["return_across_in_holster_max_mm"] for a in attempts],
                "fell": sum(1 for a in attempts if a["fell"]),
                "holster_error_mm": args.holster_error_mm, "speed": args.speed, "joint_speed": args.joint_speed,
                "draw_s": round(sum(p.duration_s for p in phases), 2),
                "draw_near_stopped": [a["smoothness"].get("draw", {}).get("near_stopped") for a in attempts],
-               "key_out_mm": [a["end"]["key_out_mm"] for a in attempts],
+               "key_out_mm": [a["drawn_key"].get("key_out_mm") for a in attempts],
                "grasp_miss_mm": [a.get("grasp", {}).get("grasp_miss_mm") for a in attempts],
                "grip_err_max_mm": [a["grip_err_max_mm"] for a in attempts],
                "torque_use_max": [max(a["torque_use_max"]) for a in attempts]}

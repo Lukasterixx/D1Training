@@ -1,0 +1,80 @@
+{
+  "mode": "leg_press_dry",
+  "status": "recorded",
+  "published": "nothing",
+  "arguments": {
+    "policy": "checkpoints/leg_press_force_ft6_model_6998.npz",
+    "live": false,
+    "rehearse": false,
+    "plate": "palm_up",
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "ramp_s": 0.5,
+    "hold_s": 3.0,
+    "standoff": 0.04,
+    "speed": 0.03,
+    "hand_wait_s": 15.0,
+    "presses": 0,
+    "stand_s": 10.0,
+    "policy_s": 90.0,
+    "tilt_limit_deg": 40.0,
+    "start_on_blend": true,
+    "start_tol_rad": 0.3,
+    "start_pitch_deg": [
+      -15.0,
+      5.0
+    ],
+    "force_abort_n": 25.0,
+    "cmd_hz": 500.0,
+    "topic": "/lowstate",
+    "arm_link_port": 8095,
+    "print_s": 1.0,
+    "run_dir": "/root/D1Training/logs/leg_press"
+  },
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261023T123207_train_seed3_press_ft6_force_s3/model_6998.pt",
+    "checkpoint_sha256": "8cdabb7cd5e8afeffa0267a35d61b6250a3314c6989c13924ed0d91a1a0ae77d",
+    "checkpoint_iteration": 6998
+  },
+  "summary": {
+    "live": false,
+    "rehearse": false,
+    "plate": "palm_up",
+    "plate_contact_m": [
+      0.331,
+      -0.202,
+      0.112
+    ],
+    "plate_n": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "abort_reason": null,
+    "end_reason": "--stand_s 10.0 s",
+    "final_mode": "done",
+    "sport_mode": "",
+    "handed_back": false,
+    "left_released": false,
+    "presses": [],
+    "last_stage": "waiting",
+    "max_tilt_deg": 0.0,
+    "lowcmd_sent": 0,
+    "events": 4,
+    "steps": 501,
+    "seconds": 10.02,
+    "policy_steps": 501,
+    "step_period_s": {
+      "median": 0.02,
+      "p99": 0.0203
+    },
+    "commanded_level_max_n": 0.0,
+    "infer_ms": {
+      "median": 1.82,
+      "p99": 2.32
+    }
+  }
+}

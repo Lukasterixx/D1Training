@@ -112,6 +112,7 @@ class ArmIK:
         self.offset = np.asarray(offset, dtype=float)
         self.seeded_loop = seeded_loop
         self.max_iterations = 100 if seeded_loop else max_iterations
+        self.soft = d1_ik.SOFT_LIMIT_FACTOR      # one factor or six (`d1_ik.joint_limits`)
         self.reset(np.zeros(6))
 
     def reset(self, q) -> None:
@@ -149,18 +150,19 @@ class ArmIK:
         point_b = np.asarray(point_b, dtype=float)
         if rot_b is not None:
             result = d1_ik.solve(self.joints, point_b, rot_b, q0=self.q, body="Link6", offset=self.offset,
-                                 max_iterations=self.max_iterations)
+                                 max_iterations=self.max_iterations, soft=self.soft)
             if result.converged or (not self.seeded_loop and result.position_error_m < POSE_ACCEPT_M
                                     and result.rotation_error_rad < POSE_ACCEPT_RAD):
                 self.q = result.q
                 return IKStep(result.q, "pose", result.position_error_m, result.rotation_error_rad)
             if self.seeded_loop:
-                seeded = solve_link6(self.joints, self.links, point_b, rot_b, _seeds(point_b, [self.q]), self.offset)
+                seeded = solve_link6(self.joints, self.links, point_b, rot_b, _seeds(point_b, [self.q]), self.offset,
+                                     self.soft)
                 if seeded is not None:
                     self.q = seeded.q
                     return IKStep(seeded.q, "pose_reseeded", seeded.position_error_m, seeded.rotation_error_rad)
         result = d1_ik.solve(self.joints, point_b, None, q0=self.q, body="Link6", offset=self.offset,
-                             max_iterations=self.max_iterations)
+                             max_iterations=self.max_iterations, soft=self.soft)
         if result.position_error_m < 0.01:
             self.q = result.q
             return IKStep(result.q, "position", result.position_error_m, float("nan"))

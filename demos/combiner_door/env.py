@@ -116,6 +116,58 @@ def pre_phases(look_back_m: float = LOOK_BACK_M) -> list[demo_script.Phase]:
     ]
 
 
+#: The door closed again after the pull (`--close`, Lukas, 2026-10-25): the robot program's first close (its
+#: `plan.DoorClose` of 2026-10-25, from the pull's fix and the lidar's angle; the robot's close now backs up and looks at
+#: the tag on the open door, `robot/key_plan.DoorClose`, which this does not model) in the simulated demo's terms, its base on paths round the hinge as the pull's. Standing where the pull left it,
+#: the lidar reads the door (`door_look`, its readings' median as `plan.DoorClose` takes it; none: the pull's angle);
+#: the base walks round the hinge to that angle (`door_align`), the hand grabs the handle there (`re_approach` to
+#: `re_grip`), and the base walks the door back to `plan.CLOSE_TO_DEG` (`push`), holds, lets go and goes home. The
+#: phases are named apart from the pull's, which the run's record scores by name.
+DOOR_ALIGN_S = 4.0
+CLOSE_PHASES = ("door_look", "door_align", "re_approach", "re_settle", "re_enter", "re_arrive", "re_grip", "push",
+                "push_hold", "re_release", "re_back")
+
+
+def close_phases(timing: demo_script.DoorTiming) -> list[demo_script.Phase]:
+    """The close after the door script's pull (`CLOSE_PHASES`): the door's angle as read is the environment's
+    (`CombinerDoorEnv._state_of`'s `close`), the pull's commanded one until `door_look` ends."""
+    from demos.combiner_door.robot import plan
+
+    Phase = demo_script.Phase
+    opened, shut = demo_script.JAW_LEVER_OPEN_M, demo_script.JAW_BAR_SHUT_M
+    site = lambda st: st["box_site"]
+    start = lambda st: st["close"].get("from_deg") or timing.door_deg
+    end = plan.CLOSE_TO_DEG
+    at = lambda st, d: site(st).grasp_point_m(0.0, d)
+    home = lambda st, u: home_at(st["base"])
+    still = lambda d: (lambda st, u: site(st).base_pose_m(d(st)))
+    reach = dict(approach=lambda st: site(st).approach_unit(start(st)),
+                 object_axis=lambda st: site(st).lever_axis_unit(0.0, start(st)), base=still(start))
+    standoff = lambda st: demo_script.offset(at(st, start(st)), site(st).approach_unit(start(st)), timing.standoff_m)
+    door = lambda st, u: start(st) + (end - start(st)) * u
+    pushed = dict(approach=lambda st: site(st).approach_unit(end), object_axis=lambda st: site(st).lever_axis_unit(0.0, end),
+                  base=still(lambda st: end))
+    return [
+        Phase("door_look", plan.DOOR_LOOK_S, path=home, jaw_m=opened, base=still(lambda st: timing.door_deg)),
+        Phase("door_align", DOOR_ALIGN_S, path=home, jaw_m=opened,
+              base=lambda st, u: site(st).base_pose_m(timing.door_deg + (start(st) - timing.door_deg) * u)),
+        Phase("re_approach", timing.approach_s, target=standoff, jaw_m=opened, **reach),
+        Phase("re_settle", timing.settle_s, target=standoff, jaw_m=opened, servo=True, **reach),
+        Phase("re_enter", timing.enter_s, target=lambda st: at(st, start(st)), jaw_m=opened, servo=True, **reach),
+        Phase("re_arrive", timing.arrive_s, target=lambda st: at(st, start(st)), jaw_m=opened, servo=True, **reach),
+        Phase("re_grip", timing.grip_s, target=lambda st: at(st, start(st)), jaw_m=shut, servo=True, **reach),
+        Phase("push", timing.pull_s, jaw_m=shut, servo=True, path=lambda st, u: at(st, door(st, u)),
+              approach_path=lambda st, u: site(st).approach_unit(door(st, u)),
+              object_axis_path=lambda st, u: site(st).lever_axis_unit(0.0, door(st, u)),
+              base=lambda st, u: site(st).base_pose_m(door(st, u))),
+        Phase("push_hold", timing.hold_s, target=lambda st: at(st, end), jaw_m=shut, servo=True, **pushed),
+        Phase("re_release", timing.release_s, target=lambda st: at(st, end), jaw_m=opened, servo=True, **pushed),
+        Phase("re_back", timing.back_s, jaw_m=opened, target=lambda st: site(st).from_base(site(st).base_pose_m(end),
+                                                                                              demo_script.HOME_POINT),
+              **pushed),
+    ]
+
+
 def shifted_site(site: props.BoxSite, forward_m: float) -> props.BoxSite:
     """`site`, given from a stance `forward_m` ahead, as seen from the spawn behind it."""
     pose = perception.site_pose(site)
@@ -127,7 +179,7 @@ class CombinerDoorEnv(DecoupledDoorEnv):
     def __init__(self, cfg, render_mode=None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
         self.parked_phases = set(PARKED_PHASES)
-        self.position_only_phases = set(STOW_PHASES)
+        self.position_only_phases = set(STOW_PHASES) | {"door_look", "door_align"}
         self.joint_phases = set(JOINT_PHASES)
         self.look_back_m = float(getattr(cfg, "look_back_m", LOOK_BACK_M))
         self.door_deg = float(getattr(cfg, "door_deg", props.DOOR_PULL_DEG))
@@ -149,6 +201,8 @@ class CombinerDoorEnv(DecoupledDoorEnv):
         #: The simulator's door angle at each reading, for the record only: nothing here reads it.
         self.lidar_truth_deg = [math.nan] * count
         self._base_now = np.zeros((count, 3))
+        #: The close (`close_phases`): the lidar's readings through `door_look` and the angle taken from them.
+        self.closes: list[dict] = [{} for _ in range(count)]
         self._noise = torch.Generator(device=self.device)
         self._noise.manual_seed(int(cfg.seed or 0))
 
@@ -165,6 +219,52 @@ class CombinerDoorEnv(DecoupledDoorEnv):
         self.scene.sensors["front_cam"] = self._front_cam
         self._lidar = MultiMeshRayCaster(mid360.lidar_cfg(LIDAR_TARGETS, BASE_PRIM))
         self.scene.sensors["mid360"] = self._lidar
+        self._carried = None
+        if getattr(self.cfg, "show_holster", False):
+            self._carried = self._spawn_holster()
+
+    def _spawn_holster(self) -> dict:
+        """Lukas's holster beside the D1's base and the key in it (`demos/combiner_key/holster_env.py`'s, v5 and the v4
+        lever), drawn on the robot as visualization markers, posed from the base every policy step
+        (`_carry_holster`): no physics of their own (the markers strip it), and out of the cameras' images and the
+        lidar's targets. Shown only: through the pull and the close the key stays in the holster. Drawn as kinematic
+        rigid bodies first, and then as these, the pull failed in every attempt (`--show_holster`, 2026-10-25): not
+        the bodies but the import of `demos/combiner_key/env.py`, which puts every `props.BoxSite`'s root on the floor
+        (that demo has no plinth) and so moved the door script's grasp off the handle. So nothing from it is imported
+        here."""
+        from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
+        from isaaclab.utils.math import quat_from_matrix
+
+        from demos.combiner_key import asset, holster
+        from mount import ARM_MOUNT_POS_M
+
+        out = head_camera.ROOT / "generated/combiner_key"
+        mount = np.eye(4)
+        mount[:3, 3] = ARM_MOUNT_POS_M
+        markers = VisualizationMarkers(VisualizationMarkersCfg(prim_path="/Visuals/CarriedHolster", markers={
+            "key": sim_utils.UsdFileCfg(usd_path=str(asset.build_holster_key_usd(out / "holster_key.usda"))),
+            "holster": sim_utils.UsdFileCfg(usd_path=str(asset.build_holster_usd(out / "holster.usda")))}))
+        # Both turned as the holstered key is (`holster_env._place_key`): the holster's prim and the key's differ by
+        # where along the holster's axis they sit.
+        offsets = [(mount @ holster.key_in_d1_base())[:3, 3], (mount @ holster.holster_in_d1_base())[:3, 3]]
+        rot = torch.as_tensor((mount @ holster.key_in_d1_base())[:3, :3], dtype=torch.float32)
+        return {"markers": markers, "offsets": offsets, "quat": quat_from_matrix(rot).numpy()}
+
+    def _carry_holster(self) -> None:
+        from isaaclab.utils.math import quat_mul
+
+        c = self._carried
+        data = self._robot.data
+        n = self.num_envs
+        if "offsets_t" not in c:
+            c["offsets_t"] = [torch.as_tensor(o, dtype=torch.float32, device=self.device).expand(n, 3)
+                              for o in c["offsets"]]
+            c["quat_t"] = torch.as_tensor(c["quat"], dtype=torch.float32, device=self.device).expand(n, 4)
+            c["indices"] = [0] * n + [1] * n
+        positions = torch.cat([data.root_pos_w + interface.quat_apply(data.root_quat_w, o) for o in c["offsets_t"]])
+        quat = quat_mul(data.root_quat_w, c["quat_t"])
+        c["markers"].visualize(translations=positions, orientations=torch.cat([quat, quat]),
+                               marker_indices=c["indices"])
 
     # --- placements: given from the stance, placed from the spawn behind it -------------------------
 
@@ -177,7 +277,8 @@ class CombinerDoorEnv(DecoupledDoorEnv):
         return self.estimates[index]
 
     def _state_of(self, index: int) -> dict:
-        return {"env": index, "box_site": self.estimates[index], "base": tuple(self._base_now[index])}
+        return {"env": index, "box_site": self.estimates[index], "base": tuple(self._base_now[index]),
+                "close": self.closes[index]}
 
     def _walk_base(self) -> None:
         """The parent's walk, except through `STRAIGHT_PHASES`: `WALK_IN_SPEED` straight ahead until within `ARRIVED_M`
@@ -210,6 +311,7 @@ class CombinerDoorEnv(DecoupledDoorEnv):
             self.lidar_readings[index] = mid360.NO_READING
             self.lidar_times_s[index] = math.nan
             self.lidar_truth_deg[index] = math.nan
+            self.closes[index] = {}
 
     def _fold(self, env_ids) -> None:
         """The arm in the real D1's rest pose, held there: the joints, the planner and the IK's seed."""
@@ -313,6 +415,13 @@ class CombinerDoorEnv(DecoupledDoorEnv):
             return 0.0
         if command.phase == "pull":
             return self.door_deg * command.progress
+        if command.phase in CLOSE_PHASES:
+            from demos.combiner_door.robot import plan
+
+            start = self.closes[index].get("from_deg") or self.door_deg
+            if command.phase == "push":
+                return start + (plan.CLOSE_TO_DEG - start) * command.progress
+            return plan.CLOSE_TO_DEG if command.phase in ("push_hold", "re_release", "re_back") else start
         return self.door_deg if command.phase in ("hold", "release", "back", "done") else 0.0
 
     def _lidar_frame(self) -> None:
@@ -348,6 +457,9 @@ class CombinerDoorEnv(DecoupledDoorEnv):
             reading = mid360.door_angle(in_box, self._door_prior[index])
             if reading.ok:
                 self._door_prior[index] = reading.angle_deg
+                demo = self.scripts[index]
+                if not demo.finished and demo.phases[demo.index].name == "door_look":
+                    self.closes[index].setdefault("readings", []).append(float(reading.angle_deg))
             self.lidar_readings[index] = reading
             self.lidar_times_s[index] = float(time_s[index])
             self.lidar_truth_deg[index] = float(truth[index])
@@ -358,8 +470,31 @@ class CombinerDoorEnv(DecoupledDoorEnv):
 
     # --- the step ---------------------------------------------------------------------------------
 
+    def _close_look(self) -> None:
+        """Past `door_look`: the door's angle the close works from, as `plan.DoorClose` takes it (the readings' median,
+        those `plan.DOOR_LOOK_SPREAD_DEG` off it dropped; none: the pull's angle)."""
+        from demos.combiner_door.robot import plan
+
+        for index, demo in enumerate(self.scripts):
+            close = self.closes[index]
+            name = "done" if demo.finished else demo.phases[demo.index].name
+            if name == "door_look":
+                close["looking"] = True
+            elif close.get("looking") and "from_deg" not in close:
+                readings = close.get("readings", [])
+                if readings:
+                    middle = float(np.median(readings))
+                    kept = [r for r in readings if abs(r - middle) <= plan.DOOR_LOOK_SPREAD_DEG]
+                    close["from_deg"], close["how"] = float(np.median(kept)), f"lidar, {len(kept)} of {len(readings)}"
+                else:
+                    close["from_deg"], close["how"] = self.door_deg, "the pull's angle (no lidar reading)"
+                close["truth_deg"] = float(self.box_state()["door_deg"][index])
+
     def _scripted_goal(self) -> torch.Tensor:
         self._base_now = self.base_pose_in_spawn().cpu().numpy()
+        if self._carried:
+            self._carry_holster()
+        self._close_look()
         self._look()
         goal = super()._scripted_goal()
         self._lidar_frame()

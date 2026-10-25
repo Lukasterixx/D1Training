@@ -234,10 +234,7 @@ class _Markers:
 
 def door_pose(box, angle_deg: float) -> np.ndarray:
     """The door's frame (the enclosure's, turned about the hinge by `angle_deg`), as the box frame `box` puts it."""
-    g = GEOMETRY
-    hinge = np.asarray(g.hinge)
-    turn = plan.pose(plan.rot_z(math.radians(g.hinge_axis_z * angle_deg)))
-    return np.asarray(box) @ plan.pose(None, hinge) @ turn @ plan.pose(None, -hinge)
+    return np.asarray(box) @ plan.about_hinge(angle_deg)
 
 
 def box_markers(out: _Markers, box, door_deg: float, colour=DOOR) -> None:
@@ -300,7 +297,8 @@ def scene_markers(cls, stamp, fix: plan.Fix, attempt, status: str, note: str, do
     whose real door stays shut while the plan opens it): the script's. `door_task` False: no door pull's base path or
     grasp. `extra(out, box)`: another task's markers (`demos/combiner_key/robot/key_viz.py`)."""
     out = _Markers(cls, stamp)
-    box = perception.site_pose(fix.site)
+    # The box with its door shut, which the door's angle is drawn from (the door close's look is of the open door).
+    box = perception.site_pose(attempt.box_site() if attempt is not None else fix.site)
     commanded = attempt.commanded_door_deg() if attempt is not None else 0.0
     shown = door.angle_deg if door.ok and not plan_door else commanded
     box_markers(out, box, shown)
@@ -313,7 +311,8 @@ def scene_markers(cls, stamp, fix: plan.Fix, attempt, status: str, note: str, do
         door_deg = attempt.timing.door_deg if attempt is not None else 90.0
         path = [(*fix.site.base_pose_m(a)[:2], 0.0) for a in np.linspace(0.0, door_deg, 19)]
         out.add("base_path", "LINE_STRIP", None, (0.012, 0, 0), YELLOW, points=path)
-        out.add("grasp", "SPHERE", plan.pose(None, fix.site.grasp_point_m()), (0.02, 0.02, 0.02), YELLOW)
+        grasp = (attempt.grasp_site(fix.site) if attempt is not None else fix.site).grasp_point_m()
+        out.add("grasp", "SPHERE", plan.pose(None, grasp), (0.02, 0.02, 0.02), YELLOW)
     if extra is not None:
         extra(out, box)
     last = getattr(attempt, "last_command", None) if attempt is not None else None

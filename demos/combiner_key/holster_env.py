@@ -6,16 +6,22 @@ On top of `env.CombinerKeyEnv` (its robot, its key's spring grip):
 - **The holster** (`asset.build_holster_usd`) is a kinematic body carried with the robot's base every physics step, at
   `holster.key_in_d1_base()` on the arm's mount: part of the robot, but its colliders are its own (boxes,
   `holster.HOLSTER_BOXES`). Its contacts with the robot's own links are filtered out; with the key they are not.
-- **The key** is the simulation's (v3 mirrored, `asset.build_holster_key_usd`), a free rigid body with its bar, platform and shaft as
-  colliders. Until the hand comes for it it is held in the holster's pose (`holstered`); from `pre` on PhysX alone
+- **The key** is Lukas's v4 lever (2026-10-24, `asset.build_holster_key_usd`; v3 mirrored and stretched 1 cm before), a
+  free rigid body with its bar and shaft as colliders. Until the hand comes for it it is held in the holster's pose (`holstered`); from `pre` on PhysX alone
   keeps it there, resting in the holster's boxes. Its contacts with the robot are not filtered: a finger, the D1's base
   or a link it touches pushes it.
-- **The draw** (`holster_phases`): Joint1 turned with the arm still folded, the arm unfolded in joint space to the
-  hand 45 mm out along the lever's axis past its root, jaws open (`holster.unfold_stages`, solved from the robot's base
-  as it stands); then the IK slides the hand onto the bar's root, the jaws close, and the hand draws the key out along
-  the axis 100 mm and holds it. The points and the hand's rotation are `holster.draw_points` in the base's current
-  frame, so the base's own sway is followed.
-- **A misplaced holster** (`holster_shift`): the holster and the key in it put off from where the draw is planned, to
+- **The draw** (`holster_phases`): Joint1 turned with the arm still folded (the elbow opened), the arm unfolded in
+  joint space to the hand above `pre` and down to it, `holster.PRE_OUT_M` out along the lever's axis past its root,
+  jaws open (`holster.unfold_stages`); then the IK slides the hand onto the bar's root, the jaws close, and the hand
+  draws the key out along the axis `holster.SLIDE_M` and on out through v5's mouth (`exit`, `holster.EXIT_M` at
+  `holster.EXIT_DEG`), and holds it. The points and the hand's rotation are `holster.draw_points` in the base's
+  current frame, so the base's own sway is followed. Out of the holster Joint1 and Joint5 may go to
+  `holster.DRAW_SOFT_J1_J5` of their range.
+- **The way back** (`RETURN_PHASES`, Lukas, 2026-10-24: "make it so that the arm puts the lever back in the holster"):
+  the exit and the draw played the other way (`enter`, into the mouth; `back`, down the channel to the grip), the jaws
+  let go (`open`) and the hand slides off the bar to `pre` (`off`) and waits (`away`). The plan is the model's: with
+  `holster_shift` the key meets the mouth off its axis, which is what the mouth is for.
+- **A misplaced holster** (`holster_shift`): the draw planned off from where the holster and the key in it are, to
   see what the jaws' 10 mm a side round the bar take up.
 - **The grip** is the key demo's spring (`env.GRIP_*`), switched on as the draw starts, at the key's pose in the hand
   where the jaws closed on it (not where they were meant to: how far that was off is the record's `grasp_miss`). The
@@ -51,7 +57,10 @@ from . import asset, env as key_env, holster
 #: The phases' lengths at `speed` 1, s: turning Joint1 at the fold, the unfold, the wait at `pre`, onto the bar, the
 #: jaws closing, the draw, the hold after it. `holster_phases(speed)` divides the moves' (turn, reach, on, draw) by it;
 #: the waits and the jaws keep theirs.
-TURN_S, REACH_S, PRE_S, ON_S, CLOSE_S, DRAW_S, HOLD_S = 2.5, 3.5, 1.5, 3.0, 1.0, 5.0, 2.0
+TURN_S, REACH_S, LOWER_S, PRE_S, ON_S, CLOSE_S, DRAW_S, HOLD_S = 2.5, 4.0, 2.0, 1.5, 3.0, 1.0, 5.0, 2.0
+#: (The unfold was one move, `reach`, of 3.5 s: with the grip 1 cm higher, `holster.LEVER_EXTRA_M`, it had not arrived
+#: at 2x when `pre` began, and its straight line in joint space put a finger through the key's root. Now it goes to the
+#: point above `pre` and down: `holster.unfold_stages`.)
 #: The joint-space moves' step per 10 Hz command at `speed` 1 (`DecoupledDoorEnv.joint_step_rad`'s 4 degrees), and the
 #: most it is raised to: 6.5 degrees a command is 1.13 rad/s, under the D1's measured 1.21-1.29
 #: (`motor_model.D1_VELOCITY_LIMIT_RAD_S`).
@@ -62,17 +71,25 @@ JOINT_STEP_DEG, JOINT_STEP_MAX_DEG = 4.0, 6.5
 #: the grip's worst error 3.2 mm not 3.6. Twice as fast evenly lagged 37 mm (the wrist roll and Joint1 at ~1.25 rad/s);
 #: paced at 1.0 rad/s, 14 mm.
 SPEED, JOINT_SPEED_RAD_S = 2.0, 0.6
-DRAW_PHASES = ("turn", "reach", "pre", "on", "close", "draw", "hold")
+#: The exit through the mouth (`holster.EXIT_M`) at `speed` 1, s, when not paced; and the way back's jaws and wait.
+EXIT_S, OPEN_S, AWAY_S = 1.5, 1.0, 1.5
+DRAW_PHASES = ("turn", "reach", "lower", "pre", "on", "close", "draw", "exit", "hold")
+RETURN_PHASES = ("enter", "back", "open", "off", "away")
 #: Pictures every this often from `turn` on.
 FRAME_EVERY_S = 0.25
-#: The key out: its far end past the holster's open end by this much more than it started inside it, along the axis.
-OUT_MM = 75.0
+#: The key out: its far end past the holster's open end (v5: its mouth's lip, 83 mm from where it sits) along the axis.
+OUT_MM = 83.0
+#: The key back: within this of holstered along the axis, and of where it rested before the grasp across it (it rests
+#: ~2.5 mm across and 1.2 degrees tilted, its shaft end out of the channel), once the jaws have let it go.
+BACK_MM = 3.0
 
 
-def holster_phases(speed: float = SPEED, joint_speed: float | None = JOINT_SPEED_RAD_S) -> list[demo_script.Phase]:
+def holster_phases(speed: float = SPEED, joint_speed: float | None = JOINT_SPEED_RAD_S,
+                   put_back: bool = True) -> list[demo_script.Phase]:
     """After the spawn's settle: the unfold in two joint-space moves, then the draw by the IK; the moves `speed` times
-    as fast as the defaults. With `joint_speed` (rad/s), the two straight moves (`on`, `draw`) are paced instead so the
-    fastest joint turns at that speed throughout (`holster.joint_paced`), not eased in and out evenly along the line.
+    as fast as the defaults. With `joint_speed` (rad/s), the three straight moves (`on`, `draw`, `exit`) are paced
+    instead so the fastest joint turns at that speed throughout (`holster.joint_paced`), not eased in and out evenly
+    along the line. With `put_back`, the way back (`RETURN_PHASES`): those moves the other way, paced as they were.
 
     Faster is smoother on the D1, to a point: its firmware plans each 10 Hz setpoint from rest (`motor_model`, F-045),
     so a joint asked for less than ~2.5 degrees a command gets there inside the 100 ms and stops until the next one."""
@@ -81,22 +98,38 @@ def holster_phases(speed: float = SPEED, joint_speed: float | None = JOINT_SPEED
                                                                                         - np.asarray(st["draw"][a]))))
     hand = dict(approach=lambda st: st["draw"]["approach"], object_axis=lambda st: st["draw"]["bar"])
     opened, held = holster.JAW_OPEN_M, holster.JAW_HOLD_M
-    on_s, draw_s = ON_S / speed, DRAW_S / speed
+    on_s, draw_s, exit_s = ON_S / speed, DRAW_S / speed, EXIT_S / speed
     if joint_speed is not None:
         paced = holster.joint_paced(joint_speed)
-        (on_s, on_u, on_f), (draw_s, draw_u, draw_f) = paced["on"], paced["draw"]
-        line = lambda a, b, us, fs: (lambda st, u: tuple(np.asarray(st["draw"][a]) + float(np.interp(u, us, fs))
-                                                         * (np.asarray(st["draw"][b]) - np.asarray(st["draw"][a]))))
-        on_path, draw_path = line("pre", "grip", on_u, on_f), line("grip", "out", draw_u, draw_f)
+        (on_s, on_u, on_f, _), (draw_s, draw_u, draw_f, _) = paced["on"], paced["draw"]
+        exit_s, exit_u, exit_f, _ = paced["exit"]
+        # From a to b at the pacing (us, fs); `back` from b to a, the same pacing played backwards.
+        line = lambda a, b, us, fs, back=False: (lambda st, u: tuple(
+            np.asarray(st["draw"][a]) + float(np.interp(1.0 - u if back else u, us, fs))
+            * (np.asarray(st["draw"][b]) - np.asarray(st["draw"][a]))))
+        on_path, draw_path, exit_path = (line("pre", "grip", on_u, on_f), line("grip", "out", draw_u, draw_f),
+                                         line("out", "exit", exit_u, exit_f))
+        off_path, back_path, enter_path = (line("pre", "grip", on_u, on_f, True), line("grip", "out", draw_u, draw_f, True),
+                                           line("out", "exit", exit_u, exit_f, True))
     else:
-        on_path, draw_path = along("pre", "grip"), along("grip", "out")
-    return [demo_script.Phase("turn", TURN_S / speed, path=point("pre"), jaw_m=opened, **hand),
+        on_path, draw_path, exit_path = along("pre", "grip"), along("grip", "out"), along("out", "exit")
+        off_path, back_path, enter_path = along("grip", "pre"), along("out", "grip"), along("exit", "out")
+    phases = [demo_script.Phase("turn", TURN_S / speed, path=point("pre"), jaw_m=opened, **hand),
             demo_script.Phase("reach", REACH_S / speed, path=point("pre"), jaw_m=opened, **hand),
+            demo_script.Phase("lower", LOWER_S / speed, path=point("pre"), jaw_m=opened, **hand),
             demo_script.Phase("pre", PRE_S, path=point("pre"), jaw_m=opened, **hand),
             demo_script.Phase("on", on_s, path=on_path, jaw_m=opened, **hand),
             demo_script.Phase("close", CLOSE_S, path=point("grip"), jaw_m=held, **hand),
             demo_script.Phase("draw", draw_s, path=draw_path, jaw_m=held, **hand),
-            demo_script.Phase("hold", HOLD_S, path=point("out"), jaw_m=held, **hand)]
+            demo_script.Phase("exit", exit_s, path=exit_path, jaw_m=held, **hand),
+            demo_script.Phase("hold", HOLD_S, path=point("exit"), jaw_m=held, **hand)]
+    if put_back:
+        phases += [demo_script.Phase("enter", exit_s, path=enter_path, jaw_m=held, **hand),
+                   demo_script.Phase("back", draw_s, path=back_path, jaw_m=held, **hand),
+                   demo_script.Phase("open", OPEN_S, path=point("grip"), jaw_m=opened, **hand),
+                   demo_script.Phase("off", on_s, path=off_path, jaw_m=opened, **hand),
+                   demo_script.Phase("away", AWAY_S, path=point("pre"), jaw_m=opened, **hand)]
+    return phases
 
 
 def _smooth(u: float) -> float:
@@ -128,20 +161,25 @@ class HolsterEnv(key_env.CombinerKeyEnv):
         self.joint_step_rad = math.radians(min(JOINT_STEP_DEG * speed, JOINT_STEP_MAX_DEG))
         self.parked_phases = {"spawn"}
         self.position_only_phases = set()
-        self.joint_phases = {"turn", "reach"}
+        self.joint_phases = {"turn", "reach", "lower"}
         from motor_model import D1_EFFORT_LIMIT_NM
         from demos.unifp.decoupled import ARM_NAMES
 
         self.arm_effort = torch.as_tensor([D1_EFFORT_LIMIT_NM[name] for name in ARM_NAMES], device=self.device)
         mount = np.eye(4)
         mount[:3, 3] = ARM_MOUNT_POS_M
-        #: The holstered key's frame (and the holster's prim frame) in the Go2's base.
+        #: The holstered key's frame, and the holster's prim frame, in the Go2's base: apart by `holster.LEVER_EXTRA_M`
+        #: along the holster's axis (the lever that much longer than v3).
         self.key_in_base = mount @ holster.key_in_d1_base()
-        self._key_in_base_t = torch.as_tensor(self.key_in_base[:3, 3], dtype=torch.float32, device=self.device)
-        self._key_quat_base_t = torch.as_tensor(key_env._matrix_quat(self.key_in_base[:3, :3]), dtype=torch.float32,
-                                                device=self.device)
+        self.holster_in_base = mount @ holster.holster_in_d1_base()
+        as_t = lambda v: torch.as_tensor(v, dtype=torch.float32, device=self.device)
+        self._key_in_base_t = as_t(self.key_in_base[:3, 3])
+        self._holster_in_base_t = as_t(self.holster_in_base[:3, 3])
+        self._key_quat_base_t = as_t(key_env._matrix_quat(self.key_in_base[:3, :3]))
         #: Where each environment's holster really is against where the draw is planned for: a shift in the base's
-        #: frame, metres (`run_holster.py --holster_error_mm`). The plan never sees it.
+        #: frame, metres (`run_holster.py --holster_error_mm`). The plan never sees it. Since v5 the plan is moved the
+        #: other way (`plan_key`) rather than the holster: v5's mouth sits 0.6 mm off the D1 base's hull, and a holster
+        #: moved into it kicked the robot over (4 and 5 of 8 fell at 3 and 5 mm, 2026-10-24).
         self.holster_shift = torch.zeros(self.num_envs, 3, device=self.device)
 
     def _make_turn(self, cfg):
@@ -233,9 +271,9 @@ class HolsterEnv(key_env.CombinerKeyEnv):
         spawn_rot = door_env.head_camera.quat_to_matrix(self._spawn_yaw_quat[index].cpu().numpy())
         to_script = lambda p: tuple(spawn_rot.T @ (base_pos + base_rot @ np.asarray(p) - spawn_pos))
         turn = lambda v: tuple(spawn_rot.T @ base_rot @ np.asarray(v))
-        pts = holster.draw_points(self.key_in_base)
-        axes = holster.key_axes(self.key_in_base)
-        state["draw"] = {name: to_script(pts[name]) for name in ("pre", "grip", "out")}
+        pts = holster.draw_points(self.plan_key(index))
+        axes = holster.key_axes(self.plan_key(index))
+        state["draw"] = {name: to_script(pts[name]) for name in ("pre", "grip", "out", "exit")}
         # `hand_rotation(approach, bar, 0, GRIP_ROLL)` is `holster.grip_rotation`: approach along the shaft, bar along u.
         state["draw"]["approach"], state["draw"]["bar"] = turn(-axes["n"]), turn(axes["u"])
         return state
@@ -250,10 +288,21 @@ class HolsterEnv(key_env.CombinerKeyEnv):
             record["pre_solve"] = note
             self._q_pre = getattr(self, "_q_pre", {})
             self._q_pre[index] = q_pre
-            stages = holster.unfold_stages(self._rest_arm(), q_pre)
+            try:
+                above = holster.above_pre(self.arms[index].joints, q_pre, self.plan_key(index))
+            except ValueError as exc:
+                # The unfold's waypoint for a plan moved off the holster (`holster_shift`) may not solve where the
+                # model's does: the model's waypoint, `pre` itself still the moved plan's.
+                above = holster.above_pre(self.arms[index].joints, q_pre)
+                record["above_pre"] = f"the model's: {exc}"
+            stages = holster.unfold_stages(self._rest_arm(), q_pre, above)
+            self._stages = getattr(self, "_stages", {})
+            self._stages[index] = stages
             self._joint_goals[index] = ("turn", stages[0])
         elif phase == "reach":
-            self._joint_goals[index] = ("reach", self._q_pre[index])
+            self._joint_goals[index] = ("reach", self._stages[index][1])
+        elif phase == "lower":
+            self._joint_goals[index] = ("lower", self._stages[index][2])
         elif phase == "pre":
             # The IK loop warm-starts from its last solution: here, the unfold's goal, on the draw's branch.
             arm.q = np.asarray(self._q_pre[index], dtype=float).copy()
@@ -261,12 +310,28 @@ class HolsterEnv(key_env.CombinerKeyEnv):
             record["key_released_at"] = self._key_record(index)
         elif phase == "draw":
             record["grasp"] = self._take_hold(index)
+            arm.soft = holster.draw_soft(arm.soft)          # Joint1 and Joint5 to `DRAW_SOFT_J1_J5` out of the holster
         elif phase == "hold":
             record["drawn"] = self._key_record(index)
+        elif phase == "enter":
+            record["drawn"] = self._key_record(index)       # at the end of the hold, the arm there
+        elif phase == "open":
+            record["back_in_hand"] = self._key_record(index)
+            self._grip[index] = False
+            self.key_mode[index] = "free"
+        elif phase == "away":
+            record["back"] = self._key_record(index)
+
+    def plan_key(self, index: int) -> np.ndarray:
+        """The holstered key's frame in the base as the draw is planned for it: `key_in_base` moved back by
+        `holster_shift` (the holster where it is, the plan off it)."""
+        out = self.key_in_base.copy()
+        out[:3, 3] -= self.holster_shift[index].cpu().numpy()
+        return out
 
     def _solve_pre(self, index: int) -> tuple[np.ndarray, str]:
         """The arm's joints with the hand at `pre`, seeded from the folded rest as `holster.check` solves it."""
-        pts = holster.draw_points(self.key_in_base)       # the IK's frame is the base's: the holster is fixed in it
+        pts = holster.draw_points(self.plan_key(index))   # the IK's frame is the base's: the holster is fixed in it
         arm = self.arms[index]
         rest = self._rest_arm()
         offset = (0.0, 0.0, holster.JAW_CENTRE_Z_M)
@@ -311,10 +376,8 @@ class HolsterEnv(key_env.CombinerKeyEnv):
 
     def key_out_mm(self, index: int) -> tuple[float, float, float]:
         """(out along the holster's axis, across it, tilt deg): how far the key is from holstered, in the holster's frame
-        (where it really is, `holster_shift` included)."""
-        real = self.key_in_base.copy()
-        real[:3, 3] += self.holster_shift[index].cpu().numpy()
-        rel = np.linalg.inv(real) @ self.key_pose_base(index)
+        (where it is; the plan is what `holster_shift` moves)."""
+        rel = np.linalg.inv(self.key_in_base) @ self.key_pose_base(index)
         along = 1000 * float(np.asarray(holster.SLIDE_OUT_KEY) @ rel[:3, 3])
         across = 1000 * float(math.hypot(rel[0, 3], rel[2, 3]))
         tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(rel[1, 1])))))
@@ -338,10 +401,10 @@ class HolsterEnv(key_env.CombinerKeyEnv):
         """The holster carried with the base; the key in it while `holstered`; then the parent's grip."""
         data = self._robot.data
         n = self.num_envs
-        pos = data.root_pos_w + interface.quat_apply(data.root_quat_w, self._key_in_base_t.expand(n, 3) + self.holster_shift)
+        at = lambda offset: data.root_pos_w + interface.quat_apply(data.root_quat_w, offset.expand(n, 3))
         quat = key_env._quat_mul(data.root_quat_w, self._key_quat_base_t.expand(n, 4))
-        pose = torch.cat([pos, quat], dim=-1)
-        self._holster.write_root_pose_to_sim(pose)
+        pose = torch.cat([at(self._key_in_base_t), quat], dim=-1)
+        self._holster.write_root_pose_to_sim(torch.cat([at(self._holster_in_base_t), quat], dim=-1))
         self._holster.write_root_velocity_to_sim(torch.zeros(n, 6, device=self.device))
         ids = [i for i, mode in enumerate(self.key_mode) if mode == "holstered"]
         if ids:
@@ -357,3 +420,4 @@ class HolsterEnv(key_env.CombinerKeyEnv):
         for index in env_ids.tolist():
             self.key_mode[index] = "holstered"
             self.arms[index].grasp, self.arms[index].grasp_note = (0.0, holster.GRIP_ROLL), "the holster's grip"
+            self.arms[index].soft = d1_ik.SOFT_LIMIT_FACTOR

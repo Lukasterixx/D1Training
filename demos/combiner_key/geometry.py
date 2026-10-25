@@ -56,6 +56,38 @@ UNLOCK_DEG = 30.0
 
 
 @dataclass(frozen=True)
+class Lever:
+    """A lever key and the lock it turns: the angle it goes in at, its end stop and where the door unlocks (degrees,
+    0 level, positive down: clockwise as the robot sees it), and its bar and platform as the lock's plant has them
+    (`unifp_train/leg_cfg.KEY_*`'s frame: (along the key from the shaft, off the door, up its top side), metres)."""
+    name: str
+    insert_deg: float
+    end_deg: float
+    unlock_deg: float
+    bar_box: tuple
+    pad_box: tuple
+    top_m: float = 0.010
+    ward_angle_deg: float = 0.0             # the wards from the bar, about the shaft (atan2(t, u))
+
+
+#: v3 (`assets/combinerbox_lever_v3.stl`, mirrored), in the lock the leg's turn was trained on: in at 45 degrees up,
+#: round to 45 down, unlocked past 30 down. The foot's key task keeps it (`leg_cfg.KEY_*`).
+LEVER_V3 = Lever("v3", INSERT_DEG, TURN_END_DEG, UNLOCK_DEG,
+                 ((-0.015, 0.160), (0.017, 0.032), (-0.010, 0.010)), ((0.048, 0.148), (0.032, 0.067), (0.004, 0.010)))
+#: v4 (Lukas, 2026-10-24; `holster.register_v4`): v3 10 mm longer between the shaft and the platform (the platform in the
+#: same place from the bar's far end: Lukas, "its still there, in the same position relative to the end of the lever";
+#: his export left it out), its wards 45 degrees off the bar. With the lock's internals changed (Lukas, 2026-10-24: "the
+#: new lever needs to be inserted horizontally rather than at 45 degrees, and now it only needs to rotate 45 degrees
+#: clockwise from that horizontal insert"; the door unlocking partway, ~30 degrees). The arm's insertion and turn take
+#: it (`ARM_LEVER`), in simulation and on the dog.
+LEVER_V4 = Lever("v4", 0.0, 45.0, 30.0,
+                 ((-0.015, 0.170), (0.017, 0.032), (-0.010, 0.010)), ((0.058, 0.158), (0.032, 0.067), (0.004, 0.010)),
+                 ward_angle_deg=135.0)
+#: The lever the arm works: the insertion's and the arm's turn's, simulated and on the robot.
+ARM_LEVER = LEVER_V4
+
+
+@dataclass(frozen=True)
 class Adapter:
     """The printed lock adapter: a block over the cam lock, its face `thickness + gap` off the door."""
     half_size: float = 0.030

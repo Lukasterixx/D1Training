@@ -128,6 +128,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--door_deg", type=float, default=props.DOOR_PULL_DEG,
                         help=f"Door only: how far the script swings the door, degrees (default {props.DOOR_PULL_DEG:g}; "
                              f"success is {props.DOOR_PULL_SUCCESS_DEG:g} or more at the end of the hold).")
+    parser.add_argument("--close", action="store_true",
+                        help="Door with --perception head (the combiner door demo): after the pull, close the door "
+                             "again as the robot program's first close did (`demos/combiner_door/env.close_phases`; "
+                             "the robot's close now looks at the open door's tag): the lidar reads the door, the base walks round the hinge to it, "
+                             "the hand grabs the handle again and the base walks the door back to 5 deg.")
+    parser.add_argument("--show_holster", action="store_true",
+                        help="The combiner door demo: draw Lukas's holster beside the D1's base and the key in it, "
+                             "carried with the robot, collisions off (on with --close).")
     parser.add_argument("--grip_s", type=float, default=None,
                         help="Door only: how long the jaws take to close on the handle, s (default DoorTiming's 0.8, "
                              "times --speed_scale).")
@@ -450,11 +458,15 @@ def main() -> int:
             # as the friction grip does, onto the bar: beyond the fingertips the lips overbite and stop nothing.
             jaws = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
             phases = [dataclasses.replace(p, jaw_m=jaws.get(p.jaw_m, p.jaw_m)) for p in phases]
+    if args.close and not (head_perception and args.task == "door"):
+        parser.error("--close is the combiner door demo's: --task door --controller decoupled --perception head")
     if head_perception:
         from demos.combiner_door import env as door_env  # noqa: E402
 
         look_back_m = door_env.LOOK_BACK_M if args.look_back_m is None else args.look_back_m
         phases = door_env.pre_phases(look_back_m) + list(phases)
+        if args.close:
+            phases += door_env.close_phases(timing)
     total_s = sum(phase.duration_s for phase in phases)
 
     goal_correction = (args.mech and not args.no_goal_correction) or args.goal_correction
@@ -569,6 +581,8 @@ def main() -> int:
 
     if head_perception:
         cfg.look_back_m, cfg.door_deg = look_back_m, args.door_deg
+        # The holster and the key in it, drawn on the robot (`door_env.CombinerDoorEnv._spawn_holster`).
+        cfg.show_holster = args.close or args.show_holster
     env_class = door_env.CombinerDoorEnv if head_perception else decoupled.DecoupledDoorEnv if decoupled_run else (
         mech_env.MechDemoEnv if use_mech_env else demo_env.UniFPDemoEnv)
     env = env_class(cfg)
@@ -841,6 +855,8 @@ class _AttemptRecord:
         #: jaws and merely tilted there.
         self.topple: list[dict | None] = [None] * env.num_envs
         self.final_row: list[dict] = [{} for _ in range(env.num_envs)]
+        #: The last row of each phase of the close after the pull (`--close`), by attempt.
+        self.close_rows: list[list[dict]] = [[] for _ in range(env.num_envs)]
         self.arm_speed_peak = torch.zeros(env.num_envs, device=env.device)
         #: The combiner door demo's lidar frames, each (phase, reading deg or nan, the simulator's door deg), and the
         #: last frame's stamp seen, so each frame is counted once although every step's row repeats it.
@@ -994,6 +1010,12 @@ class _AttemptRecord:
             best["final_phase"] = command.phase
             self.phase_start_s[index].setdefault(command.phase, time_s)
             self.final_row[index] = row
+            if "door_deg" in row and command.phase in ("push_hold", "re_back"):
+                rows_ = self.close_rows[index]
+                if rows_ and rows_[-1]["phase"] == command.phase:
+                    rows_[-1] = row
+                else:
+                    rows_.append(row)
             if (self.task == "cup" and self.topple[index] is None
                     and row["cup_tilt_deg"] > 60.0 and row["cup_lift_m"] < 0.02):
                 self.topple[index] = {"phase": command.phase, "time_s": time_s}
@@ -1077,6 +1099,15 @@ class _AttemptRecord:
                     record["grasp"] = self.env.arms[index].grasp_note
                 if hasattr(self.env, "look_records"):
                     record.update(self._perception_record(index))
+                if getattr(self.env, "closes", None) and self.env.closes[index].get("looking"):
+                    # The close after the pull (`--close`): the angle it worked from against the simulator's, and the
+                    # door when it let go and at the end.
+                    close = {k: v for k, v in self.env.closes[index].items() if k not in ("readings", "looking")}
+                    close["readings"] = len(self.env.closes[index].get("readings", []))
+                    door_at = {r["phase"]: r["door_deg"] for r in self.close_rows[index]}
+                    close["door_at_end_of_push_hold_deg"] = door_at.get("push_hold")
+                    close["door_final_deg"] = final.get("door_deg")
+                    record["close"] = close
                 # Swung open: the door at the success angle when the hold ends, the jaws still on it, and the robot
                 # still up. Its peak alone would count a door flung past and swinging back.
                 record["success"] = bool((record["door_at_end_of_hold_deg"] or 0.0) >= props.DOOR_PULL_SUCCESS_DEG

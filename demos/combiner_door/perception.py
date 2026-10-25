@@ -37,8 +37,8 @@ from . import front_camera, head_camera, mid360
 #: With the Go2's front camera (2026-10-22, `front_camera.ONE_STAND`) it is 0.40 m: its field is only +-27 deg tall, the
 #: tag (0.46 m up the box) runs off the top of it closer in, and P2Dingo's walking policy stands the base at 0.31 m (the
 #: trace, not the 0.40 the head camera's numbers assumed). From 0.40 m back the tag is whole at all 200 placements, the
-#: base 0.30-0.33 m up and pitched +-2 deg (39 px to spare); from 0.18 m at 200 of 600, and the first sim run with the
-#: front camera found the tag in none of 4 attempts.
+#: base 0.30-0.33 m up and pitched +-2 deg (39 px to spare; 24 through `front_camera.CALIBRATED`, 2026-10-24); from
+#: 0.18 m at 200 of 600, and the first sim run with the front camera found the tag in none of 4 attempts.
 LOOK_BACK_M = 0.40
 
 

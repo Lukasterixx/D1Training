@@ -21,14 +21,16 @@ It is the simulated demo's sequence (`demos/combiner_door/env.py`) on the same m
   walk in, reach, grip, pull.
 
 Frames. `odom` is the odometry's. The look's frame is the base where it stood (yaw only). The script's frame is the
-door pull's stance: straight ahead of the look, where the box's root is `NOMINAL_DISTANCE_M` away (the simulated
-placements' middle), so the operator need only stand the dog roughly in front of the box. Its z is set so the box's
+door pull's stance: straight ahead of the look, where the box's root is `STANCE_DISTANCE_M` away (the simulated
+placements' middle moved back and toward the hinge, `STANCE_*`), so the operator need only stand the dog roughly in
+front of the handle. Its z is set so the box's
 root is at the simulated plinth's height (`props.POST_TOP_M`), so every height the door script and the box geometry use
 is the box's own, whatever the floor. The base's height is a constant (`BASE_HEIGHT_M`): it cancels, since the box is
 placed from the base through the camera. Poses are 4x4 matrices, points (n, 3) arrays. numpy only.
 """
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
 import math
 
@@ -52,15 +54,18 @@ BASE_HEIGHT_M = 0.32
 CAMERA_POSE_BASE = head_camera.optical_pose_base()
 #: The Go2's own front camera's optical frame in `base_link` (`front_camera`: the URDF's mount): the look's camera since
 #: 2026-10-22 (`node.py --camera front`, the default). Fixed in the trunk, so its frames need no arm pose, and the look no
-#: arm move. Its lens model is NOMINAL until calibrated (`front_camera.NOMINAL`).
+#: arm move. Its lens is `front_camera.CALIBRATED` (the A3 ChArUco board, 2026-10-24).
 FRONT_CAMERA_POSE_BASE = front_camera.optical_pose_base()
 #: The nearest the box's root can be for the front camera to see the whole tag, standing (the base 0.30-0.34 m up and
 #: pitched +-2 deg, the tag within 0.25 m of straight ahead and 15 deg of square, 20 px to spare): its vertical field is
-#: only +-27 deg (`front_camera.ONE_STAND`), and the tag, 0.46 m up the box, leaves the top of the image closer in. The
-#: door is then ~0.79 m from the base. Every look must start at least this far back: the door pull's look band is
-#: 0.95-1.14 m (the walk in is at most `WALK_IN_RANGE_M`), its no-walk band (0.65-0.76 m) cannot be looked from, nor
-#: the key's 0.6 m from the door.
-FRONT_LOOK_MIN_ROOT_M = 0.95
+#: only 25 deg above the axis and 27 below (`front_camera.CALIBRATED`, the principal point 7 px above the image's
+#: centre), and the tag, 0.46 m up the box, leaves the top of the image closer in. The door is then ~0.82 m from the
+#: base. Every look must start at least this far back: the door pull's look band is 0.98-1.14 m (the walk in is at most
+#: `WALK_IN_RANGE_M`), its no-walk band (0.65-0.76 m) cannot be looked from, nor the key's 0.6 m from the door. It was
+#: 0.95 through `ONE_STAND` (+-27 deg); through the calibrated lens 0.95 leaves 5 px. On the dog the tag stood ~40 px lower
+#: in the image than this model has it (2026-10-25), and was seen whole from the root ~0.88-0.91 m ahead; the staging
+#: pose is now nearer than this (`approach.STAGE_ROOT_M`), its fallback beyond it (`approach.STAGE_FAR_ROOT_M`).
+FRONT_LOOK_MIN_ROOT_M = 0.98
 #: The camera on the D1's wrist instead (Lukas moved the D435i there, 2026-10-21): its colour optical frame in Link6,
 #: the bracket's CAD (`demos/cup/pick_demo/assets/mounts/wrist_mount.json`: 30 degrees below the approach axis; not
 #: measured on the arm). Its pose in the base comes from the arm's measured joints at each frame (`wrist_camera_base`).
@@ -92,6 +97,13 @@ HOLD_YAW_RAD = math.radians(4.0)
 ARM_SPEED_DEG_S = 30.0
 JOINT_SPEED_DEG_S = 40.0
 ARM_STEP_DEG = ARM_SPEED_DEG_S * 0.1
+#: Since 2026-10-24 (Lukas: "ensure all the arm motions use the same method of smooth commands as the unholstering
+#: does") the node sends these through `ArmSender`, not as `Profile` targets: a joint move as one timed path, each
+#: joint accelerating at `JOINT_ACCEL_DEG_S2` to `JOINT_SPEED_DEG_S` on its own (`joint_path`, the holster draw's
+#: `holster.joint_move`); every other goal followed as it moves (`arm_link.Follower`). A goal that jumps more than
+#: `JUMP_DEG` from the last (a look's next place, a new wrist) is a joint move too.
+JOINT_ACCEL_DEG_S2 = 300.0
+JUMP_DEG = 6.0
 #: When the IK cannot meet the hand's pose for a step it falls back to the jaw centre alone, a different wrist; this
 #: many steps in a row the goal holds where it was instead (a missed step in a transit), so the arm does not lurch to
 #: the other wrist and back.
@@ -115,15 +127,30 @@ DWELL_MIN_S = 0.3
 #: lever: under `JAW_STALL_UNITS` in `JAW_STALL_S`). The hand leaves the lever only once they have opened: within
 #: `JAW_OPEN_TOLERANCE_UNITS` of the command (~1.7 mm a finger), or stopped more than half way open. Past
 #: `JAW_WAIT_S` of waiting, the grip goes on and a release aborts, the hand where it is. Without the report, the clock.
+#: 4 s since the handle's jaws open fully (43 units from the lever; the dog's open at ~50 units/s).
 JAW_STALL_UNITS = 0.5
 JAW_STALL_S = 0.3
 JAW_OPEN_TOLERANCE_UNITS = 4.0
-JAW_WAIT_S = 2.0
+JAW_WAIT_S = 4.0
+#: Letting go of the handle (`ungrasp_phases`, `Attempt.gripper_units`): the jaws open from where they grip the lever to
+#: fully open over `LET_GO_RAMP_S`, and the hand stays still with them open for the rest of `LET_GO_S` before it backs
+#: out. Was the script's 0.8 s ramp from shut, which reached the lever's 22 units in its last 0.3 s.
+LET_GO_RAMP_S = 1.5
+LET_GO_S = 2.0
+#: The hand holds the height it was commanded at on the handle, not the height it measured itself at
+#: (`Attempt._capture`): the arm sags 11-15 mm below its goal reaching out to the handle (every release of
+#: 2026-10-24/25), so a goal at the measured height pressed the lever down that far while the jaws still held it, and
+#: the hand dropped 12-24 mm onto it once they opened. The sag kept is capped at this.
+LET_GO_SAG_MAX_M = 0.03
 #: The commandable fold: the rest pose with J1 and J2 at the limits the arm takes commands to (F-023, F-027).
 FOLD_SERVO_DEG = tuple(float(np.clip(v, -90.0, 90.0)) for v in d1_hardware.REST_SERVO_DEG)
-#: Gripper, servo units: the scripted grip's 63.2 mm opening and its shut, through `d1_hardware`'s linear map, which
-#: is unmeasured between its ends (F-063). Shut clamps to the pads touching; on the 40 mm lever they stall near 6.8.
-GRIPPER_OPEN_UNITS = d1_hardware.finger_travel_to_gripper_units(demo_script.JAW_LEVER_OPEN_M)
+#: Gripper, servo units. Open on the door's handle: the widest a command opens the jaws (`d1_hardware.GRIPPER_UNITS_OPEN`,
+#: 50.2: 30 mm a finger by the URDF, ~77 mm between them), for every handle grab and letting go of it (Lukas,
+#: 2026-10-25: "I want it open fully for all handle grabs"). Until then the simulated door script's 63.2 mm
+#: (`demo_script.JAW_LEVER_OPEN_M`, 33.9 units), which the phases still name and `Attempt.gripper_units` sends as this.
+#: Shut: the script's, the pads touching; on the dog the 40 mm lever held them at 21-23 units (the dry model's 6.8).
+#: The map between units and mm is linear between its measured ends (F-063).
+GRIPPER_OPEN_UNITS = d1_hardware.GRIPPER_UNITS_OPEN
 GRIPPER_SHUT_UNITS = d1_hardware.finger_travel_to_gripper_units(demo_script.JAW_BAR_SHUT_M)
 
 # --- the attempt ----------------------------------------------------------------------------------------------------
@@ -136,6 +163,16 @@ LOOK_S = 2.0
 #: (`ARRIVED_DEG`), and past its clock waits for it (`JOINT_ARRIVED_DEG`).
 UNFOLD_S = 5.0
 FOLD_S = 5.0
+#: The fold in two joint moves (`fold_phases`): `tuck`, to the fold with the elbow (servo 2) still `TUCK_ELBOW_DEG`
+#: open, then `fold`, the elbow shut. Straight to the fold, the arm link's path paces each joint on its own, so the
+#: elbow and wrist were there first and the shoulder then swung the shut forearm back onto the lidar's cage: both live
+#: door pulls of 2026-10-24 23:4x-23:5x UTC (after the insertion) stalled 0.5 s at the shoulder's -40 to -50 deg, the
+#: elbow at 84-90 (Lukas: "when the arm is folding back up, it hits the lidar"), and the CPU model puts the fingertips'
+#: segment 29 mm into the cage's box there. Via the elbow at 60 the arm stays 45.7 mm off it from every home the dog
+#: measured (the fold itself is the nearest point), and 125 mm or more off the head camera. As the insertion folds after
+#: putting the key back (`insert_plan.RETURN_FOLDING`: the elbow 20 deg open first).
+TUCK_ELBOW_DEG = 30.0
+TUCK_S = 5.0
 #: The walk in's clock is its least: it ends when its steps are done (`Attempt._walk_in`), which takes longer.
 WALK_IN_S = 0.5
 #: Standing after the walk in (which ends with `WALK_IN_COAST_S` stood) while the lidar's frames for the refit come in.
@@ -154,6 +191,31 @@ NOMINAL_DISTANCE_M = round(sum(DISTANCE_RANGE_M) / 2, 4)
 #: A walk shorter than `WALK_IN_RANGE_M[0]` is below what sport mode can do (it carries on 75 mm after a stop).
 ACCEPT_DISTANCE_M = (0.65, 0.76)
 BEARING_LIMIT_DEG = max(abs(v) for v in props.BOX_BEARING_RANGE_DEG)
+#: The door pull's stance on the dog, against the simulated demo's (the root `NOMINAL_DISTANCE_M` straight ahead, the
+#: dog in front of the door's middle): `STANCE_BACK_M` further from the door and `STANCE_RIGHT_M` toward the hinge (the
+#: dog's right), the handle then about straight ahead (7.5 cm right of the door's middle, 2.5 cm left of the dog's).
+#: Lukas, 2026-10-25: "it would
+#: be good if the dog could be further from the door while pulling it, as near the end it swings the door into its own
+#: face ... positioning the dog abit closer laterally to where it is gripping the handle". The base turns about the
+#: hinge with the door, so the door comes at the dog only when it swings on past the base's turn: in both live pulls
+#: after the insertion (2026-10-24) the lidar had it 15-30 deg ahead from 55 deg on. A point on the door moves toward
+#: the dog by its distance from the hinge times the sine of that. From the simulated demo's stance the door touches
+#: the front of the dog (its head to 0.37 m, the trunk's corners) 22.5 deg past the base; from this one, 38.3
+#: (29.9-46.2 within `STANCE_SIDE_TOLERANCE_M` and 3 cm along). On the CPU model the arm solves the whole pull with its
+#: full pose from 0.03 to 0.11 m back and 0.05 to 0.15 m right; 0.12 m back the release no longer solves, 0.125 m the
+#: grasp.
+STANCE_BACK_M = 0.06
+STANCE_RIGHT_M = 0.10
+#: The box's root from the stance: ahead, and its distance (the stance is square to the door, the root to its left).
+STANCE_AHEAD_M = round(NOMINAL_DISTANCE_M + STANCE_BACK_M, 4)
+STANCE_DISTANCE_M = round(math.hypot(STANCE_AHEAD_M, STANCE_RIGHT_M), 4)
+#: The walk in is straight, so the look must already stand within this of the stance sideways (`in_range`): the
+#: approach's walk lands within its 8 cm (`approach.ACCEPT_M`), 4 cm across in the dry tests.
+STANCE_SIDE_TOLERANCE_M = 0.05
+#: After the walk in the box may stand this far off (`ACCEPT_DISTANCE_M`, moved with the stance): to 0.045 m nearer the
+#: door than the stance, and out to 0.11 m behind the simulated demo's, the arm's full reach on the CPU model.
+STANCE_ACCEPT_DISTANCE_M = (round(STANCE_DISTANCE_M - 0.045, 3),
+                            round(math.hypot(NOMINAL_DISTANCE_M + 0.11, STANCE_RIGHT_M), 3))
 YAW_LIMIT_DEG = max(abs(v) for v in props.BOX_YAW_JITTER_DEG)
 WALK_IN_RANGE_M = (0.10, 0.45)
 #: The box's tag is printed on its door, so the lidar's face is where the tag is (`mid360.FaceFit.depth`, 0.6 mm in the
@@ -166,6 +228,12 @@ FACE_BEHIND_TAG_LIMIT_M = 0.03
 BEYOND_EDGES_U_M = (0.40, 0.75)          # either side, along the face
 BEYOND_TOP_DZ_M = (0.45, 0.75)           # above the tag's centre, within 0.25 m of it along the face
 BEYOND_LIMIT = 0.25
+#: The close's look at the open door (`node.py --then_close`) cannot use the edges: near 90 deg open the door's outer
+#: face stands nearly in line with the box's side, which carries the face on past the hinge (42% past the edges on the
+#: dog at 79 deg, 2026-10-25, the tag plainly on the door). Its guard instead: the face just behind the tag, and the
+#: hinge within this of where the pull's box has it (the odometry's error over the pull and the walk back: ~13 cm
+#: estimated over a 60-deg pull, F-214). A tag elsewhere (the dock's) puts its hinge as far off as it stands.
+OPEN_DOOR_HINGE_LIMIT_M = 0.30
 #: Detections that put the box this close are one tag's (`make_fix`). The look's own scatter is centimetres; P2Dingo's
 #: dock and the box stand metres apart in any room the two share.
 TAG_GROUP_M = 0.25
@@ -179,13 +247,17 @@ REFIT_LIMIT_DEG = 6.0
 #: and takes a corrective step (at least `WALK_IN_MIN_STEP_S` long, `WALK_IN_MAX_STEPS` of them) while it is still
 #: more than `WALK_IN_TOLERANCE_M` short. In classic walk the first live walk in stopped 8 cm short, having carried on
 #: next to nothing (2026-10-20). Then the attempt re-anchors where the dog stopped (`reanchor`) and checks the arm can
-#: reach from there: wherever the walk ends, the box must be within `ACCEPT_DISTANCE_M` of the base.
+#: reach from there: wherever the walk ends, the box must be within `STANCE_ACCEPT_DISTANCE_M` of the base.
 WALK_IN_TOLERANCE_M = 0.03
 #: Sport mode's odometry counts this share of a walk: the refit after the walk in put the door 12-14% of the walk nearer
 #: than the look did in every door pull and key walk up on the dog (13 mm over 0.11 m to 63 mm over 0.44 m, 2026-10-20/21).
 #: The walk in is sent this much shorter on the odometry, so that the dog walks the whole of it. Without it a 0.36 m walk
 #: in left the box 0.63 m off, under `ACCEPT_DISTANCE_M` (Lukas's first door pull with the wrist camera, 2026-10-21).
 ODOM_WALK_SCALE = 0.87
+#: The jaws close this much higher on the handle than the box's geometry puts its lever (`props.BoxSite.grasp_point_m`),
+#: on the robot only (Lukas, 2026-10-25: "the dog grabs the handle 1cm too low each time causing it to rotate the handle
+#: down on a grab"). His eye on the dog, not a measurement; the simulated demo's grasp is unchanged.
+GRASP_RAISE_M = 0.01
 WALK_IN_COAST_S = 1.0
 WALK_IN_MIN_STEP_S = 0.3
 WALK_IN_MAX_STEPS = 3
@@ -206,16 +278,18 @@ PULL_STALL_DEG = 0.5
 HOLD_FOLLOW_DEG = 10.0
 #: Phases the arm stays folded through, moves through in joint space, or holds the home point through (orientation
 #: free).
-JOINT_PHASES = {"unfold", "fold"}
+JOINT_PHASES = {"unfold", "tuck", "fold"}
 POSITION_ONLY_PHASES = {"walk_in", "walk_settle", "pause", "home"}
 #: Phases a live attempt run with `--step` waits at, for the operator to press Enter. Without it, one Enter starts the
 #: attempt and it runs through.
-CONFIRM_BEFORE = ("unfold", "walk_in", "approach", "grip", "pull", "release", "fold")
+CONFIRM_BEFORE = ("unfold", "walk_in", "approach", "grip", "pull", "release", "tuck")
 #: Phases from which the hand may be at the lever, so a recovery opens the jaws and backs out before it folds; from any
 #: other, a recovery only folds.
 AT_THE_LEVER_PHASES = {"approach", "settle", "enter", "arrive", "grip", "squeeze", "pull", "hold", "release", "ungrasp"}
 #: Phases in which the hand holds the handle, and in which the base is walked (or may still be carrying on).
 HOLDING_PHASES = {"grip", "squeeze", "pull", "hold"}
+#: Phases whose clock is the base's turn about the hinge (`Attempt._pull_clock`, `key_plan.DoorClose._clock`).
+TURN_CLOCKED_PHASES = {"pull", "push"}
 WALKING_PHASES = {"walk_in", "pull", "hold", "release", "ungrasp"}
 #: Letting go (`ungrasp_phases`): the hand keeps the orientation it measured itself at as the release began.
 RELEASE_HELD_PHASES = {"release", "ungrasp"}
@@ -348,6 +422,16 @@ def wrap(a: float) -> float:
     return math.atan2(math.sin(a), math.cos(a))
 
 
+@dataclass(frozen=True)
+class RaisedGrasp(props.BoxSite):
+    """A `BoxSite` whose grasp point stands `raise_m` higher (`GRASP_RAISE_M`); everything else the box's."""
+    raise_m: float = 0.0
+
+    def grasp_point_m(self, handle_deg: float = 0.0, door_deg: float = 0.0) -> tuple[float, float, float]:
+        x, y, z = super().grasp_point_m(handle_deg, door_deg)
+        return x, y, z + self.raise_m
+
+
 # --- the look ---------------------------------------------------------------------------------------------------------
 
 @dataclass
@@ -365,12 +449,24 @@ class Fix:
                                        # IMU's) error, since the box stands upright
     beyond_edges: float = 0.0          # the face's points past the door's edges, as a fraction of those round the tag
     other_tags: int = 0                # other id-0 tags the look saw and set aside (`make_fix`): the dock's, usually
+    pulled_hinge_xy: tuple | None = None   # the close's look of the open door: the pull's hinge (x, y in odom)
+
+    def hinge_off_m(self) -> float | None:
+        """The close's look: how far its hinge is from the pull's (`pulled_hinge_xy`); None for any other look."""
+        if self.pulled_hinge_xy is None:
+            return None
+        hinge = self.box_odom @ np.append(GEOMETRY.hinge, 1.0)
+        return float(math.hypot(hinge[0] - self.pulled_hinge_xy[0], hinge[1] - self.pulled_hinge_xy[1]))
 
     def on_a_door(self) -> bool:
         """Whether the lidar's face round the tag is the box's door: a face just behind the tag that stops at the door's
-        edges (`in_range`'s guard against P2Dingo's dock, which carries the same tag on a stand)."""
-        return (self.fit.ok and abs(self.fit.depth) <= FACE_BEHIND_TAG_LIMIT_M
-                and self.beyond_edges <= BEYOND_LIMIT)
+        edges (`in_range`'s guard against P2Dingo's dock, which carries the same tag on a stand); for the close's look
+        at the open door, a face just behind the tag with its hinge where the pull left it (`OPEN_DOOR_HINGE_LIMIT_M`)."""
+        if not (self.fit.ok and abs(self.fit.depth) <= FACE_BEHIND_TAG_LIMIT_M):
+            return False
+        if self.pulled_hinge_xy is not None:
+            return self.hinge_off_m() <= OPEN_DOOR_HINGE_LIMIT_M
+        return self.beyond_edges <= BEYOND_LIMIT
 
     @property
     def box_odom(self) -> np.ndarray:
@@ -387,38 +483,61 @@ class Fix:
         yaw_off = math.degrees(wrap(math.radians(s.yaw_deg) - math.pi))
         x, y, _ = s.root_m
         look_distance = math.hypot(x + self.walk_in_m, y)
-        far = NOMINAL_DISTANCE_M + WALK_IN_RANGE_M[1]
+        far = STANCE_DISTANCE_M + WALK_IN_RANGE_M[1]
+        near_m, far_m = STANCE_ACCEPT_DISTANCE_M
+        side = y - STANCE_RIGHT_M                         # how far left of the stance's line the box's root is
         problems = []
         if check_tag and not self.fit.ok:
             return False, f"no door face round the tag in the lidar ({self.fit.why}): not the box, or not in view"
+        if check_tag and not self.on_a_door() and self.pulled_hinge_xy is not None:
+            return False, (f"the tag is not on the door the pull opened: the lidar's face is {100 * self.fit.depth:+.0f} "
+                           f"cm from it, and its hinge {self.hinge_off_m():.2f} m from the pull's (over "
+                           f"{OPEN_DOOR_HINGE_LIMIT_M:g}). P2Dingo's dock carries the same tag")
         if check_tag and not self.on_a_door():
             return False, (f"the tag is not on a door the box's size: the lidar's face is {100 * self.fit.depth:+.0f} cm "
                            f"from it and carries on past the door's edges ({self.beyond_edges:.0%}). A tag on a stand "
                            "in front of a wall? (P2Dingo's dock carries the same one)")
         if self.walk_in_m > WALK_IN_RANGE_M[1] or look_distance > far:
             problems.append(f"forward {look_distance - (far - 0.10):.2f} m")
-        elif self.walk_in_m == 0.0 and s.distance_m < ACCEPT_DISTANCE_M[0]:
-            problems.append(f"back {NOMINAL_DISTANCE_M - s.distance_m:.2f} m")
-        elif self.walk_in_m == 0.0 and s.distance_m > ACCEPT_DISTANCE_M[1]:
-            problems.append(f"back {NOMINAL_DISTANCE_M + WALK_IN_RANGE_M[0] + 0.05 - look_distance:.2f} m, or "
-                            f"forward {look_distance - NOMINAL_DISTANCE_M:.2f} m")
-        if abs(s.bearing_deg) > BEARING_LIMIT_DEG:
-            problems.append(f"{'left' if y > 0 else 'right'} {abs(y):.2f} m")
+        elif self.walk_in_m == 0.0 and s.distance_m < near_m:
+            problems.append(f"back {STANCE_DISTANCE_M - s.distance_m:.2f} m")
+        elif self.walk_in_m == 0.0 and s.distance_m > far_m:
+            problems.append(f"back {STANCE_DISTANCE_M + WALK_IN_RANGE_M[0] + 0.05 - look_distance:.2f} m, or "
+                            f"forward {look_distance - STANCE_DISTANCE_M:.2f} m")
+        if abs(side) > STANCE_SIDE_TOLERANCE_M:
+            problems.append(f"{'left' if side > 0 else 'right'} {abs(side):.2f} m")
         if abs(yaw_off) > YAW_LIMIT_DEG:
             problems.append(f"turn {'left' if yaw_off > 0 else 'right'} {abs(yaw_off):.0f} deg")
-        text = (f"box {s.distance_m:.2f} m from the stance at {s.bearing_deg:+.1f} deg, door {yaw_off:+.1f} deg off "
-                f"square, walk in {self.walk_in_m:.2f} m")
-        if not DISTANCE_RANGE_M[0] - 0.005 <= s.distance_m <= DISTANCE_RANGE_M[1] + 0.005:
-            text += f" (outside the simulated {DISTANCE_RANGE_M[0]:.2f}-{DISTANCE_RANGE_M[1]:.2f} m)"
+        text = (f"box {s.distance_m:.2f} m from the stance at {s.bearing_deg:+.1f} deg ({100 * side:+.0f} cm left of "
+                f"the stance's line), door {yaw_off:+.1f} deg off square, walk in {self.walk_in_m:.2f} m")
         return not problems, text + ("" if not problems else "; move the dog " + ", ".join(problems))
 
 
-def make_fix(look_odom, frames, scans, stance_for=None, fix_class=None) -> Fix | None:
+#: The door close's stance this much nearer the open door than the pull's (`key_plan.DoorClose`; Lukas, 2026-10-25: "the
+#: dog needs to walk closer to the door to avoid the arm extending too far"). In his close of 02:37 UTC the jaws gripped
+#: at 0.582 m ahead of the base, the pull's at 0.529: 5.3 cm further out.
+CLOSE_STANCE_NEARER_M = 0.05
+
+
+@dataclass
+class CloseFix(Fix):
+    """The door close's fix (`key_plan.DoorClose`): its range check the pull's about the close's own stance,
+    `CLOSE_STANCE_NEARER_M` nearer the door (the box's root taken that much further from the base)."""
+
+    def in_range(self, check_tag: bool = True) -> tuple[bool, str]:
+        farther = dataclasses.replace(self, site=perception.site_from_pose(
+            pose(None, (CLOSE_STANCE_NEARER_M, 0.0, 0.0)) @ perception.site_pose(self.site)))
+        ok, text = Fix.in_range(farther, check_tag)
+        return ok, text + f" (about the close's stance, {100 * CLOSE_STANCE_NEARER_M:.0f} cm nearer)"
+
+
+def make_fix(look_odom, frames, scans, stance_for=None, fix_class=None, pulled_hinge_xy=None) -> Fix | None:
     """The fix from a look: `frames` [(base pose in odom, [TagDetection])], `scans` [(base pose in odom, base-frame
     points)], the base standing at `look_odom` when it began (its planar part is used). None without a detection.
 
+    `pulled_hinge_xy`: the close's look at the open door (`Fix.on_a_door`), the pull's hinge (x, y in odom).
     `stance_for(box_look)`: the stance (x, y, yaw) in the look's frame, from the box's level pose there (default: the
-    door pull's, straight ahead with its root `NOMINAL_DISTANCE_M` off); `fix_class`: a `Fix` with another task's range
+    door pull's, straight ahead with its root `STANCE_DISTANCE_M` off); `fix_class`: a `Fix` with another task's range
     check (`demos/combiner_key/robot/key_plan.py`).
 
     More than one tag: the box's tag and P2Dingo's charging dock's are both 36h11 id 0, 100 mm, and the front camera's
@@ -437,8 +556,8 @@ def make_fix(look_odom, frames, scans, stance_for=None, fix_class=None) -> Fix |
                   if scans else np.zeros((0, 3)))
     groups = tag_groups(poses_look)
     if len(groups) == 1:
-        return _fix_from(look_odom, poses_look, cloud_look, stance_for, fix_class)
-    fixes = [_fix_from(look_odom, [poses_look[i] for i in group], cloud_look, stance_for, fix_class)
+        return _fix_from(look_odom, poses_look, cloud_look, stance_for, fix_class, pulled_hinge_xy)
+    fixes = [_fix_from(look_odom, [poses_look[i] for i in group], cloud_look, stance_for, fix_class, pulled_hinge_xy)
              for group in groups]
     doors = [f for f in fixes if f.on_a_door()]
     chosen = max(doors or fixes, key=lambda f: f.detections)
@@ -459,19 +578,19 @@ def tag_groups(poses) -> list[list[int]]:
     return sorted(groups, key=len, reverse=True)
 
 
-def _fix_from(look_odom, poses_look, cloud_look, stance_for, fix_class) -> Fix:
+def _fix_from(look_odom, poses_look, cloud_look, stance_for, fix_class, pulled_hinge_xy=None) -> Fix:
     """`make_fix`'s fix from one tag's poses in the look's frame."""
     # The box as the script will have it (the tag's centre, the lidar's heading, level), from the look: its root
     # gives the walk. Not the tag's own pose, whose tilt (the tag's heading error's cousin) moves its root along the
     # floor by the tag's height times it.
     _, level_look, _ = perception.lidar_estimate(poses_look, cloud_look)
     root = level_look[:3, 3]
-    # The stance: straight ahead, where the box's root is the nominal distance off; no walk if that is too short.
+    # The stance: straight ahead, where the box's root is `STANCE_DISTANCE_M` off; no walk if that is too short.
     if stance_for is not None:
         sx, sy, syaw = stance_for(level_look)
         walk = math.hypot(sx, sy)
     else:
-        walk = float(root[0]) - math.sqrt(max(NOMINAL_DISTANCE_M ** 2 - float(root[1]) ** 2, 0.0))
+        walk = float(root[0]) - math.sqrt(max(STANCE_DISTANCE_M ** 2 - float(root[1]) ** 2, 0.0))
         walk = ODOM_WALK_SCALE * walk if walk >= WALK_IN_RANGE_M[0] else 0.0     # as the odometry will count it
         sx, sy, syaw = walk, 0.0, 0.0
     script_look = pose(rot_z(syaw), (sx, sy, float(root[2]) - props.POST_TOP_M))
@@ -484,6 +603,7 @@ def _fix_from(look_odom, poses_look, cloud_look, stance_for, fix_class) -> Fix:
     fix = (fix_class or Fix)(script_odom, site, pose_script, fit, len(poses), len(cloud),
                              math.degrees(wrap(math.radians(tag_site.yaw_deg - site.yaw_deg))), walk, tilt_deg(tag_pose))
     fix.beyond_edges = beyond_edges(cloud, fix)
+    fix.pulled_hinge_xy = pulled_hinge_xy
     return fix
 
 
@@ -642,14 +762,31 @@ def attempt_phases(stage: str, timing: demo_script.DoorTiming | None = None, fol
                                 object_axis=lambda st: site(st).lever_axis_unit(0.0, 0.0), servo=True))
         phases += ungrasp_phases(timing, release=stage != "reach")
     if fold:
-        phases.append(Phase("fold", FOLD_S, path=home, jaw_m=opened))
+        phases += fold_phases()
     return phases
+
+
+def tuck_servo_deg() -> np.ndarray:
+    """`tuck`'s goal: the fold with the elbow `TUCK_ELBOW_DEG` open (servo degrees)."""
+    q = np.asarray(FOLD_SERVO_DEG, dtype=float).copy()
+    q[2] -= TUCK_ELBOW_DEG
+    return q
+
+
+def fold_phases() -> list:
+    """The fold from wherever the arm is, clear of the lidar: `tuck` (the shoulder and wrist to the fold, the elbow still
+    open), then `fold` (`TUCK_ELBOW_DEG`)."""
+    home = lambda st, u: home_at(st["base"])
+    opened = demo_script.JAW_LEVER_OPEN_M
+    return [demo_script.Phase("tuck", TUCK_S, path=home, jaw_m=opened),
+            demo_script.Phase("fold", FOLD_S, path=home, jaw_m=opened)]
 
 
 def ungrasp_phases(timing: demo_script.DoorTiming | None = None, release: bool = True) -> list:
     """Letting go of the lever, then home.
 
-    - "release" (unless the jaws never shut, `release`): they open where the hand is.
+    - "release" (unless the jaws never shut, `release`): they open where the hand is, slowly, and it stays there with
+      them open before it moves (`LET_GO_S`, `LET_GO_RAMP_S`).
     - "ungrasp": the hand backs straight off the lever along its own approach (Link6's +z), by the standoff and at the
       enter's pace, its orientation held. The fingertips stand 20 mm past the jaw centre, in the 27 mm gap behind the
       lever and beside its 63 mm hub; straight out, they clear the lever's front after 29 mm without moving towards the
@@ -659,13 +796,15 @@ def ungrasp_phases(timing: demo_script.DoorTiming | None = None, release: bool =
     Both from the hand's own pose as the release begins (`Attempt._held_pose`, the measured joints), not the script's:
     after the pull the hand is where the lever is, which the door's load and the gait's carry can have moved off the
     goal. The script's "back" went straight from the lever to the home point, which crossed in front of the hub with
-    the fingers still behind the lever, and the fingers pushed the door on the way out (2026-10-20)."""
+    the fingers still behind the lever, and the fingers pushed the door on the way out (2026-10-20). On the handle, at
+    the height and wrist it was commanded at, its sag kept (`LET_GO_SAG_MAX_M`)."""
     timing = timing or demo_script.DoorTiming()
     Phase = demo_script.Phase
     opened = demo_script.JAW_LEVER_OPEN_M
     held = lambda key: (lambda st: st["held"]()[key])
     hand = dict(approach=held("approach"), object_axis=held("axis"), servo=True)
-    phases = [Phase("release", timing.release_s, target=held("hand"), jaw_m=opened, **hand)] if release else []
+    phases = [Phase("release", max(timing.release_s, LET_GO_S), target=held("hand"), jaw_m=opened, **hand)
+              ] if release else []
     return phases + [Phase("ungrasp", timing.enter_s, target=held("back"), jaw_m=opened, **hand),
                      Phase("home", timing.back_s, path=lambda st, u: home_at(st["base"]), jaw_m=opened)]
 
@@ -673,8 +812,7 @@ def ungrasp_phases(timing: demo_script.DoorTiming | None = None, release: bool =
 def recovery_phases(timing: demo_script.DoorTiming | None = None) -> list:
     """After an abort, if the operator chooses: let go of the lever from where the hand is (`ungrasp_phases`) and fold.
     The base stands throughout."""
-    return ungrasp_phases(timing) + [demo_script.Phase("fold", FOLD_S, path=lambda st, u: home_at(st["base"]),
-                                                       jaw_m=demo_script.JAW_LEVER_OPEN_M)]
+    return ungrasp_phases(timing) + fold_phases()
 
 
 # --- one 10 Hz step ---------------------------------------------------------------------------------------------------
@@ -692,6 +830,64 @@ class Observation:
     web_teleop: bool = False
     gripper_units: float | None = None  # servo 6's report, None without one
     body_height_m: float | None = None  # sport mode's `body_height`, None without one
+
+
+def joint_path(start_deg, goal_deg, dt: float = 0.1) -> np.ndarray:
+    """The joint move the node sends for a goal (servo degrees, or radians: each joint's shape is the same), every `dt`:
+    each joint on its own at `JOINT_SPEED_DEG_S` and `JOINT_ACCEL_DEG_S2` (`holster.joint_move`), two points at least."""
+    from demos.combiner_key.holster import joint_move
+
+    start, goal = np.asarray(start_deg, dtype=float), np.asarray(goal_deg, dtype=float)
+    path = joint_move(start, goal, JOINT_SPEED_DEG_S, JOINT_ACCEL_DEG_S2, dt)
+    return path if len(path) > 1 else np.stack([start, goal])
+
+
+def joint_path_rad(q_start, q_goal) -> np.ndarray:
+    """`joint_path` in radians (URDF joints): the configurations a joint move from `q_start` to `q_goal` goes through."""
+    return np.radians(joint_path(np.degrees(q_start), np.degrees(q_goal)))
+
+
+def joint_path_clear(joints, q_start, q_goal) -> tuple[bool, float | None]:
+    """`grasp.path_clear` for the move the node sends (`joint_path`), not a straight line in joint space: (clear, the
+    first failing fraction of it or None)."""
+    from demos.cup.pick_demo.grasp import arm_clear
+
+    configs = joint_path_rad(q_start, q_goal)
+    ok = arm_clear(joints, configs)
+    if bool(ok.all()):
+        return True, None
+    return False, float(np.flatnonzero(~ok)[0]) / max(1, len(ok) - 1)
+
+
+class ArmSender:
+    """What the node sends the arm link for each step's goal (servo degrees): a joint move -- a joint phase's goal, or
+    a goal more than `JUMP_DEG` from the last -- as one timed path (`joint_path`, from where the arm is), then
+    keepalives with the jaws' command while it plays; any other goal followed as it moves (`arm_link.Follower`).
+    The holster draw's way of commanding the D1 (F-199), for every phase. numpy only."""
+
+    def __init__(self, dt: float = 0.1):
+        self.dt = dt
+        self.path_goal: np.ndarray | None = None
+        self.last_goal: np.ndarray | None = None
+
+    def message(self, goal, gripper, joint: bool, measured) -> dict:
+        goal = np.asarray(goal, dtype=float)
+        gripper = None if gripper is None else round(float(gripper), 2)
+        before = self.last_goal if self.last_goal is not None else (
+            None if measured is None else np.asarray(measured, dtype=float))
+        jump = before is not None and float(np.max(np.abs(goal - before))) > JUMP_DEG
+        self.last_goal = goal
+        if joint or jump or (self.path_goal is not None and float(np.max(np.abs(goal - self.path_goal))) <= 0.5):
+            if self.path_goal is not None and float(np.max(np.abs(goal - self.path_goal))) <= 0.5:
+                return {"type": "keepalive", "gripper": gripper}
+            if measured is None:
+                return {"type": "keepalive", "gripper": gripper}
+            self.path_goal = goal
+            points = joint_path(measured, goal, self.dt)
+            return {"type": "path", "q": [[round(float(v), 3) for v in p] for p in points], "dt": self.dt,
+                    "gripper": gripper}
+        self.path_goal = None
+        return {"type": "follow", "q": [round(float(v), 3) for v in goal], "gripper": gripper}
 
 
 @dataclass
@@ -735,6 +931,14 @@ class Attempt:
     release_held_phases = RELEASE_HELD_PHASES
     #: Whether the lidar reads the door's angle through the door's phases (`node.py`): the door pull's attempts only.
     reads_door = True
+    #: How long the walk in may run past its clock (`WALK_IN_TIMEOUT_S`; the approach's is longer, `approach.py`).
+    walk_in_timeout_s = WALK_IN_TIMEOUT_S
+    #: How much higher the jaws close on the handle than the geometry has it (`GRASP_RAISE_M`; 0 for a task that does
+    #: not grab the handle).
+    grasp_raise_m = GRASP_RAISE_M
+    #: The jaws on the door's handle: the script's lever opening sent fully open (`gripper_units`). The key's attempts,
+    #: which grip the key and the holster with the same opening, keep it as it is.
+    handle_jaws = True
     #: How far the refit after the walk in may move the box before it aborts (`REFIT_LIMIT_*`).
     refit_limit_m = REFIT_LIMIT_M
     refit_limit_deg = REFIT_LIMIT_DEG
@@ -784,7 +988,7 @@ class Attempt:
         """The grasp (pitch, roll) for the attempt, planned with the base at the stance before anything moves: the
         search tries every grasp from many seeds when the first fails, which is no thing to do inside the 10 Hz loop."""
         to_base = invert(pose(None, (0.0, 0.0, BASE_HEIGHT_M - float(self.fix.script_odom[2, 3]))))
-        site = self.fix.site
+        site = self.grasp_site(self.fix.site)
         self.arm.choose_grasp(transform(to_base, site.grasp_point_m())[0], np.asarray(site.approach_unit(0.0)),
                               np.asarray(site.lever_axis_unit(0.0, 0.0)), self.timing.standoff_m)
         self.events.append({"phase": "grasp", "choice": self.arm.grasp_note})
@@ -801,8 +1005,23 @@ class Attempt:
     def base_script(self, base_odom) -> np.ndarray:
         return invert(self.fix.script_odom) @ np.asarray(base_odom)
 
+    def box_site(self) -> props.BoxSite:
+        """The box, its door shut (script frame), whose door the lidar reads and RViz draws: the fix's (the door close's
+        is its look's turned back about the hinge, `key_plan.DoorClose`)."""
+        return self.fix.site
+
+    def box_odom(self) -> np.ndarray:
+        """`box_site` in `odom`."""
+        return self.fix.script_odom @ perception.site_pose(self.box_site())
+
+    def grasp_site(self, site: props.BoxSite) -> props.BoxSite:
+        """`site` with the jaws' grasp point `grasp_raise_m` higher (`RaisedGrasp`): what the phases reach for."""
+        if not self.grasp_raise_m:
+            return site
+        return RaisedGrasp(site.distance_m, site.bearing_deg, site.yaw_deg, self.grasp_raise_m)
+
     def state(self, base_odom) -> dict:
-        st = {"box_site": self.fix.site, "base": planar(self.base_script(base_odom)), "held": self._held_pose}
+        st = {"box_site": self.grasp_site(self.fix.site), "base": planar(self.base_script(base_odom)), "held": self._held_pose}
         if self._pull is not None and self._pull["done"]:
             st["door_deg"] = self._followed_door_deg(st["base"])
         return st
@@ -830,10 +1049,19 @@ class Attempt:
         step_dt, held = self._clock(obs, dt)
         if held:
             return Command(before, abort=held)
+        if before not in TURN_CLOCKED_PHASES and self.next_phase() in TURN_CLOCKED_PHASES and not self.script.finished:
+            # Into a phase whose clock is the base's turn: start it at its start, not the step's leftover time on the
+            # plain clock (the pull's first goal a degree or two of door ahead of the base and back the next step,
+            # which the wrist took as 7.6 deg on Joint4 once the wider jaws made the grip a step longer).
+            current = self.script.phases[self.script.index]
+            step_dt = min(step_dt, max(0.0, current.duration_s - self.script.elapsed_s) + 1e-6)
         if before == "pull":
             step_dt, why = self._pull_clock(st["base"], dt)
             if why:
                 return Command(before, abort=why)
+            # The pull over this step: the hold's first goal at the door as the base has turned it, not the pull's
+            # nominal angle (a 3 mm, 0.75 deg jump and back in the hand's goal, which the wrist took as 2-6 deg).
+            st = self.state(obs.base_odom)
         cmd = self.script.update(step_dt, st)
         if cmd.finished:
             return Command("done", finished=True)
@@ -846,7 +1074,10 @@ class Attempt:
             ok, text = self.fix.in_range(check_tag=False)
             self.events.append({"phase": "reanchor", "ok": ok, "text": text})
             if not ok:
-                return Command(cmd.phase, abort=f"after the walk in: {text}")
+                why = self._out_of_range_after_walk(text)
+                if why:
+                    return Command(cmd.phase, abort=f"after the walk in: {why}")
+                return Command(self.phase)              # standing this step; walking again from the next
             base_s = self.base_script(obs.base_odom)
             st = self.state(obs.base_odom)
         if before != cmd.phase:
@@ -867,7 +1098,11 @@ class Attempt:
             goal = self._goal_servo(cmd, base_s, measured, st)
             self.last_goal = [float(v) for v in goal]
             out.arm_servo_deg = list(self.last_goal)       # the arm link steps towards it
-            out.gripper_units = d1_hardware.finger_travel_to_gripper_units(cmd.jaw_m)
+            out.gripper_units = self.gripper_units(cmd.jaw_m)
+            if self.handle_jaws and cmd.phase == "release" and self._jaw_from is not None:
+                # Letting go of the handle: from where the jaws grip the lever, not from the squeeze's command.
+                f = min(1.0, self.script.elapsed_s / LET_GO_RAMP_S)
+                out.gripper_units = self._jaw_from + f * (self._open_units() - self._jaw_from)
             out.ik_status = self.status
         out.base, out.walking = self._base(cmd, st["base"], dt)
         if before != cmd.phase:
@@ -875,6 +1110,11 @@ class Attempt:
             self.events.append({"t": round(obs.now_s, 3), "phase": cmd.phase})
         self.last_command = out
         return out
+
+    def _lag_joints(self, phase: str) -> tuple:
+        """The joints whose gap from the goal says the arm is loaded (`ARM_LAG_DEG`): all six, unless a task moves one
+        faster than the arm follows on purpose."""
+        return tuple(range(6))
 
     def _on_phase_change(self, before: str, phase: str, obs: Observation) -> str:
         """As the script goes from `before` to `phase`, before the new phase's first goal: another task's hook (the key
@@ -906,7 +1146,7 @@ class Attempt:
             # The walk in runs until its corrective steps are done, past its clock if need be.
             if self._walk is None or self._walk["state"] == "done" or not at_clock_end:
                 return dt, ""
-            return self._wait(dt, remaining, WALK_IN_TIMEOUT_S, "the walk in did not finish")
+            return self._wait(dt, remaining, self.walk_in_timeout_s, "the walk in did not finish")
         goal = self._joint_goal[1] if (current.name in self.joint_phases and self._joint_goal is not None
                                        and self._joint_goal[0] == current.name) else self.last_goal
         off = float(np.max(np.abs(np.asarray(goal) - np.asarray(obs.arm_servo_deg)))) if goal is not None else math.inf
@@ -930,7 +1170,7 @@ class Attempt:
         if current.name == "release" and self._jaws and not self._jaws_open(obs.now_s):
             reading = self._jaws[-1][1]
             return self._wait(dt, remaining, JAW_WAIT_S, f"the jaws did not open: servo 6 at {reading:.1f} units, "
-                                                         f"sent {GRIPPER_OPEN_UNITS:.1f}; the hand is still on the lever")
+                                                         f"sent {self._open_units():.1f}; the hand is still on the lever")
         self._joint_wait_s = 0.0
         return dt, ""
 
@@ -950,11 +1190,25 @@ class Attempt:
         return bool(spanned and recent and max(recent) - min(recent) < JAW_STALL_UNITS)
 
     def _jaws_open(self, now: float) -> bool:
-        reading = self._jaws[-1][1]
-        if reading >= GRIPPER_OPEN_UNITS - JAW_OPEN_TOLERANCE_UNITS:
+        reading, opened = self._jaws[-1][1], self._open_units()
+        if reading >= opened - JAW_OPEN_TOLERANCE_UNITS:
             return True
         start = self._jaw_from if self._jaw_from is not None else GRIPPER_SHUT_UNITS
-        return self._jaws_stalled(now) and reading >= start + 0.5 * (GRIPPER_OPEN_UNITS - start)
+        return self._jaws_stalled(now) and reading >= start + 0.5 * (opened - start)
+
+    def gripper_units(self, jaw_m: float) -> float:
+        """Servo 6's command for the script's jaw opening: on the door's handle (`handle_jaws`) the script's range,
+        shut to the lever's opening (`demo_script.JAW_LEVER_OPEN_M`), stretched over shut to fully open
+        (`GRIPPER_OPEN_UNITS`), so its ramps through the grip and the release end fully open too; else as the script
+        has it (`d1_hardware.finger_travel_to_gripper_units`)."""
+        if not self.handle_jaws:
+            return d1_hardware.finger_travel_to_gripper_units(jaw_m)
+        f = float(np.clip(jaw_m / demo_script.JAW_LEVER_OPEN_M, 0.0, 1.0))
+        return d1_hardware.GRIPPER_UNITS_CLOSED + f * (GRIPPER_OPEN_UNITS - d1_hardware.GRIPPER_UNITS_CLOSED)
+
+    def _open_units(self) -> float:
+        """What this attempt sends to open the jaws (`gripper_units`)."""
+        return self.gripper_units(demo_script.JAW_LEVER_OPEN_M)
 
     def sent(self, command: Command) -> None:
         """What the node actually sent the arm, which the lag check compares the arm against."""
@@ -963,11 +1217,10 @@ class Attempt:
 
     def recover(self) -> None:
         """Swap what is left of the attempt for `recovery_phases` (let go from where the hand measures itself, back off,
-        home, fold) if it may be at the lever (`AT_THE_LEVER_PHASES`); else for the fold alone."""
+        home, fold) if it may be at the lever (`AT_THE_LEVER_PHASES`); else for the fold alone (`_fold_phases`)."""
         last = self.last_command
         if last is None or last.hand_target_script is None or last.phase not in self.at_the_lever_phases:
-            phases = [demo_script.Phase("fold", FOLD_S, path=lambda st, u: home_at(st["base"]),
-                                        jaw_m=demo_script.JAW_LEVER_OPEN_M)]
+            phases = self._fold_phases()
         else:
             phases = self._recovery_phases()
         self.script = demo_script.DemoScript(phases)
@@ -981,6 +1234,13 @@ class Attempt:
     def _recovery_phases(self) -> list:
         """What an abort at the lever turns into (`recovery_phases`)."""
         return recovery_phases(self.timing)
+
+    def _fold_phases(self) -> list:
+        """What an abort away from the lever turns into: the door pull's fold (`fold_phases`); another task's, its own."""
+        if "tuck" not in self.joint_phases:
+            return [demo_script.Phase("fold", FOLD_S, path=lambda st, u: home_at(st["base"]),
+                                      jaw_m=demo_script.JAW_LEVER_OPEN_M)]
+        return fold_phases()
 
     def _held_pose(self) -> dict:
         """The hand as the release begins, script frame, from the arm's measured joints (else its last goal): where
@@ -999,6 +1259,15 @@ class Attempt:
         jaw_b, link6_b = d1_ik.tool_pose(self._joints, q, body="Link6", offset=JAW_CENTRE_LINK6)
         hand = transform(base_s, [jaw_b])[0]
         rot = base_s[:3, :3] @ link6_b
+        sag = 0.0
+        if self.handle_jaws and self.last_goal is not None:
+            # On the handle: the goal's height and wrist, so the arm sags onto the lever no more than it did holding it
+            # (`LET_GO_SAG_MAX_M`); where the hand is across the door stays the measured.
+            goal_b, goal6_b = d1_ik.tool_pose(self._joints, d1_ik.from_servo_deg(self.last_goal)[0], body="Link6",
+                                              offset=JAW_CENTRE_LINK6)
+            sag = float(np.clip(transform(base_s, [goal_b])[0][2] - hand[2], -LET_GO_SAG_MAX_M, LET_GO_SAG_MAX_M))
+            hand = hand + np.array([0.0, 0.0, sag])
+            rot = base_s[:3, :3] @ goal6_b
         approach = rot[:, 2]                        # Link6 +z: the way the jaws point
         back = hand - self.timing.standoff_m * approach
         self.held_rotation = rot
@@ -1006,7 +1275,7 @@ class Attempt:
         self._held = {"hand": tuple(float(v) for v in hand), "back": tuple(float(v) for v in back),
                       "approach": tuple(float(v) for v in approach), "axis": tuple(float(v) for v in rot[:, 0])}
         self.events.append({"phase": "let_go", "hand_script": [round(float(v), 4) for v in hand],
-                            "approach": [round(float(v), 3) for v in approach],
+                            "approach": [round(float(v), 3) for v in approach], "sag_mm": round(1000 * sag, 1),
                             "jaws_units": None if self._jaw_from is None else round(self._jaw_from, 2)})
 
     # --- the arm ------------------------------------------------------------------------------------------------
@@ -1016,9 +1285,9 @@ class Attempt:
         its end point, from where the arm is), or the IK for this step's jaw centre (position only through
         `POSITION_ONLY_PHASES`). Folded through the look's pause (`unfold` not yet begun) it holds."""
         to_base = invert(base_s)
-        if cmd.phase == "fold":
+        if cmd.phase in ("tuck", "fold"):
             self.status = "joint"
-            self._joint_goal = ("fold", np.asarray(FOLD_SERVO_DEG))
+            self._joint_goal = (cmd.phase, tuck_servo_deg() if cmd.phase == "tuck" else np.asarray(FOLD_SERVO_DEG))
             return self._joint_goal[1]
         if cmd.phase in self.joint_phases:
             if self._joint_goal is None or self._joint_goal[0] != cmd.phase:
@@ -1054,7 +1323,7 @@ class Attempt:
                 approach = to_base[:3, :3] @ np.asarray(cmd.approach)
                 bar = to_base[:3, :3] @ np.asarray(cmd.object_axis)
                 if self.arm.grasp is None:
-                    grasp_b = transform(to_base, self.fix.site.grasp_point_m())[0]
+                    grasp_b = transform(to_base, self.grasp_site(self.fix.site).grasp_point_m())[0]
                     self.arm.choose_grasp(grasp_b, approach, bar, self.timing.standoff_m)
                 rot = decoupled_arm.hand_rotation(approach, bar, *self.arm.grasp)
             seed = self.arm.q.copy()
@@ -1106,7 +1375,11 @@ class Attempt:
 
     def _pull_twist(self, base) -> dict:
         """The pull's constant twist, from where the base stands as it begins (module constants' note)."""
-        angle = math.radians(GEOMETRY.hinge_axis_z * self.timing.door_deg)
+        return self._hinge_twist(base, math.radians(GEOMETRY.hinge_axis_z * self.timing.door_deg), "pull")
+
+    def _hinge_twist(self, base, angle: float, phase: str) -> dict:
+        """A constant twist turning the base `angle` (rad) about the hinge from `base`, its largest part at the gait's
+        floor: the pull's, and the door close's (`DoorClose`)."""
         hx, hy = self.fix.site.hinge_xy_m()
         c, s = math.cos(base[2]), math.sin(base[2])
         dx, dy = hx - base[0], hy - base[1]
@@ -1118,7 +1391,7 @@ class Attempt:
         over = max(abs(v) / cap for v, cap in zip(twist, WALK_CAP))
         if over > 1.0:
             twist = [v / over for v in twist]
-        self.events.append({"phase": "pull", "twist": [round(v, 3) for v in twist],
+        self.events.append({"phase": phase, "twist": [round(v, 3) for v in twist],
                             "hinge_in_base_m": [round(v, 3) for v in h], "seconds": round(abs(angle / twist[2]), 2)})
         return {"twist": tuple(twist), "yaw0": base[2], "angle": angle, "done": False, "best": 0.0, "since": 0.0}
 
@@ -1174,6 +1447,11 @@ class Attempt:
             w["state"] = "done"
         return stand
 
+    def _out_of_range_after_walk(self, text: str) -> str:
+        """The refit after the walk in put the stance out of range (`text`): why the attempt aborts, or "" when it
+        walks again instead (a task's correction; the door pull's aborts)."""
+        return text
+
     def _refit(self) -> str:
         """After the walk in: `refine_fix` on the settle's lidar frames. Too big a change aborts."""
         refined, fit = refine_fix(self.fix, self._settle_scans)
@@ -1204,7 +1482,8 @@ class Attempt:
             return f"arm feedback {obs.arm_age_s:.2f} s old"
         holding = phase in self.holding_phases
         if holding and self.last_goal is not None:
-            lag = float(np.max(np.abs(np.asarray(self.last_goal) - np.asarray(obs.arm_servo_deg))))
+            gap = np.abs(np.asarray(self.last_goal) - np.asarray(obs.arm_servo_deg))[:6]
+            lag = float(np.max(gap[list(self._lag_joints(phase))]))
             if lag > ARM_LAG_DEG:
                 self._lag_since = now if self._lag_since is None else self._lag_since
                 if now - self._lag_since >= ARM_LAG_S:
@@ -1237,6 +1516,115 @@ class Attempt:
         if self._pull is None:
             return 0.0
         return self._pull.get("followed", self.timing.door_deg) if self._pull["done"] else self.timing.door_deg
+
+
+# --- closing the door -------------------------------------------------------------------------------------------------
+
+#: The door closed again after the pull (`key_plan.DoorClose`, `node.py --then_close`; Lukas, 2026-10-25: "a chain of
+#: events that close the door - first by grabbing the handle again, then pushing it closed while moving"). Reached as the
+#: pull reaches the shut door: from a look at the tag (Lukas, 2026-10-25: "this phase should use the apriltag to grab it
+#: just like on the open"). The pull leaves the dog too close for the front camera to see the tag (0.2-0.4 m), so it
+#: backs up to the door pull's staging pose in front of the open door and looks there; the tag's enclosure pose is then
+#: the box whose shut door stands where the open door does (`about_hinge`), and the pull's range check, approach, walk
+#: up, settle and refit go on from that look as from any. The box itself is that one turned back about the hinge by the
+#: door's angle, which is the look's heading against the pull's box. Before (the close of 2026-10-25 12:35), the close
+#: reached from the pull's fix through the odometry and the lidar's door angle: 15 cm short of the handle and 7 cm under
+#: it, Lukas saw. The pull's turn round the hinge (60 deg) had the base 12.6 cm short of the hinge's arc on the
+#: odometry; the jaws stood as high in the base as at the pull's grip (0.305 m against 0.308), so the 7 cm was not in the
+#: plan: the handle stood higher against the trunk than at the pull, which only a look from there measures. Then the pull's reach onto the handle at the door's angle (`approach`,
+#: `settle`, `enter`, `arrive`, `grip`), the pull's turn about the hinge reversed (`push`) to `CLOSE_TO_DEG`, and the
+#: pull's letting go and fold.
+#: Pushed all the way shut, and on past it by `CLOSE_PAST_DEG` of the base's turn: the door lags the base through the
+#: push (the lidar had it 16-19 deg behind the script's angle at 05:04 UTC, 2026-10-25, and Lukas saw it stop ~20 deg
+#: short of shut when pushed to 5). Lukas: "it should attempt to close it the full 90 degrees and accept that the spring
+#: will push it back out 5 or 10". Past shut, the base stalling or the arm loaded is the door on its frame: the push ends
+#: there, done (`key_plan.DoorClose`), and the key's push closes what the spring opens again
+#: (`insert_plan.InsertAttempt.lock`). A door under `CLOSE_FROM_MIN_DEG` is not pushed.
+CLOSE_TO_DEG = 0.0
+CLOSE_PAST_DEG = 15.0
+CLOSE_FROM_MIN_DEG = 15.0
+#: Where the lidar's door angle is read for the record, the RViz and the abort (`node.py`): the pull's phases, and the
+#: door close's.
+DOOR_READING_PHASES = ("grip", "squeeze", "pull", "hold", "release", "ungrasp")
+CLOSE_READING_PHASES = ("approach", "settle", "enter", "arrive", "grip", "push", "hold", "release", "ungrasp")
+#: The first close's lidar look, standing where the pull left the dog (`door_look`: the readings' median over this long,
+#: those this far off it dropped), which the Isaac door demo's close still models (`demos/combiner_door/env.py`
+#: `close_phases`). The robot program's close looks at the tag instead.
+DOOR_LOOK_S = 2.0
+DOOR_LOOK_SPREAD_DEG = 15.0
+
+
+def about_hinge(door_deg: float) -> np.ndarray:
+    """The door's turn about its hinge to `door_deg`, in the enclosure's frame (4x4): `box @ about_hinge(d)` is the
+    door's frame at `d` (`viz.door_pose`), and the enclosure whose shut door stands where `box`'s does at `d`
+    (`props.BoxSite._about_hinge`)."""
+    hinge = np.asarray(GEOMETRY.hinge, dtype=float)
+    turn = pose(rot_z(math.radians(GEOMETRY.hinge_axis_z * door_deg)))
+    return pose(None, hinge) @ turn @ pose(None, -hinge)
+
+
+#: The whole chain (`node.py --task insert --stage insert --then_door pull --then_close`, Lukas 2026-10-25: "now lets
+#: chain it together with the door unlocking"): unlocked, the door hangs ajar on its spring (up to ~10 deg), and the
+#: pull's look takes that door as shut, so its box is the real one turned about the hinge by the ajar angle and the
+#: close's angle, read against it, is that much short. The unlock's look saw the door shut: the close takes its heading
+#: as shut, about the pull's hinge (`shut_reference`), when the pull's box is turned up to this far open from it.
+AJAR_REFERENCE_MAX_DEG = 20.0
+
+
+def shut_reference(pulled_box, shut_box, limit_deg: float = AJAR_REFERENCE_MAX_DEG):
+    """(the box the close takes as shut, the pull's box's angle open from `shut_box`'s heading, whether used): the pull's
+    box turned back about its own hinge to `shut_box`'s heading when that angle is over 0 and up to `limit_deg`;
+    else the pull's box. Both 4x4 in `odom`."""
+    pulled_box, shut_box = np.asarray(pulled_box), np.asarray(shut_box)
+    yaw = lambda b: math.atan2(float(b[1, 0]), float(b[0, 0]))
+    ajar = GEOMETRY.hinge_axis_z * math.degrees(wrap(yaw(pulled_box) - yaw(shut_box)))
+    if not 0.0 < ajar <= limit_deg:
+        return pulled_box, ajar, False
+    return pulled_box @ about_hinge(-ajar), ajar, True
+
+
+def close_phases(attempt) -> list:
+    """The door close's phases (`key_plan.DoorClose`): the pull's walk up to its stance in front of the open door, its
+    reach onto the handle at the door's angle (`attempt.close`, from the look), and the base's path back round the
+    hinge."""
+    timing = attempt.timing
+    Phase = demo_script.Phase
+    opened, shut = demo_script.JAW_LEVER_OPEN_M, demo_script.JAW_BAR_SHUT_M
+    home = lambda st, u: home_at(st["base"])
+    site = lambda st: st["box_site"]
+    start = lambda: attempt.close["from_deg"]
+    end = lambda: attempt.close["to_deg"] - CLOSE_PAST_DEG          # the push's end, past shut (`CLOSE_PAST_DEG`)
+    door = lambda u: start() + (end() - start()) * u
+    at = lambda st, d: site(st).grasp_point_m(0.0, d)
+    # The jaws go where the look has the handle; the hand faces the door as the base's turn has it (the pull's grasp,
+    # turned with the base): the walk up leaves the base a few degrees off the door (the gait's carry), and with the
+    # hand turned to the door instead the IK held only the jaws' position, 9-12 mm off the handle through the push (the
+    # dry runs). Through the push the two meet at its end; past shut the hand turns on with the base, so it keeps its grip
+    # in the base's frame however far the frame lets the door go.
+    facing = lambda st: max(end(), attempt._door_from_base(st["base"]))
+    reach = dict(approach=lambda st: site(st).approach_unit(facing(st)),
+                 object_axis=lambda st: site(st).lever_axis_unit(0.0, facing(st)))
+    # Through the hold the hand follows the base as the gait carries it on, as the pull's hold follows its door
+    # (`HOLD_FOLLOW_DEG`): its grip kept in the base's frame.
+    held = lambda st: max(end() - HOLD_FOLLOW_DEG, min(start(), attempt._door_from_base(st["base"])))
+    pushed = dict(approach=lambda st: site(st).approach_unit(held(st)),
+                  object_axis=lambda st: site(st).lever_axis_unit(0.0, held(st)))
+    standoff = lambda st: demo_script.offset(at(st, start()), site(st).approach_unit(facing(st)), timing.standoff_m)
+    return [
+        Phase("unfold", UNFOLD_S, path=home, jaw_m=opened),
+        Phase("walk_in", WALK_IN_S, path=home, jaw_m=opened, base=lambda st, u: (0.0, 0.0, 0.0)),
+        Phase("walk_settle", WALK_SETTLE_S, path=home, jaw_m=opened),
+        Phase("stand", timing.stand_s, path=home, jaw_m=opened, **reach),
+        Phase("approach", timing.approach_s, target=standoff, jaw_m=opened, **reach),
+        Phase("settle", timing.settle_s, target=standoff, jaw_m=opened, servo=True, **reach),
+        Phase("enter", timing.enter_s, target=lambda st: at(st, start()), jaw_m=opened, servo=True, **reach),
+        Phase("arrive", timing.arrive_s, target=lambda st: at(st, start()), jaw_m=opened, servo=True, **reach),
+        Phase("grip", timing.grip_s, target=lambda st: at(st, start()), jaw_m=shut, servo=True, **reach),
+        Phase("push", timing.pull_s, jaw_m=shut, servo=True, path=lambda st, u: at(st, door(u)),
+              approach_path=lambda st, u: site(st).approach_unit(facing(st)),
+              object_axis_path=lambda st, u: site(st).lever_axis_unit(0.0, facing(st))),
+        Phase("hold", timing.hold_s, path=lambda st, u: at(st, held(st)), jaw_m=shut, servo=True, **pushed),
+    ] + ungrasp_phases(timing) + fold_phases()
 
 
 def release(fix: Fix, base_odom, arm_servo_deg, timing: demo_script.DoorTiming | None = None) -> Attempt:

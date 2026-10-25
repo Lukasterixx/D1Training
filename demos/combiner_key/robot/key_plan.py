@@ -30,6 +30,7 @@ and what the real D1 pushes at its published limits.
 """
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 import math
 
@@ -38,7 +39,7 @@ import numpy as np
 import d1_ik
 from demos.combiner_door import head_camera, perception
 from demos.combiner_door.robot import plan
-from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6, _chain_points, _seeds, path_clear, solve_link6
+from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6, _chain_points, _seeds, solve_link6
 from demos.unifp import decoupled_arm, script as demo_script
 
 from .. import arm_turn as at
@@ -51,7 +52,17 @@ STAGES = ("watch", "look", "unfold", "walk", "reach", "touch", "turn")
 #: 1 cm nearer than the middle (0.45): the dry walks up, with the odometry 10-15% short, landed 1-3 cm past where they aimed
 #: (the gait's carry and its settling back), and at 0.45 one 10% short stopped 0.48-0.51 m off, outside the push's area.
 WALK_TO_DOOR_M = 0.44
-STANCE_LOCK_LEFT_M = round(sum(at.PUSH_LOCK_LEFT_M) / 2, 4)
+#: Where the push works on the dog (the door this far ahead at the lock, the lock this far to the base's left), and the
+#: stance in its middle. v4 in the changed lock (2026-10-24, `geometry.ARM_LEVER`) starts level, its platform ~9 cm lower
+#: than v3's at 45 up: from the stance v3 used (the lock 7 cm left) every first pose put the hand 13-16 mm into the head
+#: camera's box, and the planner now refuses those (`_plan_push`). The CPU model, with the base 0.353 and 0.37 m over the
+#: box's root (the dog's), the door 0.42-0.48 m ahead: the lock 5-14 cm to the base's *right* solves every stance, the
+#: camera 98-111 mm clear, Joint5 25-46 degrees from 0; 2 cm right only at 0.353 m and 0.48 at 0.37. Not at 0.39 m nor
+#: 0.33 m (pitched 50-70 degrees) at any side: there the first pose is not clear of the trunk. (The simulation's walker,
+#: 0.28-0.33 m and no camera, keeps `arm_turn.PUSH_*`.)
+PUSH_DOOR_AHEAD_M = (0.42, 0.48)
+PUSH_LOCK_LEFT_M = (-0.14, -0.05)
+STANCE_LOCK_LEFT_M = round(sum(PUSH_LOCK_LEFT_M) / 2, 4)
 #: Sport mode's odometry reports this share of a walk up: the refit after the walk put the door 43, 42, 58 and 63 mm
 #: nearer than the look's fix in Lukas's four live walks up (2026-10-21), 12-15% of the 0.34-0.47 m walked -- growing
 #: with the walk, as an odometry's scale error does (the look itself passed its lidar-against-tag check, under 3 cm).
@@ -237,9 +248,9 @@ class KeyFix(plan.Fix):
                     f"{math.hypot(x, y):.2f} m")
             return not problems, text + ("" if not problems else "; move the dog " + ", ".join(problems))
         ahead, left, off_square = lock_from_base(self)
-        if not at.PUSH_DOOR_AHEAD_M[0] <= ahead <= at.PUSH_DOOR_AHEAD_M[1]:
-            problems.append(f"{'back' if ahead < at.PUSH_DOOR_AHEAD_M[0] else 'forward'} {abs(ahead - WALK_TO_DOOR_M):.2f} m")
-        lo, hi = at.PUSH_LOCK_LEFT_M
+        if not PUSH_DOOR_AHEAD_M[0] <= ahead <= PUSH_DOOR_AHEAD_M[1]:
+            problems.append(f"{'back' if ahead < PUSH_DOOR_AHEAD_M[0] else 'forward'} {abs(ahead - WALK_TO_DOOR_M):.2f} m")
+        lo, hi = PUSH_LOCK_LEFT_M
         if not lo <= left <= hi:
             problems.append(f"{'left' if left > hi else 'right'} {abs(left - STANCE_LOCK_LEFT_M):.2f} m")
         if abs(off_square) > YAW_LIMIT_DEG:
@@ -366,7 +377,13 @@ def recovery_phases(speed_scale: float = 1.0) -> list:
 
 class WalkUp:
     """The walk up to the stance (the script frame's origin, facing +x) through the `walk_in` phase, on all three axes at
-    once (`WALK_UP_*`): the key's, and the door pull's after the key (`DoorAfterKey`). A mixin for a `plan.Attempt`."""
+    once (`WALK_UP_*`): the key's, and the approach's (`combiner_door/robot/approach.py`). A mixin for a
+    `plan.Attempt`."""
+
+    #: How long the walk up may walk in all, and how many corrective steps it may take (`WALK_UP_*`); the approach to a
+    #: place to look again from walks further (`combiner_door/robot/approach.py`).
+    walk_up_timeout_s = WALK_UP_TIMEOUT_S
+    walk_up_max_steps = WALK_UP_MAX_STEPS
 
     def _base(self, cmd, actual, dt):
         if cmd.phase == "walk_in":
@@ -398,7 +415,7 @@ class WalkUp:
             left_m = math.hypot(x, y)
             there = (left_m <= max(WALK_UP_HOLD_M, math.hypot(vx, vy) * w["carry_s"])
                      and abs(math.degrees(plan.wrap(yaw))) <= max(WALK_UP_HOLD_DEG, math.degrees(abs(wz) * w["carry_s"])))
-            if (w["t"] >= plan.WALK_IN_MIN_STEP_S and there) or w["total"] > WALK_UP_TIMEOUT_S:
+            if (w["t"] >= plan.WALK_IN_MIN_STEP_S and there) or w["total"] > self.walk_up_timeout_s:
                 w.update(state="coasting", t=0.0, stop_at=actual, stop_speed=math.hypot(vx, vy))
                 return stand
             w["cmd"] = self._walk_up_command(actual, w, dt)
@@ -419,7 +436,7 @@ class WalkUp:
             shortest = plan.WALK_FLOOR[0] * (w["carry_s"] + plan.WALK_IN_MIN_STEP_S)
             worth = (math.hypot(*actual[:2]) > 0.7 * shortest
                      or abs(math.degrees(plan.wrap(actual[2]))) > WALK_UP_ACCEPT_YAW_DEG)
-            if not ok and worth and w["steps"] < WALK_UP_MAX_STEPS and w["total"] <= WALK_UP_TIMEOUT_S:
+            if not ok and worth and w["steps"] < self.walk_up_max_steps and w["total"] <= self.walk_up_timeout_s:
                 w.update(state="walking", t=0.0, steps=w["steps"] + 1, cmd=(0.0, 0.0, 0.0), lat_from=actual, lat_t=0.0)
                 return stand
             w["state"] = "done"          # close enough, or out of steps: the refit's range check decides
@@ -486,6 +503,8 @@ class KeyAttempt(WalkUp, plan.Attempt):
     refit_limit_m = REFIT_LIMIT_M
     confirm_before = CONFIRM_BEFORE
     reads_door = False
+    grasp_raise_m = 0.0                 # not the handle (`plan.GRASP_RAISE_M`)
+    handle_jaws = False                 # the key's own jaw openings (`plan.Attempt.gripper_units`)
 
     def _make_phases(self) -> list:
         return key_phases(self.stage, self.speed_scale, self.fold)
@@ -533,7 +552,7 @@ class KeyAttempt(WalkUp, plan.Attempt):
         result = solve_link6(self.arm.joints, self.arm.links, end_b, self._push_rotation(to_base, at.START_DEG),
                              [chosen["q"]], self.arm.offset)
         q = np.asarray(result.q, dtype=float) if result is not None else chosen["q"]
-        clear = bool(path_clear(self.arm.joints, start, q)[0])
+        clear = bool(plan.joint_path_clear(self.arm.joints, start, q)[0])   # the move the node sends
         turn_s = self._retime_turn()
         self.events.append({"phase": "key_out", "solved_here": result is not None, "path_clear": clear,
                             "turn_s": round(turn_s, 2)})
@@ -565,15 +584,26 @@ class KeyAttempt(WalkUp, plan.Attempt):
                 solved += 1
                 q = np.asarray(result.q, dtype=float)
                 traced = self._plan_arc(q, to_base)
-                if traced is not None:
-                    candidates.append({"q": q, "arc": traced[0], "min_j5_deg": traced[1], "pitch_deg": pitch})
-                    break
+                if traced is None:
+                    continue
+                # Clear of the head camera's box at the first pose, above the key and along the turn: from v4's level
+                # start (2026-10-24) the first poses some seeds found stood 13-16 mm inside it.
+                above_b = plan.transform(to_base, [jaw_point(self._st(), "above", at.START_DEG)])[0]
+                above = d1_ik.solve(self.arm.joints, above_b, rot, q0=q, body="Link6", offset=self.arm.offset,
+                                    max_iterations=200)
+                poses = [q, np.asarray(above.q, dtype=float)] + [row[1] for row in traced[0][::4]]
+                camera = min(camera_margin(self.arm.joints, p) for p in poses)
+                if camera < 0.0:
+                    continue
+                candidates.append({"q": q, "arc": traced[0], "min_j5_deg": traced[1], "pitch_deg": pitch,
+                                   "camera_mm": round(1000 * camera, 1)})
+                break
         self.events.append({"phase": "plan_push", "poses_solved": solved,
                             "turns": {c["pitch_deg"]: round(c["min_j5_deg"], 1) for c in candidates}})
         if not candidates:
             self._pitch = at.HAND_PITCH_DEG
-            self._blocked = ("no arm pose in front of the key from which the whole turn solves without a wrist flip, at "
-                             f"any of the hand's pitches {PITCHES_DEG} ({solved} poses solved)")
+            self._blocked = ("no arm pose in front of the key from which the whole turn solves without a wrist flip and "
+                             f"clear of the head camera, at any of the hand's pitches {PITCHES_DEG} ({solved} poses solved)")
             return
         self._push_plan = max(candidates, key=lambda c: c["min_j5_deg"])
         self._pitch = self._push_plan["pitch_deg"]
@@ -735,7 +765,7 @@ class KeyAttempt(WalkUp, plan.Attempt):
                 self._turn["since"] = None
         if before == "key_hold" and out.phase != "key_hold":
             measured = self._turn["measured_deg"]
-            self._turn["verified"] = bool(measured is not None and measured >= kg.UNLOCK_DEG
+            self._turn["verified"] = bool(measured is not None and measured >= at.UNLOCK_DEG
                                           and self._turn["lag_mm"] < at.TRACK_LIMIT_MM)
             self._turn["held_s"] = round(self._turn_held_s, 2)
             self.events.append({"phase": "turn_check", **self.turn_check()})
@@ -760,54 +790,228 @@ class KeyAttempt(WalkUp, plan.Attempt):
 
 # --- on to the door pull ---------------------------------------------------------------------------------------------
 
-#: The door pull's stages after the key (`node.py --then_door`): each walks over first.
+#: The door pull's stages after the key (`node.py --then_door`): each backs up to look again first
+#: (`approach.door_after_key`).
 DOOR_STAGES = plan.STAGES[plan.STAGES.index("walk"):]
 
 
-def door_fix(fix: plan.Fix) -> plan.Fix:
-    """The door pull's fix from the key's (after its refit, the script frame where the dog stands at the key), its
-    script frame moved to the door pull's stance: square to the door, the box's root `plan.NOMINAL_DISTANCE_M` straight
-    ahead (the simulated demo's middle placement). From the key's stance that is ~0.09 m back and ~0.18 m right."""
-    box = perception.site_pose(fix.site)
-    normal = box[:3, :3] @ np.asarray(kg.OUT_OF_DOOR_BOX)
-    normal = normal[:2] / np.linalg.norm(normal[:2])
-    x, y = box[:2, 3] + plan.NOMINAL_DISTANCE_M * normal
-    plain = plan.Fix(fix.script_odom, fix.site, fix.pose_script, fix.fit, fix.detections, fix.lidar_points,
-                     fix.tag_only_yaw_deg, 0.0, fix.tag_tilt_deg, fix.beyond_edges)
-    return plan.reanchor(plain, np.asarray(fix.script_odom) @ plan.base_pose(float(x), float(y),
-                                                                              math.atan2(-normal[1], -normal[0])))
+#: How many times the door pull after the key walks up again when the refit after its walk in puts the stance out of
+#: range (`SteppingDoorAttempt`).
+DOOR_REWALKS = 1
 
 
 @dataclass
-class DoorAfterKey(WalkUp, plan.Attempt):
-    """The door pull straight after the key's turn, from where the key left the dog: no new look, and no backing off to
-    walk in straight. The arm folded, the dog walks over to the door pull's stance on all three axes at once (the key's
-    walk up, `WalkUp`: back and sideways), settles, and the door pull's refit and range check run there as after its
-    own walk in; then its unfold and the rest of its phases (`plan.attempt_phases`). The door pull's unfold puts the
-    hand 0.40 m ahead of the base: at the key's stance, with the door 0.44 m off, that is in the door, so the arm
-    unfolds only once the dog is over."""
-
-    def _make_phases(self) -> list:
-        if self.stage not in DOOR_STAGES:
-            raise ValueError(f"the door pull after the key is one of {DOOR_STAGES}, not {self.stage!r}")
-        phases = plan.attempt_phases(self.stage, self.timing, self.fold)
-        walk = [p for p in phases if p.name in ("walk_in", "walk_settle")]
-        return walk + [p for p in phases if p.name not in ("walk_in", "walk_settle")]
+class SteppingDoorAttempt(WalkUp, plan.Attempt):
+    """The door pull after the key (`node.py --then_door`, from its look again after backing up), its walk in on all
+    three axes (`WalkUp`: sideways and turning as it goes in, not straight), and, when the refit after it still puts the
+    stance out of range, up to `DOOR_REWALKS` more walks up to the stance from the refitted box (the door pull's,
+    `approach.task_stance`), each settled and refitted again; then the abort. Lukas, 2026-10-25: "can we make this phase
+    walking up to the handle more tolerant?" (his run of 00:50 UTC: the look 3 cm left of the stance's line, the straight
+    walk in 0.26 m, then 5 cm left, the edge of `plan.STANCE_SIDE_TOLERANCE_M`, which is the arm's reach: on the CPU
+    model it pulls with the box's root 0.05-0.15 m right of the stance, the stance's 0.10 the middle). Its walk's target
+    is the door pull's stance from the start (`_at_stance`), not the look's straight-ahead one."""
 
     def _prepare(self) -> None:
         super()._prepare()
-        self._folded_walk = True                 # the arm holds the fold until the unfold begins
+        self._rewalks = 0
+        # The walk up's target, the door pull's own stance from the look (the look's fix has it straight ahead of where
+        # the dog looked from, for the straight walk in).
+        self.fix = self._at_stance()
 
-    def _goal_servo(self, cmd, base_s, measured, st):
-        if cmd.phase == "unfold":
-            self._folded_walk = False
-        if self._folded_walk:
-            self.status = "joint"
-            return np.asarray(plan.FOLD_SERVO_DEG)
-        return super()._goal_servo(cmd, base_s, measured, st)
+    def _at_stance(self) -> plan.Fix:
+        """The fix with its script frame at the door pull's stance (`approach.task_stance`), as the odometry will count
+        the walk there (`ODOM_WALK_SCALE`)."""
+        from demos.combiner_door.robot import approach
 
-    def _walk_up_note(self, actual) -> dict:
-        x, y, yaw = actual
-        site = plan.reanchor(self.fix, np.asarray(self.fix.script_odom) @ plan.base_pose(x, y, yaw)).site
-        return {"box_distance_m": round(site.distance_m, 3), "box_bearing_deg": round(site.bearing_deg, 1),
-                "door_yaw_deg": round(site.yaw_deg, 1)}
+        x, y, yaw = approach.task_stance("door", perception.site_pose(self.fix.site))
+        k = ODOM_WALK_SCALE
+        return plan.reanchor(self.fix, np.asarray(self.fix.script_odom) @ plan.base_pose(k * x, k * y, yaw))
+
+    def _out_of_range_after_walk(self, text: str) -> str:
+        if self._rewalks >= DOOR_REWALKS:
+            return text + (f" (after {self._rewalks} more walk up)" if self._rewalks else "")
+        self.fix = self._at_stance()
+        x, y, yaw = plan.planar(np.asarray(self.fix.script_odom))
+        self._rewalks += 1
+        self._walk = None
+        self._settle_scans = []
+        walk = [p for p in self._make_phases() if p.name in ("walk_in", "walk_settle")]
+        self.script = demo_script.DemoScript(walk + self.script.phases[self.script.index:])
+        self.script.reset(demo_script.HOME_POINT, demo_script.JAW_LEVER_OPEN_M)
+        self.events.append({"phase": "rewalk", "why": text, "to_odom": [round(x, 3), round(y, 3),
+                                                                       round(math.degrees(yaw), 1)]})
+        return ""
+
+
+@dataclass
+class DoorClose(SteppingDoorAttempt):
+    """The door closed after the pull (`plan.close_phases`, `node.py --then_close`), from a look at the tag on the open
+    door, as the pull from its look at the shut one (`plan`'s note on closing the door). `fix` is that look's: the box
+    whose shut door stands where the open door does, which the door pull's walk up, settle, refit and range check work
+    on unchanged (`SteppingDoorAttempt`), its grasp the open door's handle. `pulled_box_odom` is the pull's box (4x4 in
+    `odom`): the look's heading against it is the door's angle (`close`), and turned back about the hinge by that, the
+    look's box is the box itself (`box_site`), which the arm's phases, the lidar's door angle and RViz use. `step` at
+    10 Hz."""
+    pulled_box_odom: np.ndarray | None = None
+
+    joint_phases = {"unfold", "tuck", "fold"}
+    holding_phases = {"grip", "push", "hold"}
+    at_the_lever_phases = {"approach", "settle", "enter", "arrive", "grip", "push", "hold", "release", "ungrasp"}
+    walking_phases = {"walk_in", "push"}
+    door_reading_phases = plan.CLOSE_READING_PHASES
+    record_key = "close_attempt_events"
+
+    def _make_phases(self) -> list:
+        return plan.close_phases(self)
+
+    def _prepare(self) -> None:
+        if self.pulled_box_odom is None:
+            raise ValueError("the door close needs the pull's box (pulled_box_odom)")
+        # Its own stance, `plan.CLOSE_STANCE_NEARER_M` nearer the door (`_at_stance`), and its range check about it.
+        self.fix = plan.CloseFix(**{f.name: getattr(self.fix, f.name) for f in dataclasses.fields(plan.Fix)})
+        self._arc: dict | None = None
+        super()._prepare()
+        look, pulled = self.fix.box_odom, np.asarray(self.pulled_box_odom)
+        turned = plan.wrap(math.atan2(look[1, 0], look[0, 0]) - math.atan2(pulled[1, 0], pulled[0, 0]))
+        hinge = np.append(plan.GEOMETRY.hinge, 1.0)
+        # The hinge stays where it is as the door turns: how far the look has it from the pull's is how far the
+        # odometry carried the box through the pull and the walk back.
+        moved = (look @ hinge - pulled @ hinge)[:2]
+        self.close = {"from_deg": plan.GEOMETRY.hinge_axis_z * math.degrees(turned), "to_deg": plan.CLOSE_TO_DEG,
+                      "how": "the tag on the open door against the pull's box",
+                      "hinge_moved_mm": round(1000 * float(np.linalg.norm(moved)), 1), "pushed": False}
+        self.events.append({"phase": "door", "door_deg": round(self.close["from_deg"], 2),
+                            "hinge_moved_mm": self.close["hinge_moved_mm"]})
+        self._push: dict | None = None
+
+    def _at_stance(self) -> plan.Fix:
+        """The fix with its script frame at the close's stance: the door pull's (`approach.task_stance`) moved
+        `plan.CLOSE_STANCE_NEARER_M` toward the open door, as the odometry will count the walk there."""
+        from demos.combiner_door.robot import approach
+
+        x, y, yaw = approach.task_stance("door", perception.site_pose(self.fix.site))
+        x, y = x + plan.CLOSE_STANCE_NEARER_M * math.cos(yaw), y + plan.CLOSE_STANCE_NEARER_M * math.sin(yaw)
+        k = ODOM_WALK_SCALE
+        return plan.reanchor(self.fix, np.asarray(self.fix.script_odom) @ plan.base_pose(k * x, k * y, yaw))
+
+    def base_script(self, base_odom) -> np.ndarray:
+        """The base in the script frame; from the push's start, on the hinge's arc by its turn (`_arc`)."""
+        out = super().base_script(base_odom)
+        arc = self._arc
+        if arc is None:
+            return out
+        if not arc["frozen"]:
+            # While the hand holds the door the base is on the hinge's arc: where the push began, turned about the
+            # hinge as far as the base has turned (its yaw is the IMU's). The odometry's own position fell 24 cm short
+            # of the arc over a 70-degree push, and the hand's goal went 18 cm sideways after it, out of reach
+            # (2026-10-25 02:37 UTC).
+            x, y, yaw = plan.planar(out)
+            a = yaw - arc["yaw0"]
+            hx, hy = arc["hinge"]
+            bx, by = arc["base0"][0] - hx, arc["base0"][1] - hy
+            arc["offset"] = (hx + math.cos(a) * bx - math.sin(a) * by - x, hy + math.sin(a) * bx + math.cos(a) * by - y)
+        out = out.copy()
+        out[0, 3] += arc["offset"][0]
+        out[1, 3] += arc["offset"][1]
+        return out
+
+    def box_site(self) -> plan.props.BoxSite:
+        """The box itself, its door shut (script frame): the look's turned back about the hinge by the door's angle."""
+        return perception.site_from_pose(perception.site_pose(self.fix.site)
+                                         @ plan.invert(plan.about_hinge(self.close["from_deg"])))
+
+    def state(self, base_odom) -> dict:
+        return super().state(base_odom) | {"box_site": self.grasp_site(self.box_site())}
+
+    def _door_from_base(self, base) -> float:
+        """The door's angle the base's turn about the hinge puts it at: the look's at the stance, square to the open
+        door (the script frame's yaw 0), and the base's turn from there."""
+        return self.close["from_deg"] + plan.GEOMETRY.hinge_axis_z * math.degrees(base[2])
+
+    def step(self, obs: plan.Observation, dt: float = 0.1) -> plan.Command:
+        arc = self._arc
+        if arc is not None and not arc["frozen"] and self.phase not in ("push", "hold"):
+            # Let go of the door: the base stands, and keeps the arc's correction from here on.
+            arc["frozen"] = True
+            self.close["odometry_off_arc_mm"] = round(1000 * math.hypot(*arc["offset"]), 1)
+            self.events.append({"phase": "arc", "odometry_off_arc_mm": self.close["odometry_off_arc_mm"]})
+        if self.script.index == 0 and self.script.elapsed_s == 0.0 and self.close["from_deg"] < plan.CLOSE_FROM_MIN_DEG:
+            return plan.Command(self.phase, abort=f"the door is at {self.close['from_deg']:.0f} deg ({self.close['how']}): "
+                                                  f"under {plan.CLOSE_FROM_MIN_DEG:g}, nothing to push closed")
+        return super().step(obs, dt)
+
+    def _clock(self, obs: plan.Observation, dt: float) -> tuple[float, str]:
+        if self.phase != "push" or self.script.finished:
+            return super()._clock(obs, dt)
+        base = plan.planar(self.base_script(obs.base_odom))
+        current = self.script.phases[self.script.index]
+        remaining = current.duration_s - self.script.elapsed_s + 1e-6
+        if self._push is None:
+            # From wherever the base stands to the end, `CLOSE_PAST_DEG` past shut (the door lags the base), whatever
+            # the walk up left between them (the gait's carry).
+            angle = self.close["to_deg"] - plan.CLOSE_PAST_DEG - self._door_from_base(base)
+            self._push = self._hinge_twist(base, math.radians(plan.GEOMETRY.hinge_axis_z * angle), "push")
+            self._arc = {"yaw0": base[2], "base0": base[:2], "hinge": self.fix.site.hinge_xy_m(), "offset": (0.0, 0.0),
+                         "frozen": False}
+        push = self._push
+        if push["done"]:
+            return remaining, ""
+        turned = plan.wrap(base[2] - push["yaw0"])
+        u = max(0.0, turned / push["angle"])
+        if u >= 1.0:
+            # As the pull, to the end: the hand holds the door through the carry.
+            push["done"] = self.close["pushed"] = True
+            return remaining, ""
+        if u > push["best"] + math.radians(plan.PULL_STALL_DEG) / abs(push["angle"]):
+            push["best"], push["since"] = u, 0.0
+        else:
+            push["since"] += dt
+            if push["since"] > plan.PULL_STALL_S:
+                if self._past_shut(base):
+                    self._pushed("the base stopped turning", base)
+                    return remaining, ""
+                return 0.0, f"the base stopped turning {math.degrees(turned):.0f} deg into the push"
+        return max(0.0, u * current.duration_s - self.script.elapsed_s), ""
+
+    def _past_shut(self, base) -> bool:
+        """Whether the base has turned the door (as it holds it) to shut or past it."""
+        return self._door_from_base(base) <= self.close["to_deg"]
+
+    def _pushed(self, how: str, base) -> None:
+        """The push over past shut, short of its end: the door on its frame (`plan.CLOSE_PAST_DEG`)."""
+        self._push["done"] = self.close["pushed"] = True
+        self.close["ended"] = how
+        self.events.append({"phase": "push", "ended": how, "base_door_deg": round(self._door_from_base(base), 2)})
+
+    def _abort(self, obs: plan.Observation, phase: str) -> str:
+        why = super()._abort(obs, phase)
+        if why.startswith("the arm is") and phase == "push" and self._push is not None and not self._push["done"]:
+            base = plan.planar(self.base_script(obs.base_odom))
+            if self._past_shut(base):
+                # Past shut the arm loads as the door meets its frame: the push is done there.
+                self._pushed(why, base)
+                return ""
+        return why
+
+    def _base(self, cmd, actual, dt):
+        if cmd.phase == "push":
+            if self._push is None or self._push["done"]:
+                return (0.0, 0.0, 0.0), False
+            return self._push["twist"], True
+        return super()._base(cmd, actual, dt)
+
+    def commanded_door_deg(self) -> float:
+        """The door's angle as the script has it, no further than shut (the frame stops it; the hand's own target goes
+        on past it with the base, `plan.CLOSE_PAST_DEG`)."""
+        c = self.close
+        if self.phase == "push":
+            current = self.script.phases[self.script.index]
+            u = min(1.0, self.script.elapsed_s / max(current.duration_s, 1e-9))
+            end = c["to_deg"] - plan.CLOSE_PAST_DEG
+            return max(c["to_deg"], c["from_deg"] + (end - c["from_deg"]) * u)
+        return c["to_deg"] if c["pushed"] else c["from_deg"]
+
+    def close_check(self) -> dict:
+        """What the robot measured of the close: the door's angle it began from (and how), how far the look moved the
+        hinge from the pull's, whether the push turned the base all the way back. {"closed", and the record}."""
+        return dict(self.close, closed=bool(self.close["pushed"]))

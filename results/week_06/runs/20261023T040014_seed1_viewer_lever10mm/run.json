@@ -1,0 +1,131 @@
+{
+  "mode": "combiner_key_holster",
+  "status": "finished",
+  "seed": 1,
+  "arguments": {
+    "attempts": 3,
+    "num_envs": 1,
+    "seed": 1,
+    "settle_s": 4.0,
+    "walker": "p2dingo_gait",
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "holster_error_mm": 0.0,
+    "no_overview": false,
+    "run_name": "viewer_lever10mm",
+    "enable_cameras": true,
+    "xr": false,
+    "device": "cuda:0",
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": false,
+    "hide_ui": false,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "command": "demos/combiner_key/run_holster.py --attempts 3 --run_name viewer_lever10mm",
+  "git_commit": "70fad7b62a1116b1395789b0dcfcd22aa2fe6ad6",
+  "git_status": "M demos/combiner_key/asset.py\n M demos/combiner_key/holster.py\n M demos/combiner_key/holster_env.py\n M demos/combiner_key/robot/README.md\n M demos/combiner_key/tests/test_holster.py\n M results/week_06/notes.md\n?? demos/combiner_key/robot/holster_dog.py\n?? demos/combiner_key/robot/run_holster_on_dog.sh\n?? logs/holster_dog/\n?? results/week_06/runs/20261023T031352_dry/\n?? results/week_06/runs/20261023T031423_dry/\n?? results/week_06/runs/20261023T034609_seed1_viewer_paced/",
+  "holster": {
+    "registration": {
+      "d1_with_holster.stl": {
+        "sha256": "728c7c55f546daff1da9079dff05f4d94ed73ea503556a92fab11eb0302192a5",
+        "bytes": 6992984
+      },
+      "d1_with_lever.stl": {
+        "sha256": "fc163d1050bfb03d12594531531d930e22deabf31757eaffdbe46b682e4423aa",
+        "bytes": 7014184
+      },
+      "d1_with_holster_and_lever.stl": {
+        "sha256": "f957717045ae8c4b1ebedc2e3c1b0e6747faf3d65d62c61df1b626b0bdb14d2f",
+        "bytes": 7032784
+      }
+    },
+    "key_mirrored": true,
+    "grip_along_m": 0.0,
+    "grip_roll": 1,
+    "ik_soft": 0.9,
+    "pre_out_m": 0.065,
+    "slide_m": 0.09,
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "phase_s": {
+      "turn": 1.25,
+      "reach": 1.75,
+      "pre": 1.5,
+      "on": 2.472,
+      "close": 1.0,
+      "draw": 3.236,
+      "hold": 2.0
+    },
+    "jaw_open_m": 0.012,
+    "jaw_hold_m": 0.002
+  },
+  "robot_usd": "/home/lukas/D1Training/generated/go2_d1.usd",
+  "box_usd": "/home/lukas/D1Training/generated/unifp_demos/combiner_0.400_ac02abf3702d.usda",
+  "phases": [
+    "turn",
+    "reach",
+    "pre",
+    "on",
+    "close",
+    "draw",
+    "hold"
+  ],
+  "robot": "the combiner door demo's: the lidar and the RealSenses drawn, not simulated (no wrist mass)",
+  "box": "the combiner box 3 m behind the robot, out of the way",
+  "summary": {
+    "attempts": 3,
+    "drawn": 3,
+    "fell": 0,
+    "holster_error_mm": 0.0,
+    "speed": 2.0,
+    "joint_speed": 0.6,
+    "draw_s": 13.21,
+    "draw_near_stopped": [
+      0.062,
+      0.075,
+      0.075
+    ],
+    "key_out_mm": [
+      89.58,
+      89.57,
+      89.58
+    ],
+    "grasp_miss_mm": [
+      [
+        -0.44,
+        0.4,
+        1.07
+      ],
+      [
+        -0.44,
+        0.38,
+        1.1
+      ],
+      [
+        -0.44,
+        0.39,
+        0.96
+      ]
+    ],
+    "grip_err_max_mm": [
+      1.41,
+      1.41,
+      1.26
+    ],
+    "torque_use_max": [
+      1.233,
+      1.282,
+      1.225
+    ]
+  },
+  "frames": 55
+}

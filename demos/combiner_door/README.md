@@ -79,8 +79,8 @@ hold at 85° or more) beside `success` (the simulator's).
   trained on a bare Go2. The 2024 policy the door pull's baseline uses (`--walker rescue_2024`) cannot be stopped from
   a walk without turning in place and leaning up to 26°, and falls; P2Dingo's stops level.
 - **Arm:** inverse kinematics on the jaw centre through the measured D1 model, bounded to run at 10 Hz (F-152).
-- **Front camera** (`front_camera.py`): the Go2's own, at the URDF's mount, a 1280x720 fisheye (`ONE_STAND`: fitted to
-  one stand on the real dog, not a full calibration). Isaac renders a wide pinhole (1714x966) that `distort_render`
+- **Front camera** (`front_camera.py`): the Go2's own, at the URDF's mount, a 1280x720 fisheye (`CALIBRATED`: OpenCV's
+  fisheye model on an A3 ChArUco board, 0.22 px, F-206; `calibrate_front_camera.py`). Isaac renders a wide pinhole (1714x966) that `distort_render`
   remaps through the lens model, so the detector sees what the dog streams. **The USD camera needs a real focal
   length** (`USD_FOCAL_LENGTH`): with Isaac Lab's default (aperture 1.0, focal 0.35 here) Isaac reports the intrinsics
   asked for and draws the scene ~1.35x too large, the box 17 cm too near. P2Dingo's head bracket is drawn; the RealSense

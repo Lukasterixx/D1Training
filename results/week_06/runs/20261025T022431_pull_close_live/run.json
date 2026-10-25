@@ -1,0 +1,282 @@
+{
+  "mode": "combiner_door_robot",
+  "status": "finished",
+  "task": "door",
+  "stage": "pull",
+  "then_door": null,
+  "then_close": true,
+  "lock": false,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261025T022431_pull_close_live",
+    "--stage",
+    "pull",
+    "--then_close",
+    "--live"
+  ],
+  "started_utc": "20261025T022434",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 92.865,
+      "stop": "the box is out of range, and the tag is not on the box's door (the charging dock's?): nothing moved"
+    },
+    {
+      "t": 92.874,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 33.87,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 21,
+    "with_tag": 21,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": true,
+    "text": "box 0.77 m from the stance at +3.8 deg (-5 cm left of the stance's line), door -0.5 deg off square, walk in 0.09 m",
+    "detections": 21,
+    "site": {
+      "distance_m": 0.7701,
+      "bearing_deg": 3.801,
+      "yaw_deg": 179.488
+    },
+    "walk_in_m": 0.087,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.558,
+      "rms_mm": 6.0,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.11
+  },
+  "pull_attempt_events": [
+    {
+      "phase": "grasp",
+      "choice": "pitch 0 deg, roll +1"
+    },
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.102,
+        0.036,
+        0.0
+      ]
+    },
+    {
+      "t": 51.965,
+      "phase": "walk_in"
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "left_m": 0.024,
+      "carried_m": 0.009,
+      "carry_s": 0.05,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 54.01,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 16.5,
+      "turned_deg": 0.25
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "box 0.77 m from the stance at +6.3 deg (-2 cm left of the stance's line), door -0.8 deg off square, walk in 0.00 m"
+    },
+    {
+      "t": 55.026,
+      "phase": "stand"
+    },
+    {
+      "t": 56.46,
+      "phase": "approach"
+    },
+    {
+      "t": 58.492,
+      "phase": "settle"
+    },
+    {
+      "t": 60.461,
+      "phase": "enter"
+    },
+    {
+      "t": 62.968,
+      "phase": "arrive"
+    },
+    {
+      "t": 63.559,
+      "phase": "grip"
+    },
+    {
+      "t": 64.359,
+      "phase": "pull"
+    },
+    {
+      "phase": "pull",
+      "twist": [
+        -0.075,
+        -0.2,
+        0.327
+      ],
+      "hinge_in_base_m": [
+        0.612,
+        -0.229
+      ],
+      "seconds": 3.2
+    },
+    {
+      "t": 68.163,
+      "phase": "hold"
+    },
+    {
+      "phase": "let_go",
+      "hand_script": [
+        0.3854,
+        -0.1616,
+        0.7068
+      ],
+      "approach": [
+        0.506,
+        0.862,
+        -0.028
+      ],
+      "jaws_units": 22.5
+    },
+    {
+      "t": 69.659,
+      "phase": "release"
+    },
+    {
+      "t": 70.859,
+      "phase": "ungrasp"
+    },
+    {
+      "t": 73.363,
+      "phase": "home"
+    },
+    {
+      "t": 74.859,
+      "phase": "tuck"
+    },
+    {
+      "t": 78.459,
+      "phase": "fold"
+    }
+  ],
+  "approaches": [
+    {
+      "t": 83.462,
+      "from": [
+        0.493,
+        0.112,
+        1.113
+      ],
+      "staging": [
+        0.701,
+        -0.404,
+        1.402
+      ],
+      "distance_m": 0.557,
+      "turn_deg": 16.5,
+      "why": "after the pull: back to look at the tag on the open door (79 deg, lidar)",
+      "events": [
+        {
+          "phase": "walk_up",
+          "from": [
+            0.413,
+            0.255,
+            -0.289
+          ]
+        },
+        {
+          "phase": "walk_up",
+          "step": 0,
+          "close_enough": true,
+          "left_m": 0.031,
+          "carried_m": 0.052,
+          "carry_s": 0.21,
+          "lat_floor": 0.2
+        }
+      ],
+      "ended": [
+        0.675,
+        -0.367,
+        1.398
+      ]
+    }
+  ],
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        0.413,
+        0.255,
+        -0.289
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "left_m": 0.031,
+      "carried_m": 0.052,
+      "carry_s": 0.21,
+      "lat_floor": 0.2
+    }
+  ],
+  "close_look": {
+    "frames": 19,
+    "with_tag": 19,
+    "lidar_frames": 20,
+    "found": true,
+    "in_range": false,
+    "text": "the tag is not on a door the box's size: the lidar's face is -2 cm from it and carries on past the door's edges (42%). A tag on a stand in front of a wall? (P2Dingo's dock carries the same one)",
+    "detections": 19,
+    "site": {
+      "distance_m": 0.8127,
+      "bearing_deg": 8.08,
+      "yaw_deg": -179.234
+    },
+    "walk_in_m": 0.376,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.1,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.63
+  },
+  "outcome": "the box is out of range, and the tag is not on the box's door (the charging dock's?): nothing moved"
+}

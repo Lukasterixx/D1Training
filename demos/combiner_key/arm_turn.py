@@ -50,9 +50,12 @@ PRESS_DEPTH_M = 0.004
 #: Above the platform before coming down onto it, and out from the door before moving over it.
 CLEARANCE_M = 0.03
 STANDOFF_M = 0.08
-#: The turn: from the key's start to its stop, at this speed (the leg turn's layer runs 0.6-1.2 rad/s at the foot).
-START_DEG = kg.INSERT_DEG
-END_DEG = kg.TURN_END_DEG
+#: The turn: from the key's start to its stop, at this speed (the leg turn's layer runs 0.6-1.2 rad/s at the foot). The
+#: arm's lever (`geometry.ARM_LEVER`): since 2026-10-24 v4 in the changed lock, in level and round 45 degrees to its stop
+#: (v3 went from 45 up to 45 down); unlocked past `UNLOCK_DEG`.
+START_DEG = kg.ARM_LEVER.insert_deg
+END_DEG = kg.ARM_LEVER.end_deg
+UNLOCK_DEG = kg.ARM_LEVER.unlock_deg
 TURN_SPEED_DEG_S = 15.0
 #: The fingertips' lower edge in Link6 (the fingers' outer face, `FINGER_X_RANGE_M`, at the tips): what touches.
 TIP_EDGE_LINK6 = (FINGER_X_RANGE_M[1], 0.0, FINGERTIP_Z_M)
@@ -114,12 +117,12 @@ def platform_point(theta_deg: float, reach_m: float = PUSH_REACH_M, off_door_m: 
     return np.asarray(kg.LOCK) + reach_m * u + off_door_m * n + leg_top_m() * t
 
 
-#: The key's shape as the lock's plant has it (`unifp_train.leg_cfg.KEY_*`), repeated here because the robot's side
-#: (`robot/key_plan.py`) runs without torch, which `leg_cfg` imports; `tests/test_arm_turn.py` checks they agree. The
-#: platform's top above the shaft's axis, and the bar and the platform as (along the key, off the door, up its top) boxes.
-KEY_TOP_M = 0.010
-KEY_BAR_BOX = ((-0.015, 0.160), (0.017, 0.032), (-0.010, 0.010))
-KEY_PAD_BOX = ((0.048, 0.148), (0.032, 0.067), (0.004, 0.010))
+#: The arm's lever's shape as the lock's plant takes it (`geometry.ARM_LEVER`, in `unifp_train.leg_cfg.KEY_*`'s frame;
+#: v3's is `leg_cfg`'s own, `tests/test_arm_turn.py` checks they agree): the platform's top above the shaft's axis, and
+#: the bar and the platform as (along the key, off the door, up its top) boxes. v4's platform is 10 mm further out.
+KEY_TOP_M = kg.ARM_LEVER.top_m
+KEY_BAR_BOX = kg.ARM_LEVER.bar_box
+KEY_PAD_BOX = kg.ARM_LEVER.pad_box
 
 
 def leg_top_m() -> float:
