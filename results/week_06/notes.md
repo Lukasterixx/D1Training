@@ -6102,6 +6102,28 @@ How to read the table:
 --lock_beyond_face_mm 55 --no_spiral "$@"`. It is LIVE, with the one Enter or A at the start. Later arguments
 override, since argparse keeps the last. The 10-degree overturn is the program's default now, so it needs no flag.
 
+### 2026-10-24 · Force-aware against position-only on the dog's hands (round 4's matched pair)
+
+Lukas: "Does this demonstrate force aware is better than position-only?" Not today's work: every light-leg fine-tune is
+force-aware, with no position-only twin. Round 4's matched pair (seed 3, the same recipe but the variant) on the dog's
+two hands from its rest, presses of 288 / fell / past 60 N, force error median:
+
+| legs | force-aware | position-only |
+| --- | --- | --- |
+| trained (0.01 / 0.037) | 280 / 0 / 5, 1.2 N | [0 / 0 / 63, 14.1 N](#/week/6/run/20261024T031505_leg_eval_seed1_press_r4_position_5999_hands) |
+| armature 0.0002, 15-20 ms | 10 / 83 / 166 | [0 / 207 / 94](#/week/6/run/20261024T031547_leg_eval_seed1_press_r4_position_5999_hands_light) |
+| armature 0, 5-15 ms | 0 / 62 / 228 | [0 / 224 / 74](#/week/6/run/20261024T031634_leg_eval_seed1_press_r4_position_5999_hands_zero) |
+
+- **On the legs they trained on,** force-aware presses the dog's hands and position-only presses none. This is
+  consistent with F-180 (the frozen set: 197 against 100, a second seed 186 against 58; the sweep 126-229 against
+  19-95; the key zero-shot 107 against 72).
+- **The criterion is the force's accuracy** (within max(3 N, 20%)): a position-only policy is told a displacement, not a
+  force, so on a plate of unknown stiffness it misses by construction. That is the argument for force awareness, and
+  the comparison should be stated with it.
+- **On light legs both of round 4's policies fail,** and only the force-aware side was trained on them (ft6 to
+  ft11a). F-226 is a weakness particular to force awareness there, so this pair says nothing about light legs.
+- **Neither variant has pressed anything on the dog.**
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->

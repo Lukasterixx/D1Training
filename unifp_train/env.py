@@ -35,12 +35,14 @@ from isaaclab.sensors import ContactSensor
 from unifp_isaaclab import interface, task as goal_task
 from unifp_isaaclab.policy import ObsHistory
 
-from . import debug_vis, forces, gait, observations, rewards, task_cfg
+from . import debug_vis, forces, gait, leg_chatter, observations, rewards, task_cfg
 from .env_cfg import Go2D1PosForceEnvCfg
 
 
 class Go2D1PosForceEnv(DirectRLEnv):
     cfg: Go2D1PosForceEnvCfg
+    #: The steps `leg_chatter` is pooled over, each a mask from `_chatter_masks`.
+    CHATTER_SCOPES = ("all", "standing")
 
     def __init__(self, cfg: Go2D1PosForceEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
@@ -123,6 +125,42 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
         self._command_interval = int(task_cfg.COMMAND_RESAMPLING_TIME_S / interface.POLICY_DT)
 
+        if cfg.leg_armature_range is not None:
+            self._draw_leg_armature()
+        if cfg.leg_friction_range is not None:
+            self._draw_leg_friction()
+        # Over every step, and over the steps told to stand (no velocity command), so a gait is not read as a rattle.
+        self._chatter = ({scope: leg_chatter.LegChatter(self.num_envs, 12, self.device) for scope in self.CHATTER_SCOPES}
+                         if cfg.track_leg_chatter else None)
+
+    def _draw_leg_armature(self) -> None:
+        """Each environment's leg armature, once (a start-up randomisation: writing it costs a copy of every joint's)."""
+        lo, hi = self.cfg.leg_armature_range
+        legs = self._order[:12]
+        draw = lo + (hi - lo) * torch.rand(self.num_envs, 1, device=self.device)
+        knee = torch.tensor([1.0 if k % 3 == 2 else 0.0 for k in range(12)], device=self.device)
+        armature = draw * (1.0 + (self.cfg.knee_armature_factor - 1.0) * knee)
+        self._robot.write_joint_armature_to_sim(armature, joint_ids=legs.tolist())
+        self._leg_armature_drawn = armature
+
+    def _draw_leg_friction(self) -> None:
+        """Each environment's leg joint friction, once: static and dynamic effort alike (N·m), the knees scaled."""
+        lo, hi = self.cfg.leg_friction_range
+        legs = self._order[:12]
+        draw = lo + (hi - lo) * torch.rand(self.num_envs, 1, device=self.device)
+        knee = torch.tensor([1.0 if k % 3 == 2 else 0.0 for k in range(12)], device=self.device)
+        friction = draw * (1.0 + (self.cfg.knee_friction_factor - 1.0) * knee)
+        self._robot.write_joint_friction_coefficient_to_sim(friction, joint_dynamic_friction_coeff=friction,
+                                                            joint_ids=legs.tolist())
+        self._leg_friction_drawn = friction
+
+    def chatter_summary(self) -> dict | None:
+        """The leg targets' step-to-step change so far (`leg_chatter.LegChatter.summary`) over every step and over the
+        standing ones, if tracked."""
+        if self._chatter is None:
+            return None
+        return {scope: tracker.summary(interface.DOF_NAMES[:12]) for scope, tracker in self._chatter.items()}
+
     # --- scene ------------------------------------------------------------------------------------
 
     def _setup_scene(self):
@@ -140,7 +178,22 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._last_actions = self._actions
         self._actions = torch.clip(actions, -interface.CLIP_ACTIONS, interface.CLIP_ACTIONS)
         self._joint_targets = interface.joint_targets(self._actions)
+        self._track_chatter()
         self._step_forces()
+
+    def _track_chatter(self) -> None:
+        """Feed this step's leg targets to the chatter tracker; upright as `_get_dones` has it."""
+        if self._chatter is None:
+            return
+        roll_pitch = interface.body_roll_pitch(self._robot.data.root_quat_w)
+        upright = (roll_pitch[:, 1].abs() <= 1.0) & (roll_pitch[:, 0].abs() <= 0.8)
+        masks = self._chatter_masks(upright)
+        for scope, tracker in self._chatter.items():
+            tracker.step(self._joint_targets[:, :12], self.episode_length_buf, masks[scope])
+
+    def _chatter_masks(self, upright: torch.Tensor) -> dict[str, torch.Tensor]:
+        standing = self._commands[:, :3].abs().amax(dim=1) == 0.0
+        return {"all": upright, "standing": upright & standing}
 
     def _step_forces(self) -> None:
         """Advance the push schedule and write the wrench, once per policy step.
@@ -417,7 +470,13 @@ class Go2D1PosForceEnv(DirectRLEnv):
     def _reset_idx(self, env_ids: torch.Tensor | None) -> None:
         if env_ids is None or len(env_ids) == self.num_envs:
             env_ids = self._robot._ALL_INDICES
-        super()._reset_idx(env_ids)
+        if self.cfg.isolate_actuator_rng:
+            # A delayed actuator draws each environment's lag here from the global stream, which the goal schedule
+            # below also draws from: forked, a frozen manifest's episodes are the same with or without a delay.
+            with torch.random.fork_rng(devices=[torch.device(self.device).index or 0]):
+                super()._reset_idx(env_ids)
+        else:
+            super()._reset_idx(env_ids)
 
         joint_pos = self._robot.data.default_joint_pos[env_ids].clone()
         joint_vel = self._robot.data.default_joint_vel[env_ids].clone()

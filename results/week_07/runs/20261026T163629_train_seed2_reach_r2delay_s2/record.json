@@ -1,0 +1,63 @@
+{
+  "id": "20261026T163629_train_seed2_reach_r2delay_s2",
+  "title": "Reach round 2: the corner with the delay 5-20 ms (from 58400, 1500 iterations), seed 2",
+  "notes": "",
+  "week": 7,
+  "recorded_at": "2026-10-27T05:22:08+11:00",
+  "started_utc": "2026-10-26T16:36:29+00:00",
+  "source_dir": "logs/unifp_train/20261026T163629_train_seed2_reach_r2delay_s2",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 59899,
+  "final_checkpoint": {
+    "file": "model_59899.pt",
+    "sha256": "85097070a10e9e710f68167d1cca9bae95f0376b143a313d656234a70b8e4cf1"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 164.95594787597656,
+      "last_step": 59899,
+      "mean_last_10": 163.08098449707032,
+      "min": 2.1448557376861572,
+      "max": 165.3568572998047,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 59899,
+      "mean_last_10": 997.2269958496094,
+      "min": 13.869999885559082,
+      "max": 999.0,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.5996617674827576,
+      "last_step": 59899,
+      "mean_last_10": 0.5985945999622345,
+      "min": 0.5319932103157043,
+      "max": 0.6029067039489746,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 23006.0,
+      "last_step": 59899,
+      "mean_last_10": 23137.5,
+      "min": 22290.0,
+      "max": 35279.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

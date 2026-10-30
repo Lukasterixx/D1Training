@@ -97,7 +97,7 @@ def trained_on(checkpoint: Path) -> dict:
     keys = ("variant", "leg_actuator", "leg_actuator_model", "leg_armature_range", "knee_armature_factor", "key_turn_deg",
             "key_overdrive_deg", "key_hold_s", "key_lock_range_nm", "key_detent_range_nm", "key_max_force_n",
             "press_limit_n", "press_excess_weight", "spawn_states", "spawn_states_fraction", "leg_friction_range",
-            "knee_friction_factor", "press_up_cap_n")
+            "knee_friction_factor", "press_up_cap_n", "obs_noise", "weights")
     out = {k: leg[k] for k in keys if k in leg}
     out["run"] = checkpoint.parent.name
     return out

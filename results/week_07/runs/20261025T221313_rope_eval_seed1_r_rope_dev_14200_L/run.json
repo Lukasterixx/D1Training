@@ -1,0 +1,1295 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    108,
+    2432
+  ],
+  "arguments": {
+    "action_rate_weight": null,
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "logs/unifp_train/20261025T191424_train_seed1_rope_corner_s1/model_14200.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "eval_spawn_states": false,
+    "eval_start_delay_steps": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "foot_push_n": null,
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_ramp_iterations": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "handle_fraction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "key_damage_n": null,
+    "key_detent_range_nm": null,
+    "key_eval_detent_nm": null,
+    "key_eval_lock_nm": null,
+    "key_hold_s": null,
+    "key_lock_range_nm": null,
+    "key_max_force_n": null,
+    "key_overdrive_deg": null,
+    "key_press_limit_n": null,
+    "key_press_weight": 0.0,
+    "key_turn_deg": null,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "leg_actuator": "unitree_geared",
+    "leg_armature": 0.0002,
+    "leg_armature_range": null,
+    "leg_bar_radius": null,
+    "leg_delay_min_steps": 3,
+    "leg_delay_steps": 4,
+    "leg_frame_every": 5,
+    "leg_frames": 0,
+    "leg_friction_range": null,
+    "leg_knee_armature": 0.0007,
+    "leg_knee_armature_factor": 3.67,
+    "leg_knee_friction_factor": 1.917,
+    "leg_object": "handle",
+    "leg_rows": null,
+    "leg_shadow_dump": 0,
+    "leg_variant": "force",
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "rope_eval",
+    "mount_pos": null,
+    "no_arm_jitter": false,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "obs_noise": false,
+    "obs_noise_dof_vel": null,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "payload": "physical",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "plate_set": "v2",
+    "press": false,
+    "press_fraction": null,
+    "press_hand_fraction": 0.0,
+    "press_hand_levels_n": [
+      3.0,
+      10.0
+    ],
+    "press_hold_correction": false,
+    "press_hold_loop": "hybrid",
+    "press_level": null,
+    "press_orientation_weight": null,
+    "press_plate_face_only": false,
+    "press_release_from_press_point": false,
+    "press_set": "panel",
+    "press_tools": null,
+    "press_up_cap_n": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 2,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "r_rope_dev_14200_L",
+    "seed": 1,
+    "small_physx": true,
+    "spawn_states": "",
+    "spawn_states_fraction": null,
+    "start_delay_steps": null,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "rope",
+    "tilt_excess_deg": null,
+    "tilt_excess_weight": 0.0,
+    "tilt_stages": "all",
+    "tool_point": "jaw_centre",
+    "torques_weight": null,
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261025T191424_train_seed1_rope_corner_s1/model_14200.pt",
+  "checkpoint_iteration": 14200,
+  "checkpoint_source": "isaaclab",
+  "controller": "model_14200.pt",
+  "critic_obs": [
+    108,
+    459
+  ],
+  "d1_urdf_sha256": "a848ee41d51def2956fcb6f0af12048e723a1d7f3f3f52b007fcca571a586691",
+  "episode_length_steps": 1150,
+  "estimate_obs": [
+    108,
+    12
+  ],
+  "eval_plan": {
+    "frozen_set": true,
+    "hold_s": 4.0,
+    "levels_n": [
+      20.0,
+      35.0,
+      50.0
+    ],
+    "recovery_s": 4.0,
+    "releases": [
+      "snap_noticed",
+      "snap_unnoticed",
+      "slip_noticed"
+    ],
+    "rope_set": "dev",
+    "rows": 108,
+    "stiffness": [
+      1000.0,
+      4000.0
+    ],
+    "window_s": 2.0
+  },
+  "expected_actor": [
+    108,
+    2432
+  ],
+  "expected_critic": [
+    108,
+    459
+  ],
+  "expected_estimates": [
+    108,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_status": "M checkpoints/README.md\n M checkpoints/SHA256SUMS\n M demos/combiner_key/robot/README.md\n M demos/combiner_key/robot/export_policy.py\n M demos/insertion/run_demo.py\n M demos/unifp/run_demo.py\n M results/findings.md\n M results/week_06/notes.md\n M results/week_07/notes.md\n M run_unifp_train.py\n M unifp_train/README.md\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/leg_env.py\n?? checkpoints/leg_key_force_corner_model_4000.npz\n?? results/week_06/runs/20261024T031505_leg_eval_seed1_press_r4_position_5999_hands/\n?? results/week_06/runs/20261024T031547_leg_eval_seed1_press_r4_position_5999_hands_light/\n?? results/week_06/runs/20261024T031634_leg_eval_seed1_press_r4_position_5999_hands_zero/\n?? results/week_07/runs/\n?? tests/test_leg_chatter.py\n?? unifp_train/leg_chatter.py",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "leg": null,
+  "leg_joints_loaded": {
+    "armature": [
+      0.0002,
+      0.0002,
+      0.0007,
+      0.0002,
+      0.0002,
+      0.0007,
+      0.0002,
+      0.0002,
+      0.0007,
+      0.0002,
+      0.0002,
+      0.0007
+    ],
+    "effort_limit_sim": [
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0
+    ],
+    "friction": [
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01
+    ],
+    "groups": {
+      "legs_hip_thigh": "UnitreeActuator",
+      "legs_knee": "UnitreeActuator",
+      "unifp": "IdealPDActuator"
+    },
+    "velocity_limit_sim": [
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999
+    ]
+  },
+  "legs": {
+    "actuator_model": {
+      "armature_kg_m2": {
+        "hip_thigh": 0.0002,
+        "knee": 0.0007
+      },
+      "delay_physics_steps": [
+        3,
+        4
+      ],
+      "friction": 0.01,
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": [
+        20.2,
+        23.4
+      ],
+      "knee_nm": [
+        38.72,
+        44.85
+      ],
+      "knee_ratio": 1.9169,
+      "name": "unitree_geared",
+      "speed": "hip, thigh flat to 13.5, 0 at 30.0; knee flat to 7.04, 0 at 15.65 rad/s"
+    },
+    "armature_range": null,
+    "friction_range": null,
+    "knee_armature_factor": 3.67,
+    "knee_friction_factor": 1.917
+  },
+  "legs_frozen": false,
+  "mechanism": null,
+  "mode": "rope_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 108,
+  "payload": {
+    "bodies": [
+      {
+        "body": "base",
+        "com_m": [
+          [
+            0.0211,
+            0.0,
+            -0.0054
+          ],
+          [
+            0.0297,
+            -0.0,
+            0.0013
+          ]
+        ],
+        "mass_kg": [
+          6.921,
+          7.3409
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.265,
+            "name": "mid360",
+            "source": "published: Livox Mid-360 user manual, approx. 265 g"
+          },
+          {
+            "mass_kg": 0.1549,
+            "name": "mid360_mount",
+            "source": "estimated: the CAD's closed parts, 124.9 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      },
+      {
+        "body": "Link6",
+        "com_m": [
+          [
+            -0.0069,
+            -0.0,
+            0.0397
+          ],
+          [
+            -0.0234,
+            0.0001,
+            0.0421
+          ]
+        ],
+        "mass_kg": [
+          0.1679,
+          0.2666
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.072,
+            "name": "d435i",
+            "source": "published: Intel RealSense D400 series datasheet, D435/D435i 72 g"
+          },
+          {
+            "mass_kg": 0.0267,
+            "name": "wrist_bracket",
+            "source": "estimated: the CAD's 21.6 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      }
+    ],
+    "mode": "physical"
+  },
+  "press": null,
+  "ramp_n_per_s": 25.0,
+  "reward_weights": {
+    "action_rate": -0.02,
+    "action_rate_arm": -0.045,
+    "alive": 1.5,
+    "ang_vel_xy": -0.02,
+    "arm_torque_margin": -4.0,
+    "base_height": -2.0,
+    "collision": -5.0,
+    "dof_acc": -2.5e-07,
+    "dof_acc_arm": -4.5e-07,
+    "dof_pos_limits": -10.0,
+    "dof_vel": -0.0008,
+    "dof_vel_arm": -0.0002,
+    "feet_air_time": 1.0,
+    "feet_contact_forces": -0.001,
+    "feet_contact_number": 2.0,
+    "feet_drag": -0.0008,
+    "feet_height": 1.0,
+    "feet_height_high": -15.0,
+    "feet_pos_xy": -0.5,
+    "fixture_force_tracking": 4.0,
+    "fixture_tool_speed": -5.0,
+    "hip_pos": -0.5,
+    "lin_vel_z": -1.5,
+    "ref_dof_leg": 1.0,
+    "rope_fallen": -100.0,
+    "rope_ripple": -0.2,
+    "rope_slack": -2.0,
+    "rope_taut_arm": 1.0,
+    "rope_upset": -2.0,
+    "rope_wobble": 0.0,
+    "stand_still": 0.5,
+    "torque_limits": -0.005,
+    "torques": -5e-06,
+    "tracking_ang_vel": 1.0,
+    "tracking_ee_force_world": 2.0,
+    "tracking_ee_orn_roll": 1.0,
+    "tracking_lin_vel_force_world": 2.0
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1_payload.usd",
+  "robot_usd_sha256": "61290b5a5d9a7943a8b82743d6363ddd1ea2823bbc79d0612b78d9b86da915cd",
+  "roll_objective": true,
+  "rope": {
+    "curriculum": false,
+    "curriculum_rule": {
+      "ema": 0.005,
+      "min_iterations": 50,
+      "promote_rel_err": 0.25,
+      "rule": "window",
+      "step_n": 5.0
+    },
+    "detect_never_prob": 0.2,
+    "force_ceiling_max_n": 60.0,
+    "force_ceiling_n": 30.0,
+    "force_term": {
+      "shares": [
+        0.4,
+        0.4,
+        0.2
+      ],
+      "sigmas_n": [
+        3.0,
+        12.0,
+        40.0
+      ]
+    },
+    "length_range": [
+      0.3,
+      2.0
+    ],
+    "release_prob": 0.5,
+    "rope_fraction": 0.8,
+    "stiffness_range": [
+      500.0,
+      6000.0
+    ],
+    "weights": {
+      "arm_torque_margin": -4.0,
+      "fixture_force_tracking": 4.0,
+      "fixture_tool_speed": -5.0,
+      "rope_fallen": -100.0,
+      "rope_ripple": -0.2,
+      "rope_slack": -2.0,
+      "rope_taut_arm": 1.0,
+      "rope_upset": -2.0,
+      "rope_wobble": 0.0
+    }
+  },
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "stochastic_actions": false,
+  "summary": {
+    "by_level": [
+      {
+        "align_deg": {
+          "max": 13.39,
+          "median": 12.14,
+          "p90": 12.816
+        },
+        "arm_load_max": {
+          "max": 1.0,
+          "median": 1.0,
+          "p90": 1.0
+        },
+        "arm_loads_median": [
+          0.998,
+          1.0,
+          1.0,
+          0.08,
+          1.0,
+          0.077
+        ],
+        "cv": {
+          "max": 0.049,
+          "median": 0.021,
+          "p90": 0.033
+        },
+        "dominant_amp_n": {
+          "max": 1.84,
+          "median": 0.545,
+          "p90": 1.05
+        },
+        "dominant_hz": {
+          "max": 11.5,
+          "median": 2.5,
+          "p90": 3.0
+        },
+        "elbow_rad": {
+          "max": -0.145,
+          "median": -0.241,
+          "p90": -0.18
+        },
+        "error_n": {
+          "max": 9.822,
+          "median": 8.069,
+          "p90": 8.859
+        },
+        "estimate_n": {
+          "max": 29.49,
+          "median": 27.195,
+          "p90": 27.832
+        },
+        "feet_slide_mm": {
+          "max": 2.5,
+          "median": 1.1,
+          "p90": 1.8
+        },
+        "front_share": {
+          "max": 0.826,
+          "median": 0.611,
+          "p90": 0.775
+        },
+        "height_m": {
+          "max": 0.281,
+          "median": 0.274,
+          "p90": 0.279
+        },
+        "held": 108,
+        "hf_rms_n": {
+          "max": 0.932,
+          "median": 0.264,
+          "p90": 0.5
+        },
+        "hold_overshoot_n": {
+          "max": 32.04,
+          "median": 16.505,
+          "p90": 24.894
+        },
+        "hold_peak_n": {
+          "max": 48.21,
+          "median": 31.425,
+          "p90": 38.571
+        },
+        "hold_slack_fraction": {
+          "max": 0.076,
+          "median": 0.0,
+          "p90": 0.025
+        },
+        "hold_tugs": {
+          "max": 8.0,
+          "median": 1.0,
+          "p90": 4.0
+        },
+        "hold_tugs_total": 141,
+        "level_n": 20.0,
+        "mean_n": {
+          "max": 29.822,
+          "median": 28.069,
+          "p90": 28.859
+        },
+        "of": 108,
+        "p2p_n": {
+          "max": 7.439,
+          "median": 2.582,
+          "p90": 4.005
+        },
+        "pitch_deg": {
+          "max": 7.28,
+          "median": 1.335,
+          "p90": 5.071
+        },
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 1.402,
+          "median": 0.575,
+          "p90": 0.923
+        },
+        "tool_speed_m_s": {
+          "max": 0.317,
+          "median": 0.141,
+          "p90": 0.216
+        },
+        "tugs_per_s": {
+          "max": 1.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "with_hold_tugs": 65,
+        "with_tugs": 3
+      },
+      {
+        "align_deg": {
+          "max": 9.14,
+          "median": 8.08,
+          "p90": 8.72
+        },
+        "arm_load_max": {
+          "max": 1.0,
+          "median": 1.0,
+          "p90": 1.0
+        },
+        "arm_loads_median": [
+          1.0,
+          1.0,
+          1.0,
+          0.05,
+          1.0,
+          0.059
+        ],
+        "cv": {
+          "max": 0.019,
+          "median": 0.007,
+          "p90": 0.012
+        },
+        "dominant_amp_n": {
+          "max": 0.618,
+          "median": 0.283,
+          "p90": 0.43
+        },
+        "dominant_hz": {
+          "max": 3.5,
+          "median": 2.0,
+          "p90": 3.5
+        },
+        "elbow_rad": {
+          "max": -0.461,
+          "median": -0.548,
+          "p90": -0.516
+        },
+        "error_n": {
+          "max": 4.526,
+          "median": 2.018,
+          "p90": 3.619
+        },
+        "estimate_n": {
+          "max": 39.0,
+          "median": 36.81,
+          "p90": 38.156
+        },
+        "feet_slide_mm": {
+          "max": 0.9,
+          "median": 0.4,
+          "p90": 0.7
+        },
+        "front_share": {
+          "max": 0.752,
+          "median": 0.536,
+          "p90": 0.697
+        },
+        "height_m": {
+          "max": 0.282,
+          "median": 0.267,
+          "p90": 0.277
+        },
+        "held": 108,
+        "hf_rms_n": {
+          "max": 0.242,
+          "median": 0.09,
+          "p90": 0.173
+        },
+        "hold_overshoot_n": {
+          "max": 11.05,
+          "median": 8.01,
+          "p90": 9.358
+        },
+        "hold_peak_n": {
+          "max": 46.05,
+          "median": 41.41,
+          "p90": 44.021
+        },
+        "hold_slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "hold_tugs": {
+          "max": 1.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "hold_tugs_total": 1,
+        "level_n": 35.0,
+        "mean_n": {
+          "max": 39.526,
+          "median": 37.018,
+          "p90": 38.619
+        },
+        "of": 108,
+        "p2p_n": {
+          "max": 2.861,
+          "median": 1.349,
+          "p90": 2.106
+        },
+        "pitch_deg": {
+          "max": 9.16,
+          "median": 1.67,
+          "p90": 5.15
+        },
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 0.65,
+          "median": 0.282,
+          "p90": 0.439
+        },
+        "tool_speed_m_s": {
+          "max": 0.147,
+          "median": 0.044,
+          "p90": 0.09
+        },
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "with_hold_tugs": 1,
+        "with_tugs": 0
+      },
+      {
+        "align_deg": {
+          "max": 6.76,
+          "median": 5.74,
+          "p90": 6.278
+        },
+        "arm_load_max": {
+          "max": 1.0,
+          "median": 1.0,
+          "p90": 1.0
+        },
+        "arm_loads_median": [
+          1.0,
+          1.0,
+          1.0,
+          0.02,
+          1.0,
+          0.054
+        ],
+        "cv": {
+          "max": 0.006,
+          "median": 0.002,
+          "p90": 0.004
+        },
+        "dominant_amp_n": {
+          "max": 0.35,
+          "median": 0.084,
+          "p90": 0.236
+        },
+        "dominant_hz": {
+          "max": 3.5,
+          "median": 2.5,
+          "p90": 2.5
+        },
+        "elbow_rad": {
+          "max": -0.7,
+          "median": -0.788,
+          "p90": -0.72
+        },
+        "error_n": {
+          "max": 7.448,
+          "median": 1.65,
+          "p90": 5.197
+        },
+        "estimate_n": {
+          "max": 58.34,
+          "median": 51.4,
+          "p90": 55.356
+        },
+        "feet_slide_mm": {
+          "max": 0.5,
+          "median": 0.1,
+          "p90": 0.3
+        },
+        "front_share": {
+          "max": 0.773,
+          "median": 0.551,
+          "p90": 0.713
+        },
+        "height_m": {
+          "max": 0.278,
+          "median": 0.255,
+          "p90": 0.268
+        },
+        "held": 108,
+        "hf_rms_n": {
+          "max": 0.104,
+          "median": 0.033,
+          "p90": 0.071
+        },
+        "hold_overshoot_n": {
+          "max": 10.67,
+          "median": 5.115,
+          "p90": 8.696
+        },
+        "hold_peak_n": {
+          "max": 60.67,
+          "median": 55.115,
+          "p90": 58.696
+        },
+        "hold_slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "hold_tugs": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "hold_tugs_total": 0,
+        "level_n": 50.0,
+        "mean_n": {
+          "max": 57.448,
+          "median": 51.65,
+          "p90": 55.197
+        },
+        "of": 108,
+        "p2p_n": {
+          "max": 1.189,
+          "median": 0.485,
+          "p90": 0.858
+        },
+        "pitch_deg": {
+          "max": 10.48,
+          "median": 1.125,
+          "p90": 5.596
+        },
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 0.273,
+          "median": 0.095,
+          "p90": 0.198
+        },
+        "tool_speed_m_s": {
+          "max": 0.072,
+          "median": 0.014,
+          "p90": 0.053
+        },
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "with_hold_tugs": 0,
+        "with_tugs": 0
+      }
+    ],
+    "by_level_stiffness": [
+      {
+        "held": 54,
+        "hf_rms_n": {
+          "max": 0.588,
+          "median": 0.269,
+          "p90": 0.508
+        },
+        "level_n": 20.0,
+        "of": 54,
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 1.402,
+          "median": 0.575,
+          "p90": 0.974
+        },
+        "stiffness": 1000.0,
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        }
+      },
+      {
+        "held": 54,
+        "hf_rms_n": {
+          "max": 0.932,
+          "median": 0.249,
+          "p90": 0.45
+        },
+        "level_n": 20.0,
+        "of": 54,
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 1.257,
+          "median": 0.577,
+          "p90": 0.887
+        },
+        "stiffness": 4000.0,
+        "tugs_per_s": {
+          "max": 1.0,
+          "median": 0.0,
+          "p90": 0.0
+        }
+      },
+      {
+        "held": 54,
+        "hf_rms_n": {
+          "max": 0.242,
+          "median": 0.121,
+          "p90": 0.193
+        },
+        "level_n": 35.0,
+        "of": 54,
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 0.65,
+          "median": 0.351,
+          "p90": 0.469
+        },
+        "stiffness": 1000.0,
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        }
+      },
+      {
+        "held": 54,
+        "hf_rms_n": {
+          "max": 0.145,
+          "median": 0.059,
+          "p90": 0.121
+        },
+        "level_n": 35.0,
+        "of": 54,
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 0.425,
+          "median": 0.227,
+          "p90": 0.308
+        },
+        "stiffness": 4000.0,
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        }
+      },
+      {
+        "held": 54,
+        "hf_rms_n": {
+          "max": 0.104,
+          "median": 0.043,
+          "p90": 0.076
+        },
+        "level_n": 50.0,
+        "of": 54,
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 0.273,
+          "median": 0.124,
+          "p90": 0.233
+        },
+        "stiffness": 1000.0,
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        }
+      },
+      {
+        "held": 54,
+        "hf_rms_n": {
+          "max": 0.056,
+          "median": 0.022,
+          "p90": 0.044
+        },
+        "level_n": 50.0,
+        "of": 54,
+        "slack_fraction": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "std_n": {
+          "max": 0.176,
+          "median": 0.068,
+          "p90": 0.127
+        },
+        "stiffness": 4000.0,
+        "tugs_per_s": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        }
+      }
+    ],
+    "engaged": 108,
+    "episodes": 108,
+    "fell_before_release": 0,
+    "recovery": [
+      {
+        "base_excursion_end_m": {
+          "max": 0.169,
+          "median": 0.117,
+          "p90": 0.155
+        },
+        "base_excursion_max_m": {
+          "max": 0.169,
+          "median": 0.125,
+          "p90": 0.157
+        },
+        "base_speed_max_m_s": {
+          "max": 0.296,
+          "median": 0.196,
+          "p90": 0.237
+        },
+        "episodes": 36,
+        "estimate_after_n": {
+          "max": 0.17,
+          "median": -0.16,
+          "p90": 0.05
+        },
+        "fell": 0,
+        "fell_terminated": 0,
+        "foot_liftoffs": {
+          "max": 5.0,
+          "median": 2.0,
+          "p90": 3.0
+        },
+        "height_min_m": {
+          "max": 0.273,
+          "median": 0.249,
+          "p90": 0.258
+        },
+        "never_settled": 0,
+        "pitch_change_max_deg": {
+          "max": 16.7,
+          "median": 12.685,
+          "p90": 15.06
+        },
+        "release": "snap_noticed",
+        "released": 36,
+        "roll_max_deg": {
+          "max": 25.02,
+          "median": 20.0,
+          "p90": 24.205
+        },
+        "settle_s": {
+          "max": 1.42,
+          "median": 1.09,
+          "p90": 1.28
+        },
+        "tension_at_release_n": {
+          "max": 57.47,
+          "median": 51.68,
+          "p90": 55.015
+        },
+        "tension_max_after_n": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "tool_lunge_max_m": {
+          "max": 0.546,
+          "median": 0.221,
+          "p90": 0.504
+        },
+        "tool_speed_max_m_s": {
+          "max": 1.277,
+          "median": 1.144,
+          "p90": 1.219
+        }
+      },
+      {
+        "base_excursion_end_m": {
+          "max": 0.086,
+          "median": 0.045,
+          "p90": 0.071
+        },
+        "base_excursion_max_m": {
+          "max": 0.088,
+          "median": 0.048,
+          "p90": 0.078
+        },
+        "base_speed_max_m_s": {
+          "max": 0.299,
+          "median": 0.169,
+          "p90": 0.216
+        },
+        "episodes": 36,
+        "estimate_after_n": {
+          "max": 5.57,
+          "median": 0.485,
+          "p90": 2.51
+        },
+        "fell": 0,
+        "fell_terminated": 0,
+        "foot_liftoffs": {
+          "max": 3.0,
+          "median": 1.0,
+          "p90": 2.0
+        },
+        "height_min_m": {
+          "max": 0.269,
+          "median": 0.25,
+          "p90": 0.26
+        },
+        "never_settled": 0,
+        "pitch_change_max_deg": {
+          "max": 17.92,
+          "median": 15.185,
+          "p90": 17.06
+        },
+        "release": "snap_unnoticed",
+        "released": 36,
+        "roll_max_deg": {
+          "max": 25.36,
+          "median": 20.48,
+          "p90": 24.015
+        },
+        "settle_s": {
+          "max": 1.2,
+          "median": 0.85,
+          "p90": 1.08
+        },
+        "tension_at_release_n": {
+          "max": 57.08,
+          "median": 51.61,
+          "p90": 55.545
+        },
+        "tension_max_after_n": {
+          "max": 0.0,
+          "median": 0.0,
+          "p90": 0.0
+        },
+        "tool_lunge_max_m": {
+          "max": 0.316,
+          "median": 0.289,
+          "p90": 0.31
+        },
+        "tool_speed_max_m_s": {
+          "max": 1.283,
+          "median": 1.124,
+          "p90": 1.21
+        }
+      },
+      {
+        "base_excursion_end_m": {
+          "max": 0.196,
+          "median": 0.124,
+          "p90": 0.148
+        },
+        "base_excursion_max_m": {
+          "max": 0.202,
+          "median": 0.134,
+          "p90": 0.154
+        },
+        "base_speed_max_m_s": {
+          "max": 0.255,
+          "median": 0.201,
+          "p90": 0.23
+        },
+        "episodes": 36,
+        "estimate_after_n": {
+          "max": 0.52,
+          "median": 0.17,
+          "p90": 0.34
+        },
+        "fell": 0,
+        "fell_terminated": 0,
+        "foot_liftoffs": {
+          "max": 4.0,
+          "median": 1.0,
+          "p90": 2.0
+        },
+        "height_min_m": {
+          "max": 0.275,
+          "median": 0.251,
+          "p90": 0.262
+        },
+        "never_settled": 0,
+        "pitch_change_max_deg": {
+          "max": 12.15,
+          "median": 9.995,
+          "p90": 11.33
+        },
+        "release": "slip_noticed",
+        "released": 36,
+        "roll_max_deg": {
+          "max": 23.88,
+          "median": 19.94,
+          "p90": 23.135
+        },
+        "settle_s": {
+          "max": 1.34,
+          "median": 1.06,
+          "p90": 1.29
+        },
+        "tension_at_release_n": {
+          "max": 56.27,
+          "median": 51.85,
+          "p90": 54.24
+        },
+        "tension_max_after_n": {
+          "max": 56.27,
+          "median": 51.83,
+          "p90": 54.23
+        },
+        "tool_lunge_max_m": {
+          "max": 0.521,
+          "median": 0.199,
+          "p90": 0.352
+        },
+        "tool_speed_max_m_s": {
+          "max": 1.16,
+          "median": 0.927,
+          "p90": 1.014
+        }
+      }
+    ]
+  },
+  "task": "rope",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

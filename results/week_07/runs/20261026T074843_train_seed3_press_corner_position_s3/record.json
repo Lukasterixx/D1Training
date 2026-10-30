@@ -1,0 +1,63 @@
+{
+  "id": "20261026T074843_train_seed3_press_corner_position_s3",
+  "title": "Press position-only on the dog's leg corner, one stage from round 4 (matched pair)",
+  "notes": "",
+  "week": 7,
+  "recorded_at": "2026-10-26T23:18:40+11:00",
+  "started_utc": "2026-10-26T07:48:43+00:00",
+  "source_dir": "logs/unifp_train/20261026T074843_train_seed3_press_corner_position_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 3000,
+  "steps": 100,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8998,
+  "final_checkpoint": {
+    "file": "model_8998.pt",
+    "sha256": "1233a60ab9c656099aacea9ff33542f96abcf0b4b2a679ffd9c611a3a790e5cb"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 193.01922607421875,
+      "last_step": 8998,
+      "mean_last_10": 188.49623260498046,
+      "min": -2.731682777404785,
+      "max": 196.87486267089844,
+      "points": 3000
+    },
+    "Train/mean_episode_length": {
+      "last": 815.5999755859375,
+      "last_step": 8998,
+      "mean_last_10": 792.8639953613281,
+      "min": 22.81999969482422,
+      "max": 910.260009765625,
+      "points": 3000
+    },
+    "Policy/mean_std": {
+      "last": 0.13705866038799286,
+      "last_step": 8998,
+      "mean_last_10": 0.13709248304367067,
+      "min": 0.13370847702026367,
+      "max": 0.21111071109771729,
+      "points": 3000
+    },
+    "Perf/total_fps": {
+      "last": 24901.0,
+      "last_step": 8998,
+      "mean_last_10": 24797.6,
+      "min": 6225.0,
+      "max": 24962.0,
+      "points": 3000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

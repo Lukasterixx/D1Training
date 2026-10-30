@@ -13,6 +13,13 @@ nothing**: no LowCmd, no sport request, no arm target. `tests/test_leg_shadow.py
 | `check_shadow.py` | PC (torch) | `--sim`: a recorded Isaac rollout through the dog's pipeline; `--dog`: a dog record against the training code |
 | `plot_shadow.py` | PC (matplotlib) | a dog record as a figure: roll and pitch, sport mode's knee torques, the foot sensors, the would-be knee torques; `--mark` shades what was done at the robot |
 
+**The key policy for the dog's legs (2026-10-26):** `checkpoints/leg_key_force_corner_model_4000.npz`. It is the key
+policy retrained on the dog's leg corner (armature 0-0.002, 10-20 ms; checkpoints README).
+- **In simulation it turns the key on light legs:** 107 of 108, none past 60 N, calm at delays of 0 to 25 ms.
+- **The earlier exports collapse there** (F-228: ft045 `2604` 30 of 108, 47 past 60 N), so use this one for any run
+  that will drive the legs.
+- It has not run on the dog, in shadow mode or otherwise.
+
 ## Running it
 
 1. **On the PC**, export the policy (done for the walker-stance fine-tune, F-167):
@@ -97,6 +104,11 @@ puts a hand there, and it presses at most 5 N. The first program here that comma
 - **The settle gate refuses the dog's rest for it.** Its export has no `start_gate`, so the default 0.20 rad / 5°
   applies, and the dog's kp-25 rest (0.20 rad, 8.1° nose up) fails it. In simulation round 4 presses from that rest as
   from its trained stands (F-192: 197 of 288, none fell; the dog's own two hands 280 of 288, F-195).
+
+**The press candidate for the dog's legs (2026-10-27, F-236):** `checkpoints/leg_press_force_chain_s4_model_11200.npz`,
+ft11a's lineage with seed 4. In simulation it presses the dog's hands 177 of 288 on light legs (ft11a: 149) with no
+falls and none past 60 N, and stands its 10 s without rattling. It has not run on the dog. ft11a, below, is the
+fallback.
 
 **The press candidate for light legs (2026-10-24, F-227):** `checkpoints/leg_press_force_ft11a_model_11394.npz`.
 - **In simulation it does not rattle and stands its 10 s** at 12-14° nose up (on light legs never past 12.7°).

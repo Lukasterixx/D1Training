@@ -1,0 +1,63 @@
+{
+  "id": "20261025T225523_train_seed1_lever_corner_s1",
+  "title": "Lever retrained on the dog's leg corner (from 21496, 1000 iterations)",
+  "notes": "",
+  "week": 7,
+  "recorded_at": "2026-10-26T10:54:11+11:00",
+  "started_utc": "2026-10-25T22:55:23+00:00",
+  "source_dir": "logs/unifp_train/20261025T225523_train_seed1_lever_corner_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 22495,
+  "final_checkpoint": {
+    "file": "model_22495.pt",
+    "sha256": "35a4695c17edc02124b6665a68e0ef186433678dd7ce2de503deb37b4512d8fe"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 183.66429138183594,
+      "last_step": 22495,
+      "mean_last_10": 187.04068298339843,
+      "min": 1.8857492208480835,
+      "max": 193.48146057128906,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 978.3400268554688,
+      "last_step": 22495,
+      "mean_last_10": 995.3279968261719,
+      "min": 12.859999656677246,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.7894161343574524,
+      "last_step": 22495,
+      "mean_last_10": 0.7894986689090728,
+      "min": 0.7877932786941528,
+      "max": 0.8394566178321838,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 32515.0,
+      "last_step": 22495,
+      "mean_last_10": 32283.6,
+      "min": 18786.0,
+      "max": 33280.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

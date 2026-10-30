@@ -1,0 +1,1240 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    96,
+    2432
+  ],
+  "arguments": {
+    "action_rate_weight": null,
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "button_fraction": null,
+    "checkpoint": "checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "eval_spawn_states": false,
+    "eval_start_delay_steps": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "foot_push_n": null,
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_ramp_iterations": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "handle_fraction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_command": null,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": true,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "detent",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "key_damage_n": null,
+    "key_detent_range_nm": null,
+    "key_eval_detent_nm": null,
+    "key_eval_lock_nm": null,
+    "key_hold_s": null,
+    "key_lock_range_nm": null,
+    "key_max_force_n": null,
+    "key_overdrive_deg": null,
+    "key_press_limit_n": null,
+    "key_press_weight": 0.0,
+    "key_turn_deg": null,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "leg_actuator": "unifp",
+    "leg_armature": null,
+    "leg_armature_range": null,
+    "leg_bar_radius": null,
+    "leg_delay_min_steps": 0,
+    "leg_delay_steps": 0,
+    "leg_frame_every": 5,
+    "leg_frames": 0,
+    "leg_friction_range": null,
+    "leg_knee_armature": null,
+    "leg_knee_armature_factor": 3.67,
+    "leg_knee_friction_factor": 1.917,
+    "leg_object": "handle",
+    "leg_rows": null,
+    "leg_shadow_dump": 0,
+    "leg_variant": "force",
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "ins_eval",
+    "mount_pos": null,
+    "no_arm_jitter": false,
+    "no_curriculum": false,
+    "num_envs": 16,
+    "obs_noise": false,
+    "obs_noise_dof_vel": null,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "payload": "physical",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "plate_set": "v2",
+    "press": false,
+    "press_fraction": null,
+    "press_hand_fraction": 0.0,
+    "press_hand_levels_n": [
+      3.0,
+      10.0
+    ],
+    "press_hold_correction": false,
+    "press_hold_loop": "hybrid",
+    "press_level": null,
+    "press_orientation_weight": null,
+    "press_plate_face_only": false,
+    "press_release_from_press_point": false,
+    "press_set": "panel",
+    "press_tools": null,
+    "press_up_cap_n": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "b_ins21400_det_T",
+    "seed": 1,
+    "small_physx": true,
+    "spawn_states": "",
+    "spawn_states_fraction": null,
+    "start_delay_steps": null,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "insertion",
+    "tilt_excess_deg": null,
+    "tilt_excess_weight": 0.0,
+    "tilt_stages": "all",
+    "tool_point": "jaw_centre",
+    "torques_weight": null,
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_insertion_seed3_measured_model_21400.pt",
+  "checkpoint_iteration": 21400,
+  "checkpoint_source": "isaaclab",
+  "controller": "unifp_go2d1_insertion_seed3_measured_model_21400.pt",
+  "critic_obs": [
+    96,
+    459
+  ],
+  "d1_urdf_sha256": "a848ee41d51def2956fcb6f0af12048e723a1d7f3f3f52b007fcca571a586691",
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    96,
+    12
+  ],
+  "expected_actor": [
+    96,
+    2432
+  ],
+  "expected_critic": [
+    96,
+    459
+  ],
+  "expected_estimates": [
+    96,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 0,
+  "force_start_step": 0,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_status": "M demos/insertion/run_demo.py\n M demos/unifp/run_demo.py\n M results/week_06/notes.md\n M results/week_07/notes.md\n M run_unifp_train.py\n M unifp_train/README.md\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/leg_env.py\n?? results/week_06/runs/20261024T031505_leg_eval_seed1_press_r4_position_5999_hands/\n?? results/week_06/runs/20261024T031547_leg_eval_seed1_press_r4_position_5999_hands_light/\n?? results/week_06/runs/20261024T031634_leg_eval_seed1_press_r4_position_5999_hands_zero/\n?? results/week_07/runs/\n?? tests/test_leg_chatter.py\n?? unifp_train/leg_chatter.py",
+  "ground_friction": 1.0,
+  "ins_conditions": {
+    "chamfer_m": 0.002,
+    "clearance_m": 0.001,
+    "depth_m": 0.018,
+    "detent_fraction": 0.65,
+    "max_n": 30.0,
+    "mu": 0.3,
+    "search_n": 6.0,
+    "speed_m_s": 0.02,
+    "standoff_m": 0.012
+  },
+  "ins_rows": [
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.7,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.78,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 0.0,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 1.5707963267948966,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 3.141592653589793,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 0.0
+    },
+    {
+      "detent_n": 0.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 10.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 20.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    },
+    {
+      "detent_n": 30.0,
+      "direction_rad": 4.71238898038469,
+      "height_m": 0.86,
+      "lateral_m": 0.0015,
+      "roll_rad": 1.5707963267948966
+    }
+  ],
+  "ins_set": "detent",
+  "insertion": {
+    "approach_weight": null,
+    "compliant_grip": true,
+    "curriculum": false,
+    "curriculum_level": 0.2,
+    "curriculum_min_iterations": 50,
+    "engage_attitude_rad": null,
+    "hold_home": true,
+    "insertion_fraction": 0.8,
+    "outer_loops": {
+      "elevation_gain": 1.5,
+      "elevation_max_rad": 0.5235987755982988,
+      "roll_gain": 1.5,
+      "roll_max_rad": 0.6981317007977318,
+      "tip_gain": 1.5,
+      "tip_max_m": 0.05
+    },
+    "reward_true_targets": false
+  },
+  "joint_order_ok": true,
+  "leg": null,
+  "leg_joints_loaded": {
+    "armature": [
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002,
+      0.0002
+    ],
+    "effort_limit_sim": [
+      23.700001,
+      23.700001,
+      45.43,
+      23.700001,
+      23.700001,
+      45.43,
+      23.700001,
+      23.700001,
+      45.43,
+      23.700001,
+      23.700001,
+      45.43
+    ],
+    "friction": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "groups": {
+      "unifp": "IdealPDActuator"
+    },
+    "velocity_limit_sim": [
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999
+    ]
+  },
+  "legs": {
+    "actuator_model": {
+      "delay_physics_steps": [
+        0,
+        0
+      ],
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": 23.7,
+      "knee_nm": 45.43,
+      "name": "unifp",
+      "speed": "none"
+    },
+    "armature_range": null,
+    "friction_range": null,
+    "knee_armature_factor": 3.67,
+    "knee_friction_factor": 1.917
+  },
+  "mechanism": null,
+  "mode": "ins_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 96,
+  "payload": {
+    "bodies": [
+      {
+        "body": "base",
+        "com_m": [
+          [
+            0.0211,
+            0.0,
+            -0.0054
+          ],
+          [
+            0.0297,
+            -0.0,
+            0.0013
+          ]
+        ],
+        "mass_kg": [
+          6.921,
+          7.3409
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.265,
+            "name": "mid360",
+            "source": "published: Livox Mid-360 user manual, approx. 265 g"
+          },
+          {
+            "mass_kg": 0.1549,
+            "name": "mid360_mount",
+            "source": "estimated: the CAD's closed parts, 124.9 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      },
+      {
+        "body": "Link6",
+        "com_m": [
+          [
+            -0.0069,
+            -0.0,
+            0.0397
+          ],
+          [
+            -0.0234,
+            0.0001,
+            0.0421
+          ]
+        ],
+        "mass_kg": [
+          0.1679,
+          0.2666
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.072,
+            "name": "d435i",
+            "source": "published: Intel RealSense D400 series datasheet, D435/D435i 72 g"
+          },
+          {
+            "mass_kg": 0.0267,
+            "name": "wrist_bracket",
+            "source": "estimated: the CAD's 21.6 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      }
+    ],
+    "mode": "physical"
+  },
+  "press": null,
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1_payload.usd",
+  "robot_usd_sha256": "61290b5a5d9a7943a8b82743d6363ddd1ea2823bbc79d0612b78d9b86da915cd",
+  "roll_objective": true,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "at_start_median_abs": {
+      "azimuth_deg": 2.43,
+      "elevation_deg": 4.41,
+      "roll_deg": 0.405,
+      "tip_miss_mm": 2.98
+    },
+    "by_detent": [
+      {
+        "approach_err_start_deg": 5.07,
+        "damaged": 0,
+        "detent_n": 0.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 17.27,
+        "peak_lateral_n": 5.295,
+        "searched": 1,
+        "seated": 23,
+        "time_to_seat_s": 1.5
+      },
+      {
+        "approach_err_start_deg": 4.985,
+        "damaged": 0,
+        "detent_n": 10.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 16.69,
+        "peak_lateral_n": 5.875,
+        "searched": 2,
+        "seated": 22,
+        "time_to_seat_s": 1.84
+      },
+      {
+        "approach_err_start_deg": 4.96,
+        "damaged": 1,
+        "detent_n": 20.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 18.045,
+        "peak_lateral_n": 6.6,
+        "searched": 1,
+        "seated": 14,
+        "time_to_seat_s": 2.09
+      },
+      {
+        "approach_err_start_deg": 4.93,
+        "damaged": 1,
+        "detent_n": 30.0,
+        "fell": 0,
+        "of": 24,
+        "peak_contact_n": 21.27,
+        "peak_lateral_n": 10.16,
+        "searched": 2,
+        "seated": 9,
+        "time_to_seat_s": 2.78
+      }
+    ],
+    "by_height": [
+      {
+        "approach_err_start_deg": 4.12,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.7,
+        "of": 32,
+        "peak_contact_n": 10.165,
+        "peak_lateral_n": 4.67,
+        "searched": 0,
+        "seated": 21,
+        "time_to_seat_s": 1.78
+      },
+      {
+        "approach_err_start_deg": 4.88,
+        "damaged": 0,
+        "fell": 0,
+        "height_m": 0.78,
+        "of": 32,
+        "peak_contact_n": 17.39,
+        "peak_lateral_n": 14.02,
+        "searched": 0,
+        "seated": 24,
+        "time_to_seat_s": 1.61
+      },
+      {
+        "approach_err_start_deg": 12.375,
+        "damaged": 2,
+        "fell": 0,
+        "height_m": 0.86,
+        "of": 32,
+        "peak_contact_n": 30.27,
+        "peak_lateral_n": 6.075,
+        "searched": 6,
+        "seated": 23,
+        "time_to_seat_s": 2.08
+      }
+    ],
+    "by_lateral": [
+      {
+        "approach_err_start_deg": 4.945,
+        "damaged": 2,
+        "fell": 0,
+        "lateral_m": 0.0015,
+        "of": 96,
+        "peak_contact_n": 17.39,
+        "peak_lateral_n": 6.075,
+        "searched": 6,
+        "seated": 68,
+        "time_to_seat_s": 1.8
+      }
+    ],
+    "by_roll": [
+      {
+        "approach_err_start_deg": 4.83,
+        "damaged": 2,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 12.175,
+        "peak_lateral_n": 3.095,
+        "roll_rad": 0.0,
+        "searched": 6,
+        "seated": 28,
+        "time_to_seat_s": 2.03
+      },
+      {
+        "approach_err_start_deg": 5.1,
+        "damaged": 0,
+        "fell": 0,
+        "of": 48,
+        "peak_contact_n": 20.57,
+        "peak_lateral_n": 10.94,
+        "roll_rad": 1.5707963267948966,
+        "searched": 0,
+        "seated": 40,
+        "time_to_seat_s": 1.78
+      }
+    ],
+    "damaged": 2,
+    "entered": 90,
+    "episodes": 96,
+    "ever_seated": 69,
+    "fell": 0,
+    "seated": 68,
+    "started": 96
+  },
+  "task": "insertion",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

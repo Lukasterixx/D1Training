@@ -98,16 +98,7 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     #: term like `door_push`, so the position variant is given it too. 0 weight: off.
     press_limit_n: float = 30.0
     press_excess_weight: float = 0.0
-    #: Draw each environment's leg armature once at start-up, uniform in this range (kg·m², hip and thigh), the knees'
-    #: `knee_armature_factor` times as much (a knee geared 1.917 more reflects 1.917^2, F-168). Empty: as configured.
-    leg_armature_range: tuple[float, float] | None = None
-    knee_armature_factor: float = 3.67
-    #: Draw each environment's leg joint friction once at start-up, uniform in this range (N·m, hip and thigh; PhysX's
-    #: static and dynamic friction effort, solved implicitly, so a joint sticks under less), the knees
-    #: `knee_friction_factor` times as much (a friction behind the knee's 1.917 gearing, reflected). 2026-10-23: the
-    #: real dog stops where it stops at kp 25 (F-191). Empty: as configured (unitree_rl_lab's 0.01).
-    leg_friction_range: tuple[float, float] | None = None
-    knee_friction_factor: float = 1.917
+    # The legs' armature and friction draws (`leg_armature_range`, `leg_friction_range`) are the base config's.
     #: `leg_object="press"` only: the outer loop on the foot's miss while the plate is pressed
     #: (`foot_press_env._correct_foot`): "full", the whole miss across the normal, as rounds 1-4 of the foot-press task
     #: trained; "off", none once contact is called; "hybrid" (since 2026-10-22 05:25), the miss across the normal
@@ -146,6 +137,8 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
 
 class Go2D1LegEnv(Go2D1PosForceEnv):
     cfg: Go2D1LegEnvCfg
+    #: `waiting`: the foot on its footfall before the task starts, the 10 s stand's scope in the dog battery (F-196).
+    CHATTER_SCOPES = ("all", "standing", "waiting")
 
     def __init__(self, cfg: Go2D1LegEnvCfg, render_mode: str | None = None, **kwargs):
         if cfg.leg_variant not in ("position", "force"):
@@ -239,31 +232,6 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._weights = leg_cfg.scaled_weights(self._weight_table(handles=cfg.handle_fraction > 0.0))
         self._terms = dict(leg_rewards.TERMS)
         self._episode_sums = {name: zeros(n) for name in self._weights}
-        if cfg.leg_armature_range is not None:
-            self._draw_leg_armature()
-        if cfg.leg_friction_range is not None:
-            self._draw_leg_friction()
-
-    def _draw_leg_armature(self) -> None:
-        """Each environment's leg armature, once (a start-up randomisation: writing it costs a copy of every joint's)."""
-        lo, hi = self.cfg.leg_armature_range
-        legs = self._order[:12]
-        draw = lo + (hi - lo) * torch.rand(self.num_envs, 1, device=self.device)
-        knee = torch.tensor([1.0 if k % 3 == 2 else 0.0 for k in range(12)], device=self.device)
-        armature = draw * (1.0 + (self.cfg.knee_armature_factor - 1.0) * knee)
-        self._robot.write_joint_armature_to_sim(armature, joint_ids=legs.tolist())
-        self._leg_armature_drawn = armature
-
-    def _draw_leg_friction(self) -> None:
-        """Each environment's leg joint friction, once: static and dynamic effort alike (N·m), the knees scaled."""
-        lo, hi = self.cfg.leg_friction_range
-        legs = self._order[:12]
-        draw = lo + (hi - lo) * torch.rand(self.num_envs, 1, device=self.device)
-        knee = torch.tensor([1.0 if k % 3 == 2 else 0.0 for k in range(12)], device=self.device)
-        friction = draw * (1.0 + (self.cfg.knee_friction_factor - 1.0) * knee)
-        self._robot.write_joint_friction_coefficient_to_sim(friction, joint_dynamic_friction_coeff=friction,
-                                                            joint_ids=legs.tolist())
-        self._leg_friction_drawn = friction
 
     def _weight_table(self, handles: bool) -> dict[str, float]:
         weights = dict(leg_cfg.REWARD_WEIGHTS)
@@ -283,7 +251,11 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         self._actions = torch.cat((legs, torch.zeros(self.num_envs, 6, device=self.device)), dim=-1)
         self._joint_targets = interface.joint_targets(self._actions)
         self._joint_targets[:, 12:18] = self._arm_pose
+        self._track_chatter()
         self._step_forces()
+
+    def _chatter_masks(self, upright: torch.Tensor) -> dict[str, torch.Tensor]:
+        return {**super()._chatter_masks(upright), "waiting": upright & (self._stage == WAITING)}
 
     def _push_scale(self) -> float:
         start = self.cfg.force_start_step

@@ -7798,7 +7798,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-227 — Trained on the dog's likely leg corner (armature 0-0.002, command delay 10-20 ms) with rima's regularisation and the dog's two hands oversampled, the foot-press policy (ft11a's final) presses those hands from the dog's rest on light legs without falling or rattling (149 of 288, 0 past 60 N; round 4: 10 with 83 falls and 166 past 60 N) and on zero-armature legs (108; round 4: 0, 62 falls), keeps 211 on the legs round 4 trained on (round 4: 280), and waits 12-14 degrees nose up; its weak press is the palm under the foot on light legs (27 of 144)
 
-- **Status:** provisional (simulation; one lineage, checkpoints that swing by tens of presses). Numbered F-200 when written (commit 8d99415, another machine); renumbered F-227 on 2026-10-25 when merged with the robot program's F-198 to F-224, written in parallel.
+- **Status:** provisional (simulation; one lineage, checkpoints that swing by tens of presses). As the press candidate,
+  superseded 2026-10-27 by [F-236](#f-236) (the same lineage, seed 4, `11200`). Numbered F-200 when written (commit 8d99415, another machine); renumbered F-227 on 2026-10-25 when merged with the robot program's F-198 to F-224, written in parallel.
 - **Week:** 6
 - **Date:** 2026-10-24
 - **Evidence:** [Week 6 log, 2026-10-24](week_06/notes.md), rounds A-E and "The polish, a checkpoint sweep, and the
@@ -7827,3 +7828,203 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - For a press on the dog: this policy, the palm in front first. The palm under the foot needs a measured force
     (F-226).
 
+
+### F-228 — On the dog's leg corner (armature 0.0002 / 0.0007 at 15-20 ms), three of this project's six policies that drive the legs rattle or fail: the insertion policy's FL calf target flips every step (0.11-0.12 rad rms, 55-63 of 96 episodes past 0.1 rad; 0.025 on its trained legs), the lever policy's legs jump 0.084-0.119 rad (0.085-0.106 already on its trained legs), and the key policies collapse (force-aware 101 -> 30 unlocked of 108, 47 past 60 N); the rope, mechanism and reach policies hold their scores with standing leg targets at 0.012-0.049 rad
+
+- **Status:** provisional (simulation; one evaluation per policy and condition)
+- **Week:** 7
+- **Date:** 2026-10-26
+- **Evidence:** [Week 7 log, 2026-10-26](week_07/notes.md), "The baseline: which current policies rattle on the dog's
+  legs" and "The PhysX demos of the current checkpoints on light legs".
+  - Each checkpoint was run on its own frozen set on its trained legs, on L (the corner F-196 matched to the dog's
+    rattle) and on Z (armature 0 at 5-15 ms).
+  - The new `leg_chatter.json` (`unifp_train/leg_chatter.py`) gives each leg joint's rms target change a policy step,
+    and its second difference, over the standing steps. On ft11a's 10 s stand it agrees with the shadow dump to 0.0002
+    rad.
+  - Insertion on [trained](#/week/7/run/20261025T135204_ins_eval_seed1_b_ins21400_lat_T) and [light](#/week/7/run/20261025T140521_ins_eval_seed1_b_ins21400_lat_L) legs.
+  - Lever test set on [trained](#/week/7/run/20261025T135048_mech_eval_seed1_b_lever21496_test_T) and [light](#/week/7/run/20261025T140333_mech_eval_seed1_b_lever21496_test_L) legs.
+  - Key force on [its legs](#/week/7/run/20261025T142404_leg_eval_seed1_b_keyF2604_H), [light](#/week/7/run/20261025T143211_leg_eval_seed1_b_keyF2604_L) and [zero](#/week/7/run/20261025T144032_leg_eval_seed1_b_keyF2604_Z).
+  - Reach on [light](#/week/7/run/20261025T135523_eval_seed1_b_reach58400_L), rope on [light](#/week/7/run/20261025T135722_rope_eval_seed1_b_rope14600_dev_L), mechanism on [light](#/week/7/run/20261025T140002_mech_eval_seed1_b_mech17499_test_L).
+- **Scope:**
+  - Simulation. The dog's legs are not measured; L is one live run's match (F-196).
+  - The task scores of insertion and lever do not suffer in simulation (70-81 seated of 96; 346 and 502 opened). The
+    rattle is what F-196 and F-225 found the dog shows, not a simulated failure.
+  - The arm policies' walking steps are their gait and are not judged.
+  - The claw combiner demos no longer score the mechanism and lever policies: 0 / 16 on either legs. The scene took the
+    measured handle after week 4 (F-155, F-157).
+- **Implication:**
+  - Every policy that drives the legs is being retrained on the corner (Week 7 log, the queue in
+    `logs/unifp_train/corner/`).
+  - Until a retrained one is chosen, insertion, lever and key should not drive the dog's legs.
+
+### F-229 — Retrained for 2000 iterations on the dog's leg corner with rima's regularisation, the force-aware key policy (checkpoint 4000) unlocks Lukas's key in 107 of 108 frozen keys on light legs and on zero-armature legs with nothing past 60 N, where the policy it replaces (ft045 2604) unlocks 30 and 0 with 47 and 96 past 60 N; it keeps 95 of 108 on the old heavy legs (ft045: 101), stands its 10 s without rattling (support thighs 0.003 / 0.006 rad a step) and is calm at fixed delays from 0 to 25 ms; the matched position-only retrain unlocks 57 with 33 past 60 N
+
+- **Status:** provisional (simulation; one seed; selected and scored on the same frozen set, as F-179). Its force-aware
+  lead is refined by [F-235](#f-235) (a second seed: position-only can match it on light legs alone)
+- **Week:** 7
+- **Date:** 2026-10-26
+- **Evidence:** [Week 7 log, 2026-10-26](week_07/notes.md), "The key policies retrained on the dog's leg corner" and
+  "Delay sensitivity".
+  - The runs: [force-aware](#/week/7/run/20261025T130706_train_seed2_key_corner_force_s2), [position-only](#/week/7/run/20261025T130836_train_seed2_key_corner_position_s2).
+  - The chosen checkpoint on [light](#/week/7/run/20261025T180142_leg_eval_seed1_r_keyF_4000_L), [zero-armature](#/week/7/run/20261025T180530_leg_eval_seed1_r_keyF_4000_Z) and [heavy](#/week/7/run/20261025T175752_leg_eval_seed1_r_keyF_4000_H) legs.
+  - Its 10 s stand on [light legs](#/week/7/run/20261025T200947_leg_eval_seed1_r_keyF_4000_stand10_L); at [0 ms](#/week/7/run/20261025T203442_leg_eval_seed1_d_keyF4000_stand10_D0) and [25 ms](#/week/7/run/20261025T210229_leg_eval_seed1_d_keyF4000_stand10_D5).
+  - The original on [light legs](#/week/7/run/20261025T143211_leg_eval_seed1_b_keyF2604_L); the position-only candidate on [light legs](#/week/7/run/20261025T184849_leg_eval_seed1_r_keyP_3600_L).
+  - Exported: `checkpoints/leg_key_force_corner_model_4000.npz` (numpy to 3.4e-6).
+- **Scope:**
+  - Simulation. The dog's legs and delay are not measured.
+  - Its checkpoints swing: `4400` strikes past 60 N in 44-82 of 108.
+  - The position-only side unlocks only 1-16 of 108 on zero-armature legs, at every checkpoint.
+  - Not run on the dog.
+- **Implication:**
+  - The key policy for the dog is this export, not ft045's.
+  - On the dog's corner the force-aware lead over position-only holds (107 against 57; F-166).
+
+### F-230 — Trained on a 10-20 ms command delay, the reach policy rattles when the delay is removed: on light legs at 0 ms its FL hip target flips every step (0.141 rad rms, 21 of 39 standing episodes past 0.1 rad), and on its old legs (UniFP's ideal PD, no delay) 0.06-0.18 rad from its 400th retrained iteration on; at 5, 10 and 25 ms, and on the ideal PD at 15-20 ms, it is calm (0.022-0.023) and tracks 1.70-1.84 / 2.32-2.42 cm, better than the policy it replaces on the dog's corner (1.89 / 2.52)
+
+- **Status:** provisional (simulation; one lineage)
+- **Week:** 7
+- **Date:** 2026-10-26
+- **Evidence:** [Week 7 log, 2026-10-26](week_07/notes.md), "The reach policy retrained on the corner" and "Delay
+  sensitivity".
+  - [The run](#/week/7/run/20261025T172900_train_seed1_reach_corner_s1).
+  - `59400` on [its old legs](#/week/7/run/20261025T195035_eval_seed1_r_reach_59400_T), [light legs](#/week/7/run/20261025T195149_eval_seed1_r_reach_59400_L), [0 ms](#/week/7/run/20261025T203107_eval_seed1_d_reach59400_D0), [5 ms](#/week/7/run/20261025T204028_eval_seed1_d_reach59400_D1), [25 ms](#/week/7/run/20261025T205857_eval_seed1_d_reach59400_D5), [the ideal PD at 15-20 ms](#/week/7/run/20261025T210814_eval_seed1_d_reach59400_U34).
+  - The original at [0 ms](#/week/7/run/20261025T203255_eval_seed1_d_reach58400_D0) and [25 ms](#/week/7/run/20261025T210042_eval_seed1_d_reach58400_D5).
+  - The key candidate and ft11a are calm at all of these delays.
+- **Scope:**
+  - Simulation, one lineage.
+  - The dog's delay is not measured. Its command leaves 4 ms into the step after the latency cut (F-196's notes), so
+    0 ms is not a condition the dog can be in.
+- **Implication:**
+  - A retrained arm policy has to be played back and demonstrated with a delay (the corner legs), or it rattles in
+    simulation for a reason the dog does not have.
+  - If the dog's loop were ever made faster than ~5 ms, the delay range trained on would have to come down with it.
+
+### F-231 — Retrained on the dog's leg corner, the rope and mechanism policies do no better than the ones they would replace, which were already calm on it: the rope retrain tugs in 52-87 of 108 holds on light legs (the original 9) and pulls 27-29 N for 20 N (24.3); the mechanism retrain opens 358-429 of 512 (470); so rope 14600 and mechanism 17499 stay
+
+- **Status:** provisional (simulation; one run each)
+- **Week:** 7
+- **Date:** 2026-10-26
+- **Evidence:** [Week 7 log, 2026-10-26](week_07/notes.md), "The rope policy retrained on the corner" and "The mechanism
+  controller retrained on the corner".
+  - Rope: [the run](#/week/7/run/20261025T191424_train_seed1_rope_corner_s1); `14600` on [light legs](#/week/7/run/20261025T222553_rope_eval_seed1_r_rope_dev_14600_L); the original on
+    [light legs](#/week/7/run/20261025T135722_rope_eval_seed1_b_rope14600_dev_L).
+  - Mechanism: [the run](#/week/7/run/20261025T214010_train_seed1_mech_corner_s1); `18498` on [light legs](#/week/7/run/20261025T231729_mech_eval_seed1_r_mech_test_18498_L); the original on
+    [light legs](#/week/7/run/20261025T140002_mech_eval_seed1_b_mech17499_test_L).
+- **Scope:**
+  - Simulation, one seed.
+  - Both originals' calm on the corner is F-228's: rope 0.012 rad, mechanism 0.044 with no flip.
+  - Both retrains develop F-230's zero-delay rattle. The rope's grows with training (0.022 -> 0.31 rad on T) and
+    reaches 5-15 ms by its last checkpoints.
+- **Implication:** these two need no retrain for the corner. If they are ever fine-tuned again, use the delay range
+  of F-232.
+
+### F-232 — For the arm policies, the 10-20 ms delay alone trains in a rattle that a shorter delay lets out (F-230); drawing the delay 5-20 ms, or raising UniFP's action_rate from -0.02 to -0.1, removes it at every delay from 0 to 25 ms; the reach retrained with the 5-20 ms delay (59600) tracks the validation set on light legs as the original does (1.93 / 2.57 cm against 1.89 / 2.52), better on zero-armature legs (1.92 / 2.60 against 2.01 / 2.84), with half its standing chatter, and picks twice the cups on the payload robot (6 and 7 of 16 against 3 and 6)
+
+- **Status:** provisional (simulation; one seed of each arm). 2026-10-27: a second seed of the delay arm replicates
+  the calm at every delay and the tracking on light legs (2.10 / 2.54 cm), not the gain on zero-armature legs (2.12 /
+  3.07 against the original's 2.01 / 2.84; Week 7 log, "a second seed")
+- **Week:** 7
+- **Date:** 2026-10-26
+- **Evidence:** [Week 7 log, 2026-10-26](week_07/notes.md), the three "Reach round" entries and "the reach candidates
+  side by side".
+  - The delay arm: [the run](#/week/7/run/20261026T005349_train_seed1_reach_r2delay_s1); `59600` on [L](#/week/7/run/20261026T030421_eval_seed1_r2d_reach_59600_L), [Z](#/week/7/run/20261026T030616_eval_seed1_r2d_reach_59600_Z), [0 ms](#/week/7/run/20261026T030812_eval_seed1_r2d_reach_59600_D0); the cups [on L](#/week/7/run/20261026T032513_cup_unifp_wrist_seed1_pd_cup_r2d59600_L), [on Z](#/week/7/run/20261026T032703_cup_unifp_wrist_seed1_pd_cup_r2d59600_Z).
+  - The `action_rate` arm: [the run](#/week/7/run/20261026T022733_train_seed1_reach_r2rate_s1); `59600` on [0 ms](#/week/7/run/20261026T043348_eval_seed1_r2r_reach_59600_D0).
+  - Both together: [the run](#/week/7/run/20261026T050532_train_seed1_reach_r3both_s1). Calm, but 1-2 cups of 16.
+  - The lever with both: [the run](#/week/7/run/20261026T063521_train_seed1_lever_r3both_s1). Calm, and it falls as rounds 1-2 did (F-233).
+- **Scope:**
+  - Simulation; the dog's delay is not measured.
+  - The demos build the payload only with `--payload physical`, new today. The retrained policies miss every cup
+    without it.
+  - The delay arm still leans toward a flip at 0 ms (d2/d1 1.9 at 0.037 rad, 1 of 39 episodes past 0.1). The
+    `action_rate` arm does not (×1.1), and tracks 0.2 cm worse.
+- **Implication:**
+  - The reach candidate for the dog's legs is the delay arm's `59600`; the `action_rate` arm's `59600` if calm matters
+    more. Neither is in `checkpoints/` yet.
+  - Any arm policy trained for the corner should draw the delay from 5 ms, not 10.
+
+### F-233 — The lever and insertion policies have no retrain that is better on every count: retrained on the corner, the lever policy stops rattling (round 3: 0.034 rad against 0.119) and opens as many, but falls on 1-35 of 360 levers at 20-40 N where the original falls on none, as week 4's fine-tunes did on unchanged legs (3-12); the insertion retrain is calm at every delay (0.004-0.009 rad against 0.11-0.12) but seats 119 of 192 frozen keys on light legs against 151, and 32 of 48 in the demo against 41
+
+- **Status:** provisional (simulation; one run per round). 2026-10-27/28, more rounds, the conclusion unchanged:
+  lever round 4 (resistance held at 40 N) falls less (0-3) but opens 267-402 of the test set's 512. Insertion round
+  2, continued, seats 73 + 64 on light legs but 21 / 48 in the demo (Week 7 log)
+- **Week:** 7
+- **Date:** 2026-10-26
+- **Evidence:** [Week 7 log, 2026-10-26](week_07/notes.md), the lever rounds 1-3 and "The insertion policy retrained on
+  the corner".
+  - Lever: [round 1](#/week/7/run/20261025T225523_train_seed1_lever_corner_s1), [round 2](#/week/7/run/20261026T035618_train_seed1_lever_r2delay_s1), [round 3](#/week/7/run/20261026T063521_train_seed1_lever_r3both_s1).
+    Round 3's `22400` on [levers, L](#/week/7/run/20261026T080826_mech_eval_seed1_r3b_lever_levers_22400_L) and [the test set, L](#/week/7/run/20261026T084305_mech_eval_seed1_r3b_lever_test_22400_L).
+  - Insertion: [the run](#/week/7/run/20261025T235415_train_seed3_ins_corner_s3); `22000` on [lateral, L](#/week/7/run/20261026T010740_ins_eval_seed1_r_ins_lat_22000_L) and
+    [detent, L](#/week/7/run/20261026T013123_ins_eval_seed1_r_ins_det_22000_L); the demo [on L](#/week/7/run/20261026T015442_insertion_policy_seed2_pd_ins22000_L) against the original's
+    [on L](#/week/7/run/20261026T014811_insertion_policy_seed2_pd_ins21400_L).
+- **Scope:**
+  - Simulation. Whether a 0.11-0.12 rad flip rattles the real dog as round 4's 0.16-0.23 did (F-225) is not tested.
+  - The lever's falls are on the frozen lever set, not the demos. The claw demos no longer fit the measured handle
+    (F-228).
+- **Implication:**
+  - With falls and seats first, lever `21496` and insertion `21400` stay. Both rattle on the corner.
+  - Which to take for the dog (rattle, or 5 falls in 360 / 30 fewer seats) is Lukas's call.
+
+### F-234 — A matched force-aware / position-only pair of foot-press policies, trained in one stage on the dog's leg corner from round 4's finals (3000 iterations, ft11a's final recipe), presses the dog's two hands 67 against 56 of 288 on light legs, 246 against 75 on the old heavy legs and 86 against 35 on zero armature (checkpoint 7800 each, no falls on light legs); on the frozen set from the classic stand the two are close (84-116 with 2-18 falls, against 72-102 with none); neither reaches ft11a (149 on light legs)
+
+- **Status:** provisional (simulation; one seed; selected on the same battery). The lead it shows on light legs is
+  refined by [F-236](#f-236): through ft11a's whole lineage it is 4-6 times, not 67 against 56
+- **Week:** 7
+- **Date:** 2026-10-27
+- **Evidence:** [Week 7 log, 2026-10-27](week_07/notes.md), "The press pair on the corner in one stage".
+  - The runs: [force-aware](#/week/7/run/20261026T074711_train_seed3_press_corner_force_s3), [position-only](#/week/7/run/20261026T074843_train_seed3_press_corner_position_s3).
+  - `7800` on the hands on light legs: [force](#/week/7/run/20261026T123700_leg_eval_seed1_r_pressf_hands_7800_L), [position](#/week/7/run/20261026T134302_leg_eval_seed1_r_pressp_hands_7800_L).
+  - On the heavy legs: [force](#/week/7/run/20261026T123429_leg_eval_seed1_r_pressf_hands_7800_H), [position](#/week/7/run/20261026T134029_leg_eval_seed1_r_pressp_hands_7800_H).
+  - The frozen set: [force](#/week/7/run/20261026T131533_leg_eval_seed1_r_pressf_real_7800_H), [position](#/week/7/run/20261026T142204_leg_eval_seed1_r_pressp_real_7800_H).
+- **Scope:**
+  - Simulation, one seed.
+  - The force-aware side strikes past 60 N more on light legs (78 against 47 of 288).
+  - The comparison's criterion is the force's accuracy (week 6, 2026-10-24): a position-only policy given a
+    displacement misses a force on a plate of unknown stiffness by construction.
+- **Implication:**
+  - On the dog's corner the force-aware press keeps its lead in a matched pair, but a much smaller one on light legs
+    than on the legs round 4 trained on (F-180).
+  - ft11a stays the press candidate (F-227). A position-only twin of its whole lineage would be the fair comparison
+    for it.
+
+### F-235 — Over two seeds, the force-aware key policies retrained on the dog's leg corner unlock 95-107 of 108 on light, zero-armature and heavy legs alike at their chosen checkpoints (seed 2's 4000, seed 3's 3600); the position-only ones unlock 107 (seed 3) or 57 (seed 2) on light legs and 1-18 on zero armature and 37-55 on heavy legs: F-229's force-aware lead is robustness across leg models, not a higher peak on the dog's likely corner
+
+- **Status:** provisional (simulation; two seeds; selected and scored on the same frozen set). Refines F-229's
+  implication about the force-aware lead.
+- **Week:** 7
+- **Date:** 2026-10-27
+- **Evidence:** [Week 7 log, 2026-10-27](week_07/notes.md), "The key retrain's second seed".
+  - Seed 3: [force](#/week/7/run/20261026T121844_train_seed3_key_corner_force_s3), [position](#/week/7/run/20261026T122015_train_seed3_key_corner_position_s3).
+  - `3600` force on [L](#/week/7/run/20261026T165202_leg_eval_seed1_r3_keyF_3600_L), [Z](#/week/7/run/20261026T165553_leg_eval_seed1_r3_keyF_3600_Z), [H](#/week/7/run/20261026T164814_leg_eval_seed1_r3_keyF_3600_H).
+  - `3600` position on [L](#/week/7/run/20261026T175052_leg_eval_seed1_r3_keyP_3600_L), [Z](#/week/7/run/20261026T175442_leg_eval_seed1_r3_keyP_3600_Z), [H](#/week/7/run/20261026T174650_leg_eval_seed1_r3_keyP_3600_H).
+- **Scope:**
+  - Simulation; the dog's legs are not measured.
+  - Both variants' checkpoints swing widely, and seed 3's position-only falls in up to 82 of 108 at its later
+    checkpoints.
+- **Implication:**
+  - The exported key policy (F-229's seed 2 `4000`) stands.
+  - The thesis claim for force awareness on the key should be stated as robustness to the unmeasured legs. It should
+    not be stated as a higher score on the dog's likely legs.
+
+### F-236 — Through ft11a's whole five-stage lineage, the force-aware foot-press policy presses the dog's two hands on light legs 4-6 times as often as its matched position-only twin (seed 3's ft11a 149 and seed 4's 11200 177 of 288, against 22-32 for the twin, seed 3), with no falls and nothing past 60 N on light legs; seed 4's 11200 replicates ft11a and, by F-227's rule, replaces it as the press candidate (177 / 0 / 0 on light legs against 149, 254 on heavy legs against 211, 122 / 0 / 5 on the frozen set against 121 / 1 / 17)
+
+- **Status:** provisional (simulation; two force-aware seeds, one position-only, when written; 2026-10-28 two more
+  force-aware and two more position-only seeds replicated it (four seeds 149-177 against three 31-33 on light legs,
+  Week 7 log "third seeds"), its Scope updated; selected on the same battery). Refines
+  [F-234](#f-234), whose one-stage pair showed a much smaller lead (67 against 56).
+- **Week:** 7
+- **Date:** 2026-10-27
+- **Evidence:** [Week 7 log, 2026-10-27](week_07/notes.md), "ft11a's whole lineage again".
+  - The final stages: [force, seed 4](#/week/7/run/20261027T011510_train_seed4_pchain_force_s4_ft11a), [position, seed 3](#/week/7/run/20261027T011103_train_seed3_pchain_position_s3_ft11a).
+  - `11200` on the hands: [light](#/week/7/run/20261027T032422_leg_eval_seed1_c_pressf_hands_11200_L), [heavy](#/week/7/run/20261027T032156_leg_eval_seed1_c_pressf_hands_11200_H), [zero armature](#/week/7/run/20261027T032631_leg_eval_seed1_c_pressf_hands_11200_Z).
+    Its [frozen set](#/week/7/run/20261027T034817_leg_eval_seed1_c_pressf_real_11200_H) and [10 s stand](#/week/7/run/20261027T033959_leg_eval_seed1_c_pressf_stand10_11200_L).
+  - The twin's best on light legs: [10800](#/week/7/run/20261027T022323_leg_eval_seed1_c_pressp_hands_10800_L) (32 / 0 / 72).
+- **Scope:**
+  - Simulation; the dog's legs are not measured.
+  - `11200` strikes past 60 N on zero-armature legs in 62 of 288 (ft11a: 26).
+  - Its palm under the foot (F-226's weak press) is not separately checked here.
+  - A third force-aware seed and a second position-only one: 168 and 20-33 on light legs (Week 7 log, 2026-10-28,
+    "The lineage pair's second seeds"). Both replicate.
+- **Implication:**
+  - The press candidate for the dog is `11200` (exported, `checkpoints/leg_press_force_chain_s4_model_11200.npz`). ft11a
+    is the fallback.
+  - The thesis comparison for the press on the dog's legs is this lineage pair, not the one-stage pair.

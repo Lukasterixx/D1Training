@@ -1,0 +1,63 @@
+{
+  "id": "20261025T134231_train_seed1_corner_smoke_rope_train",
+  "title": "Smoke: rope training on the corner legs, 2 iterations (any-task leg model)",
+  "notes": "",
+  "week": 7,
+  "recorded_at": "2026-10-26T00:42:45+11:00",
+  "started_utc": "2026-10-25T13:42:31+00:00",
+  "source_dir": "logs/unifp_train/20261025T134231_train_seed1_corner_smoke_rope_train",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 2,
+  "steps": 100,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 14601,
+  "final_checkpoint": {
+    "file": "model_14601.pt",
+    "sha256": "35d4cf331b964f5b3df667ce8a179c68dcb9acd35fa28f328e74a830571141ab"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 4.512886047363281,
+      "last_step": 14601,
+      "mean_last_10": 2.6527243852615356,
+      "min": 0.79256272315979,
+      "max": 4.512886047363281,
+      "points": 2
+    },
+    "Train/mean_episode_length": {
+      "last": 44.81578826904297,
+      "last_step": 14601,
+      "mean_last_10": 24.907894134521484,
+      "min": 5.0,
+      "max": 44.81578826904297,
+      "points": 2
+    },
+    "Policy/mean_std": {
+      "last": 0.26483389735221863,
+      "last_step": 14601,
+      "mean_last_10": 0.2646167278289795,
+      "min": 0.26439955830574036,
+      "max": 0.26483389735221863,
+      "points": 2
+    },
+    "Perf/total_fps": {
+      "last": 490.0,
+      "last_step": 14601,
+      "mean_last_10": 422.5,
+      "min": 355.0,
+      "max": 490.0,
+      "points": 2
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "by_kind": [
+    {
+      "force_bias_n_median": 5.46,
+      "force_mae_n_median": 5.46,
+      "force_rel_bias_median": 0.86,
+      "kind": "level_up",
+      "of": 144,
+      "peak_n_max": 181.11,
+      "press_peak_n_median": 13.8,
+      "reasons": {
+        "damaged": 28,
+        "off force": 105,
+        "ok": 11
+      },
+      "success": 11
+    },
+    {
+      "force_bias_n_median": 9.76,
+      "force_mae_n_median": 9.76,
+      "force_rel_bias_median": 1.48,
+      "kind": "wall",
+      "of": 144,
+      "peak_n_max": 30.18,
+      "press_peak_n_median": 21.285,
+      "reasons": {
+        "off force": 144
+      },
+      "success": 0
+    }
+  ],
+  "by_level_n": [
+    {
+      "force_bias_n_median": 8.465,
+      "force_mae_n_median": 8.465,
+      "force_rel_bias_median": 1.694,
+      "level_n": 5.0,
+      "of": 144,
+      "peak_n_max": 181.11,
+      "press_peak_n_median": 16.99,
+      "reasons": {
+        "damaged": 17,
+        "off force": 126,
+        "ok": 1
+      },
+      "success": 1
+    },
+    {
+      "force_bias_n_median": 7.06,
+      "force_mae_n_median": 7.06,
+      "force_rel_bias_median": 0.882,
+      "level_n": 8.0,
+      "of": 144,
+      "peak_n_max": 162.96,
+      "press_peak_n_median": 18.35,
+      "reasons": {
+        "damaged": 11,
+        "off force": 123,
+        "ok": 10
+      },
+      "success": 10
+    }
+  ],
+  "by_mode": [
+    {
+      "force_bias_n_median": 7.63,
+      "force_mae_n_median": 7.63,
+      "force_rel_bias_median": 1.167,
+      "mode": "press",
+      "of": 288,
+      "peak_n_max": 181.11,
+      "press_peak_n_median": 18.02,
+      "reasons": {
+        "damaged": 28,
+        "off force": 249,
+        "ok": 11
+      },
+      "success": 11
+    }
+  ],
+  "by_stiffness": [
+    {
+      "force_bias_n_median": 8.535,
+      "force_mae_n_median": 8.535,
+      "force_rel_bias_median": 1.224,
+      "of": 144,
+      "peak_n_max": 158.34,
+      "press_peak_n_median": 18.79,
+      "reasons": {
+        "damaged": 6,
+        "off force": 135,
+        "ok": 3
+      },
+      "stiffness": "rigid",
+      "success": 3
+    },
+    {
+      "force_bias_n_median": 7.13,
+      "force_mae_n_median": 7.13,
+      "force_rel_bias_median": 1.106,
+      "of": 144,
+      "peak_n_max": 181.11,
+      "press_peak_n_median": 17.12,
+      "reasons": {
+        "damaged": 22,
+        "off force": 114,
+        "ok": 8
+      },
+      "stiffness": "sprung",
+      "success": 8
+    }
+  ],
+  "damaged": 28,
+  "engage_miss_mm_median": 7.6,
+  "engage_miss_mm_p90": 9.46,
+  "engaged": 275,
+  "episodes": 288,
+  "fell": 0,
+  "foot_down": 267,
+  "force_bias_n_median": 7.63,
+  "force_mae_n_median": 7.63,
+  "force_mae_n_p90": 11.912,
+  "force_rel_bias_median": 1.167,
+  "max_tilt_deg_median": 15.165,
+  "max_tilt_deg_p95": 19.45,
+  "max_tilt_waiting_deg_median": 6.98,
+  "over_60n": 59,
+  "peak_n_max": 181.11,
+  "peak_n_median": 27.735,
+  "peak_n_p95": 156.509,
+  "plane_err_mm_median": 8.3,
+  "reasons": {
+    "damaged": 28,
+    "off force": 249,
+    "ok": 11
+  },
+  "released": 275,
+  "slipped": 0,
+  "stalled": 271,
+  "stance_max_cm_median": 9.27,
+  "success": 11,
+  "tilt_over_15": 144,
+  "tilt_waiting_over_15": 0,
+  "torques": {
+    "episodes_fr_calf_over_stock": 0,
+    "episodes_sup_calf_over_stock": 2,
+    "fr_calf_demand_over_stock_s": {
+      "max": 0.0,
+      "median": 0.0,
+      "p90": 0.0
+    },
+    "fr_calf_demand_peak_nm": {
+      "max": 14.7,
+      "median": 10.11,
+      "p90": 11.38
+    },
+    "fr_calf_fast_s": {
+      "max": 0.0,
+      "median": 0.0,
+      "p90": 0.0
+    },
+    "fr_calf_over_stock_s": {
+      "max": 0.0,
+      "median": 0.0,
+      "p90": 0.0
+    },
+    "fr_calf_peak_nm": {
+      "max": 14.7,
+      "median": 10.11,
+      "p90": 11.38
+    },
+    "fr_calf_speed_peak": {
+      "max": 6.15,
+      "median": 3.61,
+      "p90": 4.003
+    },
+    "fr_calf_turn_peak_nm": {
+      "max": 4.18,
+      "median": 1.91,
+      "p90": 3.006
+    },
+    "fr_hip_demand_peak_nm": {
+      "max": 5.86,
+      "median": 2.86,
+      "p90": 4.423
+    },
+    "fr_hip_peak_nm": {
+      "max": 5.86,
+      "median": 2.86,
+      "p90": 4.423
+    },
+    "fr_hip_speed_peak": {
+      "max": 4.0,
+      "median": 1.685,
+      "p90": 2.246
+    },
+    "fr_saturated_s": {
+      "max": 0.0,
+      "median": 0.0,
+      "p90": 0.0
+    },
+    "fr_thigh_demand_peak_nm": {
+      "max": 10.9,
+      "median": 6.965,
+      "p90": 8.763
+    },
+    "fr_thigh_peak_nm": {
+      "max": 10.9,
+      "median": 6.965,
+      "p90": 8.763
+    },
+    "fr_thigh_speed_peak": {
+      "max": 7.75,
+      "median": 2.795,
+      "p90": 5.533
+    },
+    "fr_thigh_turn_peak_nm": {
+      "max": 4.71,
+      "median": 2.41,
+      "p90": 3.604
+    },
+    "legs_saturated_s": {
+      "max": 0.0,
+      "median": 0.0,
+      "p90": 0.0
+    },
+    "successes": {
+      "fr_calf_peak_nm": 8.73,
+      "fr_calf_turn_peak_nm": 1.9,
+      "fr_thigh_peak_nm": 6.77,
+      "sup_calf_peak_nm": 20.95
+    },
+    "sup_calf_demand_peak_nm": {
+      "max": 23.55,
+      "median": 21.135,
+      "p90": 22.292
+    },
+    "sup_calf_over_stock_s": {
+      "max": 0.02,
+      "median": 0.0,
+      "p90": 0.0
+    },
+    "sup_calf_peak_nm": {
+      "max": 23.55,
+      "median": 21.135,
+      "p90": 22.292
+    },
+    "sup_calf_speed_peak": {
+      "max": 4.94,
+      "median": 2.13,
+      "p90": 2.68
+    },
+    "sup_hip_demand_peak_nm": {
+      "max": 18.91,
+      "median": 14.2,
+      "p90": 15.929
+    },
+    "sup_hip_peak_nm": {
+      "max": 18.91,
+      "median": 14.2,
+      "p90": 15.929
+    },
+    "sup_hip_speed_peak": {
+      "max": 4.32,
+      "median": 1.56,
+      "p90": 2.376
+    },
+    "sup_thigh_demand_peak_nm": {
+      "max": 16.17,
+      "median": 13.175,
+      "p90": 14.616
+    },
+    "sup_thigh_peak_nm": {
+      "max": 16.17,
+      "median": 13.175,
+      "p90": 14.616
+    },
+    "sup_thigh_speed_peak": {
+      "max": 5.07,
+      "median": 2.75,
+      "p90": 4.043
+    }
+  },
+  "touched": 288,
+  "within": 13
+}

@@ -1,0 +1,81 @@
+{
+  "d2_over_d1": {
+    "FL_calf": 1.12734,
+    "FL_hip": 1.1268,
+    "FL_thigh": 0.99288,
+    "FR_calf": 1.07987,
+    "FR_hip": 1.07437,
+    "FR_thigh": 0.9617,
+    "RL_calf": 1.04634,
+    "RL_hip": 1.13861,
+    "RL_thigh": 1.00894,
+    "RR_calf": 1.24821,
+    "RR_hip": 1.1815,
+    "RR_thigh": 0.97811
+  },
+  "envs_counted": 16,
+  "envs_rattling": 11,
+  "per_env_rms_d1_rad": {
+    "median": {
+      "FL_calf": 0.11215,
+      "FL_hip": 0.06552,
+      "FL_thigh": 0.04823,
+      "FR_calf": 0.13076,
+      "FR_hip": 0.0664,
+      "FR_thigh": 0.04607,
+      "RL_calf": 0.1181,
+      "RL_hip": 0.07289,
+      "RL_thigh": 0.04456,
+      "RR_calf": 0.09955,
+      "RR_hip": 0.07066,
+      "RR_thigh": 0.04069
+    },
+    "p90": {
+      "FL_calf": 0.12855,
+      "FL_hip": 0.07512,
+      "FL_thigh": 0.05827,
+      "FR_calf": 0.1383,
+      "FR_hip": 0.09136,
+      "FR_thigh": 0.05878,
+      "RL_calf": 0.12805,
+      "RL_hip": 0.08846,
+      "RL_thigh": 0.06295,
+      "RR_calf": 0.11266,
+      "RR_hip": 0.08982,
+      "RR_thigh": 0.06067
+    }
+  },
+  "rattle_rad": 0.1,
+  "rms_d1_rad": {
+    "FL_calf": 0.10012,
+    "FL_hip": 0.05946,
+    "FL_thigh": 0.04526,
+    "FR_calf": 0.11073,
+    "FR_hip": 0.06384,
+    "FR_thigh": 0.0441,
+    "RL_calf": 0.10202,
+    "RL_hip": 0.06558,
+    "RL_thigh": 0.04513,
+    "RR_calf": 0.08876,
+    "RR_hip": 0.06587,
+    "RR_thigh": 0.0437
+  },
+  "rms_d2_rad": {
+    "FL_calf": 0.11287,
+    "FL_hip": 0.067,
+    "FL_thigh": 0.04494,
+    "FR_calf": 0.11957,
+    "FR_hip": 0.06859,
+    "FR_thigh": 0.04241,
+    "RL_calf": 0.10675,
+    "RL_hip": 0.07467,
+    "RL_thigh": 0.04554,
+    "RR_calf": 0.11079,
+    "RR_hip": 0.07782,
+    "RR_thigh": 0.04274
+  },
+  "steps_counted": 3184,
+  "what": "each leg joint's position-target change from one policy step to the next (d1, rad) and the change of that change (d2), on steps within one episode with the base upright; a target flipping every step makes d2 about twice d1, a smooth motion a small fraction of it",
+  "worst_joint": "FR_calf",
+  "worst_joint_rms_d1_rad": 0.11073
+}

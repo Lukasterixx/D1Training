@@ -68,6 +68,39 @@ to D of fine-tunes from ft6 (`logs/unifp_train/20261023T191133_train_seed3_press
 
 Numpy against the checkpoint: actions to 6.2e-6.
 
+`leg_key_force_corner_model_4000.npz` (2026-10-26, Week 7 log, "The key policies retrained on the dog's leg corner") is
+the key policy retrained on the dog's leg corner. It is the export of
+`logs/unifp_train/20261025T130706_train_seed2_key_corner_force_s2/model_4000.pt` (gitignored).
+- **Its recipe:** 2000 iterations from ft045's `2604` on ft045's recipe, with ft11a's legs and regularisation:
+  `unitree_geared`, leg armature drawn 0-0.002 (knees ×3.67), command delay 10-20 ms, observation noise, `action_rate`
+  -0.1, torques -2e-4. Its `meta.trained_on` now carries the noise and the weights.
+- **In simulation, on F-179's set from the classic stand** (unlocked / fell / past 60 N of 108):
+  - light legs (0.0002 / 0.0007 at 15-20 ms): 107 / 0 / 0; zero armature: 107 / 0 / 0; the old heavy legs: 95 / 0 / 1;
+  - the original ft045 `2604`: 30 / 1 / 47, 0 / 4 / 96 and 101 / 0 / 0 on the same three;
+  - after a 10 s stand on light legs: 107 / 0 / 0, its support thighs 0.003 / 0.006 rad a step;
+  - with a fixed delay of 0 to 25 ms: 99-108, calm.
+- **Chosen** by the rule stated before the sweep (on light legs: no falls, the fewest past 60 N, the most unlocks), from
+  the checkpoints every 400 iterations. They swing: `4400` strikes past 60 N in 44-82 of 108.
+- **Its `start_gate`** is round 4's stands' (pitch -3.8 to +1.0°).
+
+Numpy against the checkpoint: actions to 3.4e-6.
+
+`leg_press_force_chain_s4_model_11200.npz` (2026-10-27, F-236) is the press candidate for the dog's legs, replacing
+ft11a's. It is ft11a's five-stage lineage (ft6, ft7, ft9a, ft10b, ft11a, each stage's recorded recipe) re-run from round
+4's final with seed 4: `logs/unifp_train/20261027T011510_train_seed4_pchain_force_s4_ft11a/model_11200.pt`, gitignored.
+- **In simulation from the dog's rest** (presses of 288 / fell / past 60 N):
+  - the dog's hands: 177 / 0 / 0 on light legs, 254 / 0 / 45 on the old heavy ones, 96 / 0 / 62 on zero armature;
+  - ft11a: 149 / 0 / 0, 211 / 0 / 47, 108 / 0 / 26;
+  - the frozen set from the classic stand: 122 / 0 / 5 (ft11a: 121 / 1 / 17);
+  - its 10 s stand on light legs is calm (0.007 / 0.003 rad a step).
+- **Chosen by F-227's rule** (on light legs: no falls, the fewest past 60 N, the most presses) from the last stage's
+  checkpoints.
+- **Its weakness is zero armature:** 62 strikes past 60 N of 288. The palm under the foot (F-226) is not checked
+  separately.
+- **Its `start_gate`** is round 4's stands', as ft11a's.
+
+Numpy against the checkpoint: actions to 4.4e-6.
+
 ## A walking policy: P2Dingo's clocked gait (2026-10-20)
 
 `p2dingo_go2_gait_v7_model_7000.pt` is not a UniFP controller: it is the 12-leg velocity tracker P2Dingo's sim installs

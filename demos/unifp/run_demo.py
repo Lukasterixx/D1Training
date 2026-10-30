@@ -213,6 +213,25 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Combiner only: the lever angle the script lets the lever back to before the door is "
                              "pulled (CombinerTiming's 5). With --mech and the lip claw it defaults to the turn "
                              "angle: the lever is kept against its stop, where a hard pull cannot turn it out of the claw.")
+    # The legs' model (2026-10-26, `unifp_train.leg_actuators`), as `run_unifp_train.py` takes it: the dog's leg corner the
+    # retrained policies trained on is `--leg_actuator unitree_geared --leg_armature 0.0002 --leg_knee_armature 0.0007
+    # --leg_delay_min_steps 3 --leg_delay_steps 4` (F-196's light legs). Not with the decoupled stack, which has its own.
+    parser.add_argument("--payload", choices=("none", "physical"), default="none",
+                        help="'physical': the robot with the lidar and wrist camera's masses (weld.py's payload, as "
+                             "run_unifp_train.py builds by default since 2026-10-19), for policies trained on it. "
+                             "'none', the demos' robot until 2026-10-26. Not with the claw.")
+    parser.add_argument("--small_physx", action="store_true",
+                        help="Shrink PhysX's GPU buffers (unifp_train.env_cfg.shrink_physx), so the demo fits beside "
+                             "training runs on the shared GPU.")
+    parser.add_argument("--leg_actuator", default="unifp",
+                        choices=("unifp", "dcmotor", "knee23", "speedcurve", "knee23curve", "dcmotor_armature", "unitree",
+                                 "unitree_geared"),
+                        help="The legs' motor model (unifp_train/leg_actuators.py); 'unifp', UniFP's ideal PD, as trained.")
+    parser.add_argument("--leg_armature", type=float, default=None, help="The legs' armature, kg·m² (trained 2e-4).")
+    parser.add_argument("--leg_knee_armature", type=float, default=None)
+    parser.add_argument("--leg_delay_min_steps", type=int, default=0)
+    parser.add_argument("--leg_delay_steps", type=int, default=0,
+                        help="Delay the legs' commands by --leg_delay_min_steps to this many physics steps (5 ms).")
     parser.add_argument("--jaw_effort_n", type=float, default=None,
                         help="Combiner only: the finger drives' force limit, N (the model's is the URDF's 15). A "
                              "bar pressing sideways on a finger pushes it open past this, which is how a lip claw "
@@ -381,6 +400,8 @@ def main() -> int:
     }
     (out_dir / "run.json").write_text(json.dumps(early, indent=2))
 
+    if lips and args.payload != "none":
+        parser.error("--payload physical builds the plain robot; the claw robot has no payload")
     if lips:
         # The L-lip fingers are geometry, so they are a different robot: a copy of the URDF with a lip on each
         # finger, welded into its own directory -- the weld writes `d1.usd` beside its output, and sharing
@@ -393,11 +414,12 @@ def main() -> int:
             d1_urdf_path=str(claw_urdf), out_usd_path=str(ROOT / "generated/claw/go2_d1_claw.usd"),
             arm_mass_kg=3.152).usd_path
     else:
+        # Its own file with the payload's physics, as run_unifp_train.py's, so the plain robot's is never swapped.
         robot_usd = args.robot_usd or build_welded_robot_usd(
             go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
             d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
-            out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-            arm_mass_kg=3.152).usd_path
+            out_usd_path=str(ROOT / ("generated/go2_d1_payload.usd" if args.payload == "physical" else "generated/go2_d1.usd")),
+            arm_mass_kg=3.152, payload_physics=args.payload == "physical").usd_path
 
     if args.post_top_m is not None:
         # Before the scene is configured: the post, the box's spawn and every placement read the module constants.
@@ -497,6 +519,17 @@ def main() -> int:
         cfg.walker = args.walker or "p2dingo_gait"
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
+    leg_model = None
+    if not decoupled_run:
+        from unifp_train import leg_actuators  # noqa: E402
+
+        # 'unifp' with no delay and no armature leaves the robot as it was.
+        leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                                args.leg_knee_armature, args.leg_delay_min_steps)
+        leg_model = leg_actuators.describe(args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                                           args.leg_knee_armature, args.leg_delay_min_steps)
+    elif args.leg_actuator != "unifp" or args.leg_delay_steps or args.leg_armature is not None:
+        parser.error("--leg_* set UniFP's robot; the decoupled stack has its own legs")
     if args.jaw_effort_n is not None and decoupled_run:
         parser.error("--jaw_effort_n sets UniFP's actuator group; the decoupled robot has its own")
     if args.jaw_effort_n is not None:
@@ -514,6 +547,11 @@ def main() -> int:
             cfg.force_law_gains = tuple(args.force_law_gains)
         cfg.force_law_bleed_s = args.force_law_bleed or None
     cfg.robot_usd = robot_usd
+    cfg.track_leg_chatter = True      # leg_chatter.json beside the summary (unifp_train/leg_chatter.py)
+    if args.small_physx:
+        from unifp_train.env_cfg import shrink_physx  # noqa: E402
+
+        shrink_physx(cfg.sim)
     camera_body = None
     if args.camera_body:
         from demos.cup.pick_demo.camera import resolve_mount
@@ -683,6 +721,8 @@ def main() -> int:
         "camera_body": camera_body,
         "assets": asset_info,
         "robot_usd": robot_usd,
+        "leg_model": leg_model,
+        "payload": args.payload,
         "robot_usd_sha256": hashlib.sha256(Path(robot_usd).read_bytes()).hexdigest(),
         "stack": stack_versions(),
         "git_commit": git_output("rev-parse", "HEAD"),
@@ -756,6 +796,9 @@ def main() -> int:
     (out_dir / "summary.json").write_text(json.dumps(
         {"controller": controller, "task": args.task, "summary": summary, "attempts": attempts},
         indent=2))
+    chatter = env.chatter_summary()
+    if chatter is not None:
+        (out_dir / "leg_chatter.json").write_text(json.dumps(chatter, indent=2))
     if rows:
         with (out_dir / "trace.csv").open("w", newline="") as handle:
             writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))

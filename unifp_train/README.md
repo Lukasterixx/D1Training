@@ -213,6 +213,31 @@ one rather than failing later at the digest check.
 first training run the mean return never left 130–137 while evaluated tracking went from 6.2 cm to
 60.8 cm — worse than doing nothing. The reward does not see it.
 
+## The legs' model, in any task (2026-10-26)
+
+Until 2026-10-26 only `--task leg` could change the legs. Every task now takes the same flags:
+- `--leg_actuator` (`leg_actuators.py`);
+- `--leg_delay_min_steps` / `--leg_delay_steps`;
+- `--leg_armature` / `--leg_knee_armature`;
+- the per-environment draws `--leg_armature_range` and `--leg_friction_range`.
+
+The dog's leg corner (F-227), which every policy that drives the legs is being retrained on:
+
+```
+--leg_actuator unitree_geared --leg_armature_range 0 0.002 --leg_delay_min_steps 2 --leg_delay_steps 4
+```
+
+- Without the flags a task builds the legs it always built: UniFP's ideal PD, armature 2e-4, no delay.
+- `run.json` records the model (`legs`) and what PhysX loaded (`leg_joints_loaded`).
+- In `eval` and `manifest` the delayed actuator's per-environment lag is drawn off the global RNG stream, so the frozen
+  manifest's goal schedule, and its digests, are the same with or without a delay.
+- **Every evaluation writes `leg_chatter.json`** (`leg_chatter.py`): each leg joint's target change a policy step (rms
+  `d1`) and its second difference (`d2`).
+  - Scopes: all steps; the standing ones (no velocity command); in the leg task, the waiting stage.
+  - Counted from each episode's 30th step, with the base upright.
+  - The dog's rattle was 0.16-0.23 rad on the FL and RR thighs; policies that stand still give 0.002-0.012 (F-196,
+    F-225). On the UniFP policies the `all` scope is mostly their gait: 0.04-0.11 rad on their own legs.
+
 ## Why the reward weights carry a `dt`
 
 `legged_gym`'s `_prepare_reward_function` multiplies every scale by the timestep on startup, so a

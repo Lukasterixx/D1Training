@@ -50,6 +50,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--attempts", type=int, default=16)
     parser.add_argument("--num_envs", type=int, default=None)
     parser.add_argument("--seed", type=int, default=1)
+    # The legs' model (2026-10-26, `unifp_train.leg_actuators`), as `run_unifp_train.py` takes it; default as trained.
+    parser.add_argument("--payload", choices=("none", "physical"), default="none",
+                        help="'physical': the robot with the lidar and wrist camera's masses (weld.py's payload, as "
+                             "run_unifp_train.py builds by default), for policies trained on it.")
+    parser.add_argument("--small_physx", action="store_true",
+                        help="Shrink PhysX's GPU buffers (unifp_train.env_cfg.shrink_physx), so the demo fits beside "
+                             "training runs on the shared GPU.")
+    parser.add_argument("--leg_actuator", default="unifp",
+                        choices=("unifp", "dcmotor", "knee23", "speedcurve", "knee23curve", "dcmotor_armature", "unitree",
+                                 "unitree_geared"))
+    parser.add_argument("--leg_armature", type=float, default=None)
+    parser.add_argument("--leg_knee_armature", type=float, default=None)
+    parser.add_argument("--leg_delay_min_steps", type=int, default=0)
+    parser.add_argument("--leg_delay_steps", type=int, default=0)
     parser.add_argument("--lateral_mm", type=float, default=2.0,
                         help="How far the estimate misses the slot across its axis, mm; direction random per attempt.")
     parser.add_argument("--tilt_deg", type=float, default=1.5, help="How far the estimated axis misses the true one.")
@@ -180,10 +194,11 @@ def main() -> int:
     variant = "_compliant" if args.compliant_key else ""
     key_urdf = write_key_urdf(ROOT / "d1_arm/d1.urdf", ROOT / f"generated/insertion/d1_key{variant}.urdf",
                               compliant=args.compliant_key)
+    payload = "_payload" if args.payload == "physical" else ""
     robot_usd = build_welded_robot_usd(
         go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd", d1_urdf_path=str(key_urdf),
-        out_usd_path=str(ROOT / f"generated/insertion/go2_d1_key{variant}.usd"),
-        arm_mass_kg=3.152).usd_path
+        out_usd_path=str(ROOT / f"generated/insertion/go2_d1_key{variant}{payload}.usd"),
+        arm_mass_kg=3.152, payload_physics=args.payload == "physical").usd_path
     slot_usd = build_slot_usd(ROOT / "generated/insertion/slot_door.usd")
     drawn = {"key_usd": str(build_key_usd(ROOT / f"generated/insertion/key{variant}.usd", compliant=args.compliant_key)),
              "scenery_usd": (str(build_scenery_usd(ROOT / "generated/insertion/scenery.usd",
@@ -225,7 +240,16 @@ def main() -> int:
     armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18] else robot_mod.ARM_ARMATURE)
                 for name in interface.ISAACLAB_NAMES}
     cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot", armature=armature)
+    from unifp_train import leg_actuators  # noqa: E402
+
+    leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                            args.leg_knee_armature, args.leg_delay_min_steps)
     cfg.robot_usd = robot_usd
+    cfg.track_leg_chatter = True      # leg_chatter.json beside the summary (unifp_train/leg_chatter.py)
+    if args.small_physx:
+        from unifp_train.env_cfg import shrink_physx  # noqa: E402
+
+        shrink_physx(cfg.sim)
     if args.compliant_key:
         from isaaclab.actuators import ImplicitActuatorCfg
 
@@ -273,6 +297,9 @@ def main() -> int:
               "geometry": {k: getattr(GEOMETRY, k) for k in ("key_half_u", "key_half_w", "key_length", "clearance",
                                                              "chamfer", "depth", "friction")},
               "num_envs": num_envs, "attempts": args.attempts, "robot_usd": robot_usd, "slot_usd": str(slot_usd),
+              "payload": args.payload,
+              "leg_model": leg_actuators.describe(args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                                                  args.leg_knee_armature, args.leg_delay_min_steps),
               "drawn_only": drawn,
               "outer_loops": {"tip_gain": cfg.tip_correction_gain, "elevation_gain": cfg.elevation_correction_gain,
                               "roll_gain": cfg.roll_correction_gain, "tip_max_m": cfg.tip_correction_max_m,
@@ -407,6 +434,9 @@ def main() -> int:
 
     trace_file.close()
     summary = summarise(attempts)
+    chatter = env.chatter_summary()
+    if chatter is not None:
+        (out_dir / "leg_chatter.json").write_text(json.dumps(chatter, indent=2))
     (out_dir / "summary.json").write_text(json.dumps({"summary": summary, "attempts": attempts}, indent=2))
     report["status"] = "closed" if closed else "finished"
     report["summary"] = summary

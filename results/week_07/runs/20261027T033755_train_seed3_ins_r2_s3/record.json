@@ -1,0 +1,63 @@
+{
+  "id": "20261027T033755_train_seed3_ins_r2_s3",
+  "title": "Insertion round 2: delay 5-20 ms, curriculum from level 1.0 (from seed-3 21400, 800 iterations)",
+  "notes": "",
+  "week": 7,
+  "recorded_at": "2026-10-27T15:45:39+11:00",
+  "started_utc": "2026-10-27T03:37:55+00:00",
+  "source_dir": "logs/unifp_train/20261027T033755_train_seed3_ins_r2_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 22199,
+  "final_checkpoint": {
+    "file": "model_22199.pt",
+    "sha256": "9c4f4a921b5bb72f7726d752998646179d3a53659d89fb1ebbd8cc50e4d549e5"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 258.2381591796875,
+      "last_step": 22199,
+      "mean_last_10": 270.2523620605469,
+      "min": 2.13375186920166,
+      "max": 298.6606140136719,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 957.280029296875,
+      "last_step": 22199,
+      "mean_last_10": 958.2660034179687,
+      "min": 11.314606666564941,
+      "max": 998.47998046875,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.3393939137458801,
+      "last_step": 22199,
+      "mean_last_10": 0.33953421115875243,
+      "min": 0.3393939137458801,
+      "max": 0.3713788688182831,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 18338.0,
+      "last_step": 22199,
+      "mean_last_10": 18881.1,
+      "min": 17180.0,
+      "max": 28552.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

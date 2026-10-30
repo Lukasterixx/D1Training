@@ -1,0 +1,63 @@
+{
+  "id": "20261026T035618_train_seed1_lever_r2delay_s1",
+  "title": "Lever round 2: the corner with the delay 5-20 ms (from 21496, 1000 iterations)",
+  "notes": "",
+  "week": 7,
+  "recorded_at": "2026-10-26T16:05:27+11:00",
+  "started_utc": "2026-10-26T03:56:18+00:00",
+  "source_dir": "logs/unifp_train/20261026T035618_train_seed1_lever_r2delay_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "5945ac998a3726004b8cf5208c803d4b383fc0a4",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 22495,
+  "final_checkpoint": {
+    "file": "model_22495.pt",
+    "sha256": "67712e1847a40051278d895839933905733ebc94929ccf04a2d83afaad004059"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 185.3255615234375,
+      "last_step": 22495,
+      "mean_last_10": 186.07378692626952,
+      "min": 1.9618206024169922,
+      "max": 192.74569702148438,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 22495,
+      "mean_last_10": 997.3660034179687,
+      "min": 12.510000228881836,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.7909414768218994,
+      "last_step": 22495,
+      "mean_last_10": 0.7910979688167572,
+      "min": 0.7896758317947388,
+      "max": 0.8330517411231995,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 32695.0,
+      "last_step": 22495,
+      "mean_last_10": 31631.0,
+      "min": 18634.0,
+      "max": 33356.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -136,8 +136,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="--leg_object press, training: cap the commanded force's upward component (a plate facing "
                              "down) at this, N (F-182). Off by default.")
     parser.add_argument("--action_rate_weight", type=float, default=None,
-                        help="--task leg: the weight of UniFP's action_rate term, the squared change of the actions "
-                             "between steps (leg_cfg.REWARD_WEIGHTS: -0.02).")
+                        help="The weight of UniFP's action_rate term, the squared change of the leg actions between "
+                             "steps (leg_cfg.REWARD_WEIGHTS for --task leg, task_cfg.REWARD_WEIGHTS otherwise: -0.02).")
     parser.add_argument("--torques_weight", type=float, default=None,
                         help="--task leg: the weight of the legs' squared torques (leg_cfg.REWARD_WEIGHTS: -5e-6; "
                              "unitree_rl_lab's Go2: -2e-4).")
@@ -280,7 +280,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--leg_actuator", choices=("unifp", "dcmotor", "knee23", "speedcurve", "knee23curve",
                                                         "dcmotor_armature", "unitree", "unitree_geared"),
                         default="unifp",
-                        help="--task leg, a diagnostic of the legs' motor model (unifp_train/leg_actuators.py), the 25 / 0.5 "
+                        help="Any task (the leg task's before 2026-10-26): the legs' motor model (unifp_train/leg_actuators.py), the 25 / 0.5 "
                              "gains in all: 'unifp' is UniFP's ideal PD the leg policies trained on (knees 45.43 N·m); "
                              "'dcmotor' Isaac Lab's Go2 DCMotor (23.5 N·m on every joint, its torque-speed curve), as the "
                              "decoupled demos' robot; 'knee23' and 'speedcurve' change one of those differences each; "
@@ -316,24 +316,24 @@ def build_parser() -> argparse.ArgumentParser:
                              "the overlap it takes through the plant's stiffness; both variants).")
     parser.add_argument("--key_press_weight", type=float, default=0.0)
     parser.add_argument("--leg_delay_min_steps", type=int, default=0,
-                        help="--task leg: the least command delay, physics steps of 5 ms (with --leg_delay_steps as the most).")
+                        help="Any task: the least command delay, physics steps of 5 ms (with --leg_delay_steps as the most).")
     parser.add_argument("--leg_armature_range", type=float, nargs=2, default=None, metavar=("LO", "HI"),
-                        help="--task leg: draw each environment's leg armature once, uniform in this range (kg·m², hip and "
+                        help="Any task: draw each environment's leg armature once, uniform in this range (kg·m², hip and "
                              "thigh), the knees --leg_knee_armature_factor times as much.")
     parser.add_argument("--leg_knee_armature_factor", type=float, default=3.67)
     parser.add_argument("--leg_friction_range", type=float, nargs=2, default=None, metavar=("LO", "HI"),
-                        help="--task leg: draw each environment's leg joint friction (PhysX static and dynamic effort, "
+                        help="Any task: draw each environment's leg joint friction (PhysX static and dynamic effort, "
                              "N·m, hip and thigh) uniform in this range, the knees --leg_knee_friction_factor times as "
                              "much. LO = HI fixes it.")
     parser.add_argument("--leg_knee_friction_factor", type=float, default=1.917)
     parser.add_argument("--spawn_states_fraction", type=float, default=None,
                         help="--spawn_states, training: the share of episodes started from a recorded stance (0.5).")
     parser.add_argument("--leg_armature", type=float, default=None,
-                        help="--task leg: the legs' armature, kg·m² (trained with 2e-4; unitree_rl_lab's GO2HV 0.01), in any "
+                        help="Any task: the legs' armature, kg·m² (trained with 2e-4; unitree_rl_lab's GO2HV 0.01), in any "
                              "--leg_actuator; --leg_knee_armature sets the knees' apart.")
     parser.add_argument("--leg_knee_armature", type=float, default=None)
     parser.add_argument("--leg_delay_steps", type=int, default=0,
-                        help="--task leg: delay the legs' commands by 0 to this many physics steps (5 ms), per environment "
+                        help="Any task: delay the legs' commands by 0 to this many physics steps (5 ms), per environment "
                              "(the 'unifp', 'knee23', 'unitree' and 'unitree_geared' leg actuators).")
     parser.add_argument("--spawn_states", default="",
                         help="--task leg --leg_object key: a json of stances to start half the episodes from (the walking "
@@ -575,6 +575,20 @@ def main() -> int:
     cfg = {"hook": Go2D1HookEnvCfg, "mechanism": Go2D1MechEnvCfg, "insertion": Go2D1InsertEnvCfg,
            "press": Go2D1PressEnvCfg, "wipe": Go2D1WipeEnvCfg, "rope": Go2D1RopeEnvCfg,
            "leg": Go2D1LegEnvCfg}.get(args.task, Go2D1PosForceEnvCfg)()
+    # The legs' model is any task's since 2026-10-26 (the actuator and delay below, with the robot): the dog's leg
+    # corner (F-227) is trained into every policy that drives the legs, not only the leg task's.
+    if args.leg_armature_range is not None:
+        cfg.leg_armature_range = tuple(args.leg_armature_range)
+        cfg.knee_armature_factor = args.leg_knee_armature_factor
+    if args.leg_friction_range is not None:
+        cfg.leg_friction_range = tuple(args.leg_friction_range)
+        cfg.knee_friction_factor = args.leg_knee_friction_factor
+    cfg.track_leg_chatter = args.mode != "train"
+    if args.task != "leg" and args.action_rate_weight is not None:
+        # UniFP's `action_rate` (the 12 leg actions' step-to-step change, -0.02), read when the environment builds its
+        # weights; recorded with them (`reward_weights`). The leg task's own table is set below.
+        task_cfg.REWARD_WEIGHTS["action_rate"] = args.action_rate_weight
+    cfg.isolate_actuator_rng = args.mode in ("manifest", "eval")
     if args.task == "leg":
         cfg.leg_variant = args.leg_variant
         if args.leg_object in ("key", "press"):
@@ -634,16 +648,10 @@ def main() -> int:
             cfg.obs_noise = args.obs_noise
             if args.obs_noise_dof_vel is not None:
                 leg_cfg.OBS_NOISE["dof_vel"] = args.obs_noise_dof_vel
-            if args.leg_armature_range is not None:
-                cfg.leg_armature_range = tuple(args.leg_armature_range)
-                cfg.knee_armature_factor = args.leg_knee_armature_factor
             if args.start_delay_steps is not None:
                 cfg.start_delay_steps = tuple(args.start_delay_steps)
             if args.eval_start_delay_steps is not None:
                 cfg.eval_start_delay_steps = args.eval_start_delay_steps
-            if args.leg_friction_range is not None:
-                cfg.leg_friction_range = tuple(args.leg_friction_range)
-                cfg.knee_friction_factor = args.leg_knee_friction_factor
         if args.handle_fraction is not None:
             cfg.handle_fraction = args.handle_fraction
         if args.force_ramp_iterations is not None:
@@ -849,11 +857,9 @@ def main() -> int:
         cfg.force_start_step = 0
     cfg.seed = args.seed
     if args.small_physx:
-        px = cfg.sim.physx
-        px.gpu_max_rigid_contact_count, px.gpu_max_rigid_patch_count = 2**18, 2**16
-        px.gpu_found_lost_pairs_capacity, px.gpu_found_lost_aggregate_pairs_capacity = 2**18, 2**20
-        px.gpu_total_aggregate_pairs_capacity, px.gpu_collision_stack_size = 2**18, 2**25
-        px.gpu_heap_capacity, px.gpu_temp_buffer_capacity = 2**25, 2**23
+        from unifp_train.env_cfg import shrink_physx  # noqa: E402
+
+        shrink_physx(cfg.sim)
     # The hook and mechanism tasks have the roll objective on by default (the claw has to meet the
     # handle the right way up); UniFP's task has it off unless asked for.
     if args.task == "unifp":
@@ -865,11 +871,11 @@ def main() -> int:
         armature = {name: (hook_cfg.ARM_ARMATURE_KG_M2 if name in interface.ISAACLAB_NAMES[12:18]
                            else robot_mod.ARM_ARMATURE) for name in interface.ISAACLAB_NAMES}
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot", armature=armature)
-        if args.task == "leg":
-            leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
-                                    args.leg_knee_armature, args.leg_delay_min_steps)
     else:
         cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
+    # 'unifp' with no delay and no armature returns the group untouched, so every earlier command builds what it built.
+    leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                            args.leg_knee_armature, args.leg_delay_min_steps)
     cfg.robot_usd = robot_usd
     if args.force_start_iteration is not None:
         cfg.force_start_step = args.force_start_iteration * task_cfg.NUM_STEPS_PER_ENV
@@ -1052,16 +1058,26 @@ def main() -> int:
         "git_commit": git_output("rev-parse", "HEAD"),
         "git_status": git_output("status", "--short"),
     }
-    if args.task == "leg":
-        # What the legs' joints loaded with, as PhysX holds them (UniFP's order): the leg actuator models
-        # (`leg_actuators`) differ in these, and a group that sets no armature keeps the robot file's.
-        legs, data = env._order[:12], env._robot.data
-        report["leg_joints_loaded"] = {
-            "groups": {name: type(group).__name__ for name, group in env._robot.actuators.items()},
-            **{key: [round(float(v), 6) for v in getattr(data, attr)[0, legs].tolist()]
-               for key, attr in (("armature", "joint_armature"), ("friction", "joint_friction_coeff"),
-                                 ("effort_limit_sim", "joint_effort_limits"), ("velocity_limit_sim", "joint_vel_limits"))
-               if getattr(data, attr, None) is not None}}
+    report["legs"] = {
+        "actuator_model": leg_actuators.describe(args.leg_actuator, args.leg_delay_steps, args.leg_armature,
+                                                 args.leg_knee_armature, args.leg_delay_min_steps),
+        "armature_range": list(cfg.leg_armature_range) if cfg.leg_armature_range is not None else None,
+        "knee_armature_factor": cfg.knee_armature_factor,
+        "friction_range": list(cfg.leg_friction_range) if cfg.leg_friction_range is not None else None,
+        "knee_friction_factor": cfg.knee_friction_factor,
+    }
+    # What the legs' joints loaded with, as PhysX holds them (UniFP's order; environment 0's, where the armature is drawn
+    # per environment): the leg actuator models (`leg_actuators`) differ in these, and a group that sets no armature
+    # keeps the robot file's. Every task's since 2026-10-26 (the leg task's before).
+    legs, data = env._order[:12], env._robot.data
+    report["leg_joints_loaded"] = {
+        "groups": {name: type(group).__name__ for name, group in env._robot.actuators.items()},
+        **{key: [round(float(v), 6) for v in getattr(data, attr)[0, legs].tolist()]
+           for key, attr in (("armature", "joint_armature"), ("friction", "joint_friction_coeff"),
+                             ("effort_limit_sim", "joint_effort_limits"), ("velocity_limit_sim", "joint_vel_limits"))
+           if getattr(data, attr, None) is not None}}
+    # As the reward applies them, per second (the environment multiplies each by the policy step).
+    report["reward_weights"] = {name: round(float(w) / interface.POLICY_DT, 8) for name, w in env._weights.items()}
     report["shapes_ok"] = (report["actor_obs"] == report["expected_actor"]
                            and report["critic_obs"] == report["expected_critic"]
                            and report["estimate_obs"] == report["expected_estimates"])
@@ -1119,6 +1135,12 @@ def main() -> int:
         report["status"] = "finished"
         write_json(run_dir / "run.json", report)
 
+    chatter = env.chatter_summary()
+    if chatter is not None:
+        write_json(run_dir / "leg_chatter.json", chatter)
+        for scope, c in chatter.items():
+            print(f"leg chatter ({scope}): worst {c['worst_joint']} {c['worst_joint_rms_d1_rad']} rad rms a step, "
+                  f"{c['envs_rattling']} of {c['envs_counted']} environments past {c['rattle_rad']} rad", flush=True)
     print(json.dumps(report, indent=2), flush=True)
     env.close()
     # Isaac Sim 5.1 hangs in teardown here as it does for run_unifp_isaaclab.py; everything this

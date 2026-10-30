@@ -18,6 +18,16 @@ from unifp_isaaclab import interface, robot as robot_mod
 from . import observations, task_cfg
 
 
+def shrink_physx(sim_cfg) -> None:
+    """PhysX's GPU contact and pair buffers shrunk (ample for a few hundred environments), so an evaluation or a demo
+    fits beside training runs on the shared GPU (`--small_physx`). Not for training at 4096."""
+    px = sim_cfg.physx
+    px.gpu_max_rigid_contact_count, px.gpu_max_rigid_patch_count = 2**18, 2**16
+    px.gpu_found_lost_pairs_capacity, px.gpu_found_lost_aggregate_pairs_capacity = 2**18, 2**20
+    px.gpu_total_aggregate_pairs_capacity, px.gpu_collision_stack_size = 2**18, 2**25
+    px.gpu_heap_capacity, px.gpu_temp_buffer_capacity = 2**25, 2**23
+
+
 @configclass
 class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     """UniFP's task on the welded Go2 + D1.
@@ -89,3 +99,20 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: default is 8,000 iterations at 24 steps each. Set it to 0 to train with forces from the
     #: first step, or to `None`-equivalent large value to keep them off entirely.
     force_start_step: int = task_cfg.FORCE_START_ITERATION * task_cfg.NUM_STEPS_PER_ENV
+
+    #: Draw each environment's leg armature once at start-up, uniform in this range (kg·m², hip and thigh), the knees'
+    #: `knee_armature_factor` times as much (a knee geared 1.917 more reflects 1.917^2, F-168). Empty: as configured.
+    #: Any task (until 2026-10-26 the leg task's alone): the dog's leg corner is 0-0.002 (F-227).
+    leg_armature_range: tuple[float, float] | None = None
+    knee_armature_factor: float = 3.67
+    #: Draw each environment's leg joint friction once at start-up, uniform in this range (N·m, hip and thigh; PhysX's
+    #: static and dynamic friction effort, solved implicitly, so a joint sticks under less), the knees
+    #: `knee_friction_factor` times as much (a friction behind the knee's 1.917 gearing, reflected). 2026-10-23: the
+    #: real dog stops where it stops at kp 25 (F-191). Empty: as configured (unitree_rl_lab's 0.01).
+    leg_friction_range: tuple[float, float] | None = None
+    knee_friction_factor: float = 1.917
+    #: Accumulate each leg joint's step-to-step target change for `leg_chatter()` (evaluations; `leg_chatter.py`).
+    track_leg_chatter: bool = False
+    #: Keep the actuators' reset draws (a delayed actuator's per-environment lag) off the global RNG stream, so a frozen
+    #: manifest's goal schedule is the same with or without a command delay (`eval` and `manifest`).
+    isolate_actuator_rng: bool = False
