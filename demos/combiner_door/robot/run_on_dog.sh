@@ -14,9 +14,11 @@
 #   demos/combiner_door/robot/run_on_dog.sh --stage pull --then_close  # the door pulled open, closed, then locked
 #   demos/combiner_door/robot/run_on_dog.sh --task insert --stage insert --lock  # the key in to lock the door
 #
-# Every argument goes to node.py (--task, --stage, --then_door, --then_close, --lock, --camera, --live, --yes, --speed_scale,
-# --door_deg, --odom, --no_fold;
-# --help).
+# Every argument goes to node.py (--task, --stage, --then_door, --then_close, --lock, --camera, --live, --yes, --fast, --speed_scale,
+# --door_deg, --odom, --no_fold, --no_return;
+# --help). Once a run is over the dog walks back to where it started (not after an abort; --no_return stays).
+# --loop (the whole chain, d1dogdemo): once it has locked the door and walked back, the chain runs again by itself, a
+# record each time, 5 s after the last (Ctrl-C stops); any other end stops the loop.
 # A live run waits for one Enter after showing its plan, then runs through; `a` + Enter stops it. Keep the Unitree remote
 # in hand. The record is logs/combiner_door_robot/<run>/ (`d1fetch` on the PC copies it back).
 set -euo pipefail
@@ -46,6 +48,8 @@ TASK=""
 THEN=""
 CLOSE=""
 CAMERA=front
+FAST=""
+LOOP=0
 args=("$@")
 for ((i = 0; i < ${#args[@]}; i++)); do
   case "${args[$i]}" in
@@ -59,6 +63,8 @@ for ((i = 0; i < ${#args[@]}; i++)); do
     --then_door=*) THEN="_door_${args[$i]#--then_door=}" ;;
     --then_close) CLOSE="_close" ;;
     --lock) CLOSE="_lock" ;;
+    --fast) FAST="_fast" ;;
+    --loop) LOOP=1 ;;
     --camera) CAMERA="${args[$((i + 1))]:-}" ;;
     --camera=*) CAMERA="${args[$i]#--camera=}" ;;
   esac
@@ -70,10 +76,13 @@ if [ "$CAMERA" = front ] && [ "$STAGE" != release ] \
   die "the look uses the Go2's front camera and p2dingo-front-camera is not running: cd $P2 && docker compose up -d front_camera (or --camera wrist)"
 fi
 
-STAMP="$(date -u +%Y%m%dT%H%M%S)"
 SUFFIX=dry; [ "$LIVE" = 1 ] && SUFFIX=live
-RUN_DIR="logs/combiner_door_robot/${STAMP}_${TASK}${STAGE}${THEN}${CLOSE}_${SUFFIX}"
-mkdir -p "$REPO/$RUN_DIR"
+RUN_DIR=""
+new_run_dir() {
+  STAMP="$(date -u +%Y%m%dT%H%M%S)"
+  RUN_DIR="logs/combiner_door_robot/${STAMP}_${TASK}${STAGE}${THEN}${CLOSE}${FAST}_${SUFFIX}"
+  mkdir -p "$REPO/$RUN_DIR"
+}
 
 for name in "$NODE_NAME" "$ARM_NAME"; do
   docker rm -f "$name" >/dev/null 2>&1 || true
@@ -89,8 +98,13 @@ ROS_MOUNTS=(-v "$P2/cyclonedds_go2.xml:/root/cyclonedds_go2.xml:ro" -v "$REPO:/r
 ROS_SETUP='source /opt/ros/humble/setup.bash && source /root/ws/install/setup.bash'
 OWNER="$(id -u):$(id -g)"
 
-cleanup() {
-  set +e
+# One run's end: the node stopped, StopMove, the arm link stopped (it holds the arm where it is) and its log kept with
+# the run's record. Once per run (`RUN_OPEN`), whether the run ended or the script is on its way out.
+RUN_OPEN=0
+end_run() {
+  [ "$RUN_OPEN" = 1 ] || return 0
+  RUN_OPEN=0
+  set +e                                      # every step whatever became of the others (the node already gone)
   docker stop -t 2 "$NODE_NAME" >/dev/null 2>&1
   if [ "$LIVE" = 1 ]; then
     log "StopMove"
@@ -104,31 +118,58 @@ cleanup() {
   docker run --rm -v "$REPO/logs:/logs" --entrypoint chown "$ARM_IMAGE" -R "$OWNER" /logs/combiner_door_robot \
     >/dev/null 2>&1
   log "record: $REPO/$RUN_DIR"
+  set -e
+}
+cleanup() {
+  set +e
+  end_run
 }
 trap cleanup EXIT
 # A signal (the SSH session dropping, Ctrl-C outside the container) exits normally, so the cleanup runs.
 trap 'exit 130' INT TERM HUP
 
 # The arm link: taking targets in a live run, only reporting in a dry one (so RViz draws the real arm either way).
-ARM_ARGS=(--log "/root/D1Training/$RUN_DIR/arm_link.jsonl")
-[ "$LIVE" = 1 ] || ARM_ARGS+=(--observe)
-docker run -d --name "$ARM_NAME" --network host --ipc host "${PY_ENV[@]}" \
-  -v "$REPO:/root/D1Training" --entrypoint python3 "$ARM_IMAGE" \
-  /root/D1Training/demos/combiner_door/robot/arm_link.py "${ARM_ARGS[@]}" >/dev/null
-for _ in $(seq 1 60); do
-  docker logs "$ARM_NAME" 2>&1 | grep -q "listening on" && break
-  if ! docker ps -q -f "name=^${ARM_NAME}$" | grep -q .; then break; fi
-  sleep 0.25
-done
-if ! docker logs "$ARM_NAME" 2>&1 | grep -q "listening on"; then
-  docker logs "$ARM_NAME" 2>&1 | tail -5 >&2
-  [ "$LIVE" = 1 ] && die "the arm link did not start (above); nothing was started"
-  log "the arm link did not start (above): the arm will not be drawn"
-fi
+start_arm_link() {
+  local -a arm_args=(--log "/root/D1Training/$RUN_DIR/arm_link.jsonl")
+  [ "$LIVE" = 1 ] || arm_args+=(--observe)
+  docker run -d --name "$ARM_NAME" --network host --ipc host "${PY_ENV[@]}" \
+    -v "$REPO:/root/D1Training" --entrypoint python3 "$ARM_IMAGE" \
+    /root/D1Training/demos/combiner_door/robot/arm_link.py "${arm_args[@]}" >/dev/null
+  for _ in $(seq 1 60); do
+    docker logs "$ARM_NAME" 2>&1 | grep -q "listening on" && break
+    if ! docker ps -q -f "name=^${ARM_NAME}$" | grep -q .; then break; fi
+    sleep 0.25
+  done
+  if ! docker logs "$ARM_NAME" 2>&1 | grep -q "listening on"; then
+    docker logs "$ARM_NAME" 2>&1 | tail -5 >&2
+    [ "$LIVE" = 1 ] && die "the arm link did not start (above); nothing was started"
+    log "the arm link did not start (above): the arm will not be drawn"
+  fi
+}
 
 TTY=(-i); [ -t 0 ] && TTY=(-it)
-log "robot program: $([ "$LIVE" = 1 ] && echo LIVE || echo 'dry run, nothing moves'), stage $STAGE"
-docker run "${TTY[@]}" --rm --name "$NODE_NAME" --network host --ipc host "${ROS_ENV[@]}" "${ROS_MOUNTS[@]}" \
-  --entrypoint bash "$ROS_IMAGE" \
-  -lc "$ROS_SETUP && exec python3 /root/D1Training/demos/combiner_door/robot/node.py --run_dir /root/D1Training/$RUN_DIR \"\$@\"" \
-  node "$@"
+node_args=("$@")
+runs=0
+while :; do
+  runs=$((runs + 1))
+  new_run_dir
+  RUN_OPEN=1
+  start_arm_link
+  log "robot program: $([ "$LIVE" = 1 ] && echo LIVE || echo 'dry run, nothing moves'), stage $STAGE$([ "$LOOP" = 1 ] && echo ", run $runs of the loop")"
+  docker run "${TTY[@]}" --rm --name "$NODE_NAME" --network host --ipc host "${ROS_ENV[@]}" "${ROS_MOUNTS[@]}" \
+    --entrypoint bash "$ROS_IMAGE" \
+    -lc "$ROS_SETUP && exec python3 /root/D1Training/demos/combiner_door/robot/node.py --run_dir /root/D1Training/$RUN_DIR \"\$@\"" \
+    node "${node_args[@]}"
+  end_run
+  [ "$LOOP" = 1 ] || break
+  record="$REPO/$RUN_DIR/run.json"
+  if ! grep -q '"repeatable": true' "$record" 2>/dev/null; then
+    outcome="$(python3 -c 'import json, sys; r = json.load(open(sys.argv[1])); print(r.get("abort") or r.get("outcome") or r.get("status"))' "$record" 2>/dev/null || echo "no record")"
+    log "--loop: not again after run $runs ($outcome): the door locked and the dog back where it started is where it begins"
+    break
+  fi
+  # The operator's one Enter was for the loop: the runs after it start by themselves.
+  [ "$runs" = 1 ] && node_args+=(--yes)
+  log "--loop: run $((runs + 1)) starts in 5 s (Ctrl-C stops)"
+  sleep 5
+done

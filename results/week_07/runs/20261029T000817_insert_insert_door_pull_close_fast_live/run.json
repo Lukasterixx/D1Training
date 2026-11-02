@@ -1,0 +1,2427 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "stopped",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": "pull",
+  "then_close": true,
+  "lock": false,
+  "live": true,
+  "fast": true,
+  "loop": true,
+  "return_home": null,
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261029T000817_insert_insert_door_pull_close_fast_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--then_door",
+    "pull",
+    "--then_close",
+    "--live",
+    "--lock_beyond_face_mm",
+    "65",
+    "--no_spiral",
+    "--fast",
+    "--loop",
+    "--lock_key_left_mm",
+    "3",
+    "--unlock_key_left_mm",
+    "1"
+  ],
+  "started_utc": "20261029T000821",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 12.272,
+      "posture": "lie"
+    },
+    {
+      "t": 19.295,
+      "phase": "lock_look",
+      "searched_ms": 1419,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.69,
+          -23.82,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 48.42,
+        "runner_up": 81.62,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            760.0,
+            400.6
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 81.3,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.479,
+          "why": "",
+          "out_mm": 10.1,
+          "out_used": false,
+          "range_m": 0.5006,
+          "model_range_m": 0.489,
+          "model_r_px": 25.4
+        }
+      }
+    },
+    {
+      "t": 22.776,
+      "stop": "the wrist RealSense sends no frames (none for 2 s): it may have come off USB; reboot the dog to bring it back"
+    },
+    {
+      "t": 20.765,
+      "phase": "lock_look",
+      "searched_ms": 2140,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          64.74,
+          -24.92,
+          0.0
+        ],
+        "support": 0.986,
+        "score": 48.14,
+        "runner_up": 80.79,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            760.0,
+            400.7
+          ],
+          "axes_px": [
+            25.7,
+            24.9
+          ],
+          "angle_deg": 82.1,
+          "support": 1.0,
+          "contrast": 0.72,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.473,
+          "why": "",
+          "out_mm": 9.7,
+          "out_used": false,
+          "range_m": 0.5008,
+          "model_range_m": 0.4889,
+          "model_r_px": 25.4
+        }
+      }
+    },
+    {
+      "t": 23.093,
+      "phase": "lock_look",
+      "searched_ms": 1711,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.49,
+          -24.42,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.7,
+        "runner_up": 81.66,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.7
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 82.0,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.481,
+          "why": "",
+          "out_mm": 10.6,
+          "out_used": false,
+          "range_m": 0.501,
+          "model_range_m": 0.4894,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 24.819,
+      "phase": "lock_look",
+      "searched_ms": 1505,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.48,
+          -23.95,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.31,
+        "runner_up": 82.21,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            760.0,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 79.0,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.479,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.5013,
+          "model_range_m": 0.4898,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 26.346,
+      "phase": "lock_look",
+      "searched_ms": 1110,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.26,
+          -23.53,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.15,
+        "runner_up": 81.68,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.7
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 79.3,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.013,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.5016,
+          "model_range_m": 0.4902,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 27.473,
+      "phase": "lock_look",
+      "searched_ms": 1193,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.07,
+          -23.75,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.27,
+        "runner_up": 81.41,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            760.0,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 78.9,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.6,
+          "out_used": false,
+          "range_m": 0.5015,
+          "model_range_m": 0.49,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 28.694,
+      "phase": "lock_look",
+      "searched_ms": 1475,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.11,
+          -23.64,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.53,
+        "runner_up": 81.3,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            25.0
+          ],
+          "angle_deg": 80.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.4,
+          "out_used": false,
+          "range_m": 0.5016,
+          "model_range_m": 0.4901,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 30.209,
+      "phase": "lock_look",
+      "searched_ms": 1501,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.63,
+          -23.56,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.85,
+        "runner_up": 81.79,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            25.0
+          ],
+          "angle_deg": 79.8,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 12.5,
+          "out_used": false,
+          "range_m": 0.5017,
+          "model_range_m": 0.4902,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 31.729,
+      "phase": "lock_look",
+      "searched_ms": 1767,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.6,
+          -23.35,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.82,
+        "runner_up": 81.76,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            25.0
+          ],
+          "angle_deg": 82.4,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4904,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 33.513,
+      "phase": "lock_look",
+      "searched_ms": 1600,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          64.37,
+          -23.09,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.3,
+        "runner_up": 81.92,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 81.2,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.478,
+          "why": "",
+          "out_mm": 12.5,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 35.129,
+      "phase": "lock_look",
+      "searched_ms": 1399,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.32,
+          -23.18,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.71,
+        "runner_up": 82.05,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 78.2,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.484,
+          "why": "",
+          "out_mm": 12.3,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 36.542,
+      "phase": "lock_look",
+      "searched_ms": 1309,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.38,
+          -22.81,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.72,
+        "runner_up": 81.93,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 83.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.008,
+          "score": 0.483,
+          "why": "",
+          "out_mm": 12.1,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 37.864,
+      "phase": "lock_look",
+      "searched_ms": 800,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.31,
+          -23.25,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.17,
+        "runner_up": 81.35,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 79.8,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 38.686,
+      "phase": "lock_look",
+      "searched_ms": 1066,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.5,
+          -23.99,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.67,
+        "runner_up": 82.01,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.7
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 80.8,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 12.1,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4904,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 39.766,
+      "phase": "lock_look",
+      "searched_ms": 1381,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.37,
+          -23.03,
+          0.0
+        ],
+        "support": 0.958,
+        "score": 46.49,
+        "runner_up": 81.39,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.9,
+            400.9
+          ],
+          "axes_px": [
+            25.8,
+            25.0
+          ],
+          "angle_deg": 79.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 12.0,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 41.164,
+      "phase": "lock_look",
+      "searched_ms": 1296,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.12,
+          -21.85,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.5,
+        "runner_up": 81.44,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 83.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 12.2,
+          "out_used": false,
+          "range_m": 0.5021,
+          "model_range_m": 0.4908,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 42.486,
+      "phase": "lock_look",
+      "searched_ms": 1133,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.38,
+          -23.21,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.6,
+        "runner_up": 82.14,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 81.5,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 12.1,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 43.632,
+      "phase": "lock_look",
+      "searched_ms": 1127,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.4,
+          -23.23,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.53,
+        "runner_up": 81.62,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            25.0
+          ],
+          "angle_deg": 83.7,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.481,
+          "why": "",
+          "out_mm": 12.4,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 44.82,
+      "phase": "lock_look",
+      "searched_ms": 1243,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.37,
+          -23.02,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.23,
+        "runner_up": 81.69,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            25.0
+          ],
+          "angle_deg": 81.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.479,
+          "why": "",
+          "out_mm": 12.7,
+          "out_used": false,
+          "range_m": 0.5021,
+          "model_range_m": 0.4907,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 46.093,
+      "phase": "lock_look",
+      "searched_ms": 1244,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          64.27,
+          -23.12,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.3,
+        "runner_up": 81.41,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            25.0
+          ],
+          "angle_deg": 83.2,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.476,
+          "why": "",
+          "out_mm": 12.5,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 47.36,
+      "phase": "lock_look",
+      "searched_ms": 1590,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.1,
+          -23.35,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.03,
+        "runner_up": 81.83,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            25.0
+          ],
+          "angle_deg": 82.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 12.2,
+          "out_used": false,
+          "range_m": 0.5018,
+          "model_range_m": 0.4904,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 48.963,
+      "phase": "lock_look",
+      "searched_ms": 1193,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.71,
+          -23.05,
+          0.0
+        ],
+        "support": 0.958,
+        "score": 46.84,
+        "runner_up": 81.12,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 81.0,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.012,
+          "score": 0.479,
+          "why": "",
+          "out_mm": 11.9,
+          "out_used": false,
+          "range_m": 0.5021,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 50.186,
+      "phase": "lock_look",
+      "searched_ms": 1233,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.29,
+          -24.07,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.1,
+        "runner_up": 80.55,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 83.2,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.5018,
+          "model_range_m": 0.4903,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 51.435,
+      "phase": "lock_look",
+      "searched_ms": 913,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.01,
+          -23.19,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.31,
+        "runner_up": 80.28,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 84.0,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.481,
+          "why": "",
+          "out_mm": 11.3,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 52.366,
+      "phase": "lock_look",
+      "searched_ms": 798,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          62.98,
+          -23.21,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.86,
+        "runner_up": 81.96,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.8
+          ],
+          "angle_deg": 82.7,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 11.0,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 53.173,
+      "phase": "lock_look",
+      "searched_ms": 995,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.19,
+          -21.69,
+          0.0
+        ],
+        "support": 0.958,
+        "score": 46.87,
+        "runner_up": 81.82,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 84.7,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.487,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4909,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 54.207,
+      "phase": "lock_look",
+      "searched_ms": 813,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.14,
+          -21.88,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.97,
+        "runner_up": 81.32,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 83.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 11.5,
+          "out_used": false,
+          "range_m": 0.5021,
+          "model_range_m": 0.4908,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 55.058,
+      "phase": "lock_look",
+      "searched_ms": 866,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.17,
+          -23.09,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.81,
+        "runner_up": 82.28,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 83.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.483,
+          "why": "",
+          "out_mm": 11.5,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 55.934,
+      "phase": "lock_look",
+      "searched_ms": 981,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.26,
+          -22.8,
+          0.0
+        ],
+        "support": 0.958,
+        "score": 46.42,
+        "runner_up": 81.13,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 83.1,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.483,
+          "why": "",
+          "out_mm": 12.2,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4908,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 56.933,
+      "phase": "lock_look",
+      "searched_ms": 1015,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.72,
+          -22.92,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.3,
+        "runner_up": 81.59,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 83.3,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4908,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 57.954,
+      "phase": "lock_look",
+      "searched_ms": 1008,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.52,
+          -21.62,
+          0.0
+        ],
+        "support": 0.944,
+        "score": 46.35,
+        "runner_up": 81.44,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.8,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 83.4,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.5023,
+          "model_range_m": 0.4909,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 58.985,
+      "phase": "lock_look",
+      "searched_ms": 865,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.11,
+          -21.72,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.55,
+        "runner_up": 81.97,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 83.8,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 11.3,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4909,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 59.869,
+      "phase": "lock_look",
+      "searched_ms": 976,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.11,
+          -23.88,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.82,
+        "runner_up": 81.68,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 84.7,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.481,
+          "why": "",
+          "out_mm": 11.1,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 60.852,
+      "phase": "lock_look",
+      "searched_ms": 1164,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.45,
+          -22.98,
+          0.0
+        ],
+        "support": 0.972,
+        "score": 46.52,
+        "runner_up": 82.28,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 83.8,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.481,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.5021,
+          "model_range_m": 0.4907,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 62.039,
+      "phase": "lock_look",
+      "searched_ms": 970,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          64.28,
+          -23.01,
+          0.0
+        ],
+        "support": 0.986,
+        "score": 46.39,
+        "runner_up": 82.21,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 82.9,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.477,
+          "why": "",
+          "out_mm": 12.0,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4907,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 63.028,
+      "phase": "lock_look",
+      "searched_ms": 1132,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          64.13,
+          -23.0,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.31,
+        "runner_up": 82.29,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 83.3,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.478,
+          "why": "",
+          "out_mm": 12.3,
+          "out_used": false,
+          "range_m": 0.5022,
+          "model_range_m": 0.4907,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 64.169,
+      "phase": "lock_look",
+      "searched_ms": 1437,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.17,
+          -23.05,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.55,
+        "runner_up": 81.81,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 82.7,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4907,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 65.623,
+      "phase": "lock_look",
+      "searched_ms": 1427,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.42,
+          -23.14,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.6,
+        "runner_up": 81.46,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 84.2,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 67.106,
+      "phase": "lock_look",
+      "searched_ms": 1493,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.47,
+          -20.73,
+          0.0
+        ],
+        "support": 0.958,
+        "score": 46.47,
+        "runner_up": 81.56,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 84.9,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.008,
+          "score": 0.486,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.5024,
+          "model_range_m": 0.4912,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 68.619,
+      "phase": "lock_look",
+      "searched_ms": 1779,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.01,
+          -23.86,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.59,
+        "runner_up": 81.43,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.8
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 85.3,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.481,
+          "why": "",
+          "out_mm": 11.1,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 70.44,
+      "phase": "lock_look",
+      "searched_ms": 1178,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          62.79,
+          -23.15,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.73,
+        "runner_up": 81.5,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 83.4,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 11.6,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 71.634,
+      "phase": "lock_look",
+      "searched_ms": 1162,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.01,
+          -23.03,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.65,
+        "runner_up": 82.47,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 82.1,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 11.7,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 72.813,
+      "phase": "lock_look",
+      "searched_ms": 1216,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          62.77,
+          -23.21,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.01,
+        "runner_up": 81.55,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.8,
+            24.8
+          ],
+          "angle_deg": 85.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.483,
+          "why": "",
+          "out_mm": 11.0,
+          "out_used": false,
+          "range_m": 0.5018,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 74.043,
+      "phase": "lock_look",
+      "searched_ms": 1153,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          62.91,
+          -23.18,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.83,
+        "runner_up": 81.32,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 85.5,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.485,
+          "why": "",
+          "out_mm": 11.3,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4905,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 75.217,
+      "phase": "lock_look",
+      "searched_ms": 1179,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.41,
+          -23.02,
+          0.0
+        ],
+        "support": 0.972,
+        "score": 46.55,
+        "runner_up": 82.17,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 81.1,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.48,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 76.421,
+      "phase": "lock_look",
+      "searched_ms": 1125,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.44,
+          -23.05,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.67,
+        "runner_up": 81.93,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 83.1,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.483,
+          "why": "",
+          "out_mm": 11.2,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 77.56,
+      "phase": "lock_look",
+      "searched_ms": 1355,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.02,
+          -23.13,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.61,
+        "runner_up": 81.89,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.8,
+            24.9
+          ],
+          "angle_deg": 86.5,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.484,
+          "why": "",
+          "out_mm": 11.2,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 78.956,
+      "phase": "lock_look",
+      "searched_ms": 1172,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.29,
+          -23.15,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.62,
+        "runner_up": 81.4,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 83.2,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.2,
+          "out_used": false,
+          "range_m": 0.502,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 80.156,
+      "phase": "lock_look",
+      "searched_ms": 1221,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.08,
+          -23.12,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 46.82,
+        "runner_up": 81.7,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.8
+          ],
+          "angle_deg": 85.6,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.482,
+          "why": "",
+          "out_mm": 11.1,
+          "out_used": false,
+          "range_m": 0.5019,
+          "model_range_m": 0.4906,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 81.424,
+      "phase": "lock_look",
+      "searched_ms": 1395,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          63.33,
+          -22.98,
+          0.0
+        ],
+        "support": 0.972,
+        "score": 46.61,
+        "runner_up": 82.13,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            759.7,
+            400.7
+          ],
+          "axes_px": [
+            25.9,
+            24.9
+          ],
+          "angle_deg": 81.1,
+          "support": 1.0,
+          "contrast": 0.71,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.01,
+          "score": 0.484,
+          "why": "",
+          "out_mm": 11.8,
+          "out_used": false,
+          "range_m": 0.5021,
+          "model_range_m": 0.4907,
+          "model_r_px": 25.3
+        }
+      }
+    },
+    {
+      "t": 83.343,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 50.2,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 11,
+    "with_tag": 11,
+    "lidar_frames": 10,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.46 m ahead, +0.30 m left, turned -3 deg: a walk up of 0.55 m",
+    "detections": 11,
+    "site": {
+      "distance_m": 0.7351,
+      "bearing_deg": -24.281,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.55,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 4.8,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.51,
+    "beyond_edges": 0.009,
+    "on_a_door": true
+  },
+  "looks": [
+    {
+      "frames": 11,
+      "with_tag": 11,
+      "lidar_frames": 10,
+      "found": true,
+      "in_range": true,
+      "text": "the push's stance 0.46 m ahead, +0.30 m left, turned -3 deg: a walk up of 0.55 m",
+      "detections": 11,
+      "site": {
+        "distance_m": 0.7351,
+        "bearing_deg": -24.281,
+        "yaw_deg": -180.0
+      },
+      "walk_in_m": 0.55,
+      "lidar_heading": {
+        "used": true,
+        "points": 4000,
+        "span_m": 0.56,
+        "rms_mm": 4.8,
+        "why_not": null
+      },
+      "tag_only_yaw_off_deg": 0.51,
+      "beyond_edges": 0.009,
+      "on_a_door": true,
+      "task": "insert",
+      "closing": false
+    }
+  ],
+  "abort": "the wrist RealSense sends no frames (none for 2 s): it may have come off USB; reboot the dog to bring it back",
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.443,
+        -0.326,
+        0.055
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": false,
+      "seated_ahead_m": 0.531,
+      "lock_right_m": 0.052,
+      "yaw_off_deg": -2.1,
+      "left_m": 0.032,
+      "carried_m": 0.012,
+      "carry_s": 0.04,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 11.172,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 182.7
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 78.1,
+      "turned_deg": 1.76
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.46 m ahead, +0.05 m right, door -3.8 deg off square"
+    },
+    {
+      "t": 12.173,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 182.7
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.2473
+    },
+    {
+      "t": 15.273,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 182.7
+    },
+    {
+      "phase": "refit_lying",
+      "used": true,
+      "odometry_back_mm": -4.1,
+      "sit_back_added_mm": 44.1,
+      "scans": 15,
+      "moved_mm": 20.9,
+      "turned_deg": 0.11
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.48 m ahead, +0.01 m right, door +1.3 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "deg": 0.0,
+          "camera_mm": 158.2,
+          "shoulder_share": 0.49,
+          "j6_rad": 1.537
+        },
+        {
+          "pose": "pre",
+          "deg": 0.0,
+          "camera_mm": 158.0,
+          "shoulder_share": 0.6,
+          "j6_rad": 1.535
+        },
+        {
+          "pose": "touch",
+          "deg": 0.0,
+          "camera_mm": 158.5,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.533
+        },
+        {
+          "pose": "seated",
+          "deg": 0.0,
+          "camera_mm": 158.7,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.532
+        },
+        {
+          "pose": "across+",
+          "deg": 0.0,
+          "camera_mm": 162.6,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.521
+        },
+        {
+          "pose": "across-",
+          "deg": 0.0,
+          "camera_mm": 154.5,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.545
+        },
+        {
+          "pose": "touch_wrist+",
+          "deg": 10.0,
+          "camera_mm": 158.9,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.359
+        },
+        {
+          "pose": "seated_wrist+",
+          "deg": 10.0,
+          "camera_mm": 159.1,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.358
+        },
+        {
+          "pose": "across_wrist+",
+          "deg": 10.0,
+          "camera_mm": 162.9,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.346
+        },
+        {
+          "pose": "touch_wrist-",
+          "deg": -10.0,
+          "camera_mm": 158.2,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.708
+        },
+        {
+          "pose": "seated_wrist-",
+          "deg": -10.0,
+          "camera_mm": 158.4,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.707
+        },
+        {
+          "pose": "across_wrist-",
+          "deg": -10.0,
+          "camera_mm": 154.1,
+          "shoulder_share": 0.63,
+          "j6_rad": 1.72
+        },
+        {
+          "pose": "turned55",
+          "deg": 65.0,
+          "camera_mm": 158.7,
+          "shoulder_share": 0.64,
+          "j6_rad": 0.398
+        }
+      ],
+      "wrist_search_deg": [
+        -10.0,
+        10.0
+      ]
+    },
+    {
+      "phase": "plan_look",
+      "aim_servo_deg": [
+        2.7,
+        -90.0,
+        90.0,
+        -3.1,
+        -21.1,
+        3.1
+      ],
+      "places": 5,
+      "left_out": []
+    },
+    {
+      "t": 16.773,
+      "phase": "lock_look"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 182.7
+    }
+  ]
+}

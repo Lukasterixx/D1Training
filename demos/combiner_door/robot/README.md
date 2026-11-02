@@ -29,7 +29,59 @@ d1fetch                           # copy the dog's records (logs/combiner_door_r
 program (`node.py`, in P2Dingo's ROS image) beside P2Dingo's containers. On the way out it sends StopMove and stops
 the arm link, which leaves the arm holding where it is. `d1dog --help` lists the options (`--stage`, `--live`, `--yes`,
 `--speed_scale` (default 1.0, the sim's pace), `--door_deg` (default 60), `--odom sport|tf`, `--no_fold`,
-`--ignore_range`).
+`--ignore_range`, `--fast`, `--no_return`, `--loop`). Once a run is over the dog walks back to where it started (below).
+
+## Back where it started, and again (`--loop`, 2026-10-28)
+
+Lukas: "can you make both the fast and normal mode return the robot to its starting position? I would like to then have
+a --loop option to make it start again when it finishes".
+
+- **The walk back** (`node.py` `_return_home`, `approach.walk_home`), with or without `--fast`. Once a run is over (any
+  end through `_finish`: locked, not locked, no door pull, no tag), the dog walks back to where it stood for the first
+  look. It stands 1.5 s first, then goes in classic walk, the arm as the run left it (folded at every attempt's end).
+  - The start is kept against the box (the base in the first look's box frame). It is put back in the odometry by the
+    latest look at the box with its door shut: the insertion's, the lock's in the whole chain. The odometry's drift
+    over the run (the 4 cm sit-backs it does not see) is therefore not walked back too.
+  - It is done within the approach's `ACCEPT_M` (8 cm) and `ACCEPT_YAW_DEG` (6 deg) by the odometry. Dry, with the
+    odometry 15 cm and 3 deg off by the end, it stopped within 12 cm and 8 deg of the true start
+    (`test_approach.py`).
+  - Back there it looks at the box with the front camera, from nearly where the first look was, and turns (and steps)
+    to face it as at the start: within 2 deg and 6 cm (`approach.HOME_ACCEPT_*`), looking again after each correction,
+    at most two (`_home_looked`). The walk back by the odometry arrived within 0.3-2.1 deg of its target, but the target
+    came from the lock's look from the side, whose heading for the box differs (Lukas, 2026-10-28: "the yaw is off").
+    No tag there: it ends where the odometry put it. The record: `return_home.corrections`.
+  - Not after an abort: the operator has it then (`r` recovers, `q` quits where it is). Not when the dog is not
+    standing, nor for more than `approach.MAX_APPROACH_M` (3 m). Not with `--no_return`.
+  - The record: `return_home` (from, to, distance, turn, `walked`, `arrived`, `why_not`), and its walk's events in
+    `return_home_events`. The outcome ends "; back where it started".
+- **`--loop`** (`run_on_dog.sh`; `d1dogdemo --loop`, `d1dogdemo --fast --loop`), for the whole chain only
+  (`--task insert --stage insert --then_door pull --then_close`).
+  - Once a run has locked the door and walked back (`"repeatable": true` in its `run.json`), the chain runs again by
+    itself 5 s later (Ctrl-C stops it). It needs no Enter: the first run's one Enter covers the loop, and the next runs
+    get `--yes`.
+  - Each run has its own record and arm link, as a run of its own does.
+  - Any other end stops the loop and says why: an abort, not locked, no door pull, or not back at the start. The world
+    is then not as the chain begins (door shut and locked, key in the holster, dog at its start).
+
+## Quicker (`--fast`, 2026-10-28)
+
+Lukas: "speed this up as much as possible, through both speeding up actions, removing waits, and unfolding the arm while
+the dog is approaching things", then "make this a launch argument --fast so that the original code is unaltered".
+Without `--fast` every attempt runs as before; with it (`plan.FAST_*`, `insert_plan.FAST_*`; `d1dogdemo --fast`):
+
+| what | default | `--fast` | on the run of 2026-10-25 08:50 UTC (382 s) |
+| --- | --- | --- | --- |
+| the fold ends when the arm is within | 0.5 deg | 1.0 deg | the arm settled 0.3-0.6 deg off: three folds ran their 5 s clocks |
+| the look with the front camera | 2 s | 1 s | ~1 s a look |
+| joint moves (the arm link refuses past 45 deg/s) | 40 deg/s | 44 deg/s | ~10% of ~70 s of joint moves |
+| the door pull's and close's walk in | after the unfold | as the arm unfolds; `unfold` then waits for it | ~2.4 s each in the dry model |
+| after the lock look | back to the fold, then `h_turn` | straight to `h_turn`, if that joint move is clear of the trunk proxy and the head camera (`lock_look` event `straight_to_h_turn`) | ~2 s each |
+| `key_in` | 2 mm/s from 25 mm out | 6 mm/s to 17 mm out, then 2 mm/s, the contact's baseline taken again; locking, 4 mm/s once the encoders put the key 6 mm past seated (pushing the door shut) | unlock ~3 s; the lock's 21 s push about halved (dry: 36.2 to 23.1 s) |
+
+Not changed by `--fast`: the holster's moves in and out of the channel, the turn, the waits for camera frames, the
+door script's pace (`--speed_scale`, at least 1.0), the settles before each lidar refit. The run's record has
+`"fast": true` and its folder ends `_fast_live`. `demos/combiner_key/tests/test_fast.py` checks each item dry; none of
+it has run on the dog yet.
 
 ## Stages: try it one step at a time
 

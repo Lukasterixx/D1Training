@@ -123,12 +123,48 @@ def door_after_key(fix: plan.Fix, start) -> "ApproachAttempt":
     return ApproachAttempt(staging_fix(fix, odometry_target(start, staging)), "walk", settle_s=GAIT_SETTLE_S)
 
 
+#: The walk back's finish from a look at the start (`node.py`'s `_home_looked`; Lukas, 2026-10-28: "right now the
+#: looping takes it back to the right position but the yaw is off. I would like the yaw to face the box just like it
+#: started"). The walk back arrives within 0.3-2.1 deg of its target by the odometry (six walks, 2026-10-28), but its
+#: target comes from the lock's look, from the side, whose heading for the box is that far off the first look's. Back
+#: there, a look from (nearly) the first look's place puts the box as the first look did, and the dog turns (and steps)
+#: to the start against it: within `HOME_ACCEPT_YAW_DEG`, and `HOME_ACCEPT_M`, which the gait's carry allows (a step
+#: under ~5 cm overshoots), up to `HOME_CORRECTIONS` times.
+HOME_ACCEPT_M = 0.06
+HOME_ACCEPT_YAW_DEG = 2.0
+HOME_CORRECTIONS = 2
+
+
+def home_against_box(box_odom, base_odom) -> np.ndarray:
+    """Where the base stands (levelled), in the box's frame (`box_odom`, the box's 4x4 in the odometry): a run's start
+    as its first look has it, for the walk back at the end (`walk_home`)."""
+    return plan.invert(np.asarray(box_odom)) @ plan.level(np.asarray(base_odom))
+
+
+def walk_home(fix: plan.Fix, start, home_in_box, box_odom, settle_s: float = GAIT_SETTLE_S, accept_m: float = ACCEPT_M,
+              accept_yaw_deg: float = ACCEPT_YAW_DEG) -> tuple["ApproachAttempt", tuple[float, float, float]]:
+    """The walk back to where a run began (`node.py`'s `_return_home`; Lukas, 2026-10-28: "make both the fast and normal
+    mode return the robot to its starting position"), from `start` (x, y, yaw in the odometry): the start against the
+    box (`home_against_box`) put in the odometry by the latest look at the box (`box_odom`), so the odometry's drift over
+    the run is not walked back too; standing `GAIT_SETTLE_S` first, then the approach's walk, the arm where it is.
+    Returns the attempt and the start (x, y, yaw) in the odometry. The correction from the look there
+    (`HOME_ACCEPT_*`): no stand first, and a tighter finish."""
+    home = plan.planar(np.asarray(box_odom) @ np.asarray(home_in_box))
+    attempt = ApproachAttempt(staging_fix(fix, odometry_target(start, home)), "walk", settle_s=settle_s,
+                              accept_m=accept_m, accept_yaw_deg=accept_yaw_deg)
+    attempt.record_key = "return_home_events"          # its events beside the run's attempts' (`node._write_run`)
+    return attempt, home
+
+
 @dataclass
 class ApproachAttempt(key_plan.WalkUp, plan.Attempt):
     """The walk to the staging pose (the script frame's origin, facing +x): the key's walk up on all three axes
     (`key_plan.WalkUp`), further and with a looser finish (`ACCEPT_*`); the arm left where it is (nothing is sent to it).
     One phase, `walk_in`; after the key a `pause` before it (`settle_s`), standing."""
     settle_s: float = 0.0
+    #: The finish (`ACCEPT_*`; the walk back's correction at the start, `HOME_ACCEPT_*`).
+    accept_m: float = ACCEPT_M
+    accept_yaw_deg: float = ACCEPT_YAW_DEG
 
     reads_door = False
     joint_phases = frozenset()
@@ -155,7 +191,7 @@ class ApproachAttempt(key_plan.WalkUp, plan.Attempt):
 
     def _close_enough(self, base) -> bool:
         x, y, yaw = base
-        return math.hypot(x, y) <= ACCEPT_M and abs(math.degrees(plan.wrap(yaw))) <= ACCEPT_YAW_DEG
+        return math.hypot(x, y) <= self.accept_m and abs(math.degrees(plan.wrap(yaw))) <= self.accept_yaw_deg
 
     def _walk_up_note(self, actual) -> dict:
         return {}

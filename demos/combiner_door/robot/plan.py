@@ -70,6 +70,10 @@ FRONT_LOOK_MIN_ROOT_M = 0.98
 #: the bracket's CAD (`demos/cup/pick_demo/assets/mounts/wrist_mount.json`: 30 degrees below the approach axis; not
 #: measured on the arm). Its pose in the base comes from the arm's measured joints at each frame (`wrist_camera_base`).
 WRIST_MOUNT_LINK6 = None
+#: The camera's further offset from that CAD mount along its own optical axis (+z, forward): Lukas remounted it on
+#: 2026-10-29 with 2 mm more between the camera and its mount ("it has been pushed forward by 2mm in the direction of its
+#: camera"). Here only: the CAD file (`wrist_mount.json`) and the simulations that load it keep the bracket as drawn.
+WRIST_MOUNT_FORWARD_M = 0.002
 #: Where the arm holds the wrist camera for the look (`look_pose_servo_deg`): its optical centre this far (ahead, left,
 #: up) of the base, looking at `LOOK_AT_BASE_M` with the image's rows level. 4 cm left, the camera's own offset off the
 #: arm's plane: the arm then reaches it nearly in its plane (Joint1 -3, Joint4 -5, Joint6 +3 degrees; centred it needs
@@ -123,6 +127,18 @@ ARRIVED_DEG = 1.0
 FOLD_ARRIVED_DEG = 0.5
 ARRIVED_REPORT_S = 0.25
 DWELL_MIN_S = 0.3
+#: `--fast` (`node.py`; Lukas, 2026-10-28: "speed this up as much as possible, through both speeding up actions,
+#: removing waits, and unfolding the arm while the dog is approaching things", and "make this a launch argument --fast
+#: so that the original code is unaltered"). Each value below is read only by an attempt made with `fast=True`; without
+#: it the attempts run as before. The fold ends this close: the arm settles 0.3-0.6 deg off the fold (Joint5), so at
+#: `FOLD_ARRIVED_DEG` every fold after the holster's return and the door close ran its full 5 s clock (the run of
+#: 2026-10-25 08:50 UTC: three folds, 14.7 s, the arm still).
+FAST_FOLD_ARRIVED_DEG = 1.0
+#: Joint moves this fast (`ArmSender`), under the arm link's `arm_link.MAX_SPEED_DEG_S` (45), past which it refuses a
+#: path.
+FAST_JOINT_SPEED_DEG_S = 44.0
+#: The look this long: ~10 of the front camera's frames and the lidar's scans.
+FAST_LOOK_S = 1.0
 #: The jaws, from servo 6's report (units). The grip goes on past its clock until they stop closing (stalled on the
 #: lever: under `JAW_STALL_UNITS` in `JAW_STALL_S`). The hand leaves the lever only once they have opened: within
 #: `JAW_OPEN_TOLERANCE_UNITS` of the command (~1.7 mm a finger), or stopped more than half way open. Past
@@ -304,8 +320,24 @@ ARM_STALE_S = 1.0
 #: holding, the goal moves at the door's pace and an arm that follows stays within a step or two of it.
 ARM_LAG_DEG = 10.0
 ARM_LAG_S = 0.6
+#: Whether that lag aborts (`Attempt.arm_lag_aborts`). Off on the door since 2026-10-29: Lukas's run of 00:13 UTC
+#: aborted 2 s into the pull at "the arm is 16 deg from where the IK wants it: loaded", the door swinging 0-29 deg (lidar)
+#: in 1.5 s and Joint4 and Joint6 20 deg behind the goal; Lukas: "can we remove this abort". The key's attempts keep it
+#: (the key pressing on the lock). The lag is still traced (the goal and the arm, `arm_cmd*`, `arm_q*`).
+DOOR_ARM_LAG_ABORTS = False
 TILT_LIMIT_DEG = 12.0
-#: The lidar's door against the script's, during the pull and hold: the door not following the hand.
+#: A recovery (`node.py`'s `r`) from a base tilted past `TILT_LIMIT_DEG` runs while it is tilted no more than it was
+#: then plus `RECOVER_TILT_MARGIN_DEG`, up to `RECOVER_TILT_MAX_DEG` (`Attempt.tilt_limit_deg`). Lukas's run of
+#: 2026-10-28 01:37 UTC: the key pressing on the box tilted the lying dog 12 degrees, and every `r` aborted on the tilt
+#: again before its first step, the key still pressing: backing it out is what untilts it.
+RECOVER_TILT_MARGIN_DEG = 4.0
+RECOVER_TILT_MAX_DEG = 20.0
+#: The lidar's door against the script's, during the pull and hold: the door not following the hand. Off since 2026-10-28
+#: (`DOOR_DISAGREE_ABORTS`): Lukas's run of 03:51 UTC aborted the pull at "the lidar has the door at 99 deg, the script at
+#: 60", the door swinging on past the pull as it has done before (15-30 deg on 2026-10-24); Lukas: "can we also remove
+#: the safety check for the door angle once its open? it aborted on the last run". The lidar's angle is still read,
+#: traced, and taken for the close's start (`node._then_close`).
+DOOR_DISAGREE_ABORTS = False
 DOOR_DISAGREE_DEG = 25.0
 DOOR_DISAGREE_S = 1.0
 #: The IK without a solution this long while holding.
@@ -313,12 +345,14 @@ IK_HOLD_S = 0.5
 
 
 def wrist_mount() -> np.ndarray:
-    """`WRIST_MOUNT_LINK6`, loaded once."""
+    """`WRIST_MOUNT_LINK6`, loaded once: the CAD mount moved `WRIST_MOUNT_FORWARD_M` along the camera's axis."""
     global WRIST_MOUNT_LINK6
     if WRIST_MOUNT_LINK6 is None:
         from demos.cup.pick_demo.camera import resolve_mount
 
-        WRIST_MOUNT_LINK6 = np.asarray(resolve_mount(None)[0].pose, dtype=float)
+        forward = np.eye(4)
+        forward[2, 3] = WRIST_MOUNT_FORWARD_M
+        WRIST_MOUNT_LINK6 = np.asarray(resolve_mount(None)[0].pose, dtype=float) @ forward
     return WRIST_MOUNT_LINK6
 
 
@@ -725,12 +759,15 @@ def scaled_timing(speed_scale: float = 1.0, door_deg: float = props.DOOR_PULL_DE
     return demo_script.DoorTiming(**fields, standoff_m=base.standoff_m, door_deg=door_deg)
 
 
-def attempt_phases(stage: str, timing: demo_script.DoorTiming | None = None, fold: bool = True) -> list:
+def attempt_phases(stage: str, timing: demo_script.DoorTiming | None = None, fold: bool = True,
+                   fast: bool = False) -> list:
     """The phases after the look of an attempt that goes as far as `stage`, then lets go and folds (`fold`).
 
     The door script's phases are the simulated demo's (`door_phases`) up to the hold. From `reach` the hand then backs
     straight off the lever and goes home; from `grip` the jaws squeeze for `PAUSE_S` first and open; the pull opens
-    them at the end of its hold (`ungrasp_phases`, which replaces the script's release and its straight line home)."""
+    them at the end of its hold (`ungrasp_phases`, which replaces the script's release and its straight line home).
+    `fast` (`--fast`): the walk in first, the unfold's joint move sent as it begins, then `unfold` waiting for the arm
+    to be there (`unfold_with_walk`)."""
     if stage not in STAGES[2:]:
         raise ValueError(f"an attempt's stage is one of {STAGES[2:]}, not {stage!r}")
     timing = timing or demo_script.DoorTiming()
@@ -743,6 +780,8 @@ def attempt_phases(stage: str, timing: demo_script.DoorTiming | None = None, fol
     if STAGES.index(stage) >= STAGES.index("walk"):
         phases += [Phase("walk_in", WALK_IN_S, path=home, jaw_m=opened, base=lambda st, u: (0.0, 0.0, 0.0)),
                    Phase("walk_settle", WALK_SETTLE_S, path=home, jaw_m=opened)]
+        if fast:
+            phases = unfold_with_walk(phases)
     if STAGES.index(stage) >= STAGES.index("reach"):
         door = demo_script.door_phases(timing)
         names = [p.name for p in door]
@@ -764,6 +803,17 @@ def attempt_phases(stage: str, timing: demo_script.DoorTiming | None = None, fol
     if fold:
         phases += fold_phases()
     return phases
+
+
+def unfold_with_walk(phases: list) -> list:
+    """`--fast`: `unfold` moved from before `walk_in` to after it. The attempt sends the unfold's joint move as the walk
+    in begins (`Attempt._goal_servo`), so the dog walks while the arm unfolds; `unfold` then waits for the arm to be
+    there before the settle and its lidar refit, which see the arm at home as before."""
+    names = [p.name for p in phases]
+    if "unfold" not in names or "walk_in" not in names or names.index("unfold") + 1 != names.index("walk_in"):
+        return phases
+    i = names.index("unfold")
+    return phases[:i] + [phases[i + 1], phases[i]] + phases[i + 2:]
 
 
 def tuck_servo_deg() -> np.ndarray:
@@ -832,13 +882,14 @@ class Observation:
     body_height_m: float | None = None  # sport mode's `body_height`, None without one
 
 
-def joint_path(start_deg, goal_deg, dt: float = 0.1) -> np.ndarray:
+def joint_path(start_deg, goal_deg, dt: float = 0.1, speed_deg_s: float = JOINT_SPEED_DEG_S) -> np.ndarray:
     """The joint move the node sends for a goal (servo degrees, or radians: each joint's shape is the same), every `dt`:
-    each joint on its own at `JOINT_SPEED_DEG_S` and `JOINT_ACCEL_DEG_S2` (`holster.joint_move`), two points at least."""
+    each joint on its own at `speed_deg_s` (`JOINT_SPEED_DEG_S`; `--fast`'s `FAST_JOINT_SPEED_DEG_S`) and
+    `JOINT_ACCEL_DEG_S2` (`holster.joint_move`), two points at least. The path's shape is the same at any speed."""
     from demos.combiner_key.holster import joint_move
 
     start, goal = np.asarray(start_deg, dtype=float), np.asarray(goal_deg, dtype=float)
-    path = joint_move(start, goal, JOINT_SPEED_DEG_S, JOINT_ACCEL_DEG_S2, dt)
+    path = joint_move(start, goal, speed_deg_s, JOINT_ACCEL_DEG_S2, dt)
     return path if len(path) > 1 else np.stack([start, goal])
 
 
@@ -865,8 +916,9 @@ class ArmSender:
     keepalives with the jaws' command while it plays; any other goal followed as it moves (`arm_link.Follower`).
     The holster draw's way of commanding the D1 (F-199), for every phase. numpy only."""
 
-    def __init__(self, dt: float = 0.1):
+    def __init__(self, dt: float = 0.1, speed_deg_s: float = JOINT_SPEED_DEG_S):
         self.dt = dt
+        self.speed_deg_s = speed_deg_s                     # `--fast`: `FAST_JOINT_SPEED_DEG_S`
         self.path_goal: np.ndarray | None = None
         self.last_goal: np.ndarray | None = None
 
@@ -883,7 +935,7 @@ class ArmSender:
             if measured is None:
                 return {"type": "keepalive", "gripper": gripper}
             self.path_goal = goal
-            points = joint_path(measured, goal, self.dt)
+            points = joint_path(measured, goal, self.dt, self.speed_deg_s)
             return {"type": "path", "q": [[round(float(v), 3) for v in p] for p in points], "dt": self.dt,
                     "gripper": gripper}
         self.path_goal = None
@@ -920,17 +972,23 @@ class Attempt:
     stage: str
     timing: demo_script.DoorTiming = field(default_factory=demo_script.DoorTiming)
     fold: bool = True
+    #: `node.py --fast` (the `FAST_*` values; keyword-only, so no subclass's positional fields move).
+    fast: bool = field(default=False, kw_only=True)
 
     #: The phase sets the clock, the IK and the aborts read: the door pull's (a task with other phases gives its own).
     joint_phases = JOINT_PHASES
     dwell_phases = DWELL_PHASES
     position_only_phases = POSITION_ONLY_PHASES
     holding_phases = HOLDING_PHASES
+    #: Whether a joint `ARM_LAG_DEG` behind the goal in `holding_phases` aborts (`DOOR_ARM_LAG_ABORTS`'s note).
+    arm_lag_aborts = DOOR_ARM_LAG_ABORTS
     at_the_lever_phases = AT_THE_LEVER_PHASES
     walking_phases = WALKING_PHASES
     release_held_phases = RELEASE_HELD_PHASES
     #: Whether the lidar reads the door's angle through the door's phases (`node.py`): the door pull's attempts only.
     reads_door = True
+    #: The base's tilt that aborts (`TILT_LIMIT_DEG`; a recovery from a tilt raises it, `RECOVER_TILT_*`).
+    tilt_limit_deg = TILT_LIMIT_DEG
     #: How long the walk in may run past its clock (`WALK_IN_TIMEOUT_S`; the approach's is longer, `approach.py`).
     walk_in_timeout_s = WALK_IN_TIMEOUT_S
     #: How much higher the jaws close on the handle than the geometry has it (`GRASP_RAISE_M`; 0 for a task that does
@@ -949,6 +1007,11 @@ class Attempt:
         self.arm = decoupled_arm.ArmIK(joints, links)
         self.script = demo_script.DemoScript(self._make_phases())
         self.script.reset(demo_script.HOME_POINT, demo_script.JAW_LEVER_OPEN_M)
+        names = [p.name for p in self.script.phases]
+        #: `--fast`: the unfold's joint move sent from the first step of the walk in that comes before it
+        #: (`unfold_with_walk`); off once a phase after the unfold begins (a walk up again after the refit does not).
+        self._unfold_with_walk = (self.fast and "walk_in" in names and "unfold" in names
+                                  and names.index("walk_in") + 1 == names.index("unfold"))
         self.look_fix = self.fix
         self.refit: mid360.FaceFit | None = None
         self.status = ""
@@ -977,6 +1040,8 @@ class Attempt:
 
     def _make_phases(self) -> list:
         """The attempt's phases after the look (`attempt_phases`)."""
+        if self.fast:
+            return attempt_phases(self.stage, self.timing, self.fold, fast=True)
         return attempt_phases(self.stage, self.timing, self.fold)
 
     def _prepare(self) -> None:
@@ -1152,7 +1217,8 @@ class Attempt:
         off = float(np.max(np.abs(np.asarray(goal) - np.asarray(obs.arm_servo_deg)))) if goal is not None else math.inf
         fresh = obs.arm_age_s <= ARRIVED_REPORT_S
         if (current.name in self.dwell_phases or current.name in self.joint_phases) and goal is not None:
-            close = FOLD_ARRIVED_DEG if current.name == "fold" else ARRIVED_DEG
+            close = ((FAST_FOLD_ARRIVED_DEG if self.fast else FOLD_ARRIVED_DEG) if current.name == "fold"
+                     else ARRIVED_DEG)
             if fresh and off <= close and self.script.elapsed_s >= DWELL_MIN_S and not at_clock_end:
                 self._joint_wait_s = 0.0
                 return remaining + 1e-6, ""                     # there: on to the next phase now
@@ -1285,6 +1351,21 @@ class Attempt:
         its end point, from where the arm is), or the IK for this step's jaw centre (position only through
         `POSITION_ONLY_PHASES`). Folded through the look's pause (`unfold` not yet begun) it holds."""
         to_base = invert(base_s)
+        if self._unfold_with_walk and cmd.phase not in ("walk_in", "unfold"):
+            self._unfold_with_walk = False
+        if self._unfold_with_walk and cmd.phase == "walk_in":
+            # `--fast` (`unfold_with_walk`): the unfold's goal, solved as `unfold` would solve it, from the walk in's
+            # first step; `unfold` after it keeps the same goal, so the arm link plays the one path through both.
+            if self._joint_goal is None or self._joint_goal[0] != "unfold":
+                demo = self.script
+                end = demo.phase_end_point(demo.phases[demo.index], st)
+                grasp, note = self.arm.grasp, self.arm.grasp_note
+                self.arm.reset(d1_ik.from_servo_deg(measured)[0])
+                self.arm.grasp, self.arm.grasp_note = grasp, note
+                q = self._solve_joint_goal("unfold", transform(to_base, end)[0], to_base)
+                self._joint_goal = ("unfold", np.asarray(d1_ik.to_servo_deg(q)))
+            self.status = "joint"
+            return self._joint_goal[1]
         if cmd.phase in ("tuck", "fold"):
             self.status = "joint"
             self._joint_goal = (cmd.phase, tuck_servo_deg() if cmd.phase == "tuck" else np.asarray(FOLD_SERVO_DEG))
@@ -1476,12 +1557,12 @@ class Attempt:
             return "the website's joysticks are on"
         if obs.odom_age_s > ODOM_STALE_S and phase in self.walking_phases:
             return f"odometry {obs.odom_age_s:.2f} s old"
-        if tilt_deg(obs.base_odom) > TILT_LIMIT_DEG:
+        if tilt_deg(obs.base_odom) > self.tilt_limit_deg:
             return f"base tilted {tilt_deg(obs.base_odom):.0f} deg"
         if obs.arm_servo_deg is None or obs.arm_age_s > ARM_STALE_S:
             return f"arm feedback {obs.arm_age_s:.2f} s old"
         holding = phase in self.holding_phases
-        if holding and self.last_goal is not None:
+        if holding and self.arm_lag_aborts and self.last_goal is not None:
             gap = np.abs(np.asarray(self.last_goal) - np.asarray(obs.arm_servo_deg))[:6]
             lag = float(np.max(gap[list(self._lag_joints(phase))]))
             if lag > ARM_LAG_DEG:
@@ -1490,7 +1571,7 @@ class Attempt:
                     return f"the arm is {lag:.0f} deg from where the IK wants it: loaded"
             else:
                 self._lag_since = None
-        if phase in ("pull", "hold") and obs.door_reading.ok:
+        if DOOR_DISAGREE_ABORTS and phase in ("pull", "hold") and obs.door_reading.ok:
             commanded = self.commanded_door_deg()
             if abs(obs.door_reading.angle_deg - commanded) > DOOR_DISAGREE_DEG:
                 self._door_since = now if self._door_since is None else self._door_since
@@ -1610,7 +1691,7 @@ def close_phases(attempt) -> list:
     pushed = dict(approach=lambda st: site(st).approach_unit(held(st)),
                   object_axis=lambda st: site(st).lever_axis_unit(0.0, held(st)))
     standoff = lambda st: demo_script.offset(at(st, start()), site(st).approach_unit(facing(st)), timing.standoff_m)
-    return [
+    phases = [
         Phase("unfold", UNFOLD_S, path=home, jaw_m=opened),
         Phase("walk_in", WALK_IN_S, path=home, jaw_m=opened, base=lambda st, u: (0.0, 0.0, 0.0)),
         Phase("walk_settle", WALK_SETTLE_S, path=home, jaw_m=opened),
@@ -1625,6 +1706,8 @@ def close_phases(attempt) -> list:
               object_axis_path=lambda st, u: site(st).lever_axis_unit(0.0, facing(st))),
         Phase("hold", timing.hold_s, path=lambda st, u: at(st, held(st)), jaw_m=shut, servo=True, **pushed),
     ] + ungrasp_phases(timing) + fold_phases()
+    # `--fast`: the walk in first, the arm unfolding as it walks (`unfold_with_walk`).
+    return unfold_with_walk(phases) if attempt.fast else phases
 
 
 def release(fix: Fix, base_odom, arm_servo_deg, timing: demo_script.DoorTiming | None = None) -> Attempt:

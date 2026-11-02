@@ -77,6 +77,20 @@ TASK_STAGES = {"door": plan.STAGES, "key": key_plan.STAGES, "insert": insert_pla
 #: How long the watch's sliding look is, and how often it is redone.
 #: How long the look waits for the front camera's first frame before giving up (P2Dingo's node takes ~5 s to start).
 FRONT_FIRST_FRAME_TIMEOUT_S = 20.0
+#: The insertion's wrist looks (`WRIST_LOOK_PHASES`) abort once the RealSense has sent no frame for this long (any frame,
+#: before the node's own gates: it publishes at 15 Hz whatever is asked of it). Lukas's run of 2026-10-28 05:32 UTC: the
+#: camera came off USB 72 s in and the lock look waited 32 s through its five places with nothing; at 04:24 a keyhole
+#: view of one frame let the key go in on the model and miss. The Jetson saw it again only after a reboot. Lukas: "yes,
+#: I want that added". The camera's `camera_info` says it is sending, in its own callback group (`_on_info`): until
+#: 2026-10-29 only the images did, and a keyhole search over 2 s (2.06-2.65 s) held up the next frame's callback and
+#: aborted four of Lukas's lock looks (01:39-02:00 UTC) with the camera on USB throughout ("I think the consistent
+#: aborts on the close look is a code issue").
+WRIST_FRAMES_TIMEOUT_S = 2.0
+WRIST_LOOK_PHASES = ("lock_look", "key_view")
+#: ...and a live insertion does not start at all without one: its first attempt, after the look (some seconds after the
+#: node's start, at 15 Hz), ends the run with nothing moved if the RealSense's latest frame is older than
+#: `WRIST_FRAMES_TIMEOUT_S`. Lukas, 2026-10-29: "can we make the dog abort on demo startup if the realsense is
+#: disconnected" (it came off USB three times that morning with the arm resting).
 WATCH_WINDOW_S = 1.5
 WATCH_PERIOD_S = 0.5
 #: Lidar returns kept: in front of the robot, near enough to matter, base frame.
@@ -267,7 +281,10 @@ class CombinerDoorNode:
         # third live run, 2026-10-21) behind the camera's tag detection and the lidar.
         from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
         self.odom_group, image_group, lidar_group, front_group = (MutuallyExclusiveCallbackGroup() for _ in range(4))
-        node.create_subscription(CameraInfo, "/realsense/color/camera_info", self._on_info, qos_profile_sensor_data)
+        # The RealSense's camera_info, one per frame, in a group of its own: what says the camera is sending
+        # (`realsense_t`), however long a frame's keyhole search holds up the images' group (`WRIST_FRAMES_TIMEOUT_S`).
+        node.create_subscription(CameraInfo, "/realsense/color/camera_info", self._on_info, qos_profile_sensor_data,
+                                 callback_group=MutuallyExclusiveCallbackGroup())
         node.create_subscription(Image, "/realsense/color/image_raw", self._on_image, qos_profile_sensor_data,
                                  callback_group=image_group)
         if args.camera == "front":
@@ -315,7 +332,11 @@ class CombinerDoorNode:
         # arm link runs in both (`run_on_dog.sh`); in a dry run it only reports.
         self.arm_feedback = None
         self.arm = VirtualArm() if not args.live else None
-        self.arm_sender = plan.ArmSender()          # what the arm link is sent for each goal (the holster draw's way)
+        # What the arm link is sent for each goal (the holster draw's way); `--fast`: joint moves at
+        # `plan.FAST_JOINT_SPEED_DEG_S`.
+        self.arm_sender = plan.ArmSender(
+            speed_deg_s=plan.FAST_JOINT_SPEED_DEG_S if args.fast else plan.JOINT_SPEED_DEG_S)
+        self.look_s = plan.FAST_LOOK_S if args.fast else plan.LOOK_S    # the look's length (`--fast`: shorter)
         self.arm_sent = None
         self.virtual_base = None
         self.virtual_speed = (0.0, 0.0, 0.0)
@@ -333,6 +354,7 @@ class CombinerDoorNode:
         self.run = {"mode": "combiner_door_robot" if args.task == "door" else "combiner_key_robot", "status": "running",
                     "task": args.task, "stage": args.stage, "then_door": args.then_door,
                     "then_close": bool(args.then_close), "lock": bool(args.lock), "live": bool(args.live),
+                    "fast": bool(args.fast), "loop": bool(args.loop), "return_home": None,
                     "camera": args.camera,
                     "look_camera_model": front_camera.camera_model().source if args.camera == "front" else None,
                     "argv": sys.argv[1:], "started_utc": stamp, "odom": args.odom, "events": [],
@@ -358,6 +380,8 @@ class CombinerDoorNode:
         self._last_feedback = None
         self.state = "waiting" if (args.release or not self.aimed) else "watch" if args.stage == "watch" else "waiting"
         self.recovering = False
+        self.realsense_t = None              # when the RealSense's last frame came, whatever became of it (`_on_image`)
+        self._camera_checked = False         # the start's check of `realsense_t` done (`_start_attempt`)
         self.confirmed: set[str] = set()
         #: The operator's one Enter (or A) for the whole run (Lukas, 2026-10-25: "make it only wait for user signal once
         #: at the start"): no stage the chain goes on to (`_then_door`, `_then_close`, a walk to a new look) asks again.
@@ -381,6 +405,11 @@ class CombinerDoorNode:
         self.closing = False
         self.pulled_box_odom = None
         self.shut_box_odom = None            # the unlock's box (`_then_door`): the shut door, for the close (`shut_reference`)
+        #: Where the run began, against the box (the base at the first look in the first look's box frame), the latest
+        #: look of the shut box in `odom`, and the walk back there at the end (`_return_home`): its reason for ending.
+        self.home_in_box = None
+        self.home_box = None
+        self.returning = None
         #: The last walk to a staging pose at `approach.STAGE_ROOT_M`: (task, the box in odom, a fix for the walk's frame),
         #: for a look there that finds no tag to walk on back to `approach.STAGE_FAR_ROOT_M` (`_finish_look`); None after.
         self.staged = None
@@ -398,6 +427,7 @@ class CombinerDoorNode:
         return time.monotonic() - self.t0
 
     def _on_info(self, msg) -> None:
+        self.realsense_t = self.now()                   # alive (`WRIST_FRAMES_TIMEOUT_S`): one per frame sent
         if self.K is None:
             self.K = np.asarray(msg.k, dtype=float).reshape(3, 3)
             if self.args.camera != "front":
@@ -479,6 +509,7 @@ class CombinerDoorNode:
     def _on_image(self, msg) -> None:
         """The RealSense: the insertion's keyhole view, and the look's frames with `--camera wrist|head`."""
         now = self.now()
+        self.realsense_t = now                          # alive (`WRIST_FRAMES_TIMEOUT_S`; `_on_info` too)
         attempt = self.attempt
         front = self.args.camera == "front"
         if self.state == "keyhole":
@@ -763,6 +794,9 @@ class CombinerDoorNode:
     def _finish_look(self) -> None:
         frames, scans = self._look_window(self.look_started)
         fix = self._make_fix(self.look_base, frames, scans)
+        if self.returning is not None:
+            self._home_looked(fix, len(frames))
+            return
         record = {"frames": len(frames), "with_tag": sum(1 for f in frames if f[1]), "lidar_frames": len(scans)}
         key = "close_look" if self.closing else "look"           # the close's look of the open door beside the pull's
         if fix is None and self.stage in ("unfold", "load"):
@@ -785,6 +819,12 @@ class CombinerDoorNode:
             self.run[key] = record | {"found": False}
             self._finish("no tag in the look: nothing moved" + (" (the door left open)" if self.closing else ""))
             return
+        if self.home_in_box is None:
+            # Where the run began, against the box, for the walk back at its end (`_return_home`).
+            self.home_in_box = approach.home_against_box(fix.box_odom, self.look_base)
+        if self.home_box is None or (not self.closing and self.task in ("insert", "key")):
+            # The latest look at the box with its door shut (the key's, the insertion's): the walk back's box.
+            self.home_box = np.asarray(fix.box_odom).copy()
         ok, text = fix.in_range()
         self.fix = fix
         self.note = text
@@ -837,6 +877,18 @@ class CombinerDoorNode:
             {"t": round(self.now(), 3), "from": [round(v, 3) for v in start],
              "staging": [round(v, 3) for v in staging], "distance_m": round(distance, 3), "turn_deg": round(turn, 1),
              "why": text})
+        target = approach.odometry_target(start, staging)
+        if (self.task == "door" and fix.on_a_door() and abs(turn) <= approach.ACCEPT_YAW_DEG
+                and math.hypot(target[0] - start[0], target[1] - start[1]) <= approach.ACCEPT_M):
+            # Already at the staging pose, so the approach would not step (its finish, `approach.ACCEPT_*`), and the look
+            # would refuse again: the door's attempts walk up to their own stance on all three axes from there
+            # (`key_plan.SteppingDoorAttempt`, `DoorClose`; their refit and range check after it). Lukas's run of
+            # 2026-10-28 04:31 UTC: the close's look 9 cm short of its straight walk in's least (`plan.WALK_IN_RANGE_M`),
+            # three approaches that did not move, "the box is still out of range after 3 approaches".
+            self.run["approaches"][-1]["skipped"] = "at the staging pose: the attempt's own walk up"
+            log(f"{text}: at the staging pose already; the {'close' if self.closing else 'door pull'} walks up itself")
+            self._start_attempt(fix)
+            return
         if distance > approach.MAX_APPROACH_M:
             self._finish(f"the box is {distance:.1f} m off, past the approach's {approach.MAX_APPROACH_M:.0f} m: walk "
                          "the dog nearer")
@@ -903,6 +955,16 @@ class CombinerDoorNode:
             self._pause("start")
 
     def _start_attempt(self, fix) -> None:
+        if self.args.live and self.task == "insert" and not self._camera_checked:
+            # The wrist RealSense sending frames before anything moves (`WRIST_LOOK_PHASES`' note).
+            self._camera_checked = True
+            age = math.inf if self.realsense_t is None else self.now() - self.realsense_t
+            if age > WRIST_FRAMES_TIMEOUT_S:
+                since = "none since the node started" if self.realsense_t is None else f"none for {age:.0f} s"
+                self.run["abort"] = f"the wrist RealSense sends no frames at the start ({since})"
+                self._end(f"the wrist RealSense sends no frames ({since}): is it plugged in? (`lsusb` on the dog lists "
+                          "8086:0b3a when it is). Nothing moved")
+                return
         if self.args.live:
             try:
                 self._arm()
@@ -919,14 +981,17 @@ class CombinerDoorNode:
                 key_in_m=self.args.key_in_mm / 1000.0, turn_deg=self.args.turn_deg,
                 turn_extra_deg=self.args.turn_extra_deg, reholster=not self.args.leave_key,
                 lock=self.locking, lock_from_deg=self.args.lock_from_deg,
-                lock_beyond_face_m=self.args.lock_beyond_face_mm / 1000.0, spiral=not self.args.no_spiral)
+                lock_left_m=self.args.lock_key_left_mm / 1000.0, unlock_left_m=self.args.unlock_key_left_mm / 1000.0,
+                lock_beyond_face_m=self.args.lock_beyond_face_mm / 1000.0, spiral=not self.args.no_spiral,
+                fast=self.args.fast)
         elif self.task == "key":
             self.attempt = key_plan.KeyAttempt(fix, self.stage, fold=not self.args.no_fold,
-                                               speed_scale=self.args.speed_scale)
+                                               speed_scale=self.args.speed_scale, fast=self.args.fast)
         elif self.closing:
             # The door close from the look at the open door, as the pull from its look (`key_plan.DoorClose`).
             self.attempt = key_plan.DoorClose(fix, "pull", plan.scaled_timing(self.args.speed_scale, self.args.door_deg),
-                                              fold=not self.args.no_fold, pulled_box_odom=self.pulled_box_odom)
+                                              fold=not self.args.no_fold, pulled_box_odom=self.pulled_box_odom,
+                                              fast=self.args.fast)
             self.run["close_from_look"] = {k: v for k, v in self.attempt.close.items() if k != "pushed"}
         else:
             # The door pull walks in on all three axes to its own stance and walks up again once if out of range
@@ -934,7 +999,7 @@ class CombinerDoorNode:
             # `--stage pull --then_close` as after the key).
             self.attempt = key_plan.SteppingDoorAttempt(fix, self.stage,
                                                         plan.scaled_timing(self.args.speed_scale, self.args.door_deg),
-                                                        fold=not self.args.no_fold)
+                                                        fold=not self.args.no_fold, fast=self.args.fast)
         if not self.args.live:
             self.virtual_base = self.odom[1].copy()
         self.state = "attempt"
@@ -995,7 +1060,7 @@ class CombinerDoorNode:
             self._start_look()
             return
         if self.state == "looking":
-            if self.now() - self.look_started >= plan.LOOK_S:
+            if self.now() - self.look_started >= self.look_s:
                 self._finish_look()
             return
         if self.state in ("paused", "aborted", "finished"):
@@ -1028,12 +1093,22 @@ class CombinerDoorNode:
         if self.args.live and attempt.next_phase() == "walk_in" and not self._standing():
             self._abort("the dog is not standing: stand it up first")
             return
+        if isinstance(attempt, insert_plan.InsertAttempt) and attempt.phase in WRIST_LOOK_PHASES:
+            age = math.inf if self.realsense_t is None else self.now() - self.realsense_t
+            if age > WRIST_FRAMES_TIMEOUT_S:
+                since = "none since the run began" if self.realsense_t is None else f"none for {age:.0f} s"
+                self._abort(f"the wrist RealSense sends no frames ({since}): it may have come off USB; reboot the dog "
+                            "to bring it back")
+                return
         command = attempt.step(obs)
         self._trace(obs, command)
         self._posture(command.posture)
         if command.note and command.note != self._last_note:
             log(command.note)                    # the insertion's hand-in and hand-back countdowns
         self._last_note = command.note
+        if command.finished and isinstance(attempt, approach.ApproachAttempt) and self.returning is not None:
+            self._returned(attempt)
+            return
         if command.finished and isinstance(attempt, approach.ApproachAttempt):
             self._approached(attempt)
             return
@@ -1365,10 +1440,103 @@ class CombinerDoorNode:
         "lever, then fold); q + Enter or Ctrl-C: quit with the arm where it is")
 
     def _finish(self, why: str) -> None:
+        """The run over: back where it began first (`_return_home`), then the end (`_end`)."""
+        if self._return_home(why):
+            return
+        self._end(why)
+
+    def _return_home(self, why: str) -> bool:
+        """Walk back to where the run began (Lukas, 2026-10-28: "make both the fast and normal mode return the robot to
+        its starting position"), the arm where it is (folded at every attempt's end), as the walk back to a look goes
+        (`approach.ApproachAttempt`, in classic walk after `GAIT_SETTLE_S` stood). The start is kept against the box
+        (`home_in_box`, from the first look) and put in `odom` by the latest look at the shut box (`home_box`), so the
+        odometry's drift over the run (the sit-backs it does not see) is not walked back too. Not after an abort, nor for
+        a dog not standing, nor with `--no_return`; nothing to do when it is already there (`approach.ACCEPT_*`).
+        Whether the walk began."""
+        if (self.returning is not None or self.args.no_return or self.home_in_box is None or self.home_box is None
+                or self.attempt is None or self.odom is None):
+            return False
+        start = plan.planar(self.odom[1])
+        walk, home = approach.walk_home(self.attempt.fix, start, self.home_in_box, self.home_box)
+        distance = math.hypot(home[0] - start[0], home[1] - start[1])
+        turn = math.degrees(plan.wrap(home[2] - start[2]))
+        record = {"why": why, "from": [round(v, 3) for v in start], "to": [round(v, 3) for v in home],
+                  "distance_m": round(distance, 3), "turn_deg": round(turn, 1)}
+        if distance <= approach.ACCEPT_M and abs(turn) <= approach.ACCEPT_YAW_DEG:
+            self.run["return_home"] = record | {"walked": False, "arrived": True}
+            if distance <= approach.HOME_ACCEPT_M and abs(turn) <= approach.HOME_ACCEPT_YAW_DEG:
+                return False
+            # Near, but not facing as it did: the look there and its correction (`_home_looked`), no walk first.
+            self.returning, self.fix, self.staged = why, None, None
+            self.state = "waiting"
+            self.aimed = self.args.camera != "wrist" or not self.args.live
+            self._write_run()
+            log(f"{why}; near the start: looking at the box to face it as at the start")
+            return True
+        if distance > approach.MAX_APPROACH_M or (self.args.live and not self._standing()):
+            self.run["return_home"] = record | {"walked": False, "arrived": False,
+                                                "why_not": "too far" if distance > approach.MAX_APPROACH_M
+                                                else "the dog is not standing"}
+            return False
+        self._write_run()                                  # the last attempt's events, before the walk's
+        self.attempt, self.returning, self.fix, self.staged = walk, why, None, None
+        self.state = "attempt"
+        self.run["return_home"] = record | {"t": round(self.now(), 3), "walked": True, "arrived": False}
+        self._write_run()
+        log(f"{why}; walking back {distance:.2f} m (turning {turn:+.0f} deg) to where it started")
+        self._classic_walk()
+        return True
+
+    def _returned(self, attempt) -> None:
+        """A walk back over: look at the box from there (`_home_looked`), as the run's first look did."""
+        home = self.run["return_home"]
+        home.update(arrived=True, ended=[round(v, 3) for v in plan.planar(self.odom[1])])
+        self._drive(None)
+        self.state = "waiting"
+        self.aimed = self.args.camera != "wrist" or not self.args.live
+        log("back at the start: looking at the box to face it as at the start")
+
+    def _home_looked(self, fix, frames: int) -> None:
+        """The look from the start (`approach.HOME_*`): the box where this look has it, the start against it as the first
+        look had it, and a turn (and step) there unless within `HOME_ACCEPT_*`; again after it, up to
+        `HOME_CORRECTIONS` times; then the run's end. No tag: the end, placed by the odometry."""
+        home = self.run["return_home"]
+        corrections = home.setdefault("corrections", [])
+        if fix is None:
+            corrections.append({"frames": frames, "found": False})
+            self._end(f"{self.returning}; back where it started (no tag in the look there: placed by the odometry)")
+            return
+        self.home_box = np.asarray(fix.box_odom).copy()
+        start = plan.planar(self.odom[1])
+        walk, target = approach.walk_home(fix, start, self.home_in_box, self.home_box, settle_s=0.0,
+                                          accept_m=approach.HOME_ACCEPT_M,
+                                          accept_yaw_deg=approach.HOME_ACCEPT_YAW_DEG)
+        walk.record_key = "return_home_events"
+        distance = math.hypot(target[0] - start[0], target[1] - start[1])
+        turn = math.degrees(plan.wrap(target[2] - start[2]))
+        there = distance <= approach.HOME_ACCEPT_M and abs(turn) <= approach.HOME_ACCEPT_YAW_DEG
+        walked = sum(1 for c in corrections if c.get("walked"))
+        corrections.append({"frames": frames, "found": True, "off_m": round(distance, 3), "turn_deg": round(turn, 1),
+                            "walked": not there and walked < approach.HOME_CORRECTIONS})
+        if there or walked >= approach.HOME_CORRECTIONS:
+            how = "facing the box as it did" if there else f"{distance:.2f} m and {turn:+.1f} deg off by the look"
+            self._end(f"{self.returning}; back where it started, {how}")
+            return
+        self.attempt = walk
+        self.state = "attempt"
+        self._write_run()
+        log(f"the look there has the start {distance:.2f} m off and {turn:+.1f} deg turned: correcting")
+        self._classic_walk()
+
+    def _end(self, why: str) -> None:
         self._stop_motion(why)
         self.state = "finished"
         self.run["status"] = "finished"
         self.run["outcome"] = why
+        # `--loop` (`run_on_dog.sh`) goes again only from where it began: the whole chain locked and back at the start.
+        lock = self.run.get("lock") or {}
+        self.run["repeatable"] = bool(self.args.task == "insert" and self.args.then_door == "pull" and self.args.then_close
+                                      and lock.get("verified") and (self.run.get("return_home") or {}).get("arrived"))
         self._write_run()
         log(f"{why}. Done; the arm holds where it is")
         # Exit: the main thread stops motion again and writes the record on its way out (`spin`).
@@ -1391,6 +1559,12 @@ class CombinerDoorNode:
                 os.kill(os.getpid(), signal.SIGINT)
                 return
             elif key == "r" and self.state == "aborted" and self.attempt is not None:
+                tilt = plan.tilt_deg(self.odom[1]) if self.odom is not None else 0.0
+                if tilt > plan.TILT_LIMIT_DEG:
+                    # Tilted: the recovery runs while it is no worse (`plan.RECOVER_TILT_*`), else it aborts at once.
+                    self.attempt.tilt_limit_deg = min(plan.RECOVER_TILT_MAX_DEG, tilt + plan.RECOVER_TILT_MARGIN_DEG)
+                    log(f"the base is tilted {tilt:.0f} deg: the recovery stops past "
+                        f"{self.attempt.tilt_limit_deg:.0f}")
                 self.attempt.recover()
                 self.recovering = True
                 self.abort_reason = ""
@@ -1561,7 +1735,7 @@ class CombinerDoorNode:
     def spin(self) -> None:
         from rclpy.executors import MultiThreadedExecutor
 
-        executor = MultiThreadedExecutor(num_threads=5)
+        executor = MultiThreadedExecutor(num_threads=6)      # one more for `_on_info`'s group
         executor.add_node(self.node)
         try:
             executor.spin()
@@ -1666,6 +1840,16 @@ def parse_args(argv=None):
                         "level, mm: the face as the lidar saw it lying down, before the arm came out "
                         f"(insert_plan.LOCK_BEYOND_FACE_M, default {1000.0 * insert_plan.LOCK_BEYOND_FACE_M:g}; seated "
                         "it is 7.7). A key that stops first, in the keyway, turns there.")
+    p.add_argument("--unlock_key_left_mm", type=float, default=1000.0 * insert_plan.UNLOCK_KEY_LEFT_M,
+                   help="Unlocking (the chain's first insertion) only: put the key this far to the robot's left of where "
+                        "the camera, the touch and the search put the keyway, mm, level along the door's face (negative: "
+                        f"right; insert_plan.UNLOCK_KEY_LEFT_M, default {1000.0 * insert_plan.UNLOCK_KEY_LEFT_M:g}). The "
+                        "keyhole calibration does not learn it.")
+    p.add_argument("--lock_key_left_mm", type=float, default=1000.0 * insert_plan.LOCK_KEY_LEFT_M,
+                   help="Locking (the last insertion of the chain, or --lock) only: put the key this far to the robot's "
+                        "left of where the camera, the touch and the search put the keyway, mm, level along the door's "
+                        f"face (negative: right; insert_plan.LOCK_KEY_LEFT_M, default {1000.0 * insert_plan.LOCK_KEY_LEFT_M:g}). "
+                        "The unlock is not moved, and the keyhole calibration does not learn it.")
     p.add_argument("--lock_from_deg", type=float, default=insert_plan.kg.ARM_LEVER.end_deg,
                    help="Locking: the angle the key goes in at, clockwise from level as the robot sees it (the unlock's "
                         f"turn, default {insert_plan.kg.ARM_LEVER.end_deg:g}); it turns back to level.")
@@ -1682,6 +1866,19 @@ def parse_args(argv=None):
     p.add_argument("--yes", action="store_true", help="With --live: start without waiting for Enter.")
     p.add_argument("--step", action="store_true",
                    help="With --live: wait for Enter before each step that moves something, not only at the start.")
+    p.add_argument("--no_return", action="store_true",
+                   help="Stay where the run ends instead of walking back to where it started (the default since "
+                        "2026-10-28: once the run is over, not after an abort).")
+    p.add_argument("--loop", action="store_true",
+                   help="run_on_dog.sh: once the whole chain (--task insert --stage insert --then_door pull "
+                        "--then_close) has locked the door and walked back, run it again, without Enter (5 s to Ctrl-C); "
+                        "any other end stops. The node only records it.")
+    p.add_argument("--fast", action="store_true",
+                   help="Quicker, without changing what the robot does: the fold ends within 1 deg, the look is 1 s, "
+                        "joint moves at 44 deg/s (40), the door pull and close walk in while the arm unfolds, the "
+                        "lock look goes straight on to the holster, and the key goes in at 6 mm/s through the air "
+                        "(and, locking, 4 mm/s pushing the door shut) before 2 mm/s near the lock. Without it, as before "
+                        "(plan.FAST_*, insert_plan.FAST_*).")
     p.add_argument("--speed_scale", type=float, default=1.0,
                    help="The door script's phases this many times as long as the simulated demo's (default 1.0: its "
                         "own pace; the first live runs were at 1.5).")
@@ -1712,6 +1909,11 @@ def parse_args(argv=None):
         p.error("--then_door follows the key's turn: --task key --stage turn, or --task insert --stage insert")
     if args.then_close and not ((args.task, args.stage) == ("door", "pull") or args.then_door == "pull"):
         p.error("--then_close follows a door pull that opens the door: --task door --stage pull, or --then_door pull")
+    if args.loop and not ((args.task, args.stage, args.then_door) == ("insert", "insert", "pull") and args.then_close):
+        p.error("--loop repeats the whole chain, which ends where it began: --task insert --stage insert --then_door pull "
+                "--then_close (d1dogdemo)")
+    if args.loop and args.no_return:
+        p.error("--loop starts again from where the run began: not with --no_return")
     if args.lock and (args.task, args.stage) != ("insert", "insert"):
         p.error("--lock is the insertion's: --task insert --stage insert")
     if args.lock and args.then_door:

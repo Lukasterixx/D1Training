@@ -841,6 +841,702 @@ Job `160` (8 h) ran the lineage again with position-only seed 5 and force-aware 
   legs 149-177 of 288, and its twin 31-33,** with no falls on either side's chosen checkpoint.
 - Seed 6 falls 6-15 times on the frozen set from the classic stand (on heavy legs), where seeds 4 and 5 fell 0-6. The
   candidate stays seed 4's `11200`.
+### 2026-10-28 · The dog helpers on the ROG PC
+
+Lukas reset this PC to `origin/main` (`5945ac9`) and asked for "the commands needed to run d1dogdemo". This PC's
+`~/.bashrc` had none of the `d1*` helpers (they were written on the other PC), so they were rebuilt here from
+`demos/combiner_door/robot/README.md`, `demos/combiner_key/robot/README.md` and week 6's notes: `d1update`, `d1dog`,
+`d1doginsert` (`--task insert --stage insert`), `d1dogdemo` (week 6's 08:50 command: `d1doginsert --then_door pull
+--then_close --live --lock_beyond_face_mm 55 --no_spiral`), `d1view`, `d1fetch` (the dog's whole `logs/`). They reach
+the dog as `sshuni` does. `d1dog` runs through `sshuni` itself. rsync cannot, because `sshuni`'s lookup runs
+`ssh ... true` on stdin and swallowed rsync's first bytes (a dry run hung). So `d1update`/`d1fetch` take `sshuni`'s
+target and ssh options from its lookup with stdin closed. `d1update` leaves `.git/`, `.claude/`, `results/`, `logs/`,
+`generated/` and the `.pt` checkpoints alone on the dog.
+
+Later the same day `d1update` went to the other dog, Tailscale's `$GO2_ROBOT` (100.99.23.36), which `sshuni` tries first, once it
+came online. Nothing was sent to it: one dry-run rsync. Lukas: "I only want to connect to the dog that is on the same
+casiofx100 wifi network". Every `d1*` helper now goes through `_d1_dog`: the dog on this PC's WiFi, found and its key
+checked by `_p2_dog_on_wifi` (the known_hosts alias `p2dingo-go2`), or none. `d1dog` still runs `sshuni`, held to that
+address (`P2DINGO_ROBOT_HOSTS`). Checked: `_d1_dog` and a dry `_d1_rsync` reach 10.154.40.30 on CasioFX100.
+
+Checked (nothing moved, no run): `d1dog --help` on the dog over its WiFi (10.154.40.30). md5 of the 54 robot-program
+files (`demos/combiner_door/robot/`, `demos/combiner_key/robot/`, `demos/combiner_{door,key}/*.py`, `d1_hardware.py`,
+`d1_ik.py`) is the same on the dog as here. A `--checksum` dry run of `d1update` deletes nothing and sends only
+sim-side files, untracked scripts and `leg_press_force_ft11a_model_11394.npz`. **Not shown:** `d1view` on this PC.
+This PC's `~/P2Dingo` lacks the `OPC_COMPOSE_EXTRA` hook and the `/combiner_door/` zenoh topics, which are
+uncommitted P2Dingo changes on the other PC, and `view_on_pc.sh` refuses without them.
+
+### 2026-10-28 · `d1dogdemo` with the box on a 5 mm platform, 23:01-23:04 UTC (2026-10-27)
+
+Lukas ran `d1dogdemo` three times with the combiner box on a 5 mm platform, then: "the combiner box is on a 5mm
+platform and I noticed the key insertion was affected". Fetched with `d1fetch`.
+
+| UTC | outcome |
+|---|---|
+| 23:01 | no `run.json`, so not recorded; `arm_link.log` ends "no D1 feedback; check the arm's power and the DDS interface" |
+| [23:02](#/week/7/run/20261027T230213_insert_insert_door_pull_close_live) | aborted after the walk up: "the lidar puts the door 98 mm and 7.4 deg from where the look did" |
+| [23:03](#/week/7/run/20261027T230355_insert_insert_door_pull_close_live) | drew the key (93 mm), lay down (0.250 m). `lock_look` moved the box model 26.1 mm across and 16.9 mm down. `key_view` 0.28 / 0.76 mm off. Contact 7.21 mm out of seated, wrist search to 9.52 deg, "the key stuck 2.1 mm short of seated": no door pull |
+
+**What it shows:** nothing in the program takes the box's height from the floor. The look sets the script's frame
+from the tag's height (`plan._fix_from`), and `lock_look` then moves the model onto the lock's bezel as the wrist
+camera sees it. On the floor `lock_look` moved the model down 18.1-26.0 mm (median about 21, 19 runs from 2026-10-24
+22:58 to 10-25 08:50); on the platform it moved it down 16.9 mm. So the front camera's look took up little of the
+5 mm, and the wrist camera took up the rest before the touch.
+
+**Not shown:** that the platform caused the miss. It is one run, and the same miss (touched 4.5-9.7 mm out, stuck
+2.3-2.8 mm short) happened on the floor at 10-24 23:24 and 10-25 07:46. The door pull's and close's lever height comes
+from the front camera alone (the lidar refit corrects depth and heading). Whether that height is a few mm low on the
+platform is not measured: no run reached the door.
+
+### 2026-10-28 · `--fast`: the whole chain quicker, opt-in (code and dry tests only)
+
+Lukas: "right now the whole demo process takes 4 minutes. I would like you to speed this up as much as possible,
+through both speedin up actions, removing waits, and unfolding the arm while the dog is approaching things", then
+"make this a launch argument --fast so that the original code is unaltered".
+
+**Where the time went:** in the trace of week 6's locked run ([08:50](#/week/6/run/20261025T085057_insert_insert_door_pull_close_live)),
+382 s from its first step to `done`:
+- `key_in`, 2 mm/s: 51 s. The lock's 36 s of it was mostly pushing the door shut ahead of the key, 65 mm.
+- The holster's draw and return, twice: about 130 s.
+- `lock_look`, twice: 18 s.
+- Folding and unfolding between stages, the walks back and the looks: about 40 s.
+- Three `fold`s that ran their full 5 s clocks with the arm already there (it settled 0.3-0.6 deg off, against
+  `FOLD_ARRIVED_DEG` 0.5): 14.7 s.
+- The joint moves are limited by their 40 deg/s pace, not by the arrival checks (the door's unfold, about 100 deg
+  of shoulder, arrived at 2.8 s). The arm link refuses a path faster than 45 deg/s.
+
+**Change** (`node.py --fast`, `run_on_dog.sh` passes it on; `d1dogdemo --fast`). Without the flag every attempt is as
+before: the attempts take `fast` as a keyword-only field, and each `FAST_*` value is read only when it is set.
+- The fold ends within 1.0 deg.
+- The front camera's look is 1 s.
+- Joint moves run at 44 deg/s.
+- The door pull and close walk in while the arm unfolds (`plan.unfold_with_walk`).
+- `lock_look` goes straight on to `h_turn` when that joint move is clear of the trunk proxy and the head camera.
+- `key_in` goes at 6 mm/s down to 17 mm out, then 2 mm/s with the contact's baseline taken again. Locking, it goes at
+  4 mm/s once the encoders put the key 6 mm past seated. This switches on the measured key, not the command, so a key
+  stopped at seated is caught at 2 mm/s as before.
+- The run's record has `"fast": true`, and its folder ends `_fast_live`. Table in
+  `demos/combiner_door/robot/README.md`, "Quicker".
+
+**Checked (dry, the CPU model):** `demos/combiner_key/tests/test_fast.py`, 8 tests, OK:
+- Fast joint paths pass the arm link's own check.
+- The fast pull's arm moves while it walks in, and it grips within 2 cm as the default does.
+- A fold left 0.7 deg off ends at once with `--fast` and runs its 5 s clock without it.
+- The fast unlock draws, seats, turns and reholsters with the same phases.
+- The fast key's slow pace and the contact's new baseline start from more than 13 mm out.
+- The lock look goes straight on to the holster.
+- A door 8 deg ajar is pushed shut and locked.
+
+Dry times, default against fast:
+- The unlock: 151.4 against 146.5 s. Its `key_in` went from 10.2 to 7.4 s. The model's `lock_look` without frames pans
+  every place, so it is not the dog's.
+- The ajar lock: 122.6 against 107.0 s. Its `key_in` went from 36.2 to 23.1 s.
+- The door pull: 27.1 against 24.7 s.
+
+The model's arm folds exactly, so the fold's gain does not show there. The robot suites
+(`test_insert_robot`, `test_key_robot`, `test_robot`, `test_approach`) fail the same 21 tests on a clean checkout of
+`5945ac9` as with the change, mostly `test_key_robot`'s finger turn; none of them is new.
+
+**Not shown:** any of it on the dog. The estimate from the 08:50 trace is about 50 s of its 382 s. Larger cuts
+would change what the robot does, and are Lukas's to choose:
+- the door script faster than the simulation's pace (`--speed_scale` is held at 1.0 or more);
+- the arm left unfolded between the pull and the close, with the look done past it;
+- the holster's channel moves or the turn sped up;
+- the key left in the lock between the unlock and the lock (no return and draw: about 70 s of each insertion).
+
+### 2026-10-28 · Back to the start at the end of a run, and `--loop` (code and dry tests only)
+
+Lukas: "can you make both the fast and normal mode return the robot to its starting position? I would like to then have
+a --loop option to make it start again when it finishes".
+
+**Change** (the default now, `--fast` or not; `demos/combiner_door/robot/README.md`, "Back where it started"):
+- Once a run is over through `_finish`, the dog walks back to where it stood for the first look (`node._return_home`,
+  `approach.walk_home`). It stands 1.5 s first, then goes in classic walk with the arm as the run left it (folded).
+- The start is kept in the first look's box frame and put back in the odometry by the latest look at the shut box (the
+  lock's, in the whole chain). The odometry's drift over the run is therefore not walked back.
+- It does not walk back after an abort, for a dog not standing, past 3 m, or with `--no_return`.
+- The record has `return_home`, and the walk's events are in `return_home_events`.
+- `--loop` (`run_on_dog.sh`, whole chain only; `d1dogdemo --loop`): a run that locked the door and got back
+  (`"repeatable": true`) is followed 5 s later by the next, with `--yes` (the first Enter covers the loop). Each run has
+  its own record and arm link. Any other end stops the loop and says why.
+
+**Checked** (no robot):
+- `test_approach.py`, 5 tests, OK. The odometry is 15 cm and 3 deg off by the end. The walk home aims at the true start
+  (within 2 cm in the drifted odometry, where the odometry's own start is more than 10 cm away) and stops within
+  12 cm and 8 deg of it in the dry walk.
+- The node's end of a run, built without ROS: it walks back, then ends, `repeatable` only for the whole chain locked.
+  It does not walk back with `--no_return` or lying, and is repeatable without a walk when already at the start.
+- `node.parse_args` refuses `--loop` outside the whole chain and with `--no_return`.
+- `run_on_dog.sh` with a stubbed docker: three runs, each its own record, `--yes` from the second, stopped after the
+  third, which did not lock. Without `--loop`, one run as before.
+
+**Not shown:** any of it on the dog.
+- Whether the latest look's box is good enough there: the lock's look is before the walk up, the lie-down and the sit-back.
+- Whether the start pose's front camera look finds the tag again on the next run: it is the run's own first stance, so it
+  should.
+
+### 2026-10-28 · The lock's key 2 mm to the left (`--lock_key_left_mm`)
+
+Lukas: "we need to make the key insertion at the end 2mm to the left - expose this as a launch argument, no need to
+rerun tests. it should only affect the last insertion as an offset from where the camera detects it".
+
+**Change:**
+- When locking (the chain's last insertion, or `--lock`), the jaws' target (`InsertAttempt._target`) is moved
+  `lock_left_m` to the robot's left, level along the door's face (`_lock_nudge`).
+- The offset is added on top of where the lock look, the keyhole view, the touch and the search put the keyway, through
+  `key_go` to `key_back`.
+- `node.py --lock_key_left_mm`, default 2 (`insert_plan.LOCK_KEY_LEFT_M`); negative moves it right. The unlock is not
+  moved.
+- The keyhole calibration's residual at the seat subtracts the offset, so the next runs' camera correction does not
+  learn it.
+- The record: `insert.lock_key_left_mm`.
+
+**Checked:** only that a lock attempt's offset is (0, +2.0, 0) mm in the robot's frame (ahead, left, up) and an
+unlock's is zero. The test suites were not rerun (Lukas: "no need to rerun tests"). **Not shown:** on the dog.
+
+### 2026-10-28 · Thirteen chains on the dog, 00:04-01:45 UTC: `--fast` 40 s quicker; two aborts and their fixes
+
+Lukas ran `d1dogdemo` (`--lock_beyond_face_mm 65 --no_spiral`), then `d1dogdemo --fast` and `--fast --loop`. Fetched
+with `d1fetch`, all recorded.
+
+| UTC | mode | outcome |
+|---|---|---|
+| [00:04](#/week/7/run/20261028T000449_insert_insert_door_pull_close_live) | default | **locked**, 354.8 s from the first step |
+| [00:14](#/week/7/run/20261028T001428_insert_insert_door_pull_close_live) | default | **locked**, 377.7 s |
+| [00:34](#/week/7/run/20261028T003433_insert_insert_door_pull_close_live) | default | the key stuck 2.2 mm short of seated: no door pull |
+| [00:37](#/week/7/run/20261028T003717_insert_insert_door_pull_close_live) | default | locking, `key_close`: "the arm is 13 deg from where the IK wants it" (Joint6 12.5-16.9 behind) |
+| [00:50](#/week/7/run/20261028T005015_insert_insert_door_pull_close_live) | default | **locked**, 370.7 s |
+| [00:57](#/week/7/run/20261028T005712_insert_insert_door_pull_close_live) | default | the key touched 4.9 mm out and did not go in in 20 s of the wiggle |
+| [01:00](#/week/7/run/20261028T010030_insert_insert_door_pull_close_live) | default | **locked**, 362.3 s |
+| [01:18](#/week/7/run/20261028T011847_insert_insert_door_pull_close_fast_live) | `--fast` | **locked**, 322.0 s; walked 0.41 m back to the start |
+| [01:26](#/week/7/run/20261028T012623_insert_insert_door_pull_close_fast_live) | `--fast` | the look refused the tag (the charging dock's?): nothing moved |
+| [01:30](#/week/7/run/20261028T013018_insert_insert_door_pull_close_fast_live) | `--fast` | **locked**, 327.3 s; walked 0.58 m back to the start |
+| [01:37](#/week/7/run/20261028T013747_insert_insert_door_pull_close_fast_live) | `--fast --loop` | `key_in`: "base tilted 12 deg"; every recovery aborted again on it |
+| [01:42](#/week/7/run/20261028T014223_insert_insert_door_pull_close_fast_live) | `--fast --loop` | the key seated, then `key_turn`: "the arm is 12 deg ... loaded" (Joint6, 19.7 at most); recovered and walked 0.38 m back |
+| [01:45](#/week/7/run/20261028T014534_insert_insert_door_pull_close_fast_live) | `--fast` | the look refused the tag: nothing moved |
+
+**`--fast` on the dog:**
+- From the first step to locked: 322.0 and 327.3 s, against 354.8-377.7 s for the four default chains. That is about
+  40 s quicker, near the 50 s estimated from the 25 Oct trace.
+- The folds: 2.8-3.1 s against 10.9-16.1. `key_in`: 37.7-40.0 s against 49.8-57.1.
+- The walk back to the start took 5 s after the lock and arrived both times.
+- The 01:42 abort was in the turn, which `--fast` does not change; the same lag stopped a default lock at 00:37.
+
+**01:37, the tilt.**
+- Both lidar refits failed: after the walk up, "too short a line"; lying, "no face", so the sit-back alone was used.
+  The lock look moved the box 85 mm across and 60 mm out by the bezel's size.
+- The key met the box in `key_in`'s first second, about 30 mm out of the model's seated, while it was still catching
+  up from `key_pre`. In every run the key starts `key_in` 8-30 mm behind its command.
+- The contact's baseline was taken against the box (15.1 mm behind at 1 s, against 0-3.2 at 2 mm/s in 47 insertions
+  and 3.0-6.7 at 6 mm/s in 5). `--fast` then took the baseline again at the slow pace's start.
+- The arm pushed on until the lying dog's front rose (body height 0.069 to 0.087 m), and the tilt check aborted at
+  12 deg.
+- Every `r` and A then aborted on the tilt before its first step, the key still pressing.
+- Whether the key was on the box's face or already in the keyway, 30 mm nearer than the model put it, is not known.
+
+**01:42 and 00:37, Joint6.** The lock holds the key, and Joint6 falls behind its command.
+- In the turn: 10-15.7 deg in all 12 turns that unlocked or locked, over 10 for up to 0.5 s of the abort's 0.6.
+  01:42 went to 19.7.
+- In the lock's press: 12.5-16.9 deg, the keyway holding the key where the wrist's search left its command.
+
+**Changes:**
+- `--fast` only:
+  - A key more than `insert_plan.FAST_LAG_MAX_M` (12 mm) behind its command after `key_in`'s first second is touching
+    (short of the push).
+  - The slow pace keeps the contact's baseline, with no second unwatched. It lowers it to the slow pace's own lag a
+    second on.
+- Both modes:
+  - With the key in the lock (`key_seat`, `key_close`, `key_turn`), Joint6 aborts only past `TURN_LAG_DEG` (30 deg);
+    the other joints keep 10.
+  - `key_back` draws the key out at the angle the encoders say it turned to, not the one commanded.
+  - A recovery from a tilt runs while the base is tilted no more than at the abort plus 4 deg (at most 20;
+    `plan.RECOVER_TILT_*`).
+  - The insertion tests' harness runs the lock's 2 mm offset at 0: its keyway is where its camera sees it, and with
+    the offset a door 8 deg ajar was pushed to 1.6 deg instead of 0.
+
+**Checked (dry):** `test_fast.py`, 12 tests, OK, among them:
+- a turn with Joint6 held 19.7 deg back goes on, one held 35 deg back aborts ("the key is not turning");
+- a lock press with it 16.9 back goes on;
+- a fast key into a lock 27 mm nearer than the model touches with the command at most 18 mm ahead, and no tilt or
+  load abort;
+- a tilted base passes the check while recovering within the allowance, and aborts past it.
+
+The robot suites (`test_insert_robot`, `test_key_robot`, `test_robot`, `test_approach`, 149 tests) fail the same 21 as a
+clean checkout of `5945ac9`. **Not shown:** any of the fixes on the dog. The key's depth when both refits
+fail (01:37) is not fixed.
+
+### 2026-10-28 · Back at the start, facing the box as it did
+
+Lukas: "right now the looping takes it back to the right position but the yaw is off. I would like the yaw to face the
+box just like it started".
+
+**What the records show:** the walk back arrived within 0.3-2.1 deg of its target yaw by the odometry in all six
+walks of 01:18-02:00 UTC. The error is in the target. It is put in the odometry by the lock's look, taken from the
+insertion's staging pose to the side, whose heading for the box is not the first look's. The next loops' first looks
+had the box at bearings -27.3, -26.0, -25.2 deg, drifting a degree or so per loop.
+
+The runs since the last entry, all `d1dogdemo --fast`, fetched and recorded:
+- [01:46](#/week/7/run/20261028T014614_insert_insert_door_pull_close_fast_live),
+  [01:52](#/week/7/run/20261028T015245_insert_insert_door_pull_close_fast_live) and
+  [02:00](#/week/7/run/20261028T020018_insert_insert_door_pull_close_fast_live) **locked** and walked back.
+- [01:52 with `--loop`](#/week/7/run/20261028T015222_insert_insert_door_pull_close_fast_live): the first look refused
+  the tag ("not on the box's door (the charging dock's?)"). Nothing moved, and the loop stopped.
+- 01:59 and 02:00: stopped before the robot program wrote a record, so only `arm_link.log` exists; not recorded.
+
+**Change** (both modes; `node._home_looked`, `approach.HOME_*`):
+- Back at the start, the dog looks at the box with the front camera, from nearly where the first look was, so the
+  camera's and lidar's biases are much the same.
+- It puts the start against the box as the first look had it, then turns, and steps if more than 6 cm off, to within
+  2 deg (`ApproachAttempt.accept_*`, no stand first).
+- It looks again after each correction, at most two.
+- Near the start already but more than 2 deg turned, it looks and corrects without the walk.
+- No tag there: it ends where the odometry put it.
+- The record: `return_home.corrections` (each look's offset and turn).
+
+**Checked (dry):**
+- `test_approach.py`, 6 tests, OK: a dog 5 deg turned is turned with the 2 deg finish, and one facing as it did ends
+  the run, repeatable.
+- The classic walk's model turned the dog from +5, -8, +3 (4 cm off) and +12 deg (5 cm off) to -0.7, -2.3, +1.5 and
+  +1.2 deg in 1.4-1.6 s.
+
+**Not shown:** on the dog.
+
+### 2026-10-28 · The seat's depth check removed
+
+Lukas's run of 03:29 UTC (`d1dogdemo --fast --lock_key_left_mm 2`, not yet fetched) aborted in `key_seat`: "the key
+stuck 2.0 mm short of seated: in 6.7 mm past the lock's face, the keyway 8.7 mm deep". Lukas: "lets remove this check.
+the key went in fully in the run and it aborted anyway".
+
+**Change** (both modes):
+- A key that has entered past where it met the lock's face and then stops is seated, however far it went.
+- The record keeps how far it went (`insert.seat_advanced_mm`) and flags one short of `TRAVEL_M - SEATED_TOL_M`
+  (`seat_short`).
+- The overrun check stays ("the key did not stop at seated").
+
+**Checked:** compiles only; no tests run (Lukas: "no need to run the tests"). **Not shown:** on the dog.
+
+**And the recovery turned the key** (the same run, after the abort; Lukas: "on abort, it shouldn't try turn the key"):
+- The recovery's way out of the lock (`key_out`, and `key_letgo` after a turn) gave the IK the bar as minus Link6's x,
+  which is the hand-in grip's (roll -1).
+- With the holster's grip (roll +1) that is the hand turned 180 deg about the key from where it is: computed, 180.0 deg
+  for roll +1 and 0.0 for -1. The wrist turned the key in the lock before backing out.
+- Now the bar is `grip_roll` times Link6's x, so the hand is held exactly as it is for either grip (0.0 deg both).
+- Checked: that computation, and it compiles. No tests run.
+
+**Then the key taken for being on the face** (Lukas's run of 03:34 UTC; "it also went in perfectly in this run and it
+still aborted"):
+- [03:29](#/week/7/run/20261028T032952_insert_insert_door_pull_close_fast_live) aborted in `key_seat` (the check
+  removed above).
+- [03:34](#/week/7/run/20261028T033441_insert_insert_door_pull_close_fast_live) stopped 6.3 mm out of the model's
+  seated. That is past half the keyway (4.35 mm), so it was taken for the lock's face, pressed under the wiggle for
+  20 s ("never went further") and aborted. The 00:57 run did the same at 4.9 mm.
+- Neither the depth nor Joint6 tells the cases apart. Face touches have stopped 4.5-9.8 mm out, and through the
+  03:34 press Joint6 rolled 19.0 deg of the ±10 wiggle (the cylinder turns with a key that is in).
+- **Change** (both modes, `--no_spiral`, as `d1dogdemo` runs): a key that touched and has not gone further in after
+  `SEAT_BY_STOP_S` (6 s, three wiggle periods) is taken as in, and the turn follows. The record has
+  `insert.seated_by_stop` and a `seated_by_stop` event.
+- Risk: a key truly on the face is then turned there. The unlock check (the key's roll by the encoders) can pass for
+  it, and the door pull would meet a locked door.
+- Checked: compiles. No tests run.
+
+**Easing the key before it comes out** (Lukas: "before taking out the key, it should command the gripper to turn in the
+other direction just a little to prevent the tension from causing friction on the way out"):
+- **Change** (both modes, the unlock and the lock): a new phase `key_ease` (`EASE_S` 0.8 s) between `key_turn` and
+  `key_back`, the key held where it is along the keyway.
+- The wrist goes from the angle the encoders say the key turned to, `EASE_DEG` (3 deg) back against the turn, over
+  the first 0.4 s: the unlock eases back toward shut, and the lock 3 deg off level.
+- `key_back` then draws the key out from there. The record has a `key_ease` event (from, to).
+- With the key in the lock, Joint6 has the `TURN_LAG_DEG` allowance here too. An abort in it lets go in the lock, as
+  one in the turn does.
+- Checked: compiles. No tests run.
+- Then (Lukas: "the ease out is only necessary on the open, we can remove it for the close"): the unlock only. The
+  lock's key comes out straight after its turn, as before.
+
+**The door-angle abort off** (Lukas: "can we also remove the safety check for the door angle once its open? it aborted
+on the last run"):
+- The run of 03:51 UTC aborted the pull at "the lidar has the door at 99 deg, the script at 60", and still locked
+  after the recovery.
+- `plan.DOOR_DISAGREE_ABORTS = False`, both modes: the lidar's door angle no longer aborts the pull, its hold or the
+  close's hold. It is still read, traced, and taken for where the close starts.
+- No test expected that abort. Checked: compiles. No tests run.
+- Also fetched: 03:45 locked and walked back, ending 0.01 m and -2.0 deg off by the look after the two corrections.
+  03:51 locked and walked back facing the box. 04:01 was still `running` when fetched.
+
+**The unlock's key 1 mm to the left** (Lukas: "can we make the first key insert offset 1mm to the left"):
+`node.py --unlock_key_left_mm`, default 1 (`insert_plan.UNLOCK_KEY_LEFT_M`), applied as the lock's
+(`InsertAttempt._lock_nudge`, now `unlock_left_m` unlocking and `lock_left_m` locking). The keyhole calibration
+subtracts it too. The record has `insert.unlock_key_left_mm`. The tests' harness runs it at 0, as the lock's.
+Checked: the unlock's offset is (0, +1.0, 0) mm and the lock's (0, +2.0, 0) mm (ahead, left, up); it compiles. No
+tests run.
+
+### 2026-10-28 · The lock's key missed at 04:24 UTC: the keyhole view got one frame
+
+Lukas: "the dog now misses the last lock insertion on the close. did you change anything?". Fetched and recorded:
+- [04:01](#/week/7/run/20261028T040158_insert_insert_door_pull_close_fast_live) and
+  [04:07](#/week/7/run/20261028T040754_insert_insert_door_pull_close_fast_live) (`--lock_key_left_mm 4`) locked.
+- [04:16](#/week/7/run/20261028T041627_insert_insert_door_pull_close_fast_live) was stopped by the operator.
+- [04:24](#/week/7/run/20261028T042456_insert_insert_door_pull_close_fast_live) (`--lock_key_left_mm 3`) "verified"
+  by its own check, and missed (Lukas).
+
+**What the record shows for 04:24's lock:**
+- The lock look found the bezel (3 frames; `keyhole/0241.13_lock_look.jpg`) and moved the model 1.4 mm across and
+  18.4 mm down. Usually it is 14-27 mm across, but the model was already close this time.
+- `key_view` ran 5.9 s and processed one frame, so "found 0", and the key went in on the lock look alone.
+  That one frame (`0280.84_key_view.jpg`) did find the bezel, 5.7 mm along the key and 5.1 mm up from the key's aim,
+  but too late and alone.
+- The key, about 7.6 mm off, went on to 38.5 mm past seated. Locking, that is taken as pushing an ajar door shut, so
+  a key on the door's face pushing the door counts as in. It "pressed" and "turned" there, and `lock_check` passed.
+
+**Was it a change?**
+- `key_view`'s code is not changed. It got one frame twice today (03:34 and 04:24, both 5.9 s, both `--fast`).
+  The other 30 views today got 3 frames and found the bezel in all 3, in 3.0-4.3 s. Two cases cannot say whether
+  `--fast` has to do with it.
+- What did change for the lock: its offset (2 mm by default since today, 3 in Lukas's `d1dogdemo`), `--fast`'s pace
+  (the push at 4 mm/s once 6 mm past seated) and the seat's checks. None of them moves the key across by 7.6 mm.
+
+**Not fixed:** a keyhole view without its frames still goes on blind, and a missed lock key on an ajar door still
+passes the lock's check.
+
+### 2026-10-28 · Stopped after the door opened (04:31 UTC): the approach would not step
+
+Lukas: "in the latest run, it stopped unexpectedly after opening the door".
+[04:31](#/week/7/run/20261028T043124_insert_insert_door_pull_close_fast_live) unlocked and pulled the door open (70
+deg by the lidar). Then the close's look said "box 0.85 m from the stance ... walk in 0.00 m; move the dog back 0.06 m,
+or forward 0.09 m": the 9 cm walk in is under the straight walk in's least (`plan.WALK_IN_RANGE_M`, 0.10), so out of
+range.
+- The approach to the staging pose was 0.09 m, 0.078 m on the odometry, inside its own finish (`approach.ACCEPT_M`,
+  0.08). So it did not step, and the look found the same.
+- That happened three times, then "the box is still out of range after 3 approaches: nothing more moved". No abort.
+- Earlier closes' looks stopped 11-14 cm short of the staging pose, enough for a walk in. Neither the range check nor
+  the approach changed today.
+
+**Change** (both modes, `node._approach`): for the door's attempts, when the approach would not step (its odometry
+target within `ACCEPT_M` and `ACCEPT_YAW_DEG`) and the tag is on the box's door, the attempt starts from that look.
+- `SteppingDoorAttempt` and `DoorClose` walk up to their own stance on all three axes. Their refit, range check after
+  the walk, one walk up again, and abort are unchanged.
+- The approach's record has `skipped`.
+- Checked: compiles, pyflakes. No tests run. **Not shown:** on the dog.
+
+### 2026-10-28 · The lock look waited 32 s (05:32 UTC): the wrist RealSense came off USB
+
+Lukas: "why did the last run pause in the realsense lock finding stage?".
+[05:32](#/week/7/run/20261028T053231_insert_insert_door_pull_close_fast_live):
+- The unlock's lock look took 8.8 s (3 frames, found). The lock's took 31.9 s with no wrist frame at all: all 6
+  keyhole frames of the run are the unlock's.
+- With nothing seen, each of its five places ran out its clock, until Lukas stopped it. It then recovered and walked
+  back facing the box.
+- The node's gates were not dropping frames: through the lock look the arm's reports were under 0.3 s old 90% of the
+  time and the arm was still.
+- The dog's `p2dingo-realsense` log: "The device has been disconnected!" at 16:33:43 local (05:33:43 UTC, 72 s into
+  the run, during the unlock's `key_in`), then "Cannot open '/dev/video0'". There was no reconnect in that run.
+- It had also dropped and come back at 05:24:58-05:25:02 UTC. The log only goes back to the container's last restart.
+- The two keyhole views of one frame (03:34, 04:24) may have been the same, but they are older than the log.
+
+**What it shows:** the wrist RealSense (D435I, USB 3.2 on the arm) drops off USB mid-run. That points at its cable as
+the arm moves, or its power, not at the code; the cause is not measured. **Not changed:** a look with no frames still
+waits out its places, and a `key_view` with too few goes in on the model. Proposed to Lukas: stop with "the wrist
+RealSense sends no frames".
+
+**Then:**
+- A restart of `p2dingo-realsense` found no camera: `lsusb` had nothing on the USB 3 bus, and the container waited
+  ("No RealSense devices were found!"). Replugging on the dog changed nothing.
+- On Lukas's laptop the same camera and cable came up at once on USB 3 (5000M, uvcvideo).
+- Back on the dog, after Lukas rebooted it, the D435I was on bus 2 port 1 at 5000M, "RealSense Node Is Up!", and
+  `/realsense/color/image_raw` ran at 15.0 Hz.
+- The USB descriptor's serial (262523062940) and the RealSense's own (262522070580) are the same camera.
+- **What it shows:** the camera and cable work. After the camera dropped off, the Jetson's USB 3 port did not see it
+  again until a reboot reset the controller. Why it dropped off mid-run (cable flex with the arm, power) is not
+  measured.
+
+**Change** (Lukas: "yes, I want that added"; both modes, `node.py`):
+- The node notes each RealSense frame as it arrives, before its own gates (`realsense_t`); the camera publishes at
+  15 Hz whatever is asked of it.
+- In the insertion's `lock_look` and `key_view` (`WRIST_LOOK_PHASES`), no frame for `WRIST_FRAMES_TIMEOUT_S` (2 s)
+  aborts: "the wrist RealSense sends no frames (none for N s): it may have come off USB; reboot the dog to bring it
+  back".
+- A camera that dropped earlier in the run stops the look as it begins, not 32 s later. A `key_view` does not go in
+  on the model because the camera is gone.
+- A view whose frames come but find nothing is unchanged.
+- Checked: compiles, pyflakes. No tests run. **Not shown:** on the dog.
+
+### 2026-10-29 · Why the wrist RealSense came off USB on the 28th
+
+Lukas: "the dog is back up. I would like to know why the usb bus disappeared yesterday". From the dog's
+`/var/log/kern.log` and `/var/log/syslog`, read-only; the dog's clock is UTC.
+
+**The kernel's record:**
+- The camera is on the Jetson's USB 3 port 2-1 (`tegra-xusb 3610000.usb`, SuperSpeed).
+- A drop while streaming shows as "usb 2-1: USB disconnect" followed by "tegra-xusb: WARN Set TR Deq Ptr cmd failed
+  due to incorrect slot or ep state": the device left the bus with its streams open.
+- After a drop the camera usually re-enumerated within 0.35-7 s. Short disconnect-and-back pairs of 0.4 s are the
+  camera software's resets.
+- At 05:33:43 UTC it dropped and nothing appeared on the port again, through replugs, until the reboot at 05:49.
+  The same camera and cable came up at once on Lukas's laptop.
+
+**Getting worse:**
+- The camera port's disconnects per day: 1-6 from 14 to 24 Oct, 14 on the 25th, 11 on the 27th, 83 on the 28th.
+- Drops while streaming: 2 on the 21st, 6 on the 25th, 4 on the 27th, 26 on the 28th (00:15-05:33 UTC).
+
+**Where (the 28 drops of the 28th against the runs' traces):**
+- 27 of 28 came with the arm out at the lock: `key_in` 19, `key_turn` 3, `key_view` 2, `key_go` 2, `key_search` 1.
+  The other was in the door pull's `hold`. None came while walking, lying down, drawing the key or folding.
+- At each, Joint5 (the wrist's pitch) was -36 to -53 deg and Joint6 (its roll) 53-82 deg, except the two in
+  `key_go` (-20 to -26, 29-31).
+- The one-frame keyhole views fit: 03:36:19 came in the 03:34 run's `key_view`, and 04:29:34 just before the 04:24
+  run's lock `key_view`.
+
+**Also:** the dog's 05:18:44 boot followed no shutdown. The syslog stops at 05:16:15 with nothing between, so it was
+a power cut or a hard reset, not a reboot command.
+
+**What it shows:** the camera's link breaks when the arm reaches out to the lock with the wrist pitched down and
+rolled, which bends or pulls on its cable or its connector. The link has been breaking more often for a week. Its
+cause (the connector at the camera, the cable, the routing past the wrist) is not measured. After a drop the
+Jetson's USB 3 port can stay unable to see the camera until a reboot.
+
+### 2026-10-29 · Thirteen more chains on the dog (28 Oct 05:38 to 23:36 UTC); a key turned before it was in
+
+All Lukas's `d1dogdemo` (`--fast --loop --lock_key_left_mm 3 --unlock_key_left_mm 1`, no spiral), the dog's code
+from before the frames watchdog (no `d1update` since). Fetched with `d1fetch`; times are the dog's UTC.
+
+| Run | Outcome |
+|---|---|
+| [05:38](#/week/7/run/20261028T053808_insert_insert_door_pull_close_fast_live) | unlock key did not seat; operator stop (the camera had dropped at 05:33) |
+| [05:41](#/week/7/run/20261028T054106_insert_insert_door_pull_close_fast_live) | operator stop before the key went in |
+| [05:43](#/week/7/run/20261028T054322_insert_insert_door_pull_close_fast_live) | quit at start |
+| [21:49](#/week/7/run/20261028T214910_insert_insert_door_pull_close_fast_live) | **locked**, home facing the box, 350 s |
+| [22:10](#/week/7/run/20261028T221008_insert_insert_door_pull_close_fast_live) | **locked**, 343 s |
+| [22:16](#/week/7/run/20261028T221605_insert_insert_door_pull_close_fast_live) | **locked**, 331 s |
+| [22:21](#/week/7/run/20261028T222151_insert_insert_door_pull_close_fast_live) | quit at start |
+| [22:26](#/week/7/run/20261028T222633_insert_insert_door_pull_close_fast_live) | **locked**, 340 s |
+| [22:32](#/week/7/run/20261028T223228_insert_insert_door_pull_close_fast_live) | the camera dropped at 22:33:38 and came back jammed (UVC -71 every second); the lock look waited from 22:35:56 for frames until the operator's stop at 22:37:29 |
+| [22:41](#/week/7/run/20261028T224138_insert_insert_door_pull_close_fast_live) | **locked** (after a reboot), 349 s |
+| [22:47](#/week/7/run/20261028T224742_insert_insert_door_pull_close_fast_live) | operator stop in the holster reach |
+| [22:49](#/week/7/run/20261028T224915_insert_insert_door_pull_close_fast_live) | unlock key on the lock's face, turned (below) |
+| [23:36](#/week/7/run/20261028T233628_insert_insert_door_pull_close_fast_live) | on a new cable that runs at USB 2; unlock key turned while still going in (below); door not opened |
+
+Run times are from the node's start to back home, the loop included. 5 locked of the 11 that started. The
+unlocks that worked stopped −2.2 to +1.5 mm out of the model's seated, by their lag.
+
+**"in the past 2 runs it started locking before the key was in"** (Lukas):
+- **22:49:** the key touched 11.5 mm out of seated (not seated: past half the keyway). With no spiral, it stayed there
+  through the wrist's search, 10.9-11.7 mm out. After `SEAT_BY_STOP_S` (6 s, added on the 28th) it was taken as in by
+  its stop and turned 49 deg, on the face.
+- **23:36:** the key was still going in against the keyway's friction (4.4 to 2.3 mm out over its last 2.5 s, its
+  command 5.7 mm ahead). It fell `CONTACT_LAG_M` behind and was taken as seated, straight in, at 2.3 mm, then turned
+  52 deg at once. The operator stopped it in the ease; the door was not opened. 2.3 mm is near the stops that unlocked
+  (up to 1.5), so the depth alone does not show it short. It was creeping.
+
+**Fixes** (`insert_plan.py`):
+- `SEAT_BY_STOP_MAX_OFF_M` = 8 mm. Taken as in by its stop only that near seated: the keys that were in stopped 4.9
+  and 6.3 mm out. Further out the search goes on to `PRESS_ONLY_S` (20 s) and aborts, unturned, with "on the lock's
+  face" in the message.
+- `SETTLE_S` / `SETTLE_AVG_S` / `SETTLE_MOVE_M`, unlocking only. In `key_seat` a seated key is pressed on, `PRESS_M` (2
+  mm) ahead of where it is, at most `TRAVEL_M` deeper than its stop. It turns when the mean of its depth over the
+  latest 0.5 s is within 0.3 mm of the mean 1 s earlier, or at `SEAT_S` (12 s) anyway. The run records
+  `settle_crept_mm`, `settle_s`, `settled`. Locking keeps `key_close`'s press; dry runs skip it.
+- A key that has stopped still turns about 1.5 s after it stops.
+- Checked: compiles, pyflakes. No tests run (Lukas: "no need to run tests"). **Not shown:** on the dog; whether the
+  2 mm press moves a stuck key the last 2 mm.
+
+**The new cable (23:44 UTC boot):**
+- The D435i enumerated on bus 1 at 480 Mb/s (USB 2.10), not on the USB 3 port 2-1.
+- The driver opened the same profiles as on USB 3 (colour 1280×720 RGB8 at 15 fps, depth 480×270 at 15 fps), and
+  `ros2 topic hz` read 15.0 Hz on both.
+- No disconnects in its first minutes. Not yet shown with the arm at the lock.
+- Either the cable carries USB 2 only, or its SuperSpeed lanes are not connecting; flipping the USB-C plug would tell.
+
+**Is the USB 2 cable moving the insertions?** Lukas: "im noticing the insertions are happening at different spots".
+- The camera's error (the key's encoder position once in, less where the camera put the keyhole and the deliberate
+  offset) was 2.2 ± 1.2 mm across and 1.9 ± 1.1 mm up over 65 insertions on 27-28 Oct, and 2.2 ± 0.9 and 2.7 ± 1.5 over
+  10 this morning.
+- On the USB 2 cable: 1.9, 0.9 mm and 1.5, 1.8 mm (2 insertions). Within the scatter.
+- The streams are the same size and rate, so USB 2 does not change the images.
+- **Not shown:** an effect smaller than the scatter, from 2 insertions.
+
+### 2026-10-29 · The first run with the settle (00:00 UTC): locked; the heading at home springs back
+
+[Run](#/week/7/run/20261029T000018_insert_insert_door_pull_close_fast_live). `d1dogdemo` after `d1update` (the
+watchdog, `SEAT_BY_STOP_MAX_OFF_M`, the settle), on the USB 2 cable.
+
+- **Unlock:**
+  - The key touched at -5.05 mm out of seated: just past half the keyway on the deep side, so taken as the face.
+  - It held through the search at -3.9 mm, within 8 mm, and was taken as in by its stop after 6 s.
+  - The settle pressed it 1.1 mm further in 2.6 s, and it turned 59 deg. Verified; the door pulled open.
+- **Lock:** pushed the door shut at depth (62.7 mm beyond the face of 65) and turned. Locked, verified.
+- First step to locked: 11:00:30 to 11:06:07 Sydney, 337 s, as the other `--fast` runs (331-350).
+- **Home:**
+  - The walk back (0.57 m) ended with the look at 0.06 m off and -4.2 deg. The first correction was under way when
+    the operator stopped it (B); after the recovery, a second look had -3.4 deg.
+  - In the trace the dog's heading springs back after every walk stops: +1.4 deg after the walk home, +2.5 within
+    9 s of the correction's turn, +1 deg a second after a pure turn.
+  - So a 4 deg correction lands 1-3 deg short, against `HOME_ACCEPT_YAW_DEG` of 2. **Not changed yet.**
+
+### 2026-10-29 · The arm-lag abort off on the door (00:13 UTC)
+
+[Run](#/week/7/run/20261029T001342_insert_insert_door_pull_close_fast_live): `d1dogdemo`, USB 2 cable (reconnected
+00:12:03 after the plug came out at 00:09:56 with the arm folded).
+
+- **What happened:** the unlock turned. The pull aborted 2 s in at "the arm is 16 deg from where the IK wants it: loaded".
+  - In those 1.5 s the lidar had the door swinging from 0 to 29 deg.
+  - Joint4's goal moved from -18.6 to +23.4 deg and Joint6's from 107.5 to 66.9 deg.
+  - The arm's reports held still for 0.4 s (155.9-156.3 s), then it was 20-23 deg behind on both.
+- Lukas: "can we remove this abort". **Change:** `plan.DOOR_ARM_LAG_ABORTS` = False, read through
+  `Attempt.arm_lag_aborts`. Off for the door's pull and close (`plan.Attempt`, `SteppingDoorAttempt`, `DoorClose`).
+- **Kept:** for the key (`InsertAttempt`, `KeyAttempt`: `arm_lag_aborts = True`) and the key's Joint6 turn lag.
+- **Still abort on the door:** stale arm feedback or odometry, the base's tilt, the IK failing, the website's joysticks.
+  The door-angle check has been off since the 28th.
+- `test_a_loaded_arm_aborts_the_pull` now switches the check on for itself.
+- Checked: compiles. No tests run (Lukas). **Not shown:** on the dog; what an arm far behind does to the door or the
+  handle with nothing to stop it.
+
+### 2026-10-29 · The RealSense's drops against the WiFi dongle's
+
+Lukas: "do the realsense dropouts correspond with any wifi dropouts? is the usb wifi dongle dropped too?" From the dog's
+`kern.log(.1)` and `syslog(.1)`, 14-29 Oct, read-only. The WiFi is a USB dongle (rtl8821au, `usb 1-2`), on the same
+`tegra-xusb` controller as the camera.
+
+- **The dongle does fall off USB:** 6 times, each back 4-9 s later with the WiFi reconnecting.
+  - 25 Oct 05:28; 28 Oct 01:16, 03:21, 23:35, 23:41, 23:59 UTC.
+  - One more WiFi drop, 28 Oct 01:09, was the link itself (not locally generated), not USB.
+- **Not together with the camera's:** none of the camera's 161 disconnects, 50 of them while streaming, came within
+  60 s of any of the 7 WiFi drops.
+  - So no controller reset or supply dip that takes both off at once.
+- **Since the camera moved to USB 2:** it shares the controller's USB 2 side with the dongle (bus 1).
+  - Three of the dongle's drops came in the 26 min after the switch (23:33), against three in the four days before.
+  - 23:35 and 23:41 came between the boots of the cable change (23:33, 23:44), when the dog was being handled.
+  - **Not shown:** whether the USB 2 camera makes the dongle drop. Too few events.
+
+### 2026-10-29 · "a few mm to the right ... doesnt push in far enough for the lock": what the records show
+
+Lukas: "its now putting the key consistently a few mm to the right of the keyhole in both unlock and lock. also, it
+doesnt push in far enough for the lock anymore. it worked at the end of yesterday perfectly in both regards".
+
+**The runs (00:08-00:39 UTC):**
+- [00:08](#/week/7/run/20261029T000817_insert_insert_door_pull_close_fast_live),
+  [00:23](#/week/7/run/20261029T002329_insert_insert_door_pull_close_fast_live) and
+  [00:25](#/week/7/run/20261029T002523_insert_insert_door_pull_close_fast_live): the watchdog's "no frames" abort.
+- [00:13](#/week/7/run/20261029T001309_insert_insert_door_pull_close_fast_live): no box at the start look.
+- [00:19](#/week/7/run/20261029T001923_insert_insert_door_pull_close_fast_live): both lidar refits failed, the lock
+  look moved the target 79 mm, `key_view` found 1 of 7 frames, and the key touched 35 mm out; operator stop.
+- [00:33](#/week/7/run/20261029T003331_insert_insert_door_pull_close_fast_live): locked. 00:39 left no node record.
+
+**Not changed since the good runs of the 28th:**
+- The launch offsets: unlock 1 mm, lock 2 mm (3 mm at 00:19-00:25, which did not reach the lock).
+- The kept calibration: (1.93, 1.99) mm against (1.91, 1.92) at 05:26 UTC on the 28th.
+- The draw from the holster: 92.0-92.8 mm, the loop's correction within its usual range.
+- The camera's own error (the key in the keyway against where the camera put the keyhole): 1.5-2.5 mm across, 0.9-1.8 up,
+  against 2.2 ± 1.2 and 1.9-2.7 before. So the camera was not knocked in the cable change by more than about 1 mm.
+- No code since the `d1update` touches the aim or the lock's push.
+
+**Changed:**
+- Where the key arrives against where the keyway turned out to be (encoders; the key 12-25 mm out against the
+  key in the keyway as it turns, along the key's sideways axis):
+  - The 28th's runs (04:31-22:49 UTC, 29 insertions): -3.1 to +2.3 mm.
+  - Since the `d1update`: unlocks -4.0 (00:00), -4.8 (00:13), -0.4 (00:33); locks -0.3 (00:00), -1.6 (00:33).
+- The lock's push stopped earlier:
+  - At 00:33 the key's lag stopped `key_in` at 34.4 mm past seated (42-54 on the 28th) and `key_close` at 50.2 mm beyond
+    the face (target 65; 55-63 on the 28th).
+  - At 00:00 it reached 62.7.
+- The camera on the USB 2 cable dropped frames in 3 of 7 runs.
+
+**What it shows:**
+- The camera and the code aim where they did. The two large misses came from the arm being several mm off its
+  target as the key arrived, or from the key's tip being off the hand's model of it (which the encoders cannot see).
+- A key off-centre in the keyway would also bind and stop the lock's push early.
+- **Not shown:** which, from 3 runs. Whether the key sits as it did in the jaws (bent, turned, further out) is not measured.
+
+### 2026-10-29 · The wrist RealSense 2 mm further out on its mount
+
+Lukas: "I changed the mount of the realsense on the wrist - there is now a 2mm increased distance from the realsense to
+its mount, so it has been pushed forward by 2mm in the direction of its camera".
+
+- **Change:** `plan.WRIST_MOUNT_FORWARD_M` = 2 mm, applied in `plan.wrist_mount()` along the colour optical frame's +z.
+  In Link6 that moves the camera +1.0 mm along x and +1.7 mm along z (the bracket's 30 deg); the rotation is unchanged.
+- **Uses it:** every wrist camera pose on the dog: the lock look, `key_view`, the look pose, the insertion's
+  vision, through `wrist_camera_base`.
+- **Kept as drawn:** the CAD file `demos/cup/pick_demo/assets/mounts/wrist_mount.json` and the simulations that load it
+  (`payload.py`, `demos/combiner`, `demos/unifp`).
+- **Not changed:** the kept keyhole calibration (`logs/combiner_key_calibration/keyhole.json` on the dog, the mean of all
+  runs' residuals, about (1.9, 2.0) mm), learned with the camera where it was.
+- Checked: compiles; the moved mount computed against the CAD's. **Not shown:** on the dog.
+
+### 2026-10-29 · No start without the wrist RealSense
+
+Lukas: "can we make the dog abort on demo startup if the realsense is disconnected". The camera had come off USB three
+times that morning with the arm resting (00:09:56, 00:52:01, 01:45:06 UTC).
+
+- **Change:** `node.py` `_start_attempt`. A live insertion's first attempt checks the RealSense's latest frame
+  (`realsense_t`) before the arm is enabled or anything moves.
+  - That is after the start look, some seconds after the node starts, at 15 Hz.
+  - Older than `WRIST_FRAMES_TIMEOUT_S` (2 s), or none: the run ends with "the wrist RealSense sends no frames (...):
+    is it plugged in? ... Nothing moved". `abort` is recorded.
+  - Not repeatable, so `--loop` stops there too: each loop run is a new node and is checked again.
+- The mid-run watchdog in the wrist looks is unchanged.
+- Checked: compiles. No tests run (Lukas). **Not shown:** on the dog.
+
+### 2026-10-29 · The "no frames" aborts at the lock look were the watchdog's bug
+
+Lukas: "the past runs, it aborts on the close look because of no frames from the realsense but I immediately start the
+code again and it doesnt abort on startup. I think the consistent aborts on the close look is a code issue".
+
+**The runs:**
+- [01:32](#/week/7/run/20261029T013240_insert_insert_door_pull_close_fast_live): locked (the camera's 2 mm in the code).
+- Four aborted at the lock's `lock_look`, 223-232 s in, with "the wrist RealSense sends no frames (none for 2 s)":
+  [01:39](#/week/7/run/20261029T013924_insert_insert_door_pull_close_fast_live),
+  [01:48](#/week/7/run/20261029T014813_insert_insert_door_pull_close_fast_live),
+  [01:53](#/week/7/run/20261029T015325_insert_insert_door_pull_close_fast_live),
+  [02:00](#/week/7/run/20261029T020054_insert_insert_door_pull_close_fast_live).
+- [01:58](#/week/7/run/20261029T015808_insert_insert_door_pull_close_fast_live) and
+  [02:05](#/week/7/run/20261029T020527_insert_insert_door_pull_close_fast_live): operator stops.
+
+**Why:**
+- Each abort came straight after a keyhole search that took over 2 s: 2096, 2083, 2647 and 2061 ms.
+- The camera's real disconnects in `kern.log` (01:49:56, 01:52:49, 01:57:47 UTC) fall at none of them.
+- The search runs in `_on_image`, in the images' mutually exclusive callback group. The next frame's callback waits for
+  it, so `realsense_t` (set as an image arrives) went stale while the camera was sending.
+- The searches at the lock look take 0.9-2.6 s, longer than at the unlock (1.1-1.9).
+
+**Fix (`node.py`):**
+- `_on_info` (the camera's `camera_info`, one per frame) sets `realsense_t`, in a callback group of its own. The
+  executor has 6 threads, one more for it.
+- `_on_image` still sets it too. `WRIST_FRAMES_TIMEOUT_S` stays 2 s.
+- Checked: compiles. No tests run (Lukas). **Not shown:** on the dog.
+
+### 2026-10-29 · The lock pressed 4 mm deeper (`--lock_beyond_face_mm 69`)
+
+Lukas: "it seems to be thinking the box is 4mm closer than it actually is, so it doesnt push the lock in fully. can we
+add an offset quickly".
+
+- The last two locks, [01:32](#/week/7/run/20261029T013240_insert_insert_door_pull_close_fast_live) and
+  [02:12](#/week/7/run/20261029T021239_insert_insert_door_pull_close_fast_live), ended `key_close` "at depth".
+  - The press reached its target, 65 mm beyond the lidar's face (62.4 and 61.6 measured), and no further.
+  - So the target, not the door's resistance, limited them.
+- **Change:** `d1dogdemo` in `~/.bashrc`, `--lock_beyond_face_mm` from 65 to 69 (backup `~/.bashrc.bak-20261029-lockdepth`).
+  - Only the lock's press: its end of `key_in` and `key_close`. The unlock is unchanged.
+  - `--key_in_mm` would move the model's lock for both insertions.
+- No code change. **Not shown:** on the dog.
+
+### 2026-10-30 · Weekly update 6 (Week 7), and the pull of the leg retrains
+
+`git fetch` / fast-forward of `mechanism-demo` to `origin/main` (`134b250`, the leg-corner retrains, F-228 to F-236),
+the working tree's robot-program changes stashed and put back. This file conflicted (both sides added Log entries);
+both kept, the retrain entries (26-28 Oct) first.
+
+Weekly update 6 written from week 5's document (same layout and colour key) to
+`~/Downloads/Weekly_Update_Lukas_6_20261031.docx`, with Lukas's two expo screenshots (`~/Pictures/Screenshots/`,
+2026-10-30 19-50-15 and 19-50-57). The first shows the dog lying in front of the box with the key drawn from the
+holster, its tag in view. The second shows it standing, the D1's jaws on the handle and the door pulled open.
+Numbers in it:
+- The demo runs from 27 Oct 23:02 to 29 Oct 02:12 UTC, all recorded above: 60 run folders, 22 with "attempt finished:
+  locked" plus 29 Oct 00:00 (locked, no outcome written after the operator's stop at home), so 23. "The key did not
+  seat" in 16 outcomes.
+- The camera's error 2.2 ± 1.2 / 1.9 ± 1.1 mm over 65 insertions, `--fast` about 40 s quicker, and 27 of the 28th's
+  USB drops with the arm at the lock, from the entries above.
+- The retrain and press numbers from F-229, F-232, F-233, F-235 and F-236.
+- The front camera's lens calibration from week 6 (F-206).
+
+**Not shown:** the 60 runs are not a placement-controlled repeatability test (G7). They include operator stops,
+quits at the start and refused tags, and the settings changed between runs.
 
 ## Results
 

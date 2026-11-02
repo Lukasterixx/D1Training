@@ -418,17 +418,20 @@ class LinkedArm:
 
 
 class AttemptTests(unittest.TestCase):
-    def run_attempt(self, stage, timing=None, max_steps=1200, arm=None, watch=None, expect_abort=False):
+    def run_attempt(self, stage, timing=None, max_steps=1200, arm=None, watch=None, expect_abort=False, fast=False):
         """A dry attempt with the arm link's profile driving a model servo (`SimulatedArm`), the jaws stalling on the
         lever while the hand holds it. `watch(attempt, command, arm, base)` is called each step. Returns the attempt,
         the phases in order, the arm's last joints and (base, jaw centre, grasp point) at the arrival; with
-        `expect_abort`, the attempt and the abort's reason."""
+        `expect_abort`, the attempt and the abort's reason. `fast`: `node.py --fast` (the attempt's, and joint moves at
+        `plan.FAST_JOINT_SPEED_DEG_S`)."""
         base = plan.base_pose(0.0, 0.0, 0.0)
         box = door_box(0.92, 0.0, 181.0)
         frames, scans = look(base, box)
         fix = plan.make_fix(base, frames, scans)
-        attempt = plan.Attempt(fix, stage, timing or plan.scaled_timing(1.0, 30.0))
+        attempt = plan.Attempt(fix, stage, timing or plan.scaled_timing(1.0, 30.0), fast=fast)
         arm = arm or LinkedArm(d1_hardware.REST_SERVO_DEG)
+        if fast:
+            arm.sender = plan.ArmSender(speed_deg_s=plan.FAST_JOINT_SPEED_DEG_S)
         joints, _ = d1_ik.load_urdf()
         phases, at_arrive, moving = [], None, (0.0, 0.0, 0.0)
         for step in range(max_steps):
@@ -531,10 +534,12 @@ class AttemptTests(unittest.TestCase):
         self.assertTrue(walked)
 
     def test_a_loaded_arm_aborts_the_pull(self):
+        # Off on the door since 2026-10-29 (`plan.DOOR_ARM_LAG_ABORTS`); the check itself, switched on.
         base = plan.base_pose(0.0, 0.0, 0.0)
         box = door_box(0.92, 0.0, 180.0)
         fix = plan.make_fix(base, *look(base, box))
         attempt = plan.Attempt(fix, "grip", plan.scaled_timing(1.5, 30.0))
+        attempt.arm_lag_aborts = True
         q = np.asarray(d1_hardware.REST_SERVO_DEG, dtype=float)
         stuck, why, moving = None, "", (0.0, 0.0, 0.0)
         for step in range(1500):

@@ -1,0 +1,336 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": "pull",
+  "then_close": true,
+  "lock": false,
+  "live": true,
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261027T230213_insert_insert_door_pull_close_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--then_door",
+    "pull",
+    "--then_close",
+    "--live",
+    "--lock_beyond_face_mm",
+    "55",
+    "--no_spiral"
+  ],
+  "started_utc": "20261027T230217",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 15.866,
+      "posture": "lie"
+    },
+    {
+      "t": 15.873,
+      "stop": "the lidar puts the door 98 mm and 7.4 deg from where the look did"
+    },
+    {
+      "t": 78.22,
+      "posture": "stand"
+    },
+    {
+      "t": 80.728,
+      "posture": "balance"
+    },
+    {
+      "t": 86.723,
+      "stop": "the insertion did not unlock the door (the key did not seat): no door pull"
+    },
+    {
+      "t": 86.732,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 50.2,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 21,
+    "with_tag": 21,
+    "lidar_frames": 21,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.48 m ahead, +0.35 m left, turned -2 deg: a walk up of 0.60 m",
+    "detections": 21,
+    "site": {
+      "distance_m": 0.7369,
+      "bearing_deg": -23.764,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.595,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 4.7,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.56,
+    "beyond_edges": 0.22,
+    "on_a_door": true
+  },
+  "looks": [
+    {
+      "frames": 21,
+      "with_tag": 21,
+      "lidar_frames": 21,
+      "found": true,
+      "in_range": true,
+      "text": "the push's stance 0.48 m ahead, +0.35 m left, turned -2 deg: a walk up of 0.60 m",
+      "detections": 21,
+      "site": {
+        "distance_m": 0.7369,
+        "bearing_deg": -23.764,
+        "yaw_deg": -180.0
+      },
+      "walk_in_m": 0.595,
+      "lidar_heading": {
+        "used": true,
+        "points": 4000,
+        "span_m": 0.56,
+        "rms_mm": 4.7,
+        "why_not": null
+      },
+      "tag_only_yaw_off_deg": 0.56,
+      "beyond_edges": 0.22,
+      "on_a_door": true,
+      "task": "insert",
+      "closing": false
+    }
+  ],
+  "abort": "the lidar puts the door 98 mm and 7.4 deg from where the look did",
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.472,
+        -0.362,
+        0.025
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.514,
+      "lock_right_m": 0.072,
+      "yaw_off_deg": -1.8,
+      "left_m": 0.012,
+      "carried_m": 0.028,
+      "carry_s": 0.12,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 14.813,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 172.9
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 98.1,
+      "turned_deg": 7.38
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 182.9
+    },
+    {
+      "phase": "recover",
+      "phases": [
+        "home",
+        "stand_up",
+        "stand_settle",
+        "fold"
+      ]
+    },
+    {
+      "t": 78.214,
+      "phase": "stand_up"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 181.9
+    },
+    {
+      "t": 80.716,
+      "phase": "stand_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_up",
+      "mm": 181.9
+    },
+    {
+      "t": 81.714,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_settle",
+      "mm": 181.3
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 181.6
+    }
+  ],
+  "key_attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.472,
+        -0.362,
+        0.025
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.514,
+      "lock_right_m": 0.072,
+      "yaw_off_deg": -1.8,
+      "left_m": 0.012,
+      "carried_m": 0.028,
+      "carry_s": 0.12,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 14.813,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 172.9
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 98.1,
+      "turned_deg": 7.38
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 182.9
+    },
+    {
+      "phase": "recover",
+      "phases": [
+        "home",
+        "stand_up",
+        "stand_settle",
+        "fold"
+      ]
+    },
+    {
+      "t": 78.214,
+      "phase": "stand_up"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 181.9
+    },
+    {
+      "t": 80.716,
+      "phase": "stand_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_up",
+      "mm": 181.9
+    },
+    {
+      "t": 81.714,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_settle",
+      "mm": 181.3
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 181.6
+    }
+  ],
+  "insert": {
+    "verified": false,
+    "why": "the key did not seat",
+    "key_source": "holster",
+    "key_right_mm": -0.0,
+    "key_up_mm": 0.0,
+    "key_in_mm": 0.0,
+    "lock_deeper_mm": 3.5,
+    "shaft_along_mm": 2.0,
+    "shaft_up_mm": -0.0,
+    "drawn_mm": null,
+    "turn_deg": null,
+    "turned_deg": null,
+    "left_in_lock": false,
+    "held": null,
+    "lie_drop_m": null,
+    "plan": null,
+    "look": null,
+    "vision": null,
+    "spiral": false,
+    "wrist_search_deg": null,
+    "wrist_at_entry_deg": null,
+    "contact_off_mm": null,
+    "entered_at_mm": null,
+    "searched_r_mm": 0.0,
+    "seated": null,
+    "measured_off_mm": null,
+    "released": false,
+    "lock": false,
+    "lock_from_deg": null,
+    "closed_deg": null,
+    "closed": null,
+    "key_mm": [
+      408.03,
+      -64.93,
+      155.96
+    ]
+  },
+  "outcome": "the insertion did not unlock the door (the key did not seat): no door pull"
+}

@@ -496,6 +496,7 @@ class KeyAttempt(WalkUp, plan.Attempt):
     position_only_phases = {"walk_in", "walk_settle", "pause", "home"}
     #: The arm's lag abort (`plan.ARM_LAG_DEG`) and, in the turn, the hand's (`STALL_S`).
     holding_phases = {"key_touch", "turn", "key_hold"}
+    arm_lag_aborts = True                           # kept on the key (`plan.DOOR_ARM_LAG_ABORTS`)
     #: Where an abort lifts the hand off the key before folding.
     at_the_lever_phases = {"key_above", "key_touch", "turn", "key_hold", "key_lift", "key_clear"}
     walking_phases = {"walk_in"}

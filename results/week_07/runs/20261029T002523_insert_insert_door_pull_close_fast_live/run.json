@@ -1,0 +1,1108 @@
+{
+  "mode": "combiner_key_robot",
+  "status": "finished",
+  "task": "insert",
+  "stage": "insert",
+  "then_door": "pull",
+  "then_close": true,
+  "lock": false,
+  "live": true,
+  "fast": true,
+  "loop": true,
+  "return_home": {
+    "why": "the insertion did not unlock the door (the key did not seat): no door pull",
+    "from": [
+      0.407,
+      0.525,
+      0.36
+    ],
+    "to": [
+      0.042,
+      0.344,
+      0.154
+    ],
+    "distance_m": 0.407,
+    "turn_deg": -11.8,
+    "t": 35.88,
+    "walked": true,
+    "arrived": true,
+    "ended": [
+      0.035,
+      0.361,
+      0.149
+    ],
+    "corrections": [
+      {
+        "frames": 11,
+        "found": true,
+        "off_m": 0.024,
+        "turn_deg": -2.2,
+        "walked": true
+      },
+      {
+        "frames": 11,
+        "found": true,
+        "off_m": 0.017,
+        "turn_deg": 0.4,
+        "walked": false
+      }
+    ]
+  },
+  "camera": "front",
+  "look_camera_model": "cv2.fisheye.calibrate on two videos of the A3 ChArUco board (9x6, 40 mm, tag36h11) through the dog's front camera, 2026-10-24 (logs/front_camera_calibration/20261024T124011_calibrate): 474 views, 0.22 px rms; the squares 40 mm as printed (Lukas measured); the image's corners from the second clip alone",
+  "argv": [
+    "--run_dir",
+    "/root/D1Training/logs/combiner_door_robot/20261029T002523_insert_insert_door_pull_close_fast_live",
+    "--task",
+    "insert",
+    "--stage",
+    "insert",
+    "--then_door",
+    "pull",
+    "--then_close",
+    "--live",
+    "--lock_beyond_face_mm",
+    "65",
+    "--no_spiral",
+    "--fast",
+    "--loop",
+    "--lock_key_left_mm",
+    "3",
+    "--unlock_key_left_mm",
+    "1"
+  ],
+  "started_utc": "20261029T002527",
+  "odom": "sport",
+  "events": [
+    {
+      "t": 13.452,
+      "posture": "lie"
+    },
+    {
+      "t": 20.497,
+      "phase": "lock_look",
+      "searched_ms": 2018,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          6.15,
+          -33.26,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 48.13,
+        "runner_up": 78.13,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            654.5,
+            419.6
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 81.9,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.671,
+          "why": "",
+          "out_mm": 8.4,
+          "out_used": false,
+          "range_m": 0.5006,
+          "model_range_m": 0.4967,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 22.574,
+      "stop": "the wrist RealSense sends no frames (none for 2 s): it may have come off USB; reboot the dog to bring it back"
+    },
+    {
+      "t": 22.57,
+      "phase": "lock_look",
+      "searched_ms": 1369,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          5.84,
+          -35.6,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 48.05,
+        "runner_up": 77.11,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            654.5,
+            419.7
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 84.5,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.011,
+          "score": 0.664,
+          "why": "",
+          "out_mm": 7.9,
+          "out_used": false,
+          "range_m": 0.5002,
+          "model_range_m": 0.4962,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 23.957,
+      "phase": "lock_look",
+      "searched_ms": 1131,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          6.44,
+          -32.71,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.72,
+        "runner_up": 77.18,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            654.9,
+            411.1
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 83.4,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.008,
+          "score": 0.672,
+          "why": "",
+          "out_mm": 8.3,
+          "out_used": false,
+          "range_m": 0.4998,
+          "model_range_m": 0.4961,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 25.118,
+      "phase": "lock_look",
+      "searched_ms": 1177,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          6.74,
+          -32.44,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.74,
+        "runner_up": 77.11,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            654.9,
+            411.2
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 83.0,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.674,
+          "why": "",
+          "out_mm": 8.7,
+          "out_used": false,
+          "range_m": 0.5,
+          "model_range_m": 0.4963,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 26.311,
+      "phase": "lock_look",
+      "searched_ms": 1389,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          6.68,
+          -32.51,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.73,
+        "runner_up": 77.17,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            654.9,
+            411.2
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 83.6,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.674,
+          "why": "",
+          "out_mm": 8.1,
+          "out_used": false,
+          "range_m": 0.5,
+          "model_range_m": 0.4962,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 27.72,
+      "phase": "lock_look",
+      "searched_ms": 1234,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          6.84,
+          -32.43,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.49,
+        "runner_up": 77.32,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            655.0,
+            411.2
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 84.4,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.008,
+          "score": 0.675,
+          "why": "",
+          "out_mm": 8.3,
+          "out_used": false,
+          "range_m": 0.5001,
+          "model_range_m": 0.4963,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 28.984,
+      "phase": "home",
+      "searched_ms": 1060,
+      "keyhole": {
+        "ok": true,
+        "offset_mm": [
+          6.99,
+          -32.27,
+          0.0
+        ],
+        "support": 1.0,
+        "score": 47.48,
+        "runner_up": 77.24,
+        "why": "",
+        "how": "image",
+        "image": {
+          "ok": true,
+          "centre_px": [
+            655.0,
+            411.2
+          ],
+          "axes_px": [
+            25.5,
+            24.6
+          ],
+          "angle_deg": 82.8,
+          "support": 1.0,
+          "contrast": 0.74,
+          "isolation": 1.0,
+          "seen": 1.0,
+          "residual": 0.009,
+          "score": 0.675,
+          "why": "",
+          "out_mm": 8.4,
+          "out_used": false,
+          "range_m": 0.5002,
+          "model_range_m": 0.4965,
+          "model_r_px": 24.9
+        }
+      }
+    },
+    {
+      "t": 32.07,
+      "posture": "stand"
+    },
+    {
+      "t": 34.471,
+      "posture": "balance"
+    },
+    {
+      "t": 44.872,
+      "stop": "the insertion did not unlock the door (the key did not seat): no door pull; back where it started, facing the box as it did"
+    },
+    {
+      "t": 44.877,
+      "stop": "quit"
+    }
+  ],
+  "plan": {
+    "arm_step_deg": 3.0,
+    "walk_floor": [
+      0.18,
+      0.2,
+      0.45
+    ],
+    "walk_cap": [
+      0.25,
+      0.25,
+      0.6
+    ],
+    "carry_s": 0.36,
+    "gripper_open_units": 50.2,
+    "gripper_shut_units": -19.8,
+    "lever_mm": [
+      140.0,
+      40.0,
+      17.0
+    ]
+  },
+  "look": {
+    "frames": 10,
+    "with_tag": 10,
+    "lidar_frames": 10,
+    "found": true,
+    "in_range": true,
+    "text": "the push's stance 0.43 m ahead, +0.13 m left, turned +2 deg: a walk up of 0.45 m",
+    "detections": 10,
+    "site": {
+      "distance_m": 0.7472,
+      "bearing_deg": -26.528,
+      "yaw_deg": -180.0
+    },
+    "walk_in_m": 0.448,
+    "lidar_heading": {
+      "used": true,
+      "points": 4000,
+      "span_m": 0.56,
+      "rms_mm": 5.1,
+      "why_not": null
+    },
+    "tag_only_yaw_off_deg": 0.63,
+    "beyond_edges": 0.0,
+    "on_a_door": true
+  },
+  "looks": [
+    {
+      "frames": 10,
+      "with_tag": 10,
+      "lidar_frames": 10,
+      "found": true,
+      "in_range": true,
+      "text": "the push's stance 0.43 m ahead, +0.13 m left, turned +2 deg: a walk up of 0.45 m",
+      "detections": 10,
+      "site": {
+        "distance_m": 0.7472,
+        "bearing_deg": -26.528,
+        "yaw_deg": -180.0
+      },
+      "walk_in_m": 0.448,
+      "lidar_heading": {
+        "used": true,
+        "points": 4000,
+        "span_m": 0.56,
+        "rms_mm": 5.1,
+        "why_not": null
+      },
+      "tag_only_yaw_off_deg": 0.63,
+      "beyond_edges": 0.0,
+      "on_a_door": true,
+      "task": "insert",
+      "closing": false
+    }
+  ],
+  "abort": "the wrist RealSense sends no frames (none for 2 s): it may have come off USB; reboot the dog to bring it back",
+  "attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.433,
+        -0.116,
+        -0.041
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.526,
+      "lock_right_m": 0.099,
+      "yaw_off_deg": -2.0,
+      "left_m": 0.025,
+      "carried_m": 0.009,
+      "carry_s": 0.05,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 12.363,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 182.1
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 76.1,
+      "turned_deg": 0.84
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.45 m ahead, +0.10 m right, door -2.8 deg off square"
+    },
+    {
+      "t": 13.365,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 183.0
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.251
+    },
+    {
+      "t": 16.364,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 182.7
+    },
+    {
+      "phase": "refit_lying",
+      "used": true,
+      "odometry_back_mm": 10.1,
+      "sit_back_added_mm": 29.9,
+      "scans": 15,
+      "moved_mm": 8.6,
+      "turned_deg": 0.43
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.48 m ahead, +0.12 m right, door -6.1 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "deg": 0.0,
+          "camera_mm": 168.7,
+          "shoulder_share": 0.5,
+          "j6_rad": 1.444
+        },
+        {
+          "pose": "pre",
+          "deg": 0.0,
+          "camera_mm": 168.6,
+          "shoulder_share": 0.61,
+          "j6_rad": 1.436
+        },
+        {
+          "pose": "touch",
+          "deg": 0.0,
+          "camera_mm": 169.6,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.431
+        },
+        {
+          "pose": "seated",
+          "deg": 0.0,
+          "camera_mm": 170.7,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.427
+        },
+        {
+          "pose": "across+",
+          "deg": 0.0,
+          "camera_mm": 174.5,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.413
+        },
+        {
+          "pose": "across-",
+          "deg": 0.0,
+          "camera_mm": 164.8,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.447
+        },
+        {
+          "pose": "touch_wrist+",
+          "deg": 10.0,
+          "camera_mm": 169.9,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.256
+        },
+        {
+          "pose": "seated_wrist+",
+          "deg": 10.0,
+          "camera_mm": 171.0,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.252
+        },
+        {
+          "pose": "across_wrist+",
+          "deg": 10.0,
+          "camera_mm": 174.8,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.238
+        },
+        {
+          "pose": "touch_wrist-",
+          "deg": -10.0,
+          "camera_mm": 169.3,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.605
+        },
+        {
+          "pose": "seated_wrist-",
+          "deg": -10.0,
+          "camera_mm": 170.4,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.602
+        },
+        {
+          "pose": "across_wrist-",
+          "deg": -10.0,
+          "camera_mm": 164.5,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.622
+        },
+        {
+          "pose": "turned55",
+          "deg": 65.0,
+          "camera_mm": 170.7,
+          "shoulder_share": 0.65,
+          "j6_rad": 0.293
+        }
+      ],
+      "wrist_search_deg": [
+        -10.0,
+        10.0
+      ]
+    },
+    {
+      "phase": "plan_look",
+      "aim_servo_deg": [
+        14.3,
+        -90.0,
+        90.0,
+        -3.1,
+        -21.6,
+        3.1
+      ],
+      "places": 5,
+      "left_out": []
+    },
+    {
+      "t": 17.864,
+      "phase": "lock_look"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 182.7
+    },
+    {
+      "phase": "recover",
+      "phases": [
+        "home",
+        "stand_up",
+        "stand_settle",
+        "fold"
+      ]
+    },
+    {
+      "t": 32.065,
+      "phase": "stand_up"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 183.4
+    },
+    {
+      "t": 34.465,
+      "phase": "stand_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_up",
+      "mm": 183.1
+    },
+    {
+      "t": 35.464,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_settle",
+      "mm": 183.4
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 183.4
+    }
+  ],
+  "key_attempt_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        -0.433,
+        -0.116,
+        -0.041
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "seated_ahead_m": 0.526,
+      "lock_right_m": 0.099,
+      "yaw_off_deg": -2.0,
+      "left_m": 0.025,
+      "carried_m": 0.009,
+      "carry_s": 0.05,
+      "lat_floor": 0.2
+    },
+    {
+      "t": 12.363,
+      "phase": "walk_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_in",
+      "mm": 182.1
+    },
+    {
+      "phase": "refit",
+      "used": true,
+      "moved_mm": 76.1,
+      "turned_deg": 0.84
+    },
+    {
+      "phase": "reanchor",
+      "ok": true,
+      "text": "the seated key 0.45 m ahead, +0.10 m right, door -2.8 deg off square"
+    },
+    {
+      "t": 13.365,
+      "phase": "lie_down"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "walk_settle",
+      "mm": 183.0
+    },
+    {
+      "phase": "lain",
+      "drop_m": 0.251
+    },
+    {
+      "t": 16.364,
+      "phase": "lie_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_down",
+      "mm": 182.7
+    },
+    {
+      "phase": "refit_lying",
+      "used": true,
+      "odometry_back_mm": 10.1,
+      "sit_back_added_mm": 29.9,
+      "scans": 15,
+      "moved_mm": 8.6,
+      "turned_deg": 0.43
+    },
+    {
+      "phase": "reanchor_lying",
+      "text": "the seated key 0.48 m ahead, +0.12 m right, door -6.1 deg off square"
+    },
+    {
+      "phase": "plan_insert",
+      "poses": [
+        {
+          "pose": "view",
+          "deg": 0.0,
+          "camera_mm": 168.7,
+          "shoulder_share": 0.5,
+          "j6_rad": 1.444
+        },
+        {
+          "pose": "pre",
+          "deg": 0.0,
+          "camera_mm": 168.6,
+          "shoulder_share": 0.61,
+          "j6_rad": 1.436
+        },
+        {
+          "pose": "touch",
+          "deg": 0.0,
+          "camera_mm": 169.6,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.431
+        },
+        {
+          "pose": "seated",
+          "deg": 0.0,
+          "camera_mm": 170.7,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.427
+        },
+        {
+          "pose": "across+",
+          "deg": 0.0,
+          "camera_mm": 174.5,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.413
+        },
+        {
+          "pose": "across-",
+          "deg": 0.0,
+          "camera_mm": 164.8,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.447
+        },
+        {
+          "pose": "touch_wrist+",
+          "deg": 10.0,
+          "camera_mm": 169.9,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.256
+        },
+        {
+          "pose": "seated_wrist+",
+          "deg": 10.0,
+          "camera_mm": 171.0,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.252
+        },
+        {
+          "pose": "across_wrist+",
+          "deg": 10.0,
+          "camera_mm": 174.8,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.238
+        },
+        {
+          "pose": "touch_wrist-",
+          "deg": -10.0,
+          "camera_mm": 169.3,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.605
+        },
+        {
+          "pose": "seated_wrist-",
+          "deg": -10.0,
+          "camera_mm": 170.4,
+          "shoulder_share": 0.65,
+          "j6_rad": 1.602
+        },
+        {
+          "pose": "across_wrist-",
+          "deg": -10.0,
+          "camera_mm": 164.5,
+          "shoulder_share": 0.64,
+          "j6_rad": 1.622
+        },
+        {
+          "pose": "turned55",
+          "deg": 65.0,
+          "camera_mm": 170.7,
+          "shoulder_share": 0.65,
+          "j6_rad": 0.293
+        }
+      ],
+      "wrist_search_deg": [
+        -10.0,
+        10.0
+      ]
+    },
+    {
+      "phase": "plan_look",
+      "aim_servo_deg": [
+        14.3,
+        -90.0,
+        90.0,
+        -3.1,
+        -21.6,
+        3.1
+      ],
+      "places": 5,
+      "left_out": []
+    },
+    {
+      "t": 17.864,
+      "phase": "lock_look"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "lie_settle",
+      "mm": 182.7
+    },
+    {
+      "phase": "recover",
+      "phases": [
+        "home",
+        "stand_up",
+        "stand_settle",
+        "fold"
+      ]
+    },
+    {
+      "t": 32.065,
+      "phase": "stand_up"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "home",
+      "mm": 183.4
+    },
+    {
+      "t": 34.465,
+      "phase": "stand_settle"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_up",
+      "mm": 183.1
+    },
+    {
+      "t": 35.464,
+      "phase": "fold"
+    },
+    {
+      "phase": "camera_gap",
+      "of": "stand_settle",
+      "mm": 183.4
+    },
+    {
+      "phase": "camera_gap",
+      "of": "fold",
+      "mm": 183.4
+    }
+  ],
+  "insert": {
+    "verified": false,
+    "why": "the key did not seat",
+    "key_source": "holster",
+    "key_right_mm": -0.0,
+    "key_up_mm": 0.0,
+    "key_in_mm": 0.0,
+    "lock_deeper_mm": 3.5,
+    "shaft_along_mm": 2.0,
+    "shaft_up_mm": -0.0,
+    "drawn_mm": null,
+    "turn_deg": 55.0,
+    "turned_deg": null,
+    "left_in_lock": false,
+    "held": null,
+    "lie_drop_m": 0.251,
+    "plan": [
+      {
+        "pose": "view",
+        "deg": 0.0,
+        "camera_mm": 168.7,
+        "shoulder_share": 0.5,
+        "j6_rad": 1.444
+      },
+      {
+        "pose": "pre",
+        "deg": 0.0,
+        "camera_mm": 168.6,
+        "shoulder_share": 0.61,
+        "j6_rad": 1.436
+      },
+      {
+        "pose": "touch",
+        "deg": 0.0,
+        "camera_mm": 169.6,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.431
+      },
+      {
+        "pose": "seated",
+        "deg": 0.0,
+        "camera_mm": 170.7,
+        "shoulder_share": 0.65,
+        "j6_rad": 1.427
+      },
+      {
+        "pose": "across+",
+        "deg": 0.0,
+        "camera_mm": 174.5,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.413
+      },
+      {
+        "pose": "across-",
+        "deg": 0.0,
+        "camera_mm": 164.8,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.447
+      },
+      {
+        "pose": "touch_wrist+",
+        "deg": 10.0,
+        "camera_mm": 169.9,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.256
+      },
+      {
+        "pose": "seated_wrist+",
+        "deg": 10.0,
+        "camera_mm": 171.0,
+        "shoulder_share": 0.65,
+        "j6_rad": 1.252
+      },
+      {
+        "pose": "across_wrist+",
+        "deg": 10.0,
+        "camera_mm": 174.8,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.238
+      },
+      {
+        "pose": "touch_wrist-",
+        "deg": -10.0,
+        "camera_mm": 169.3,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.605
+      },
+      {
+        "pose": "seated_wrist-",
+        "deg": -10.0,
+        "camera_mm": 170.4,
+        "shoulder_share": 0.65,
+        "j6_rad": 1.602
+      },
+      {
+        "pose": "across_wrist-",
+        "deg": -10.0,
+        "camera_mm": 164.5,
+        "shoulder_share": 0.64,
+        "j6_rad": 1.622
+      },
+      {
+        "pose": "turned55",
+        "deg": 65.0,
+        "camera_mm": 170.7,
+        "shoulder_share": 0.65,
+        "j6_rad": 0.293
+      }
+    ],
+    "look": null,
+    "vision": null,
+    "spiral": false,
+    "wrist_search_deg": [
+      -10.0,
+      10.0
+    ],
+    "wrist_at_entry_deg": null,
+    "contact_off_mm": null,
+    "entered_at_mm": null,
+    "searched_r_mm": 0.0,
+    "seated": null,
+    "measured_off_mm": null,
+    "released": false,
+    "lock": false,
+    "lock_from_deg": null,
+    "lock_key_left_mm": null,
+    "unlock_key_left_mm": 1.0,
+    "closed_deg": null,
+    "closed": null,
+    "key_mm": [
+      381.03,
+      -89.75,
+      161.52
+    ]
+  },
+  "return_home_events": [
+    {
+      "phase": "walk_up",
+      "from": [
+        0.021,
+        -0.002,
+        0.038
+      ]
+    },
+    {
+      "phase": "walk_up",
+      "step": 0,
+      "close_enough": true,
+      "left_m": 0.014,
+      "carried_m": 0.033,
+      "carry_s": 0.12,
+      "lat_floor": 0.2
+    }
+  ],
+  "outcome": "the insertion did not unlock the door (the key did not seat): no door pull; back where it started, facing the box as it did",
+  "repeatable": false
+}

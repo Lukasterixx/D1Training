@@ -40,7 +40,8 @@ class InsertAttemptTests(unittest.TestCase):
                     lock_there=True, dry=False, vision=False, calibration_path=None, hidden=(), key_source="hand",
                     lidar_lying=True, true_along_m=None, true_up_m=None, key_right_mm=None, key_up_mm=None, turn_deg=None, true_deeper_m=None,
                     key_in_mm=0.0, reholster=True, then_door=None, ajar_deg=DOOR_AJAR_DEG, look_turn_deg=0.0,
-                    lock_ajar_deg=None, lock_soft=False, lock_beyond_face_mm=None, spiral=True):
+                    lock_ajar_deg=None, lock_soft=False, lock_beyond_face_mm=None, spiral=True, fast=False,
+                    lock_left_mm=0.0, unlock_left_mm=0.0):
         """A dry insertion attempt. The keyway is `keyway_mm` (along the key, up its top side) off where the box's model
         has it; the arm's key stops on the lock's face unless its shaft is within `CLEAR_M` of it. `key`: a key between
         the jaws (an int: from that try of the grip on). `slip_in`: the key falls out in that phase. `vision`: the wrist
@@ -57,7 +58,10 @@ class InsertAttemptTests(unittest.TestCase):
         lidar see it there, rigid through the touch and the seat (the spring stiffer than the touch), and through
         `key_close` it turns shut about its hinge as the seated key pushes it, to its frame at 0 (`self.door_deg`).
         `lock_soft`: the spring weaker than the touch, as on the dog (2026-10-25 05:07 UTC): the door turns shut under the
-        key from `key_in` on. `lock_beyond_face_mm`: the attempt's press (`InsertAttempt.lock_beyond_face_m`). Returns (attempt, phases, arm, abort reason or "")."""
+        key from `key_in` on. `lock_beyond_face_mm`: the attempt's press (`InsertAttempt.lock_beyond_face_m`). `fast`: `node.py
+        --fast` (the attempt's, and the node's joint moves at `plan.FAST_JOINT_SPEED_DEG_S`). `lock_left_mm`: locking, the key's
+        offset left of the keyway (`InsertAttempt.lock_left_m`); 0 here, where the keyway is where the camera sees it (the
+        dog's default, `LOCK_KEY_LEFT_M`, corrects a bias seen there). Returns (attempt, phases, arm, abort reason or "")."""
         base = plan.base_pose(0.0, 0.0, 0.0)
         box = box_for_lock(*(lock or lock_ahead()), 180.0, height)
         closed_box, self.door_deg = box, float(lock_ajar_deg or 0.0)
@@ -72,13 +76,16 @@ class InsertAttemptTests(unittest.TestCase):
                                    key_right_m=None if key_right_mm is None else key_right_mm / 1000.0,
                                    key_up_m=None if key_up_mm is None else key_up_mm / 1000.0,
                                    key_in_m=key_in_mm / 1000.0, reholster=reholster, lock=lock_ajar_deg is not None,
-                                   spiral=spiral,
+                                   spiral=spiral, fast=fast, lock_left_m=lock_left_mm / 1000.0,
+                                   unlock_left_m=unlock_left_mm / 1000.0,
                                    **({} if lock_beyond_face_mm is None else
                                       {"lock_beyond_face_m": lock_beyond_face_mm / 1000.0}),
                                    **({} if turn_deg is None else {"turn_deg": turn_deg}))
         if attempt_out is not None:
             attempt_out.append(attempt)
         arm = LinkedArm(d1_hardware.REST_SERVO_DEG)
+        if fast:
+            arm.sender = plan.ArmSender(speed_deg_s=plan.FAST_JOINT_SPEED_DEG_S)
         joints = attempt.arm.joints
         true_base, rng, moving = base, np.random.default_rng(5), (0.0, 0.0, 0.0)
         body, posture, phases, released = STAND_BODY_M, "", [], False
