@@ -8,7 +8,7 @@
      "live_zero": ["--live", "--zero_test", "--step", "--timing", "--console"]}},
   {"id": "reach_66600", "label": "Reach sticky 66600 (whole body)", "kind": "press",
    "file": "checkpoints/reach_force_sticky_model_66600.npz",
-   "status": "Trained on sticky legs. Misses the replay gate: 17-21 deg of lead against 15, under the 25 deg stop. Never run on the dog. A lead stop now holds the arm, folds and lies down.",
+   "status": "Trained on sticky legs. Four complete live runs, 10 s (F-257). Misses the replay gate: 17-21 deg of lead against 15, under the 25 deg stop. A lead stop now holds the arm, folds and lies down.",
    "note": "Live drives the legs AND the arm for 10 s. A tilt, a leg bound or the E-stop still goes to damping with the arm held out, then sport mode. Dry: the policy sees a simulated arm, nothing is sent.",
    "confirm": {"live_whole": "arm"},
    "modes": {

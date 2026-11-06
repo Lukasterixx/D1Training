@@ -1,0 +1,154 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.021,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.332,
+    "stand_q": [
+      -0.0187,
+      0.7061,
+      -1.4278,
+      0.0371,
+      0.7126,
+      -1.5005,
+      -0.0141,
+      0.7315,
+      -1.4726,
+      0.1337,
+      0.6673,
+      -1.4549
+    ]
+  },
+  {
+    "t": 11.14,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 11.14,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 12.66,
+    "event": "lying",
+    "calf": [
+      -2.481,
+      -2.491,
+      -2.554,
+      -2.531
+    ]
+  },
+  {
+    "t": 12.66,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 12.8,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 12.82,
+    "event": "sport mode released"
+  },
+  {
+    "t": 12.82,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 13.24,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 13.24,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 16.742,
+    "event": "arm: unfolding"
+  },
+  {
+    "t": 21.101,
+    "event": "arm: at the policy's start"
+  },
+  {
+    "t": 22.121,
+    "event": "taken at the blend",
+    "base_m": 0.289,
+    "roll_pitch_deg": [
+      0.3,
+      -3.9
+    ],
+    "q_minus_trained_settled": [
+      0.031,
+      0.13,
+      0.121,
+      -0.02,
+      0.117,
+      0.142,
+      -0.1,
+      -0.042,
+      0.126,
+      0.088,
+      -0.053,
+      0.145
+    ]
+  },
+  {
+    "t": 22.121,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 22.144,
+    "event": "the arm's goals are going to the link"
+  },
+  {
+    "t": 32.145,
+    "event": "the policy is done",
+    "presses": 0
+  },
+  {
+    "t": 32.145,
+    "event": "mode policy -> stand_end"
+  },
+  {
+    "t": 33.663,
+    "event": "arm: folding"
+  },
+  {
+    "t": 39.722,
+    "event": "arm: folded"
+  },
+  {
+    "t": 39.722,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 44.241,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 78.981,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 79.0,
+    "event": "LowCmd stopped",
+    "sent": 32845
+  },
+  {
+    "t": 80.5,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 82.18,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 82.18,
+    "event": "mode handback -> done"
+  }
+]

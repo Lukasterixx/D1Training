@@ -872,6 +872,35 @@ Lukas ran `live_whole` again on a wooden floor (`20261106T133525_reach_stand_liv
 
 `armft6b` `66600` is the closest to passing both: arm 17 / 7, 17 / 8 and 21 deg, legs 0.56 / 0.26 rad, J4 coming back to -14 by itself. It misses the 15 deg gate by 2-6 deg, and its reversals are 35% against 30%, so by the rule nothing is chosen. The runner's stop is 25 deg, which the replay stays under. Lukas asked to test a checkpoint before sleeping, for the data: the replay holds the legs as they were, so only a run shows how they answer a different policy. Exported as `reach_force_sticky_model_66600.npz`, console entry `reach_66600`, 10 s stand, with the stop split.
 
+### 2026-11-07 · The first complete whole-body run
+
+From the UniFP session's `1d04f12e` (`reach_force_sticky_model_66600`, the stop split), the code read and 108 tests passed here first. The console restarted, `d1update` by it. [Dry, stopped by B](#/week/8/run/20261106T140624_reach_stand), then [live](#/week/8/run/20261106T140642_reach_stand_live) from a sport-mode stand: **Reach sticky 66600, Live whole body**, typed `arm`, `live`:
+
+    run_press_on_dog.sh --policy checkpoints/reach_force_sticky_model_66600.npz --presses 0 --stand_s 10 --reach_arm_obs reports --reach_arm_send --live --start_on_blend --start_pitch_deg -10 5 --status_port 8098
+
+Lukas: "this run succeeded!". Handover at pitch -3.9, base 0.289 m. No stop. J4 target and report: -6 / +1 at 0.58 s, -20 / -12 at 0.98, -13 / -16 at 1.5, then a slow settle to -23 / -23 by 8 s. Lead at most 20.3 deg in the first second, 6.9 after. Then folded in 6.1 s, lay down, and A gave sport mode back. See F-257.
+
+**Does not show:** the hand on goal (not measured), any force, the soft stop (it never fired), or repeatability.
+
+[A second complete run](#/week/8/run/20261106T141120_reach_stand_live), the same command. Lukas: "there was more leg movement this time". The record agrees: joints' summed movement 4.2 rad against 1.5, thighs ranging 0.21-0.31 rad after 3 s against 0.00-0.01. It started within 0.01 rad of the first run's leg pose and was quiet to 3.5 s, then the legs moved in steps: all four thighs down ~0.12 rad around 4.3 s with roll +2.5 to -1.7, then up ~0.25 rad over 6-7 s. Feet stayed loaded (at least 24 N). Body within pitch -3.4 to -6.1, roll 2.5, base 0.285-0.296 m. The arm answered: at 6.1 s J4's target went from 0 to -27 at up to 157 deg/s, lead 19.5 deg, over 15 for 0.4 s, under the guard's 25. Ended without a stop, folded, lay down, sport mode back. Steps with the legs quiet between look like stick-slip, the UniFP session's sticky legs; that is a reading, not shown.
+
+**Where the hand ended, all four runs.** The UniFP session's script (`handgoal.py`, `handgoal.txt` in each run): the CAD tip by forward kinematics from the arm's reports, on the base from leg kinematics and roll and pitch, against the `init_start` goal at (0.405, 0, 0.784) m. Calculated, not a measured point, and yaw taken as zero.
+
+| run | at handover, cm | last 3 s, mean cm | closest, cm |
+|---|---|---|---|
+| [1](#/week/8/run/20261106T140642_reach_stand_live) | 6.6 | 5.0 | 3.1 |
+| [2](#/week/8/run/20261106T141120_reach_stand_live) | 6.2 | 4.6 | 0.8 |
+| [3](#/week/8/run/20261106T141455_reach_stand_live) | 6.4 | 5.2 | 2.6 |
+| [4](#/week/8/run/20261106T141945_reach_stand_live) | 6.2 | 4.9 | 2.7 |
+
+The end is about 4 cm back, 2.5-3 cm left, height on goal. The simulator's J4 test for this policy ended at 3.8 and 7.8 cm (the UniFP session's figures), so the dog is inside that range; simulation's frozen set was 2-4 cm for earlier policies.
+
+**A correction, in case the wrong figure was seen.** The first table from this script said 11.1 and 10.4 cm, and I told Lukas neither run reached. The script added `ARM_MOUNT_POS_M` to `d1_ik.tool_pose`, which is already in the Go2 base frame (`forward` starts at `MOUNT_B`): 8.5 cm too high. The UniFP session found it before the push, and I confirmed it in the code. Nothing with 11 cm went out.
+
+**Runs 3 and 4**, the same command, Lukas's: both complete. Lead after the first second at most 4.6 and 4.4 deg, legs quiet (ratio 0.09, 1.5-1.6 rad of movement), pitch within 5.2, roll within 2.8, folded in about 6 s. So three of four runs were quiet and run 2 alone stepped.
+
+**The replay on these runs' own frames (`ownframes.py`, `ownframes_switch.py`; offline, open in the legs).** It does not give back the dog: 10-11 deg RMS on the targets, settling at J2 about +21 and the hand 9-10 cm off in all four, where the dog sat at J2 +4 and 5 cm. It parts by 3 deg at 0.6-0.74 s. Run on the recorded frames to a switch time, then closed, it lands on the dog's pose from 2 s on in run 1 and from about 5 s in run 2, and on the J2 +21 pose from earlier. That reads as two stable arm poses chosen in the first seconds, the dog in the better one each time. A reading, not yet a finding; the UniFP session has it. It means the replay's hand figure is not to be trusted for this policy.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->

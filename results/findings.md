@@ -8385,3 +8385,28 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - This, not the simulator, is the gate for a policy on the dog.
   - What simulated legs answer at once hides is a policy leaning on its legs: test a whole-body policy against recorded real frames before it runs.
 
+### F-257 — The first complete whole-body run on the dog: `66600` held the stand and the arm for 10 s with no stop, J4 within 6.9 deg of its report from 1 s on, then the arm folded on the stand-up gains, the dog lay down and sport mode came back
+
+- **Status:** confirmed for this one run; provisional for the policy (one run, one goal, one stance, a 10 s stand)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "The first complete whole-body run". [The run](#/week/8/run/20261106T140642_reach_stand_live), with `policy_rows.npz` and `arm_link.jsonl`.
+
+  | what | result |
+  |---|---|
+  | end | `--stand_s 10.0 s`, no abort, 501 policy steps, step period 20 ms (p99 20.7) |
+  | body on the policy | pitch -3.5 to -5.6, roll at most 3.1 deg, base 0.287-0.295 m |
+  | lead, target over report | at most 20.3 deg in the first second, at most 6.9 after it, 3.8 at p95; none over 15 from 1 s on |
+  | arm, settled | target J1-J6 14, 4, -10, -23, 27, -19 deg, held from about 5 s; target std after 3 s at most 1.4 deg |
+  | leg targets | at most 0.56 rad off default, 0.24 after the first second; movement 0.15 of their targets' over the first 1.5 s |
+  | arm link | 90 follow commands, period 111 ms (at most 119), 0 repeated, 7 at the cap |
+  | the way out | arm folded in 6.1 s on the stand-up gains, tilt at most 8.4 deg from there to the end; lay down, damping, sport mode back |
+
+- **Scope:** the hand was not measured here, and the arm's own reports are the only arm evidence, so this does not show the hand was on goal. Force was not tested. `ArmWatch.soft` did not fire: the soft stop is still unrun on the dog. A stop from a live stand with the arm out on this policy is not shown. The 12.4 deg in the summary came before the policy. Skips were not recorded in this program.
+- **Implication:**
+  - The fold on the stand-up gains, and a run's normal end with the arm out, are now shown on the dog.
+  - The replay gate was conservative here: it had 17-21 deg of lead for this policy, against 6.9 measured. F-256's test still ranked this policy correctly against `66200`.
+  - `66600` is the candidate to test further; it is not yet shown against the frozen goals.
+- **Note (2026-11-07, later):** [a second run](#/week/8/run/20261106T141120_reach_stand_live) also completed, from a stance within 0.01 rad, but not the same way: legs moved in steps after 3.5 s (2.8 times the movement) and lead reached 19.5 deg at 6.4 s, past this finding's 6.9. So the lead here is not a bound, and two runs from one stance can differ this much.
+- **Note (2026-11-07, later):** [two more runs](#/week/8/run/20261106T141945_reach_stand_live) completed, four of four, the last two quiet like the first (lead at most 4.6 deg after 1 s). Calculated from the frames (`handgoal.txt`, CAD tip, not measured), the hand ended 4.6-5.2 cm from the goal in all four, from 6.2-6.6 at handover: about 4 cm back, 2.5-3 left, height on goal. Not yet simulation's 2-4 cm, and one goal.
+
