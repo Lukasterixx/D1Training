@@ -7944,7 +7944,9 @@ result that changes a conclusion gets a new entry, and the old one is marked
     `action_rate` arm does not (×1.1), and tracks 0.2 cm worse.
 - **Implication:**
   - The reach candidate for the dog's legs is the delay arm's `59600`; the `action_rate` arm's `59600` if calm matters
-    more. Neither is in `checkpoints/` yet.
+    more. Neither is in `checkpoints/` yet. 2026-11-06: both `59600`s copied to `checkpoints/` byte for byte
+    (`unifp_go2d1_isaaclab_corner_delay_model_59600.pt`, `..._corner_rate_model_59600.pt`), for a test on the dog;
+    the demos' default stays `58400`, and no program on the dog runs an 18-action policy yet (Week 8 log).
   - Any arm policy trained for the corner should draw the delay from 5 ms, not 10.
 
 ### F-233 — The lever and insertion policies have no retrain that is better on every count: retrained on the corner, the lever policy stops rattling (round 3: 0.034 rad against 0.119) and opens as many, but falls on 1-35 of 360 levers at 20-40 N where the original falls on none, as week 4's fine-tunes did on unchanged legs (3-12); the insertion retrain is calm at every delay (0.004-0.009 rad against 0.11-0.12) but seats 119 of 192 frozen keys on light legs against 151, and 32 of 48 in the demo against 41

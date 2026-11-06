@@ -8,6 +8,40 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## The reach retrained on the dog's leg corner: the two `59600`s (trained 2026-10-26, copied here 2026-11-06)
+
+The whole-body policies of the corner campaign: 18 actions, legs and arm, the same interface as every `unifp_go2d1_*`
+reach policy. Both are `unifp_go2d1_isaaclab_cad333_model_58400.pt` fine-tuned on the payload robot with the
+`unitree_geared` legs, leg armature drawn 0-0.002 (knees ×3.67). They differ in one setting each (F-232):
+
+| file | run (gitignored) | what it changed | L | Z | standing, L | standing, 0 ms | walking, L | cups on L / Z |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `58400` (the original) | | | 1.89 / 2.52 | 2.01 / 2.84 | 0.049 ×1.1 | 0.024 ×1.4 | 0.126 | 3 / 6 |
+| **`unifp_go2d1_isaaclab_corner_delay_model_59600.pt`** | `20261026T005349_train_seed1_reach_r2delay_s1` | command delay drawn 5-20 ms | 1.93 / 2.57 | 1.92 / 2.60 | 0.022 ×1.4 | 0.037 ×1.9 | 0.085 | 6 / 7 |
+| `unifp_go2d1_isaaclab_corner_rate_model_59600.pt` | `20261026T022733_train_seed1_reach_r2rate_s1` | delay 10-20 ms, `action_rate` -0.1 | 2.07 / 2.75 | 2.10 / 2.89 | 0.020 ×1.1 | 0.020 ×1.1 | 0.068 | 5 / 10 |
+
+L is light legs (armature 0.0002 / 0.0007, 15-20 ms), Z zero armature. The two tracking columns are quiet goal error on
+the validation set, median / p90 cm; the chatter columns are the worst joint's rad a step and d2/d1; cups are of 16.
+
+- **The delay arm is the candidate**, for its tracking; the `action_rate` arm if calm matters more than 2 mm. It is the
+  calmer at every delay, and the delay arm still leans toward a flip at 0 ms (1 of 39 episodes past 0.1 rad).
+- **Simulation only, one seed each.** The frozen set chose each run's checkpoint. A second seed of the delay arm
+  replicates the calm and the tracking on light legs, not the gain on Z (F-232). The dog's legs and delay are not
+  measured, and the 3.33 N·m Joint2 and Joint3 they were trained on are not measured on the arm (F-140).
+- **No program drives the arm from them, and they must not go to the arm.** `export_policy.py` writes their 18-output numpy
+  exports (`reach_force_corner_{delay,rate}_model_59600.npz`) and `press_live.py --presses 0` runs the legs on one with the arm
+  folded, dry on the dog so far (F-237). Shown the real folded arm they run away. Nothing sends the arm's targets yet, and the
+  later fine-tunes' arm commands jitter in simulation (Week 8 log).
+- **The demos' default is still `58400`** (`demos/unifp/run_demo.py`), so pass `--checkpoint`, and pass `--payload
+  physical`: the retrained policies miss every cup without it.
+
+```bash
+./run_unifp_train.py eval --headless --small_physx --num_envs 16 --seed 20260921 --tool_point fingertip \
+    --manifest results/manifests/unifp_isaaclab_validation.json --leg_actuator unitree_geared \
+    --leg_armature 0.0002 --leg_knee_armature 0.0007 --leg_delay_min_steps 3 --leg_delay_steps 4 \
+    --checkpoint checkpoints/unifp_go2d1_isaaclab_corner_delay_model_59600.pt
+```
+
 ## The key-turning leg policy, exported for the dog's shadow mode (2026-10-21)
 
 `leg_key_force_s2walker_model_2104.npz` is the force-aware front-right-leg key policy fine-tuned from the walking

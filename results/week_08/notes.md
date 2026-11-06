@@ -221,6 +221,27 @@ its model does not do: not tested on the arm.
 
 **Reach policies jitter (reported by the UniFP session, same day; not checked here).** It asks that no reach policy, `62800` and `armft3` included, go to the arm yet. In sim `armft3` 63800 tracks at 3.58 / 4.28 cm with no falls, but per joint its commands move 10-14 degrees rms a cycle, 42-66% of steps reverse the last and 35-59% are over 10 degrees ahead of the arm, where the goals need about 3-4 degrees. Averaging the actions between commands made tracking worse (4.73 / 5.89 cm), so it reads this as a closed-loop oscillation to fix in training. `armft4_s1` is training with a penalty on command change, with a gate fixed in advance: worst joint at most 6 degrees rms and 30% reversals, else nothing is chosen. Lukas told it to build the arm half; it has `reach_arm.py` and tests on its PC, sending nothing, waiting for this tree. Noted for it here: the arm link's feedback carries no report stamp (`age_s` is refreshed by echoes), and the fold sits on or past the training's joint limits (J2 -90.9, J3 91.7 against 89.95 degrees).
 
+### 2026-11-06 · The reach's two `59600`s into `checkpoints/`, for a whole-body test on the dog
+
+Lukas asked for the UniFP retrain's whole-body policies on `main`, for the agent on the other PC to test them on the
+real robot. Week 7 left them gitignored under `logs/` ("That is for Lukas"). No run was launched for this.
+
+    cp -p logs/unifp_train/20261026T005349_train_seed1_reach_r2delay_s1/model_59600.pt \
+          checkpoints/unifp_go2d1_isaaclab_corner_delay_model_59600.pt
+    cp -p logs/unifp_train/20261026T022733_train_seed1_reach_r2rate_s1/model_59600.pt \
+          checkpoints/unifp_go2d1_isaaclab_corner_rate_model_59600.pt
+
+- **The files:** [the delay arm's run](#/week/7/run/20261026T005349_train_seed1_reach_r2delay_s1) (`6d363be2...`) and
+  [the `action_rate` arm's](#/week/7/run/20261026T022733_train_seed1_reach_r2rate_s1) (`cb6fb060...`), each sha256-equal
+  to its source. `checkpoints/SHA256SUMS` has both, and all 25 of its entries verify.
+- **The load check (CPU, no simulator):** through `EvaluablePolicy` each reads iteration 59600, 18 actions, and gives
+  finite actions on a random 2432-wide stack.
+- **What this shows:** the files are intact and load. Their scores are Week 7's (F-232, `checkpoints/README.md`), all in
+  simulation, and were not re-run.
+- **What this does not show:** that either can run on the dog. See "Issues and risks". The demos' default stays `58400`.
+- **The key and press exports** (`leg_key_force_corner_model_4000.npz`, `leg_press_force_chain_s4_model_11200.npz`) were
+  already on `main` from 2026-10-30. They are leg-only: the arm is held.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
@@ -240,5 +261,11 @@ its model does not do: not tested on the arm.
   run that commands the arm.
 - The D1's pauses (F-240): the arm link is locked by default, `D1Client` gates every other sender. The gate and a full `d1dogdemo` are not yet run on the arm. P2Dingo's arm bridge still streams at 10 Hz.
 - `nvidia-smi` cannot reach the driver on this PC (2026-11-06): no Isaac runs here until that is fixed.
+- **No program on the dog runs a whole-body policy.** The reach has 18 outputs, and the dog's image has numpy and no
+  torch. `export_policy.py` and `leg_policy.py` serve the 12-output leg policies that hold the arm, and the door and key
+  demos walk on sport mode with a scripted arm. A whole-body test needs an 18-output export, a runner that sends the
+  arm's targets to the D1, and a source for the goal commands. None of these exists on `main` or `mechanism-demo` as
+  of 2026-11-06.
+  (2026-11-06, later: on `mechanism-demo` the 18-output export and a legs-only runner did exist, see "What exists for a reach runner". The arm sender and a live goal source still do not, and no reach policy goes to the arm yet: they jitter in sim.)
 
 ## Next week
