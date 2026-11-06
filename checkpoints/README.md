@@ -8,6 +8,33 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## The reach for the real arm: `reach_force_locked_model_66200.npz` (2026-11-06)
+
+**The reach candidate for the dog (F-253), and the only policy trained on the arm as it is.** `reach_force_locked_model_66200.npz` is the numpy export for the dog (numpy against torch 2.4e-5); `unifp_go2d1_isaaclab_locked_model_66200.pt` the checkpoint. Lineage: the delay arm's `59600`, then five stages on the arm link, the last two with a penalty on what the arm receives (`--arm_locked --arm_locked_range --arm_step_weight`; Week 8 log).
+
+| on the frozen validation set, light legs | quiet goal error, cm | fell | worst command step RMS | worst reversals |
+| --- | --- | --- | --- | --- |
+| **this, `--arm_locked`** | **2.15 / 2.83** | 0 | 3.1 deg | 30% |
+| **this, through the Follower, as on the dog** | **2.24 / 3.93** | 0 | 2.3 deg | 23% |
+| delay arm `59600`, `--arm_locked` | 16.63 / 18.78 | 0 | | |
+| `58400`, `--arm_locked` | 15.75 / 18.14 | 0 | | |
+
+- **Through the Follower it holds** at 2.2-2.3 / 3.1-4.0 cm over the fitted lags, F-045's planner, the command 20-60 ms after its report, skips at 1% and zero-armature legs. 27 of 27 held goals from the default pose, no contact.
+- **Only through `follow`.** Sent directly it asks up to 64 deg in one command at handover; the Follower makes that 5.
+- **Only with its legs.** With the legs ignoring it, 13 of 27 held goals (F-252). `press_live.py` refuses that.
+- **Only from the default pose.** From the fold the hand strikes the dog in simulation, 4 of 27 to 485 N (`65799`). `press_live.py` unfolds first.
+- **It does not work on UniFP's 50 Hz soft arm**, so the demos' robot is not its robot. The demos' default stays `58400`.
+- **Simulation, one seed.** Its arm model rests on one joint unloaded and one held-out draw (F-250).
+
+To run it: `demos/combiner_key/robot/README.md`, "The whole-body reach". `reach_arm.py` holds the contract.
+
+```bash
+./run_unifp_train.py eval --headless --small_physx --tool_point fingertip \
+    --manifest results/manifests/unifp_isaaclab_validation.json --leg_actuator unitree_geared \
+    --leg_armature 0.0002 --leg_knee_armature 0.0007 --leg_delay_min_steps 3 --leg_delay_steps 4 \
+    --checkpoint checkpoints/unifp_go2d1_isaaclab_locked_model_66200.pt --arm_locked --arm_follower
+```
+
 ## The reach retrained on the dog's leg corner: the two `59600`s (trained 2026-10-26, copied here 2026-11-06)
 
 The whole-body policies of the corner campaign: 18 actions, legs and arm, the same interface as every `unifp_go2d1_*`
@@ -32,6 +59,11 @@ the validation set, median / p90 cm; the chatter columns are the worst joint's r
   exports (`reach_force_corner_{delay,rate}_model_59600.npz`) and `press_live.py --presses 0` runs the legs on one with the arm
   folded, dry on the dog so far (F-237). Shown the real folded arm they run away. Nothing sends the arm's targets yet, and the
   later fine-tunes' arm commands jitter in simulation (Week 8 log).
+- **On the real arm's interface neither tracks (F-241, 2026-11-06).** In simulation, free-running with drops, 15.13 / 21.02 cm for
+  the delay arm and 14.83 / 23.06 for the `action_rate` arm, and 16-17 cm on the locked stream, against 1.93 / 2.57 and 2.07 / 2.75
+  here. They trained with 50 Hz commands into a soft PD and exact feedback. The real arm takes 9-10 Hz, reports at 9 Hz, and goes
+  where it is told: most of the delay arm's commands are past a joint limit, because it uses the targets as torques. A rate limiter
+  does not fix that.
 - **The demos' default is still `58400`** (`demos/unifp/run_demo.py`), so pass `--checkpoint`, and pass `--payload
   physical`: the retrained policies miss every cup without it.
 

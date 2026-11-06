@@ -23,6 +23,11 @@ base roll/pitch and drift, falls. Two time series (the centre goal, both starts)
 Simulation of UniFP's port, which drives the arm with UniFP's own PD -- not the D1's firmware position
 servo, and faster than it (F-097). Timings here do not transfer to the bench; the direction and order of
 the motion, and whether it hits anything, are what this can say.
+
+`--real_arm` runs it on the arm as the dog has it instead (2026-11-06): the payload robot, light legs, and the locked
+stream at the fit's centre (`unifp_train/arm_link.py`, `motor_model`'s locked profile), with no skips. A stiff servo does
+not give way if the hand meets the dog, so a strike means more here than on the PD. The torque-limit column is empty
+there: Isaac Lab only estimates an implicit drive's torque.
 """
 from __future__ import annotations
 
@@ -54,6 +59,14 @@ def main() -> int:
     parser.add_argument("--tool_point", choices=("jaw_centre", "fingertip"), default="fingertip",
                         help="fingertip is what the reach checkpoints are scored on (checkpoints/README.md)")
     parser.add_argument("--run_name", default="folded_start")
+    parser.add_argument("--real_arm", action="store_true", help="The payload robot, light legs and the locked arm stream.")
+    parser.add_argument("--follower", action="store_true", help="--real_arm: each target through the dog's arm_link.Follower.")
+    parser.add_argument("--scripted_unfold", action="store_true",
+                        help="--real_arm: no policy: the folded arm moved along the joint line to the default pose at 30 deg/s, the "
+                             "legs on their stance, and back, the contact on the dog read throughout.")
+    parser.add_argument("--legs_held", action="store_true",
+                        help="The legs hold their stance and ignore the policy, as sport mode's would with the runner dry; the policy "
+                             "still reads its own leg outputs as its last actions, as `press_live` keeps them.")
     parser.add_argument("--output", default=str(ROOT / "logs/unifp_demos"))
     from isaaclab.app import AppLauncher
 
@@ -82,8 +95,8 @@ def main() -> int:
     robot_usd = build_welded_robot_usd(
         go2_usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/Unitree/Go2/go2.usd",
         d1_urdf_path=str(ROOT / "d1_arm/d1.urdf"),
-        out_usd_path=str(ROOT / "generated/go2_d1.usd"),
-        arm_mass_kg=3.152).usd_path
+        out_usd_path=str(ROOT / ("generated/go2_d1_payload.usd" if args.real_arm else "generated/go2_d1.usd")),
+        arm_mass_kg=3.152, payload_physics=args.real_arm).usd_path
 
     cfg = Go2D1PosForceEnvCfg()
     cfg.scene.num_envs = 2 * count
@@ -91,6 +104,19 @@ def main() -> int:
     cfg.robot = robot_mod.make_robot_cfg(robot_usd, prim_path="/World/envs/env_.*/Robot")
     cfg.robot_usd = robot_usd
     cfg.force_start_step = 10 ** 9
+    if args.real_arm:
+        import motor_model  # noqa: E402
+        from unifp_train import arm_link, leg_actuators  # noqa: E402
+        from unifp_train.env_cfg import shrink_physx  # noqa: E402
+
+        shrink_physx(cfg.sim)
+        leg_actuators.swap_legs(cfg.robot, "unitree_geared", 4, 0.0002, 0.0007, 3)
+        arm_link.swap_arm(cfg.robot)
+        cfg.arm_servo = True
+        cfg.arm_link = {"locked": True, "feedback_hz": motor_model.D1_FEEDBACK_HZ,
+                        "quantum_deg": motor_model.D1_FEEDBACK_QUANTUM_DEG, "planner": True,
+                        "plan": motor_model.arm_trajectory("locked"), "servo_lag_s": motor_model.D1_LOCKED_SERVO_LAG_S,
+                        "report_age_s": motor_model.D1_LOCKED_REPORT_AGE_S, "follower": args.follower}
     if args.tool_point == "fingertip":
         cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
     env = Go2D1PosForceEnv(cfg)
@@ -98,6 +124,15 @@ def main() -> int:
     device = env.device
 
     policy = EvaluablePolicy(args.checkpoint, device=str(device))
+    if args.legs_held:
+        leg_stance = torch.tensor(interface.DEFAULT_DOF_POS[:12], device=device)
+        pre_physics = env._pre_physics_step
+
+        def legs_held(actions):
+            pre_physics(actions)
+            env._joint_targets[:, :12] = leg_stance
+
+        env._pre_physics_step = legs_held
     held = torch.tensor(goals + goals, dtype=torch.float32, device=device)
     env._goals.step = lambda: held          # type: ignore[assignment]
     for buffer in ("current", "start", "goal"):
@@ -112,6 +147,10 @@ def main() -> int:
     joint_pos[count:, arm_ids] = folded
     env._robot.write_joint_state_to_sim(joint_pos, torch.zeros_like(joint_pos))
     env._robot.set_joint_position_target(joint_pos)
+    if env._arm_link is not None:
+        arm_start = torch.zeros(2 * count, 6, device=device)
+        arm_start[count:] = folded
+        env._arm_link.reset(None, arm_start)
 
     # On the robot the dog is already standing when the policy is switched on. Training's reset drops it
     # from the spawn height instead, so without this both starts would include that landing. Hold every
@@ -123,6 +162,29 @@ def main() -> int:
         for _ in range(int(args.hold_s / interface.POLICY_DT)):
             env.step(hold)
             env._commands[:, :3] = 0.0
+    if args.scripted_unfold:
+        names_ = list(env._contact_sensor.body_names)
+        body_ = [i for i, n in enumerate(names_) if n in ("base", "Head_upper", "Head_lower") or n.endswith(("_hip", "_thigh"))]
+        seconds = float(torch.rad2deg(folded.abs()).max()) / 30.0
+        ticks = int(seconds / interface.POLICY_DT)
+        peak, tilt_peak, worst = 0.0, 0.0, 0.0
+        for way, (a, b) in (("out", (1.0, 0.0)), ("back", (0.0, 1.0))):
+            with torch.no_grad():
+                for k in range(ticks + 50):
+                    u = min(k / ticks, 1.0)
+                    hold[:] = 0.0
+                    hold[:, 12:18] = (a + (b - a) * u) * folded / interface.ACTION_SCALE
+                    env.step(hold)
+                    env._commands[:, :3] = 0.0
+                    force = env._contact_sensor.data.net_forces_w.norm(dim=-1)[:, body_].max(dim=1).values
+                    peak = max(peak, float(force.max()))
+                    tilt_peak = max(tilt_peak, float(torch.rad2deg(interface.body_roll_pitch(env._robot.data.root_quat_w)).abs().max()))
+                    worst = max(worst, float(torch.rad2deg((env._arm_link.target - env._dof()[0][:, 12:18]).abs()).max()))
+            end = torch.rad2deg(env._dof()[0][:, 12:18]).mean(dim=0)
+            print(f"[unfold] {way}: {ticks * interface.POLICY_DT:.1f} s, peak contact on the dog {peak:.1f} N, peak tilt {tilt_peak:.1f} deg, "
+                  f"worst lag {worst:.1f} deg, ends at {[round(float(v), 1) for v in end]}", flush=True)
+        simulation_app.close() if "simulation_app" in dir() else None
+        return 0
     env._actions.zero_()
     env._last_actions.zero_()
     env._last_dof_vel[:] = env._dof()[1]
@@ -146,6 +208,12 @@ def main() -> int:
     q_arm = torch.zeros(T, 2 * count, 6, device=device)
     qd_arm = torch.zeros(T, 2 * count, 6, device=device)
     saturated = torch.zeros(T, 2 * count, 6, dtype=torch.bool, device=device)
+    #: What the arm is commanded, on the link: `--real_arm`'s measure of what a stop on the dog would see.
+    commanded = torch.zeros(T, 2 * count, 6, device=device)
+    #: What the policy asked, before the link: `ArmWatch` reads this one, and on a `follow` stream it can lead the wire.
+    asked = torch.zeros(T, 2 * count, 6, device=device)
+    #: The largest leg target's distance from default, rad: `press_live`'s `--reach_max_leg_off_rad` reads this.
+    leg_off = torch.zeros(T, 2 * count, device=device)
     body_contact = torch.zeros(T, 2 * count, device=device)
     body_which = torch.zeros(T, 2 * count, dtype=torch.long, device=device)
     trunk_contact = torch.zeros(T, 2 * count, device=device)
@@ -171,7 +239,11 @@ def main() -> int:
             q_arm[step] = pos[:, 12:18]
             qd_arm[step] = vel[:, 12:18]
             torque = env._robot.data.applied_torque[:, arm_ids]
-            saturated[step] = torque.abs() >= 0.98 * torque_limit
+            saturated[step] = (torque.abs() >= 0.98 * torque_limit) & (env._arm_link is None)
+            if env._arm_link is not None:
+                commanded[step] = env._arm_link.target
+                asked[step] = env._joint_targets[:, 12:18]
+                leg_off[step] = env._actions[:, :12].abs().amax(dim=1) * interface.ACTION_SCALE
             forces = env._contact_sensor.data.net_forces_w.norm(dim=-1)
             body_contact[step], which = forces[:, body_sensor].max(dim=1)
             body_which[step] = which
@@ -181,6 +253,32 @@ def main() -> int:
             drift[step] = torch.norm(env._robot.data.root_pos_w[:, :2] - spawn_xy, dim=1)
 
     dt = interface.POLICY_DT
+    command_gap = {}
+    if env._arm_link is not None:
+        lead = torch.rad2deg((commanded - q_arm).abs())
+        step_deg = torch.rad2deg((commanded[1:] - commanded[:-1]).abs())
+        asked_lead = torch.rad2deg((asked - q_arm).abs())
+        # Per 111 ms, as `ArmWatch` sees it from one cycle to the next.
+        cycle = max(1, round(0.111 / dt))
+        asked_step = torch.rad2deg((asked[cycle:] - asked[:-cycle]).abs())
+        skip = int(1.0 / dt)                                    # the first second is the handover's
+        for n, start in enumerate(starts):
+            rows = slice(n * count, (n + 1) * count)
+            command_gap[start] = {
+                "gap_deg_max_by_joint": [round(float(v), 1) for v in lead[skip:, rows].amax(dim=(0, 1))],
+                "gap_deg_p99_by_joint": [round(float(torch.quantile(lead[skip:, rows, j].flatten(), 0.99)), 1) for j in range(6)],
+                "step_deg_max_by_joint": [round(float(v), 1) for v in step_deg[skip:, rows].amax(dim=(0, 1))],
+                # The handover itself: an empty history, as every episode starts, and what the arm is asked for in it.
+                "asked_lead_deg_max_by_joint": [round(float(v), 1) for v in asked_lead[skip:, rows].amax(dim=(0, 1))],
+                "asked_lead_deg_p99_by_joint": [round(float(torch.quantile(asked_lead[skip:, rows, j].flatten(), 0.99)), 1)
+                                                for j in range(6)],
+                "asked_cycle_step_deg_max_by_joint": [round(float(v), 1) for v in asked_step[skip:, rows].amax(dim=(0, 1))],
+                "leg_off_rad_max_first_s": round(float(leg_off[:skip, rows].max()), 3),
+                "leg_off_rad_max_after": round(float(leg_off[skip:, rows].max()), 3),
+                "first_s_gap_deg_max_by_joint": [round(float(v), 1) for v in lead[:skip, rows].amax(dim=(0, 1))],
+                "first_s_step_deg_max_by_joint": [round(float(v), 1) for v in step_deg[:skip, rows].amax(dim=(0, 1))],
+                "first_s_arm_travel_deg_max_by_joint": [round(float(v), 1) for v in torch.rad2deg(
+                    (q_arm[:skip, rows] - q_arm[0:1, rows]).abs()).amax(dim=(0, 1))]}
 
     def first_below(threshold):
         """Seconds until the error first drops below `threshold` and stays there for 0.5 s; NaN if never."""
@@ -275,7 +373,7 @@ def main() -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "folded_start.json").write_text(json.dumps({"records": records, "series": series}, indent=2))
     run_json = {
-        "mode": "folded_start_probe", "status": "finished", "seed": args.seed,
+        "mode": "folded_start_probe", "status": "finished", "seed": args.seed, "command_gap": command_gap,
         "checkpoint": os.path.abspath(args.checkpoint),
         "checkpoint_source": policy.source, "checkpoint_iteration": policy.iteration,
         "steps": T, "hold_s": args.hold_s, "goals": count, "tool_point": args.tool_point,

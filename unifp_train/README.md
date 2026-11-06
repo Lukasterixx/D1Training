@@ -765,3 +765,33 @@ What it is not: the plates are analytic -- nothing in PhysX touches them, only t
 through penalty forces; the thighs and calves pass through a plate's slab unchecked. The layer is told the plate by an
 estimate with drawn errors; no camera sees it. Plates facing down are its weak kind (22 of 72); the base rears ~30
 degrees through a press. Details: `results/week_06/notes.md`.
+
+## The real arm's interface (`--arm_real`, since 2026-11-06)
+
+UniFP's task drives the arm like the legs: a 50 Hz target into an ideal PD, exact feedback. `arm_link.py` puts the D1 as it
+is on the dog between the policy and the joints, UniFP's task only, each part behind its own flag so what it costs can be
+measured (F-241). The legs are untouched. The actor reads the arm through it; the critic and rewards keep the true state.
+
+| flag | what it adds | source |
+| --- | --- | --- |
+| `--arm_command_hz 9 10` | one command a period, drawn per environment, random phase, held between | Lukas; ceiling F-032 |
+| `--arm_feedback_hz 9` | reports at 9 Hz to 0.1 deg (`--arm_quantum_deg`), speed by differencing them | F-020 |
+| `--arm_servo` | 4000 / 400 implicit drive, published torques, measured speed ceilings (`arm_link.swap_arm`) | F-010, F-033 |
+| `--arm_planner` | the firmware's trapezoid, replanned from rest at each command | F-045 |
+| `--arm_stalls` | no command taken and no report for 0.3-0.7 s; the arm finishes the move it has. `--arm_stall_interval_s` sets how often | Lukas, F-200 |
+| `--arm_real` | all of them, at those values: a free-running sender | |
+| `--arm_locked` | one command per report 20 ms after it, a true 111 ms stream (100 / 120 ms on the 20 ms grid), 9 Hz reports, the servo, `motor_model`'s `locked` profile, skips at 0.15%: **what a runner should do** | F-238 to F-240, F-250 |
+| `--arm_locked_range` | with it, each environment's servo lag (60-90 ms) and report age (0-20 ms) drawn, for training | F-250 |
+
+`--arm_lock_offset_s`, `--arm_servo_lag_s`, `--arm_report_age_s`, `--arm_skip_probability` and `--arm_plan` override any one
+of these. `python -m unifp_train.arm_link_check` replays the commands the arm was sent (`tests/data/d1_locked_swing.json`) and
+prints the model beside the arm on one measure; `tests/test_arm_link.py` holds the profile to them.
+
+Everything is off by default, and its draws use their own generator, so a frozen manifest's episodes do not move:
+`schedule_mismatches` stays 0 and a row with the link on is paired with one with it off. An evaluation writes
+`arm_link.json`: what the arm would have been sent, in the hardware findings' terms (step per command against F-199's 2.5
+deg, the gap to the arm against the link's 10 deg lead, commands clamped at limits). `run.json` reads the drive back from
+PhysX as `arm_joints_loaded`.
+
+With `--arm_servo` the arm's torques are left out of `torque_limits`: Isaac Lab estimates an implicit drive's torque as
+stiffness x error, which reads as the limit on any lag.

@@ -285,6 +285,53 @@ def build_parser() -> argparse.ArgumentParser:
                              "'dcmotor' Isaac Lab's Go2 DCMotor (23.5 N·m on every joint, its torque-speed curve), as the "
                              "decoupled demos' robot; 'knee23' and 'speedcurve' change one of those differences each; "
                              "'unitree' is unitree_rl_lab's Go2 envelope; 'unitree_geared' that with the URDF's geared knee.")
+    # The D1 as the dog's arm is, UniFP's task only (unifp_train/arm_link.py). Each is separate, so what each costs can be
+    # measured; `--arm_real` is all of them.
+    parser.add_argument("--arm_command_hz", type=float, nargs="+", default=None, metavar="HZ",
+                        help="The arm takes a command at this rate, held between; two values draw each environment's "
+                             "from the range. Unset: every 50 Hz policy step.")
+    parser.add_argument("--arm_feedback_hz", type=float, default=None,
+                        help="The actor reads the arm's angles at this rate, to --arm_quantum_deg, and its speeds as "
+                             "differences of them. Unset: exact, at 50 Hz.")
+    parser.add_argument("--arm_quantum_deg", type=float, default=None,
+                        help="The reports' resolution. Default the arm's 0.1 with --arm_feedback_hz, else none.")
+    parser.add_argument("--arm_planner", action="store_true", help="The firmware's fitted trapezoid planner (F-045).")
+    parser.add_argument("--arm_servo", action="store_true",
+                        help="The stiff position drive with the published torques and measured speed ceilings, for "
+                             "UniFP's 60 / 40 N·m/rad spring (arm_link.swap_arm).")
+    parser.add_argument("--arm_stalls", action="store_true",
+                        help="The arm drops commands and reports for 0.3-0.7 s (F-200).")
+    parser.add_argument("--arm_stall_interval_s", type=float, nargs=2, default=None, metavar=("LOW", "HIGH"),
+                        help="Time between stalls, drawn in this range. Default motor_model's, F-200's frequent end.")
+    parser.add_argument("--arm_locked", action="store_true",
+                        help="The real arm with one command per report, a true 111 ms stream: 9 Hz reports, the servo, "
+                             "motor_model's locked profile, rare skipped reports. Fixed at the fit's centre unless "
+                             "--arm_locked_range draws them.")
+    parser.add_argument("--arm_locked_range", action="store_true",
+                        help="--arm_locked: draw each environment's servo lag and report age from the fit's ranges, "
+                             "since nothing measured separates them.")
+    parser.add_argument("--arm_lock_offset_s", type=float, default=None,
+                        help="--arm_locked: how long after a report its command goes. Default motor_model's 20 ms.")
+    parser.add_argument("--arm_report_age_s", type=float, nargs="+", default=None,
+                        help="A report shows the arm as it was this long ago (20 ms steps); two values draw it per "
+                             "environment. Overrides --arm_locked's.")
+    parser.add_argument("--arm_servo_lag_s", type=float, nargs="+", default=None,
+                        help="A first-order lag behind the plan; two values draw it per environment. Overrides --arm_locked's.")
+    parser.add_argument("--arm_wrist_lag_s", type=float, nargs="+", default=None,
+                        help="Joint4-6's own lag, as --arm_servo_lag_s; unset, they take that one's.")
+    parser.add_argument("--arm_step_weight", type=float, default=0.0,
+                        help="Reward on the squared change in each command the arm receives: negative to stop a policy "
+                             "shaking the arm, which UniFP's action_rate_arm cannot see at 9 Hz.")
+    parser.add_argument("--arm_follower", action="store_true",
+                        help="Each target through the dog's arm_link.Follower, as a `follow` goal would be: 45 deg/s, held on lead.")
+    parser.add_argument("--arm_command_mean", action="store_true",
+                        help="Send the mean of the policy's targets since the last command, not the last of them.")
+    parser.add_argument("--arm_plan", choices=("measured", "locked"), default=None,
+                        help="The planner's profile (motor_model.arm_trajectory). Default: locked with --arm_locked.")
+    parser.add_argument("--arm_skip_probability", type=float, default=None,
+                        help="Chance a report, and the command locked to it, is skipped. Default motor_model's with --arm_locked.")
+    parser.add_argument("--arm_real", action="store_true",
+                        help="All of them at the real arm's values: 9-10 Hz, 9 Hz reports, the planner, the servo, the stalls.")
     parser.add_argument("--key_turn_deg", type=float, nargs=3, default=None, metavar=("START", "STOP", "UNLOCK"),
                         help="--leg_object key: the turn in degrees below horizontal (positive down, clockwise as the "
                              "robot sees it): where the key starts, its end stop, where the door unlocks. The trained "
@@ -530,7 +577,8 @@ def main() -> int:
     from unifp_train.wipe_env import Go2D1WipeEnv, Go2D1WipeEnvCfg  # noqa: E402
     from unifp_train import rope_cfg  # noqa: E402
     from unifp_train.rope_env import Go2D1RopeEnv, Go2D1RopeEnvCfg  # noqa: E402
-    from unifp_train import leg_actuators, leg_cfg  # noqa: E402
+    from unifp_train import arm_link, leg_actuators, leg_cfg  # noqa: E402
+    import motor_model  # noqa: E402
     from unifp_train.leg_env import Go2D1LegEnv, Go2D1LegEnvCfg  # noqa: E402
     from unifp_train import foot_press_cfg  # noqa: E402
     from unifp_train.foot_press_env import Go2D1FootPressEnv  # noqa: E402
@@ -876,6 +924,59 @@ def main() -> int:
     # 'unifp' with no delay and no armature returns the group untouched, so every earlier command builds what it built.
     leg_actuators.swap_legs(cfg.robot, args.leg_actuator, args.leg_delay_steps, args.leg_armature,
                             args.leg_knee_armature, args.leg_delay_min_steps)
+    if args.arm_real:
+        args.arm_planner = args.arm_servo = args.arm_stalls = True
+        args.arm_command_hz = args.arm_command_hz or list(motor_model.D1_COMMAND_HZ_RANGE)
+        args.arm_feedback_hz = args.arm_feedback_hz or motor_model.D1_FEEDBACK_HZ
+    if args.arm_locked:
+        if args.arm_real or args.arm_command_hz:
+            parser.error("--arm_locked sets the command rate from the reports")
+        args.arm_planner = args.arm_servo = True
+        args.arm_feedback_hz = args.arm_feedback_hz or motor_model.D1_FEEDBACK_HZ
+    link = {}
+    if args.arm_locked:
+        drawn = args.arm_locked_range
+        link["locked"] = True
+        link["lock_offset_s"] = motor_model.D1_LOCK_OFFSET_S if args.arm_lock_offset_s is None else args.arm_lock_offset_s
+        link["servo_lag_s"] = (motor_model.D1_LOCKED_SERVO_LAG_RANGE_S if drawn else motor_model.D1_LOCKED_SERVO_LAG_S)
+        link["report_age_s"] = (motor_model.D1_LOCKED_REPORT_AGE_RANGE_S if drawn else motor_model.D1_LOCKED_REPORT_AGE_S)
+        link["skip_probability"] = motor_model.D1_LOCKED_SKIP_PROBABILITY
+        link["plan"] = motor_model.arm_trajectory(args.arm_plan or "locked")
+    elif args.arm_plan:
+        link["plan"] = motor_model.arm_trajectory(args.arm_plan)
+    if args.arm_report_age_s is not None:
+        link["report_age_s"] = tuple(args.arm_report_age_s) if len(args.arm_report_age_s) > 1 else args.arm_report_age_s[0]
+    if args.arm_servo_lag_s is not None:
+        link["servo_lag_s"] = tuple(args.arm_servo_lag_s) if len(args.arm_servo_lag_s) > 1 else args.arm_servo_lag_s[0]
+    if args.arm_wrist_lag_s is not None:
+        link["wrist_lag_s"] = tuple(args.arm_wrist_lag_s) if len(args.arm_wrist_lag_s) > 1 else args.arm_wrist_lag_s[0]
+    if args.arm_skip_probability is not None:
+        link["skip_probability"] = args.arm_skip_probability
+    if args.arm_command_mean:
+        link["command_mean"] = True
+    if args.arm_follower:
+        link["follower"] = True
+    if args.arm_command_hz:
+        link["command_hz"] = (min(args.arm_command_hz), max(args.arm_command_hz))
+    if args.arm_feedback_hz:
+        link["feedback_hz"] = args.arm_feedback_hz
+    quantum = args.arm_quantum_deg
+    if quantum is None and args.arm_feedback_hz:
+        quantum = motor_model.D1_FEEDBACK_QUANTUM_DEG
+    if quantum:
+        link["quantum_deg"] = quantum
+    if args.arm_planner:
+        link["planner"] = True
+    if args.arm_stalls:
+        link["stalls"] = True
+        if args.arm_stall_interval_s:
+            link["stall_interval_s"] = tuple(args.arm_stall_interval_s)
+    if link or args.arm_servo:
+        if args.task != "unifp":
+            parser.error("the arm link is UniFP's task's (the other tasks' environments build their own actions)")
+        cfg.arm_link, cfg.arm_servo, cfg.arm_step_weight = link or None, args.arm_servo, args.arm_step_weight
+        if args.arm_servo:
+            arm_link.swap_arm(cfg.robot)
     cfg.robot_usd = robot_usd
     if args.force_start_iteration is not None:
         cfg.force_start_step = args.force_start_iteration * task_cfg.NUM_STEPS_PER_ENV
@@ -1058,6 +1159,16 @@ def main() -> int:
         "git_commit": git_output("rev-parse", "HEAD"),
         "git_status": git_output("status", "--short"),
     }
+    report["arm_link"] = arm_link.describe(cfg.arm_link, cfg.arm_servo)
+    # What the arm's joints loaded with, as PhysX holds them (F-010: a drive that did not take reads as a policy failing).
+    arm_ids, arm_data = env._order[12:18], env._robot.data
+    report["arm_joints_loaded"] = {
+        "groups": {name: type(group).__name__ for name, group in env._robot.actuators.items()},
+        **{key: [round(float(v), 6) for v in getattr(arm_data, attr)[0, arm_ids].tolist()]
+           for key, attr in (("stiffness", "joint_stiffness"), ("damping", "joint_damping"),
+                             ("armature", "joint_armature"), ("effort_limit_sim", "joint_effort_limits"),
+                             ("velocity_limit_sim", "joint_vel_limits"))
+           if getattr(arm_data, attr, None) is not None}}
     report["legs"] = {
         "actuator_model": leg_actuators.describe(args.leg_actuator, args.leg_delay_steps, args.leg_armature,
                                                  args.leg_knee_armature, args.leg_delay_min_steps),
@@ -1135,6 +1246,8 @@ def main() -> int:
         report["status"] = "finished"
         write_json(run_dir / "run.json", report)
 
+    if env._arm_link is not None and env._arm_link.track:
+        write_json(run_dir / "arm_link.json", env._arm_link.summary())
     chatter = env.chatter_summary()
     if chatter is not None:
         write_json(run_dir / "leg_chatter.json", chatter)

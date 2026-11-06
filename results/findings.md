@@ -8168,6 +8168,76 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - Locking holds on whole-arm motion under load, so the arm link's `--lock_reports` is fit to become the default.
   - For a policy: the arm can be treated as a steady 111 ms stream. Rare single gaps of ~0.2 s remain, so a runner should not treat one as a fault. A policy runner still has to be built.
 
+### F-241 — On the real arm's interface every reach policy stops tracking: the delay arm's `59600` goes from 1.93 / 2.57 cm to 15.13 / 21.02 on the frozen validation set, and realises 0.28 N of a 3.37 N command; the 9-10 Hz command rate alone costs 1.1-1.4 cm, 9 Hz reports 2.1, and the rest comes from them stacking with a stiff servo, because the policy uses arm targets as torques: 87% of its commands are past a joint limit
+
+- **Status:** provisional (simulation, on the fitted arm model; nothing here ran on the arm). Same day: commands locked to
+  reports stop the drops (the robot program's F-238 to F-240), and on the arm model fitted to that stream (F-242) the same
+  policy is worse, 19.86 / 22.09 cm: the first model flattered it. The headline's cause stands; `--arm_real`'s numbers are a
+  free-running sender's.
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The reach on the real arm's interface".
+  - As trained: [the link off](#/week/8/run/20261106T012220_eval_seed1_al_d_base), reproducing Week 7's 1.93 / 2.57. The real arm: [delay arm](#/week/8/run/20261106T012249_eval_seed1_al_d_real), [`action_rate` arm](#/week/8/run/20261106T012929_eval_seed1_al_r_real) (14.83 / 23.06), [`58400`](#/week/8/run/20261106T013033_eval_seed1_al_o_real) (14.81 / 19.39).
+  - One part at a time: [10 Hz](#/week/8/run/20261106T012422_eval_seed1_al_d_cmd10) 3.04 / 3.67, [9 Hz](#/week/8/run/20261106T012451_eval_seed1_al_d_cmd9) 3.31 / 4.18, [reports](#/week/8/run/20261106T012520_eval_seed1_al_d_fb9) 4.03 / 4.63, [servo](#/week/8/run/20261106T012651_eval_seed1_al_d_servo) 4.78 / 9.52, [servo at 9-10 Hz](#/week/8/run/20261106T012753_eval_seed1_al_d_scmd) 9.24 / 10.74, [all but dropped commands](#/week/8/run/20261106T012824_eval_seed1_al_d_nostall) 12.03 / 14.14 (2 falls).
+  - Schedules identical in every run: paired.
+- **Scope:**
+  - The firmware planner is F-045's fit, its replanning provisional. The dropped commands' frequency is one 39 s capture
+    (F-200) and Lukas's "on occasion"; the 9-10 Hz and the 0.3-0.7 s are stated; the 4000 / 400 drive stands in for a
+    servo whose stiffness is not measured.
+  - One checkpoint per lineage, light legs, the reach's frozen set. Other arm tasks (rope, mechanism, lever, insertion)
+    use the same interface and are not scored here.
+- **Implication:**
+  - The reach cannot go to the dog as it is, and a rate limiter in a runner would not fix it: the targets are not
+    positions. Every UniFP arm policy shares this.
+  - The measurements that would settle the model: the arm's response to a step under load (its stiffness), and the
+    stalls' frequency over a long stream at 9-10 Hz.
+
+### F-242 — In a stream of small commands the D1 is not F-045's planner: a first-order servo lag of about 80 ms is needed to reproduce the measured Joint1 triangle (150 ms lag, +-7.9 of +-10 deg, 30-32 deg/s), which F-045 alone cannot (106 ms at best), and that same profile is 2.6 deg RMS off the 30 deg steps F-045 fits to 0.34, so the arm has two regimes and each needs its own profile
+
+- **Status:** superseded by [F-250](#f-250), 2026-11-06. The 150 ms target was on a different measure from the one fitted (98 ms on this
+  one), so this profile runs ~60 ms slow (1.93 deg RMS against the raw reports), and "F-045 ... cannot" and "two regimes" as
+  stated do not stand. Originally: provisional (a fit to the summary of one Joint1 triangle, with one all-joint lag agreeing; the raw reports were not on this PC)
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The spec changes". `python -m unifp_train.arm_link_check`:
+  the profile (servo lag 80, dead 20, report age 40 ms, plan acceleration at the fit's bound) gives 152 ms, +-8.2 deg, 32.2
+  deg/s, peak 37.3, first motion 90 ms, against 150, 7.9, 30-32, 37-40 and 88-90; 134 ms and 40.8 on training's 20 ms steps.
+  96 points of lag, dead time and age, acceleration refitted on the F-033 steps at each. `tests/test_arm_link.py` pins it.
+- **Scope:**
+  - Dead time and report age do not separate: only their sum shows, 40-60 ms in the top fits, servo lag 80-100.
+  - The dog lying down, Joint1 at 4 deg a command. Under ~2.5 deg a command (F-199) the firmware may still stop between
+    commands, which this smooth profile does not. No load, no walking.
+- **Implication:**
+  - F-045 stands for big steps and the position-only task; `motor_model`'s `locked` profile is for streams. F-045's own
+    streaming note (4.3 deg a cycle modelled, 2.5 measured) was this.
+  - The raw reports of those blocks would replace the summary fit. A run with a slower ramp would separate the lag from
+    the hold.
+
+### F-243 — Fine-tuned on the report-locked stream, the reach (`62800`) tracks the frozen validation set on the fitted arm model at 4.92 / 5.73 cm with no falls, against 19.86 / 22.09 for the policy it replaces, realises 2.71 of 3.42 N, holds 4.5-5.3 / 5.4-6.4 cm across the fit's range, the command's place in its window and zero-armature legs, and reaches from the folded arm with no contact on the dog (the delay arm: 11 of 27, to 696 N); it no longer works on UniFP's 50 Hz soft arm (15.37 / 22.63)
+
+- **Status:** provisional (simulation; one seed; the frozen set chose the checkpoint; nothing ran on the arm or the dog). 2026-11-06:
+  scored and trained on F-242's profile, since superseded; on the corrected one (F-250) `62800` is 4.02 / 4.90 cm and what it
+  replaces 16.63 / 18.78. The direction stands; the numbers here are for the slower profile. There its folded starts make one
+  contact on the dog of 27, 45 N, not none. And it shakes the arm (Week 8 log, "The policy shakes the arm"): not a candidate.
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The reach on the locked stream".
+  - The runs: [armft1](#/week/8/run/20261106T013202_train_seed1_armft1_s1) (with drops, from the delay arm's `59600`, stopped at `61088`), [armft2](#/week/8/run/20261106T025555_train_seed1_armft2_s1). [`62800`](#/week/8/run/20261106T043047_eval_seed1_ft2_62800) by the rule stated before scoring.
+  - Against: [the delay arm](#/week/8/run/20261106T025555_eval_seed1_l2_d), [`action_rate`](#/week/8/run/20261106T025802_eval_seed1_l2_r), [`58400`](#/week/8/run/20261106T030022_eval_seed1_l2_o), [`61088`](#/week/8/run/20261106T030234_eval_seed1_l2_f61088) 7.26 / 8.90.
+  - Scored, not selected on: [fast corner](#/week/8/run/20261106T044721_eval_seed1_fin_fast), [slow corner](#/week/8/run/20261106T044753_eval_seed1_fin_slow), [F-045's planner](#/week/8/run/20261106T044826_eval_seed1_fin_f045), [60 ms](#/week/8/run/20261106T044858_eval_seed1_fin_off60), [80 ms](#/week/8/run/20261106T044931_eval_seed1_fin_off80), [skips at 1%](#/week/8/run/20261106T045003_eval_seed1_fin_skip1), [zero armature](#/week/8/run/20261106T045036_eval_seed1_fin_zero), [free-running with drops](#/week/8/run/20261106T045109_eval_seed1_fin_drops) 5.80 / 7.42, [the 50 Hz interface](#/week/8/run/20261106T045141_eval_seed1_fin_ideal).
+  - Folded: [`62800`](#/week/8/run/20261106T045225_probe_seed1_fold_armft2_62800), [delay arm](#/week/8/run/20261106T045243_probe_seed1_fold_delay59600).
+- **Scope:**
+  - The arm model is F-242's, with its limits. Standing, the reach's goals and virtual forces: no real contact, and force
+    realised swings 1.5-2.8 N between checkpoints and conditions.
+  - A hand following perfectly 150 ms late scores 1.9 cm here, so about 3 cm is unexplained. The run was still improving.
+  - Folded: closed loop in simulation, standing, no forces. The dog's F-237 runaway was open loop, its cause not isolated.
+    Peak base pitch 28 deg on the unfold.
+- **Implication:**
+  - `checkpoints/unifp_go2d1_isaaclab_locked_model_62800.pt` is the reach candidate for the arm, and the only one.
+  - It needs a runner: 18 outputs, the latest action through `ReportClock`, reports held to 0.1 deg, speed from differences
+    of reports. Keep the first test low and slow, the arm's step and the dog's pitch watched.
+  - The demos' soft arm is no longer its interface: the cup demo and the other arm tasks have not been run on this link.
+
 ### F-244 — On the locked all-joint draw, a held-out replay finds no sign the D1's lag differs by joint or under the key (J1-3 about 0.25 degrees rms moving, J4-6 about 0.55, with a cap of 45-50 deg/s), but a speed cap near the Joint1 swing's 36 deg/s misses J1 and J6 by 3-4 degrees: the arm reaches 41-45.5 deg/s there, so the swing's apparent limit is not a joint constant
 
 - **Status:** superseded by [F-245](#f-245) (2026-11-06): the replay capped the lag's own output rate, a different model from the UniFP session's slew-then-lag, so the "no sign the lag differs by joint", the 0.37-0.72 mismatch and "no model wins on both" do not stand. The measured speeds (reports reach 41-45.5 deg/s) do.
@@ -8189,4 +8259,66 @@ result that changes a conclusion gets a new entry, and the old one is marked
 - **Implication:**
   - The D1's streamed response is two stages in series, not a lag with a rate limit on it. The earlier concern that a cap below 45 deg/s was overfitted does not apply: the fitted cap is 72 deg/s.
   - An arm model can use per-joint lags. Whether that matters to a policy is untested.
+
+### F-250 — Replaying the commands the arm was sent, a first-order lag of 77 ms behind a speed-limited target follows every report of a locked Joint1 triangle to 0.23 deg RMS (0.19-0.32 held out), against 1.93 for F-242's profile and 0.37 for F-045's planner with 19 ms of report age; the arm's shift against held commands is 96-100 ms, and almost no separate delay is needed
+
+- **Status:** provisional (one joint, unloaded, the dog lying down, ~900 reports; 4 deg a command)
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "Correction". `python -m unifp_train.arm_link_check`, `tests/data/d1_locked_swing.json`,
+  five blocks whose crc32s match, from the session on the dog's PC. Shift, half range, speed, peak: arm 98, 7.96, 31.2, 37.5; model
+  96, 7.56, 31.1, 36.2; through the locked link on training's 20 ms steps 94, 8.04, 31.9, 39.0.
+  **Held out:** the six-joint holster draw with the key in the jaws, 0.23-0.57 deg RMS (`tests/data/d1_locked_draw.json`, Week 8 log, "held
+  out on the six-joint draw"). Scores on it: [`62800`](#/week/8/run/20261106T050701_eval_seed1_c3_62800), [delay arm](#/week/8/run/20261106T050806_eval_seed1_c3_delay).
+- **Scope:**
+  - A shift against held commands is not the 150 ms quoted against the sends as points: the same arm, ~55 ms apart.
+  - Delay and lag trade off (0-20 ms with lag 82-63 fit within 0.02 deg). The 30 deg steps still favour F-045 (0.34 deg against
+    0.95), so the arm is not one model, though F-242 made too much of that.
+  - The one lag is about right for the shoulder and elbow (65-70 ms on the draw) and slow for the wrist (50-55 ms). Peak speeds 40-45 deg/s.
+  - Under ~2.5 deg a command the draw's steady ramps keep 0.90-1.00 of commanded speed, which eases F-199 but cannot show a stop inside a
+    cycle.
+  - Replicated in separate code by the session that sent the data, 0.229 deg on the swing and the same draw row (its F-245, superseding its
+    F-244, whose "no sign" of a lag by joint and cap concern are withdrawn). It has not checked the small-step binning. Why the wrist is
+    quicker is not known.
+- **Implication:**
+  - `motor_model`'s `locked` profile is this one, for streams. A check against the arm should replay its commands and read both
+    sides with one function; `tests/test_arm_link.py` holds this, and holds the mistaken profile failing.
+  - Any arm figure taken from a summary has to say what it was measured against.
+
+### F-251 — The first fine-tunes on the arm's interface shook the arm, which tracking, falls and leg chatter all hid: 10-14 deg of command step RMS, half of them reversing, the simulated arm moving 23-38 deg/s rms on a held goal; a penalty on the squared change in each command the arm receives takes that to 0.4-3 deg/s and, with it, tracking from 3.58 / 4.28 to about 2.1 / 2.7 cm, so the shake was the unexplained error
+
+- **Status:** provisional (simulation; one seed; on F-250's arm model). No checkpoint yet passes the gate stated before scoring: worst reversals 35-48% against 30%
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The policy shakes the arm", "The penalty works", "What decides the runner".
+  [`63800`](#/week/8/run/20261106T061308_eval_seed1_j_latest), [`65799`](#/week/8/run/20261106T081930_eval_seed1_ft4_65799), [`65400`](#/week/8/run/20261106T075810_eval_seed1_ft4_65400) 1.86 / 2.55.
+  The mean of the actions is no filter: [4.73 / 5.89](#/week/8/run/20261106T061855_eval_seed1_j_mean2), steps unchanged.
+- **Scope:** the arm model's lag smooths what the real arm may not; whether the real arm shakes at these commands is not measured. UniFP's `action_rate_arm`
+  reads the 50 Hz output, most of which a 9 Hz arm never gets.
+- **Implication:**
+  - Score what the arm receives. A tracking figure says nothing about it.
+  - `--arm_step_weight` belongs in any policy for this arm. `62800` and `armft3` should not go on it.
+
+### F-252 — A whole-body policy needs its legs to answer it: through the arm link's Follower, with the legs holding their stance and ignoring it, the reach reaches 10 of 27 goals, ends 27 cm off at the median and touches the dog in 8 of 27, its targets running to the clip, where with its legs it reaches 27 of 27, 1.6 cm off, with no contact; so the arm cannot be tested alone on this policy, and `--reach_arm_send` is refused
+
+- **Status:** provisional (simulation; one seed; the held legs stand for sport mode's stand)
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "What decides the runner". [Legs on the policy](#/week/8/run/20261106T084628_probe_seed1_fold_asked_65799_f), [legs held](#/week/8/run/20261106T084835_probe_seed1_fold_held_65799_f). It fits the run on the dog that ran away dry (F-237).
+  The Follower: [direct, 64 deg in a command](#/week/8/run/20261106T084312_probe_seed1_fold_hand_65799), [through it, 5](#/week/8/run/20261106T084414_probe_seed1_fold_hand_65799_f). From the fold, 4 of 27 strike the dog, to 347 N direct and 485 through it.
+- **Scope:** `armft4` `65799`, not a chosen policy. Standing, no forces, 27 goals. 2026-11-06: `armft5` `66200` with its legs held reaches 13 of 27, 7.5 / 16.8 cm, with no contact and no runaway (Week 8 log): the stronger penalty took the violence out of it, not the dependence.
+- **Implication:**
+  - `--reach_arm_send` needs `--live`. Lukas chose both live at once over an arm-only stage (2026-11-06).
+  - The Follower is required, and the arm must start near the policy's default pose.
+
+### F-253 — With a stronger penalty the reach passes the jitter gate: `66200` tracks the frozen set at 2.15 / 2.83 cm with no falls on the fitted arm, command steps 3.1 deg RMS at worst and 29.9% reversals; through the arm link's Follower, as the dog would run it, 2.2-2.3 / 3.1-4.0 cm across the fit's range, command timing, skips and zero-armature legs, and all 27 held goals reached with no contact
+
+- **Status:** provisional (simulation; one seed; the frozen set chose the checkpoint; nothing has run on the arm or the dog)
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "`66200` chosen". [`66200`](#/week/8/run/20261106T085115_eval_seed1_ft5_66200), through the Follower [at the centre](#/week/8/run/20261106T091401_eval_seed1_p566200_base), [held goals](#/week/8/run/20261106T093328_probe_seed1_fold_p5_66200follower). Lineage: `59600` delay arm, `armft1` `61088`, `armft2` `62800`, `armft3` `63800`, `armft4` `65799`, `armft5` `66200`.
+- **Scope:** F-250's arm model, from one joint unloaded and one held-out draw. Standing, a fixed goal on the dog. Force realised 2.6-3.2 of 3.42 N through the Follower, on the frozen set's virtual forces, not contact.
+- **Implication:**
+  - `checkpoints/reach_force_locked_model_66200.npz` is the reach candidate for the dog, through `press_live.py --reach_arm_send --live`, through `follow` only: sent directly, it asks up to 64 deg in one command at handover.
+  - Five things are first-ever on the real arm in that run (Week 8 log).
 

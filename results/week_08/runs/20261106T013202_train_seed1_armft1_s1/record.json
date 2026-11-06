@@ -1,0 +1,63 @@
+{
+  "id": "20261106T013202_train_seed1_armft1_s1",
+  "title": "Reach fine-tuned on the real arm (from 59600 delay arm, 3000 iterations, stalls every 1-8 s)",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-06T13:55:12+11:00",
+  "started_utc": "2026-11-06T01:32:02+00:00",
+  "source_dir": "logs/unifp_train/20261106T013202_train_seed1_armft1_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 3000,
+  "steps": 100,
+  "git_commit": "e879afc038b7335eb62673e41831a43aa1ce5a00",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 61088,
+  "final_checkpoint": {
+    "file": "model_61088.pt",
+    "sha256": "534615ebbebbe81d9c1c43af4f907375dfc843e7ab258a04d45ac81f25814333"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 149.95506286621094,
+      "last_step": 61088,
+      "mean_last_10": 150.75974884033204,
+      "min": 1.9900321960449219,
+      "max": 152.6971893310547,
+      "points": 1489
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 61088,
+      "mean_last_10": 998.0240051269532,
+      "min": 13.430000305175781,
+      "max": 999.0,
+      "points": 1489
+    },
+    "Policy/mean_std": {
+      "last": 0.6942837238311768,
+      "last_step": 61088,
+      "mean_last_10": 0.6945083439350128,
+      "min": 0.5937000513076782,
+      "max": 0.7144381999969482,
+      "points": 1489
+    },
+    "Perf/total_fps": {
+      "last": 31997.0,
+      "last_step": 61088,
+      "mean_last_10": 32305.0,
+      "min": 15577.0,
+      "max": 36641.0,
+      "points": 1489
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

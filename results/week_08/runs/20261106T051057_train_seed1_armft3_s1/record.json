@@ -1,0 +1,63 @@
+{
+  "id": "20261106T051057_train_seed1_armft3_s1",
+  "title": "Reach fine-tuned on the corrected locked profile (from armft2 62800, 2000 iterations)",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-06T17:22:47+11:00",
+  "started_utc": "2026-11-06T05:10:57+00:00",
+  "source_dir": "logs/unifp_train/20261106T051057_train_seed1_armft3_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "e879afc038b7335eb62673e41831a43aa1ce5a00",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 64109,
+  "final_checkpoint": {
+    "file": "model_64109.pt",
+    "sha256": "59b95647b47ffc1da3b65a95c8087fbc2729c290dc577422256034af1edbe27c"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 160.41610717773438,
+      "last_step": 64109,
+      "mean_last_10": 160.47959747314454,
+      "min": 2.025775671005249,
+      "max": 161.86154174804688,
+      "points": 1310
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 64109,
+      "mean_last_10": 999.0,
+      "min": 13.430000305175781,
+      "max": 999.0,
+      "points": 1310
+    },
+    "Policy/mean_std": {
+      "last": 0.6096196174621582,
+      "last_step": 64109,
+      "mean_last_10": 0.6089006066322327,
+      "min": 0.6038116216659546,
+      "max": 0.6277100443840027,
+      "points": 1310
+    },
+    "Perf/total_fps": {
+      "last": 32268.0,
+      "last_step": 64109,
+      "mean_last_10": 32133.9,
+      "min": 15916.0,
+      "max": 36424.0,
+      "points": 1310
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -35,7 +35,7 @@ from isaaclab.sensors import ContactSensor
 from unifp_isaaclab import interface, task as goal_task
 from unifp_isaaclab.policy import ObsHistory
 
-from . import debug_vis, forces, gait, leg_chatter, observations, rewards, task_cfg
+from . import arm_link, debug_vis, forces, gait, leg_chatter, observations, rewards, task_cfg
 from .env_cfg import Go2D1PosForceEnvCfg
 
 
@@ -125,6 +125,18 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
         self._command_interval = int(task_cfg.COMMAND_RESAMPLING_TIME_S / interface.POLICY_DT)
 
+        self._arm_ids = self._order[12:interface.NUM_ACTIONS]
+        self._arm_link = None
+        if cfg.arm_link is not None or cfg.arm_servo:
+            limits = self._robot.data.joint_pos_limits[0, self._arm_ids]
+            self._arm_link = arm_link.ArmLink(self.num_envs, self.device, interface.POLICY_DT,
+                                              lower=limits[:, 0], upper=limits[:, 1], seed=cfg.seed or 0,
+                                              track=cfg.track_leg_chatter, **(cfg.arm_link or {}))
+            if cfg.arm_step_weight:
+                self._weights["arm_command_step"] = cfg.arm_step_weight * interface.POLICY_DT
+                self._terms["arm_command_step"] = lambda state: self._arm_link.sent_step
+                self._episode_sums["arm_command_step"] = zeros(self.num_envs)
+
         if cfg.leg_armature_range is not None:
             self._draw_leg_armature()
         if cfg.leg_friction_range is not None:
@@ -178,6 +190,8 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._last_actions = self._actions
         self._actions = torch.clip(actions, -interface.CLIP_ACTIONS, interface.CLIP_ACTIONS)
         self._joint_targets = interface.joint_targets(self._actions)
+        if self._arm_link is not None:
+            self._arm_link.command(self._joint_targets[:, 12:], self._dof()[0][:, 12:interface.NUM_ACTIONS])
         self._track_chatter()
         self._step_forces()
 
@@ -232,7 +246,16 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
     def _apply_action(self) -> None:
         """Called once per physics step, so the PD actuator recomputes torque at 200 Hz."""
-        self._robot.set_joint_position_target(self._joint_targets, joint_ids=self._action_joint_ids)
+        targets = self._joint_targets
+        if self._arm_link is not None:
+            # The legs stay at the policy's 50 Hz; the arm follows what the link says it is doing, at the physics rate.
+            arm, speed = self._arm_link.drive(self.physics_dt)
+            targets = torch.cat((targets[:, :12], arm), dim=1)
+            if self.cfg.arm_servo:
+                # Against a zero velocity target the stiff drive's damping trails the plan by 97 ms and counts the
+                # servo's lag twice (`position_only.mdp.HeldJointPositionAction.apply_actions`).
+                self._robot.set_joint_velocity_target(speed, joint_ids=self._arm_ids)
+        self._robot.set_joint_position_target(targets, joint_ids=self._action_joint_ids)
         self._robot.set_joint_position_target(self._jaw_targets, joint_ids=self._jaw_joint_ids)
 
     # --- state ------------------------------------------------------------------------------------
@@ -268,12 +291,18 @@ class Go2D1PosForceEnv(DirectRLEnv):
         dof_pos, dof_vel = self._dof()
         yaw = self._base_yaw_quat()
         feet_forces = self._contact_forces(self._feet_contacts)
+        torques = self._robot.data.applied_torque[:, self._order]
+        if self.cfg.arm_servo:
+            # Isaac Lab estimates an implicit drive's torque as stiffness x error, so at 4000 N·m/rad any lag reads as the
+            # limit: a saturation that is not there, which `torque_limits` would charge for. The firmware owns these.
+            torques = torques.clone()
+            torques[:, 12:interface.NUM_ACTIONS] = 0.0
         return rewards.TaskState(
             base_lin_vel_b=self._robot.data.root_lin_vel_b,
             base_ang_vel_b=self._robot.data.root_ang_vel_b,
             root_pos_w=self._robot.data.root_pos_w - self.scene.env_origins,
             dof_pos=dof_pos, dof_vel=dof_vel, last_dof_vel=self._last_dof_vel,
-            torques=self._robot.data.applied_torque[:, self._order],
+            torques=torques,
             actions=self._actions, last_actions=self._last_actions,
             commands=self._commands, gait_phase=self._gait_phase,
             ref_leg_pos=gait.reference_leg_pos(self._gait_phase),
@@ -327,9 +356,16 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
     def _get_observations(self) -> dict:
         dof_pos, dof_vel = self._dof()
+        seen_pos, seen_vel = dof_pos, dof_vel
+        if self._arm_link is not None:
+            # The actor reads the arm as the dog would; the critic below keeps the true state.
+            arm = slice(12, interface.NUM_ACTIONS)
+            arm_pos, arm_vel = self._arm_link.observe(dof_pos[:, arm], dof_vel[:, arm])
+            seen_pos, seen_vel = dof_pos.clone(), dof_vel.clone()
+            seen_pos[:, arm], seen_vel[:, arm] = arm_pos, arm_vel
         actor = interface.single_obs(
             self._robot.data.root_quat_w, self._robot.data.root_ang_vel_b,
-            dof_pos, dof_vel, self._actions, self._gait_phase, self._commands)
+            seen_pos, seen_vel, self._actions, self._gait_phase, self._commands)
         actor = torch.clip(actor, -interface.CLIP_OBSERVATIONS, interface.CLIP_OBSERVATIONS)
 
         yaw = self._base_yaw_quat()
@@ -487,6 +523,8 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._robot.write_root_pose_to_sim(root_state[:, :7], env_ids)
         self._robot.write_root_velocity_to_sim(root_state[:, 7:], env_ids)
 
+        if self._arm_link is not None:
+            self._arm_link.reset(env_ids, self._default_dof_pos[12:interface.NUM_ACTIONS].expand(len(env_ids), -1))
         self._actions[env_ids] = 0.0
         self._last_actions[env_ids] = 0.0
         self._last_dof_vel[env_ids] = 0.0

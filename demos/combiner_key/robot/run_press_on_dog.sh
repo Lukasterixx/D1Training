@@ -71,10 +71,12 @@ trap 'exit 130' INT TERM HUP
 
 if [ "$ARM" = 1 ]; then
   if docker image inspect "$ARM_IMAGE" >/dev/null 2>&1; then
-    # --observe: the link reports the arm's angles and takes no target.
+    # --observe: the link reports the arm's angles and takes no target. Only --reach_arm_send asks for one that does.
+    OBSERVE=--observe
+    for a in "$@"; do [ "$a" = --reach_arm_send ] && OBSERVE=; done
     docker run -d --name "$ARM_NAME" --network host --ipc host "${PY_ENV[@]}" \
       -v "$REPO:/root/D1Training" --entrypoint python3 "$ARM_IMAGE" \
-      /root/D1Training/demos/combiner_door/robot/arm_link.py --observe \
+      /root/D1Training/demos/combiner_door/robot/arm_link.py $OBSERVE \
       --log "/root/D1Training/logs/leg_press/${STAMP}_arm_link.jsonl" >/dev/null
     for _ in $(seq 1 60); do
       docker logs "$ARM_NAME" 2>&1 | grep -q "listening on" && break

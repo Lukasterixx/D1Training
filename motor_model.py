@@ -122,6 +122,45 @@ D1_FEEDBACK_HZ = 9.0  # measured: 8.9986 Hz over 120 s
 # commands are honoured.
 D1_COMMAND_HZ = 10.0
 
+# What the UniFP task's arm link draws from (`unifp_train/arm_link.py`). Lukas, 2026-11-06: "the real arm takes commands
+# at 9-10 hz". Stated, not measured here; `d1_hardware.MAX_COMMAND_HZ` is the ceiling, because past it the arm stops
+# responding (F-032).
+D1_COMMAND_HZ_RANGE = (9.0, 10.0)
+
+# MEASURED (F-020): the joint angles are reported to 0.1 deg.
+D1_FEEDBACK_QUANTUM_DEG = 0.1
+
+# Under a stream of commands the arm drops them for 0.3-0.7 s on occasion (Lukas, 2026-11-06), and its angle reports stop
+# with them (F-200). Duration: stated, and F-200's gaps agree (to 0.71 s). How often is ESTIMATED from one 39 s capture at
+# 10 Hz (19 gaps, 8.1 s of 38.8, F-200; fewer at lower rates, F-202): these ranges give that capture's 21% of the time.
+# Lukas's "on occasion" may be rarer, so this interval is the frequent end. What the arm does in one is read from commands
+# against the next reports, not measured: it moved ~5 deg through a gap asked for 15-20 (F-200), about one 4 deg command,
+# so the model finishes the move it has and takes no new one.
+D1_STALL_INTERVAL_S = (1.0, 2.8)
+D1_STALL_DURATION_S = (0.3, 0.7)
+
+# The locked stream (2026-11-06, F-238/F-239 in the robot program's numbering, run on the other PC): one command 20 ms after
+# each `current_servo_angle` report, so a true 111 ms stream at the reports' own rate. MEASURED on the arm: 3 skipped reports
+# in 2,059 cycles, each ~0.21 s, cause unknown (three events do not fit a rate: light noise), against 73 in 710 free-running.
+# Commands 98-106 ms after a report are what skip.
+D1_LOCK_OFFSET_S = 0.02
+D1_LOCKED_SKIP_PROBABILITY = 0.0015
+# The arm in that stream. FITTED 2026-11-06 to the raw reports of five locked Joint1 triangle blocks (+-10 deg at 36 deg/s, 4 deg
+# a command, ~900 reports), driven by the commands as sent: a first-order lag behind a speed-limited target, 0.43 deg RMS, 0.35
+# held out. `unifp_train/arm_link_check.py` is the comparison. An earlier fit to summary figures gave lag 80, dead 20, age 40 ms,
+# 1.95 deg RMS: it matched a 150 ms lag on a measure that reads 98 on the arm. F-045's planner with 19 ms of report age is close
+# behind at 0.53 and fits the 30 deg steps far better (0.34 deg against 0.95): this profile is for streams, F-045 for big steps.
+# Acceleration, deceleration and velocity retention add nothing here, so the plan only limits speed. Delay and lag trade off
+# (dead + age 0: lag 82 ms, 0.433; 20 ms: 63-65, 0.45), so training draws those ranges. Fitted to Joint1, unloaded, dog lying down.
+# HELD OUT on the six-joint holster draw with the key in the jaws: 0.23-0.57 deg RMS. There the shoulder and elbow fit best at 65-70
+# ms and the wrist at 50-55, so this one lag is about right for the first and slow for the second.
+D1_LOCKED_SERVO_LAG_S = 0.077
+D1_LOCKED_SERVO_LAG_RANGE_S = (0.06, 0.09)
+D1_LOCKED_REPORT_AGE_S = 0.0
+D1_LOCKED_REPORT_AGE_RANGE_S = (0.0, 0.02)
+D1_LOCKED_DEAD_TIME_S = 0.005
+D1_LOCKED_PLAN_ACCEL_RAD_S2 = 400.0   # the step fit's bound: with the servo lag the plan only limits speed
+
 # The D1 firmware's commanded motion: what happens between a setpoint arriving and the joint getting
 # there. FITTED to recorded hardware, 2026-09-17 (F-045), by `position_only/arm_response.py`, which
 # simulates `core.TrapezoidTracker` -- the implementation the task uses -- against the raw 9 Hz samples
@@ -154,13 +193,17 @@ GO2_LEG_DELAY_PHYSICS_STEPS = (0, 2)
 
 
 def arm_trajectory(profile: str) -> dict | None:
-    """The D1 firmware's motion planner for a profile: "measured" (F-045) or "none" (setpoints act at once).
+    """The D1 firmware's motion planner for a profile: "measured" (F-045), "locked" (a stream of small steps, with
+    `D1_LOCKED_SERVO_LAG_S` behind it) or "none" (setpoints act at once).
 
     Joint speed ceilings are not repeated here; they are `D1_VELOCITY_LIMIT_RAD_S`, which the planner
     and PhysX share.
     """
     if profile == "none":
         return None
+    if profile == "locked":
+        return {"dead_time_s": D1_LOCKED_DEAD_TIME_S, "accel_rad_s2": D1_LOCKED_PLAN_ACCEL_RAD_S2,
+                "decel_rad_s2": D1_LOCKED_PLAN_ACCEL_RAD_S2, "replan_velocity_retention": D1_REPLAN_VELOCITY_RETENTION}
     if profile != "measured":
         raise ValueError(f"Unknown arm trajectory profile: {profile!r}")
     return {

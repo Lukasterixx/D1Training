@@ -70,6 +70,7 @@ class ArmFeedback:
 
     def __init__(self, port: int):
         self.q_rad, self.rx, self.hello, self.lock = None, 0.0, None, threading.Lock()
+        self.report_s = None
         self.sock = socket.create_connection(("127.0.0.1", port), timeout=2.0)
         self.sock.settimeout(None)
         threading.Thread(target=self._read, daemon=True).start()
@@ -96,8 +97,14 @@ class ArmFeedback:
                     q = np.asarray(d1_ik.from_servo_deg(np.asarray(msg["q"], dtype=float))[0], dtype=float)
                     with self.lock:
                         self.q_rad, self.rx = q, time.monotonic() - float(msg.get("age_s", 0.0))
+                        self.report_s = msg.get("report_s")
                 elif msg.get("type") == "hello":
                     self.hello = msg
+
+    def latest_report(self):
+        """The last report's own arrival time and its angles as a pair (`arm_link`'s `report_s`), or (None, None)."""
+        with self.lock:
+            return self.report_s, self.q_rad
 
     def latest(self):
         with self.lock:

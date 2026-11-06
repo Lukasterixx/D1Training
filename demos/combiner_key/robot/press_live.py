@@ -44,6 +44,10 @@ A reach export (18 outputs, `export_policy.py`) runs here too, with `--presses 0
 policy with the arm folded and sent nothing, its six arm outputs recorded (`--reach_goal`, `--reach_arm_obs`). Its record
 is `<stamp>_reach_stand[_live]/`. Not validated: it has run only against the fake robot here.
 
+`--reach_arm_obs reports` reads the real arm as the policy trained on it. With `--reach_arm_send --live` the whole body runs: the arm unfolds on the
+stand-up gains, the policy drives legs and arm, and the arm folds before the dog lies down (`reach_arm.py`). Never with the legs dry: the policy runs
+away (F-252). Not validated: it has never run on the dog.
+
     run_press_on_dog.sh --policy checkpoints/reach_force_corner_delay_model_59600.npz --presses 0 --stand_s 20    # dry
 
 The record is `logs/leg_press/<stamp>_leg_press[_live]/` (`press.npz`, `summary.json`, `run.json`); `d1fetch` copies it.
@@ -72,6 +76,7 @@ REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
 
 from demos.combiner_key.robot import leg_policy, lowlevel as ll, press_layer as pl  # noqa: E402
+from demos.combiner_key.robot import reach_arm  # noqa: E402
 from demos.combiner_key.robot.shadow import ARM_LINK_PORT, ARM_STALE_S, FLUSH_S, STALE_S, ArmFeedback  # noqa: E402
 
 #: The Go2's joint limits (the URDF's, `unifp_train.task_cfg.JOINT_POS_LIMITS`) in Unitree's order: targets are clamped
@@ -278,7 +283,7 @@ class Operator:
 # --- the program -----------------------------------------------------------------------------------------------------
 
 class PressRun:
-    def __init__(self, args, io: LiveIO | None, operator: Operator | None):
+    def __init__(self, args, io: LiveIO | None, operator: Operator | None, arm_link=None):
         self.args, self.io, self.operator = args, io, operator
         self.live = io is not None
         self.policy = leg_policy.LegPolicy(args.policy)
@@ -289,7 +294,15 @@ class PressRun:
         self.reach = self.meta.get("task") == "reach"
         if self.reach and args.presses != 0:
             raise SystemExit("a reach export only holds the stand here: pass --presses 0")
-        if self.reach and self.live and args.reach_arm_obs != "virtual":
+        self.arm_send = bool(getattr(args, "reach_arm_send", False))
+        if self.arm_send and not self.reach:
+            raise SystemExit("--reach_arm_send is a reach export's")
+        if self.arm_send and args.reach_arm_obs != "reports":
+            raise SystemExit("--reach_arm_send needs --reach_arm_obs reports: the policy has to read the arm it drives")
+        if self.arm_send and not (self.live and args.live):
+            # The flag and the state: a refusal resting on how the writer was built is one refactor from not refusing.
+            raise SystemExit("--reach_arm_send needs --live: with the legs dry the policy runs away (F-252)")
+        if self.reach and self.live and args.reach_arm_obs != "virtual" and not self.arm_send:
             # Shown the real folded arm on the dog (2026-11-06, dry) the policy's outputs ran away: past 1 rad at its 46th
             # step, every leg target at the 25 rad clip soon after. Live, that is the legs driven to their limits.
             raise SystemExit("a reach export shown the real folded arm runs away (Week 8 log): never live")
@@ -313,13 +326,31 @@ class PressRun:
         self.tick_now = 0.0
         #: This tick's time from its start to the command's send (ms).
         self.send_ms = math.nan
-        self.arm = None
-        if args.arm_link_port:
+        self.arm = arm_link if arm_link is not None else None
+        if self.arm is None and args.arm_link_port:
             try:
                 self.arm = ArmFeedback(args.arm_link_port)
-                log(f"arm link on 127.0.0.1:{args.arm_link_port} (listening only)")
+                log(f"arm link on 127.0.0.1:{args.arm_link_port}" + (" (sending)" if self.arm_send else " (listening only)"))
             except OSError as error:
                 log(f"no arm link ({error}): the arm is taken at its rest pose")
+        self.arm_reports = self.arm_targets = self.arm_watch = self.arm_sender = None
+        self.arm_started = False
+        #: The arm's part of the run: folded, unfolding, ready (at the policy's default pose), then folding, folded_again.
+        self.arm_phase, self.arm_move_t0 = "folded", None
+        self.stand_wait_s = 0.0
+        if self.reach and args.reach_arm_obs == "reports":
+            if self.arm is None:
+                raise SystemExit("--reach_arm_obs reports needs the arm link")
+            limits = np.asarray(self.meta["arm_joint_limits"], dtype=float)
+            self.arm_reports = reach_arm.ArmReports(self.obs.default[12:18])
+            self.arm_targets = reach_arm.ArmTargets(self.obs.default[12:18], self.meta["action_scale"],
+                                                    self.meta["clip_actions"], limits[:, 0], limits[:, 1])
+        if self.arm_send:
+            hello = self.arm.hello or {}
+            if hello.get("observe"):
+                raise SystemExit("the arm link is observing: it takes no goal")
+            self.arm_watch = reach_arm.ArmWatch()
+            self.arm_sender = reach_arm.ArmSender(self.arm.sock)
         self.mode, self.mode_t0 = "preflight", time.monotonic()
         self.sport_name = ""
         self.pending: int | None = None
@@ -399,11 +430,19 @@ class PressRun:
         log(what + (f" {extra}" if extra else ""))
 
     def set_mode(self, mode: str) -> None:
+        if self.mode == "policy" and mode != "policy":
+            self.arm_hold()
         self.event(f"mode {self.mode} -> {mode}")
         self.mode, self.mode_t0 = mode, time.monotonic()
 
+    def arm_hold(self) -> None:
+        """Whatever stops the run, the arm stays where it is."""
+        if self.arm_sender is not None:
+            self.arm_sender.hold()
+
     def abort(self, why: str) -> None:
         """Damping now (live), or the dry run's end."""
+        self.arm_hold()
         if self.abort_reason is None:
             self.abort_reason = why
         if self.live and self.mode in DRIVEN + ("damping",):
@@ -627,7 +666,14 @@ class PressRun:
             self._send(target, kp, ll.STAND_KD)
             self._record(state, sent=True, target=target, kp=kp, kd=ll.STAND_KD)
             return
-        s = (t - STAND_S - STAND_HOLD_S) / GAIN_BLEND_S
+        if self.arm_sender is not None and self.arm_phase != "ready":
+            # The legs stiff at the stand while the arm comes out: the policy starts with it there, as every episode did.
+            self._send(self.default_q, ll.STAND_KP, ll.STAND_KD)
+            self._record(state, sent=True, target=self.default_q, kp=ll.STAND_KP, kd=ll.STAND_KD)
+            if self.mode == "stand_up" and self._unfolded():
+                self.stand_wait_s = t - STAND_S - STAND_HOLD_S
+            return
+        s = (t - STAND_S - STAND_HOLD_S - self.stand_wait_s) / GAIN_BLEND_S
         kp, kd = ll.blend(ll.STAND_KP, self.kp, s), ll.blend(ll.STAND_KD, self.kd, s)
         self._send(self.default_q, kp, kd)
         self._record(state, sent=True, target=self.default_q, kp=kp, kd=kd)
@@ -647,7 +693,7 @@ class PressRun:
         self.settle_q = self.settle_q[-SETTLED_TICKS:]
         still = len(self.settle_q) == SETTLED_TICKS and float(np.abs(self.settle_q[-1] - self.settle_q[0]).max()) < SETTLED_MOVE_RAD
         self.still_ticks = SETTLED_TICKS if still else 0
-        waited = t - STAND_S - STAND_HOLD_S - GAIN_BLEND_S
+        waited = t - STAND_S - STAND_HOLD_S - self.stand_wait_s - GAIN_BLEND_S
         if self.still_ticks >= SETTLED_TICKS or waited > SETTLE_MAX_S:
             self._gate(state, still)
 
@@ -713,6 +759,74 @@ class PressRun:
         self.rehearse_v = (p - last) / pl.POLICY_DT
         self.rehearse_foot = p
 
+    def args_dt(self) -> float:
+        return float(self.meta["policy_dt"])
+
+    def _read_arm(self) -> None:
+        stamp, reported = self.arm.latest_report()
+        if stamp is not None and reported is not None:
+            self.arm_reports.report(float(stamp), reported)
+
+    def _joint_move(self, phase: str, *waypoints) -> None:
+        """Start the unfold or the fold from where the arm reports itself."""
+        self.arm_phase, self.arm_move_t0 = phase, time.monotonic()
+        self.arm_sender.path(reach_arm.route(reach_arm.to_servo_deg(self.arm_reports.q), *waypoints))
+        self.event(f"arm: {phase}")
+
+    def _unfolded(self) -> bool:
+        """With the legs on the stand-up gains: True once the arm is at the policy's default pose. A stop aborts."""
+        self._read_arm()
+        if self.arm_phase == "folded":
+            if self.arm_reports.stamp is None:
+                self.abort("arm: no report before the unfold")
+                return False
+            self._joint_move("unfolding", reach_arm.HOME_SERVO_DEG, reach_arm.to_servo_deg(self.obs.default[12:18]))
+        self.arm_sender.keepalive()
+        if reach_arm.at_start(self.arm_reports.q, self.obs.default[12:18], reach_arm.ARRIVED_DEG) is None:
+            self.arm_phase = "ready"
+            self.event("arm: at the policy's start")
+            return True
+        if time.monotonic() - self.arm_move_t0 > reach_arm.JOINT_MOVE_TIMEOUT_S:
+            self.abort("arm: not at the policy's start in time")
+        return False
+
+    def _folded(self) -> bool:
+        """Before the dog lies down: True once the arm is back, or was never out."""
+        if self.arm_sender is None or self.arm_phase in ("folded", "folded_again"):
+            return True
+        self._read_arm()
+        fold = reach_arm.from_servo_deg(reach_arm.FOLD_SERVO_DEG)
+        if self.arm_phase != "folding":
+            self._joint_move("folding", reach_arm.HOME_SERVO_DEG, reach_arm.TUCK_SERVO_DEG, reach_arm.FOLD_SERVO_DEG)
+        self.arm_sender.keepalive()
+        if reach_arm.at_start(self.arm_reports.q, fold, reach_arm.ARRIVED_DEG) is None:
+            self.arm_phase = "folded_again"
+            self.event("arm: folded")
+            return True
+        if time.monotonic() - self.arm_move_t0 > reach_arm.JOINT_MOVE_TIMEOUT_S:
+            self.abort("arm: not folded in time, and the dog will not lie down on it")
+        return False
+
+    def _send_arm(self, arm_action) -> None:
+        """The six arm outputs to the link as a goal, or the reason not to."""
+        target = self.arm_targets.target(arm_action)
+        if not self.arm_started:
+            if self.arm_reports.stamp is None:
+                self.abort("no report from the arm")
+                return
+            why = reach_arm.at_start(self.arm_reports.q, self.obs.default[12:18])
+            if why:
+                self.abort(why)
+                return
+            self.arm_started = True
+            self.arm_watch.begin(time.monotonic())
+            self.event("the arm's goals are going to the link")
+        why = self.arm_watch.check(time.monotonic(), self.arm_reports, target)
+        if why:
+            self.abort(f"arm: {why}")
+            return
+        self.arm_sender.follow(target)
+
     def _policy(self, state, t) -> None:
         task = self.task
         stage_before = task.stage
@@ -737,6 +851,9 @@ class PressRun:
             self._rehearsal_foot(task.goal_w_held)
         arm_obs, arm_obs_dq = ((self.virtual_arm.q, self.virtual_arm.dq) if self.virtual_arm is not None
                                else (arm_q, np.zeros(6)))
+        if self.arm_reports is not None:
+            self._read_arm()
+            arm_obs, arm_obs_dq = self.arm_reports.q, self.arm_reports.dq
         frame = self.obs.frame(state["quat"], state["gyro"], state["q"], state["dq"], arm_obs, arm_obs_dq, commands)
         stack = self.obs.step(frame)
         t0 = time.perf_counter()
@@ -750,8 +867,11 @@ class PressRun:
         if self.reach:
             # Before the send: this policy's target past the bound is damping, not a leg driven there.
             off = float(np.abs(legs).max()) * float(self.meta["action_scale"])
-            if off > self.args.reach_max_leg_off_rad:
-                self.abort(f"leg target {off:.2f} rad off default, past {self.args.reach_max_leg_off_rad} rad")
+            bound = self.args.reach_max_leg_off_rad
+            if self.arm_send and self.policy_ticks * self.args_dt() < reach_arm.GRACE_S:
+                bound = max(bound, reach_arm.LEG_OFF_GRACE_RAD)
+            if off > bound:
+                self.abort(f"leg target {off:.2f} rad off default, past {bound} rad")
         if self.mode == "policy":           # an abort this tick has already sent damping
             self._send(target, self.kp, self.kd)
         infer_ms = 1000.0 * (time.perf_counter() - t0)      # state to command out, this program's part
@@ -761,6 +881,8 @@ class PressRun:
             arm_target = (self.obs.prev_actions[12:18] * self.meta["action_scale"] + self.obs.default[12:18])
             if self.virtual_arm is not None:
                 self.virtual_arm.step(arm_target)
+            if self.arm_sender is not None and self.mode == "policy":
+                self._send_arm(self.obs.prev_actions[12:18])
         self.send_ms = 1000.0 * (time.monotonic() - self.tick_now)
         estimate = self.policy.decoder(latent)[0]
         est = leg_policy.decode_estimates(self.meta, estimate)
@@ -846,7 +968,7 @@ class PressRun:
         target = ll.ramp(self.from_q, self.default_q, t / END_STAND_S)
         self._send(target, kp, kd)
         self._record(state, sent=True, target=target, kp=kp, kd=kd)
-        if t >= END_STAND_S + 0.5:
+        if t >= END_STAND_S + 0.5 and self._folded() and self.mode == "stand_end":
             self.set_mode("lie_end")
 
     def _lie_end(self, state, t) -> None:
@@ -1041,8 +1163,12 @@ def main() -> int:
                              "export's start_gate, else -5 5)")
     parser.add_argument("--reach_goal", choices=("init_start", "folded"), default="init_start",
                         help="a reach export's hand goal: the one training opens on, or the folded hand's own")
-    parser.add_argument("--reach_arm_obs", choices=("virtual", "measured"), default="virtual",
-                        help="what a reach export sees of the arm: `leg_policy.VirtualArm` or the real folded arm")
+    parser.add_argument("--reach_arm_obs", choices=("virtual", "measured", "reports"), default="virtual",
+                        help="what a reach export sees of the arm: `leg_policy.VirtualArm`, the real folded arm, or the real "
+                             "arm's reports as it trained on them (`reach_arm.ArmReports`)")
+    parser.add_argument("--reach_arm_send", action="store_true",
+                        help="the whole body: with --live, the arm unfolds and the policy drives it through the arm link (after a typed "
+                             "confirmation). Never with the legs dry: the policy runs away (F-252)")
     parser.add_argument("--reach_max_leg_off_rad", type=float, default=0.9,
                         help="a reach export's leg target this far from default stops the run, unsent. On the dog dry: "
                              "0.76 at the first step, 0.35 after it settles; the runaway passes 1 within a second")
@@ -1077,6 +1203,16 @@ def main() -> int:
         signal.signal(sig, lambda *_: stop.set())
     node = rclpy.create_node("leg_press")
     io = LiveIO(node, args.cmd_hz) if args.live else None
+    if args.reach_arm_send:
+        log("--reach_arm_send: the whole body, for the first time: the D1 unfolds and the policy drives it and the legs. Nobody within the arm's "
+            "reach, a hand on the E-stop.")
+        try:
+            if input("type 'arm' to go on: ").strip() != "arm":
+                log("not sent")
+                return 1
+        except EOFError:
+            log("no terminal to confirm on: not sent")
+            return 1
     run = PressRun(args, io, Operator(eof_is_estop=bool(args.status_port)))
     node.create_subscription(LowState, args.topic, run.on_state, qos_profile_sensor_data)
     log(f"{'LIVE' if args.live else 'DRY'}: {run.meta['variant']} policy {Path(run.meta['checkpoint']).name}, "
@@ -1124,6 +1260,7 @@ def main() -> int:
                 log("left in damping: LowCmd stops now and the motors keep its last command (kp 0, kd 3); "
                     f"select sport mode ({run.sport_name!r}) from the app or the remote")
     finally:
+        run.arm_hold()
         if run.live and run.mode not in ("done",) and run.io is not None and run.io.writing and not run.handed_back:
             # Whatever happened, the last command out is damping.
             run.io.command(run.state["q"] if run.state else np.zeros(12), 0.0, ll.DAMP_KD)

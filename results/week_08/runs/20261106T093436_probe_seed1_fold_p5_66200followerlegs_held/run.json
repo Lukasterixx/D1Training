@@ -1,0 +1,261 @@
+{
+  "mode": "folded_start_probe",
+  "status": "finished",
+  "seed": 1,
+  "command_gap": {
+    "zero": {
+      "gap_deg_max_by_joint": [
+        5.4,
+        7.0,
+        6.1,
+        7.5,
+        6.9,
+        7.0
+      ],
+      "gap_deg_p99_by_joint": [
+        2.9,
+        3.9,
+        2.6,
+        6.2,
+        5.9,
+        6.7
+      ],
+      "step_deg_max_by_joint": [
+        4.6,
+        5.0,
+        4.8,
+        5.0,
+        5.0,
+        5.0
+      ],
+      "asked_lead_deg_max_by_joint": [
+        16.0,
+        16.6,
+        14.0,
+        35.5,
+        32.5,
+        26.4
+      ],
+      "asked_lead_deg_p99_by_joint": [
+        7.2,
+        10.6,
+        7.3,
+        15.4,
+        18.2,
+        19.6
+      ],
+      "asked_cycle_step_deg_max_by_joint": [
+        12.4,
+        12.2,
+        8.0,
+        11.4,
+        16.7,
+        14.5
+      ],
+      "leg_off_rad_max_first_s": 0.949,
+      "leg_off_rad_max_after": 0.839,
+      "first_s_gap_deg_max_by_joint": [
+        6.9,
+        6.9,
+        6.5,
+        6.8,
+        6.8,
+        6.9
+      ],
+      "first_s_step_deg_max_by_joint": [
+        5.0,
+        5.0,
+        5.0,
+        5.0,
+        5.0,
+        5.0
+      ],
+      "first_s_arm_travel_deg_max_by_joint": [
+        30.9,
+        32.3,
+        26.2,
+        41.7,
+        27.4,
+        30.4
+      ]
+    },
+    "folded": {
+      "gap_deg_max_by_joint": [
+        7.0,
+        7.2,
+        7.8,
+        7.4,
+        7.1,
+        7.0
+      ],
+      "gap_deg_p99_by_joint": [
+        3.8,
+        6.5,
+        6.5,
+        5.9,
+        6.5,
+        6.9
+      ],
+      "step_deg_max_by_joint": [
+        5.0,
+        5.0,
+        5.0,
+        5.0,
+        5.0,
+        5.0
+      ],
+      "asked_lead_deg_max_by_joint": [
+        23.8,
+        80.9,
+        71.0,
+        59.6,
+        34.7,
+        40.6
+      ],
+      "asked_lead_deg_p99_by_joint": [
+        14.4,
+        64.0,
+        50.3,
+        50.6,
+        28.7,
+        35.6
+      ],
+      "asked_cycle_step_deg_max_by_joint": [
+        9.4,
+        7.1,
+        12.4,
+        9.4,
+        13.6,
+        16.3
+      ],
+      "leg_off_rad_max_first_s": 0.856,
+      "leg_off_rad_max_after": 0.791,
+      "first_s_gap_deg_max_by_joint": [
+        4.8,
+        7.1,
+        7.9,
+        6.5,
+        4.0,
+        5.2
+      ],
+      "first_s_step_deg_max_by_joint": [
+        3.9,
+        5.0,
+        5.0,
+        5.0,
+        3.3,
+        4.1
+      ],
+      "first_s_arm_travel_deg_max_by_joint": [
+        15.1,
+        42.9,
+        37.5,
+        30.3,
+        15.8,
+        21.5
+      ]
+    }
+  },
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261106T082312_train_seed1_armft5_s1/model_66200.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 66200,
+  "steps": 400,
+  "hold_s": 1.0,
+  "goals": 27,
+  "tool_point": "fingertip",
+  "forces": "off",
+  "base_command": "zero (standing)",
+  "folded_pose_rad": [
+    0.036651913076639175,
+    -1.565000057220459,
+    1.565000057220459,
+    -0.05410520359873772,
+    0.07155849784612656,
+    0.05410520359873772
+  ],
+  "folded_rest_measured_deg": [
+    2.1,
+    -90.9,
+    91.7,
+    -3.1,
+    4.1,
+    3.1
+  ],
+  "body_contact_bodies": [
+    "base",
+    "FL_hip",
+    "FL_thigh",
+    "FR_hip",
+    "FR_thigh",
+    "Head_upper",
+    "Head_lower",
+    "RL_hip",
+    "RL_thigh",
+    "RR_hip",
+    "RR_thigh"
+  ],
+  "summary": {
+    "zero": {
+      "envs": 27,
+      "falls": 0,
+      "reached_5cm": 13,
+      "time_to_5cm_s_median": 2.36,
+      "time_to_5cm_s_max": 6.6000000000000005,
+      "time_to_3cm_s_median": 5.74,
+      "error_final_cm_median": 7.533243298530579,
+      "error_final_cm_max": 16.786721348762512,
+      "peak_arm_speed_rad_s_median": 0.981739342212677,
+      "peak_arm_speed_rad_s_max": 1.0031787157058716,
+      "peak_J1_speed_rad_s_max": 0.9771339297294617,
+      "peak_J2_speed_rad_s_max": 0.9075702428817749,
+      "saturated_steps_first_2s_J1_median": 0,
+      "saturated_steps_first_2s_J2_median": 0,
+      "peak_body_contact_n_max": 0.0,
+      "envs_body_contact_over_5n": 0,
+      "peak_trunk_contact_n_max": 0.0,
+      "peak_pitch_deg_max": 4.765893936157227,
+      "peak_roll_deg_max": 2.732205629348755,
+      "base_drift_m_max": 0.11151130497455597,
+      "first_arm_action_median": [
+        -0.14870776236057281,
+        0.12832891941070557,
+        -0.44761696457862854,
+        -1.7574212551116943,
+        -0.8077017664909363,
+        -0.35888662934303284
+      ]
+    },
+    "folded": {
+      "envs": 27,
+      "falls": 0,
+      "reached_5cm": 19,
+      "time_to_5cm_s_median": 3.14,
+      "time_to_5cm_s_max": 6.8,
+      "time_to_3cm_s_median": 3.38,
+      "error_final_cm_median": 7.257205247879028,
+      "error_final_cm_max": 17.31511354446411,
+      "peak_arm_speed_rad_s_median": 1.0226047039031982,
+      "peak_arm_speed_rad_s_max": 1.04899263381958,
+      "peak_J1_speed_rad_s_max": 1.04899263381958,
+      "peak_J2_speed_rad_s_max": 1.0449299812316895,
+      "saturated_steps_first_2s_J1_median": 0,
+      "saturated_steps_first_2s_J2_median": 0,
+      "peak_body_contact_n_max": 0.0,
+      "envs_body_contact_over_5n": 0,
+      "peak_trunk_contact_n_max": 0.0,
+      "peak_pitch_deg_max": 7.155158519744873,
+      "peak_roll_deg_max": 2.4282751083374023,
+      "base_drift_m_max": 0.10330194234848022,
+      "first_arm_action_median": [
+        0.4834279716014862,
+        0.5500402450561523,
+        -0.7854112386703491,
+        -1.9955377578735352,
+        -1.303789734840393,
+        -0.5163367390632629
+      ]
+    }
+  },
+  "records_file": "folded_start.json",
+  "command": "./demos/unifp/folded_start_probe.py --headless --real_arm --follower --legs_held --run_name fold_p5_66200followerlegs_held --checkpoint logs/unifp_train/20261106T082312_train_seed1_armft5_s1/model_66200.pt"
+}

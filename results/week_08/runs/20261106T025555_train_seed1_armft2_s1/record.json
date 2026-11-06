@@ -1,0 +1,63 @@
+{
+  "id": "20261106T025555_train_seed1_armft2_s1",
+  "title": "Reach fine-tuned on the locked arm stream (from armft1 61088, 2000 iterations)",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-06T15:44:59+11:00",
+  "started_utc": "2026-11-06T02:55:55+00:00",
+  "source_dir": "logs/unifp_train/20261106T025555_train_seed1_armft2_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 4096,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "e879afc038b7335eb62673e41831a43aa1ce5a00",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 63087,
+  "final_checkpoint": {
+    "file": "model_63087.pt",
+    "sha256": "9e2d57ac61791e9d1455cf910a27c2365483d84b84b68d5a0a18b6a273f33880"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 157.5980987548828,
+      "last_step": 63087,
+      "mean_last_10": 158.50513458251953,
+      "min": 1.9658461809158325,
+      "max": 160.16262817382812,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 992.7999877929688,
+      "last_step": 63087,
+      "mean_last_10": 997.9809997558593,
+      "min": 13.600000381469727,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 0.6180554628372192,
+      "last_step": 63087,
+      "mean_last_10": 0.6179153442382812,
+      "min": 0.6169211268424988,
+      "max": 0.6957384943962097,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 33244.0,
+      "last_step": 63087,
+      "mean_last_10": 33175.6,
+      "min": 15781.0,
+      "max": 34182.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

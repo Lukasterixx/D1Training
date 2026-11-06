@@ -113,6 +113,14 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     knee_friction_factor: float = 1.917
     #: Accumulate each leg joint's step-to-step target change for `leg_chatter()` (evaluations; `leg_chatter.py`).
     track_leg_chatter: bool = False
+    #: The D1 as the dog's arm is (`arm_link.ArmLink`'s keyword arguments): commands at 9-10 Hz, reports at 9 Hz, the
+    #: firmware's planner, its stalls. Empty: UniFP's 50 Hz interface, as every policy before 2026-11-06 trained on.
+    #: `arm_servo` is the stiff drive that follows it (`arm_link.swap_arm`, on the robot's config at launch).
+    arm_link: dict | None = None
+    arm_servo: bool = False
+    #: Reward on the squared change in each command the arm receives (rad², per second as the others). UniFP's `action_rate_arm`
+    #: reads the 50 Hz output, most of which never reaches a 9 Hz arm; this reads what does. Negative to penalise; 0: none.
+    arm_step_weight: float = 0.0
     #: Keep the actuators' reset draws (a delayed actuator's per-environment lag) off the global RNG stream, so a frozen
     #: manifest's goal schedule is the same with or without a command delay (`eval` and `manifest`).
     isolate_actuator_rng: bool = False

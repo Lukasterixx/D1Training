@@ -15,7 +15,9 @@ time, newline-delimited JSON:
                                    still here, keep going (a gripper given: the jaws there from now on)
     -> {"type": "hold"}            stop: command the arm to where it is, and stream nothing more
     <- {"type": "hello", "observe": bool, "bridge": {...} | null, "q": [...]}
-    <- {"type": "feedback", "q": [6], "gripper": units, "age_s": s, "streaming": bool}   at the arm's ~9 Hz
+    <- {"type": "feedback", "q": [6], "gripper": units, "age_s": s, "report_s": s, "streaming": bool}   at the arm's ~9 Hz
+                                   `report_s`: `time.monotonic()` as the last `current_servo_angle` arrived. `age_s` is refreshed by
+                                   the arm's echoes; a speed read off reports needs this
     <- {"type": "error", "detail": "..."}
 
 What it will and will not do:
@@ -455,7 +457,8 @@ class Link:
             with self.lock:
                 streaming = self.streaming
             self.send(conn, {"type": "feedback", "q": [round(v, 3) for v in q], "gripper": round(gripper, 2),
-                             "age_s": round(age, 3), "streaming": streaming})
+                             "age_s": round(age, 3), "report_s": round(self.client.servo_report_s, 4),
+                             "streaming": streaming})
 
     @staticmethod
     def send(conn, msg: dict) -> None:

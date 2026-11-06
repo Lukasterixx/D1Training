@@ -571,3 +571,31 @@ back to where it started (`holster_dog.recovery`: on the way out, what it has pl
 on, the rest of the plan's way back), and `q` + Enter or Ctrl-C quits with it held. A is Enter at every prompt. The
 remote is read from `/lf/lowstate` (the launcher now runs the program with ROS); not yet tried on the dog. The hand passes ~10 mm from the D1's
 own base on the CPU model while at the bar's place; that is the model's margin, not the real arm's.
+
+## The whole-body reach (`press_live.py --reach_arm_send --live`, 2026-11-06)
+
+`checkpoints/reach_force_locked_model_66200.npz` on the legs and the arm together. **Never run on the dog.** F-253, and `reach_arm.py` for the contract.
+
+**First, without the policy**, `run_holster_on_dog.sh --live --zero_test --step --timing`: out to zero, `follow`, and back. It covers three of the five first-ever items below.
+
+**Then, the arm folded, the dog standing in sport mode, nobody within the arm's reach, a hand on the E-stop:**
+
+    d1update
+    demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/reach_force_locked_model_66200.npz --presses 0 --stand_s 20 \
+        --reach_arm_obs reports --reach_arm_send --live --start_on_blend
+
+Type `arm`, then `live`. The dog lies down and stands up with the arm folded; on the stand-up gains the arm comes out by home to zero (~5 s); the policy holds the goal for `--stand_s`; the arm holds, then folds by home, `tuck` and `fold`; the dog lies down. The goal is fixed: `--reach_goal init_start`, 0.5 m out, 36 deg up.
+
+| what stops it | what happens |
+| --- | --- |
+| Ctrl-C, `a` + Enter, tilt, a joint limit, stale LowState | legs to damping, arm holds where it is |
+| E-stop | damping, sport mode at once, arm holds |
+| no arm report for 0.34 s | as Ctrl-C |
+| target 25 deg ahead of the arm for 0.5 s, or 60 at once; 20 deg in a tick; not finite | as Ctrl-C, after the first second |
+| a leg target past 0.9 rad (1.2 in the first second) | as Ctrl-C, before the send |
+| the arm not out or not folded in 20 s | as Ctrl-C |
+| the stand not the trained one | the arm folds, the dog lies down |
+
+The arm link holds on its own if the program goes quiet for 0.5 s. **Never release the arm** (F-028): after a stop it stays out, powered, and folds by home, `tuck` and `fold`, not straight, which hits the lidar cage.
+
+**First-ever on the real arm, all in this run:** the arm at zero; `follow` on a locked stream; the policy on the legs with the arm out; a stop from there, on a dog going to damping with the arm held out, whose effect on balance is not known; a fold-back from a policy pose.
