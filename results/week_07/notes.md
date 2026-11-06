@@ -855,7 +855,7 @@ All results are simulation. L is light legs (armature 0.0002 / 0.0007, 15-20 ms)
 | --- | --- | --- | --- | --- |
 | key (force-aware) | ft045 `2604`: 30 / 1 / 47 of 108 | seed 2 `4000`: 107 / 0 / 0 (seed 3 `3600`: 107 / 0 / 1) | support thighs 0.022 / 0.028 -> 0.004 / 0.007 | **`checkpoints/leg_key_force_corner_model_4000.npz`** (F-229, F-235) |
 | press (force-aware) | round 4: 10 / 83 / 166 of 288 hands | ft11a lineage, seed 4 `11200`: 177 / 0 / 0 (four seeds 149-177; position-only twin 31-33) | waiting thighs 0.27 / 0.22 (round 4) -> 0.007 / 0.003 | **`checkpoints/leg_press_force_chain_s4_model_11200.npz`** (F-236); ft11a the fallback |
-| reach | `58400`: 1.89 / 2.52 cm | round 2 delay arm `59600`: 1.93 / 2.57 (seed 2 `59000`: 2.10 / 2.54) | 0.049 -> 0.022 | **round 2's `59600`** (F-232); not yet in `checkpoints/` |
+| reach | `58400`: 1.89 / 2.52 cm | round 2 delay arm `59600`: 1.93 / 2.57 (seed 2 `59000`: 2.10 / 2.54) | 0.049 -> 0.022 | **round 2's `59600`** (F-232); in `checkpoints/` since 2026-11-06, with the `action_rate` arm's (Week 8 log) |
 | rope | `14600`: 24.3 / 35.9 / 49.1 N, 9 tugged | worse: 52-87 tugged, 27-29 N at 20 | 0.012 (no change needed) | **`14600` stays** (F-231) |
 | mechanism | `17499`: 470 / 512 | worse: 358-429 | 0.044, no flip (no change needed) | **`17499` stays** (F-231) |
 | lever | `21496`: 346 / 360, 502 / 512, 0 falls | round 3 `22400`: 346, 507, but 5 falls on levers (rounds 1-4: 1-72) | 0.119 ×2.0 -> 0.034 | **`21496` stays, rattling**: Lukas's trade (F-233) |
