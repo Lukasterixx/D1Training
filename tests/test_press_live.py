@@ -24,6 +24,7 @@ from unifp_isaaclab import interface
 REPO = Path(__file__).resolve().parents[1]
 ROBOT = REPO / "demos" / "combiner_key" / "robot"
 POLICY = REPO / "checkpoints" / "leg_press_force_r4_model_5999.npz"
+REACH_POLICY = REPO / "checkpoints" / "reach_force_corner_delay_model_59600.npz"
 
 
 class RepeatedConstants(unittest.TestCase):
@@ -408,6 +409,7 @@ class FakeRobot:
         self.keys = []
         self.ids = 0
         self.log = []
+        self.drop_selects = 0
 
     # The LiveIO interface.
     def switcher(self, api_id, parameter=None):
@@ -415,6 +417,10 @@ class FakeRobot:
         if api_id == ll.RELEASE_MODE:
             self.mode = ""
         elif api_id == ll.SELECT_MODE:
+            if self.drop_selects:                  # lost, and unanswered as every SelectMode on the dog has been
+                self.drop_selects -= 1
+                self.log.append(("switcher", api_id, parameter))
+                return self.ids
             self.mode = parameter["name"]
         self.responses[self.ids] = (0, json.dumps({"name": self.mode}))
         self.log.append(("switcher", api_id, parameter))
@@ -479,7 +485,7 @@ class FakeOperator:
 def args(**kw):
     base = dict(policy=str(POLICY), live=False, rehearse=False, plate="palm_up", force_n=5.0, max_force_n=5.0,
                 ramp_s=0.5, hold_s=1.0, standoff=0.04, speed=0.03, hand_wait_s=15.0, presses=1, policy_s=90.0,
-                tilt_limit_deg=15.0, force_abort_n=1e9, stand_s=10.0, start_tol_rad=None, start_pitch_deg=None, start_on_blend=False, cmd_hz=500.0, topic="/lowstate", arm_link_port=0, print_s=1e9,
+                status_port=0, tilt_limit_deg=15.0, force_abort_n=1e9, stand_s=10.0, start_tol_rad=None, start_pitch_deg=None, start_on_blend=False, cmd_hz=500.0, topic="/lowstate", arm_link_port=0, print_s=1e9,
                 run_dir=None)
     base.update(kw)
     return types.SimpleNamespace(**base)
@@ -562,6 +568,103 @@ class Program(unittest.TestCase):
         self.assertEqual(stages, {pl.WAITING})              # Enter never lifts the foot
         self.assertEqual(robot.mode, "normal")
 
+    def test_reach_stand_sends_the_legs_and_nothing_to_the_arm(self):
+        meta = leg_policy.LegPolicy(REACH_POLICY).meta
+        robot, op = FakeRobot(meta), FakeOperator()
+        run = press_live.PressRun(args(policy=str(REACH_POLICY), live=True, presses=0, stand_s=3.0,
+                                       run_dir=self.tmp.name, reach_goal="init_start", reach_arm_obs="virtual", reach_max_leg_off_rad=0.9,
+                                       start_on_blend=True, start_tol_rad=1.0, start_pitch_deg=(-90.0, 90.0)), robot, op)
+        self.drive(run, robot, op, until=lambda r: r.mode == "done",
+                   script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight", "waiting", "damping")))
+        self.assertIsNone(run.abort_reason)
+        self.assertEqual(run.end_reason, "--stand_s 3.0 s")
+        self.assertEqual(robot.mode, "normal")
+        self.assertEqual(run.obs.prev_actions.size, 18)
+        self.assertGreater(np.abs(run.obs.prev_actions[12:]).max(), 0.0)     # kept for the next frame, not zeros
+        moved = np.ptp(np.array(run.rows["arm_obs"])[np.isfinite(np.array(run.rows["infer_ms"]))], axis=0)
+        self.assertGreater(moved.max(), 0.0)                                 # the policy sees the virtual arm move
+        self.assertEqual(np.array(run.rows["target"]).shape[1], 12)          # a LowCmd's worth of legs only
+        self.assertIsNone(run.arm)                                           # no socket to the D1 at all
+        self.assertIn("reach_stand", run.run_dir.name)
+
+    def test_reach_never_live_on_the_measured_arm(self):
+        robot = FakeRobot(leg_policy.LegPolicy(REACH_POLICY).meta)
+        with self.assertRaises(SystemExit):
+            press_live.PressRun(args(policy=str(REACH_POLICY), live=True, presses=0, run_dir=self.tmp.name,
+                                     reach_goal="folded", reach_arm_obs="measured", reach_max_leg_off_rad=0.9),
+                                robot, FakeOperator())
+
+    def test_reach_leg_bound_stops_before_the_send(self):
+        meta = leg_policy.LegPolicy(REACH_POLICY).meta
+        robot, op = FakeRobot(meta), FakeOperator()
+        run = press_live.PressRun(args(policy=str(REACH_POLICY), live=True, presses=0, stand_s=3.0, run_dir=self.tmp.name,
+                                       reach_goal="init_start", reach_arm_obs="virtual", reach_max_leg_off_rad=0.01,
+                                       start_on_blend=True, start_tol_rad=1.0, start_pitch_deg=(-90.0, 90.0)), robot, op)
+        self.drive(run, robot, op, until=lambda r: r.mode == "damping",
+                   script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight",)))
+        self.assertIn("off default", run.abort_reason)
+        driven = np.array(run.rows["mode"]) == press_live.DRIVEN.index("policy")
+        self.assertEqual(float(np.array(run.rows["sent"])[driven].max(initial=0.0)), 0.0)    # no policy target went out
+
+    def _estop_run(self, press):
+        """A live stand, the E-stop pressed one second into the policy by `press(run, robot, operator)`."""
+        robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
+        run = press_live.PressRun(args(live=True, presses=0, stand_s=30.0, run_dir=self.tmp.name, start_on_blend=True,
+                                       start_tol_rad=1.0, start_pitch_deg=(-90.0, 90.0)), robot, op)
+        pressed = []
+
+        def script(k, r, rb, o):
+            if k % 30 == 0:
+                self.enter_on(r, o, ("preflight",))
+            if r.mode == "policy" and r.policy_ticks == 50 and not pressed:
+                pressed.append(k)
+                press(r, rb, o)
+        self.drive(run, robot, op, until=lambda r: r.mode == "done", script=script)
+        return run, robot
+
+    def test_estop_by_the_remotes_b_goes_to_sport_mode_with_no_enter(self):
+        run, robot = self._estop_run(lambda r, rb, o: setattr(rb, "keys", ["B"]))
+        self.assertIn("the remote's B", run.abort_reason)
+        self.assertTrue(run.handed_back)
+        self.assertEqual(robot.mode, "normal")
+        self.assertFalse(run.released)
+        stamps = {e["event"].split(" (")[0]: e["t"] for e in run.events}
+        self.assertLess(stamps["LowCmd stopped"] - stamps["E-STOP"], 0.1)         # two ticks, not a prompt
+
+    def test_estop_by_the_console_goes_to_sport_mode(self):
+        run, robot = self._estop_run(lambda r, rb, o: o.lines.append("estop"))
+        self.assertIn("the console", run.abort_reason)
+        self.assertEqual(robot.mode, "normal")
+
+    def test_the_console_closing_is_an_estop(self):
+        run, robot = self._estop_run(lambda r, rb, o: o.lines.append("estop eof"))
+        self.assertIn("link closed", run.abort_reason)
+        self.assertEqual(robot.mode, "normal")
+
+    def test_a_tilt_stop_still_waits_in_damping(self):
+        robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
+        run = press_live.PressRun(args(live=True, presses=0, stand_s=30.0, run_dir=self.tmp.name, start_on_blend=True,
+                                       start_tol_rad=1.0, start_pitch_deg=(-90.0, 90.0)), robot, op)
+        self.drive(run, robot, op, until=lambda r: r.mode == "policy" and r.policy_ticks > 5,
+                   script=lambda k, r, rb, o: k % 30 == 0 and self.enter_on(r, o, ("preflight",)))
+        run.abort("tilt")
+        for _ in range(100):
+            robot.step()
+            run.on_state(robot.msg())
+            run.tick()
+            self.clock.now += 0.02
+        self.assertEqual(run.mode, "damping")
+
+    def test_a_lost_selectmode_is_sent_again(self):
+        run, robot = self._estop_run(lambda r, rb, o: (setattr(rb, "drop_selects", 1), o.lines.append("estop")))
+        self.assertEqual(robot.mode, "normal")
+        self.assertIn("sport mode not back: SelectMode again", [e["event"] for e in run.events])
+
+    def test_reach_refuses_a_press(self):
+        with self.assertRaises(SystemExit):
+            press_live.PressRun(args(policy=str(REACH_POLICY), presses=1, run_dir=self.tmp.name,
+                                     reach_goal="init_start", reach_arm_obs="virtual"), None, None)
+
     def test_a_stand_not_the_trained_one_lies_down(self):
         robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta, sag=2.0), FakeOperator()   # twice the load
         run = press_live.PressRun(args(live=True, run_dir=self.tmp.name), robot, op)
@@ -641,10 +744,6 @@ class Program(unittest.TestCase):
         self.assertEqual(float(robot.kd.max()), ll.DAMP_KD)
         return run
 
-    def test_stop_on_the_remotes_b(self):
-        run = self.stop_case(lambda rb, o: setattr(rb, "keys", ["B"]))
-        self.assertIn("B", run.abort_reason)
-
     def test_stop_on_tilt(self):
         a = math.radians(25) / 2
         run = self.stop_case(lambda rb, o: setattr(rb, "quat", np.array([math.cos(a), math.sin(a), 0.0, 0.0])))
@@ -655,7 +754,7 @@ class Program(unittest.TestCase):
         self.assertIn("operator", run.abort_reason)
 
     def test_the_remote_alone_starts_it_stops_it_and_gives_it_back(self):
-        """A as `live` + Enter and every Enter, B as `a` + Enter, then A: sport mode back, where it started."""
+        """A as `live` + Enter and every Enter, B as the E-stop: sport mode back, where it started."""
         robot, op = FakeRobot(leg_policy.LegPolicy(POLICY).meta), FakeOperator()
         run = press_live.PressRun(args(live=True, run_dir=self.tmp.name), robot, op)
 

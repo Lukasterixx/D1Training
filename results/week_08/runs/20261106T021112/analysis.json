@@ -1,0 +1,56 @@
+{
+ "swing_10hz": {
+  "hz": 10.0,
+  "gripper_every": 1,
+  "commands": 200,
+  "moved_max_deg": 0.2,
+  "current_servo_angle": {
+   "n": 145,
+   "rate_hz": 7.25,
+   "gaps": 11,
+   "in_gaps_s": 4.93,
+   "max_s": 0.708
+  },
+  "arm_Feedback/1": {
+   "n": 325,
+   "rate_hz": 16.23,
+   "gaps": 4,
+   "in_gaps_s": 1.21,
+   "max_s": 0.31
+  },
+  "arm_Feedback/3": {
+   "n": 200,
+   "rate_hz": 9.96,
+   "gaps": 0,
+   "in_gaps_s": 0.0,
+   "max_s": 0.101
+  }
+ },
+ "swing_lock_20ms": {
+  "hz": 9.0,
+  "gripper_every": 1,
+  "commands": 180,
+  "moved_max_deg": 0.2,
+  "current_servo_angle": {
+   "n": 180,
+   "rate_hz": 9.0,
+   "gaps": 0,
+   "in_gaps_s": 0.0,
+   "max_s": 0.113
+  },
+  "arm_Feedback/1": {
+   "n": 357,
+   "rate_hz": 17.88,
+   "gaps": 0,
+   "in_gaps_s": 0.0,
+   "max_s": 0.114
+  },
+  "arm_Feedback/3": {
+   "n": 197,
+   "rate_hz": 9.85,
+   "gaps": 0,
+   "in_gaps_s": 0.0,
+   "max_s": 0.201
+  }
+ }
+}

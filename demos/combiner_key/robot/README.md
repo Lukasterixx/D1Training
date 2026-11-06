@@ -183,9 +183,33 @@ The motors did what was asked (`tau_est` within ~5% of kp (target - q) - kd dq).
 trained stance first, and Ctrl-C no longer kills the LowCmd writer (rclpy's SIGINT handler is off).
 
 Not shown: anything the policy does with the real legs beyond those 0.24 s. It has never driven them; the stand-in has no dynamics; the
-handover's ramps, the release's behaviour on this firmware and a stop by the remote's B are untried on the dog. For the first
+handover's ramps, the release's behaviour on this firmware and a stop by the remote's B are untried on the dog (B has since become the E-stop, below). For the first
 live runs: the dog on the floor with room around it, someone at its side ready to catch it, Ctrl-C at hand, and a dry
 `--rehearse` first to see the remote's B printed as `remote: ['B']`.
+
+**The E-stop (2026-11-06, Lukas: "immediately hand back to sportsmode if possible"):** the remote's B, `estop` + Enter, and
+the console's button no longer wait in damping for Enter. Damping, LowCmd stopped and SelectMode go out at once, and
+SelectMode goes again at 3.5 s if sport mode is not back. Every other stop (tilt, joint limit, stale LowState, Ctrl-C,
+`a`) still waits in damping. If they are in damping, B hands back. **Not validated from a stand:** every handback on the
+dog so far was from lying or settled damping, ~3.2 s to confirm. Test on the dog through `demos/robot_console/`.
+
+# The whole-body reach policy holding a stand, arm folded (`press_live.py --presses 0`, 2026-11-06)
+
+The reach retrain (`checkpoints/reach_force_corner_delay_model_59600.npz`; `..._rate_...` the calmer alternative) through
+this same program: stops, handover and lie-down unchanged. **It drives the legs only.** The six arm outputs are recorded
+(`arm_target`) and sent nowhere, the arm link runs `--observe`, and a press is refused. The arm stays folded throughout.
+
+    demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/reach_force_corner_delay_model_59600.npz --presses 0 --stand_s 20          # dry
+    ... --reach_arm_obs measured --reach_goal folded     # dry only: this runs away (F-237), and --live refuses it
+
+- **`--reach_arm_obs virtual` (default):** the policy sees `leg_policy.VirtualArm`, an arm following its outputs from the
+  training pose, not the real one. Shown the real folded arm its targets run to the 25 rad clip within a second (F-237).
+  The virtual arm is a lag at the measured speed, not a model of the D1.
+- **`--reach_max_leg_off_rad` (0.9):** a leg target past it stops the run into damping, unsent.
+- **What a run under it shows:** the policy's legs on the real dog. Nothing about the real arm, whose 10 Hz commands and 9 Hz
+  feedback the task never modelled.
+- Its `start_gate` is empty, so the defaults apply (0.20 rad, pitch +-5 degrees) unless `--start_tol_rad` and
+  `--start_pitch_deg` are given. Not validated: it has run dry on a lying dog and against the fake robot.
 
 # The key turned by the arm on the dog (`node.py --task key`, 2026-10-21)
 

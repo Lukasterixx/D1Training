@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>D1 dog test console</title>
+<style>
+:root{--bg:#14171a;--panel:#1d2227;--line:#30373e;--text:#e7ebee;--dim:#98a3ad;--ok:#3fb27f;--warn:#e0a63a;--bad:#e5484d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,sans-serif;height:100vh;display:grid;grid-template-rows:auto 1fr}
+header{display:grid;grid-template-columns:1fr auto;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:center}
+h1{font-size:18px;margin:0 0 6px}h2{font-size:13px;margin:0 0 8px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:3px 10px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:13px}
+.chip.ok{border-color:var(--ok);color:var(--ok)}.chip.warn{border-color:var(--warn);color:var(--warn)}.chip.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+#estop{width:320px;height:96px;border-radius:12px;border:4px solid #7e1216;background:var(--bad);color:#fff;font-size:30px;font-weight:800;letter-spacing:.04em;cursor:pointer;box-shadow:0 4px 0 #7e1216}
+#estop:active{transform:translateY(3px);box-shadow:0 1px 0 #7e1216}#estop small{display:block;font-size:12px;font-weight:500;letter-spacing:0}
+main{display:grid;grid-template-columns:340px 1fr;gap:12px;padding:12px;min-height:0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;min-height:0}
+#list{overflow:auto}.pol{width:100%;text-align:left;background:none;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:8px;cursor:pointer;font:inherit}
+.pol.sel{border-color:#6aa8ff;background:#22303f}.pol b{display:block}.pol span{display:block;color:var(--dim);font-size:13px}.pol i{font-style:normal;color:var(--ok);font-size:12px}
+#right{display:grid;grid-template-rows:auto auto 1fr;gap:12px;min-height:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button.act{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:#2a3138;color:var(--text);font:inherit;cursor:pointer}
+button.act:disabled{opacity:.42;cursor:not-allowed}button.live{background:#6d4a12;border-color:var(--warn)}
+#why{color:var(--warn);font-size:13px;margin-top:8px;min-height:1.3em}
+#confirm{display:none;margin-top:10px;padding:10px;border:2px solid var(--warn);border-radius:8px}#confirm input{font:inherit;padding:6px;width:110px;background:#111;color:var(--text);border:1px solid var(--line);border-radius:6px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}.tile{background:#15191d;border-radius:8px;padding:8px 10px}.tile b{display:block;font-size:21px;font-variant-numeric:tabular-nums}.tile span{color:var(--dim);font-size:12px}
+#log{overflow:auto;font:12px/1.45 ui-monospace,monospace;white-space:pre-wrap;color:#c4ccd3}#logbox{display:flex;flex-direction:column;min-height:0}
+#banner{display:none;padding:10px 12px;border-radius:8px;background:var(--bad);color:#fff;font-weight:700;margin-bottom:10px}
+</style></head><body>
+<header><div><h1>D1 dog test console</h1><div class="chips" id="chips"></div></div>
+<button id="estop">E-STOP<small>Esc · or B on the remote</small></button></header>
+<main><section id="list"><h2>Policies</h2><div id="pols"></div></section>
+<div id="right">
+<section><div id="banner"></div><h2 id="ptitle">Pick a policy</h2><div id="pstatus"></div><div id="pnote" style="color:var(--dim);font-size:13px"></div>
+<div class="actions" id="actions"></div><div id="why"></div>
+<div id="confirm"><b>The dog will lie down, release sport mode, stand up and drive its legs.</b><br>Clear the area, remote in hand, arm folded. Type <b>live</b>:
+<input id="word" autocomplete="off"> <button class="act live" id="go">Go</button></div></section>
+<section><h2>Now</h2><div class="tiles" id="tiles"></div></section>
+<section id="logbox"><h2>Log</h2><div id="log"></div></section>
+</div></main>
+<script>
+const H={'X-Console':'1','Content-Type':'application/json'};let sel=null,S=null,linkOK=false,lastOK=0,busy=false;
+const $=i=>document.getElementById(i);
+const post=(p,b={})=>fetch(p,{method:'POST',headers:H,body:JSON.stringify(b),keepalive:true});
+function estop(src){for(const d of[0,120,300])setTimeout(()=>post('/api/estop',{source:src}).catch(()=>{}),d)}
+$('estop').onclick=()=>estop('the button');
+addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();estop('the Esc key')}});
+const worker=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),200)'])));
+async function poll(){if(busy)return;busy=true;try{const r=await fetch('/api/state',{headers:H,signal:AbortSignal.timeout(1500)});S=await r.json();linkOK=true;lastOK=Date.now();draw()}catch(e){linkOK=false;drawLink()}busy=false}
+worker.onmessage=poll;
+function chip(t,c){return `<span class="chip ${c||''}">${t}</span>`}
+function drawLink(){if(Date.now()-lastOK>1000){$('chips').innerHTML=chip('LINK LOST: use B on the remote. A live run stops itself in 2 s.','bad')}}
+const MODES={dry:['Dry run','Sends nothing'],live_stand:['Live stand','Drives the legs'],live_press:['Live press','Drives the legs, one press']};
+function draw(){const st=S.status,run=S.run;const fresh=S.active&&st&&S.status_age<1;
+let c=[chip('Link OK','ok')];c.push(S.active?chip((run.live?'LIVE: ':'Dry: ')+S.policies.find(x=>x.id===run.policy).label,run.live?'warn':'ok'):chip('No run'));
+c.push(S.b_seen?chip('B confirmed','ok'):chip('B not seen yet','warn'));
+if(S.sport_busy)c.push(chip('Giving sport mode back…','warn'));if(S.sport_result)c.push(chip(S.sport_result.ok?'Sport mode OK':'SPORT MODE NOT CONFIRMED',S.sport_result.ok?'ok':'bad'));
+if(fresh&&st.released)c.push(chip('Sport mode RELEASED','warn'));if(fresh&&!st.live&&st.base_m<0.25)c.push(chip('Dog is not standing: this dry run will not count','warn'));$('chips').innerHTML=c.join('');
+if(!sel&&S.policies.length)sel=S.policies[0].id;
+$('pols').innerHTML=S.policies.map(p=>`<button class="pol ${p.id===sel?'sel':''}" data-id="${p.id}"><b>${p.label}</b><span>${p.status}</span>${p.dry_ok?'<i>Dry OK this session</i>':''}</button>`).join('');
+document.querySelectorAll('.pol').forEach(b=>b.onclick=()=>{sel=b.dataset.id;draw()});
+const p=S.policies.find(x=>x.id===sel);if(p){$('ptitle').textContent=p.label;$('pstatus').textContent=p.status;$('pnote').textContent=p.note;
+$('actions').innerHTML=p.modes.map(m=>{const live=m!=='dry',off=S.active||S.sport_busy||(live&&!p.can_live);return `<button class="act ${live?'live':''}" data-m="${m}" ${off?'disabled':''} title="${MODES[m][1]}">${MODES[m][0]}</button>`}).join('')+
+`<button class="act" id="cont" ${S.active?'':'disabled'}>Continue (A)</button><button class="act" id="gentle" ${S.active?'':'disabled'}>End gently</button><button class="act" id="sport" ${S.active||S.sport_busy?'disabled':''}>Check sport mode</button>`;
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=async()=>{const r=await post('/api/start',{policy:sel,mode:b.dataset.m});if(!r.ok){const j=await r.json();$('why').textContent=j.error}});
+$('cont').onclick=()=>post('/api/line',{line:''});$('gentle').onclick=()=>post('/api/line',{line:'q'});$('sport').onclick=()=>post('/api/sport');
+$('why').textContent=(!S.active&&p.modes.some(m=>m!=='dry')&&!p.can_live)?'Live is locked: '+p.why_not+'.':''}
+const conf=fresh&&st.confirming;if(conf&&$('confirm').style.display!=='block'){$('word').value=''}$('confirm').style.display=conf?'block':'none';
+const b=$('banner');if(S.estop&&S.active){b.style.display='block';b.textContent='E-STOP: '+(fresh?(st.mode==='handback'?'giving the legs to sport mode…':st.mode):'stopping…')}
+else if(run&&!S.active&&run.estop){b.style.display='block';b.textContent='E-stopped ('+run.estop+'). Check the dog before the next run.'}else b.style.display='none';
+const T=[['State',fresh?st.mode:(S.active?'starting':'idle')],['Keys',fresh?(st.keys.join(' ')||'–'):'–'],['Roll °',fresh?st.roll:'–'],['Pitch °',fresh?st.pitch:'–'],['Base m',fresh?st.base_m:'–'],['Max tilt °',fresh?st.max_tilt:'–'],['Leg off rad',fresh?st.leg_off:'–'],['Arm out rad',fresh&&st.reach?st.arm_out:'–']];
+$('tiles').innerHTML=T.map(([k,v])=>`<div class="tile"><b>${v}</b><span>${k}</span></div>`).join('');
+const L=$('log'),end=L.scrollTop+L.clientHeight>=L.scrollHeight-20;L.textContent=S.log.join('\n');if(end)L.scrollTop=L.scrollHeight}
+$('go').onclick=()=>{if($('word').value.trim().toLowerCase()==='live')post('/api/line',{line:'live'})};
+$('word').onkeydown=e=>{if(e.key==='Enter')$('go').click()};
+poll();
+</script></body></html>

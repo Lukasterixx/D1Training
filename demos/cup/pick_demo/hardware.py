@@ -45,8 +45,8 @@ Safety, and it is the whole reason this file is careful:
   slews toward each target at the arm's measured 70 deg/s (F-033). Every frame it looks at is a real
   frame from the real camera; only the arm's position is imagined, and both the log and the result say
   so. A dry run therefore tests perception, planning and the sequence -- not the arm's tracking.
-* Every joint target goes through `D1Client.set_all_joint_angles`, so the 10 Hz ceiling (F-032), mode 0
-  (F-031) and the hard-limit clamp apply exactly as they do to the console's own moves.
+* Every joint target goes through `D1Client.set_all_joint_angles`, so the 10 Hz ceiling (F-032), the gate
+  that keeps commands out of the stall window (F-238), mode 0 (F-031) and the hard-limit clamp apply exactly as they do to the console's own moves.
 * `should_stop` is checked every cycle. Stopping commands the arm to its own measured pose
   (`hold_here`), which decelerates it under torque. It does **not** release: release drops the arm
   (F-028).

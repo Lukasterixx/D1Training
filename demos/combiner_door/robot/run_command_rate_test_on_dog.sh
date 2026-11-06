@@ -6,6 +6,9 @@
 #
 #   demos/combiner_door/robot/run_command_rate_test_on_dog.sh               # six 20 s blocks, ~2.5 min
 #   demos/combiner_door/robot/run_command_rate_test_on_dog.sh --block_s 10
+#   demos/combiner_door/robot/run_command_rate_test_on_dog.sh --blocks phase   # locked to the reports (F-238), held
+#   demos/combiner_door/robot/run_command_rate_test_on_dog.sh --blocks swing   # MOVES Joint1 10 deg either way: watch it
+#   demos/combiner_door/robot/run_command_rate_test_on_dog.sh --blocks gate    # a 10 Hz clock through D1Client's gate; MOVES it too
 #
 # The record is logs/arm_command_rate/<stamp>/ (rate_test.json, feedback_timing/); `d1fetch` copies it back, then
 # `python demos/combiner_door/robot/arm_command_rate_test.py --analyse <dir>`.
@@ -50,7 +53,7 @@ docker run -d --name "$TIMING_NAME" --network host "${PY_ENV[@]}" -v "$REPO:/roo
   --out "/root/D1Training/$RUN_DIR/feedback_timing" >/dev/null
 sleep 2
 TTY=(-i); [ -t 0 ] && TTY=(-it)
-log "commanding the arm its own pose (it should not move); Ctrl-C stops the stream and the arm holds"
+log "commanding the arm (its own pose unless --blocks swing); Ctrl-C stops the stream and the arm holds"
 docker run "${TTY[@]}" --rm --name "$TEST_NAME" --network host "${PY_ENV[@]}" -v "$REPO:/root/D1Training" \
   --entrypoint python3 "$ARM_IMAGE" /root/D1Training/demos/combiner_door/robot/arm_command_rate_test.py \
   --out "/root/D1Training/$RUN_DIR" "$@"

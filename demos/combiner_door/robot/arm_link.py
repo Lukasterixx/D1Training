@@ -19,12 +19,14 @@ time, newline-delimited JSON:
     <- {"type": "error", "detail": "..."}
 
 What it will and will not do:
-- **A smooth command** (`Profile`): streamed at a steady 10 Hz (the arm's own command rate, `D1Client._pace`), moving
+- **One command per angle report**, 20 ms after it (`d1_hardware.ReportClock`, 9 Hz), whatever is being played: a command
+  98-106 ms after a report stalls the arm (F-238 to F-240). `--no_lock_reports` goes back to the clock, for comparisons.
+- **A smooth command** (`Profile`): streamed steadily, moving
   along the line in joint space to the target with its longest joint accelerating at `ACCEL_DEG_S2` to the asked
   `speed_deg_s` (at most `MAX_SPEED_DEG_S`) and slowing to arrive, **never more than `LEAD_DEG` from where the arm last
   reported itself**. Angles are clamped to the URDF's hard limits.
 - **A timed path** (`PathPlayer`, since 2026-10-23, the holster draw's): joint points `dt` apart in time, played out
-  by the clock, one command a point (10 Hz at `dt` 0.1, 5 Hz at 0.2: the arm pauses less at lower rates, F-202), each command the path's own point -- no slowing to stop on each one, as a stream
+  by the clock, one command a report (9 Hz, F-239; the path's own time, so its `dt` need not match), each command the path's own point -- no slowing to stop on each one, as a stream
   of near targets gets from `Profile` (on the dog, 58% of its steps came out under 2.5 deg, which the firmware stops
   after, F-045). Its lead on the arm's report may grow by how far the path moves in the report's age (to
   `PATH_LEAD_MAX_DEG`): the reports come in bursts, with gaps of 0.4-0.6 s, and a 10 deg lead on a stale report
@@ -328,8 +330,10 @@ class SimulatedLink:
 
 
 class Link:
-    def __init__(self, client, observe: bool, log_path: Path | None):
+    def __init__(self, client, observe: bool, log_path: Path | None, lock_reports: bool = True):
         self.client = client
+        #: One command per angle report, away from the stall window (`d1_hardware.ReportClock`, F-239), not by the clock.
+        self.report_clock = d1_hardware.ReportClock() if lock_reports else None
         self.observe = observe
         self.lock = threading.Lock()
         self.target = None
@@ -374,11 +378,11 @@ class Link:
     # --- the arm ------------------------------------------------------------------------------------------------
 
     def control(self) -> None:
-        """Poll the arm; while streaming, send the next command every `COMMAND_PERIOD_S`, a steady 10 Hz -- or, playing a
-        timed path, every point of it (its `dt`, never less than `COMMAND_PERIOD_S`)."""
+        """Poll the arm; while streaming, send the next command when `command_due` says: once per report, or unlocked
+        every `COMMAND_PERIOD_S` (playing a timed path, its `dt`, never less)."""
         last_sent = None
         while not self.stopping:
-            self.client.poll(timeout_s=0.02)
+            self.client.poll(timeout_s=0.02 if self.report_clock is None else 0.003)
             with self.lock:
                 target, gripper, speed, streaming, last_rx = (self.target, self.gripper, self.speed,
                                                               self.streaming, self.last_rx)
@@ -396,7 +400,7 @@ class Link:
             now = time.monotonic()
             with self.lock:
                 period = max(COMMAND_PERIOD_S, self.player.dt) if self.player is not None else COMMAND_PERIOD_S
-            if last_sent is not None and now - last_sent < period:
+            if not self.command_due(now, last_sent, period):
                 continue
             dt = period if last_sent is None else min(now - last_sent, 3 * period)
             last_sent = now
@@ -419,10 +423,17 @@ class Link:
                 command = profile.step(target, measured, dt, speed)
             self.last_command = command
             sent = self.client.set_all_joint_angles(command, mode=0, gripper=gripper)
+            if self.report_clock is not None:
+                self.report_clock.sent(now)
             if gripper is not None:
                 self.last_gripper = gripper
             self.record(kind="command", measured=[round(v, 2) for v in measured],
                         command=[round(v, 2) for v in command], gripper=gripper, sent=sent)
+
+    def command_due(self, now: float, last_sent: float | None, period: float) -> bool:
+        if self.report_clock is not None:
+            return self.report_clock.due(now, self.client.servo_report_s)
+        return last_sent is None or now - last_sent >= period
 
     def report(self) -> None:
         """Feedback to the client at the arm's rate."""
@@ -596,6 +607,10 @@ def main(argv=None) -> int:
     p.add_argument("--iface", default=d1_hardware.ARM_IFACE)
     p.add_argument("--observe", action="store_true", help="Feedback only; take no targets (a dry run's).")
     p.add_argument("--log", default=None, help="Append every command to this JSONL file.")
+    p.add_argument("--no_lock_reports", dest="lock_reports", action="store_false",
+                   help="Command every 100 ms by the clock, not once per angle report, 20 ms after it (F-239, the "
+                        "standard). The arm then stalls ~28% of the time unless `D1Client`'s gate catches it: for "
+                        "comparisons only.")
     args = p.parse_args(argv)
 
     status = bridge_status()
@@ -614,7 +629,8 @@ def main(argv=None) -> int:
         log(f"{exc}")
         return 4
     log(f"arm at {[round(v, 1) for v in q]}")
-    link = Link(client, args.observe, Path(args.log) if args.log else None)
+    link = Link(client, args.observe, Path(args.log) if args.log else None, args.lock_reports)
+    log("commands locked to the arm's reports" if args.lock_reports else "commands by the clock, NOT locked to the reports")
 
     def stop(signum, frame):
         link.stopping = True

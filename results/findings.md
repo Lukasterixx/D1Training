@@ -7106,6 +7106,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 ### F-200 — Under the arm link's 10 Hz command stream the D1 itself pauses its joint-angle reports, and its motion with them, for 0.3-0.7 s about every 2 s (19 gaps over 0.25 s in 39 s, 8.1 s in all, on the arm's own source timestamps), while its status stream runs on at 10 Hz; idle, with P2Dingo's whole stack up, it reports every 111 ms (max 115 ms) for 60 s; this, not the step sizes, is the stutter left in the base swivel
 
 - **Status:** provisional (one 60 s idle capture, one 39 s capture beside a live run)
+- **Note (2026-11-06):** F-238 finds the trigger this left open: a command landing just before an angle report is due.
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The holster motion live on the dog".
@@ -7144,6 +7145,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
 ### F-202 — The D1 does not execute a funcode 2 command that lacks the gripper's angle (`angle6`), and stops publishing its status while it gets them; F-201's "no pauses without it" was nothing being executed. Re-read, the pauses go with the rate of commands the arm executes: 10-15 in 20 s at 10 Hz (25-31% of the time), 3 at 5 Hz, none at 2 Hz or 1 Hz
 
 - **Status:** provisional (one live run, two held-pose tests)
+- **Note (2026-11-06):** F-238 re-reads these counts. The rate is not the cause: "none at 2 Hz" is a block whose 40 commands
+  never landed in the stall window, not evidence that 2 Hz is safe.
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The holster motion live on the dog".
@@ -7161,6 +7164,8 @@ result that changes a conclusion gets a new entry, and the old one is marked
 ### F-203 — Commanded at 5 Hz with twice the step (8° a command at the same 40°/s), the moving D1 pauses its reports far less (2 gaps over 0.25 s in 28 s, against 19 in 39 s at 10 Hz) but moves visibly stop-start at 5 Hz ("very choppy", Lukas); 10 Hz, with its pauses, stays the smoother of the two
 
 - **Status:** provisional (one live run at each rate, Lukas's eye)
+- **Note (2026-11-06):** F-238 offers a third option, which this finding did not consider: commands locked to the arm's reports,
+  not yet tried. "What is left is the arm's firmware" no longer follows.
 - **Week:** 6
 - **Date:** 2026-10-23
 - **Evidence:** [Week 6 log, 2026-10-23](week_06/notes.md), "The holster motion live on the dog". [5 Hz](#/week/6/run/20261023T054616_live):
@@ -8028,3 +8033,158 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - The press candidate for the dog is `11200` (exported, `checkpoints/leg_press_force_chain_s4_model_11200.npz`). ft11a
     is the fallback.
   - The thesis comparison for the press on the dog's legs is this lineage pair, not the one-stage pair.
+
+### F-237 — On the real standing dog, dry, the reach retrain shown the true folded arm runs away within a second (past 1 rad at step 46, then leg and arm targets at the 25 rad clip); shown a virtual arm following its own outputs it settles in ~2 s and holds 0.195 rad rms for 60 s, and `corner_rate` does not settle its arm
+
+- **Status:** provisional (one dog, one sport-mode stand, open loop: nothing was sent to the legs)
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "Dry on the standing dog".
+  - `corner_delay`, real arm, goal at the folded hand: [the runaway](#/week/8/run/20261106T012444_reach_stand).
+  - `corner_delay`, virtual arm: [15 s](#/week/8/run/20261106T012425_reach_stand), [60 s](#/week/8/run/20261106T012647_reach_stand).
+  - `corner_rate`, virtual arm: [15 s](#/week/8/run/20261106T012503_reach_stand).
+- **Scope:**
+  - Dry: the policy's targets never acted, so the legs and base stayed in sport mode's stand (0.333 m, 1.3 degrees nose up),
+    not the kp-25 handover stance a live run starts from. A loop this open can show a runaway, not closed-loop stability.
+  - The runaway's cause is not isolated. The arm sits ~91 degrees from the policy's default and can never arrive, and the
+    policy's own growing arm actions come back in its observation; the goal differs from the virtual arm's too.
+  - The offline static test before it did not show this (it read 11.8 rad on the arm, no leg runaway), so a static
+    check does not clear a mode.
+  - Nothing about the real arm: the virtual arm is a lag, and the task never modelled the D1's rates.
+- **Implication:**
+  - The reach policy must never drive the legs while shown the true folded arm: `press_live.py` refuses it live, and stops
+    unsent at a leg target 0.9 rad off default.
+  - A folded stand needs the virtual arm, so what it tests is the policy's legs, not whole-body control.
+  - `corner_delay` over `corner_rate` for this use, on the arm output (1.4 against ~18 rad), not for F-232's reasons.
+
+### F-238 — The D1's 0.3-0.7 s pauses (F-200) start when a command lands 98-106 ms after an angle report, just before the next is due at 111 ms: there 36 of 42 cycles at 10 Hz skip the report, and of 590 held cycles none skipped without a command in the 88-110 ms band around it (2,301 moving cycles, 16); a 100 ms command period drifts into that window about once a second and then sits in it, so 10 Hz is close to the worst rate; commands locked to the reports should miss it, not yet tried
+
+- **Status:** provisional (a correlation in existing records; no locked command has been sent to the arm)
+- **Note (2026-11-06, later):** tested on the arm the same day: [F-239](#f-239) confirms the cause with the deliberate control. The 13 unexplained moving outliers stand.
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The D1's pauses traced to command phase".
+  `demos/combiner_door/robot/arm_gap_phase.py` over the 23 October records in `logs/`:
+  [the figure](week_08/figures/d1_stall_vs_command_phase.png).
+  - Held pose ([1](#/week/6/run/20261023T050700), [2](#/week/6/run/20261023T051030)), 10 Hz and 5 Hz: 590 cycles, 52 skips, all 52
+    with a command 88-110 ms after the last report (103 such cycles). At 10 Hz, 98-106 ms: 42 cycles, 36 skipped.
+  - Moving arm, 13 live holster runs (e.g. [10 Hz](#/week/6/run/20261023T045925_live), [5 Hz](#/week/6/run/20261023T054616_live)):
+    2,806 cycles, 283 skips, 267 in the band. Outside it, 16 of 2,301. The same place, blurred: these commands are stamped
+    after the send and to 1 ms.
+  - Time lost in skips at 10 Hz: 28% both held and moving, the longest 0.71 and 0.81 s; at 5 Hz 13% held, 5% moving.
+  - Why they chain, read from the times: after a stall the next report comes ~105 ms after the command (5 Hz, median 105 ms held,
+    103 moving). At 10 Hz the next command is due first, 100 ms on, inside the window again: skips run 0.4 s (median) at 10 Hz,
+    0.21 s at 5 Hz, and end ~11 ms after a command. Skip lengths are multiples of the command period, not the 111 ms cycle.
+  - The firmware stays up through a stall: status keeps running and `arm_Feedback/1` still answers, ~2 ms after each command
+    (median distance to a command 2-5 ms; that stream rises from 9 to ~16 Hz under command).
+- **Scope:**
+  - Correlation only. The cause is not shown until a command aimed at the window stalls the arm and one aimed away does not.
+  - Not sufficient alone: the "every 5th" blocks put 8 commands in 98-106 ms with no skip. Those blocks also carry unexecuted
+    commands and stop the status stream (F-202), so they are a different state, but why is not known.
+  - All runs are one arm, one firmware, one day. That the arm's motion stops with its reports is still F-200's reading of
+    commands against the next reports, not measured directly. Why the firmware has this window is not known.
+  - The 16 moving outliers are not explained; stamp error is the likely reading, not shown.
+- **Implication:**
+  - Try one command per report, a fixed time after it (`d1_hardware.ReportClock`, 9 Hz). Cycles whose commands all sat 15-85 ms
+    after the report: 0 of 347 skipped held, 13 of 1,766 (0.7%) moving, against 28% of the time lost now. Those 13 are not
+    explained, so a locked stream may not reach zero. No firmware change or SSH (F-024) is needed for this.
+  - Test it with the deliberate control: `run_command_rate_test_on_dog.sh --blocks phase` (held, 103 ms should stall, 20-80 ms
+    should not), then `--blocks swing` (moving, because a held pose cannot show a command was executed: F-201).
+  - Lock to `current_servo_angle` only (`D1Client.servo_report_s`). `feedback_age_s` also takes the `arm_Feedback/1` echoes.
+    Whether those echoes carry fresh angles is unknown; `arm_feedback_timing.py` now records them.
+  - If it holds, the arm link (still a 10 Hz clock, paths at `dt` 0.1) and any policy driving the arm move to 9 Hz, and
+    `motor_model.D1_COMMAND_HZ` (10, unmeasured) changes on that measurement, so UniFP trains on the rate it will get.
+  - Revises F-200, F-202 and F-203 (noted on each).
+
+### F-239 — Sending one D1 command per angle report, 20 ms after it, ends the 0.3-0.7 s pauses: held, 0 skips in 716 locked cycles against 53 of 56 with commands aimed at the window; moving Joint1 at 36 deg/s, 1 skip of 0.21 s in 894 locked cycles against 73 skips (29% of the time) in 710 at 10 Hz, tracking 0.44-0.98 degrees rms against 2.9-3.4, peak speed 37-40 deg/s against 58-109
+
+- **Status:** confirmed (the cause and the cure, on one joint); provisional for whole-arm motion and any policy
+- **Note (2026-11-06, later):** [F-240](#f-240) takes it to all six joints with the key in the jaws.
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "Report-locked commands on the arm"; [the motion](week_08/figures/d1_swing_10hz_vs_locked.png).
+  `run_command_rate_test_on_dog.sh`, Lukas watching, the dog lying down, P2Dingo's containers up.
+  - [Held](#/week/8/run/20261106T020724), 20 s blocks: 10 Hz 15 skips (29% lost, to 0.61 s); locked at 20, 50, 80 and 20 ms 0 skips in
+    179 cycles each, longest 0.114 s; at 103 ms, the control, 53 of 56 cycles skipped, 98% lost.
+  - Moving, Joint1 ±10 degrees at 36 deg/s, three runs ([stopped early](#/week/8/run/20261106T021112), [second](#/week/8/run/20261106T021303),
+    [final clock](#/week/8/run/20261106T021615)):
+
+    | | cycles | skips | lost | rms error (5 blocks) | peak speed |
+    |---|---|---|---|---|---|
+    | 10 Hz | 710 | 73 | 28.4 of 99.4 s | 2.89-3.44 deg | 58-109 deg/s |
+    | locked 20 ms | 894 | 1 | 0.2 of 99.5 s | 0.44-0.47, 0.98 once | 37-40 deg/s |
+
+    Rms error is at the best-fit lag: 150 ms locked, 160-170 ms at 10 Hz.
+  - The arm itself stops: in the second run's 10 Hz gaps it moved 0-4.5 degrees where the commands asked 3.6-20. This measures what
+    F-200 could only read from commands.
+  - The one locked skip (0.21 s, block with the 0.98) had no command near the window: commands 19 and 130 ms after the last report.
+    The clock then dropped a slot on the 100 ms pacing floor, leaving a 210 ms hole. Fixed; the final run's two blocks: 0 skips,
+    command period at most 114 ms.
+  - `arm_Feedback/1`'s extra messages under command are copies: all 1,612 on the moving arm equal the last report.
+- **Scope:**
+  - One arm, one firmware, one session, 20 s blocks. Motion on Joint1 alone, a triangle at one speed, folded and unloaded.
+    Moving tests locked at 20 ms only. Multi-joint moves, load and a dog walking or standing are not tested.
+  - No policy has run through this. The arm link, the demos and `press_live.py` still command by the clock. Nothing is shown about F-032's
+    unresponsive arm over long sessions.
+  - Why the firmware has this window is not known, nor why it skipped once unprovoked. Locked is rare skips, not none: 1 in 1,610 cycles.
+  - Only `ReportClock` as of the final run is tested end to end; the earlier runs had the slot bug.
+- **Implication:**
+  - Stream the D1 with `ReportClock`, at 9 Hz (111 ms). 10 Hz is the wrong rate: F-203's choice between 10 and 5 Hz no longer stands.
+  - Next, the arm link: paths retimed to the report period and the `control` loop on `ReportClock`, then the demos' moves rechecked.
+  - For UniFP: the arm can be trained as a steady 111 ms stream with ~150 ms from command to report, no stall model needed.
+    `motor_model.D1_COMMAND_HZ` should become the measured 9 when the arm link does (`arm_command_hold_steps` 5 to 6 at 50 Hz).
+    F-097's experiment is still not run.
+  - `D1Client.feedback_age_s` is refreshed by those copies, so it can read fresher than the angles are. Its effect on the arm link's
+    stale-feedback hold is not tested. Left as it is until the arm link moves.
+  - `arm_command_rate_test` holds the gripper at what the arm reports; reported outside the arm's window (57.1, F-063) that moves the jaws
+    to its limit (50.3), as it did once here.
+
+### F-240 — The demo's holster draw and put-back, all six joints with the real key in the jaws, loses 0.8% of its time locked to the arm's reports against 29.7% at 10 Hz: 2 skipped reports in 449 cycles against 46 in 390, the longest gap 0.21 s against 0.71 s, the worst joint error ~10 degrees against 46, every move on schedule (50.2 s against 54.6 s for 49.8 planned); Lukas: stalling seen at 10 Hz, "that run was perfect, no stalls" locked
+
+- **Status:** confirmed (one run each, the record and Lukas's eye agree); provisional for any policy
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The demo's draw, all joints, with the key"; [the error through both runs](week_08/figures/d1_demo_draw_10hz_vs_locked.png).
+  `run_holster_on_dog.sh --live --demo_draw --timing` with and without `--lock`, the dog lying down: [10 Hz](#/week/8/run/20261106T023519_live),
+  [locked](#/week/8/run/20261106T023651_live_lock), [dry first](#/week/8/run/20261106T023302_dry_lock).
+
+  | | cycles | skips | lost | longest | worst error | turn / reach / unreach, 3.0 / 2.6 / 2.6 s planned |
+  |---|---|---|---|---|---|---|
+  | 10 Hz | 390 | 46 | 16.2 of 54.4 s | 0.71 s | 45.8 deg | 4.22 / 3.72 / 3.32 s |
+  | locked | 449 | 2 | 0.42 of 50.1 s | 0.21 s | 10.2 deg | 3.01 / 2.61 / 2.71 s |
+
+  - Locked commands: 20.6-24.1 ms after a report (p1-p99), period 111 ms, at most 116 ms; none in the stall window. At 10 Hz 42 of the 46 skips had one.
+  - The key was in the jaws: they stopped at -3.5 to -4.8 units, as in the demo's own draws (-3.8 to -5.7), not the -19.8 commanded. It was drawn and put back in both runs.
+  - Worst error includes the ordinary lag: ~150 ms (F-239) at 44 deg/s is ~6.6 degrees.
+- **Scope:**
+  - One run each, the dog lying down, no walking, one arm, one session.
+  - The motion is the demo's as commanded on 29 October (`extract_demo_draw.py`): joint moves to its goals, streamed phases retimed to the link's 44 deg/s where the record ran faster, the lock itself left out. It is not a run of the whole demo. The key was not checked by eye for how it seated afterwards.
+  - The two locked skips are one event: back to back at 37.6 s, the end of `back`, as the key returned to its seat, with no command near the window. With F-239's one, the residual is three skips in 2,059 locked cycles, not zero, and its cause is not known. Whether seating the key had anything to do with this one is not shown.
+  - The demos, `press_live.py` and any policy still run on the 10 Hz clock. `--lock_reports` is opt-in, and only `run_holster_on_dog.sh` passes it.
+    (2026-11-06, later, at Lukas's request: the arm link is locked by default and `D1Client` gates every sender, see the week log. The full demo has not been run that way.)
+- **Implication:**
+  - Locking holds on whole-arm motion under load, so the arm link's `--lock_reports` is fit to become the default.
+  - For a policy: the arm can be treated as a steady 111 ms stream. Rare single gaps of ~0.2 s remain, so a runner should not treat one as a fault. A policy runner still has to be built.
+
+### F-244 — On the locked all-joint draw, a held-out replay finds no sign the D1's lag differs by joint or under the key (J1-3 about 0.25 degrees rms moving, J4-6 about 0.55, with a cap of 45-50 deg/s), but a speed cap near the Joint1 swing's 36 deg/s misses J1 and J6 by 3-4 degrees: the arm reaches 41-45.5 deg/s there, so the swing's apparent limit is not a joint constant
+
+- **Status:** superseded by [F-245](#f-245) (2026-11-06): the replay capped the lag's own output rate, a different model from the UniFP session's slew-then-lag, so the "no sign the lag differs by joint", the 0.37-0.72 mismatch and "no model wins on both" do not stand. The measured speeds (reports reach 41-45.5 deg/s) do.
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The arm model replayed on the all-joint draw"; `results/week_08/runs/20261106T023651_live_lock/replay_models.py` and its output `replay_models.txt`, which read only the `swing_series.json` and `draw_series.json` in `results/`; [locked draw](#/week/8/run/20261106T023651_live_lock).
+- **Scope:** the locked draw of [F-240](#f-240) only: peak commands 40-44 deg/s, no contact, the key in the jaws, each joint's median bias removed (up to about 0.3 degrees) and the one skip event excluded. Parameters come from the J1 swing of [F-239](#f-239); the draw is held out. Not a fit of the arm at higher speeds, in contact, or at other command offsets. The replay does not reproduce the UniFP session's 0.23 degrees for lag 77 ms, delay 5 ms (0.72 uncapped, 0.37 at 36 deg/s); its speed limit and sim step were asked for and are not yet known here.
+- **Implication:**
+  - An arm model should not carry a fixed speed limit below about 45 deg/s. No model tried here wins on both the swing and the draw; a limit that scales with command speed would explain that, and a straight line to each target over 130 ms (no cap) is one candidate, not shown.
+  - Nothing here tests the UniFP policies themselves.
+
+### F-245 — A slew at the URDF speed limit followed by a first-order lag fits the D1 on the locked swing and, held out, the locked all-joint draw: 0.23 degrees rms on the swing, 0.23-0.57 on the draw at one lag of 77 ms and 5 ms delay; the lag differs by joint, 65-70 ms on J1-3 and 50-55 ms on J4-6, which cuts the wrist's moving error from 0.71-0.79 to 0.29-0.43 degrees
+
+- **Status:** provisional (one draw, offline replay; two independent replays agree)
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "F-244 corrected"; `results/week_08/runs/20261106T023651_live_lock/replay_models.py` and `replay_models.txt`, reading only the series in `results/`; [locked draw](#/week/8/run/20261106T023651_live_lock). The model is the UniFP session's; replayed here independently, matching its reference values to 0.01 degrees on `20261106T021615 swing_lock_20ms`.
+- **Scope:** locked commands, peak 40-44 deg/s, no contact, the key in the jaws, each joint's median bias removed (up to about 0.3 degrees), the one skip event excluded. The per-joint lags are fitted to this draw at a fixed 5 ms delay and the URDF caps; each joint's best lag held within 10 ms across the two halves of the run, but the halves are not independent runs. Why the wrist is quicker is not known. 9 Hz reports cannot show what the arm does inside a cycle. Not tested at higher speed or in contact. Replaces [F-244](#f-244).
+- **Implication:**
+  - The D1's streamed response is two stages in series, not a lag with a rate limit on it. The earlier concern that a cap below 45 deg/s was overfitted does not apply: the fitted cap is 72 deg/s.
+  - An arm model can use per-joint lags. Whether that matters to a policy is untested.
+

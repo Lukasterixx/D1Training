@@ -1,0 +1,116 @@
+{
+  "mode": "arm_command_rate",
+  "status": "finished",
+  "arm_moved": true,
+  "what": "the same on the final ReportClock (a slot at the pacing floor waits for it)",
+  "analysis": {
+    "swing_10hz": {
+      "hz": 10.0,
+      "gripper_every": 1,
+      "commands": 200,
+      "moved_max_deg": 0.1,
+      "current_servo_angle": {
+        "n": 144,
+        "rate_hz": 7.17,
+        "gaps": 12,
+        "in_gaps_s": 5.06,
+        "max_s": 0.515
+      },
+      "arm_Feedback/1": {
+        "n": 324,
+        "rate_hz": 16.2,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.2
+      },
+      "arm_Feedback/3": {
+        "n": 199,
+        "rate_hz": 9.91,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.201
+      }
+    },
+    "swing_lock_20ms": {
+      "hz": 9.0,
+      "gripper_every": 1,
+      "commands": 180,
+      "moved_max_deg": 0.1,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.113
+      },
+      "arm_Feedback/1": {
+        "n": 357,
+        "rate_hz": 17.88,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.112
+      },
+      "arm_Feedback/3": {
+        "n": 198,
+        "rate_hz": 9.9,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.201
+      }
+    },
+    "swing_10hz_again": {
+      "hz": 10.0,
+      "gripper_every": 1,
+      "commands": 200,
+      "moved_max_deg": 0.1,
+      "current_servo_angle": {
+        "n": 146,
+        "rate_hz": 7.3,
+        "gaps": 12,
+        "in_gaps_s": 4.75,
+        "max_s": 0.515
+      },
+      "arm_Feedback/1": {
+        "n": 325,
+        "rate_hz": 16.23,
+        "gaps": 4,
+        "in_gaps_s": 1.21,
+        "max_s": 0.311
+      },
+      "arm_Feedback/3": {
+        "n": 199,
+        "rate_hz": 9.96,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.102
+      }
+    },
+    "swing_lock_20ms_again": {
+      "hz": 9.0,
+      "gripper_every": 1,
+      "commands": 180,
+      "moved_max_deg": 0.1,
+      "current_servo_angle": {
+        "n": 180,
+        "rate_hz": 9.0,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.113
+      },
+      "arm_Feedback/1": {
+        "n": 344,
+        "rate_hz": 17.23,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.111
+      },
+      "arm_Feedback/3": {
+        "n": 198,
+        "rate_hz": 9.9,
+        "gaps": 0,
+        "in_gaps_s": 0.0,
+        "max_s": 0.201
+      }
+    }
+  }
+}

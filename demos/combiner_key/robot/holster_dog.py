@@ -5,6 +5,7 @@ go through the motions in real life"). Start it on the dog with `run_holster_on_
     run_holster_on_dog.sh                 # DRY: the plan, then the motion on a simulated arm; nothing moves
     run_holster_on_dog.sh --live          # the real arm (one Enter to start; `a` + Enter holds it where it is)
     run_holster_on_dog.sh --live --step   # an Enter before every move
+    run_holster_on_dog.sh --live --demo_draw  # the demo's own draw and put-back (F-240)
 
 Live, the Go2 remote's A is Enter and its B is `a` + Enter (read from `/lf/lowstate`, as in every live program here:
 `lowlevel.RemoteButtons`). After a stop, `r` + Enter or A takes the arm back to where it started (`recovery`): stopped
@@ -26,7 +27,7 @@ own frame, so the arm's motion is the same sitting or standing. The moves, as th
 
 Through `arm_link.py` (`demos/combiner_door/robot/`): every move goes to the link as one timed path (`move_path`; a
 joint-space move as a straight joint line, accelerating, cruising at `JOINT_SPEED_DEG_S` and braking), which the link
-plays out by its clock at 10 Hz (`arm_link.PathPlayer`), within a lead on the arm's report that allows for the report's
+plays out once per arm report, 9 Hz (`arm_link.PathPlayer`), within a lead on the arm's report that allows for the report's
 age; it holds the arm on `hold`, on silence or on disconnect, and never releases it. (The first version, run live on
 2026-10-23, sent a near target every 100 ms instead: the link's profile slowed to stop on each, 58% of its commands came
 out under 2.5 degrees, which the firmware stops after, and on the reports' 0.4-0.6 s gaps its 10-degree lead stopped
@@ -66,6 +67,10 @@ from demos.combiner_key import holster  # noqa: E402
 
 ARM_LINK_PORT = 8095
 LOG_ROOT = ROOT / "logs/holster_dog"
+#: The demo's draw as it commanded it on 2026-10-29 (`extract_demo_draw.py`, `--demo_draw`).
+DEMO_DRAW_PATH = Path(__file__).resolve().parent / "demo_draw_20261029.json"
+#: The moves with the key in the jaws or at the holster: the link's smaller lead.
+KEY_MOVES = ("draw", "exit", "clear", "unclear", "align", "enter", "back", "close", "hold", "open")
 #: The command period: 0.1 s (10 Hz) by default; `--hz 5` makes it 0.2 s, each command twice the step (F-202: the
 #: arm paused its reports and motion 10-15 times in 20 s at 10 Hz, 3 at 5 Hz). The link sends one command a point.
 PERIOD_S = 0.1
@@ -160,6 +165,30 @@ def plan(joint_speed: float = JOINT_SPEED_RAD_S) -> list[dict]:
         {"name": "unreach", "path": reach[::-1], "joint": True, "gripper": opened},
         {"name": "fold", "reverse_of": "turn", "joint": True, "gripper": opened},
     ]
+
+
+def demo_plan(path: Path = DEMO_DRAW_PATH) -> list[dict]:
+    """The demo's own draw and put-back (`extract_demo_draw.py`), in this program's moves, the lock left out: turn, reach
+    and lower as joint moves to the demo's goals, the streamed phases as the demo commanded them, then folded back the
+    way it came. It uses the same way back as `plan`: `recovery` needs `enter`, and `raise` to `fold` are played reversed."""
+    demo = json.loads(path.read_text())
+    paths = {name: np.asarray(points, dtype=float) for name, points in demo["paths"].items()}
+    opened, held = demo["open_units"], demo["grip_units"]
+    joint = lambda a, b: holster.joint_move(a, b, JOINT_SPEED_DEG_S, ACCEL_DEG_S2, PERIOD_S)
+    turned, above, q_pre = np.asarray(demo["turn"]), np.asarray(demo["goals"]["reach"]), paths["on"][0]
+    reach, lower = joint(turned, above), joint(above, q_pre)
+    moves = [{"name": "turn", "goal": turned, "gripper": opened},
+             {"name": "reach", "path": reach, "joint": True, "gripper": opened},
+             {"name": "lower", "path": lower, "joint": True, "gripper": opened},
+             {"name": "on", "path": paths["on"], "gripper": opened},
+             {"name": "close", "wait": JAW_S, "gripper": held}]
+    moves += [{"name": name, "path": paths[name], "gripper": held}
+              for name in ("draw", "exit", "hold", "clear", "unclear", "align", "enter", "back")]
+    return moves + [{"name": "open", "wait": JAW_S, "gripper": opened},
+                    {"name": "off", "path": paths["off"], "gripper": opened},
+                    {"name": "raise", "path": lower[::-1], "joint": True, "gripper": opened},
+                    {"name": "unreach", "path": reach[::-1], "joint": True, "gripper": opened},
+                    {"name": "fold", "reverse_of": "turn", "joint": True, "gripper": opened}]
 
 
 def describe(moves: list[dict]) -> list[str]:
@@ -459,8 +488,7 @@ class Runner:
         started = time.monotonic()
         points = move_path(m, self.where, self.played)
         self.played[name] = points
-        self.arm.path(points, gripper, LEAD_KEY_DEG if name in ("draw", "exit", "enter", "back", "close", "hold", "open")
-                      else LEAD_FREE_DEG)
+        self.arm.path(points, gripper, LEAD_KEY_DEG if name in KEY_MOVES else LEAD_FREE_DEG)
         lag, ticks, q = 0.0, 0, None
         for point in points[1:]:
             q = self._tick(name, point, gripper)
@@ -523,8 +551,12 @@ def main(argv=None) -> int:
                    help="the streamed moves' pace on the fastest joint, rad/s (at most 0.75: the link's 45 deg/s)")
     p.add_argument("--hz", type=float, choices=(10.0, 5.0), default=10.0,
                    help="commands a second: 10, or 5 with each step twice as large (F-202)")
+    p.add_argument("--demo_draw", action="store_true",
+                   help="the demo's own draw and put-back as it commanded it (`demo_plan`), not `plan`'s")
     p.add_argument("--run_dir", default=None)
     args = p.parse_args(argv)
+    if args.demo_draw and args.hz != 10.0:
+        p.error("--demo_draw's paths are 100 ms apart: leave --hz alone")
     global PERIOD_S
     PERIOD_S = 1.0 / args.hz
     if not 0.1 <= args.joint_speed <= 0.75:
@@ -534,10 +566,10 @@ def main(argv=None) -> int:
     run_dir = Path(args.run_dir) if args.run_dir else LOG_ROOT / f"{stamp}_{'live' if args.live else 'dry'}"
     run_dir.mkdir(parents=True, exist_ok=True)
     log(f"planning the draw on the CPU arm model (joint pace {args.joint_speed} rad/s, {args.hz:g} commands a second) ...")
-    moves = plan(args.joint_speed)
+    moves = demo_plan() if args.demo_draw else plan(args.joint_speed)
     log("the moves:\n" + "\n".join(describe(moves)))
     record = {"mode": "holster_dog", "live": args.live, "step": args.step, "joint_speed_rad_s": args.joint_speed,
-              "command_hz": args.hz,
+              "command_hz": args.hz, "demo_draw": args.demo_draw,
               "holster_registration": holster.load()["inputs"], "fold_servo_deg": FOLD_SERVO_DEG,
               "argv": sys.argv, "status": "running"}
 

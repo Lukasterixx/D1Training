@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Export a key-turning leg policy for the dog: its weights and its interface's constants in one `.npz` (on the PC).
+"""Export a leg-driving policy for the dog: its weights and its interface's constants in one `.npz` (on the PC). A
+12-output leg policy, or an 18-output reach policy, whose legs `press_live.py` can drive while the arm stays folded.
 
     python demos/combiner_key/robot/export_policy.py --checkpoint <model.pt> --variant force --out checkpoints/<name>.npz
 
@@ -41,13 +42,34 @@ def linear_layers(module) -> list[tuple[np.ndarray, np.ndarray]]:
     return [(m.weight.detach().cpu().numpy(), m.bias.detach().cpu().numpy()) for m in children if isinstance(m, nn.Linear)]
 
 
-def meta_for(variant: str, checkpoint: Path, iteration, num_leg_actions: int, layers: dict) -> dict:
+def reach_goals() -> dict:
+    """A reach policy's goals as (radius, pitch, yaw) about the goal sphere's centre: the one every training episode
+    opens on, and the folded hand's own, with the base at `leg_cfg.SETTLED_BASE_HEIGHT_M` (the sphere's centre is
+    measured from the ground under the base, `unifp_isaaclab.task.goal_sphere_center`)."""
+    import d1_ik
+    from demos.combiner_key.robot import leg_policy
+    from mount import ARM_MOUNT_POS_M
+    from unifp_isaaclab import interface
+    from unifp_train import leg_cfg
+
+    tip, _ = d1_ik.tool_pose(d1_ik.load_urdf()[0], np.asarray(leg_cfg.ARM_REST_POSE))
+    hand = np.asarray(ARM_MOUNT_POS_M) + tip + np.array([0.0, 0.0, leg_cfg.SETTLED_BASE_HEIGHT_M])
+    folded = leg_policy.cart_to_sphere(hand - np.asarray(interface.EE_GOAL_CENTER_OFFSET))
+    return {"init_start": list(interface.EE_GOAL_INIT_START), "folded": [float(v) for v in folded]}
+
+
+def meta_for(variant: str, checkpoint: Path, iteration, num_policy_actions: int, layers: dict) -> dict:
     from demos.combiner_key import classic_stance
     from unifp_isaaclab import interface
-    from unifp_train import leg_cfg, observations
+    from unifp_train import leg_cfg, observations, task_cfg
 
+    reach = num_policy_actions == interface.NUM_ACTIONS
     return {
         "format": "d1training-leg-policy-1",
+        # "reach": 18 outputs, the legs' first; the robot programs here send the legs and never the arm's six.
+        "task": "reach" if reach else "leg",
+        **({"reach_goals": reach_goals(), "arm_joint_limits": [list(l) for l in task_cfg.JOINT_POS_LIMITS[12:18]]}
+           if reach else {}),
         "variant": variant,
         "checkpoint": str(checkpoint),
         "checkpoint_sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
@@ -55,7 +77,7 @@ def meta_for(variant: str, checkpoint: Path, iteration, num_leg_actions: int, la
         "layers": layers,
         "dof_names": list(interface.DOF_NAMES),
         "num_actions": interface.NUM_ACTIONS,
-        "num_leg_actions": num_leg_actions,
+        "num_leg_actions": min(num_policy_actions, 12),
         "default_dof_pos": list(interface.DEFAULT_DOF_POS),
         "obs_scale_ang_vel": interface.OBS_SCALE_ANG_VEL,
         "obs_scale_dof_pos": interface.OBS_SCALE_DOF_POS,

@@ -226,7 +226,7 @@ the jaws where they are, backs the hand straight out along its own approach (ori
   sideways, 0.36-0.39 rad/s: 60 deg in about 3 s), and the script's door angle follows how far the dog has actually turned. The
   hand then stays on the door's arc, nearly still relative to the dog. The base stands for the hold and while the hand
   lets go.
-- **The arm moves smoothly** (`arm_link.Profile`): a steady 10 Hz stream, 60 deg/s^2 up to 30 deg/s and back down into
+- **The arm moves smoothly** (`arm_link.Profile`): a steady stream, one command per arm report (9 Hz, F-239), 60 deg/s^2 up to 30 deg/s and back down into
   the goal, never more than 10 deg ahead of the arm. For a reach, the unfold already turns the hand to the grasp's
   orientation. When the IK misses the hand's pose for a step, the goal holds rather than switching wrists.
 - **Joint moves wait for the arm.** The unfold, the tuck and the fold go at 40 deg/s in joint space (the Cartesian phases at
@@ -388,7 +388,7 @@ the lock), phases, planned and retimed turn, stall abort and lift-off. See `demo
 | --- | --- |
 | `plan.py` | the attempt as numbers: the look's fix, the stance, the stages' phases, the arm's steps, the walk's shaping, the aborts. No ROS. |
 | `node.py` | the ROS 2 node: sensors in, sport mode and the arm link out (live), RViz's topics, the record |
-| `arm_link.py` | the D1 through `d1_hardware.D1Client` behind a local socket; `--observe` in dry runs |
+| `arm_link.py` | the D1 through `d1_hardware.D1Client` behind a local socket, one command per arm report (F-239; `--no_lock_reports` for comparisons); `--observe` in dry runs |
 | `viz.py` | the robot model's transforms from `description/go2_d1.urdf`, the markers, the clouds, the camera frame |
 | `run_on_dog.sh`, `view_on_pc.sh` | the two launchers (`d1dog`, `d1view`) |
 | `combiner_door_robot.rviz`, `opc-compose.yaml` | the RViz config and the rviz container's mount |

@@ -7,6 +7,9 @@
 #   demos/combiner_key/robot/run_holster_on_dog.sh                  # dry: the plan, the motion on a simulated arm
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live           # the real arm: one Enter to start
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live --step    # an Enter before every move
+#   demos/combiner_key/robot/run_holster_on_dog.sh --live --demo_draw  # the demo's own draw and put-back, as it commanded it
+#   demos/combiner_key/robot/run_holster_on_dog.sh --live --no_lock # the link's commands by the clock, not the arm's
+#                                                                   # reports (the standard, F-239): comparisons only
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live --timing  # and, beside it, the arm's report timing (read-only,
 #                                                                   # arm_feedback_timing.py) in <record>/feedback_timing/
 #
@@ -37,17 +40,20 @@ done
 
 LIVE=0
 TIMING=0
+LOCK=1
 args=()
 for a in "$@"; do
   case "$a" in
     --live) LIVE=1; args+=("$a") ;;
     --timing) TIMING=1 ;;
+    --no_lock) LOCK=0 ;;
     *) args+=("$a") ;;
   esac
 done
 TIMING_NAME=d1t-feedback-timing
 STAMP="$(date -u +%Y%m%dT%H%M%S)"
 SUFFIX=dry; [ "$LIVE" = 1 ] && SUFFIX=live
+[ "$LOCK" = 1 ] || SUFFIX="${SUFFIX}_unlocked"
 RUN_DIR="logs/holster_dog/${STAMP}_${SUFFIX}"
 mkdir -p "$REPO/$RUN_DIR"
 
@@ -85,6 +91,7 @@ trap 'exit 130' INT TERM HUP
 
 ARM_ARGS=(--log "/root/D1Training/$RUN_DIR/arm_link.jsonl")
 [ "$LIVE" = 1 ] || ARM_ARGS+=(--observe)
+[ "$LOCK" = 1 ] || ARM_ARGS+=(--no_lock_reports)
 docker run -d --name "$ARM_NAME" --network host --ipc host "${PY_ENV[@]}" \
   -v "$REPO:/root/D1Training" --entrypoint python3 "$ARM_IMAGE" \
   /root/D1Training/demos/combiner_door/robot/arm_link.py "${ARM_ARGS[@]}" >/dev/null

@@ -232,7 +232,7 @@ retain the tagged system for the core control evaluation and report the limit.
 
 The current task uses 200 Hz physics and 50 Hz policy steps. Its default
 `--latency estimated` profile holds D1 arm targets for 5 policy steps (the SDK's
-10 Hz streaming rate), samples arm joint angles at the **measured** 9 Hz (F-020)
+10 Hz streaming rate, since measured at 9 Hz locked to the reports: F-239), samples arm joint angles at the **measured** 9 Hz (F-020)
 with velocities differenced from them, and delays Go2 leg commands by 0–10 ms.
 The 10 Hz command rate and the leg delay are still estimates from interface code.
 Joint speed ceilings are measured (1.21–1.29 rad/s, F-033). The default

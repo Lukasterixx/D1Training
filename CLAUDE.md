@@ -39,6 +39,9 @@ in the same session as the work, not as a follow-up. Layout and conventions: [re
   import's acceleration drives. Say which when comparing arm behaviour across them.
 - `python run_position_only.py verify --headless --num_envs 8` re-runs the deliberate G0 checks after any change
   to the task, robot config or weld.
+- **D1 commands go by the arm's reports, not a 10 Hz clock (F-238 to F-240).** A command 98-106 ms after an angle report stalls the arm 0.3-0.7 s.
+  Anything streaming to it uses `d1_hardware.ReportClock` (one command per `current_servo_angle` report, 20 ms after it, 9 Hz), as `arm_link.py` does by
+  default; `D1Client._pace` also holds every motion command out of the window. `--no_lock_reports` and `report_gate = False` are for measuring the stall only.
 - Motor and timing values in `motor_model.py` carry source labels (published, URDF-unverified, estimated). Keep the labels accurate; change a label only when a measurement replaces the value.
 
 ## graphify

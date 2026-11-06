@@ -143,12 +143,12 @@ class LegObservation:
         self.history[-1] = frame
         return self.history.reshape(-1).copy()
 
-    def record_action(self, action_legs: np.ndarray) -> np.ndarray:
-        """Clip the policy's 12 outputs as the environment does and keep them (plus the held arm's zeros) for the next
-        frame; returns the clipped 12."""
-        legs = np.clip(np.asarray(action_legs, dtype=float).reshape(-1), -self.clip_actions, self.clip_actions)
-        self.prev_actions = np.concatenate((legs, np.zeros(self.num_actions - self.num_legs)))
-        return legs
+    def record_action(self, action: np.ndarray) -> np.ndarray:
+        """Clip the policy's outputs as the environment does and keep them for the next frame (a leg policy's 12 plus
+        the held arm's zeros; a reach policy's own 18, sent to the arm or not); returns the clipped legs."""
+        action = np.clip(np.asarray(action, dtype=float).reshape(-1), -self.clip_actions, self.clip_actions)
+        self.prev_actions = np.concatenate((action, np.zeros(self.num_actions - action.size)))
+        return action[:self.num_legs]
 
     def leg_targets_unitree(self, action_legs: np.ndarray) -> np.ndarray:
         """The 12 joint targets the policy asks for (default + scale x action), in Unitree's order."""
@@ -169,6 +169,43 @@ def waiting_command(meta: dict, foot_goal_local=None) -> np.ndarray:
     i = int(meta["cmd_ee_radius"])
     commands[i:i + 3] = cart_to_sphere(goal - np.asarray(meta["goal_centre"], dtype=float))
     return commands
+
+
+def reach_command(meta: dict, goal_sphere) -> np.ndarray:
+    """The 15 commands of a reach policy told to stand: no walking, no force, no roll (the two `59600`s trained with
+    `roll_objective` off), the hand's goal as UniFP's (radius, pitch, yaw) about the sphere's centre."""
+    commands = np.zeros(int(meta["num_commands"]))
+    i = int(meta["cmd_ee_radius"])
+    commands[i:i + 3] = np.asarray(goal_sphere, dtype=float)
+    return commands
+
+
+class VirtualArm:
+    """An arm that exists only in a reach policy's observation: it follows the policy's six arm targets, from the
+    pose every training episode starts in, while the real D1 stays folded and is sent nothing.
+
+    A reach policy shown the folded arm asks 12-16 rad of it and never stops asking (2026-11-06, offline on a settled
+    stand), a state it never trained in; shown this, it asks ~1 rad and its leg targets halve. It is not a model of the
+    D1: a first-order lag at the measured speed ceiling (`SPEED_RAD_S`, F-033) inside the training's joint limits, and
+    a run under it says nothing about the real arm."""
+
+    #: The lag's time constant is a choice, not a measurement; the ceiling is the low end of F-033's 1.21-1.29 rad/s.
+    TAU_S, SPEED_RAD_S = 0.1, 1.2
+
+    def __init__(self, meta: dict):
+        self.default = np.asarray(meta["default_dof_pos"], dtype=float)[12:18]
+        self.limits = np.asarray(meta["arm_joint_limits"], dtype=float)
+        self.dt = float(meta["policy_dt"])
+        self.reset()
+
+    def reset(self) -> None:
+        self.q, self.dq = self.default.copy(), np.zeros(6)
+
+    def step(self, target) -> None:
+        most = self.SPEED_RAD_S * self.dt
+        move = np.clip((np.asarray(target, dtype=float) - self.q) * self.dt / self.TAU_S, -most, most)
+        new = np.clip(self.q + move, self.limits[:, 0], self.limits[:, 1])
+        self.q, self.dq = new, (new - self.q) / self.dt
 
 
 def decode_estimates(meta: dict, estimate: np.ndarray) -> dict:

@@ -20,10 +20,16 @@ LIVE (`--live`, after a typed confirmation), with the dog standing in sport mode
      ramps off, backs out, and goes home to its footfall;
   5. back on the FixStand gains, lie down, damping (kp 0, kd 3), and -- on Enter -- sport mode selected again.
 
-Stops: Ctrl-C, `a` + Enter, the remote's B, a tilt past `--tilt_limit_deg`, a joint past its limit, or a LowState older
-than 0.1 s put every motor in damping at once (the dog sinks down) and wait for Enter to give the legs back to sport
-mode. The remote's A is Enter (and `live` + Enter at the confirmation), as in every live program here
-(`lowlevel.RemoteButtons`): A goes, B stops, A again gives the dog back to sport mode, where it started. `q` + Enter (or `--policy_s` running out) ends gently: the press released, the foot home, then step 5. The
+Stops: Ctrl-C, `a` + Enter, a tilt past `--tilt_limit_deg`, a joint past its limit, or a LowState older than 0.1 s put
+every motor in damping at once (the dog sinks down) and wait for Enter to give the legs back to sport mode.
+
+The E-STOP -- the remote's B, the console's button (`demos/robot_console/`), `estop` + Enter, or the console's link lost
+-- does not wait: damping, LowCmd stopped and sport mode selected at once, on the next tick. From a stand that is not the
+settled handback every earlier run made: not validated on the dog (Lukas, 2026-11-06: "immediately hand back to
+sportsmode if possible"). If sport mode does not come back the motors stay in damping.
+
+The remote's A is Enter (and `live` + Enter at the confirmation), as in every live program here
+(`lowlevel.RemoteButtons`). `q` + Enter (or `--policy_s` running out) ends gently: the press released, the foot home, then step 5. The
 decoder's estimate of the foot's force past `--force_abort_n` for 0.1 s releases the press.
 
 Not validated: this program has run only against `fake_go2.py` on the PC (a kinematic stand-in, no dynamics); the
@@ -33,6 +39,12 @@ closed loop. See the week-6 log.
     run_press_on_dog.sh --policy checkpoints/leg_press_force_r4_model_5999.npz                 # dry
     run_press_on_dog.sh --policy ... --rehearse                                               # dry, a pretend foot
     run_press_on_dog.sh --policy ... --live                                                   # the legs driven
+
+A reach export (18 outputs, `export_policy.py`) runs here too, with `--presses 0` only: the legs driven by the whole-body
+policy with the arm folded and sent nothing, its six arm outputs recorded (`--reach_goal`, `--reach_arm_obs`). Its record
+is `<stamp>_reach_stand[_live]/`. Not validated: it has run only against the fake robot here.
+
+    run_press_on_dog.sh --policy checkpoints/reach_force_corner_delay_model_59600.npz --presses 0 --stand_s 20    # dry
 
 The record is `logs/leg_press/<stamp>_leg_press[_live]/` (`press.npz`, `summary.json`, `run.json`); `d1fetch` copies it.
 """
@@ -45,6 +57,7 @@ import os
 import queue
 import shutil
 import signal
+import socket
 import sys
 import threading
 import time
@@ -80,6 +93,11 @@ END_BLEND_S, END_STAND_S, LIE_S, DAMP_S = 0.5, 1.0, 2.5, 1.5
 LIE_WAIT_S, LYING_CALF_RAD = 6.0, -2.3
 #: The motion switcher's answers are waited for this long; /lowcmd listened to this long for anyone else.
 SWITCH_TIMEOUT_S, LOWCMD_LISTEN_S = 6.0, 0.4
+#: SelectMode is sent again if sport mode is not back this long after it. Every handback so far was back by 3.3 s
+#: (2026-10-23), its SelectMode unanswered, so this is past them: one lost message, not a second request mid-switch.
+SELECT_RESEND_S = 3.5
+#: The console's status datagrams (`--status_port`), at most this often.
+STATUS_S = 0.1
 #: The policy ends this long after the foot is back on its footfall.
 FOOT_DOWN_END_S = 1.0
 #: A standing robot's base is at least this high over its feet (m); the live run starts only from a stand.
@@ -233,15 +251,20 @@ class LiveIO:
 
 
 class Operator:
-    """Lines typed on the terminal: Enter (go), `q` (end gently), `a` (stop: damping)."""
+    """Lines typed on the terminal: Enter (go), `q` (end gently), `a` (stop: damping), `estop` (stop: sport mode).
 
-    def __init__(self):
+    Under the console its stdin closing means the console is gone, which is an E-stop (`eof_is_estop`)."""
+
+    def __init__(self, eof_is_estop: bool = False):
         self.events: queue.Queue[str] = queue.Queue()
+        self.eof_is_estop = eof_is_estop
         threading.Thread(target=self._read, daemon=True).start()
 
     def _read(self) -> None:
         for line in sys.stdin:
             self.events.put(line.strip().lower())
+        if self.eof_is_estop:
+            self.events.put("estop eof")
 
     def drain(self) -> list[str]:
         out = []
@@ -262,6 +285,16 @@ class PressRun:
         self.meta = self.policy.meta
         if self.meta.get("variant") != "force":
             raise SystemExit("the press layer commands a force: it needs a force-aware export")
+        #: A whole-body reach policy, driving the legs only: it holds the stand, and its six arm outputs go nowhere.
+        self.reach = self.meta.get("task") == "reach"
+        if self.reach and args.presses != 0:
+            raise SystemExit("a reach export only holds the stand here: pass --presses 0")
+        if self.reach and self.live and args.reach_arm_obs != "virtual":
+            # Shown the real folded arm on the dog (2026-11-06, dry) the policy's outputs ran away: past 1 rad at its 46th
+            # step, every leg target at the 25 rad clip soon after. Live, that is the legs driven to their limits.
+            raise SystemExit("a reach export shown the real folded arm runs away (Week 8 log): never live")
+        self.reach_goal = np.asarray(self.meta["reach_goals"][args.reach_goal], dtype=float) if self.reach else None
+        self.virtual_arm = (leg_policy.VirtualArm(self.meta) if self.reach and args.reach_arm_obs == "virtual" else None)
         self.obs = leg_policy.LegObservation(self.meta)
         self.kp, self.kd = float(self.meta["leg_kp"]), float(self.meta["leg_kd"])
         #: The policy's zero-action targets and the stance gravity settles them into in training, Unitree's order.
@@ -305,6 +338,15 @@ class PressRun:
         self.buttons = ll.RemoteButtons()
         self.max_tilt_deg = 0.0
         self.handed_back = False
+        #: An E-stop: from damping straight to the handback, with no Enter.
+        self.to_sport = False
+        self.select_t = 0.0
+        self.last_status = 0.0
+        self.status_sock = None
+        if getattr(args, "status_port", 0):
+            # Datagrams, unconnected and non-blocking: a console that has gone must not be able to hold up this loop.
+            self.status_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.status_sock.setblocking(False)
         self.confirming = self.asked_handback = False
         self.release_step = self.back_step = ""
         self.typed = ""
@@ -318,10 +360,12 @@ class PressRun:
         self.rows: dict[str, list] = {k: [] for k in (
             "t", "dt", "state_age", "mode", "stage", "phase", "level", "stalled", "q", "dq", "tau_est", "quat", "gyro",
             "rpy", "foot_force", "arm_q", "arm_measured", "foot", "foot_v", "height", "commands", "frame", "action",
-            "target", "kp", "kd", "sent", "estimate", "infer_ms", "goal", "offset", "go", "remote", "send_ms")}
+            "target", "kp", "kd", "sent", "estimate", "infer_ms", "goal", "offset", "go", "remote", "send_ms",
+            "arm_obs", "arm_target")}
         self.last_tick = None
         suffix = "_live" if self.live else ("_rehearse" if args.rehearse else "")
-        self.run_dir = Path(args.run_dir) / f"{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}_leg_press{suffix}"
+        stem = "reach_stand" if self.reach else "leg_press"
+        self.run_dir = Path(args.run_dir) / f"{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}_{stem}{suffix}"
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.parts, self.flushed = self.run_dir / "parts", 0
         self.events: list[dict] = []
@@ -378,6 +422,14 @@ class PressRun:
             self.event(f"stop ({why})")
             self.set_mode("done")
 
+    def estop(self, why: str) -> None:
+        """The E-stop: as `abort`, then the legs to sport mode with no Enter (`_damping`)."""
+        if self.mode == "done":
+            return
+        self.to_sport = True
+        self.event(f"E-STOP ({why})")
+        self.abort(f"E-stop: {why}")
+
     def _send(self, q, kp, kd) -> None:
         if self.io is not None:
             self.io.command(q, kp, kd)
@@ -404,8 +456,8 @@ class PressRun:
             self.event(f"LowCmd can no longer be sent ({self.io.error}): the motors keep the last command; "
                        "switch the dog off or select sport mode from the app")
         for press in self.buttons.update(keys):
-            if press == "B":                    # `a` + Enter
-                self.abort("the remote's B")
+            if press == "B":                    # the E-stop
+                self.estop("the remote's B")
             else:                               # Enter, and `live` + Enter at the live run's confirmation
                 self.typed, self.go = "live", True
         if age > STALE_S and self.mode in DRIVEN:
@@ -430,9 +482,34 @@ class PressRun:
         t = now - self.mode_t0
         getattr(self, f"_{self.mode}")(state, t)
         self.last_tick = now
+        self._status(state)
+
+    def _status(self, state) -> None:
+        """What the console shows, as one datagram to 127.0.0.1 (`--status_port`). Lost ones do not matter."""
+        if self.status_sock is None or self.tick_now - self.last_status < STATUS_S:
+            return
+        self.last_status = self.tick_now
+        rp = np.degrees(leg_policy.roll_pitch(state["quat"]))
+        _, height = feet(state["q"], state["quat"], self.meta)
+        scale = float(self.meta["action_scale"])
+        status = {"mode": self.mode, "live": self.live, "keys": sorted(state["keys"]), "roll": round(float(rp[0]), 1),
+                  "pitch": round(float(rp[1]), 1), "base_m": round(float(height), 3),
+                  "max_tilt": round(self.max_tilt_deg, 1), "confirming": self.confirming,
+                  "stage": pl.STAGE_NAMES[self.task.stage], "reach": self.reach, "abort": self.abort_reason,
+                  "end": self.end_reason, "sport": self.sport_name, "released": self.released,
+                  "to_sport": self.to_sport, "handed_back": self.handed_back,
+                  "leg_off": round(float(np.abs(self.obs.prev_actions[:12]).max()) * scale, 2),
+                  "arm_out": round(float(np.abs(self.obs.prev_actions[12:]).max()) * scale, 2),
+                  "tick_ms": round(self.send_ms, 1) if self.mode == "policy" and math.isfinite(self.send_ms) else None}
+        try:
+            self.status_sock.sendto(json.dumps(status).encode(), ("127.0.0.1", self.args.status_port))
+        except OSError:
+            pass
 
     def _operator(self, line: str) -> None:
-        if line == "a":
+        if line.startswith("estop"):
+            self.estop("the console's link closed" if line == "estop eof" else "the console")
+        elif line == "a":
             self.abort("operator: a")
         elif line == "q":
             self.end_reason = "operator: q"
@@ -472,10 +549,13 @@ class PressRun:
             self.stand_q = state["q"].copy()
             self.event("sport mode", name=self.sport_name, stand_height_m=round(height, 3),
                        stand_q=np.round(self.stand_q, 4).tolist())
+            what = (f"Reach policy, stand only for {self.args.stand_s:.0f} s, the arm sent nothing (the policy sees "
+                    f"{self.args.reach_arm_obs}), goal {self.args.reach_goal}." if self.reach else
+                    f"Plate {self.args.plate} (contact {self.plate.contact.tolist()} m, normal "
+                    f"{np.round(self.plate.n, 3).tolist()}), {self.args.force_n} N for {self.args.hold_s} s (cap "
+                    f"{self.args.max_force_n} N).")
             log("LIVE. The dog will lie down, sport mode will be released, and this program will stand it up and "
-                f"drive its legs. Plate {self.args.plate} (contact {self.plate.contact.tolist()} m, normal "
-                f"{np.round(self.plate.n, 3).tolist()}), {self.args.force_n} N for {self.args.hold_s} s (cap "
-                f"{self.args.max_force_n} N). Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the "
+                f"drive its legs. {what} Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the "
                 "remote's A) to go.")
             self.go = False
             self.confirming = True
@@ -605,6 +685,8 @@ class PressRun:
         self.task = self._new_task()
         self.policy_ticks, self.down_for, self.go = 0, 0.0, False
         self.rehearse_foot = None
+        if self.virtual_arm is not None:
+            self.virtual_arm.reset()
         self.set_mode("policy")
         if self.args.presses == 0:
             log(f"the policy holds the stand for {self.args.stand_s:.0f} s (q + Enter ends it sooner)")
@@ -643,6 +725,8 @@ class PressRun:
         foot, foot_v = self._foot_now(state)
         if self.policy_ticks == 0:
             commands = np.zeros(15)              # the reset's frame (leg_policy.waiting_command)
+        elif self.reach:
+            commands = leg_policy.reach_command(self.meta, self.reach_goal)
         else:
             # --presses 0: the stand only, the foot never lifted.
             commands = task.step(foot, foot_v, go=self.go and self.args.presses > 0)
@@ -651,7 +735,9 @@ class PressRun:
             self._announce(task, stage_before)
         if self.args.rehearse:
             self._rehearsal_foot(task.goal_w_held)
-        frame = self.obs.frame(state["quat"], state["gyro"], state["q"], state["dq"], arm_q, np.zeros(6), commands)
+        arm_obs, arm_obs_dq = ((self.virtual_arm.q, self.virtual_arm.dq) if self.virtual_arm is not None
+                               else (arm_q, np.zeros(6)))
+        frame = self.obs.frame(state["quat"], state["gyro"], state["q"], state["dq"], arm_obs, arm_obs_dq, commands)
         stack = self.obs.step(frame)
         t0 = time.perf_counter()
         # The command goes out as soon as the action exists: the encoder runs once, and the estimate (for the record and
@@ -661,9 +747,20 @@ class PressRun:
         legs = self.obs.record_action(action)
         target = np.clip(self.obs.leg_targets_unitree(legs), JOINT_LIMITS[:, 0] + TARGET_MARGIN_RAD,
                          JOINT_LIMITS[:, 1] - TARGET_MARGIN_RAD)
+        if self.reach:
+            # Before the send: this policy's target past the bound is damping, not a leg driven there.
+            off = float(np.abs(legs).max()) * float(self.meta["action_scale"])
+            if off > self.args.reach_max_leg_off_rad:
+                self.abort(f"leg target {off:.2f} rad off default, past {self.args.reach_max_leg_off_rad} rad")
         if self.mode == "policy":           # an abort this tick has already sent damping
             self._send(target, self.kp, self.kd)
         infer_ms = 1000.0 * (time.perf_counter() - t0)      # state to command out, this program's part
+        # Recorded, and fed to the virtual arm if there is one: nothing here reaches the D1.
+        arm_target = None
+        if self.reach:
+            arm_target = (self.obs.prev_actions[12:18] * self.meta["action_scale"] + self.obs.default[12:18])
+            if self.virtual_arm is not None:
+                self.virtual_arm.step(arm_target)
         self.send_ms = 1000.0 * (time.monotonic() - self.tick_now)
         estimate = self.policy.decoder(latent)[0]
         est = leg_policy.decode_estimates(self.meta, estimate)
@@ -677,7 +774,8 @@ class PressRun:
                 self.force_high = 0
         self._record(state, sent=self.live and self.mode == "policy", target=target, kp=self.kp, kd=self.kd,
                      arm_q=arm_q, measured=measured, foot=foot, foot_v=foot_v, height=height, commands=commands,
-                     frame=frame, action=legs, estimate=estimate, infer_ms=infer_ms)
+                     frame=frame, action=legs, estimate=estimate, infer_ms=infer_ms, arm_obs=arm_obs,
+                     arm_target=arm_target)
         self.policy_ticks += 1
         now = time.monotonic()
         if now - self.last_print >= self.args.print_s:
@@ -722,6 +820,13 @@ class PressRun:
     def _print(self, state, foot, height, force_est, infer_ms, measured) -> None:
         task = self.task
         rp = np.degrees(leg_policy.roll_pitch(state["quat"]))
+        if self.reach:
+            off = np.abs(self.obs.prev_actions[:12]).max() * self.meta["action_scale"]
+            arm = np.abs(self.obs.prev_actions[12:18]).max() * self.meta["action_scale"]
+            log(f"{self.mode} reach  leg target off default {off:.2f} rad  arm output {arm:.2f} rad (not sent)  base "
+                f"{height:.3f} m  roll {rp[0]:+5.1f} pitch {rp[1]:+5.1f}  {infer_ms:.1f} ms  real arm "
+                f"{'measured' if measured else 'rest pose'}")
+            return
         log(f"{self.mode} {pl.STAGE_NAMES[task.stage]}/{pl.PHASE_NAMES[task.layer.phase]}  level "
             f"{task.layer.normal_level:4.1f} N  est. foot force {force_est:5.1f} N  foot "
             f"{np.round(foot, 3).tolist()} (goal {np.round(task.commanded_goal(), 3).tolist()})  base {height:.3f} m  "
@@ -758,6 +863,9 @@ class PressRun:
     def _damping(self, state, t) -> None:
         self._send(state["q"], 0.0, ll.DAMP_KD)
         self._record(state, sent=True, target=state["q"], kp=0.0, kd=ll.DAMP_KD)
+        if self.to_sport:
+            self.set_mode("handback")
+            return
         if not self.asked_handback:
             self.asked_handback = True
             self.go = False
@@ -774,7 +882,7 @@ class PressRun:
             self.io.stop_writing()
             self.event("LowCmd stopped", sent=self.io.sent)
             self.pending = self.io.switcher(ll.SELECT_MODE, {"name": self.sport_name})
-            self.pending_t, self.handed_back, self.back_step = now, True, "select"
+            self.pending_t, self.handed_back, self.back_step, self.select_t = now, True, "select", now
             return
         result = self.io.responses.pop(self.pending, None) if self.pending is not None else None
         if self.back_step == "select" and (result is not None or now - self.pending_t > 1.5):
@@ -787,6 +895,10 @@ class PressRun:
                 self.set_mode("done")
                 return
             if result is not None or now - self.pending_t > 0.5:
+                if now - self.select_t > SELECT_RESEND_S:
+                    self.event("sport mode not back: SelectMode again")
+                    self.io.switcher(ll.SELECT_MODE, {"name": self.sport_name})
+                    self.select_t = now
                 self.pending, self.pending_t = self.io.switcher(ll.CHECK_MODE), now
         if t > SWITCH_TIMEOUT_S:
             self.event(f"no confirmation from the motion switcher: select sport mode from the app or remote "
@@ -799,7 +911,8 @@ class PressRun:
     # --- the record --------------------------------------------------------------------------------------------------
 
     def _record(self, state, *, sent, target, kp, kd, arm_q=None, measured=False, foot=None, foot_v=None,
-                height=math.nan, commands=None, frame=None, action=None, estimate=None, infer_ms=math.nan) -> None:
+                height=math.nan, commands=None, frame=None, action=None, estimate=None, infer_ms=math.nan,
+                arm_obs=None, arm_target=None) -> None:
         now = self.tick_now                 # the tick's start: the period between rows, not including the step's work
         task = self.task
         nan3 = np.full(3, math.nan)
@@ -818,7 +931,9 @@ class PressRun:
                "estimate": np.full(12, math.nan) if estimate is None else estimate, "infer_ms": infer_ms,
                "goal": task.commanded_goal(), "offset": task.offset, "go": float(self.go),
                "remote": float(sum(1 << k for k, name in enumerate(ll.KEYS) if name in state["keys"])),
-               "send_ms": self.send_ms if self.mode == "policy" else math.nan}
+               "send_ms": self.send_ms if self.mode == "policy" else math.nan,
+               "arm_obs": np.full(6, math.nan) if arm_obs is None else arm_obs,
+               "arm_target": np.full(6, math.nan) if arm_target is None else arm_target}
         for key, value in row.items():
             self.rows[key].append(np.asarray(value, dtype=float))
 
@@ -839,7 +954,8 @@ class PressRun:
         (self.run_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
         (self.run_dir / "events.json").write_text(json.dumps(self.events, indent=2, default=str))
         (self.run_dir / "run.json").write_text(json.dumps(
-            {"mode": "leg_press_live" if self.live else "leg_press_dry", "status": "recorded",
+            {"mode": ("reach_stand" if self.reach else "leg_press") + ("_live" if self.live else "_dry"),
+             "status": "recorded",
              "published": ("LowCmd, motion switcher and sport requests" if self.live else "nothing"),
              "arguments": vars(self.args),
              "policy_meta": {k: self.meta[k] for k in ("variant", "checkpoint", "checkpoint_sha256", "checkpoint_iteration")},
@@ -849,7 +965,8 @@ class PressRun:
 
     def summary(self, a: dict) -> dict:
         task = self.task
-        out = {"live": self.live, "rehearse": self.args.rehearse, "plate": self.args.plate,
+        out = {"live": self.live, "rehearse": self.args.rehearse, "task": self.meta.get("task", "leg"),
+               "plate": self.args.plate,
                "plate_contact_m": self.plate.contact.tolist(), "plate_n": np.round(self.plate.n, 4).tolist(),
                "force_n": self.args.force_n, "max_force_n": self.args.max_force_n,
                "abort_reason": self.abort_reason, "end_reason": self.end_reason,
@@ -866,6 +983,21 @@ class PressRun:
                         "step_period_s": {"median": round(float(np.median(a["dt"][1:])), 4) if len(a["dt"]) > 1 else None,
                                           "p99": round(float(np.quantile(a["dt"][1:], 0.99)), 4) if len(a["dt"]) > 1 else None},
                         "commanded_level_max_n": round(float(np.nanmax(a["level"][pol])), 3) if pol.any() else None})
+            if ticks.any() and self.reach:
+                legs = a["action"][ticks] * self.meta["action_scale"]
+                settled = legs[32:] if len(legs) > 32 else legs          # past the empty history
+                out["reach"] = {
+                    "goal": self.args.reach_goal, "arm_obs": self.args.reach_arm_obs,
+                    "goal_sphere": self.reach_goal.tolist(),
+                    "leg_target_off_default_rad": {"rms": round(float(np.sqrt((settled ** 2).mean())), 3),
+                                                   "p95": round(float(np.quantile(np.abs(settled), 0.95)), 3),
+                                                   "max": round(float(np.abs(settled).max()), 3)},
+                    "leg_target_rms_step_rad": round(float(np.sqrt((np.diff(settled, axis=0) ** 2).mean(0)).max()), 4)
+                    if len(settled) > 1 else None,
+                    "arm_output_max_rad": round(float(np.nanmax(np.abs(a["arm_target"][ticks][32:]))), 3)
+                    if len(legs) > 32 else None,
+                    "real_arm_moved_rad": round(float(np.ptp(a["arm_q"][ticks], axis=0).max()), 4),
+                    "real_arm_measured_share": round(float(a["arm_measured"][ticks].mean()), 3)}
             if ticks.any():
                 out["infer_ms"] = {"median": round(float(np.nanmedian(a["infer_ms"])), 2),
                                    "p99": round(float(np.nanquantile(a["infer_ms"], 0.99)), 2)}
@@ -907,12 +1039,21 @@ def main() -> int:
     parser.add_argument("--start_pitch_deg", type=float, nargs=2, default=None, metavar=("LO", "HI"),
                         help="the stand's pitch range the policy may start from, nose up negative (default: the "
                              "export's start_gate, else -5 5)")
+    parser.add_argument("--reach_goal", choices=("init_start", "folded"), default="init_start",
+                        help="a reach export's hand goal: the one training opens on, or the folded hand's own")
+    parser.add_argument("--reach_arm_obs", choices=("virtual", "measured"), default="virtual",
+                        help="what a reach export sees of the arm: `leg_policy.VirtualArm` or the real folded arm")
+    parser.add_argument("--reach_max_leg_off_rad", type=float, default=0.9,
+                        help="a reach export's leg target this far from default stops the run, unsent. On the dog dry: "
+                             "0.76 at the first step, 0.35 after it settles; the runaway passes 1 within a second")
     parser.add_argument("--force_abort_n", type=float, default=25.0,
                         help="the decoder's foot-force estimate past this for 0.1 s releases the press")
     parser.add_argument("--cmd_hz", type=float, default=500.0, help="LowCmd's rate (the latest command repeated)")
     parser.add_argument("--topic", default="/lowstate")
     parser.add_argument("--arm_link_port", type=int, default=ARM_LINK_PORT, help="0: no arm link, the rest pose")
     parser.add_argument("--print_s", type=float, default=1.0)
+    parser.add_argument("--status_port", type=int, default=0,
+                        help="the console's status port on 127.0.0.1; stdin closing is then an E-stop")
     parser.add_argument("--run_dir", default="logs/leg_press")
     args = parser.parse_args()
     if args.live and args.rehearse:
@@ -936,10 +1077,11 @@ def main() -> int:
         signal.signal(sig, lambda *_: stop.set())
     node = rclpy.create_node("leg_press")
     io = LiveIO(node, args.cmd_hz) if args.live else None
-    run = PressRun(args, io, Operator())
+    run = PressRun(args, io, Operator(eof_is_estop=bool(args.status_port)))
     node.create_subscription(LowState, args.topic, run.on_state, qos_profile_sensor_data)
-    log(f"{'LIVE' if args.live else 'DRY'}: {run.meta['variant']} policy {Path(run.meta['checkpoint']).name}, plate "
-        f"{args.plate}, {args.force_n} N (cap {args.max_force_n} N); recording to {run.run_dir}")
+    log(f"{'LIVE' if args.live else 'DRY'}: {run.meta['variant']} policy {Path(run.meta['checkpoint']).name}, "
+        + (f"reach stand, goal {args.reach_goal}, arm seen as {args.reach_arm_obs}, arm sent nothing" if run.reach else
+           f"plate {args.plate}, {args.force_n} N (cap {args.max_force_n} N)") + f"; recording to {run.run_dir}")
     dt = float(run.meta["policy_dt"])
     next_tick = last_flush = time.monotonic()
     interrupted = False

@@ -10,7 +10,7 @@ with the arm still as moving, and the arm stopped acting on commands through the
 on the bench. Each sample's arrival time (this process's clock) and its DDS source timestamp (the arm's) tell the two
 apart: gaps in both, the arm stopped publishing; gaps on arrival only, the network or this computer held them.
 
-Writes `samples.jsonl` (topic, funcode, arrival time, source time) and `summary.json` (per stream: intervals and gaps
+Writes `samples.jsonl` (topic, funcode, arrival time, source time, the angles where the message has them) and `summary.json` (per stream: intervals and gaps
 on either clock; the arm NIC's counters before and after; the load average each second), and prints the summary.
 """
 from __future__ import annotations
@@ -119,15 +119,17 @@ def main(argv=None) -> int:
                 src = source_s(s)
                 if src is not None:
                     sources["current_servo_angle"].append(src)
+                q = [round(float(getattr(s, f"servo{i}_data_")), 2) for i in range(7)]
                 f.write(json.dumps({"topic": "current_servo_angle", "t": round(now - start, 4), "src": src,
-                                    "wall": round(time.time(), 4)}) + "\n")
+                                    "wall": round(time.time(), 4), "q": q}) + "\n")
             for s in fb.take(N=50):
                 if not hasattr(s, "data_"):
                     continue
                 try:
-                    funcode = json.loads(s.data_).get("funcode")
+                    msg = json.loads(s.data_)
                 except ValueError:
                     continue
+                funcode, data = msg.get("funcode"), msg.get("data") or {}
                 key = f"arm_Feedback/{funcode}"
                 if key not in streams:
                     continue
@@ -135,8 +137,10 @@ def main(argv=None) -> int:
                 src = source_s(s)
                 if src is not None:
                     sources[key].append(src)
-                f.write(json.dumps({"topic": key, "t": round(now - start, 4), "src": src, "wall": round(time.time(), 4)})
-                        + "\n")
+                row = {"topic": key, "t": round(now - start, 4), "src": src, "wall": round(time.time(), 4)}
+                if "angle0" in data:  # the echoes under command (F-238): fresh angles, or the last report's?
+                    row["q"] = [round(float(data[f"angle{i}"]), 2) for i in range(7) if f"angle{i}" in data]
+                f.write(json.dumps(row) + "\n")
     summary = {"seconds": round(time.monotonic() - start, 1), "iface": args.iface,
                "arrival": {k: stats(v) for k, v in streams.items()},
                "source": {k: stats(v) for k, v in sources.items()},

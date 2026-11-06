@@ -53,6 +53,15 @@ import d1_ik
 FEEDBACK_PERIOD_S = 0.111   # measured, F-020
 COMMAND_PERIOD_S = 0.10     # the driver's streaming rate
 MAX_COMMAND_HZ = 10.0       # hard ceiling on motion commands; see D1Client._pace
+#: The arm's angle reports come every 111 ms (F-020); a command landing just before one stalls them (F-238).
+REPORT_PERIOD_S = 0.111
+#: Seconds after an angle report where a command stalls the arm: 0.098-0.106 on the held tests' exact times, 0.088-0.110
+#: from the live runs', which are stamped after the send (F-238). The wider one is the keep-out.
+STALL_WINDOW_S = (0.088, 0.112)
+#: A command this soon after a report is not known to be safe (nothing was tested closer than 15 ms, F-238).
+GATE_OPEN_S = 0.015
+#: Reports older than this say nothing about the arm's phase: the caller is not polling, or the arm has stopped.
+GATE_REPORT_MAX_AGE_S = 1.0
 PEAK_RATE_DEG_S = 70.0      # measured on every joint, 68.6-74.1 deg/s (F-033)
 ARM_IFACE = "enP8p1s0"      # the Go2 payload's arm-facing NIC
 ARM_SERVOS = 6              # servos 0-5 are the IK chain; 6 is the gripper
@@ -166,8 +175,56 @@ def _message_types():
     return ArmString, PubServoInfo
 
 
+def stall_wait_s(now: float, report_s: float | None) -> float:
+    """How long to hold a motion command so it goes out `GATE_OPEN_S` to `STALL_WINDOW_S[0]` after an angle report (F-238):
+    0 if it may go now. Between reports the arm's cycle is carried on by its period. At most ~38 ms."""
+    if report_s is None or now - report_s > GATE_REPORT_MAX_AGE_S:
+        return 0.0
+    phase = (now - report_s) % REPORT_PERIOD_S
+    if GATE_OPEN_S <= phase <= STALL_WINDOW_S[0]:
+        return 0.0
+    return (GATE_OPEN_S - phase) % REPORT_PERIOD_S
+
+
+class ReportClock:
+    """When to send the next motion command so that it cannot land in the arm's stall window (F-238).
+
+    One command a report, `offset_s` after it. Between reports, or if they stop, the slots carry on at the report period
+    from the last one seen, so a late report does not hold a command back. A slot missed by more than `slack_s` is
+    skipped: a late command drifts towards the window, and the next slot is only 111 ms away.
+
+    The caller polls `due(now, client.servo_report_s)` and calls `sent(now)` after each command.
+    """
+
+    def __init__(self, offset_s: float = 0.02, period_s: float = REPORT_PERIOD_S, slack_s: float = 0.04,
+                 allow_window: bool = False):
+        if not allow_window and offset_s + slack_s >= STALL_WINDOW_S[0]:
+            raise ValueError(f"a command {offset_s + slack_s:.3f} s after a report can reach the stall window")
+        self.offset_s, self.period_s, self.slack_s = offset_s, period_s, slack_s
+        self._min_interval_s = 1.0 / MAX_COMMAND_HZ
+        self._last_sent = None
+
+    def due(self, now: float, report_s: float | None) -> bool:
+        if report_s is None:
+            return False
+        first = report_s + self.offset_s
+        floor = 0.0 if self._last_sent is None else self._last_sent + self._min_interval_s
+        # A slot just short of the 10 Hz floor waits for it; dropping it would leave a 210 ms hole in the stream.
+        earliest = max(now, floor) - self.slack_s
+        slots_on = max(0, math.ceil((earliest - first) / self.period_s))
+        return now >= max(first + slots_on * self.period_s, floor)
+
+    def sent(self, now: float) -> None:
+        self._last_sent = now
+
+
 class D1Client:
     """Talks to the real arm. Mirrors `DirectD1`'s interface where it can."""
+
+    #: Hold every motion command out of the arm's stall window (`stall_wait_s`). The standard: off only to measure the
+    #: stall itself (`arm_command_rate_test`).
+    report_gate = True
+    _last_servo_rx = 0.0
 
     def __init__(self, iface: str = ARM_IFACE, domain: int = 0):
         # Bind to the arm-facing NIC and drop whatever the ROS/Go2 stack left in
@@ -269,7 +326,7 @@ class D1Client:
                 self._angles_deg = [s.servo0_data_, s.servo1_data_, s.servo2_data_,
                                     s.servo3_data_, s.servo4_data_, s.servo5_data_,
                                     s.servo6_data_]
-                self._last_rx = time.monotonic()
+                self._last_rx = self._last_servo_rx = time.monotonic()
             got = True
         for s in self._fb.take(N=50):
             if not _has_data(s, "data_"):
@@ -326,6 +383,17 @@ class D1Client:
         with self._lock:
             return time.monotonic() - self._last_rx if self._last_rx else float("inf")
 
+    @property
+    def servo_report_s(self) -> float | None:
+        """When the last `current_servo_angle` report arrived (`time.monotonic()`), None before the first.
+
+        The arm's own 111 ms clock, which `ReportClock` locks to. `feedback_age_s` is not: `rt/arm_Feedback` funcode 1
+        also refreshes it, and under command that stream gains a message ~2 ms after each command (F-238), so a lock
+        on it would follow its own commands.
+        """
+        with self._lock:
+            return self._last_servo_rx or None
+
     def is_powered(self) -> bool | None:
         with self._lock:
             return None if self._status is None else bool(self._status.get("power_status"))
@@ -342,11 +410,16 @@ class D1Client:
 
     def _pace(self) -> None:
         """Block until at least one command interval has passed since the last motion
-        command. Applied to funcode 1 and 2 only -- status and release must never be
-        delayed, because release is the abort."""
+        command, and until the command is clear of the arm's stall window (`stall_wait_s`,
+        F-238: every sender gets this, whatever its own timing). Applied to funcode 1 and 2
+        only -- status and release must never be delayed, because release is the abort."""
         wait = self._min_command_interval_s - (time.monotonic() - self._last_motion_tx)
         if wait > 0:
             time.sleep(wait)
+        if self.report_gate:
+            wait = stall_wait_s(time.monotonic(), self._last_servo_rx or None)
+            if wait > 0:
+                time.sleep(wait)
         self._last_motion_tx = time.monotonic()
 
     def _send(self, funcode: int, data: dict | None = None) -> str:

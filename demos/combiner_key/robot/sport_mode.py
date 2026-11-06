@@ -7,6 +7,7 @@ P2Dingo's ROS image on the dog (`d1dogsport` in ~/.bashrc).
 
     python3 demos/combiner_key/robot/sport_mode.py                 # CheckMode only
     python3 demos/combiner_key/robot/sport_mode.py --select mcf    # SelectMode, then CheckMode
+    python3 demos/combiner_key/robot/sport_mode.py --ensure mcf    # SelectMode only if CheckMode reports it released
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from demos.combiner_key.robot import lowlevel as ll  # noqa: E402
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--select", default=None, help="the mode to select (the dog's is 'mcf')")
+    parser.add_argument("--ensure", default=None, help="select this mode only if sport mode is released")
     args = parser.parse_args()
 
     import rclpy
@@ -55,6 +57,8 @@ def main() -> int:
     before = call(ll.CHECK_MODE)
     print(f"CheckMode: {before and repr(ll.mode_name(before[1]))} {'(released)' if before and not ll.mode_name(before[1]) else ''}")
     ok = before is not None
+    if args.ensure and before is not None and not ll.mode_name(before[1]):
+        args.select = args.ensure
     if args.select:
         result = call(ll.SELECT_MODE, {"name": args.select}, wait=6.0)
         print(f"SelectMode {args.select!r}: {'answered, code %d' % result[0] if result else 'no answer'}")
