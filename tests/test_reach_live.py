@@ -1,8 +1,9 @@
 """`press_live.py` closing the reach's loop on the arm, against a fake arm link: what reaches the socket, and above all what does not."""
-import inspect
 import json
 import math
 import tempfile
+import threading
+import time
 import unittest
 
 import numpy as np
@@ -355,8 +356,53 @@ class TheRoutes(unittest.TestCase):
 
 
 class TheLinkSaysWhenItsReportsCame(unittest.TestCase):
+    def feedback(self, client, wait_s=0.2):
+        """What `Link.report` sends for this client in `wait_s`, and whether its thread lived."""
+        link = arm_link.Link.__new__(arm_link.Link)
+        sent = []
+        link.client, link.stopping, link.conn, link.lock, link.streaming = client, False, object(), threading.Lock(), False
+        link.send = lambda conn, msg: sent.append(msg)
+        thread = threading.Thread(target=link.report, daemon=True)
+        thread.start()
+        time.sleep(wait_s)
+        alive = thread.is_alive()
+        link.stopping = True
+        thread.join(1.0)
+        return sent, alive
+
+    class Client:
+        """Angles that say which report they are from; `stamps` is what `servo_report_s` reads, in turn, the last one held."""
+        feedback_age_s = 0.01
+
+        def __init__(self, stamps, angles):
+            self.stamps, self.angles = list(stamps), angles
+
+        @property
+        def servo_report_s(self):
+            return self.stamps.pop(0) if len(self.stamps) > 1 else self.stamps[0]
+
+        def get_joint_angles(self):
+            return [self.angles] * 6
+
+        @staticmethod
+        def get_gripper_units():
+            return 50.0
+
     def test_the_feedback_carries_the_reports_own_time(self):
-        self.assertIn('"report_s": round(self.client.servo_report_s', inspect.getsource(arm_link.Link))
+        sent, _ = self.feedback(self.Client([100.0], 1.0))
+        self.assertEqual(sent[0]["report_s"], 100.0)
+
+    def test_angles_before_the_first_report_do_not_end_the_feedback(self):
+        # `arm_Feedback/1` fills the angles without stamping `servo_report_s`; the thread must wait, not die on round(None).
+        sent, alive = self.feedback(self.Client([None], 1.0))
+        self.assertTrue(alive)
+        self.assertEqual(sent, [])
+
+    def test_a_report_landing_between_the_reads_is_not_sent_as_a_pair(self):
+        # The first pass reads 100 then 200: its angles could be either report's. The next pass reads 200 twice and is sent.
+        sent, alive = self.feedback(self.Client([100.0, 200.0, 200.0], 1.0))
+        self.assertTrue(alive)
+        self.assertEqual([m["report_s"] for m in sent][:1], [200.0])
 
 
 class TheStartGate(unittest.TestCase):

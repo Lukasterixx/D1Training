@@ -1,0 +1,59 @@
+{
+  "live": true,
+  "rehearse": false,
+  "task": "reach",
+  "plate": "palm_up",
+  "plate_contact_m": [
+    0.331,
+    -0.202,
+    0.112
+  ],
+  "plate_n": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "force_n": 5.0,
+  "max_force_n": 5.0,
+  "abort_reason": "arm: joint 4 33.7 deg ahead of its report for 0.5 s (at most 25.0)",
+  "end_reason": "operator: q",
+  "final_mode": "done",
+  "sport_mode": "mcf",
+  "handed_back": true,
+  "left_released": false,
+  "presses": [],
+  "last_stage": "waiting",
+  "max_tilt_deg": 13.12,
+  "lowcmd_sent": 17618,
+  "events": 24,
+  "steps": 1763,
+  "seconds": 46.84,
+  "policy_steps": 77,
+  "step_period_s": {
+    "median": 0.02,
+    "p99": 0.0206
+  },
+  "commanded_level_max_n": 0.0,
+  "reach": {
+    "goal": "init_start",
+    "arm_obs": "reports",
+    "goal_sphere": [
+      0.5,
+      0.6283185307179586,
+      0.0
+    ],
+    "leg_target_off_default_rad": {
+      "rms": 0.144,
+      "p95": 0.291,
+      "max": 0.312
+    },
+    "leg_target_rms_step_rad": 0.0056,
+    "arm_output_max_rad": 1.551,
+    "real_arm_moved_rad": 0.9634,
+    "real_arm_measured_share": 1.0
+  },
+  "infer_ms": {
+    "median": 2.6,
+    "p99": 3.1
+  }
+}

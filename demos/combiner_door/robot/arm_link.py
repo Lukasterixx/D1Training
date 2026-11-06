@@ -445,10 +445,14 @@ class Link:
             conn = self.conn
             if conn is None:
                 continue
+            stamp = self.client.servo_report_s
             try:
                 q = self.client.get_joint_angles()
                 gripper = self.client.get_gripper_units()
             except RuntimeError:
+                continue
+            # None: `arm_Feedback/1` can fill the angles before the first report. Moved: a report landed between the reads.
+            if stamp is None or self.client.servo_report_s != stamp:
                 continue
             age = self.client.feedback_age_s
             if time.monotonic() - age <= last:
@@ -457,7 +461,7 @@ class Link:
             with self.lock:
                 streaming = self.streaming
             self.send(conn, {"type": "feedback", "q": [round(v, 3) for v in q], "gripper": round(gripper, 2),
-                             "age_s": round(age, 3), "report_s": round(self.client.servo_report_s, 4),
+                             "age_s": round(age, 3), "report_s": round(stamp, 4),
                              "streaming": streaming})
 
     @staticmethod

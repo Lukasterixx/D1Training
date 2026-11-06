@@ -43,7 +43,8 @@ DEADMAN_S, ESCALATE_S = 2.0, 0.6
 DRY_MIN_STEPS, DRY_MIN_STANDING = 250, 30
 STANDING_MIN_M = 0.25
 LAUNCHERS = {"press": ("demos/combiner_key/robot/run_press_on_dog.sh", "d1t-leg-press"),
-             "shadow": ("demos/combiner_key/robot/run_shadow_on_dog.sh", "d1t-leg-shadow")}
+             "shadow": ("demos/combiner_key/robot/run_shadow_on_dog.sh", "d1t-leg-shadow"),
+             "arm": ("demos/combiner_key/robot/run_holster_on_dog.sh", "d1t-holster")}
 SPORT = "demos/combiner_key/robot/run_sport_on_dog.sh"
 #: The dog's sport mode, if a run never got to read it.
 SPORT_NAME = "mcf"
@@ -87,7 +88,7 @@ class Console:
             return False, "this policy needs a clean dry run of at least 5 s, with the dog standing, first"
         return True, ""
 
-    def start(self, policy_id: str, mode: str) -> tuple[bool, str]:
+    def start(self, policy_id: str, mode: str, word: str = "") -> tuple[bool, str]:
         with self.lock:
             policy = self.policies.get(policy_id)
             if policy is None or mode not in policy["modes"]:
@@ -100,8 +101,11 @@ class Console:
                 ok, why = self.can_live(policy_id)
                 if not ok:
                     return False, why
+            confirm = policy.get("confirm", {}).get(mode)
+            if confirm and word.strip().lower() != confirm:
+                return False, f"type {confirm} to start this"
             launcher, container = self.launchers[policy["kind"]]
-            args = ["--policy", policy["file"], *policy["modes"][mode]]
+            args = [*(["--policy", policy["file"]] if "file" in policy else []), *policy["modes"][mode]]
             if policy["kind"] == "press":
                 args += ["--status_port", str(self.status_port)]
             self.proc = subprocess.Popen([launcher if launcher.startswith("/") else str(self.repo / launcher), *args],
@@ -112,6 +116,8 @@ class Console:
             self.status, self.estop_t, self.sport_result = None, None, None
             self.heartbeat = self.clock()
             self.say(f"START {policy['label']} [{mode}]")
+            if confirm and policy["kind"] == "press":    # press_live asks on its stdin before it does anything
+                self.write(confirm)
             threading.Thread(target=self._read, args=(self.proc, self.run), daemon=True).start()
             return True, ""
 
@@ -121,8 +127,14 @@ class Console:
             self.say(line)
             if "record: " in line:
                 run["record"] = line.split("record: ", 1)[1].strip()
-            if "E-STOP (" in line:                       # its own word: it has heard
-                run["heard"] = True
+            if "E-STOP (" in line or "stopped: operator" in line or "stopped on the way back" in line:
+                run["heard"] = True                      # its own word: it has heard
+            # From the log as well as the status: B stops a run before any status can carry it (2026-11-06).
+            if "the remote's B" in line:
+                self.b_seen = True
+            if run["kind"] == "arm" and "back to the start: " in line:   # folding after a stop: stoppable, watched, again
+                with self.lock:
+                    self.estop_t, run["heard"] = None, False
         proc.wait()
         self._ended(proc, run)
 
@@ -136,6 +148,12 @@ class Console:
                                 | {"abort": (summary or {}).get("abort_reason"), "end": (summary or {}).get("end_reason")})
             why = (summary or {}).get("abort_reason") or ""
             clean = why == "" or "the remote's B" in why
+            if run["kind"] == "arm":
+                # Finished, or stopped by the operator, and the real arm folded with its report fresh. The last dry run
+                # decides: an arm that was folded before is not one that is folded now.
+                if run["mode"] == "dry":
+                    (self.dry_ok.add if summary is not None and summary["arm_ok"] else self.dry_ok.discard)(run["policy"])
+                return                                   # the legs were never touched: sport mode is not this run's
             if (run["mode"] == "dry" and clean and summary is not None and run["standing"] >= DRY_MIN_STANDING
                     and (summary.get("policy_steps") or 0) >= DRY_MIN_STEPS):
                 self.dry_ok.add(run["policy"])
@@ -148,6 +166,12 @@ class Console:
             return None
         path = str(run["record"]).replace("/root/D1Training/", f"{self.repo}/")
         try:
+            if run["kind"] == "arm":
+                record = json.loads((Path(path) / "run.json").read_text())
+                status, why = record.get("status"), record.get("why") or ""
+                return {"abort_reason": None if status == "finished" else f"{status}: {why}", "end_reason": status,
+                        "arm_ok": ((status == "finished" or (status == "stopped" and why.startswith("operator: a")))
+                                   and str(record.get("real_arm_start_check", "")).startswith("ok"))}
             return json.loads((Path(path) / "summary.json").read_text())
         except (OSError, ValueError):
             return None
@@ -174,8 +198,9 @@ class Console:
                 self.estop_t = self.clock()
                 run["estop"] = source
                 self.say(f"E-STOP from {source}")
-            if active and run["kind"] == "press":
-                self.write("estop")
+            if active and run["kind"] in ("press", "arm"):
+                # An arm run's stop holds the arm, and the program stays up to fold it: no sport mode, the legs are not its.
+                self.write("estop" if run["kind"] == "press" else "a")
                 if first:
                     threading.Thread(target=self._escalate, args=(self.proc, run), daemon=True).start()
                 return {"stopping": True}
@@ -251,11 +276,11 @@ class Console:
             for p in self.policies.values():
                 ok, why = self.can_live(p["id"])
                 policies.append({k: p[k] for k in ("id", "label", "status", "note", "kind")}
-                                | {"modes": list(p["modes"]), "can_live": ok, "why_not": why,
+                                | {"modes": list(p["modes"]), "confirm": p.get("confirm", {}), "can_live": ok, "why_not": why,
                                    "dry_ok": p["id"] in self.dry_ok})
             return {"policies": policies, "active": active, "b_seen": self.b_seen, "log": list(self.log)[-160:],
                     "polls": self.polls,
-                    "run": None if run is None else {k: run.get(k) for k in ("policy", "mode", "live", "record", "estop")},
+                    "run": None if run is None else {k: run.get(k) for k in ("policy", "mode", "live", "kind", "record", "estop")},
                     "status": self.status, "status_age": round(self.clock() - self.status_t, 2) if self.status else None,
                     "estop": self.estop_t is not None, "sport_busy": self.sport_job is not None,
                     "sport_result": self.sport_result, "history": self.history[-8:]}
@@ -330,11 +355,13 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/estop":
             self._json(c.estop(str(body.get("source") or "the button")))
         elif self.path == "/api/start":
-            ok, why = c.start(str(body.get("policy")), str(body.get("mode")))
+            ok, why = c.start(str(body.get("policy")), str(body.get("mode")), str(body.get("word") or ""))
             self._json({"ok": ok, "error": why}, 200 if ok else HTTPStatus.CONFLICT)
         elif self.path == "/api/line":
             line = str(body.get("line", ""))
-            if line not in ("", "q", "live"):
+            # An arm run's `q` quits with the arm out, so it has no `q`; its `r` folds it after a stop.
+            arm = c.run is not None and c.run["kind"] == "arm"
+            if line not in (("", "r") if arm else ("", "q", "live")):
                 return self._json({"error": "no such line"}, HTTPStatus.BAD_REQUEST)
             self._json({"ok": c.write(line)})
         elif self.path == "/api/sport":

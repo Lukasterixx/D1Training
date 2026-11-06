@@ -8321,4 +8321,53 @@ result that changes a conclusion gets a new entry, and the old one is marked
 - **Implication:**
   - `checkpoints/reach_force_locked_model_66200.npz` is the reach candidate for the dog, through `press_live.py --reach_arm_send --live`, through `follow` only: sent directly, it asks up to 64 deg in one command at handover.
   - Five things are first-ever on the real arm in that run (Week 8 log).
+- **Note (2026-11-06, later):** [F-255](#f-255): on the dog it stopped at 1.54 s, J4's lead far from this finding's simulation.
+
+### F-254 — The D1 reached the all-zero pose for the first time, held it, followed a 20 s moving goal on all six joints and folded back: no stall, the Follower never waited, and F-245's arm model held at a pose it had never seen
+
+- **Status:** confirmed for this one run (dog sitting, jaws empty, no policy, no legs); provisional for any policy
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The zero test, live". [Live](#/week/8/run/20261106T115147_live), its `zero_analysis.txt` and `zero_series.json`; [dry, stopped by B](#/week/8/run/20261106T115125_dry).
+
+  | what | result |
+  |---|---|
+  | moves, planned / wall s | unfold 3.3 / 3.32, zero 1.0 / 1.00, hold 5.0 / 5.02, home 1.0 / 1.01, tuck 3.3 / 3.32, fold 1.1 / 1.41 |
+  | hold at zero, mean report | J1-J6 0.21, 0.39, 0.50, -0.10, 0.51, 0.00 deg; drift over the hold at most 0.02 deg |
+  | `follow`, 20.1 s | 181 commands, period 111 ms (at most 115), 0 repeated: the Follower never waited; 0 of 143 reports without movement |
+  | skips, whole run | 4 of 527 cycles (3 in the circle, 1 in the fold), each one report late, longest 0.21 s; commands a median 22.9 ms after a report, none in the stall window |
+  | F-245 model (77 ms, 5 ms) on the circle | 0.60 deg RMS (0.55 on the whole run) |
+  | best lag per joint on the circle | J1-J6 70, 70, 70, 50, 50, 55 ms, as F-245's 65-70 and 50-55 |
+
+- **Scope:** one run, the arm's own reported angles, nothing measured on the arm. No sag beyond the above in the servo's report does not show the link does not flex: F-140's static torque is still unmeasured. Dog sitting (Lukas's choice, not read by this program), no load, nobody near it. The goals were 10 Hz, so against 9 Hz commands every ~1.05 s two goals landed in one command: 14 steps of 4.9 deg against the usual 2.4. That beat is this test's: not a property of the arm, and a 50 Hz policy's goals should not have it (not run). The skip rate is near the locked draw's (F-240, 2 in 449), above the swing's 1 in 894; three in a 20 s circle is too few to say whether a moving goal raises it. Whether a skip is a lost report or a brief slow-down is not separated: speed across the four was 4-20 deg/s against a 22.5 median. `report_s` was not read by this program, so its rate on real feedback is still not validated.
+- **Implication:**
+  - Three of the whole-body run's five first-ever items are done without the policy: the arm at zero, `follow` on a locked stream, the fold back from out there. The policy with the arm out, and a stop from there on a dog going to damping, are not.
+  - The console's arm run, its Continue, the remote's A and B, and the zero test's route are shown on the dog. Finish after a stop on the real arm is not.
+- **Note (2026-11-06, later):** [`report_s` was then read on real feedback](#/week/8/run/20261106T115727_observe) with the link observing: about 9 Hz, and 0.6-94 ms old on a second container's clock. Not under command.
+
+### F-255 — The first whole-body run on the dog: `66200` held the stand for 1.54 s, but asked J4 for 92 deg/s against the arm link's 45, so the 25 deg lead guard tripped at the first moment it could, and the stop, damping on every motor, dropped a dog that was standing well to the floor
+
+- **Status:** confirmed (one run, the record and Lukas's eye agree); the cause of J4's demand is not isolated
+- **Week:** 8
+- **Date:** 2026-11-06
+- **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "The whole-body run". [The run](#/week/8/run/20261106T121312_reach_stand_live), with its `arm_link.jsonl`; its [dry run](#/week/8/run/20261106T121255_reach_stand).
+
+  | after the policy took over | what happened |
+  |---|---|
+  | 0-1.54 s, legs | base 0.286 to 0.298 m, roll at most 1.1, pitch -4.1 to -6.6 deg; simulation had 11.9 deg |
+  | 0.56 s | J4 target -29, report -13, lead 17 deg |
+  | 0.76 s | target -57, report -21, lead 36 |
+  | 0.96 s | target -69, report -26, lead 43 |
+  | 1.54 s | target -89, report -55, lead 33.7: `ArmWatch` stops, after its 1 s grace and 0.5 s hold |
+  | arm link | 14 commands, J4 in 5.0 deg steps every 111 ms from 0.4 s: the 45 deg/s cap; the arm followed each to within ~8 deg |
+  | stop | kp 0, kd 3 on every leg motor; thighs and calves folded in 0.8 s, peak 2.7 rad/s, roll to 6.4, pitch to +3.2, at rest by 22.8 s, not tipped |
+  | arm | held at [-7.2, 3.1, -0.8, 54.9, 14.2, -13.0] servo degrees (read 1 min later); it did not drop |
+  | handback | B 25 s later, sport mode back at 3.2 s |
+
+- **Scope:** one run, one goal, a fixed stance. The record has no measure of the hand and the arm's report only. Whether the arm or dog struck anything was not read by any sensor here; Lukas watched it.
+- **Implication:**
+  - **Damping with the arm out, first-ever, is now known:** the dog goes to the floor in under 1 s and stays upright. It is not a soft stop. A lead trip with the legs doing well is the wrong reason to use it.
+  - **The legs-on simulation did not predict the arm:** it had a lead of 3.8 deg at 1-1.5 s against 33-43 here, and no stop. The dog looks like the dry run instead (F-252's family), with the legs answering. Why is open.
+  - Do not run `live_whole` again as it is: it should stop the same way. Decide first what the arm's demand and the lead stop should be.
+  - The stop leaves the arm out and nothing folded it: [`holster_dog.py --fold_back`](#/week/8/run/20261106T122011_live) did, by home, tuck, fold.
 

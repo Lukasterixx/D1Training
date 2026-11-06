@@ -662,6 +662,133 @@ Lukas, on the choice of a first test: "I am on a strict timeframe so I would pre
 
 **What this does not show:** nothing has run on the arm or the dog. All simulation or fakes, one seed, the frozen set chose the checkpoint. The goal is fixed at `init_start`. The start gate's bounds on the real stand are not known; refused, the run folds and lies down.
 
+### 2026-11-06 · Before the whole-body run: the legs-dry warning, what is first-time, and the zero test
+
+Written before `66200` was chosen and the runner pushed (`7db7ac43`); the figures below are the ones reported then.
+
+**Reach with the legs dry (reported by the UniFP session, same day; not checked here).** In sim `armft4` 65799 through `Follower`, from the default pose, with the legs holding their stance and ignoring the policy: 10 of 27 goals within 5 cm, final error 27 cm median and 77 max, contact on the dog in 8 of 27 up to 79 N, targets running to the clip. With the legs on the policy: 27 of 27, 1.6 cm, no contact. From the fold, 65799 strikes the dog in 4 of 27, up to 347 N direct and 485 N through `Follower`. On a held goal the shake is down from 5-17 degrees peak-to-peak to 0.2-3.6, but reversals miss its gate (35% against 30%), so `armft5` is running. It reports arm sending locked off in code on its PC (`reach_arm.SEND_CLEARED = False`), a start refused more than 10 degrees from the default pose, and goals sent as `follow`; that is uncommitted there, and it also edits `arm_link.py` (`report_s`) and `shadow.py`. It takes F-251 and F-252; numbering here carries on from F-246.
+
+**What the whole-body test would be doing for the first time (same day; offline, from the logs).** Lukas told the UniFP session to go straight to legs and arm live together, and it asked what is proven. Across 218 `arm_link.jsonl` runs the arm has never been within 25 degrees of the policy's all-zero start: the nearest is the unfold's end, servo [2.8, 3.9, 24.5, -2.4, -25.2, 2.8] ([run](#/week/6/run/20261020T084728_unfold_live)). Those logs do not cover direct `d1_hardware` moves. CPU proxy only, not validated: 115 mm margin from there to zero, holdable at zero. Never run: the arm at zero, locked `follow`, a stop or a fold-back from an extended policy pose, a dog going to damping with the arm out. Fold-back is proven from home only, by `tuck` then `fold`; straight to the fold hit the lidar cage (24 Oct).
+
+**The zero test, written, not run on the arm (same day).** At the UniFP session's request, for when Lukas says go: `holster_dog.py --zero_test`, through `run_holster_on_dog.sh`, moves the arm by the demo's unfold to its logged home, a path to all-zero, 5 s held, 20 s of `follow` around zero (every joint +/-8 degrees, about 3 degrees a command), a hold, then home, tuck and fold, at 30 deg/s, the legs untouched. A stop holds; `r` then goes forward through home, tuck and fold, not back the way it came, because a retraced unfold is the fold that hits the lidar's cage.
+
+    demos/combiner_key/robot/run_holster_on_dog.sh --live --zero_test --step --timing     # not yet run
+
+[Dry on the simulated arm](#/week/8/run/20261106T092120_dry) (`python demos/combiner_key/robot/holster_dog.py --zero_test` on this PC, no arm link): finished, all seven moves, the arm ended folded. Shows the plan plays through the real `check_path`, `PathPlayer` and `Follower`, at the simulation's 10 Hz. Does not show anything about the real arm: `SimArm` is not the D1, has no lidar cage and no load. Seven tests added to `test_arm_timing.py`, including the CPU proxy keeping the whole way over 40 mm off the body.
+
+### 2026-11-06 · `7db7ac43` pulled, a feedback bug fixed, and the arm runs put on the console
+
+This tree fast-forwarded to the UniFP session's `7db7ac43`, the zero test on top. Nothing below has run on the arm.
+
+**A bug in the new `report_s`, fixed.** `Link.report` rounded `servo_report_s`, which is None until the first
+`current_servo_angle`, while `arm_Feedback/1` can fill the angles first. With a fake client: `TypeError`, the feedback thread
+dead, the link still up, no feedback again. Narrow (a client connected before the first report) and never seen on the arm.
+`Link.report` now reads the stamp, the angles, the stamp again, and skips if it is None or moved, as the UniFP session asked,
+so the pairing `reach_arm.read_report` described is on the live path; that helper and its two tests are gone. The new test
+fails with the check removed.
+
+**The console runs the arm (Lukas: use the GUI, the zero test on it, the whole body on it).** `arm_zero` and `reach_66200` added,
+with a typed `arm` for both live modes. An arm run's stop holds the arm, leaves sport mode alone and keeps the program up,
+**Finish** or A folds it, its `q` is refused, its stdin closing is a stop (`holster_dog.py --console`). Live on it is locked until
+B is seen and the last dry run shows the real arm folded. See `demos/robot_console/README.md`. Tests are against a fake
+program: 31 console tests. **Not validated on the dog.** `press_live.py`'s `arm` prompt read through the launcher's pipe has
+not run; if it fails it refuses, nothing moves.
+
+Full suite on the finished tree: 1,281 tests, 23 failures and 2 errors, the exact list of the merge's baseline (`comm`
+both ways empty). Those 25 are still not investigated. A first pass during the edits showed 3 more, each reading a file edited
+while it ran; they are gone here.
+
+### 2026-11-06 · The zero test's dry runs on the console: a dry run too fast to stop, then fixed
+
+All on the dog, dog up, the real arm not moved, the simulated arm moved, through `demos/robot_console/run_on_pc.sh`. **Arm zero test, Dry run**, which runs `run_holster_on_dog.sh --zero_test --console`.
+
+- [First dry](#/week/8/run/20261106T114356_dry), started by Lukas (the screenshot of the page shows it): **failed its purpose.** All seven moves in under 1 s, because the simulated arm had no pacing, so nobody could press B in it and Live stayed locked (I had told Lukas ~40 s). `exit 133`: `terminate called without an active exception` after the record was written, `Remote`'s ROS spin left running at exit. The arm check through the console did work: `the real arm (not moved): ok: folded, its report fresh`.
+- Fixed in `holster_dog.py`: under `--console` the simulated arm runs at the real pace; `Remote.close` takes ROS down before exit.
+- [Paced dry](#/week/8/run/20261106T114602_dry): 39.5 s, finished, exit 0.
+- [Stopped dry](#/week/8/run/20261106T114642_dry): the console's stop 8 s in, from the API rather than the button: `stopped: operator: a` within 1 s (log timestamps), program gone 1.6 s after the stop, no SIGTERM, sport mode not touched, exit 1 as a stop is.
+
+- [Dry by Lukas](#/week/8/run/20261106T114947_dry): 38 s, finished, exit 0, arm check ok, no remote press in its log, so the console has still not seen B and Live stays locked.
+
+**Shows** the launcher, Docker stdin and the stop path reach the program on the dog, on a simulated arm. **Does not show** B (not yet seen by the console), Finish after a stop, or anything about the real arm moving.
+
+### 2026-11-06 · The zero test, live: the arm at zero for the first time
+
+Lukas ran it from the console, dog sitting, nobody near it: [B first, in a dry run](#/week/8/run/20261106T115125_dry) (`the remote's B`, stopped 2 s in, B confirmed on the page), then [live](#/week/8/run/20261106T115147_live), `run_holster_on_dog.sh --live --zero_test --step --timing --console`, typed `arm`, A on the remote for all seven moves. Lukas: "the live zero test worked". Exit 0, `finished`, `F-254`.
+
+- **Moves:** end errors 0.5-1.8 deg, wall times at plan, except the fold at 1.41 of 1.1 s, where a skip added to the lag (11.6 deg, the path's lead allowing it).
+- **Hold:** J2 and J3 at 0.39 and 0.50 deg, no drift (0.02 at most). The servo's report, not the link.
+- **Circle:** 181 commands, 0 repeated, reports ranging -8.0 to +8.4 deg of the +-8 goal; furthest behind the goal 5.6-9.2 deg by joint.
+- **Skips:** 4 of 527, 0.21 s each, none in the stall window. Not the old 0.3-0.7 s stalls: the arm kept moving (0 of 143 circle reports without movement).
+- **Model:** F-245's lag fits at 0.60 deg RMS on the circle, and the per-joint best lags repeat its split.
+- **Oddity, this test's:** 14 steps of 4.9 deg, every ~1.05 s, from 10 Hz goals beating against 9 Hz commands. They did not line up with the skips.
+
+Numbers in the run's `zero_analysis.txt`; `zero_replay.py` and `zero_skips.py` beside it read `logs/`, and `zero_series.json` holds the same commands and reports.
+
+**Does not show:** anything with the legs, a standing dog, a real stop on the moving arm or Finish after one, `report_s` at 9 Hz on real feedback, or anything measured on the arm.
+
+### 2026-11-06 · `report_s` on real feedback, and the two containers' clocks
+
+Asked by the UniFP session before the whole-body run; nothing moved. [The arm link with `--observe`](#/week/8/run/20261106T115727_observe) in `p2dingo-arm:latest`, and a read-only client in `p2dingo-web:latest`, `press_live.py`'s image, for 10 s, arm folded.
+
+- `report_s`: 91 distinct stamps in 105 feedback messages, about 9 Hz; differences 112.8 ms median, 101.6-116.4.
+- `time.monotonic()` in the client minus `report_s` from the link: 0.6 to 94 ms, 27.9 median, always positive. The two containers share the clock, so `ArmWatch`'s age is sound.
+
+**Does not show** `report_s` under command: `--observe` sends nothing, so the echoes that refresh `feedback_age_s` were absent. That it ignores them is from the code (stamped only in the `current_servo_angle` branch), not measured.
+
+### 2026-11-06 · `66200` dry on the standing dog: steady, and its arm goes far from zero
+
+[Lukas's dry run on the console](#/week/8/run/20261106T115838_reach_stand): `--presses 0 --stand_s 20`, the default `--reach_arm_obs virtual`, sport-mode stand, nothing sent (`lowcmd_sent` 0), the real arm folded throughout. 1,001 policy steps, exit 0, infer 1.76 ms, base 0.341 m, roll 0.9, pitch -2.4 deg. It unlocks Live.
+
+The virtual arm follows the policy's outputs and the legs do not answer. Its targets pass 25 deg from zero at 0.40 s and settle by 3 s at J1-J6 -10, +50, -31, -77, -25, -5 deg (std under 0.15), peak target speed 381 deg/s. Leg targets 0.36 rad off default settled, 0.68 at most. Finite throughout, no runaway to the clip.
+
+**What this does and does not show:** open loop on a stand the live run does not start from. It looks like F-252's legs-dry failure and cannot show what the legs-live run does; simulation has that at 27 of 27 with no contact. If the real run did the same, `ArmWatch`'s 25 deg lead for 0.5 s should stop it, after its 1 s grace, with the arm out and the dog going to damping: the untried stop. The log's "real arm measured" is only the link's flag: the policy saw the virtual arm.
+
+**Start gate:** the export has none of its own, so the default holds, 0.20 rad and +-5 deg pitch. `press_live.py`'s comment gives the dog's kp-25 rest as 8.1 deg nose up, so a refusal is likely on the first try (the arm folds, the dog lies down).
+
+**The UniFP session's answer (reported, simulation or offline, not checked here; its records `goal_init_*`).** The `.npz` offline with static legs at this tilt reproduces it: past 25 deg at 0.40 s, at 3 s -10, +51, -26, -81, -30, -24. The pose moves a lot with leg stance, so it predicts little for legs-live. J4 near -70 is wrist null-space (`roll_objective` off) and the legs-on simulation drifts there too with the hand on goal. Legs-on, through `Follower`, worst lead 47 deg in the first 0.5 s (inside the grace), then 8.5, 3.8, 3.2, 3.7 deg: no stop expected. Its estimate for the dry target appearing at once: about 0.25 s over 25 deg, under the 0.5 s hold. A stop in that pose has the hand forward and lower, away from the dog, on a boxes-only trunk proxy. Simulated pitch at handover with the arm out is -4.8, so it advises `--start_pitch_deg -10 5` on `live_whole`, as `reach_delay`'s `live_stand`, and warns simulated tilt peaks at 11.9 deg at 0.12 s (13.25 over 27 goals) against the 15 deg stop.
+
+Lukas chose to widen it: `live_whole` now has `--start_pitch_deg -10 5`; `--start_tol_rad` and the 15 deg tilt stop stay at their defaults.
+
+After the console's restart, [the dry run again](#/week/8/run/20261106T120720_reach_stand): 20 s, exit 0, base 0.341 m, roll 0.9, pitch -2.4, the same arm output. No B in it, so Live stays locked.
+
+Lukas then pressed B in two more: [9 s in](#/week/8/run/20261106T120901_reach_stand) and [16 s in](#/week/8/run/20261106T120954_reach_stand), each `E-STOP (the remote's B)` and stopped, 227 and 583 policy steps, dry. B reached `press_live.py` both times, the first time it has stopped this program. Live stayed locked by a bug in the console: B ended the run before any status carried it, and `b_seen` came only from status. Now read from the log too, with a test; the console restarted, so B is asked for again.
+
+Lukas: the Dry run button "sometimes takes 5 presses". The page rebuilt its buttons 5 times a second, and a rebuild between press and release loses the click, Continue and Finish included. The E-stop button sits outside the redraw and was not affected. Now rebuilt only when they change: built once in 20 redraws against a fake DOM, still updating when a run starts. Not tried in a browser by me.
+
+### 2026-11-06 · The whole-body run: 1.54 s on the policy, then the lead guard, and the dog on the floor
+
+[Dry again after the console fixes](#/week/8/run/20261106T121144_reach_stand), [dry stopped by B](#/week/8/run/20261106T121255_reach_stand), which unlocked Live, then [live](#/week/8/run/20261106T121312_reach_stand_live), from the console, Lukas typing `arm` and `live`:
+
+    run_press_on_dog.sh --policy checkpoints/reach_force_locked_model_66200.npz --presses 0 --stand_s 20 --reach_arm_obs reports --reach_arm_send --live --start_on_blend --start_pitch_deg -10 5 --status_port 8098
+
+Lukas: "it fell to the floor on the whole body live run I did, but the dog seemed to be standing fine after the handover". The record agrees. `arm` went through the console's pipe and worked; the arm unfolded to zero in 4.1 s during the stand-up; the gate passed at pitch -4.3 (the old +-5 would have too). Then F-255: legs good (pitch at most 6.6), J4's target ran at 92 deg/s against the 45 cap, lead over 25 deg from about 0.6 s, the stop at 1.54 s, damping, the dog on the floor by 2.3 s after handover, upright, the arm held out. B at 46.8 s gave sport mode back.
+
+**Predictions against the run:** mine, a stop at ~1.5 s, held. The UniFP session's legs-on table (lead 3.8 deg at 1-1.5 s, no stop) and its worst case (0.25 s over 25 deg, no trip) did not: J4's target did not settle at -77 but kept going past -89. My note that the page's dry "predicts little" was its view too; the dry's J4 was the better guide.
+
+**The arm was left at J4 54.9 deg, held, the dog on the floor.** `holster_dog.py --fold_back` written to fold it by home, `tuck`, `fold` from there. Lukas: "you may fold the arm. everything is fine on the dog, the arm didnt hit anything". [Dry on the dog](#/week/8/run/20261106T121952_dry), then [live](#/week/8/run/20261106T122011_live): `run_holster_on_dog.sh --live --fold_back --step --timing`, from this PC rather than the console (its lock needs a folded arm), A on the remote for each move, finished.
+
+For the UniFP session, over the 77 policy steps (kp 25, kd 0.5): leg actions 0.119 rad mean, 0.557 at most after scale. Leg targets moved 0.10-0.46 rad per joint, the joints 0.02-0.14; summed movement of the joints is 0.165 of the targets'. Calf error 0.24-0.42 rad RMS. All in the run's `policy_rows.npz`. That the real legs answered much less than simulation's is the UniFP session's leading guess, not yet tested.
+
+### 2026-11-06 · What drives J4: the recorded frames replayed through the export
+
+Asked by the UniFP session, CPU only. The 77 policy frames of [the whole-body run](#/week/8/run/20261106T121312_reach_stand_live) through `66200` reproduce `arm_target` to 5e-14 deg (`j4_replay.py`, `j4_replay.txt`). Open loop: each edit changes one input group and leaves the rest as recorded, so it shows what J4's target is sensitive to, not a new run.
+
+| edit | J4 at 1.54 s, deg |
+|---|---|
+| none | -89 |
+| leg q settled | -67 |
+| leg q, dq, previous action as simulation | -65 |
+| gyro, leg dq, arm dq, level roll and pitch, each alone | -87 to -89 |
+| arm previous action 0 | -63 |
+| arm q 0 | -74 |
+| both | -42 |
+| commands as the reset frame | -68 |
+| commands and both arm inputs | -11 |
+
+No single leg or body input starts it: the goal command and the arm's own state together do. The goal is cols 64 and 65, 0.25 and 0.628, constant from the second frame. This does not explain why the legs-on simulation differed. The UniFP session has a retrain running (leg friction, weak leg response, varied stance, a wrist penalty, `Follower` in the loop) and a split of the stops built on its side, not yet here: lead and step stops hold the arm, go to the stand-up gains, fold and lie down. Lukas agreed to that split; this session did not build a second one.
+
+Full suite before the push: 1,289 tests, 23 failures and 2 errors, the exact list of the merge's baseline. Those 25 are still not investigated.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->

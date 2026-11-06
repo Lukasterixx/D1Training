@@ -576,13 +576,15 @@ own base on the CPU model while at the bar's place; that is the model's margin, 
 
 `checkpoints/reach_force_locked_model_66200.npz` on the legs and the arm together. **Never run on the dog.** F-253, and `reach_arm.py` for the contract.
 
+Both steps below are on the console (`demos/robot_console/run_on_pc.sh`, 2026-11-06): **Arm zero test** and **Reach locked 66200**. The commands are what it runs.
+
 **First, without the policy**, `run_holster_on_dog.sh --live --zero_test --step --timing`: out to zero, `follow`, and back. It covers three of the five first-ever items below.
 
 **Then, the arm folded, the dog standing in sport mode, nobody within the arm's reach, a hand on the E-stop:**
 
     d1update
     demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/reach_force_locked_model_66200.npz --presses 0 --stand_s 20 \
-        --reach_arm_obs reports --reach_arm_send --live --start_on_blend
+        --reach_arm_obs reports --reach_arm_send --live --start_on_blend --start_pitch_deg -10 5
 
 Type `arm`, then `live`. The dog lies down and stands up with the arm folded; on the stand-up gains the arm comes out by home to zero (~5 s); the policy holds the goal for `--stand_s`; the arm holds, then folds by home, `tuck` and `fold`; the dog lies down. The goal is fixed: `--reach_goal init_start`, 0.5 m out, 36 deg up.
 
@@ -598,4 +600,4 @@ Type `arm`, then `live`. The dog lies down and stands up with the arm folded; on
 
 The arm link holds on its own if the program goes quiet for 0.5 s. **Never release the arm** (F-028): after a stop it stays out, powered, and folds by home, `tuck` and `fold`, not straight, which hits the lidar cage.
 
-**First-ever on the real arm, all in this run:** the arm at zero; `follow` on a locked stream; the policy on the legs with the arm out; a stop from there, on a dog going to damping with the arm held out, whose effect on balance is not known; a fold-back from a policy pose.
+**First-ever on the real arm, in this run** (the arm at zero, `follow` on a locked stream and the fold back from there were done without the policy, dog sitting, F-254): the policy on the legs with the arm out; a stop from there, on a dog going to damping with the arm held out, whose effect on balance is not known; a fold-back from a policy pose.

@@ -2,9 +2,11 @@
 analysis finds that window, and the rate test's locked and swing blocks run against a pretend arm that stalls there."""
 from __future__ import annotations
 
+import io
 import json
 from pathlib import Path
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -12,6 +14,7 @@ from unittest import mock
 import numpy as np
 
 import d1_hardware
+import d1_ik
 from d1_hardware import GATE_OPEN_S, ReportClock, REPORT_PERIOD_S, STALL_WINDOW_S, stall_wait_s
 from demos.combiner_door.robot import arm_command_rate_test as rate_test
 from demos.combiner_door.robot import arm_gap_phase, arm_link
@@ -234,6 +237,142 @@ class DemoDrawTests(unittest.TestCase):
         names = [m["name"] for m in self.moves]
         shut = [m["name"] for m in self.moves if m["gripper"] < 0]
         self.assertEqual(shut, names[names.index("close"):names.index("open")])
+
+
+class FoldBackTests(unittest.TestCase):
+    def test_it_is_the_zero_tests_way_back_and_only_that(self):
+        moves = holster_dog.fold_back_plan()
+        self.assertEqual([m["name"] for m in moves], ["home", "tuck", "fold"])
+        np.testing.assert_allclose(moves[-1]["goal"], holster_dog.FOLD_SERVO_DEG)
+        self.assertTrue(all(m["speed_deg_s"] == holster_dog.ZERO_SPEED_DEG_S for m in moves))
+
+    def test_from_where_the_stop_left_it_every_path_is_one_the_link_takes(self):
+        start = np.array([-7.2, 3.1, -0.8, 54.9, 14.2, -13.0])
+        where = start
+        for m in holster_dog.fold_back_plan():
+            path = holster_dog.move_path(m, where)
+            self.assertIsNone(arm_link.check_path(path.tolist(), holster_dog.PERIOD_S, where))
+            where = path[-1]
+        np.testing.assert_allclose(where, holster_dog.FOLD_SERVO_DEG, atol=0.01)
+
+    def test_a_stop_on_the_way_goes_on_forward(self):
+        moves = holster_dog.fold_back_plan()
+        self.assertEqual([m["name"] for m in holster_dog.recovery(moves, {}, 1, np.zeros(6))], ["tuck", "fold"])
+
+    def test_it_needs_only_a_fresh_report(self):
+        arm = mock.Mock()
+        arm.latest.return_value = (np.array([0.0, 0, 0, 55, 0, 0]), 50.0, 0.01)
+        self.assertIsNone(holster_dog.check_report(arm))
+        self.assertIsNotNone(holster_dog.check_start(arm))
+
+
+class ConsoleDryRunTests(unittest.TestCase):
+    def test_the_consoles_dry_run_goes_at_the_real_pace_so_b_can_land_in_it(self):
+        with mock.patch.object(holster_dog.time, "sleep") as slept:
+            holster_dog.SimArm().tick()
+            slept.assert_not_called()
+            holster_dog.SimArm(realtime=True).tick()
+            slept.assert_called_once_with(holster_dog.PERIOD_S)
+
+    def test_the_remote_takes_ros_down_and_its_thread_with_it(self):
+        remote = holster_dog.Remote.__new__(holster_dog.Remote)
+        stopped = threading.Event()
+        remote.rclpy = mock.Mock()
+        remote.rclpy.spin.side_effect = lambda node: (stopped.wait(2.0), (_ for _ in ()).throw(RuntimeError("shut down")))
+        remote.rclpy.try_shutdown.side_effect = stopped.set
+        remote.node = None
+        remote.thread = threading.Thread(target=remote._spin, daemon=True)
+        remote.thread.start()
+        remote.close()
+        self.assertFalse(remote.thread.is_alive())
+
+
+class ConsoleStdinTests(unittest.TestCase):
+    def runner(self, text, **kw):
+        with mock.patch("sys.stdin", io.StringIO(text)):
+            made = holster_dog.Runner(mock.Mock(), kw.pop("live", False), False, Path("."), [], **kw)
+            time.sleep(0.05)
+        return made
+
+    def test_the_console_closing_is_a_stop(self):
+        self.assertEqual(self.runner("", console=True).keys.get(timeout=1), "a")
+
+    def test_its_lines_are_read_in_a_dry_run_too(self):
+        made = self.runner("r\n", console=True)
+        self.assertEqual([made.keys.get(timeout=1), made.keys.get(timeout=1)], ["r", "a"])
+
+    def test_a_terminal_closing_is_not(self):
+        self.assertTrue(self.runner("", live=True).keys.empty())
+
+    def test_a_dry_run_off_the_console_reads_nothing(self):
+        self.assertTrue(self.runner("a\n").keys.empty())
+
+
+class ZeroTestTests(unittest.TestCase):
+    def setUp(self):
+        self.moves = holster_dog.zero_plan()
+        self.names = [m["name"] for m in self.moves]
+        self.fold = np.asarray(holster_dog.FOLD_SERVO_DEG)
+
+    def played(self):
+        """Every joint path in order, as the link would play it."""
+        out, where, played = [], self.fold, {}
+        for m in self.moves:
+            if "follow" in m:
+                out.append(m["follow"])
+                where = m["follow"][-1]
+            else:
+                played[m["name"]] = holster_dog.move_path(m, where, played)
+                out.append(played[m["name"]])
+                where = played[m["name"]][-1]
+        return out
+
+    def test_it_ends_folded_by_home_and_tuck(self):
+        self.assertEqual(self.names[-3:], ["home", "tuck", "fold"])
+        self.assertEqual(float(self.moves[-2]["goal"][2]), self.fold[2] - 30.0)
+        np.testing.assert_array_equal(self.moves[-1]["goal"], self.fold)
+
+    def test_the_follow_starts_and_ends_on_zero_at_a_few_degrees_a_command(self):
+        goals = holster_dog.zero_circle()
+        np.testing.assert_allclose(goals[[0, -1]], 0.0, atol=1e-9)
+        per_report = np.abs(np.diff(goals, axis=0)).max() / holster_dog.PERIOD_S * d1_hardware.REPORT_PERIOD_S
+        self.assertLess(per_report, 4.0)
+        self.assertGreater(per_report, 2.0)
+        self.assertLessEqual(np.abs(goals).max(), holster_dog.ZERO_CIRCLE_DEG)
+
+    def test_every_path_is_one_the_link_takes(self):
+        where = self.fold
+        for path in self.played():
+            self.assertIsNone(arm_link.check_path(path, holster_dog.PERIOD_S, where)) if len(path) > 1 else None
+            where = path[-1]
+
+    def test_the_cpu_model_keeps_it_off_the_body_all_the_way(self):
+        from demos.cup.pick_demo import grasp
+
+        joints, _ = d1_ik.load_urdf()
+        margin = min(float(grasp.proxy_margin(joints, np.asarray(d1_ik.from_servo_deg(q)[0])))
+                     for path in self.played() for q in path)
+        self.assertGreater(margin, 0.04)        # the fold itself is 46 mm
+
+    def test_a_stop_anywhere_goes_on_through_home_tuck_and_fold(self):
+        for k in range(self.names.index("home") + 1):
+            got = [m["name"] for m in holster_dog.recovery(self.moves, {}, k, np.zeros(6))]
+            self.assertEqual(got, ["home", "tuck", "fold"], self.names[k])
+
+    def test_a_stop_on_the_way_back_finishes_it(self):
+        got = [m["name"] for m in holster_dog.recovery(self.moves, {}, self.names.index("tuck"), self.fold)]
+        self.assertEqual(got, ["tuck", "fold"])
+
+    def test_the_dry_run_goes_out_follows_and_folds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            arm = holster_dog.SimArm()
+            with mock.patch.object(holster_dog, "ZERO_CIRCLE_S", 6.0), mock.patch.object(holster_dog.time, "sleep"):
+                moves = holster_dog.zero_plan()
+                done = holster_dog.Runner(arm, False, False, Path(tmp), moves).run(moves)["moves"]
+        self.assertEqual([d["move"] for d in done], self.names)
+        circle = done[self.names.index("circle")]
+        self.assertLess(max(circle["off_goal_max_deg"]), 8.0)
+        self.assertLess(np.abs(arm.latest()[0] - self.fold).max(), holster_dog.ARRIVED_DEG)
 
 
 class DemoDrawRecoveryTests(unittest.TestCase):

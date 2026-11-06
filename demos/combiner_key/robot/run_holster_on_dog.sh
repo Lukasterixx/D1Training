@@ -8,6 +8,9 @@
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live           # the real arm: one Enter to start
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live --step    # an Enter before every move
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live --demo_draw  # the demo's own draw and put-back, as it commanded it
+#   demos/combiner_key/robot/run_holster_on_dog.sh --live --zero_test --step --timing  # no draw: the policy's all-zero pose,
+#                                                                   # a `follow` around it, back by home, tuck and fold
+#   demos/combiner_key/robot/run_holster_on_dog.sh --live --fold_back --step --timing  # an arm a stop left out: home, tuck, fold
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live --no_lock # the link's commands by the clock, not the arm's
 #                                                                   # reports (the standard, F-239): comparisons only
 #   demos/combiner_key/robot/run_holster_on_dog.sh --live --timing  # and, beside it, the arm's report timing (read-only,

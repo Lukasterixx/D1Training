@@ -108,17 +108,6 @@ def from_servo_deg(angles_deg) -> np.ndarray:
     return np.ravel(d1_ik.from_servo_deg(np.asarray(angles_deg, dtype=float)))
 
 
-def read_report(get_stamp, get_angles, tries: int = 5):
-    """A report's stamp and its angles as a pair, or None. They are separate reads, so one can land between them: the stamp, the
-    angles, the stamp again, retried if it moved. For `D1Client.servo_report_s` and `get_joint_angles`."""
-    for _ in range(tries):
-        before = get_stamp()
-        angles = get_angles()
-        if get_stamp() == before:
-            return before, angles
-    return None
-
-
 #: How near the policy's default pose every joint has to be to start sending, deg. Every training episode starts there.
 START_TOL_DEG = 10.0
 

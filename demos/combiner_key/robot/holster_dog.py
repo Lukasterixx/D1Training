@@ -6,6 +6,7 @@ go through the motions in real life"). Start it on the dog with `run_holster_on_
     run_holster_on_dog.sh --live          # the real arm (one Enter to start; `a` + Enter holds it where it is)
     run_holster_on_dog.sh --live --step   # an Enter before every move
     run_holster_on_dog.sh --live --demo_draw  # the demo's own draw and put-back (F-240)
+    run_holster_on_dog.sh --live --zero_test --step --timing  # no draw: the policy's all-zero pose and the link's `follow`
 
 Live, the Go2 remote's A is Enter and its B is `a` + Enter (read from `/lf/lowstate`, as in every live program here:
 `lowlevel.RemoteButtons`). After a stop, `r` + Enter or A takes the arm back to where it started (`recovery`): stopped
@@ -106,6 +107,23 @@ SETTLE_S = 1.5
 MOVE_TIMEOUT_S = 20.0
 #: The arm's report older than this: hold and stop.
 STALE_S = 1.0
+#: `--zero_test`: the policy's start pose and the arm link's `follow`, with no policy. Home is the demo unfold's end as
+#: logged (the nearest of 218 arm-link runs to zero, `20261020T084728_unfold_live`). Zero is 25 degrees past it on servos 2
+#: and 4 and has never been run. The joints go at `ZERO_SPEED_DEG_S`, under the demos' 40, this being a first.
+ZERO_HOME_SERVO_DEG = (2.8, 3.9, 24.5, -2.4, -25.2, 2.8)
+#: The fold's way in (`plan.fold_phases`): everything at the fold but the elbow, still this open. Straight to the fold the
+#: shut forearm swung onto the lidar's cage (24 Oct).
+ZERO_TUCK_ELBOW_DEG = 30.0
+ZERO_SPEED_DEG_S = 30.0
+ZERO_HOLD_S = 5.0
+#: The followed goal: every joint +/- this about zero, a turn each `ZERO_CIRCLE_PERIOD_S`, a sixth of a turn apart, faded in
+#: and out over `ZERO_CIRCLE_FADE_S`. At most ~29 deg/s, 2-3.2 degrees a command at the reports' 111 ms.
+ZERO_CIRCLE_DEG = 8.0
+ZERO_CIRCLE_PERIOD_S = 2.0
+ZERO_CIRCLE_S = 20.0
+ZERO_CIRCLE_FADE_S = 2.0
+#: After the follow's hold, before the way back.
+ZERO_AFTER_FOLLOW_S = 1.0
 
 
 def log(msg: str) -> None:
@@ -191,10 +209,42 @@ def demo_plan(path: Path = DEMO_DRAW_PATH) -> list[dict]:
                     {"name": "fold", "reverse_of": "turn", "joint": True, "gripper": opened}]
 
 
+def zero_circle() -> np.ndarray:
+    """The goals `--zero_test` follows, every `PERIOD_S`, from zero back to zero."""
+    t = np.arange(0.0, ZERO_CIRCLE_S + 1e-9, PERIOD_S)[:, None]
+    fade = np.clip(np.minimum(t, ZERO_CIRCLE_S - t) / ZERO_CIRCLE_FADE_S, 0.0, 1.0)
+    return ZERO_CIRCLE_DEG * fade * np.sin(2.0 * math.pi * t / ZERO_CIRCLE_PERIOD_S + 2.0 * math.pi * np.arange(6) / 6.0)
+
+
+def zero_plan() -> list[dict]:
+    """Out by the demo's unfold, on to the policy's all-zero pose, held, a `follow` around it, then back by the only proven
+    way in: home, tuck, fold. `way_back` marks where that starts: a stop anywhere goes on to it (`recovery`)."""
+    opened = GRIPPER_OPEN_UNITS
+    tuck = np.asarray(FOLD_SERVO_DEG)
+    tuck = tuck + np.eye(6)[2] * -ZERO_TUCK_ELBOW_DEG
+    at = {"speed_deg_s": ZERO_SPEED_DEG_S, "gripper": opened}
+    return [{"name": "unfold", "goal": np.asarray(ZERO_HOME_SERVO_DEG), **at},
+            {"name": "zero", "goal": np.zeros(6), **at},
+            {"name": "zero_hold", "wait": ZERO_HOLD_S, "gripper": opened},
+            {"name": "circle", "follow": zero_circle(), "gripper": opened},
+            {"name": "home", "goal": np.asarray(ZERO_HOME_SERVO_DEG), "way_back": True, **at},
+            {"name": "tuck", "goal": tuck, **at},
+            {"name": "fold", "goal": np.asarray(FOLD_SERVO_DEG), **at}]
+
+
+def fold_back_plan() -> list[dict]:
+    """From wherever a stop left the arm: `zero_plan`'s way back alone, home, tuck, fold (straight to fold hit the lidar cage)."""
+    return [{k: v for k, v in m.items()} for m in zero_plan() if m["name"] in ("home", "tuck", "fold")]
+
+
 def describe(moves: list[dict]) -> list[str]:
     out = []
     for m in moves:
-        if "goal" in m:
+        if "follow" in m:
+            step = np.abs(np.diff(m["follow"], axis=0)).max() / PERIOD_S
+            out.append(f"  {m['name']:8s} followed {(len(m['follow']) - 1) * PERIOD_S:.0f} s, +/-{np.abs(m['follow']).max():.1f} deg, "
+                       f"at most {step:.0f} deg/s")
+        elif "goal" in m:
             out.append(f"  {m['name']:8s} joint space to {np.round(m['goal'], 1).tolist()} deg")
         elif "reverse_of" in m:
             out.append(f"  {m['name']:8s} `{m['reverse_of']}` played backwards, to where the arm started")
@@ -221,7 +271,7 @@ def move_path(m: dict, start, played: dict | None = None) -> np.ndarray:
     if "reverse_of" in m:
         return np.asarray(played[m["reverse_of"]], dtype=float)[::-1]
     if "goal" in m:
-        path = holster.joint_move(start, m["goal"], JOINT_SPEED_DEG_S, ACCEL_DEG_S2, PERIOD_S)
+        path = holster.joint_move(start, m["goal"], m.get("speed_deg_s", JOINT_SPEED_DEG_S), ACCEL_DEG_S2, PERIOD_S)
         return path if len(path) > 1 else np.stack([path[0], path[0]])
     if "path" in m:
         return np.asarray(m["path"], dtype=float)
@@ -233,7 +283,11 @@ def recovery(moves: list[dict], played: dict, k: int, q) -> list[dict]:
     it has played or the plan's way back: on the way out (before `back`), the moves played so far backwards, the one it
     stopped in from its point nearest `q`, each with the jaws as they were before it; from `back` on, the rest of the
     plan's way back, the one it stopped in from its point nearest `q`. Each is a move for `run_move`, `of` the planned
-    move it retraces or finishes."""
+    move it retraces or finishes. `--zero_test`'s plan marks its way back: retraced, the unfold is the fold the lidar's cage
+    stops, so from anywhere it goes forward through what is left of home, tuck and fold."""
+    marked = [j for j, m in enumerate(moves) if m.get("way_back")]
+    if marked:
+        return [{**moves[j], "of": j} for j in range(max(k, marked[0]), len(moves))]
     way_back = [m["name"] for m in moves].index("enter")
     q = np.asarray(q, dtype=float)
 
@@ -317,6 +371,12 @@ class LinkArm:
                                        "dt": PERIOD_S, "gripper": round(float(gripper), 2),
                                        "lead_max_deg": float(lead_max)}) + "\n").encode())
 
+    def follow(self, goal, gripper) -> None:
+        """The goal the link is to follow, at the arm's reports (`arm_link.Follower`)."""
+        self.errors.clear()
+        self.sock.sendall((json.dumps({"type": "follow", "q": [round(float(v), 3) for v in goal],
+                                       "gripper": round(float(gripper), 2)}) + "\n").encode())
+
     def tick(self) -> None:
         """One 100 ms: the link told we are still here (its watchdog holds the arm after 0.5 s of silence)."""
         self.sock.sendall(b'{"type": "keepalive"}\n')
@@ -335,12 +395,15 @@ class SimArm:
     """A dry run's arm: the link's path player (`arm_link.PathPlayer`, checked as the link checks a path) driving
     `arm_link.SimulatedArm`'s model of the servo, folded at the start."""
 
-    def __init__(self):
+    def __init__(self, realtime: bool = False):
         from demos.combiner_door.robot import arm_link
 
         self.arm_link = arm_link
+        #: At the real pace, for a dry run someone has to be able to stop (the console's: B has to land inside it).
+        self.realtime = realtime
         self.sim = arm_link.SimulatedArm(d1_hardware.REST_SERVO_DEG)
-        self.player, self.gripper_cmd = None, None
+        self.player, self.follower, self.gripper_cmd = None, None, None
+        self.command = None
 
     def latest(self):
         return self.sim.q.copy(), self.sim.gripper, 0.0
@@ -350,12 +413,24 @@ class SimArm:
         if why:
             raise Stop(f"arm link (simulated): {why}")
         self.player, self.gripper_cmd = self.arm_link.PathPlayer(points, PERIOD_S, lead_max=lead_max), gripper
+        self.follower = None
+
+    def follow(self, goal, gripper) -> None:
+        if self.follower is None:
+            self.follower = self.arm_link.Follower(self.sim.q if self.command is None else self.command)
+        self.follower.goal = np.asarray(goal, dtype=float)
+        self.player, self.gripper_cmd = None, gripper
 
     def tick(self) -> None:
-        self.sim.step_command(self.player.step(self.sim.q, 0.0, PERIOD_S), self.gripper_cmd, PERIOD_S)
+        driver = self.follower or self.player
+        if driver is not None:
+            self.command = driver.step(self.sim.q, 0.0, PERIOD_S)
+            self.sim.step_command(self.command, self.gripper_cmd, PERIOD_S)
+        if self.realtime:
+            time.sleep(PERIOD_S)
 
     def hold(self) -> None:
-        pass
+        self.player, self.follower, self.command = None, None, None
 
 
 class Remote:
@@ -375,9 +450,22 @@ class Remote:
         self.buttons = lowlevel.RemoteButtons()
         # rclpy's own SIGINT handler would take Ctrl-C from the main thread, which holds the arm on it.
         rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
+        self.rclpy = rclpy
         self.node = rclpy.create_node("holster_dog_remote")
         self.node.create_subscription(LowState, topic, self._on_state, qos_profile_sensor_data)
-        threading.Thread(target=rclpy.spin, args=(self.node,), daemon=True).start()
+        self.thread = threading.Thread(target=self._spin, daemon=True)
+        self.thread.start()
+
+    def _spin(self) -> None:
+        try:
+            self.rclpy.spin(self.node)
+        except Exception:  # noqa: BLE001 -- `close` shutting the context down under the spin
+            pass
+
+    def close(self) -> None:
+        """ROS down before the interpreter: left spinning, it aborts the process at exit (exit 133, 2026-11-06)."""
+        self.rclpy.try_shutdown()
+        self.thread.join(timeout=2.0)
 
     def _on_state(self, msg) -> None:
         for press in self.buttons.update(self.lowlevel.remote_keys(msg.wireless_remote)):
@@ -391,8 +479,8 @@ class Stop(Exception):
 
 
 class Runner:
-    def __init__(self, arm, live: bool, step: bool, run_dir: Path, moves: list[dict] | None = None):
-        self.arm, self.live, self.step = arm, live, step
+    def __init__(self, arm, live: bool, step: bool, run_dir: Path, moves: list[dict] | None = None, console: bool = False):
+        self.arm, self.live, self.step, self.console = arm, live, step, console
         self.run_dir = run_dir
         self.moves = moves or []
         #: The move in progress (or waited for), and every move's path as played: what a recovery retraces.
@@ -402,12 +490,14 @@ class Runner:
         self.rows: list[dict] = []
         self.t0 = time.monotonic()
         self.events: list[dict] = []
-        if live:
+        if live or console:
             threading.Thread(target=self._stdin, daemon=True).start()
 
     def _stdin(self) -> None:
         for line in sys.stdin:
             self.keys.put(line.strip().lower())
+        if self.console:                    # the console is gone: stop and hold, the remote's A can still fold it
+            self.keys.put("a")
 
     def event(self, **row) -> None:
         self.events.append({"t_s": round(time.monotonic() - self.t0, 2), **row})
@@ -484,6 +574,8 @@ class Runner:
     def run_move(self, m: dict) -> dict:
         """The move as one timed path for the link (`move_path`), then until the arm is within `ARRIVED_DEG` of its
         end (at most `SETTLE_S` more for a streamed move or a wait, `MOVE_TIMEOUT_S` in all)."""
+        if "follow" in m:
+            return self.run_follow(m)
         name, gripper = m["name"], m["gripper"]
         started = time.monotonic()
         points = move_path(m, self.where, self.played)
@@ -510,6 +602,25 @@ class Runner:
                 "wall_s": round(time.monotonic() - started, 2), "path_lag_max_deg": round(lag, 2),
                 "end_error_deg": round(float(np.max(np.abs(q - end))), 2)}
 
+    def run_follow(self, m: dict) -> dict:
+        """The goals one a tick through the link's `follow`, then a hold, and the arm's report is where the next move starts
+        from. Off its goal is measured against the goal of that tick, so it includes the link's and the arm's lag."""
+        name, gripper = m["name"], m["gripper"]
+        started = time.monotonic()
+        goals = np.asarray(m["follow"], dtype=float)
+        off = []
+        for goal in goals[1:]:
+            self.arm.follow(goal, gripper)
+            off.append(np.abs(self._tick(name, goal, gripper) - goal))
+        self.arm.hold()
+        for _ in range(int(round(ZERO_AFTER_FOLLOW_S / PERIOD_S))):
+            q = self._tick(name, goals[-1], gripper)
+        self.where = q
+        off = np.asarray(off)
+        return {"move": name, "ticks": len(goals) - 1, "planned_s": round((len(goals) - 1) * PERIOD_S, 2),
+                "wall_s": round(time.monotonic() - started, 2), "off_goal_max_deg": np.round(off.max(axis=0), 2).tolist(),
+                "end_error_deg": round(float(np.max(np.abs(q - goals[-1]))), 2)}
+
     def run(self, moves: list[dict]) -> dict:
         done = []
         self.moves = moves
@@ -521,6 +632,18 @@ class Runner:
             done.append(self.run_move(m))
             self.event(kind="move", **done[-1])
         return {"moves": done}
+
+
+def check_report(arm) -> str | None:
+    """Why an arm that is not folded may not be folded: only no fresh report."""
+    deadline = time.monotonic() + 3.0
+    while time.monotonic() < deadline:
+        q, _, age = arm.latest()
+        if q is not None and age < STALE_S:
+            log(f"the arm is at {np.round(q, 1).tolist()}")
+            return None
+        time.sleep(0.1)
+    return "no report from the arm (is the arm link up and the arm powered?)"
 
 
 def check_start(arm) -> str | None:
@@ -553,10 +676,18 @@ def main(argv=None) -> int:
                    help="commands a second: 10, or 5 with each step twice as large (F-202)")
     p.add_argument("--demo_draw", action="store_true",
                    help="the demo's own draw and put-back as it commanded it (`demo_plan`), not `plan`'s")
+    p.add_argument("--zero_test", action="store_true",
+                   help="no draw: the arm to the policy's all-zero pose, held, a `follow` around it, and back (`zero_plan`)")
+    p.add_argument("--fold_back", action="store_true",
+                   help="no draw: fold an arm a stop left out, by home, tuck and fold (`fold_back_plan`); needs no folded start")
+    p.add_argument("--console", action="store_true",
+                   help="run by the console (demos/robot_console/): stdin is read dry too, and its closing is a stop")
     p.add_argument("--run_dir", default=None)
     args = p.parse_args(argv)
-    if args.demo_draw and args.hz != 10.0:
-        p.error("--demo_draw's paths are 100 ms apart: leave --hz alone")
+    if args.demo_draw + args.zero_test + args.fold_back > 1:
+        p.error("one of --demo_draw, --zero_test, --fold_back")
+    if (args.demo_draw or args.zero_test or args.fold_back) and args.hz != 10.0:
+        p.error("--demo_draw's, --zero_test's and --fold_back's paths are 100 ms apart: leave --hz alone")
     global PERIOD_S
     PERIOD_S = 1.0 / args.hz
     if not 0.1 <= args.joint_speed <= 0.75:
@@ -566,10 +697,11 @@ def main(argv=None) -> int:
     run_dir = Path(args.run_dir) if args.run_dir else LOG_ROOT / f"{stamp}_{'live' if args.live else 'dry'}"
     run_dir.mkdir(parents=True, exist_ok=True)
     log(f"planning the draw on the CPU arm model (joint pace {args.joint_speed} rad/s, {args.hz:g} commands a second) ...")
-    moves = demo_plan() if args.demo_draw else plan(args.joint_speed)
+    moves = (fold_back_plan() if args.fold_back else zero_plan() if args.zero_test else demo_plan() if args.demo_draw
+             else plan(args.joint_speed))
     log("the moves:\n" + "\n".join(describe(moves)))
     record = {"mode": "holster_dog", "live": args.live, "step": args.step, "joint_speed_rad_s": args.joint_speed,
-              "command_hz": args.hz, "demo_draw": args.demo_draw,
+              "command_hz": args.hz, "demo_draw": args.demo_draw, "zero_test": args.zero_test, "fold_back": args.fold_back,
               "holster_registration": holster.load()["inputs"], "fold_servo_deg": FOLD_SERVO_DEG,
               "argv": sys.argv, "status": "running"}
 
@@ -583,27 +715,29 @@ def main(argv=None) -> int:
         except OSError as exc:
             record["real_arm_start_check"] = f"no arm link: {exc}"
             log(f"no arm link ({exc}); the dry run goes on with a simulated arm")
-    arm = LinkArm() if args.live else SimArm()
+    arm = LinkArm() if args.live else SimArm(realtime=args.console)
     if args.live and arm.hello and arm.hello.get("observe"):
         log("the arm link is in observe mode (a dry launcher?): it will not move the arm")
         return 2
-    why = check_start(arm)
+    why = check_report(arm) if args.fold_back else check_start(arm)
     if why:
         log(f"refusing: {why}")
         record.update(status="refused", why=why)
         (run_dir / "run.json").write_text(json.dumps(record, indent=2, default=str))
         return 2
-    runner = Runner(arm, args.live, args.step, run_dir, moves)
+    runner = Runner(arm, args.live, args.step, run_dir, moves, console=args.console)
     # Dry too, so a dry run shows the remote is read (B stops the simulated arm; A is logged).
+    remote = None
     try:
-        Remote(runner.keys)
+        remote = Remote(runner.keys)
         log("the remote: A is Enter (and r + Enter once stopped), B is a + Enter")
     except Exception as exc:  # noqa: BLE001 -- the remote is a convenience; the keyboard always works
         log(f"no remote ({exc!r}): the keyboard only")
     status, why = "finished", ""
     try:
         if args.live and not args.step:
-            runner._wait_enter("LIVE: the arm will unfold beside its base on the robot's right and back")
+            runner._wait_enter("LIVE: the arm will go out in front to its all-zero pose, circle about it and fold"
+                               if args.zero_test else "LIVE: the arm will unfold beside its base on the robot's right and back")
         record.update(runner.run(moves))
     except (Stop, KeyboardInterrupt) as exc:
         status, why = "stopped", str(exc) or "Ctrl-C"
@@ -634,6 +768,8 @@ def main(argv=None) -> int:
                 writer.writeheader()
                 writer.writerows(runner.rows)
         log(f"{status}; record: {run_dir}")
+        if remote is not None:
+            remote.close()
     return 0 if status == "finished" else 1
 
 

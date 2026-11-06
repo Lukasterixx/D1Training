@@ -1,4 +1,19 @@
 [
+  {"id": "arm_zero", "label": "Arm zero test (no policy)", "kind": "arm",
+   "status": "Ran once on the arm, sitting (F-254). Sit the dog first: the legs are not touched.",
+   "note": "Out to the all-zero pose, a 5 s hold, a 20 s follow, back by home, tuck and fold. Stop holds the arm, then Finish folds it. Sport mode is left alone.",
+   "confirm": {"live_zero": "arm"},
+   "modes": {
+     "dry": ["--zero_test", "--console"],
+     "live_zero": ["--live", "--zero_test", "--step", "--timing", "--console"]}},
+  {"id": "reach_66200", "label": "Reach locked 66200 (whole body)", "kind": "press",
+   "file": "checkpoints/reach_force_locked_model_66200.npz",
+   "status": "Stopped at 1.54 s on its first live run: J4 outran the arm, the stop dropped the dog (F-255). Do not rerun as it is.",
+   "note": "Live drives the legs AND the arm. An E-stop goes to damping with the arm held out, then sport mode. Dry: the policy sees a simulated arm, nothing is sent.",
+   "confirm": {"live_whole": "arm"},
+   "modes": {
+     "dry": ["--presses", "0", "--stand_s", "20"],
+     "live_whole": ["--live", "--presses", "0", "--stand_s", "20", "--reach_arm_obs", "reports", "--reach_arm_send", "--start_on_blend", "--start_pitch_deg", "-10", "5"]}},
   {"id": "reach_delay", "label": "Reach corner_delay 59600", "kind": "press",
    "file": "checkpoints/reach_force_corner_delay_model_59600.npz",
    "status": "Candidate. Dry: steady 60 s under the simulated arm (F-237). Never live.",

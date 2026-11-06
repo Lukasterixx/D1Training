@@ -124,14 +124,6 @@ class TestArrivalStamps(unittest.TestCase):
         link.reset(None, torch.zeros(1, 6))
         self.assertEqual(reach_arm.MIN_REPORT_INTERVAL_S, link.policy_dt)
 
-    def test_a_stamp_and_its_angles_are_read_as_a_pair(self):
-        stamps, angles = iter([1.0, 2.0, 2.0, 2.0]), iter(["old", "new"])
-        self.assertEqual(reach_arm.read_report(lambda: next(stamps), lambda: next(angles)), (2.0, "new"))
-
-    def test_a_stamp_that_never_settles_gives_nothing(self):
-        counter = iter(range(100))
-        self.assertIsNone(reach_arm.read_report(lambda: next(counter), lambda: "x"))
-
 
 class TestTheFold(unittest.TestCase):
     """The real fold is at or past the training limits: J2 -1.5865, J3 +1.6005 at rest, against +-1.57."""

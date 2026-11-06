@@ -1,0 +1,104 @@
+{
+  "mode": "reach_stand_live",
+  "status": "recorded",
+  "published": "LowCmd, motion switcher and sport requests",
+  "arguments": {
+    "policy": "checkpoints/reach_force_locked_model_66200.npz",
+    "live": true,
+    "rehearse": false,
+    "plate": "palm_up",
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "ramp_s": 0.5,
+    "hold_s": 3.0,
+    "standoff": 0.04,
+    "speed": 0.03,
+    "hand_wait_s": 15.0,
+    "presses": 0,
+    "stand_s": 20.0,
+    "policy_s": 90.0,
+    "tilt_limit_deg": 15.0,
+    "start_on_blend": true,
+    "start_tol_rad": null,
+    "start_pitch_deg": [
+      -10.0,
+      5.0
+    ],
+    "reach_goal": "init_start",
+    "reach_arm_obs": "reports",
+    "reach_arm_send": true,
+    "reach_max_leg_off_rad": 0.9,
+    "force_abort_n": 25.0,
+    "cmd_hz": 500.0,
+    "topic": "/lowstate",
+    "arm_link_port": 8095,
+    "print_s": 1.0,
+    "status_port": 8098,
+    "run_dir": "/root/D1Training/logs/leg_press"
+  },
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261106T082312_train_seed1_armft5_s1/model_66200.pt",
+    "checkpoint_sha256": "a0bf97501f3e2cb2a03989a8b11f7798b0a5244d762bdb6b8424b7fbb677138e",
+    "checkpoint_iteration": 66200
+  },
+  "summary": {
+    "live": true,
+    "rehearse": false,
+    "task": "reach",
+    "plate": "palm_up",
+    "plate_contact_m": [
+      0.331,
+      -0.202,
+      0.112
+    ],
+    "plate_n": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "abort_reason": "arm: joint 4 33.7 deg ahead of its report for 0.5 s (at most 25.0)",
+    "end_reason": "operator: q",
+    "final_mode": "done",
+    "sport_mode": "mcf",
+    "handed_back": true,
+    "left_released": false,
+    "presses": [],
+    "last_stage": "waiting",
+    "max_tilt_deg": 13.12,
+    "lowcmd_sent": 17618,
+    "events": 24,
+    "steps": 1763,
+    "seconds": 46.84,
+    "policy_steps": 77,
+    "step_period_s": {
+      "median": 0.02,
+      "p99": 0.0206
+    },
+    "commanded_level_max_n": 0.0,
+    "reach": {
+      "goal": "init_start",
+      "arm_obs": "reports",
+      "goal_sphere": [
+        0.5,
+        0.6283185307179586,
+        0.0
+      ],
+      "leg_target_off_default_rad": {
+        "rms": 0.144,
+        "p95": 0.291,
+        "max": 0.312
+      },
+      "leg_target_rms_step_rad": 0.0056,
+      "arm_output_max_rad": 1.551,
+      "real_arm_moved_rad": 0.9634,
+      "real_arm_measured_share": 1.0
+    },
+    "infer_ms": {
+      "median": 2.6,
+      "p99": 3.1
+    }
+  }
+}

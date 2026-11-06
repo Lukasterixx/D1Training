@@ -1,0 +1,21 @@
+{
+  "mode": "report_s_probe",
+  "status": "finished",
+  "live": false,
+  "observe": true,
+  "seconds": 10,
+  "feedback_messages": 105,
+  "distinct_report_s": 91,
+  "report_s_diff_ms": {
+    "p50": 112.8,
+    "min": 101.6,
+    "max": 116.4
+  },
+  "now_minus_report_s_s": {
+    "min": 0.0006,
+    "p50": 0.0279,
+    "max": 0.094
+  },
+  "link_image": "p2dingo-arm:latest",
+  "client_image": "p2dingo-web:latest"
+}

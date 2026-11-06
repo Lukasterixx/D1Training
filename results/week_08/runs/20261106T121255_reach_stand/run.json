@@ -1,0 +1,101 @@
+{
+  "mode": "reach_stand_dry",
+  "status": "recorded",
+  "published": "nothing",
+  "arguments": {
+    "policy": "checkpoints/reach_force_locked_model_66200.npz",
+    "live": false,
+    "rehearse": false,
+    "plate": "palm_up",
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "ramp_s": 0.5,
+    "hold_s": 3.0,
+    "standoff": 0.04,
+    "speed": 0.03,
+    "hand_wait_s": 15.0,
+    "presses": 0,
+    "stand_s": 20.0,
+    "policy_s": 90.0,
+    "tilt_limit_deg": 15.0,
+    "start_on_blend": false,
+    "start_tol_rad": null,
+    "start_pitch_deg": null,
+    "reach_goal": "init_start",
+    "reach_arm_obs": "virtual",
+    "reach_arm_send": false,
+    "reach_max_leg_off_rad": 0.9,
+    "force_abort_n": 25.0,
+    "cmd_hz": 500.0,
+    "topic": "/lowstate",
+    "arm_link_port": 8095,
+    "print_s": 1.0,
+    "status_port": 8098,
+    "run_dir": "/root/D1Training/logs/leg_press"
+  },
+  "policy_meta": {
+    "variant": "force",
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261106T082312_train_seed1_armft5_s1/model_66200.pt",
+    "checkpoint_sha256": "a0bf97501f3e2cb2a03989a8b11f7798b0a5244d762bdb6b8424b7fbb677138e",
+    "checkpoint_iteration": 66200
+  },
+  "summary": {
+    "live": false,
+    "rehearse": false,
+    "task": "reach",
+    "plate": "palm_up",
+    "plate_contact_m": [
+      0.331,
+      -0.202,
+      0.112
+    ],
+    "plate_n": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "force_n": 5.0,
+    "max_force_n": 5.0,
+    "abort_reason": "E-stop: the remote's B",
+    "end_reason": null,
+    "final_mode": "done",
+    "sport_mode": "",
+    "handed_back": false,
+    "left_released": false,
+    "presses": [],
+    "last_stage": "waiting",
+    "max_tilt_deg": 0.0,
+    "lowcmd_sent": 0,
+    "events": 5,
+    "steps": 232,
+    "seconds": 4.64,
+    "policy_steps": 232,
+    "step_period_s": {
+      "median": 0.02,
+      "p99": 0.0207
+    },
+    "commanded_level_max_n": 0.0,
+    "reach": {
+      "goal": "init_start",
+      "arm_obs": "virtual",
+      "goal_sphere": [
+        0.5,
+        0.6283185307179586,
+        0.0
+      ],
+      "leg_target_off_default_rad": {
+        "rms": 0.217,
+        "p95": 0.382,
+        "max": 0.688
+      },
+      "leg_target_rms_step_rad": 0.007,
+      "arm_output_max_rad": 1.377,
+      "real_arm_moved_rad": 0.0035,
+      "real_arm_measured_share": 1.0
+    },
+    "infer_ms": {
+      "median": 1.82,
+      "p99": 2.58
+    }
+  }
+}

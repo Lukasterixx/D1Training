@@ -44,25 +44,28 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();estop('th
 const worker=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),200)'])));
 async function poll(){if(busy)return;busy=true;try{const r=await fetch('/api/state',{headers:H,signal:AbortSignal.timeout(1500)});S=await r.json();linkOK=true;lastOK=Date.now();draw()}catch(e){linkOK=false;drawLink()}busy=false}
 worker.onmessage=poll;
+// Only when it changed: a button rebuilt between press and release loses the click, and this redraws 5 times a second.
+function put(el,html){if(el._html===html)return false;el._html=html;el.innerHTML=html;return true}
 function chip(t,c){return `<span class="chip ${c||''}">${t}</span>`}
 function drawLink(){if(Date.now()-lastOK>1000){$('chips').innerHTML=chip('LINK LOST: use B on the remote. A live run stops itself in 2 s.','bad')}}
-const MODES={dry:['Dry run','Sends nothing'],live_stand:['Live stand','Drives the legs'],live_press:['Live press','Drives the legs, one press']};
+const MODES={dry:['Dry run','Sends nothing'],live_stand:['Live stand','Drives the legs'],live_press:['Live press','Drives the legs, one press'],live_zero:['Live zero test','Moves the arm, not the legs'],live_whole:['Live whole body','Drives the legs AND the arm']};
 function draw(){const st=S.status,run=S.run;const fresh=S.active&&st&&S.status_age<1;
 let c=[chip('Link OK','ok')];c.push(S.active?chip((run.live?'LIVE: ':'Dry: ')+S.policies.find(x=>x.id===run.policy).label,run.live?'warn':'ok'):chip('No run'));
 c.push(S.b_seen?chip('B confirmed','ok'):chip('B not seen yet','warn'));
 if(S.sport_busy)c.push(chip('Giving sport mode back…','warn'));if(S.sport_result)c.push(chip(S.sport_result.ok?'Sport mode OK':'SPORT MODE NOT CONFIRMED',S.sport_result.ok?'ok':'bad'));
 if(fresh&&st.released)c.push(chip('Sport mode RELEASED','warn'));if(fresh&&!st.live&&st.base_m<0.25)c.push(chip('Dog is not standing: this dry run will not count','warn'));$('chips').innerHTML=c.join('');
 if(!sel&&S.policies.length)sel=S.policies[0].id;
-$('pols').innerHTML=S.policies.map(p=>`<button class="pol ${p.id===sel?'sel':''}" data-id="${p.id}"><b>${p.label}</b><span>${p.status}</span>${p.dry_ok?'<i>Dry OK this session</i>':''}</button>`).join('');
+if(put($('pols'),S.policies.map(p=>`<button class="pol ${p.id===sel?'sel':''}" data-id="${p.id}"><b>${p.label}</b><span>${p.status}</span>${p.dry_ok?'<i>Dry OK this session</i>':''}</button>`).join('')))
 document.querySelectorAll('.pol').forEach(b=>b.onclick=()=>{sel=b.dataset.id;draw()});
 const p=S.policies.find(x=>x.id===sel);if(p){$('ptitle').textContent=p.label;$('pstatus').textContent=p.status;$('pnote').textContent=p.note;
-$('actions').innerHTML=p.modes.map(m=>{const live=m!=='dry',off=S.active||S.sport_busy||(live&&!p.can_live);return `<button class="act ${live?'live':''}" data-m="${m}" ${off?'disabled':''} title="${MODES[m][1]}">${MODES[m][0]}</button>`}).join('')+
-`<button class="act" id="cont" ${S.active?'':'disabled'}>Continue (A)</button><button class="act" id="gentle" ${S.active?'':'disabled'}>End gently</button><button class="act" id="sport" ${S.active||S.sport_busy?'disabled':''}>Check sport mode</button>`;
-document.querySelectorAll('[data-m]').forEach(b=>b.onclick=async()=>{const r=await post('/api/start',{policy:sel,mode:b.dataset.m});if(!r.ok){const j=await r.json();$('why').textContent=j.error}});
-$('cont').onclick=()=>post('/api/line',{line:''});$('gentle').onclick=()=>post('/api/line',{line:'q'});$('sport').onclick=()=>post('/api/sport');
+const armRun=S.active&&run.kind==='arm';if(put($('actions'),p.modes.map(m=>{const live=m!=='dry',off=S.active||S.sport_busy||(live&&!p.can_live);return `<button class="act ${live?'live':''}" data-m="${m}" ${off?'disabled':''} title="${MODES[m][1]}">${MODES[m][0]}</button>`}).join('')+
+`<button class="act" id="cont" ${S.active?'':'disabled'}>Continue (A)</button>${armRun?`<button class="act" id="finish">Finish: fold the arm (A)</button>`:`<button class="act" id="gentle" ${S.active?'':'disabled'}>End gently</button>`}<button class="act" id="sport" ${S.active||S.sport_busy?'disabled':''}>Check sport mode</button>`)){
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=async()=>{const w=S.policies.find(x=>x.id===sel).confirm[b.dataset.m];let word='';if(w){word=prompt(MODES[b.dataset.m][1]+'. Nobody within reach of the arm. Type '+w+' to start:')||'';if(word.trim().toLowerCase()!==w)return}const r=await post('/api/start',{policy:sel,mode:b.dataset.m,word});if(!r.ok){const j=await r.json();$('why').textContent=j.error}});
+$('cont').onclick=()=>post('/api/line',{line:''});if(armRun)$('finish').onclick=()=>post('/api/line',{line:'r'});else $('gentle').onclick=()=>post('/api/line',{line:'q'});$('sport').onclick=()=>post('/api/sport')}
 $('why').textContent=(!S.active&&p.modes.some(m=>m!=='dry')&&!p.can_live)?'Live is locked: '+p.why_not+'.':''}
 const conf=fresh&&st.confirming;if(conf&&$('confirm').style.display!=='block'){$('word').value=''}$('confirm').style.display=conf?'block':'none';
-const b=$('banner');if(S.estop&&S.active){b.style.display='block';b.textContent='E-STOP: '+(fresh?(st.mode==='handback'?'giving the legs to sport mode…':st.mode):'stopping…')}
+const b=$('banner');if(S.estop&&S.active&&run.kind==='arm'){b.style.display='block';b.textContent='STOPPED: the arm is held where it is. Finish (or A) folds it by home, tuck and fold.'}
+else if(S.estop&&S.active){b.style.display='block';b.textContent='E-STOP: '+(fresh?(st.mode==='handback'?'giving the legs to sport mode…':st.mode):'stopping…')}
 else if(run&&!S.active&&run.estop){b.style.display='block';b.textContent='E-stopped ('+run.estop+'). Check the dog before the next run.'}else b.style.display='none';
 const T=[['State',fresh?st.mode:(S.active?'starting':'idle')],['Keys',fresh?(st.keys.join(' ')||'–'):'–'],['Roll °',fresh?st.roll:'–'],['Pitch °',fresh?st.pitch:'–'],['Base m',fresh?st.base_m:'–'],['Max tilt °',fresh?st.max_tilt:'–'],['Leg off rad',fresh?st.leg_off:'–'],['Arm out rad',fresh&&st.reach?st.arm_out:'–']];
 $('tiles').innerHTML=T.map(([k,v])=>`<div class="tile"><b>${v}</b><span>${k}</span></div>`).join('');

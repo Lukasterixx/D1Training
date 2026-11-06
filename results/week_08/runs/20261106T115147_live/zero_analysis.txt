@@ -1,0 +1,22 @@
+20261106T115147_live/20261106T115147_live {"cycles": 527, "skips": 4, "seconds": 58.9, "lost_s": 0.84, "lost_pct": 1.4, "longest_s": 0.21, "in_window": 0, "in_window_skipped": 0, "outside": 527, "outside_skipped": 4}
+follow commands 181 in 20.1 s; repeated (no change on any joint) in follow 0 ; repeated anywhere moving 64
+follow max step per cmd deg [4.94 4.91 4.91 4.94 4.91 4.91] as deg/s at 111ms [44.5 44.2 44.2 44.5 44.2 44.2]
+whole run F-245 (77 ms, 5 ms): rms per joint [0.25 0.49 0.8  0.33 0.75 0.48] all 0.55 max [2.  3.  7.4 1.6 2.2 5.8]
+circle F-245 (77 ms, 5 ms): rms per joint [0.34 0.59 0.51 0.5  0.68 0.83] all 0.60 max [2.  3.  2.4 1.6 2.2 5.8]
+best lag per joint on circle ms, rms [(70, 0.31), (70, 0.57), (70, 0.49), (50, 0.27), (50, 0.54), (55, 0.74)]
+reports in circle 170
+skip at 25.5 s; last link event follow ; interval 0.21 ; cmds ms after report [24] ; cmds within 0.3 s 5
+skip at 34.26 s; last link event follow ; interval 0.21 ; cmds ms after report [23] ; cmds within 0.3 s 5
+skip at 38.36 s; last link event follow ; interval 0.21 ; cmds ms after report [24] ; cmds within 0.3 s 5
+skip at 58.35 s; last link event path ; interval 0.21 ; cmds ms after report [23] ; cmds within 0.3 s 5
+reports in window cmd phase: median ms after report 22.9
+follow step per cmd: p50 2.41 p90 2.50 max 4.94; at cap(>4.5): 14 of 180; first 12: [0.41 0.5  0.55 0.67 0.78 1.8  1.11 1.11 1.36 1.46 1.41 1.7 ]
+follow cmd gaps p50 0.111 max 0.115, gaps>0.15: 0
+skip t=25.50 step before cmds [2.35, 2.47, 2.23, 2.41, 2.5, 2.34] | joint J3 q before [-0.1, -0.9, -2.0] across-gap -2.3 after [-4.3, -2.6]
+skip t=34.26 step before cmds [2.5, 2.41, 2.23, 2.47, 2.47, 2.23] | joint J4 q before [0.9, 1.6, 2.2] across-gap +4.1 after [2.9, 1.9]
+skip t=38.36 step before cmds [2.41, 2.23, 2.47, 2.47, 2.23, 2.41] | joint J6 q before [1.0, 0.2, -0.6] across-gap -3.2 after [-2.7, -2.0]
+skip t=58.35 step before cmds [3.3, 3.38, 3.32, 3.34, 3.34, 3.06] | joint J5 q before [0.0, 0.0, 0.1] across-gap +0.8 after [-0.1, -0.2]
+follow steps <2.5: 136 of 181 ; big(>4.5) at seconds [26.1, 27.1, 28.2, 29.2, 30.3, 31.3, 32.4, 33.5, 34.6, 36.8, 37.8, 38.9, 40.0, 41.1]
+skip seconds [25.5, 34.26, 38.36, 58.35]
+follow speed deg/s fastest joint p50 22.5; across skips [10.9, 19.5, 15.2, 3.8]
+follow reports with no movement at all: 0 of 143
