@@ -8370,4 +8370,5 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - **The legs-on simulation did not predict the arm:** it had a lead of 3.8 deg at 1-1.5 s against 33-43 here, and no stop. The dog looks like the dry run instead (F-252's family), with the legs answering. Why is open.
   - Do not run `live_whole` again as it is: it should stop the same way. Decide first what the arm's demand and the lead stop should be.
   - The stop leaves the arm out and nothing folded it: [`holster_dog.py --fold_back`](#/week/8/run/20261106T122011_live) did, by home, tuck, fold.
+- **Note (2026-11-07):** [a second run](#/week/8/run/20261106T133525_reach_stand_live) repeated it: 77 policy steps, J4 33.3 deg ahead, damping, with a harder fall (pitch +12.8 deg against +3.2). The result is two runs now, from stands a little apart.
 

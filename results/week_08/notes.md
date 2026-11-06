@@ -791,6 +791,17 @@ Full suite before the push: 1,289 tests, 23 failures and 2 errors, the exact lis
 
 [The first `66200` dry run](#/week/8/run/20261106T115838_reach_stand) now has its 1,001 policy frames in `policy_rows.npz`, for the UniFP session's replay test: a second real stance (sport mode's) and a full 20 s, not a second handover.
 
+### 2026-11-07 · The whole-body run again: the same stop, a harder fall
+
+Lukas ran `live_whole` twice more from the console, unchanged since F-255 (no stop change on the dog), after the console was left open overnight here. Run stamps are the dog's UTC.
+
+- [First attempt](#/week/8/run/20261106T133506_reach_stand_live): `no heartbeat from the browser for 2.1 s` during preflight, so the deadman stopped it: 0 LowCmd sent, the dog not touched. The deadman's first real firing. Why the page went quiet is not known.
+- [Second](#/week/8/run/20261106T133525_reach_stand_live): handover at pitch -3.8, base 0.297 m. 77 policy steps, as before, legs well: pitch -3.5 to -5.7, roll at most 1.8, base to 0.308 m; legs' movement 0.175 of their targets'. J4 target / report at 0.58, 0.98, 1.38, 1.5 s: -26 / -10, -62 / -28, -78 / -43, -81 / -48. Lead 33.3 deg, stopped at 1.53 s, damping. B 4.8 s later, sport mode back at 3.2 s.
+- The fall was harder than the first: pitch to +12.8 deg nose down (first +3.2), roll to 6.7, calves to -2.9. `press_live.py` notes sport mode's lying folds them past -2.72 too, so that alone is not a fault. No check of the dog here.
+- [Dry](#/week/8/run/20261106T133735_dry) and [live](#/week/8/run/20261106T133748_live) `--fold_back` from [-8.7, 3.4, 0.8, 52.8, 17.4, -17.5]: finished, 0 skips in 62 cycles, ended [2.3, -89.7, 89.2, -2.8, 3.9, 2.9].
+
+Frames in the run's `policy_rows.npz` for the UniFP session's replay test, which Lukas asked to be pushed.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
