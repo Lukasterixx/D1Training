@@ -61,6 +61,14 @@ def main() -> int:
     parser.add_argument("--run_name", default="folded_start")
     parser.add_argument("--real_arm", action="store_true", help="The payload robot, light legs and the locked arm stream.")
     parser.add_argument("--follower", action="store_true", help="--real_arm: each target through the dog's arm_link.Follower.")
+    parser.add_argument("--leg_friction", type=float, default=0.0,
+                        help="--real_arm: joint friction on the legs, N·m (knees x1.917): the real dog stops where it stops at kp 25 (F-191).")
+    parser.add_argument("--leg_answer", type=float, default=None, help="--real_arm: how much of each leg action reaches the legs.")
+    parser.add_argument("--leg_hold_offsets", type=float, nargs=12, default=None, metavar="RAD",
+                        help="Hold the legs this far from default before the handover, UniFP's order: the dog's own stance.")
+    parser.add_argument("--floor_grip", type=float, default=None, help="--real_arm: the floor's friction coefficient.")
+    parser.add_argument("--floor_stiffness", type=float, default=None,
+                        help="--real_arm: a soft floor, PhysX's compliant contact, N/m (critically-ish damped): standing in for carpet.")
     parser.add_argument("--scripted_unfold", action="store_true",
                         help="--real_arm: no policy: the folded arm moved along the joint line to the default pose at 30 deg/s, the "
                              "legs on their stance, and back, the contact on the dog read throughout.")
@@ -111,6 +119,20 @@ def main() -> int:
 
         shrink_physx(cfg.sim)
         leg_actuators.swap_legs(cfg.robot, "unitree_geared", 4, 0.0002, 0.0007, 3)
+        if args.leg_friction:
+            cfg.leg_friction_range = (args.leg_friction, args.leg_friction)
+        if args.leg_answer is not None:
+            cfg.leg_answer_range = (args.leg_answer, args.leg_answer)
+        if args.floor_grip is not None or args.floor_stiffness is not None:
+            import isaaclab.sim as sim_utils
+            from isaaclab.assets import AssetBaseCfg
+
+            grip = 1.0 if args.floor_grip is None else args.floor_grip
+            soft = {} if args.floor_stiffness is None else dict(compliant_contact_stiffness=args.floor_stiffness,
+                                                                compliant_contact_damping=0.1 * args.floor_stiffness ** 0.5 * 10)
+            floor = sim_utils.RigidBodyMaterialCfg(static_friction=grip, dynamic_friction=grip, restitution=0.0, **soft)
+            cfg.sim.physics_material = floor
+            cfg.terrain = AssetBaseCfg(prim_path="/World/ground", spawn=sim_utils.GroundPlaneCfg(physics_material=floor))
         arm_link.swap_arm(cfg.robot)
         cfg.arm_servo = True
         cfg.arm_link = {"locked": True, "feedback_hz": motor_model.D1_FEEDBACK_HZ,
@@ -158,6 +180,8 @@ def main() -> int:
     # policy with the buffers a fresh episode has: no previous action, an empty history.
     hold = torch.zeros(2 * count, interface.NUM_ACTIONS, device=device)
     hold[count:, 12:18] = folded / interface.ACTION_SCALE
+    if args.leg_hold_offsets is not None:
+        hold[:, :12] = torch.tensor(args.leg_hold_offsets, device=device) / interface.ACTION_SCALE
     with torch.no_grad():
         for _ in range(int(args.hold_s / interface.POLICY_DT)):
             env.step(hold)
@@ -192,6 +216,11 @@ def main() -> int:
     env._critic_history.reset(None)
     obs = env._get_observations()
     held_arm_deg = torch.rad2deg(env._dof()[0][:, 12:18])
+    if args.real_arm:
+        leg_now = env._dof()[0][0, :12] - torch.tensor(interface.DEFAULT_DOF_POS[:12], device=device)
+        rp_now = interface.body_roll_pitch(env._robot.data.root_quat_w)[0]
+        z_now = float(env._robot.data.root_pos_w[0, 2] - env.scene.env_origins[0, 2])
+        print(f"[handover] leg q - default {[round(float(v), 3) for v in leg_now]} rp {[round(float(v), 3) for v in rp_now]} base {z_now:.3f}", flush=True)
 
     names = list(env._robot.body_names)
     sensor_names = list(env._contact_sensor.body_names)
@@ -214,6 +243,9 @@ def main() -> int:
     asked = torch.zeros(T, 2 * count, 6, device=device)
     #: The largest leg target's distance from default, rad: `press_live`'s `--reach_max_leg_off_rad` reads this.
     leg_off = torch.zeros(T, 2 * count, device=device)
+    #: The legs' joints and what they were asked, to read how much they answer the policy, as `press.npz` gives it on the dog.
+    leg_q = torch.zeros(T, 2 * count, 12, device=device)
+    leg_asked = torch.zeros(T, 2 * count, 12, device=device)
     body_contact = torch.zeros(T, 2 * count, device=device)
     body_which = torch.zeros(T, 2 * count, dtype=torch.long, device=device)
     trunk_contact = torch.zeros(T, 2 * count, device=device)
@@ -244,6 +276,8 @@ def main() -> int:
                 commanded[step] = env._arm_link.target
                 asked[step] = env._joint_targets[:, 12:18]
                 leg_off[step] = env._actions[:, :12].abs().amax(dim=1) * interface.ACTION_SCALE
+                leg_q[step] = pos[:, :12]
+                leg_asked[step] = env._joint_targets[:, :12]
             forces = env._contact_sensor.data.net_forces_w.norm(dim=-1)
             body_contact[step], which = forces[:, body_sensor].max(dim=1)
             body_which[step] = which
@@ -365,7 +399,8 @@ def main() -> int:
         **{f"{s}_{k}": v[:, centre + count * n].tolist()
            for n, s in enumerate(starts)
            for k, v in (("error_m", err), ("arm_q_rad", q_arm), ("arm_qd_rad_s", qd_arm),
-                        ("body_contact_n", body_contact), ("pitch_deg", tilt[:, :, 1]))},
+                        ("body_contact_n", body_contact), ("pitch_deg", tilt[:, :, 1]), ("asked_rad", asked),
+                        ("commanded_rad", commanded), ("leg_off_rad", leg_off), ("leg_q_rad", leg_q), ("leg_asked_rad", leg_asked))},
     }
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")

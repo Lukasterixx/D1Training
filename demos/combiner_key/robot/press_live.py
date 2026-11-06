@@ -822,10 +822,22 @@ class PressRun:
             self.arm_watch.begin(time.monotonic())
             self.event("the arm's goals are going to the link")
         why = self.arm_watch.check(time.monotonic(), self.arm_reports, target)
+        if why and self.arm_watch.soft and self.live:
+            self._arm_stop(f"arm: {why}")
+            return
         if why:
             self.abort(f"arm: {why}")
             return
         self.arm_sender.follow(target)
+
+    def _arm_stop(self, why: str) -> None:
+        """The arm's asking is out of bounds and the legs are good: hold the arm, and stand, fold and lie down as a run's end does."""
+        self.arm_hold()
+        if self.abort_reason is None:
+            self.abort_reason = why
+        self.event(f"STOP ({why}): the arm held; the legs to the stand-up gains, then fold and lie down")
+        self.from_q = self.state["q"].copy()
+        self.set_mode("stand_end")
 
     def _policy(self, state, t) -> None:
         task = self.task

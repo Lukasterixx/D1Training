@@ -322,6 +322,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--arm_step_weight", type=float, default=0.0,
                         help="Reward on the squared change in each command the arm receives: negative to stop a policy "
                              "shaking the arm, which UniFP's action_rate_arm cannot see at 9 Hz.")
+    parser.add_argument("--leg_start_noise", type=float, default=0.0, metavar="RAD",
+                        help="Leg joints start this far from default at each reset, uniform.")
+    parser.add_argument("--leg_answer_range", type=float, nargs=2, default=None, metavar=("LOW", "HIGH"),
+                        help="How much of each leg action reaches the legs, drawn per environment: the dog's answered less than any friction gives.")
+    parser.add_argument("--arm_wrist_weight", type=float, default=0.0,
+                        help="Reward on the wrist's squared distance from default: negative keeps Joint4-6 from wandering.")
     parser.add_argument("--arm_follower", action="store_true",
                         help="Each target through the dog's arm_link.Follower, as a `follow` goal would be: 45 deg/s, held on lead.")
     parser.add_argument("--arm_command_mean", action="store_true",
@@ -631,6 +637,9 @@ def main() -> int:
     if args.leg_friction_range is not None:
         cfg.leg_friction_range = tuple(args.leg_friction_range)
         cfg.knee_friction_factor = args.leg_knee_friction_factor
+    if args.leg_answer_range is not None:
+        cfg.leg_answer_range = tuple(args.leg_answer_range)
+    cfg.leg_start_noise_rad = args.leg_start_noise
     cfg.track_leg_chatter = args.mode != "train"
     if args.task != "leg" and args.action_rate_weight is not None:
         # UniFP's `action_rate` (the 12 leg actions' step-to-step change, -0.02), read when the environment builds its
@@ -975,6 +984,7 @@ def main() -> int:
         if args.task != "unifp":
             parser.error("the arm link is UniFP's task's (the other tasks' environments build their own actions)")
         cfg.arm_link, cfg.arm_servo, cfg.arm_step_weight = link or None, args.arm_servo, args.arm_step_weight
+        cfg.arm_wrist_weight = args.arm_wrist_weight
         if args.arm_servo:
             arm_link.swap_arm(cfg.robot)
     cfg.robot_usd = robot_usd

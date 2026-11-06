@@ -8372,3 +8372,16 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - The stop leaves the arm out and nothing folded it: [`holster_dog.py --fold_back`](#/week/8/run/20261106T122011_live) did, by home, tuck, fold.
 - **Note (2026-11-07):** [a second run](#/week/8/run/20261106T133525_reach_stand_live) repeated it: 77 policy steps, J4 33.3 deg ahead, damping, with a harder fall (pitch +12.8 deg against +3.2). The result is two runs now, from stands a little apart.
 
+### F-256 — A replay of the dog's own legs and body, with the arm closed on the policy through the real Follower, predicts a whole-body run it was not built on to 1.4 deg RMS on J4 and 1.8 on all joints, where the simulator predicted 3.8 deg of lead against the real 33-43; and the legs answer the same on wood as on the rug (0.175, 0.165), so the floor is not the cause
+
+- **Status:** provisional (three real runs: two handovers, one stand; 1.5 s of each handover; the legs held as recorded)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log](week_08/notes.md), "A test that reproduces the dog", "The replay predicted a run it had never seen". Runs `20261106T121312_reach_stand_live`, `20261106T133525_reach_stand_live`, `20261106T115838_reach_stand`, their `policy_rows.npz`.
+- **Scope:**
+  - It holds the legs as they moved under `66200`, so it cannot show how they would answer another policy. Fair over 1.5 s because they barely moved; the 3 s held past the frames are an extrapolation.
+  - The cause of the legs' weak answer is not known. Friction reaches 0.28 in simulation, not 0.17.
+- **Implication:**
+  - This, not the simulator, is the gate for a policy on the dog.
+  - What simulated legs answer at once hides is a policy leaning on its legs: test a whole-body policy against recorded real frames before it runs.
+

@@ -125,6 +125,12 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
         self._command_interval = int(task_cfg.COMMAND_RESAMPLING_TIME_S / interface.POLICY_DT)
 
+        self._leg_answer = None
+        if cfg.leg_answer_range is not None:
+            low, high = cfg.leg_answer_range
+            draw = torch.Generator(device=self.device)
+            draw.manual_seed(int(cfg.seed or 0) + 17)
+            self._leg_answer = low + (high - low) * torch.rand(self.num_envs, 1, device=self.device, generator=draw)
         self._arm_ids = self._order[12:interface.NUM_ACTIONS]
         self._arm_link = None
         if cfg.arm_link is not None or cfg.arm_servo:
@@ -136,6 +142,10 @@ class Go2D1PosForceEnv(DirectRLEnv):
                 self._weights["arm_command_step"] = cfg.arm_step_weight * interface.POLICY_DT
                 self._terms["arm_command_step"] = lambda state: self._arm_link.sent_step
                 self._episode_sums["arm_command_step"] = zeros(self.num_envs)
+            if cfg.arm_wrist_weight:
+                self._weights["arm_wrist_pose"] = cfg.arm_wrist_weight * interface.POLICY_DT
+                self._terms["arm_wrist_pose"] = lambda state: torch.sum(torch.square(state.dof_pos[:, 15:18]), dim=1)
+                self._episode_sums["arm_wrist_pose"] = zeros(self.num_envs)
 
         if cfg.leg_armature_range is not None:
             self._draw_leg_armature()
@@ -190,6 +200,9 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._last_actions = self._actions
         self._actions = torch.clip(actions, -interface.CLIP_ACTIONS, interface.CLIP_ACTIONS)
         self._joint_targets = interface.joint_targets(self._actions)
+        if self._leg_answer is not None:
+            stance = self._default_dof_pos[:12]
+            self._joint_targets[:, :12] = stance + self._leg_answer * (self._joint_targets[:, :12] - stance)
         if self._arm_link is not None:
             self._arm_link.command(self._joint_targets[:, 12:], self._dof()[0][:, 12:interface.NUM_ACTIONS])
         self._track_chatter()
@@ -516,6 +529,9 @@ class Go2D1PosForceEnv(DirectRLEnv):
 
         joint_pos = self._robot.data.default_joint_pos[env_ids].clone()
         joint_vel = self._robot.data.default_joint_vel[env_ids].clone()
+        if self.cfg.leg_start_noise_rad:
+            legs = self._order[:12]
+            joint_pos[:, legs] += self.cfg.leg_start_noise_rad * (2.0 * torch.rand(len(env_ids), 12, device=self.device) - 1.0)
         self._robot.write_joint_state_to_sim(joint_pos, joint_vel, env_ids=env_ids)
 
         root_state = self._robot.data.default_root_state[env_ids].clone()

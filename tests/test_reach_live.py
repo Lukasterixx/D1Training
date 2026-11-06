@@ -199,6 +199,20 @@ class WholeBody(unittest.TestCase):
         self.assertNotIn("path", link.kinds())
         self.assertNotIn("follow", link.kinds())
 
+    def test_a_dead_feed_still_goes_to_damping(self):
+        link = FakeLink(self.clock, q=FOLD)
+        run = self.make(link)
+        modes = []
+
+        def go_quiet(k, r, lk):
+            modes.append(r.mode)
+            if r.arm_sender.sent > 10:
+                lk.reports = False
+
+        self.drive(run, link, script=go_quiet)
+        self.assertNotIn("stand_end", modes)
+        self.assertIn("damping", modes)
+
     def test_an_arm_gone_quiet_stops_it_and_holds(self):
         link = FakeLink(self.clock, q=FOLD)
         run = self.make(link)
@@ -226,6 +240,18 @@ class WholeBody(unittest.TestCase):
         self.drive(run, link)
         self.assertIn("arm:", run.abort_reason)
         self.assertGreater(run.arm_sender.sent, 30)                         # about a second's worth went first
+
+    def test_a_lead_stop_does_not_drop_the_dog(self):
+        link = FakeLink(self.clock, q=FOLD)
+        run = self.make(link, policy=REACH_POLICY, stand_s=20.0, reach_max_leg_off_rad=1e9)
+        modes = []
+        self.drive(run, link, script=lambda k, r, lk: modes.append(r.mode))
+        order = [m for i, m in enumerate(modes) if i == 0 or modes[i - 1] != m]
+        at = order.index("policy")
+        self.assertEqual(order[at + 1:at + 3], ["stand_end", "lie_end"])   # not straight to damping
+        kinds = [k for k in link.kinds() if k != "keepalive"]
+        self.assertEqual(kinds[-2:], ["hold", "path"])                     # held, then folded
+        self.assertEqual(run.arm_phase, "folded_again")
 
     def leg_bound_run(self, leg_action, tick):
         """The policy's leg outputs forced to `leg_action` from `tick` on: the first stop, as a reason, or None."""

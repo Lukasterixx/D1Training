@@ -593,7 +593,8 @@ Type `arm`, then `live`. The dog lies down and stands up with the arm folded; on
 | Ctrl-C, `a` + Enter, tilt, a joint limit, stale LowState | legs to damping, arm holds where it is |
 | E-stop | damping, sport mode at once, arm holds |
 | no arm report for 0.34 s | as Ctrl-C |
-| target 25 deg ahead of the arm for 0.5 s, or 60 at once; 20 deg in a tick; not finite | as Ctrl-C, after the first second |
+| target 25 deg ahead of the arm for 0.5 s, or 60 at once; 20 deg in a tick | after the first second: the arm holds, the legs go to the stand-up gains, it folds, the dog lies down |
+| a target not finite | as Ctrl-C |
 | a leg target past 0.9 rad (1.2 in the first second) | as Ctrl-C, before the send |
 | the arm not out or not folded in 20 s | as Ctrl-C |
 | the stand not the trained one | the arm folds, the dog lies down |

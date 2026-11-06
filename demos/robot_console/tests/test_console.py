@@ -424,7 +424,7 @@ class Http(Base):
         self.assertIn(b"E-STOP", urllib.request.urlopen(self.url + "/", timeout=3).read())
         state = json.load(urllib.request.urlopen(urllib.request.Request(self.url + "/api/state",
                                                                         headers={"X-Console": "1"}), timeout=3))
-        self.assertEqual(len(state["policies"]), 8)
+        self.assertEqual(len(state["policies"]), 9)
 
 
 if __name__ == "__main__":

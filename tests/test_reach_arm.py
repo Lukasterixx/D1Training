@@ -193,6 +193,15 @@ class TestWatch(unittest.TestCase):
     def test_nan_stops_it(self):
         self.assertIn("not finite", reach_arm.ArmWatch().check(1.05, reports_at(np.zeros(6)), np.full(6, np.nan)))
 
+    def test_what_the_policy_asks_is_a_soft_stop_and_a_dead_feed_is_not(self):
+        lead, gap, bad = reach_arm.ArmWatch(), reach_arm.ArmWatch(), reach_arm.ArmWatch()
+        lead.check(1.05, reports_at(np.zeros(6)), np.radians([70.0] * 6))
+        gap.check(1.4, reports_at(np.zeros(6)), np.zeros(6))
+        bad.check(1.05, reports_at(np.zeros(6)), np.full(6, np.nan))
+        self.assertTrue(lead.soft)
+        self.assertFalse(gap.soft)
+        self.assertFalse(bad.soft)
+
     def test_stopped_stays_stopped_until_reset(self):
         watch, r = reach_arm.ArmWatch(), reports_at(np.zeros(6))
         watch.check(1.05, r, np.full(6, np.nan))

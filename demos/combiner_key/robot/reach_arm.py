@@ -39,6 +39,8 @@ it holds, then folds by `FOLD_ROUTE` before the dog lies down: back to home, the
 the forearm onto the lidar cage and stalled it, which simulation cannot see, since only the dog's body reports contact. A stop holds the arm where
 it is. Never release: it is a torque-off with no brake (F-028). The goal is fixed for the run.
 
+**Two kinds of stop.** The arm answering and only the policy's asking out of bounds (`ArmWatch.soft`) stops the arm, not the dog: it holds, the legs go to the stand-up gains, the arm folds, the dog lies down. A dead feed, a bad number, a tilt, a leg bound or the E-stop stays damping, the arm held out.
+
 **First-ever on the real arm, all at once in the first run:** the arm at zero (the nearest logged is 25 deg off); `follow` on a locked stream; the policy on
 the legs with the arm out; a stop from there, on a dog going to damping with the arm held out, whose effect on its balance is not known; a fold-back from a
 policy pose (proven only from home).
@@ -193,19 +195,22 @@ class ArmWatch:
         self.max_gap, self.max_lead, self.max_step = float(max_report_gap_s), float(max_lead_deg), float(max_step_deg)
         self.grace, self.lead_hold, self.max_lead_hard = float(grace_s), float(lead_hold_s), float(max_lead_hard_deg)
         self.stopped: str | None = None
+        #: The arm is answering and only the policy's asking is out of bounds: a stop for the arm, not for the legs. The first live run's lead stop
+        #: dropped a dog whose legs were good to the floor (F-255). A dead feed or a bad number is not soft: nothing can be trusted to fold on.
+        self.soft = False
         self.last_target: np.ndarray | None = None
         self.began: float | None = None
         self.lead_since: float | None = None
 
     def reset(self) -> None:
-        self.stopped, self.last_target, self.began, self.lead_since = None, None, None, None
+        self.stopped, self.last_target, self.began, self.lead_since, self.soft = None, None, None, None, False
 
     def begin(self, now_s: float) -> None:
         """The first goal is about to go: the grace runs from here. With no `begin` there is none."""
         self.began = float(now_s)
 
-    def _stop(self, why: str) -> str:
-        self.stopped = why
+    def _stop(self, why: str, soft: bool = False) -> str:
+        self.stopped, self.soft = why, soft
         return why
 
     def check(self, now_s: float, reports: ArmReports, target) -> str | None:
@@ -226,17 +231,18 @@ class ArmWatch:
         lead = np.degrees(np.abs(target - reports.q))
         worst, joint = float(lead.max()), int(lead.argmax()) + 1
         if worst > self.max_lead_hard:
-            return self._stop(f"joint {joint} {worst:.1f} deg ahead of its report (at most {self.max_lead_hard})")
+            return self._stop(f"joint {joint} {worst:.1f} deg ahead of its report (at most {self.max_lead_hard})", soft=True)
         if worst > self.max_lead:
             self.lead_since = now_s if self.lead_since is None else self.lead_since
             if now_s - self.lead_since >= self.lead_hold:
-                return self._stop(f"joint {joint} {worst:.1f} deg ahead of its report for {now_s - self.lead_since:.1f} s (at most {self.max_lead})")
+                return self._stop(f"joint {joint} {worst:.1f} deg ahead of its report for {now_s - self.lead_since:.1f} s (at most {self.max_lead})",
+                                  soft=True)
         else:
             self.lead_since = None
         if self.last_target is not None:
             step = np.degrees(np.abs(target - self.last_target))
             if float(step.max()) > self.max_step:
-                return self._stop(f"joint {int(step.argmax()) + 1} stepped {step.max():.1f} deg in a cycle (at most {self.max_step})")
+                return self._stop(f"joint {int(step.argmax()) + 1} stepped {step.max():.1f} deg in a tick (at most {self.max_step})", soft=True)
         self.last_target = target.copy()
         return None
 

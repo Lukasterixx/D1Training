@@ -121,6 +121,16 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: Reward on the squared change in each command the arm receives (rad², per second as the others). UniFP's `action_rate_arm`
     #: reads the 50 Hz output, most of which never reaches a 9 Hz arm; this reads what does. Negative to penalise; 0: none.
     arm_step_weight: float = 0.0
+    #: Reward on the wrist's squared distance from its default (rad²). Nothing else fixes it: with `roll_objective` off the hand's orientation
+    #: is free, so Joint4-6 wander. On the dog that became a target running away at 90 deg/s (F-256 in the making). Negative to penalise; 0: none.
+    arm_wrist_weight: float = 0.0
+    #: Leg joints start this far from default at each reset, uniform, rad. The dog handed over 0.16 rad off the trained stance, and what the
+    #: policy asks of the arm swings with the stance (J4 -33 or -49 in the same chain). 0: as every earlier run.
+    leg_start_noise_rad: float = 0.0
+    #: How much of each leg action reaches the legs, drawn per environment in this range. The dog's joints moved 0.165 of what their targets did over
+    #: the first whole-body run, where the legs simulated as trained move 0.51 and no joint friction gets below 0.28: something more than friction,
+    #: which this stands for without saying what it is. The policy's own action is what it reads back. Empty: all of it.
+    leg_answer_range: tuple[float, float] | None = None
     #: Keep the actuators' reset draws (a delayed actuator's per-environment lag) off the global RNG stream, so a frozen
     #: manifest's goal schedule is the same with or without a command delay (`eval` and `manifest`).
     isolate_actuator_rng: bool = False

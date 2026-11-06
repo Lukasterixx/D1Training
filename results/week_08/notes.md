@@ -802,6 +802,76 @@ Lukas ran `live_whole` twice more from the console, unchanged since F-255 (no st
 
 Frames in the run's `policy_rows.npz` for the UniFP session's replay test, which Lukas asked to be pushed.
 
+### 2026-11-06 · The dog's dry run of `66200`, read before going live
+
+The session on the dog's PC held the live run on a dry result: `20261106T115838_reach_stand` (`--reach_arm_obs virtual`, sport-mode stand, nothing sent) took the arm targets past 25 deg from zero at 0.40 s and settled at -10, +50, -31, -77, -25, -5 deg.
+
+- **It is reproduced offline.** The real export with static legs at the default stance, the dog's tilt and `VirtualArm`: past 25 deg at 0.40 s, -10, +51, -26, -81, -30 at 3 s (J6 -24 against -5), peak 315 deg/s against 381. So it is the policy with legs that do not answer, F-252's family, not a mismatch. The gait phase, commands and arm order match training at zero velocity.
+- **It says little about legs live.** The same run at the settled stance gives J2 +25, J3 +5: the pose rests on the stance.
+- **J4 near -70 is not a fault.** Nothing fixes the hand's orientation (`roll_objective` is off), so the wrist wanders in the null space: [with its legs](#/week/8/run/20261106T120206_probe_seed1_goal_init_follower) the arm reaches J4 -70, J5 -49 by 16 s with the hand 1.3 cm on goal. Also [legs held, through the Follower](#/week/8/run/20261106T120230_probe_seed1_goal_init_held_f), [direct](#/week/8/run/20261106T120253_probe_seed1_goal_init_held_d).
+- **Lead in that run, legs on, through the Follower:** 47 deg in the first 0.5 s (the grace), 8.5 to 1 s, 3.8 to 1.5 s, under 4 after. If the dry target appeared at once, at the Follower's 45 deg/s it stays past 25 deg for about 0.25 s after the grace, under the stop's 0.5 s: an estimate.
+- **Start gate:** simulated pitch at handover with the arm out is -4.8, on the default -5; the real rest is further nose up. `--start_pitch_deg -10 5`, as `reach_delay`'s `live_stand`. The policy passes -11.9 at 0.12 s by itself.
+- **Tilt stop:** simulated peaks 11.9 deg on this goal, 13.25 over 27 goals, against 15, in the first moments. Plausible on the dog, and then it is the untried stop with the arm near zero. Left at 15 for the first run; Lukas's call.
+- **If it stops in the dry pose:** the hand is forward and lower, away from the dog, tool (0.587, -0.026, 0.331) against zero's (0.392, -0.013, 0.526), clear and holdable on the proxy, which is boxes only. Balance under damping stays unknown.
+
+### 2026-11-06 · The first whole-body run stopped at 1.54 s: my lead table was wrong
+
+The session on the dog's PC ran `live_whole` (`20261106T121312_reach_stand_live`, its F-255). The legs were good: roll at most 1.1, pitch -4.1 to -6.6. J4's target ran to -89 deg at up to 92 deg/s while the Follower took the arm at 45 deg/s, and `ArmWatch` stopped on 33.7 deg of lead at the first moment it could. Legs to damping: the dog went to the floor, not tipped; the arm held.
+
+**I had said about 3.8 deg of lead at 1-1.5 s, and no stop. The real lead was 33-43.** My worst case also assumed the target stopped growing. Those figures came from legs that answer the policy at once.
+
+**What reproduces it: friction in the legs.** The same goal through the Follower (`--leg_friction`, knees x1.917), J4's target at 0.56 and 1.54 s and the pitch range:
+
+| legs | J4 target | pitch |
+| --- | --- | --- |
+| no friction, as every reach policy trained | -22, -15 | -11.9 to -1.7 |
+| 1 N·m | -21, -69 | -7.4 to -1.3 |
+| 2 N·m | -28, -66 | -8.3 to -3.2 |
+| the dog | -29, -89 | -6.6 to -4.1 |
+
+So the policy's legs do not answer on the dog as they did in training, and it behaves as it does with its legs held (F-252). F-191 said the real legs stick at kp 25 in October; the reach chain never trained with it. This is the larger part, not all: the dog's target is faster than any of these. The real frames are asked for, to find the rest.
+
+**Stated before any checkpoint is scored.** Two runs from `66200`, 2048 environments each, on `--arm_locked --arm_locked_range --arm_follower --leg_friction_range 0 2 --arm_step_weight -30`: `armft6a_s1` as that, `armft6b_s1` with `--arm_wrist_weight -0.3` as well. 1500 iterations.
+
+**Selection:** on the frozen set through the Follower, light legs with 1 N·m of friction, no falls, the worst joint's command step RMS at most 6 deg, reversals at most 30%. **Then a new gate, the test that should have existed:** on the dog's goal through the Follower, at 0, 1, 2 and 4 N·m, the target's lead on the arm at most 15 deg from 1 s to the end. Then the lowest p90. If the real frames arrive, each candidate is also replayed on them. If nothing passes, nothing is chosen.
+
+### 2026-11-06 · Friction is part of it, not all; and the fake chain had called this
+
+**The dog's legs moved 0.165 of what their targets did over the run** (the other session's numbers: joints 0.02-0.14 rad against targets 0.10-0.46). The same measure in simulation: 0.51 with no friction, 0.28-0.32 at 0.5-2 N·m. Friction 0.5-1 N·m matches the dog's target-minus-joint RMS (calves 0.24-0.42), but nothing reaches 0.165. Scaling each leg action reaches the ratio at about 0.45, and J4's target is still 60% of the dog's. A chain of the export, the real Follower and legs that do not answer gives J4 -33 from the default stance and -49 from the settled one, leads to 37 deg: the result swings with the stance, which I do not have. The cause is not pinned; the real frames are being replayed on the other PC.
+
+**My error, for the record.** Before the run, the end-to-end chain on the fake robot stopped on "joint 4 27.5 deg ahead of its report" just past the grace. I put that down to the fake's unphysical base, trusted the simulator's 4 deg, and loosened the stop to 25 deg held 0.5 s. The real run failed on the same joint at about the same moment. A fake whose legs barely move was nearer the dog than simulated legs that answer at once.
+
+**Stops, changed:** a lead or step stop, with the arm answering, now holds the arm, takes the legs to the stand-up gains, folds and lies down (`ArmWatch.soft`). A dead feed, a bad target, tilt, a leg bound and the E-stop stay damping.
+
+**`armft6a` is stopped** as too narrow. In its place `armft6c_s1`, from `66200`: friction 0-2 N·m, `--leg_answer_range 0.1 1`, `--leg_start_noise 0.15`, `--arm_wrist_weight -0.3`, with `armft6b`'s rest. The wrist penalty limits J4 whatever the cause. **The rule stated for `armft6` stands, for both**, and adds the chain: from both stances, the target's lead at most 15 deg from 1 s on, and the real frames' replay if they come.
+
+### 2026-11-06 · A test that reproduces the dog: its real frames, the arm closed on the policy
+
+With the run's frames (`policy_rows.npz`, the other session's), a replay: the dog's own legs, body and goal as recorded, and the arm closed on the policy through the real `Follower`, 9 Hz reports and the 77 ms lag. Over 1.5 s that is fair, because the real legs barely moved. Run on `66200`:
+
+| | J4 target at .56 .76 .96 1.16 1.36 1.54 s | J4 report | lead past 1 s |
+| --- | --- | --- | --- |
+| the dog | -30 -58 -69 -78 -85 -89 | -13 -21 -26 -35 -45 -55 | 33-43 |
+| the replay | -33 -58 -72 -80 -86 -88 | -14 -19 -29 -39 -48 -54 | 44 |
+
+So this predicts the robot, where the simulator did not: `armft6b` `66400` holds J4 at 0 deg with 2.4 deg of lead on simulated sticky legs, and in this replay reaches -47 with 32 deg of lead. With the last frame held for 3 s more `66200`'s J4 goes to -113.
+
+**It is now the first gate, stated before any later checkpoint is scored:** in this replay, lead at most 15 deg from 1 s on, for the 1.5 s of frames and for 3 s more with the last frame held. Then the rest of the `armft6` rule. What it cannot see is how the legs would answer a different policy: it holds them as they were.
+
+**A second stance, 2026-11-06.** The sport-mode stand's dry run (`20261106T115838_reach_stand/policy_rows.npz`, 20 s, its legs and body real, the arm columns replaced by the closed arm) reproduces the dog too: `66200` ends at -10, +50, -32, -77, -24, -5 against the dog's -10, +50, -31, -77, -25, -5. It is a second stance, not a second handover, and it runs a whole run. **The gate now reads, before any further checkpoint is scored:** lead at most 15 deg from 1 s on, on the handover's frames with 3 s more held, and on the stand's 20 s.
+
+### 2026-11-07 · The replay predicted a run it had never seen; the floor is not the cause
+
+Lukas ran `live_whole` again on a wooden floor (`20261106T133525_reach_stand_live`, on `main`): the same stop at 1.53 s, lead 33.3 deg, a harder fall (pitch +12.8 against +3.2). The leg ratio was 0.175 on wood against 0.165 on the rug, so the floor is not what holds the legs back.
+
+**The replay, untouched since the first run, on these frames:** J4 target -27 -63 -79 -82 against the real -26 -62 -78 -81, report -10 -25 -45 -50 against -10 -28 -43 -48, 1.4 deg RMS on J4 and 1.8 on all joints over the run (F-256). A blind check: nothing was fitted to this run. It joins the gate as a third real set: lead at most 15 deg from 1 s on, in all three, with 3 s held on the two handovers.
+
+### 2026-11-07 · Scoring on real frames: a pass on the arm is not a pass, and what to try next
+
+`armft6c` `67000` passed the arm gate on all three real sets (6 / 10, 6 / 9, 8 deg) and is ruled out: with the arm closed on it, its leg target reaches 2.0 rad on the FR calf at 1.0 s on both handovers, past the 0.9 rad bound, a hard stop and more than the legs should be asked. `66800` the same. **The legs' bound is a second replay gate:** at most 1.2 rad in the first second, 0.9 after.
+
+`armft6b` `66600` is the closest to passing both: arm 17 / 7, 17 / 8 and 21 deg, legs 0.56 / 0.26 rad, J4 coming back to -14 by itself. It misses the 15 deg gate by 2-6 deg, and its reversals are 35% against 30%, so by the rule nothing is chosen. The runner's stop is 25 deg, which the replay stays under. Lukas asked to test a checkpoint before sleeping, for the data: the replay holds the legs as they were, so only a run shows how they answer a different policy. Exported as `reach_force_sticky_model_66600.npz`, console entry `reach_66600`, 10 s stand, with the stop split.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->

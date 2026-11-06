@@ -1,0 +1,63 @@
+{
+  "id": "20261106T122121_train_seed1_armft6a_s1",
+  "title": "Reach with leg friction and the Follower in training (from armft5 66200, 1500 iterations) ",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-06T23:33:18+11:00",
+  "started_utc": "2026-11-06T12:21:21+00:00",
+  "source_dir": "logs/unifp_train/20261106T122121_train_seed1_armft6a_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "7db7ac431375c5525ea892c0924e9b4308fc7d7d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 66364,
+  "final_checkpoint": {
+    "file": "model_66364.pt",
+    "sha256": "4b70bab5dfc6250f4be5efeb8b845070609804f476925c87619f5b1b8be41ea2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 160.60690307617188,
+      "last_step": 66364,
+      "mean_last_10": 160.444873046875,
+      "min": 1.8086482286453247,
+      "max": 161.4149932861328,
+      "points": 165
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 66364,
+      "mean_last_10": 999.0,
+      "min": 11.50943374633789,
+      "max": 999.0,
+      "points": 165
+    },
+    "Policy/mean_std": {
+      "last": 0.459693968296051,
+      "last_step": 66364,
+      "mean_last_10": 0.4588543325662613,
+      "min": 0.4299395978450775,
+      "max": 0.459693968296051,
+      "points": 165
+    },
+    "Perf/total_fps": {
+      "last": 11029.0,
+      "last_step": 66364,
+      "mean_last_10": 10920.2,
+      "min": 8137.0,
+      "max": 31976.0,
+      "points": 165
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}
