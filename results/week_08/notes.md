@@ -789,6 +789,8 @@ No single leg or body input starts it: the goal command and the arm's own state 
 
 Full suite before the push: 1,289 tests, 23 failures and 2 errors, the exact list of the merge's baseline. Those 25 are still not investigated.
 
+[The first `66200` dry run](#/week/8/run/20261106T115838_reach_stand) now has its 1,001 policy frames in `policy_rows.npz`, for the UniFP session's replay test: a second real stance (sport mode's) and a full 20 s, not a second handover.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
