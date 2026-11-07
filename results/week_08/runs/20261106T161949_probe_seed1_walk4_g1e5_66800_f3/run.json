@@ -1,0 +1,22 @@
+{
+  "mode": "run_plan_probe",
+  "status": "finished",
+  "seed": 1,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/20261106T153126_train_seed1_armft8_1e5_s1/model_66800.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 66800,
+  "plan": "walk",
+  "steps": 850,
+  "plans": 19,
+  "clear": 16,
+  "leg_friction": 3.0,
+  "floor_grip": null,
+  "real_stance": true,
+  "handover_base_m": 0.267390638589859,
+  "stop_at_s": null,
+  "stop_kind": "soft",
+  "tool_point": "fingertip",
+  "forces": "off",
+  "records_file": "run_plan.json",
+  "command": "./demos/unifp/run_plan_probe.py --headless --plan walk --leg_friction 3 --real_stance --checkpoint logs/unifp_train/20261106T153126_train_seed1_armft8_1e5_s1/model_66800.pt --run_name walk4_g1e5_66800_f3"
+}

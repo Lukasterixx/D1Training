@@ -1,0 +1,160 @@
+23:53:12 [press] policy reach  leg target off default 0.12 rad  arm output 0.21 rad (not sent)  base 0.284 m  roll  +2.0 pitch  -2.6  2.8 ms  real arm measured
+23:53:13 [press] policy reach  leg target off default 0.12 rad  arm output 0.17 rad (not sent)  base 0.284 m  roll  +2.4 pitch  -2.5  2.5 ms  real arm measured
+23:53:14 [press] policy reach  leg target off default 0.12 rad  arm output 0.15 rad (not sent)  base 0.284 m  roll  +2.4 pitch  -2.5  2.6 ms  real arm measured
+23:53:15 [press] the policy is done {'presses': 0}
+23:53:15 [press] mode policy -> stand_end
+23:53:16 [press] arm: folding
+23:53:21 [press] arm: folded
+23:53:21 [press] mode stand_end -> lie_end
+23:53:26 [press] mode lie_end -> damping
+23:53:26 [press] damping. Enter (A): give the legs back to sport mode (SelectMode 'mcf'); it may stand the dog up by itself
+23:53:27 [press] remote: ['A']
+23:53:27 [press] mode damping -> handback
+23:53:27 [press] LowCmd stopped {'sent': 18687}
+23:53:29 [press] SelectMode not answered; checking
+23:53:30 [press] sport mode back {'name': 'mcf'}
+23:53:30 [press] mode handback -> done
+23:53:31 [press] record: /root/D1Training/logs/leg_press/20261106T235244_reach_stand_live
+23:53:32 [run_press_on_dog] records: /home/unitree/D1Training/logs/leg_press/
+23:53:32 END reach_66600 [live_far_low], exit 0: --stand_s 16.0 s
+23:53:40 START Reach sticky 66600 (whole body) [live_far_left]
+23:53:42 [run_press_on_dog] LIVE: this program will drive the legs
+23:53:43 [press] --reach_arm_send: the whole body, for the first time: the D1 unfolds and the policy drives it and the legs. Nobody within the arm's reach, a hand on the E-stop.
+23:53:43 type 'arm' to go on: [press] arm link on 127.0.0.1:8095 (sending)
+23:53:43 [press] LIVE: force policy model_66600.pt, reach stand, goal init_start, arm seen as reports, arm sent nothing; recording to /root/D1Training/logs/leg_press/20261106T235343_reach_stand_live
+23:53:43 [press] first LowState
+23:53:43 [press] sport mode {'name': 'mcf', 'stand_height_m': 0.332, 'stand_q': [-0.0187, 0.7027, -1.4332, 0.04, 0.706, -1.499, -0.0205, 0.7342, -1.4729, 0.1441, 0.6744, -1.4364]}
+23:53:43 [press] LIVE. The dog will lie down, sport mode will be released, and this program will stand it up and drive its legs. Reach policy, the goal slides out and back, 16 s, legs and arm, goal init_start. Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the remote's A) to go.
+23:53:47 [press] sport StandDown sent
+23:53:47 [press] mode preflight -> lie_down
+23:53:48 [press] lying {'calf': [-2.48, -2.487, -2.545, -2.515]}
+23:53:48 [press] mode lie_down -> release
+23:53:49 [press] ReleaseMode answered (code 0)
+23:53:49 [press] sport mode released
+23:53:49 [press] mode release -> check_lowcmd
+23:53:49 [press] /lowcmd is quiet: standing up
+23:53:49 [press] mode check_lowcmd -> stand_up
+23:53:53 [press] arm: unfolding
+23:53:57 [press] arm: at the policy's start
+23:53:58 [press] taken at the blend {'base_m': 0.29, 'roll_pitch_deg': [0.3, -3.8], 'q_minus_trained_settled': [0.031, 0.123, 0.132, -0.022, 0.115, 0.15, -0.1, -0.044, 0.135, 0.092, -0.052, 0.16]}
+23:53:58 [press] mode stand_up -> policy
+23:53:58 [press] the policy holds the stand for 16 s (q + Enter ends it sooner)
+23:53:58 [press] the arm's goals are going to the link
+23:53:58 [press] policy reach  leg target off default 0.56 rad  arm output 0.28 rad (not sent)  base 0.289 m  roll  +0.4 pitch  -3.7  2.7 ms  real arm measured
+23:53:59 [press] policy reach  leg target off default 0.23 rad  arm output 0.34 rad (not sent)  base 0.294 m  roll  +2.4 pitch  -4.4  2.6 ms  real arm measured
+23:54:00 [press] policy reach  leg target off default 0.17 rad  arm output 0.33 rad (not sent)  base 0.291 m  roll  +3.1 pitch  -3.9  2.6 ms  real arm measured
+23:54:01 [press] policy reach  leg target off default 0.18 rad  arm output 0.25 rad (not sent)  base 0.291 m  roll  +3.1 pitch  -3.9  2.6 ms  real arm measured
+23:54:02 [press] policy reach  leg target off default 0.15 rad  arm output 0.30 rad (not sent)  base 0.292 m  roll  +2.1 pitch  -3.7  2.7 ms  real arm measured
+23:54:03 [press] policy reach  leg target off default 0.18 rad  arm output 0.59 rad (not sent)  base 0.291 m  roll  +0.6 pitch  -4.0  2.6 ms  real arm measured
+23:54:04 [press] policy reach  leg target off default 0.13 rad  arm output 0.66 rad (not sent)  base 0.287 m  roll  -0.5 pitch  -5.0  2.5 ms  real arm measured
+23:54:05 [press] policy reach  leg target off default 0.18 rad  arm output 0.60 rad (not sent)  base 0.289 m  roll  -0.6 pitch  -5.1  2.6 ms  real arm measured
+23:54:06 [press] policy reach  leg target off default 0.23 rad  arm output 0.77 rad (not sent)  base 0.289 m  roll  -0.2 pitch  -4.8  2.7 ms  real arm measured
+23:54:07 [press] policy reach  leg target off default 0.23 rad  arm output 0.86 rad (not sent)  base 0.285 m  roll  +0.3 pitch  -4.0  2.6 ms  real arm measured
+23:54:08 [press] policy reach  leg target off default 0.23 rad  arm output 0.87 rad (not sent)  base 0.285 m  roll  +0.4 pitch  -3.8  2.7 ms  real arm measured
+23:54:09 [press] policy reach  leg target off default 0.25 rad  arm output 0.64 rad (not sent)  base 0.284 m  roll  +1.3 pitch  -3.6  2.8 ms  real arm measured
+23:54:10 [press] policy reach  leg target off default 0.24 rad  arm output 0.55 rad (not sent)  base 0.284 m  roll  +2.6 pitch  -3.4  2.9 ms  real arm measured
+23:54:11 [press] policy reach  leg target off default 0.23 rad  arm output 0.52 rad (not sent)  base 0.284 m  roll  +3.6 pitch  -3.4  3.3 ms  real arm measured
+23:54:12 [press] policy reach  leg target off default 0.22 rad  arm output 0.48 rad (not sent)  base 0.284 m  roll  +3.6 pitch  -3.4  2.6 ms  real arm measured
+23:54:13 [press] policy reach  leg target off default 0.22 rad  arm output 0.47 rad (not sent)  base 0.284 m  roll  +3.7 pitch  -3.4  3.3 ms  real arm measured
+23:54:14 [press] the policy is done {'presses': 0}
+23:54:14 [press] mode policy -> stand_end
+23:54:15 [press] arm: folding
+23:54:21 [press] arm: folded
+23:54:21 [press] mode stand_end -> lie_end
+23:54:26 [press] mode lie_end -> damping
+23:54:26 [press] damping. Enter (A): give the legs back to sport mode (SelectMode 'mcf'); it may stand the dog up by itself
+23:54:26 [press] remote: ['A']
+23:54:26 [press] mode damping -> handback
+23:54:26 [press] LowCmd stopped {'sent': 18397}
+23:54:27 [press] SelectMode not answered; checking
+23:54:29 [press] sport mode back {'name': 'mcf'}
+23:54:29 [press] mode handback -> done
+23:54:29 [press] record: /root/D1Training/logs/leg_press/20261106T235343_reach_stand_live
+23:54:31 [run_press_on_dog] records: /home/unitree/D1Training/logs/leg_press/
+23:54:31 END reach_66600 [live_far_left], exit 0: --stand_s 16.0 s
+23:54:33 START Reach sticky 66600 (whole body) [live_far_right]
+23:54:35 [run_press_on_dog] LIVE: this program will drive the legs
+23:54:36 [press] --reach_arm_send: the whole body, for the first time: the D1 unfolds and the policy drives it and the legs. Nobody within the arm's reach, a hand on the E-stop.
+23:54:36 type 'arm' to go on: [press] arm link on 127.0.0.1:8095 (sending)
+23:54:36 [press] LIVE: force policy model_66600.pt, reach stand, goal init_start, arm seen as reports, arm sent nothing; recording to /root/D1Training/logs/leg_press/20261106T235436_reach_stand_live
+23:54:36 [press] first LowState
+23:54:36 [press] sport mode {'name': 'mcf', 'stand_height_m': 0.331, 'stand_q': [-0.0213, 0.7024, -1.4269, 0.0512, 0.7104, -1.4989, -0.0276, 0.7312, -1.473, 0.1599, 0.6707, -1.4398]}
+23:54:36 [press] LIVE. The dog will lie down, sport mode will be released, and this program will stand it up and drive its legs. Reach policy, the goal slides out and back, 16 s, legs and arm, goal init_start. Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the remote's A) to go.
+23:54:39 [press] sport StandDown sent
+23:54:39 [press] mode preflight -> lie_down
+23:54:40 [press] lying {'calf': [-2.48, -2.489, -2.546, -2.514]}
+23:54:40 [press] mode lie_down -> release
+23:54:40 [press] ReleaseMode answered (code 0)
+23:54:40 [press] sport mode released
+23:54:40 [press] mode release -> check_lowcmd
+23:54:41 [press] /lowcmd is quiet: standing up
+23:54:41 [press] mode check_lowcmd -> stand_up
+23:54:44 [press] arm: unfolding
+23:54:48 [press] arm: at the policy's start
+23:54:49 [press] taken at the blend {'base_m': 0.287, 'roll_pitch_deg': [0.5, -4.0], 'q_minus_trained_settled': [0.017, 0.123, 0.125, -0.019, 0.119, 0.14, -0.119, -0.045, 0.127, 0.103, -0.054, 0.151]}
+23:54:49 [press] mode stand_up -> policy
+23:54:49 [press] the policy holds the stand for 16 s (q + Enter ends it sooner)
+23:54:49 [press] the arm's goals are going to the link
+23:54:49 [press] policy reach  leg target off default 0.57 rad  arm output 0.28 rad (not sent)  base 0.286 m  roll  +0.5 pitch  -3.9  2.8 ms  real arm measured
+23:54:50 [press] policy reach  leg target off default 0.22 rad  arm output 0.33 rad (not sent)  base 0.291 m  roll  +2.6 pitch  -4.7  2.6 ms  real arm measured
+23:54:51 [press] policy reach  leg target off default 0.23 rad  arm output 0.47 rad (not sent)  base 0.288 m  roll  +2.4 pitch  -4.0  2.5 ms  real arm measured
+23:54:52 [press] policy reach  leg target off default 0.24 rad  arm output 0.52 rad (not sent)  base 0.286 m  roll  +2.5 pitch  -3.6  2.7 ms  real arm measured
+23:54:53 [press] policy reach  leg target off default 0.20 rad  arm output 0.52 rad (not sent)  base 0.286 m  roll  +3.9 pitch  -3.3  2.5 ms  real arm measured
+23:54:54 [press] policy reach  leg target off default 0.22 rad  arm output 0.37 rad (not sent)  base 0.287 m  roll  +4.9 pitch  -3.2  2.8 ms  real arm measured
+23:54:55 [press] policy reach  leg target off default 0.17 rad  arm output 0.63 rad (not sent)  base 0.286 m  roll  +5.0 pitch  -3.1  2.5 ms  real arm measured
+23:54:56 [press] policy reach  leg target off default 0.23 rad  arm output 0.67 rad (not sent)  base 0.286 m  roll  +2.8 pitch  -3.9  2.6 ms  real arm measured
+23:54:57 [press] policy reach  leg target off default 0.18 rad  arm output 0.62 rad (not sent)  base 0.285 m  roll  +1.8 pitch  -4.6  2.6 ms  real arm measured
+23:54:58 [press] policy reach  leg target off default 0.15 rad  arm output 0.60 rad (not sent)  base 0.282 m  roll  +0.3 pitch  -4.5  2.5 ms  real arm measured
+23:54:59 [press] policy reach  leg target off default 0.15 rad  arm output 0.46 rad (not sent)  base 0.283 m  roll  +0.8 pitch  -4.6  2.5 ms  real arm measured
+23:55:00 [press] policy reach  leg target off default 0.33 rad  arm output 0.85 rad (not sent)  base 0.284 m  roll  +2.0 pitch  -4.4  2.7 ms  real arm measured
+23:55:01 [press] policy reach  leg target off default 0.17 rad  arm output 0.28 rad (not sent)  base 0.282 m  roll  +3.8 pitch  -2.8  2.7 ms  real arm measured
+23:55:02 [press] policy reach  leg target off default 0.17 rad  arm output 0.44 rad (not sent)  base 0.283 m  roll  +2.2 pitch  -2.6  2.7 ms  real arm measured
+23:55:03 [press] policy reach  leg target off default 0.16 rad  arm output 0.28 rad (not sent)  base 0.282 m  roll  +2.3 pitch  -2.6  2.7 ms  real arm measured
+23:55:04 [press] policy reach  leg target off default 0.15 rad  arm output 0.30 rad (not sent)  base 0.282 m  roll  +2.3 pitch  -2.6  2.8 ms  real arm measured
+23:55:05 [press] the policy is done {'presses': 0}
+23:55:05 [press] mode policy -> stand_end
+23:55:06 no heartbeat from the browser for 2.1 s
+23:55:06 E-STOP from the link lost
+23:55:06 [press] E-STOP (the console)
+23:55:06 [press] STOP (E-stop: the console): damping, every motor kp 0 kd 3.0
+23:55:06 [press] mode stand_end -> damping
+23:55:06 [press] mode damping -> handback
+23:55:06 [press] LowCmd stopped {'sent': 12474}
+23:55:07 [press] SelectMode not answered; checking
+23:55:09 [press] sport mode back {'name': 'mcf'}
+23:55:09 [press] mode handback -> done
+23:55:09 [press] record: /root/D1Training/logs/leg_press/20261106T235436_reach_stand_live
+23:55:10 [run_press_on_dog] records: /home/unitree/D1Training/logs/leg_press/
+23:55:10 END reach_66600 [live_far_right], exit 0: E-stop: the console
+23:58:16 START Reach sticky 66600 (whole body) [live_far_forward]
+23:58:17 [run_press_on_dog] LIVE: this program will drive the legs
+23:58:19 [press] --reach_arm_send: the whole body, for the first time: the D1 unfolds and the policy drives it and the legs. Nobody within the arm's reach, a hand on the E-stop.
+23:58:19 type 'arm' to go on: [press] arm link on 127.0.0.1:8095 (sending)
+23:58:19 [press] LIVE: force policy model_66600.pt, reach stand, goal init_start, arm seen as reports, arm sent nothing; recording to /root/D1Training/logs/leg_press/20261106T235819_reach_stand_live
+23:58:19 [press] first LowState
+23:58:19 [press] sport mode {'name': 'mcf', 'stand_height_m': 0.328, 'stand_q': [-0.0455, 0.7225, -1.4456, 0.0524, 0.7091, -1.5287, -0.0137, 0.7728, -1.5048, 0.1849, 0.6641, -1.4285]}
+23:58:19 [press] LIVE. The dog will lie down, sport mode will be released, and this program will stand it up and drive its legs. Reach policy, the goal slides out and back, 16 s, legs and arm, goal init_start. Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the remote's A) to go.
+23:58:21 [press] sport StandDown sent
+23:58:21 [press] mode preflight -> lie_down
+23:58:23 [press] lying {'calf': [-2.487, -2.496, -2.544, -2.504]}
+23:58:23 [press] mode lie_down -> release
+23:58:23 [press] ReleaseMode answered (code 0)
+23:58:23 [press] sport mode released
+23:58:23 [press] mode release -> check_lowcmd
+23:58:23 [press] /lowcmd is quiet: standing up
+23:58:23 [press] mode check_lowcmd -> stand_up
+23:58:27 [press] arm: unfolding
+23:58:31 [press] arm: at the policy's start
+23:58:31 no heartbeat from the browser for 2.0 s
+23:58:31 E-STOP from the link lost
+23:58:31 [press] E-STOP (the console)
+23:58:31 [press] STOP (E-stop: the console): damping, every motor kp 0 kd 3.0
+23:58:31 [press] mode stand_up -> damping
+23:58:31 [press] mode damping -> handback
+23:58:31 [press] LowCmd stopped {'sent': 4128}
+23:58:33 [press] SelectMode not answered; checking
+23:58:35 [press] sport mode back {'name': 'mcf'}
+23:58:35 [press] mode handback -> done
+23:58:35 [press] record: /root/D1Training/logs/leg_press/20261106T235819_reach_stand_live
+23:58:36 [run_press_on_dog] records: /home/unitree/D1Training/logs/leg_press/
+23:58:36 END reach_66600 [live_far_forward], exit 0: E-stop: the console

@@ -37,7 +37,10 @@ import time
 REPO = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 PORT, STATUS_PORT = 8097, 8098
-DEADMAN_S, ESCALATE_S = 2.0, 0.6
+#: 3.5 s: past TCP's own recovery on the tunnel (0.2 + 0.4 + 0.8 + 1.6 s of retries). At 2.0 s the WiFi stopped live runs (F-262).
+DEADMAN_S, ESCALATE_S = 3.5, 0.6
+#: A gap in the page's 5 Hz heartbeat worth writing down, and how old the program's 10 Hz status may be to count as alive.
+HEARTBEAT_GAP_S, STATUS_FRESH_S = 0.6, 1.0
 #: A dry run has to reach this many policy steps to count (5 s), this many status reports (3 s) with the dog up. A
 #: lying dog gives a policy nothing to say about a stand.
 DRY_MIN_STEPS, DRY_MIN_STANDING = 250, 30
@@ -49,6 +52,8 @@ SPORT = "demos/combiner_key/robot/run_sport_on_dog.sh"
 #: The dog's sport mode, if a run never got to read it.
 SPORT_NAME = "mcf"
 STOPPING = ("damping", "handback", "done")
+#: A whole-body run with its arm out or coming out, and that run on its own way down: see `deadman`.
+ARM_OUT, ENDING = ("stand_up", "policy"), ("stand_end", "lie_end")
 
 
 class Console:
@@ -102,7 +107,9 @@ class Console:
                 if not ok:
                     return False, why
             confirm = policy.get("confirm", {}).get(mode)
-            if confirm and word.strip().lower() != confirm:
+            # `quick_start`: a policy proven on the dog takes the page's OK for both words. The Live lock above still stands.
+            quick = bool(policy.get("quick_start")) and mode != "dry"
+            if confirm and not quick and word.strip().lower() != confirm:
                 return False, f"type {confirm} to start this"
             launcher, container = self.launchers[policy["kind"]]
             args = [*(["--policy", policy["file"]] if "file" in policy else []), *policy["modes"][mode]]
@@ -112,7 +119,9 @@ class Console:
                                          cwd=self.repo, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                          stderr=subprocess.STDOUT, text=True, bufsize=1, start_new_session=True)
             self.run = {"policy": policy_id, "mode": mode, "live": mode != "dry", "container": container,
-                        "kind": policy["kind"], "record": None, "started": self.clock(), "estop": None, "standing": 0}
+                        "kind": policy["kind"], "record": None, "started": self.clock(), "estop": None, "standing": 0,
+                        "whole_body": "--reach_arm_send" in policy["modes"][mode], "ended_gently": False,
+                        "auto_live": quick, "live_sent": False}
             self.status, self.estop_t, self.sport_result = None, None, None
             self.heartbeat = self.clock()
             self.say(f"START {policy['label']} [{mode}]")
@@ -246,13 +255,26 @@ class Console:
                      + self.sport_result["detail"])
 
     def deadman(self) -> None:
-        """The browser gone, the tunnel down: a live run must not carry on unwatched."""
+        """The browser gone, the tunnel down: a live run must not carry on unwatched.
+
+        A whole-body run ends as End gently ends it: the link is not the dog, the run is on the dog and B still works, and the
+        E-stop would drop a healthy dog with the arm out (F-262). A run already going down is left to finish its fold. A
+        program that has stopped reporting gets the E-stop, as does everything else.
+        """
         with self.lock:
             lost = self.clock() - self.heartbeat
-            if (self.active() and self.run["live"] and lost > DEADMAN_S and self.estop_t is None
-                    and (self.status or {}).get("mode") not in STOPPING):
-                self.say(f"no heartbeat from the browser for {lost:.1f} s")
-                self.estop("the link lost")
+            mode = (self.status or {}).get("mode")
+            if not self.active() or not self.run["live"] or lost <= DEADMAN_S or self.estop_t is not None or mode in STOPPING:
+                return
+            alive = self.status is not None and self.clock() - self.status_t < STATUS_FRESH_S
+            if self.run["whole_body"] and alive and mode in ARM_OUT + ENDING:
+                if mode in ARM_OUT and not self.run["ended_gently"]:
+                    self.run["ended_gently"] = True
+                    self.say(f"no heartbeat from the browser for {lost:.1f} s: ending gently, the arm folds. B still stops it")
+                    self.write("q")
+                return
+            self.say(f"no heartbeat from the browser for {lost:.1f} s")
+            self.estop("the link lost")
 
     def on_status(self, data: bytes) -> None:
         try:
@@ -265,10 +287,19 @@ class Console:
                 self.b_seen = True
             if self.run is not None and status.get("mode") == "policy" and status.get("base_m", 0.0) >= STANDING_MIN_M:
                 self.run["standing"] += 1
+            # The program has checked the dog and asks for `live`: only then, because it clears anything that came before it asked.
+            if (self.run is not None and self.run["auto_live"] and status.get("confirming") and not self.run["live_sent"]
+                    and self.estop_t is None and self.active()):
+                self.run["live_sent"] = True
+                self.say("the page's OK stands for `live`")
+                self.write("live")
 
     def state(self, heartbeat: bool = False) -> dict:
         with self.lock:
             if heartbeat:
+                gap = self.clock() - self.heartbeat
+                if gap > HEARTBEAT_GAP_S and self.active():
+                    self.say(f"heartbeat back after {gap:.1f} s")
                 self.heartbeat = self.clock()
                 self.polls += 1
             active, run = self.active(), self.run
@@ -276,7 +307,7 @@ class Console:
             for p in self.policies.values():
                 ok, why = self.can_live(p["id"])
                 policies.append({k: p[k] for k in ("id", "label", "status", "note", "kind")}
-                                | {"modes": list(p["modes"]), "confirm": p.get("confirm", {}), "can_live": ok, "why_not": why,
+                                | {"modes": list(p["modes"]), "confirm": p.get("confirm", {}), "quick_start": bool(p.get("quick_start")), "can_live": ok, "why_not": why,
                                    "dry_ok": p["id"] in self.dry_ok})
             return {"policies": policies, "active": active, "b_seen": self.b_seen, "log": list(self.log)[-160:],
                     "polls": self.polls,

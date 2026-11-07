@@ -1,0 +1,69 @@
+{
+  "live": true,
+  "rehearse": false,
+  "task": "reach",
+  "plate": "palm_up",
+  "plate_contact_m": [
+    0.331,
+    -0.202,
+    0.112
+  ],
+  "plate_n": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "force_n": 5.0,
+  "max_force_n": 5.0,
+  "abort_reason": null,
+  "end_reason": "--stand_s 16.0 s",
+  "final_mode": "done",
+  "sport_mode": "mcf",
+  "handed_back": true,
+  "left_released": false,
+  "presses": [],
+  "last_stage": "waiting",
+  "max_tilt_deg": 11.53,
+  "lowcmd_sent": 18687,
+  "events": 27,
+  "steps": 1870,
+  "seconds": 43.62,
+  "policy_steps": 801,
+  "step_period_s": {
+    "median": 0.02,
+    "p99": 0.0207
+  },
+  "commanded_level_max_n": 0.0,
+  "reach": {
+    "goal": "init_start",
+    "arm_obs": "reports",
+    "goal_sphere": [
+      0.5,
+      0.6283185307179586,
+      0.0
+    ],
+    "via": [
+      [
+        0.45,
+        0.0,
+        0.0,
+        3.0,
+        4.0
+      ]
+    ],
+    "walk_max": null,
+    "leg_target_off_default_rad": {
+      "rms": 0.092,
+      "p95": 0.167,
+      "max": 0.215
+    },
+    "leg_target_rms_step_rad": 0.004,
+    "arm_output_max_rad": 0.668,
+    "real_arm_moved_rad": 0.6929,
+    "real_arm_measured_share": 1.0
+  },
+  "infer_ms": {
+    "median": 2.57,
+    "p99": 3.13
+  }
+}

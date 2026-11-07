@@ -1,0 +1,22 @@
+{
+  "mode": "run_plan_probe",
+  "status": "finished",
+  "seed": 1,
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_gentle_model_67199.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 67199,
+  "plan": "walk",
+  "steps": 308,
+  "plans": 19,
+  "clear": 18,
+  "leg_friction": 1.0,
+  "floor_grip": null,
+  "real_stance": true,
+  "handover_base_m": 0.26593297719955444,
+  "stop_at_s": 6.17,
+  "stop_kind": "soft",
+  "tool_point": "fingertip",
+  "forces": "off",
+  "records_file": "run_plan.json",
+  "command": "./demos/unifp/run_plan_probe.py --headless --real_stance --checkpoint checkpoints/unifp_go2d1_isaaclab_gentle_model_67199.pt --run_name stopsoft_walk_6.17_g67199 --plan walk --leg_friction 1 --stop_at_s 6.17 --stop_kind soft"
+}

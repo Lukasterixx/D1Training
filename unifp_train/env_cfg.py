@@ -122,7 +122,7 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: reads the 50 Hz output, most of which never reaches a 9 Hz arm; this reads what does. Negative to penalise; 0: none.
     arm_step_weight: float = 0.0
     #: Reward on the wrist's squared distance from its default (rad²). Nothing else fixes it: with `roll_objective` off the hand's orientation
-    #: is free, so Joint4-6 wander. On the dog that became a target running away at 90 deg/s (F-256 in the making). Negative to penalise; 0: none.
+    #: is free, so Joint4-6 wander. On the dog that became a target running away at 90 deg/s (F-255). Negative to penalise; 0: none.
     arm_wrist_weight: float = 0.0
     #: Leg joints start this far from default at each reset, uniform, rad. The dog handed over 0.16 rad off the trained stance, and what the
     #: policy asks of the arm swings with the stance (J4 -33 or -49 in the same chain). 0: as every earlier run.

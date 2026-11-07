@@ -115,11 +115,14 @@ class LegObservation:
         self.clip_obs, self.clip_actions = float(meta["clip_observations"]), float(meta["clip_actions"])
         self.history = np.zeros((self.frame_stack, self.num_single_obs))
         self.prev_actions = np.zeros(self.num_actions)
+        #: The gait clock's phase, 0 to 1 (`gait_step`). 0 stands, and is all the leg tasks ever see.
+        self.gait_phase = 0.0
 
     def reset(self) -> None:
         """As at a training reset: an all-zero history and no previous action."""
         self.history[:] = 0.0
         self.prev_actions[:] = 0.0
+        self.gait_phase = 0.0
 
     def frame(self, quat_wxyz, gyro_b, q_unitree, dq_unitree, arm_q, arm_dq, commands) -> np.ndarray:
         """One 76-wide frame (`interface.single_obs`), clipped as the environment clips it."""
@@ -132,7 +135,7 @@ class LegObservation:
             (q - self.default) * m["obs_scale_dof_pos"],
             dq * m["obs_scale_dof_vel"],
             self.prev_actions,
-            np.array([0.0, 1.0]),                       # the gait phase, pinned to 0 (the leg task never walks)
+            np.array([math.sin(2 * math.pi * self.gait_phase), math.cos(2 * math.pi * self.gait_phase)]),
             np.asarray(commands, dtype=float) * self.commands_scale,
         ))
         return np.clip(out, -self.clip_obs, self.clip_obs)
@@ -171,12 +174,32 @@ def waiting_command(meta: dict, foot_goal_local=None) -> np.ndarray:
     return commands
 
 
-def reach_command(meta: dict, goal_sphere) -> np.ndarray:
-    """The 15 commands of a reach policy told to stand: no walking, no force, no roll (the two `59600`s trained with
-    `roll_objective` off), the hand's goal as UniFP's (radius, pitch, yaw) about the sphere's centre."""
+#: UniFP's gait clock, as training's `interface` has it: its period, and the dead zones (vx, vy m/s, yaw rad/s) inside which a robot is told to stand.
+GAIT_CYCLE_S = 0.64
+WALK_DEAD_ZONE = (0.1, 0.1, 0.2)
+
+
+def gait_step(phase: float, velocity, dt: float) -> float:
+    """`interface.gait_step` for one robot: the phase advances, before the frame that shows it, while any velocity command is outside its
+    dead zone, and is 0 otherwise. The zero is how the policy is told to stop stepping."""
+    if any(abs(float(v)) > d for v, d in zip(velocity, WALK_DEAD_ZONE)):
+        return (float(phase) + dt / GAIT_CYCLE_S) % 1.0
+    return 0.0
+
+
+#: The commands' tool force, yaw frame, N (`interface.CMD_EE_FORCE`): its z, up.
+CMD_EE_FORCE_Z = 11
+
+
+def reach_command(meta: dict, goal_sphere, velocity=(0.0, 0.0, 0.0), force_down_n: float = 0.0) -> np.ndarray:
+    """The 15 commands of a reach policy: a base velocity (vx, vy, yaw rate; zero stands), no roll (the two `59600`s trained with `roll_objective`
+    off), the hand's goal as UniFP's (radius, pitch, yaw) about the sphere's centre, and a downward tool force if any. The policy takes that force as
+    the hand's target moved by force / 200 N/m: nothing here measures what it presses with (F-267)."""
     commands = np.zeros(int(meta["num_commands"]))
+    commands[:3] = np.asarray(velocity, dtype=float)
     i = int(meta["cmd_ee_radius"])
     commands[i:i + 3] = np.asarray(goal_sphere, dtype=float)
+    commands[CMD_EE_FORCE_Z] = -float(force_down_n)
     return commands
 
 

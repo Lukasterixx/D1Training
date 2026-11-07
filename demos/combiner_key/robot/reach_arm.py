@@ -37,9 +37,9 @@ default pose by `UNFOLD_ROUTE`: the door demo's proven unfold to `HOME_SERVO_DEG
 policy start, and only within `START_TOL_DEG` of that pose: from the fold the hand strikes the dog in simulation (4 of 27, to 485 N). At the end of a run
 it holds, then folds by `FOLD_ROUTE` before the dog lies down: back to home, then the door demo's `tuck` and `fold`. Not straight: on 24 Oct that swung
 the forearm onto the lidar cage and stalled it, which simulation cannot see, since only the dog's body reports contact. A stop holds the arm where
-it is. Never release: it is a torque-off with no brake (F-028). The goal is fixed for the run.
+it is. Never release: it is a torque-off with no brake (F-028). The goal is fixed for a run unless it is given a path (`GoalPath`).
 
-**Two kinds of stop.** The arm answering and only the policy's asking out of bounds (`ArmWatch.soft`) stops the arm, not the dog: it holds, the legs go to the stand-up gains, the arm folds, the dog lies down. A dead feed, a bad number, a tilt, a leg bound or the E-stop stays damping, the arm held out.
+**Two kinds of stop.** The arm answering and only the policy's asking out of bounds (`ArmWatch.soft`) stops the arm, not the dog: it holds, the legs go to the stand-up gains, the arm folds, the dog lies down. So does a tilt past `--reach_soft_tilt_deg` or a leg bound, where the legs can still hold (Week 8 log). A dead feed, a bad number, a tilt past `--tilt_limit_deg` or the E-stop stays damping, the arm held out.
 
 **First-ever on the real arm, all at once in the first run:** the arm at zero (the nearest logged is 25 deg off); `follow` on a locked stream; the policy on
 the legs with the arm out; a stop from there, on a dog going to damping with the arm held out, whose effect on its balance is not known; a fold-back from a
@@ -186,6 +186,135 @@ class ArmTargets:
         return np.clip(self.default + self.scale * action, self.lower, self.upper)
 
 
+#: What training draws goals from (`interface.EE_GOAL_*`), radius m, pitch and yaw rad, and how fast a slide may be: training's take 1-3 s, and the
+#: Follower caps the arm at 45 deg/s, so a far goal goes no faster than this.
+GOAL_RADIUS_M, GOAL_PITCH_RAD, GOAL_YAW_RAD = (0.30, 0.58), (-math.pi / 4, math.pi / 3), (-2 * math.pi / 5, 2 * math.pi / 5)
+MIN_SLIDE_S = 2.0
+#: Training's keep-out box about the goal sphere's centre, and how far under it a goal may go (`interface.EE_GOAL_COLLISION_*`, `EE_GOAL_UNDERGROUND_LIMIT`): it never
+#: drew a slide through these, and the box is the dog.
+GOAL_KEEP_OUT_LOWER, GOAL_KEEP_OUT_UPPER, GOAL_UNDERGROUND_M = (-0.48, -0.14, -0.55), (0.17, 0.14, -0.10), -0.40
+GOAL_CHECK_SAMPLES = 10
+#: Back on the start goal for this long before a run ends, so the fold starts where it has started on the dog.
+BACK_HOLD_S = 2.0
+#: The jaws on a cloth (`--reach_cloth`), servo units (`d1_hardware.GRIPPER_UNITS_OPEN`, `_CLOSED`, kept here off the dog's import path). They close
+#: over `CLOTH_CLOSE_S`, slowly enough to see and with a hand nearby, and stop where the cloth stops them, still commanded shut so they go on squeezing.
+#: `CLOTH_LET_GO_S` then gives the operator time to let go and step back. With no A in `CLOTH_WAIT_S` the run ends: the dog is not left standing on it.
+JAWS_OPEN_UNITS, JAWS_SHUT_UNITS = 50.2, -19.8
+CLOTH_CLOSE_S, CLOTH_LET_GO_S, CLOTH_WAIT_S = 2.0, 2.0, 90.0
+
+
+def jaws_closing(elapsed_s: float) -> float:
+    """The jaw command `elapsed_s` into closing."""
+    return JAWS_OPEN_UNITS + (JAWS_SHUT_UNITS - JAWS_OPEN_UNITS) * min(max(elapsed_s / CLOTH_CLOSE_S, 0.0), 1.0)
+
+
+def goal_is_clear(start, goal) -> bool:
+    """`EeGoalTrajectory._collides`, negated: whether a slide stays out of the keep-out box and above the floor's limit, by the same samples."""
+    start, goal = np.asarray(start, dtype=float), np.asarray(goal, dtype=float)
+    for u in np.linspace(0.0, 1.0, GOAL_CHECK_SAMPLES):
+        r, pitch, yaw = start + (goal - start) * u
+        point = r * np.array([math.cos(pitch) * math.cos(yaw), math.cos(pitch) * math.sin(yaw), math.sin(pitch)])
+        if np.all(point < GOAL_KEEP_OUT_UPPER) and np.all(point > GOAL_KEEP_OUT_LOWER) or point[2] < GOAL_UNDERGROUND_M:
+            return False
+    return True
+
+
+class GoalPath:
+    """A run's hand goal against time: the start goal for `settle_s`, then each `(goal, slide_s, hold_s)` in turn, and back to the start goal. A goal
+    slides in spherical coordinates, as `EeGoalTrajectory.step` slides it: the policy has never seen one jump. `at(t)` gives (radius, pitch, yaw)."""
+
+    def __init__(self, start, via, settle_s: float):
+        now = tuple(float(v) for v in start)
+        self.points: list[tuple[float, float, tuple, tuple]] = []
+        t = float(settle_s)
+        last_slide = MIN_SLIDE_S
+        for goal, slide_s, hold_s in via:
+            goal = tuple(float(v) for v in goal)
+            for value, span, name in zip(goal, (GOAL_RADIUS_M, GOAL_PITCH_RAD, GOAL_YAW_RAD), ("radius", "pitch", "yaw")):
+                if not span[0] <= value <= span[1]:
+                    raise ValueError(f"goal {name} {value:.3f} is outside what the policy trained on, {span[0]:.3f} to {span[1]:.3f}")
+            if slide_s < MIN_SLIDE_S:
+                raise ValueError(f"a {slide_s} s slide: at least {MIN_SLIDE_S} s")
+            if not goal_is_clear(now, goal):
+                raise ValueError(f"the slide to {goal} passes through what training kept goals out of")
+            self.points.append((t, t + slide_s, now, goal))
+            t, now, last_slide = t + slide_s + hold_s, goal, float(slide_s)
+        self.start = tuple(float(v) for v in start)
+        if not goal_is_clear(now, self.start):
+            raise ValueError("the slide back passes through what training kept goals out of")
+        self.points.append((t, t + last_slide, now, self.start))
+        self.duration = t + last_slide + BACK_HOLD_S
+
+    def press_window(self) -> tuple[float, float]:
+        """On the path's clock: the hand has reached the first goal, and is about to leave the last one for the start goal."""
+        return self.points[0][1], self.points[-1][0]
+
+    def at(self, t: float) -> np.ndarray:
+        goal = self.start
+        for begin, end, a, b in self.points:
+            if t < begin:
+                break
+            u = min((t - begin) / (end - begin), 1.0)
+            goal = tuple(x + (y - x) * u for x, y in zip(a, b))
+        return np.array(goal)
+
+
+#: The most the policy's force input trained on (`task_cfg.GRIPPER_FORCE_RANGE_N`), and how long a change of it takes.
+MAX_FORCE_N, FORCE_RAMP_S = 8.0, 1.0
+
+
+class PressForce:
+    """The downward force to tell the policy against the path's clock: nothing until the hand has arrived, the given levels in equal parts, nothing again
+    by the time it leaves. Each change is a ramp: the force is a move of the hand's target, and the policy has never seen one jump."""
+
+    def __init__(self, levels, begin_s: float, end_s: float):
+        self.levels = [float(v) for v in levels]
+        if not self.levels or not all(0.0 <= v <= MAX_FORCE_N for v in self.levels):
+            raise ValueError(f"forces are 0 to {MAX_FORCE_N} N, what the policy trained on: {self.levels}")
+        self.begin, self.end = float(begin_s), float(end_s)
+        self.part = (self.end - self.begin) / len(self.levels)
+        if self.part < 2 * FORCE_RAMP_S:
+            raise ValueError(f"{self.part:.1f} s a level: at least {2 * FORCE_RAMP_S} s")
+
+    def at(self, t: float) -> float:
+        if not self.begin < t < self.end:
+            return 0.0
+        k = min(int((t - self.begin) / self.part), len(self.levels) - 1)
+        before = self.levels[k - 1] if k else 0.0
+        level = before + (self.levels[k] - before) * min((t - self.begin - k * self.part) / FORCE_RAMP_S, 1.0)
+        return level * min((self.end - t) / FORCE_RAMP_S, 1.0)
+
+
+#: Just outside the dead zones of `leg_policy.WALK_DEAD_ZONE`, so a stick past its own dead zone walks and does not creep.
+WALK_LEAST = (0.12, 0.12, 0.24)
+#: What training asked at most (`task_cfg.LIN_VEL_*_RANGE`, `ANG_VEL_YAW_RANGE`).
+WALK_MOST = (0.6, 0.4, 0.6)
+#: A stick counts from `STICK_DEAD` and stops counting under `STICK_RELEASE`: with one edge, a thumb resting on it flips the command and resets the gait clock every few ticks.
+STICK_DEAD, STICK_RELEASE = 0.2, 0.12
+
+
+class WalkSticks:
+    """The remote's sticks to a velocity: left stick forward and sideways, right stick turns. Inside `STICK_DEAD` nothing, then from just past the
+    gait's dead zone to the most asked. Up on the left stick is forward; right on either is right, which is negative in the base frame."""
+
+    def __init__(self, max_vx: float, max_vy: float, max_wz: float):
+        self.most = (float(max_vx), float(max_vy), float(max_wz))
+        self.pushed = [False, False, False]
+        for most, least, ceiling in zip(self.most, WALK_LEAST, WALK_MOST):
+            if not least <= most <= ceiling:
+                raise ValueError(f"the most asked, {most}, is outside the gait's least, {least}, and what training asked, {ceiling}")
+
+    def _axis(self, stick: float, k: int) -> float:
+        size = abs(float(stick))
+        self.pushed[k] = size >= (STICK_RELEASE if self.pushed[k] else STICK_DEAD)
+        if not self.pushed[k]:
+            return 0.0
+        return math.copysign(WALK_LEAST[k] + max(size - STICK_DEAD, 0.0) / (1.0 - STICK_DEAD) * (self.most[k] - WALK_LEAST[k]), stick)
+
+    def velocity(self, sticks: dict) -> tuple[float, float, float]:
+        return self._axis(sticks["ly"], 0), self._axis(-sticks["lx"], 1), self._axis(-sticks["rx"], 2)
+
+
 class ArmWatch:
     """Whether to go on sending. `check` gives None, or why to stop; once stopped it stays stopped until `reset`."""
 
@@ -255,8 +384,12 @@ class ArmSender:
         self.sock = sock
         self.sent = 0
         self.held = False
+        #: The jaw command, once there is one, on every message. The link takes a message with none as "wherever the jaws measure": on a cloth, that is letting go of it.
+        self.gripper: float | None = None
 
     def _write(self, msg: dict) -> bool:
+        if self.gripper is not None and msg["type"] != "hold":
+            msg["gripper"] = round(float(self.gripper), 2)
         try:
             self.sock.sendall((json.dumps(msg) + "\n").encode())
             return True

@@ -8314,6 +8314,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 ### F-253 — With a stronger penalty the reach passes the jitter gate: `66200` tracks the frozen set at 2.15 / 2.83 cm with no falls on the fitted arm, command steps 3.1 deg RMS at worst and 29.9% reversals; through the arm link's Follower, as the dog would run it, 2.2-2.3 / 3.1-4.0 cm across the fit's range, command timing, skips and zero-armature legs, and all 27 held goals reached with no contact
 
 - **Status:** provisional (simulation; one seed; the frozen set chose the checkpoint; nothing has run on the arm or the dog)
+- **Note (2026-11-07):** `66200` stopped on the dog twice at about 1.5 s (F-255, F-256). `66600` took its place (F-257). These simulation figures stand as simulation.
 - **Week:** 8
 - **Date:** 2026-11-06
 - **Evidence:** [Week 8 log, 2026-11-06](week_08/notes.md), "`66200` chosen". [`66200`](#/week/8/run/20261106T085115_eval_seed1_ft5_66200), through the Follower [at the centre](#/week/8/run/20261106T091401_eval_seed1_p566200_base), [held goals](#/week/8/run/20261106T093328_probe_seed1_fold_p5_66200follower). Lineage: `59600` delay arm, `armft1` `61088`, `armft2` `62800`, `armft3` `63800`, `armft4` `65799`, `armft5` `66200`.
@@ -8375,6 +8376,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 ### F-256 — A replay of the dog's own legs and body, with the arm closed on the policy through the real Follower, predicts a whole-body run it was not built on to 1.4 deg RMS on J4 and 1.8 on all joints, where the simulator predicted 3.8 deg of lead against the real 33-43; and the legs answer the same on wood as on the rug (0.175, 0.165), so the floor is not the cause
 
 - **Status:** provisional (three real runs: two handovers, one stand; 1.5 s of each handover; the legs held as recorded)
+- **Note (2026-11-07):** narrowed by [F-258](#f-258). On `66600`'s four runs, its own frames, the same replay misses the settled pose and the hand, at 10-11 deg RMS. The 1.4 deg stands for `66200`, not as a general forecast.
 - **Week:** 8
 - **Date:** 2026-11-07
 - **Evidence:** [Week 8 log](week_08/notes.md), "A test that reproduces the dog", "The replay predicted a run it had never seen". Runs `20261106T121312_reach_stand_live`, `20261106T133525_reach_stand_live`, `20261106T115838_reach_stand`, their `policy_rows.npz`.
@@ -8409,4 +8411,390 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - `66600` is the candidate to test further; it is not yet shown against the frozen goals.
 - **Note (2026-11-07, later):** [a second run](#/week/8/run/20261106T141120_reach_stand_live) also completed, from a stance within 0.01 rad, but not the same way: legs moved in steps after 3.5 s (2.8 times the movement) and lead reached 19.5 deg at 6.4 s, past this finding's 6.9. So the lead here is not a bound, and two runs from one stance can differ this much.
 - **Note (2026-11-07, later):** [two more runs](#/week/8/run/20261106T141945_reach_stand_live) completed, four of four, the last two quiet like the first (lead at most 4.6 deg after 1 s). Calculated from the frames (`handgoal.txt`, CAD tip, not measured), the hand ended 4.6-5.2 cm from the goal in all four, from 6.2-6.6 at handover: about 4 cm back, 2.5-3 left, height on goal. Not yet simulation's 2-4 cm, and one goal.
+
+### F-258 — Neither `armft6` fine-tune beats `66600`: of 16 checkpoints none clears the replay gates, and the two that clear the arm's ask the legs for 2-3 rad; and on the dog's own four runs the replay reads the leg targets, but not the arm's settled pose or the hand
+
+- **Status:** provisional (offline replay, open in the legs; one seed; one goal; the settled pose's cause not found)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "`armft6` scored: none passes, and what the replay can be used for". [`armft6b`](#/week/8/run/20261106T122207_train_seed1_armft6b_s1), [`armft6c`](#/week/8/run/20261106T123325_train_seed1_armft6c_s1), whose run directory holds the tables and scripts (`gate_66200_frames.txt`, `gate4`, `handreplay`, `basin`, `lurch`). The replay on each real run's own frames is that run's `ownframes.txt` and `ownframes_switch.txt`, by the session on the dog's PC.
+
+  `66600` on the dog against the replay on the same run's frames, four runs:
+
+  | what | the dog | the replay |
+  |---|---|---|
+  | leg target off default, first second / after | 0.56-0.57 / 0.24-0.29 rad | 0.57 / 0.34 rad |
+  | lead from 1 s on | 4.4-6.9 deg in three quiet runs, 19.5 in the stepped one | 9.8-12.3 deg, and no swing at 6.1 s in the stepped run |
+  | J2 at 10 s | +4 to +5 deg | +19 to +22 deg |
+  | hand off the goal at 10 s, CAD tip, calculated | 4.5-5.3 cm | 8.5-9.8 cm |
+  | target RMS, all joints | | 10.2-10.7 deg against the dog |
+
+  Each checkpoint, worst over the four real `66600` runs, then on the older sets (`66200`'s two handovers and the dry stand). Gates: lead at most 15 deg from 1 s on, leg target at most 1.2 rad in the first second and 0.9 after.
+
+  | checkpoint | lead, `66600`'s frames | leg target, `66600`'s frames | hand, cm | worst lead, older sets | passes |
+  |---|---|---|---|---|---|
+  | `66600` (`6b`) | 12.3 | 0.57 / 0.34 | 7.5-9.7 | 21 | own frames only |
+  | `6b` `66400`, `66800`, `67000` | 21-33 | 0.53-0.61 / 0.43-0.55 | 12-35 | 32-170 | no |
+  | `6b` `67200` to `67699` | 63-90 | 0.49-0.57 / 0.63-0.96 | 22-42 | 60-135 | no |
+  | `6c` `66400` to `66800` | 30-36 | 0.74-1.42 / 0.85-1.66 | 15-30 | 32-40 | no |
+  | `6c` `67000` to `67699` | 20-28 | 1.57-3.14 / 2.19-3.33 | 8-27 | 10-19 | no |
+
+  On the older sets `6c` `67000` and `67400` clear the arm's gate, and their leg targets reach 2.0-3.0 rad. The switch test (recorded frames to a time, then the loop closed): closing from 2 s or later on the first run lands within about 2 deg of the dog's pose at 10 s, and from 1 s on the J2 +21 pose. 48 replays with the arm's lag at 60-90 ms, the report phase and the start pose +-1.5 deg, on `66200`'s frames, all settled in the J2 +25 pose (7.5-8.9 cm).
+
+- **Scope:**
+  - Offline. The legs and body are replayed, not closed, and `66600`'s frames favour `66600`: every other checkpoint is scored on legs it did not drive. Only `66200` and `66600` have run on the dog.
+  - The frozen set ran to `6b` `67200` and `6c` `67000` and was not restarted after, so the later checkpoints are not scored on it.
+  - `6c` differs from `6b` by two flags, `--leg_answer_range 0.1 1` and `--leg_start_noise 0.15`, so the leg targets are not pinned on either one. That the policy shouts at legs it learnt barely answer is a reading, not shown.
+  - What chooses the arm's settled pose is not found. Arm timing and small start errors did not change it, but that was on `66200`'s frames.
+  - One goal, about 6.5 cm from the hand at handover: this says nothing about a far goal.
+- **Implication:**
+  - `66600` stays. Nothing here replaces it, and more steps on `6b` made it worse, so a longer run of the same recipe is not the next step.
+  - The replay is a screen, not a forecast. Keep it for leg targets and to catch a runaway: it did both. Do not read a hand error or a settled pose from it, and do not read its lead as a bound either way. Its 15 deg mark is unchanged. `66600` missed it on the older frames, and what stands for `66600` is four real runs, not this table.
+  - F-256's 1.4 deg RMS was on `66200`, whose J4 ran near the Follower's cap for most of those 1.5 s. A capped joint may simply be easy to predict; not tested.
+  - The stepped run's lead is still unexplained: the replay does not reproduce it, and synthetic thigh steps match the swing's size at 5-9 deg of lead against 19.5 (3 of 90 passed 25 deg, all -0.30 rad on all four thighs). So whether a step can reach the 25 deg stop on the dog is open.
+- **Note (2026-11-07, later):** where the replay parts, link by link (`whereparts.py`, `whereparts2.py`, `whereparts3.py`, in `armft6c`'s run directory). Recorded frames straight into the policy give the dog's targets exactly. Recorded targets through the arm model give the reports to 0.5-1.2 deg RMS. Closing position alone or last action alone stays on the dog's pose (0.0-0.4 deg RMS); closing both goes to J2 +21. The reports at the ticks they really arrived and the recorded start pose take the first 2 s from 5.8 to 1.7 deg RMS, and it still forks, at 2.5-3 s. The arm's command log shows it stopping 0.3-0.9 deg short of a target, so a play band was tried, 0.1-1.5 deg: it changed nothing, and J2 stayed at +19 to +23. So that explanation is rejected, and the fork's cause is still not found.
+
+### F-259 — In simulation from the dog's stance, `66600` reaches every far goal tried and walks on command, and its stops keep the dog up; the runner now carries both, against fakes only
+
+- **Status:** provisional (simulation, one seed, one policy; open-loop replay; the runner on fakes only; **nothing here has run on the dog**)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "Far goals and walking, prepared". The plan probe (`demos/unifp/run_plan_probe.py`): a schedule per environment, handed over from the dog's mean stance, scored against the dog's own stops (9 Hz reports, 25 deg held 0.5 s, 60 at once, 20 deg in one 20 ms tick, leg target 1.2 / 0.9 rad, tilt 15 deg). The frozen set with a held command. `farreplay.py` on the four real `66600` runs, in `armft6c`'s run directory.
+
+  | far goals, 60 (radius 0.35-0.55, pitch 0-50, yaw +-40), a 3 s slide out, 4 s hold, 3 s back | legs 1 N·m | 2 N·m | 3 N·m |
+  |---|---|---|---|
+  | clear of every stop | 60 | 60 | 60 |
+  | hand at the hold, cm, median (range) | 3.0 (0.7-4.9) | 3.6 (1.4-8.7) | 8.9 (1.3-13.7) |
+  | lead, worst, deg | 4.4 | 5.3 | 6.4 |
+  | leg target after 1 s, worst, rad | 0.30 | 0.37 | 0.51 |
+  | tilt, worst, deg | 7.8 | 8.7 | 7.6 |
+  | contact on the dog, N | 0 | 0 | 0 |
+
+  | walking, 19 plans (each velocity, and three of hands on the sticks) | legs 1 N·m | 2 N·m | 3 N·m |
+  |---|---|---|---|
+  | clear of every stop | 18 | 18 | 13 |
+  | speed made good of 0.2 / 0.3 / 0.5 m/s asked | 0.17 / 0.28 / 0.46 | 0.15 / 0.23 / 0.41 | 0.18 / 0.23 / 0.35 |
+  | worst lead, deg | 16.9 | 27.5 (past 25 for 0.06 s) | 37.9 (0.54 s: a stop) |
+  | worst step in a tick, deg, against 20 | 8.2 | 8.9 | 9.0 |
+  | leg target after 1 s, worst, rad | 0.92 | 0.95 | 1.13 |
+  | tilt, worst, deg | 7.0 | 7.5 | 12.9 |
+
+  At 1 and 2 N·m the one plan not clear is the hardest combined input (0.3 m/s forward, 0.2 sideways, 0.5 rad/s together), just past the 0.9 rad leg bound. Floor grip 0.4 and 0.6 change almost nothing. The frozen set with a held command, through the Follower: no falls in 400 episodes across eight conditions, velocity error 0.04-0.11 m/s, quiet goal error 2.5-3.8 cm.
+
+  The stops, simulated: soft (the arm held, stand-up gains, the fold by home, tuck and fold) from 18 far goals at the hold and mid-slide, and from 19 walking plans at four points of the gait: tilt at most 10.7 deg, none fell, the dog ends at 0.29-0.30 m. Damping: the dog sinks straight to its belly, base 7.6 cm, tilt at most 12.9 deg, the hand at least 27 cm off the floor.
+
+  On the dog's real frames the named goals read 9-13 deg of lead, about what `66600` reads standing on those frames, with leg targets at most 0.36 rad. The fold route is valid and clear of the body from every far pose (about 5.6 s). No joint passes about half its range.
+
+- **Scope:**
+  - **None of this has run on the dog.** The runner's new paths have run against the fake robot and link only. The sticks' bytes have never been read on this dog, so a **Stick check** comes first: a live stand with sport mode released, where they read and move nothing. Not a dry run: sport mode still has them there and walks the dog.
+  - The soft stop has never fired on the dog, and `ArmWatch.soft` has not either. Its simulation uses the same gains and route but not the real legs.
+  - It all rests on leg friction, and the real figure is not known. The four runs give a floor, not a value: a stuck joint absorbed up to 1.2 N·m at the hips, 1.6 at the thighs, 1.9-4.4 at the calves, with the planted feet taking some of that. It fits 1-2 N·m here (knees x1.917) and cannot rule out 3, where walking is rough and the hand ends 6-15 cm off. Two things argue against 3 without measuring it: `rima`'s policies, not trained on friction, walked this dog at the same kp 25, and back at the start goal the simulated hand ends 3.9 cm off at 1 N·m, 5.5-8.6 at 2 and about 13 at 3, against the dog's 4.5-5.3.
+  - The simulator's stance settles 2 cm under the dog's even when written to it (0.266 against 0.288 m). The simulator has been wrong about a live run before (F-255), and F-258 is why the replay is only a screen. The lidar cage is not in the simulator, so zero contact says nothing near the head: every goal offered has radius 0.45 or more.
+  - The hand is the CAD tip, calculated. Walking speed cannot be read from the dog's record.
+- **Implication:**
+  - Both are ready to try, in this order: far goals one at a time, the tour, then walking slowly. `demos/combiner_key/robot/README.md` has the steps and the stops.
+  - The Stick check gates the walking steps.
+  - A first walking run that stops on the 0.9 rad bound is a safe answer and a measurement of friction, not a reason to lift the bound.
+  - F-252's "a whole-body policy needs its legs" still stands: these rest on legs that move.
+
+### F-260 — Fine-tuning away from `66600` keeps losing what the real frames reward: three more recipes, 11 checkpoints, none clears the arm's screen; the gentlest does better on sticky legs in simulation and clears the jitter gate, and is kept as a fallback that has never run on the dog
+
+- **Status:** provisional (simulation and offline replay; one seed; the fallback chosen after seeing every checkpoint; **it has never run on the dog**)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "Three more fine-tunes, and a fallback". `gate4_7.txt`, `gate4_8.txt`, `farreplay_g.txt` in `armft6c`'s run directory.
+
+  | recipe, from `66600` | checkpoints | worst lead on the four real runs' frames, deg | passes |
+  |---|---|---|---|
+  | `armft7`: legs 0-4 N·m, the adaptive rate | 5 | 26-138, one leg target at the 25 rad clip | 0 |
+  | `armft8_1e5`: legs 0-3, fixed 1e-5, no entropy bonus | 3 | 23-47 | 0 |
+  | `armft8_3e6`: legs 0-3, fixed 3e-6, no entropy bonus | 3 | 18-53 | 0 |
+
+  `armft8_3e6` `67199`, the fallback, against `66600`:
+
+  | | `66600` | `67199` |
+  |---|---|---|
+  | frozen set through the Follower, legs 1 N·m, cm | 2.89 / 3.94 | 2.42 / 3.69 |
+  | command step, reversals (gate 30%) | 2.8 deg, 35% | 2.7 deg, 29% |
+  | frozen set with a held command, 8 conditions, falls | 0 of 400 | 0 of 400 |
+  | walking plans clear at 1 / 2 / 3 N·m, of 19 | 18 / 18 / 13 | 18 / 18 / 17 |
+  | worst tilt walking at 3 N·m, deg | 12.9 | 6.9 |
+  | far goals, 60: hand median at 1 / 2 / 3 N·m, cm | 3.0 / 3.6 / 8.9 | 3.1 / 4.3 / 5.7 |
+  | leg target on real frames, first second / after, rad | 0.57 / 0.34 | 0.56 / 0.37 |
+  | lead on `66600`'s frames, on `66200`'s handovers, on the dry stand, deg | 12, 17, 21 | 18, 30-32, 11 |
+  | named far goals on real frames, worst lead, deg | 13 | 18-32, past 25 for up to 0.42 s on the stepped run |
+  | soft stops simulated, worst tilt, deg | 10.7 | 11.3 |
+  | on the dog | four complete stands | never |
+
+- **Scope:**
+  - **`67199` has never run on the dog.** Everything for it is simulation or replay, where a policy once read 3.8 deg of lead and did 33-43 (F-255).
+  - It was picked after looking at 11 checkpoints. Its neighbours in the same run read 52-53 deg on the same screen, so that screen is noisy and 18 may be a lucky reading; the simulation gains are the steadier evidence.
+  - `66600`'s frames favour `66600`. The screen cannot say the others are worse on the dog, only that they differ from what is known to work.
+  - Why the policy drifts is not established. `armft7`'s KL ran far over the 0.01 target (to 102, with the action noise growing from 0.53 to 0.68), and the two gentle runs' KL stayed nearer it and they drifted less on most measures, but with one seed each this is not shown. One run per recipe also means the friction range, the rate and the entropy bonus are not separated.
+  - Friction above about 2 N·m may not describe the dog (F-259), in which case the fallback's advantage is one the dog never needs.
+- **Implication:**
+  - `66600` stays first. Four real runs outweigh any of this.
+  - `67199` is on the console for one case: `66600` proves rough on real legs. It needs its own dry run and a live stand before anything else. Its entry leaves out the tour and the left goal, which read past 25 deg on the stepped run's frames.
+  - More steps of the same recipes are not the next step. The next evidence is what walking and far goals do on the dog.
+
+### F-261 — `66600` reaches far goals on the real dog: three of three, the hand 2.8-4.0 cm off by calculation, where simulation put it
+
+- **Status:** provisional (one run per goal, one dog, a stand only; the hand is forward kinematics from the arm's reports, not measured)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "The first far goals on the dog". [Far: low](#/week/8/run/20261106T235244_reach_stand_live), [Far: left](#/week/8/run/20261106T235343_reach_stand_live), [Far: right](#/week/8/run/20261106T235436_reach_stand_live), each with `hand_error.txt`.
+
+  | goal: radius m, pitch, yaw | held, cm | simulated, cm (F-259) | back at the start goal, cm | tilt, deg | worst lead after the first second, deg | replay's worst lead, deg |
+  |---|---|---|---|---|---|---|
+  | 0.45, 0, 0 | 3.5 | 2.5-3.3 | 0.8 | 5.6 | 9.4 (J2) | 13 |
+  | 0.45, 36, +40 | 2.8 | 2.4-4.0 | 5.6 | 5.4 | 14.6 (J4) | 11 |
+  | 0.45, 36, -40 | 4.0 | 2.2-3.0 | 0.9 | 5.9 | 23.1 (J4) | 13 |
+
+- **Scope:** three goals on a stand, 16 s each, the goal about 30 cm from where the hand starts, where F-257's was about 6.5 cm. All three finished the policy's 16 s with no stop of the dog's own. Low and left folded and lay down as a normal run (fold 5.4 and 6.0 s). **Not shown:** Far: forward (0.55 radius) and Far: tour never ran the policy; walking and the sticks have not run; the soft stop has not fired; the hand was not measured.
+- **Implication:**
+  - F-259's far-goal result holds on the dog for these three goals. This is the first reaching on the dog: F-257 only held about where the arm started.
+  - The replay understated J4 on the right goal by 10 deg: 23.1 against 13, under the 25 deg stop (0.12 s above 20, at 11.0 s, on the slide back). It is a screen, as F-258 says. J4 is the joint to watch in the tour and in walking.
+  - Tilt stayed under 6 deg, so 12 deg is far off on a stand. The 11.5-12.5 deg in each `summary.json` is the stand-up's nose-up, before the policy, and the soft tilt stop does not watch it.
+- **Followed by:** F-263 (2026-11-07): Far: forward, the tour and walking on the dog.
+
+### F-262 — The console's link deadman dropped a healthy dog twice in four live runs, arm out both times: a 2 s gap in a browser poll is not a fault on the dog
+
+- **Status:** provisional for the fix (not yet on the dog); the two stops are as logged; **the cause of the gaps is not found**
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "The link deadman stopped two runs". `console_log.txt` in [Far: right](#/week/8/run/20261106T235436_reach_stand_live) and [Far: forward](#/week/8/run/20261106T235819_reach_stand_live).
+- **Scope:** four live runs from the Precision over WiFi and one SSH tunnel. The first stop came 0.3 s into `stand_end`, after a complete policy, so the arm did not fold. The second came in `stand_up` with the arm at the policy's start. The dog was fine both times: base 0.28 m, roll and pitch about 2-3 deg, its 50 Hz loop at most 21 ms a tick. An earlier trip from the other PC, 2026-11-06, was in preflight with nothing sent, so this is not only the Precision.
+  - **What is known about the gap:** the dongle did not drop (dog's kernel log) and the dog was not stalled. One sample of the tunnel, 10 s after the second stop, was mid-retransmit with nothing from the dog for 0.7 s, and pings reached 385 ms in the half minute after it. 300 pings at other times, on all three paths, stayed under 25 ms. The Precision's WiFi power saving is on. None of this says which end fails, and the true length of the gaps is unknown, since the deadman fires at its limit.
+  - **Also the first E-stops from a live stand** (the console's README had this as not validated): sport mode was confirmed 3.1 s after each. The run's last status has the base at 0.329 m, so sport mode stood the dog up by itself with the arm out. The record ends at the stop, so how it sank is not in it.
+- **Implication:**
+  - `server.py`, in the working tree: the limit is 3.5 s, past TCP's retries. A whole-body run in `stand_up` or `policy` gets `q`, as End gently does; one in `stand_end` or `lie_end` is left to fold; a program that has stopped reporting, anything before the stand-up, and a run without the arm get the E-stop as before. Each gap over 0.6 s is logged when the heartbeat returns, so the next runs measure them.
+  - Against fakes only: 47 console tests, six of them breaking this logic on purpose, and `q` during the stand-up on the fake robot. `q` has been used once on a live whole-body run, and that run went on to a lead stop.
+  - B does not depend on any of this.
+
+### F-263 — `66600` finished the rest on the dog: Far: forward 2.6 cm off, the tour 1.5-3.4 cm, and a 30 s walk with the hand 3.1 cm off at the median and 6.9 at worst; J4's lead passed 25 deg twice, and sideways walking is barely tested
+
+- **Status:** provisional (one run each, one dog; the hand by forward kinematics, not measured; walking speed not measured)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "Forward, the tour and the walk". [Far: forward](#/week/8/run/20261107T001643_reach_stand_live), [Far: tour](#/week/8/run/20261107T001746_reach_stand_live), [Walk](#/week/8/run/20261107T001905_reach_stand_live), each with `hand_error.txt`. Lukas: "all the remaining tests worked with no issues, including the walk".
+
+  | run | length | held, cm | tilt, deg | worst lead after the first second, deg | time past 25 deg |
+  |---|---|---|---|---|---|
+  | Far: forward (0.55, 15, 0) | 16 s | 2.6 | 6.0 | 28.3 (J4) | 0.24 s, at 12.5 s |
+  | Far: tour | 26 s | low 3.4, left 1.5, right 2.9 | 6.3 | 28.3 (J4) | 0.18 s, at 11.5 s |
+  | Walk (start goal, at most 0.3, 0.2, 0.5) | 30 s | 3.1 median, 6.9 worst | 7.6 | 24.0 (J2) | none |
+
+- **Scope:**
+  - All three ended on `--stand_s` with no stop, folded and lay down. Base 0.258-0.319 m walking, leg torque at most 23.4 N·m.
+  - **What was walked:** forward 6.7 s, back 3.9 s, turning 13.1 s, forward or back with a turn 3.6 s, at up to 0.28 m/s and 0.46 rad/s asked. **Sideways: 1.0 s, to the right only, and never with a turn.**
+  - The Stick check and Walk, slow were not run: Walk went first. The log's `ask` matches the runbook's table for forward, back, both turns and right.
+  - How far or fast the dog went is not in the record, and the goal stayed at the start goal. Walking with the hand far out has not run. The soft stop has not fired.
+  - No heartbeat gap in the console log kept (from 00:18:23 UTC), so F-262's fix has not met a real gap. WiFi power saving was still on.
+- **Implication:**
+  - F-259's walking and far-goal results hold on the dog for what was run. Whole-body walking with the hand held is real on this dog.
+  - J4 is the margin: 28.3 deg, past the 25 deg line for half the 0.5 s the stop needs, in free air. Any load on the hand is likely to use up the rest.
+
+### F-264 — The door swing asks `66600` for what it has just done on the dog, a fixed goal while the base walks, but not with a closed hand: its wrist is 99 deg from the grip, and five things around it do not exist (analysis; nothing run)
+
+- **Status:** provisional (analysis of recorded runs; nothing tried on the door)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "Could `66600` swing the door?". The live pull in [F-219's run](#/week/6/run/20261025T052908_pull_close_live) against [Far: forward](#/week/8/run/20261107T001643_reach_stand_live) and [Walk](#/week/8/run/20261107T001905_reach_stand_live); F-146.
+  - **What fits:** through that pull the hand was at radius 0.54-0.58, pitch 12-18 deg, yaw -12 to +2 in UniFP's goal, inside training's range but at its edge (0.58), and within about 3 cm of Far: forward's goal (0.55, 15, 0). The hand barely moved in the base frame (the tool turned 1.5 deg): the base turns with the door. F-146 reached the same conclusion in simulation, with no fall in 116 attempts.
+  - **What does not:**
+    1. **The wrist.** `66600` commands position only. At Far: forward its tool is 99 deg from the grip's, nearly all of it roll (J6 -8 against +97), and pitched 18 deg down. It wandered up to 16 deg holding still, and 14 deg at the median, 29 at worst, walking.
+    2. **The hand's position.** 3.1 cm median and 6.9 worst walking, against a plan that holds the jaws within 1-6 mm of the lever. Clamped on the lever that error becomes force. In F-146 the friction grip held in 15 of 32 attempts, with a free 0.6 kg door and the pose given.
+    3. **The jaws and the stops.** `press_live.py` has no jaw control, and every soft stop and normal end folds the arm. On a closed hand that folds against the lever.
+    4. **The handover.** A whole-body run starts by lying down and releasing sport mode. The grip is made in sport mode, standing. Nothing goes from one to the other with the hand on the lever.
+    5. **Base pose.** The pull is clocked on sport mode's odometry. In a whole-body run sport mode is released. GLIM (`--odom tf`) is the existing alternative, untried with sport mode released.
+    6. **The motion.** The pull asks 0.08 m/s back, 0.2 right and 0.36 rad/s left together, for 3.4 s. F-263 has 1.0 s of sideways walking and none combined with a turn.
+- **Scope:** one recorded pull and one run per goal. The door's real load has never been measured (it runs on past the base by 15-30 deg, F-212, so it is light; it has a spring in its last 10 deg). Training's tool pushes reach 8 N, not confirmed through the fine-tunes. The scripted pull already opens the door on the dog (77 deg, F-219).
+- **Implication:**
+  - Do not put `66600` on the door with the jaws closed as it stands: a stop would fold against the lever.
+  - Next on the dog, with no door: hold the lever's goal while walking the pull's arc in free air. It tests items 2, 5 and 6 with the stops as they are.
+  - J6 can be set apart from the policy (F-146's `--wrist`; the controlled point lies on its axis, so the roll does not move it). That covers the roll, not the 18 deg of pitch.
+  - An open hand pushing the door from behind, after the script has opened it, would avoid 1, 3 and most of 2. Not simulated yet.
+
+### F-265 — A standing wipe across a 40 cm bench is prepared: in simulation `66600` holds the stroke's height and presses 2-15 N on position goals alone, but a hard stop with the hand on the bench puts every arm joint at its torque limit (simulation and fakes; never on the dog)
+
+- **Status:** provisional (simulation with an invented pad, and the runner against fakes; the bench's and cloth's numbers are assumed; **it has never run on the dog**)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "A wiping test for the bench". `run_plan_probe.py --plan wipe --bench`, the dog's stance, a kinematic box with compliant contact:
+  [friction 1](#/week/8/run/20261107T012248_probe_seed1_wipe3_f1), [2](#/week/8/run/20261107T012326_probe_seed1_wipe3_f2), [3](#/week/8/run/20261107T012404_probe_seed1_wipe3_f3), [stiff pad](#/week/8/run/20261107T012442_probe_seed1_wipe3_f2_stiff), [soft stop](#/week/8/run/20261107T011746_probe_seed1_wipe2_soft), [damping stop](#/week/8/run/20261107T011810_probe_seed1_wipe2_damp).
+
+  | console, goal over the bench | tip over the bench, cm, friction 1 / 2 / 3 | press, N mean (peak) | stops |
+  |---|---|---|---|
+  | Wipe: high, +6 | 8.7 / 9.1 / 7.6 | none | none |
+  | Wipe: near, +2 | 4.9 / 5.5 / 4.2 | none | none |
+  | Wipe: touch, 0 | 3.0 / 3.7 / 2.4 | none | none |
+  | Wipe: firm, -2 | 1.2 / 1.9 / 1.5 | 2 (8) / none / 1 (6) | none |
+  | Wipe: hard, -3 | 1.7 / 1.0 / 1.4 | 13 (16) / 8 (14) / 3 (7) | lead at friction 1 |
+
+  - **The hand rides 2-4 cm over its goal** at these goals, and a bare hand meets the bench with the tip about 1 cm up: another part of it touches first. Touching held for 57-100% of a stroke once it began. The stiff pad changed little.
+  - **The layout:** with the edge at 0.45 m and radius 0.52 the hand slid off the near edge at the deepest goal, tip at x 0.44 and under the top with nothing on it. Edge 0.42 and radius 0.54 keep the hand 5-10 cm in.
+  - **Past the ladder:** goals of -4 and -5 cm tripped the lead stop (43-51 deg, over 25 for 4-5 s) and lost the goal by 30 cm.
+  - **Soft stop mid-stroke:** hand lowest 0.407-0.411 m, press peak 31-38 N, tilt 8.4 deg, base 0.183 at its lowest and 0.298 at the end.
+  - **Damping mid-stroke:** the base fell to 0.076 m with the hand still on the bench at 0.411, press peak 34-44 N, tilt 10.8 deg, every arm joint at its limit (3.3 and 1.7 N·m, URDF-unverified). The soft stop's peak torques read the same, so the torque alone does not separate them; the 21 cm the arm was forced through does.
+  - **The jaws:** `arm_link` takes a goal with no gripper as "where the jaws measure", so a squeeze ends as soon as a stream starts, with no fault shown. `ArmSender` now carries the jaw command on every goal. 15 tests, eight deliberate breaks all caught.
+- **Scope:** the sim's lead read 3-5 deg in free air where the dog's reached 28, so its stops are optimistic. The pad is a contact stiffness, not cloth, and hangs nothing under the hand. Height repeats to about 2 cm on the dog, against the sim's 0.3-0.8 cm of wander (the same goal 1.2 and -2.2 cm off in height on Far: low and the tour's low). Standing only, one stroke.
+- **Implication:**
+  - On the dog the rung that touches is found by running the ladder, and a thick cloth is what makes it forgiving: with 2 cm of repeatability a thin one will touch and lift.
+  - A hard stop with the hand on the bench risks the arm. B stays a stop. End gently is the first choice unless something is actually wrong.
+  - This policy has no force command in use and no wipe training. A real wiping result needs the plan's measure: at least 90% of the path and 80% contact.
+- **Followed by:** F-266 (2026-11-07): the dog now walks in on the sticks first, so "placed by hand" no longer holds.
+
+### F-266 — Walking in on the sticks before the wipe keeps the hand's mean height to about 1 cm at leg frictions 1 and 2 and clears every stop when the dog ends in place, but widens the height along a stroke, and a blind walk does not end where it began (simulation and fakes; never on the dog)
+
+- **Status:** provisional (simulation with an invented pad; the walk scripted, with no one steering; **never on the dog**)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "Walking in before the wipe". `run_plan_probe.py --plan wipe --wipe_walk_first`: on the slow sticks back, forward, both turns and both ways sideways, the last move held until A, 3 s, then the wipe. [No bench, friction 1](#/week/8/run/20261107T014001_probe_seed1_wipe4_air_f1), [2](#/week/8/run/20261107T014054_probe_seed1_wipe4_air_f2), [3](#/week/8/run/20261107T014148_probe_seed1_wipe4_air_f3); [blind, on the bench](#/week/8/run/20261107T014246_probe_seed1_wipe4_bench_f2); [started back so it ends in place, friction 1](#/week/8/run/20261107T014519_probe_seed1_wipe5_f1), [2](#/week/8/run/20261107T014423_probe_seed1_wipe5_f2).
+
+  | leg friction | tip over the bench at Wipe: touch, no walk, mean (range), cm | after the walk | clear of every stop |
+  |---|---|---|---|
+  | 1 | 3.0 (2.7-3.6) | 3.6 (3.3-4.2) | 4 of 4 |
+  | 2 | 3.7 (3.3-4.3) | 3.0-4.1 (1.4-6.1) | 4 of 4 |
+  | 3 | 2.4 (1.5-3.3) | 4.2 (3.9-4.9) | 0 of 4, leg targets 0.97-1.09 rad against 0.9 |
+
+  - **Where it ends:** commands that cancel out did not. The dog finished 10-65 cm forward, by friction, and 8-11 deg turned. Walked blind at the bench it reached it, 22-26 N on the body, and 0 of 4 cleared the lead stop.
+  - **Ended in place** (started 11 and 32 cm back): 8 of 8 clear, nothing on the body. Wipe: hard touched for 77-88% of a stroke at friction 1 and 50-61% at friction 2, at 2-5 N mean and 5-11 N peak. Wipe: firm touched 12-19% at friction 2. Standing, the same rung touched more (F-265).
+  - The tip's mean x fell to 0.44 on some strokes, 2 cm inside the 0.42 edge, with the base 2-4 cm back and turned.
+  - `--reach_walk_first` in `press_live.py`: the sticks until A, then the goals, never both, and `--stand_s` counts from that A. Nine tests, seven deliberate breaks each caught by a test of its own.
+- **Scope:** a script is not an operator: on the dog the steering is by eye, and the walk's forward creep and turn may not be the simulator's. Friction 3 is rougher than the dog looked (F-263's run cleared its stops at up to 0.28 m/s). Sideways walking is 1.0 s on the dog.
+- **Implication:**
+  - Fine to try. Square the dog up by eye and check the gap before A, since the stroke is laid out from where the dog stands.
+  - Expect less even contact than a run with the dog placed by hand: if a stroke touches at one end only, the stance is the likely reason, not the rung.
+
+### F-267 — `66600` still answers its force input, as exactly 5 mm of hand per newton, so the force wipe is open loop: neither the foot sensors nor the policy's own estimate can yet say what the hand presses with on the dog (simulation, and real runs with no contact)
+
+- **Status:** provisional (the force input in simulation only, never on the dog; the sensors' noise measured on the dog, but with no contact)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "A force wipe, and what cannot be measured yet".
+  - **The input works, as a move of the target.** [Free air, friction 2](#/week/8/run/20261107T023008_probe_seed1_wipeF_air): told 0, 2, 4, 6 and 8 N the tip went 3.7, 2.7, 1.7, 0.7, -0.3 cm over the bench, 5 mm a newton: the 200 N/m spring it trained with (`rewards.tracking_ee_force_world`).
+  - **Against the bench**, at Wipe: touch's height, mean N along a stroke (peak):
+
+    | told | [friction 1](#/week/8/run/20261107T023852_probe_seed1_force_f1) | [friction 2](#/week/8/run/20261107T024041_probe_seed1_force_f2) | [friction 3](#/week/8/run/20261107T024210_probe_seed1_force_f3) | [after a walk, friction 1](#/week/8/run/20261107T025647_probe_seed1_force2_walk_f1) | [after a walk, friction 2](#/week/8/run/20261107T025439_probe_seed1_force2_walk_f2) |
+    |---|---|---|---|---|---|
+    | 2 N | none | none | up to 1 (9) | none | none |
+    | 4 N | 2-7 (12) | none | 2-4 (6) | none | up to 1 (9) |
+    | 6 N | 7-10 (39) | 8-10 (16) | 0-6 (11) | 13-16 (20), lead stop | 2-3 (11) |
+
+  - **So told is not felt:** the same 6 N gave 2 to 16 N, or none. [8 N tripped the lead stop](#/week/8/run/20261107T023046_probe_seed1_wipeF_bench) at friction 2, so the console stops at 6.
+  - **The pad does not set it:** [400](#/week/8/run/20261107T024347_probe_seed1_force_pad400), 2000 and [8000 N/m](#/week/8/run/20261107T024516_probe_seed1_force_pad8000) gave 7-9, 8-10 and 9-10 N at 6 N told. The dog gives way first, its base 2.5 cm lower.
+  - **Nor is it even along the stroke:** [held at the stroke's centre](#/week/8/run/20261107T024637_probe_seed1_force_check) 6 N told pressed 2 N, against 8-10 along it.
+  - **[Soft stop](#/week/8/run/20261107T024725_probe_seed1_force_soft) and [damping](#/week/8/run/20261107T024759_probe_seed1_force_damp) mid-stroke** at 4 and 6 N: as F-265. Soft: tilt at most 7 deg, hand at least 0.407 m, press peak 35-39 N, base 0.298 m at the end. Damping: base 0.076 m, hand still on the bench at 0.407-0.409, press peak 25-41 N.
+  - **The estimate in simulation** ([run](#/week/8/run/20261107T023319_probe_seed1_wipeF_est)): the decoder's z rises about 2 N for a 10 N press, from a baseline of 4.4-5.5 N that moves with the arm's pose.
+  - **The same signals on the dog, hand held still, no contact**, seven holds of the far-goal runs: within a hold they are quiet (decoder 0.1-0.7 N, foot sum 0.2-3.8 raw over 0.5 s). Between holds they are not: the decoder's mean ran from -0.7 to 7.1 N and the foot sum from 150 to 169 raw, and the same goal, Far: low, read 7.1 N and 169 on one run and -0.5 N and 150 on the tour. At an assumed 1.7 N a raw unit (19 kg, unweighed) that is 33 N of shift, against a signal of 5-10.
+  - `--reach_force_n`: levels on the path's clock, ramped over 1 s, on once the hand has arrived and off before it leaves, 0-8 N. 12 tests. Seven deliberate breaks caught, after a first pass was void (a test's own wrong bound failed every time) and one break proved a test vacuous (it compared the window with itself); both fixed and rerun.
+- **Scope:** the pad and the press are simulation. The hold data has no contact in it, so the real signal size is unknown, and the eight wipe runs on the dog of 2026-11-07 (below) have not been read: the dog went off the network at 13:28 before they could be fetched. Two walk-in runs are void (the probe's force timing) and marked so; the table uses their reruns.
+- **Implication:**
+  - On the dog this tests the policy's trained force input, open loop. It is not force control. Say "told" for the number on the button.
+  - **Force check** with a kitchen scale is the next measurement: real force against told, and against both signals at one fixed pose, where they are quiet.
+  - A closed loop then has a sensor to be tuned on, if one is good enough, probably as a step against a baseline taken in the same run. Along a moving stroke the baseline moves with the pose, which is the harder case.
+  - F-265 and F-266 said "never on the dog": no longer true of the position-only wipes, whose runs are still to be read.
+- **Followed by:** F-268 and F-269 (2026-11-07): the force input has now run on the dog, and at one fixed pose the foot sum does read the hand's force.
+
+### F-268 — First real force reading: the hand, set too deep by a console not restarted, pressed 18-26 N on a scale and told force made no difference; the hand had stalled, and contact shows plainly in the foot sensors and the hand's height, but neither followed the force itself
+
+- **Status:** provisional (one complete run of three attempts, at the wrong height; the scale read by eye from video)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "The Force check on the scale". `week_08/figures/force_check_aligned.csv`, `force_check_scale_display_1s.jpg`, `force_check_scale_display_peak.jpg`, from Lukas's video `20261107_142245.mp4`, begun at the last A. The run is `20261107T032158_reach_stand_live`, read from its `parts/`.
+
+  | seconds after A | told, N | scale, g (N) | tip over the bench, cm | J5 lead, deg | foot sum, raw | decoder z, N |
+  |---|---|---|---|---|---|---|
+  | 5, descending | 0 | 58 | 16.7 | -0.3 | 157 | 6.2 |
+  | 8, the peak | 0 | 2,700 (26) | 3.5 | 9.8 | 142 | 9.0 |
+  | 9-11 | 0 | 2,110 (21) | 3.6 | 10.5 | 142 | 8.7 |
+  | 13-15 | 2 | 1,915 (19) | 3.7 | 13.3 | 142 | 8.9 |
+  | 17-20 | 4 | 1,870 (18) | 3.7 | 15.4 | 142 | 9.2 |
+  | 22-23 | 6 | 1,850 (18) | 3.7 | 17.2 | 142 | 9.4 |
+  | 26, rising | 0 | 18 | 17.8 | 3.4 | 154 | 2.8 |
+
+- **Scope:**
+  - **The height was not the one intended.** The goal was 0 (pitch -9.6), the bench's height, with a scale under the hand: the console had not been restarted after the fix, so the dog's `policies.json` was the old one. The hand stopped 3.7 cm above its goal. Attempt 1 ended on the J5 lead stop at A + 9 s (26.7 deg) and attempt 2 on End gently.
+  - One run, one cloth, scale digits by eye to about 10 g and aligned to about 0.5 s. A share of the hand's load may have reached the bench through the cloth, not the scale.
+- **Implication:**
+  - **Told force has no effect once the hand is stalled.** The policy did answer, J5's lead rising 10 to 17 deg and J3's 1 to 6, but the hand did not move and the scale did not rise. This says nothing about the force input in the range it was meant for. The hand was past that range before the first step.
+  - **Real force was three to four times the largest told force**, and 18-26 N is the most this hand has pressed. Why it settled near 18 N is not known: the servos' limit and the cloth or scale relaxing are candidates.
+  - **Contact is easy to see, the force is not.** The foot sum stepped down about 14 raw on contact and back after it, and the tip stopped following the goal. But while the scale fell from 26 to 18 N the foot sum stayed at 142, within 0.6. So it is a good contact detector and, on this run, not a force reading. The decoder rose about 4 N, as simulation had it (F-267), and then followed the told force, not the real one.
+  - The next run is the same check at the raised height, so that told 0 is a light touch.
+- **Followed by:** F-269 (2026-11-07): "not a force reading" was too strong. At the raised height the foot sum followed the scale, and it reads this run's plateau to about 1 N. What it missed here is the first seconds' peak.
+
+### F-269 — At the raised height the real force follows the told force, 6 to 19 N for 0 to 6 N told, and at that spot the foot sensors read it to about 1 N, on a run they were not fitted to
+
+- **Status:** provisional (one run at one spot, with one cloth on one scale, read by eye; held out against one other run at the same spot)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "The Force check at the raised height". [The run](#/week/8/run/20261107T033949_reach_stand_live), goal +5 cm, ended on `--stand_s` with no stop, tilt 7.2 deg, lead at most 18.9 deg. Lukas's video `20261107_144033.mp4`, begun at the last A, read every 0.5 s: `week_08/figures/force_check_tall_aligned.csv`, `force_check_tall_scale_display_half_s.jpg`.
+
+  | told, N | scale, g | real, N | tip over the bench, cm | foot sum, raw | decoder z, N | J5 lead, deg |
+  |---|---|---|---|---|---|---|
+  | 0 | 648 (sd 236) | 6.4 | 5.18 | 149.8 | 4.2 | 0.7 |
+  | 2 | 1,114 (sd 242) | 10.9 | 4.44 | 147.3 | 4.9 | 2.3 |
+  | 4 | 1,445 (sd 159) | 14.2 | 4.09 | 145.3 | 6.0 | 3.6 |
+  | 6 | 1,939 (sd 51) | 19.0 | 3.60 | 142.0 | 6.8 | 5.8 |
+
+  - **The input works on the dog:** real = 2.06 x told + 6.4 N, residuals under 0.5 N on the four means. The hand moved 2.6 mm a told newton, half of what it does in free air, with 8 N a centimetre through the cloth.
+  - **Each signal against the scale**, 33 samples of 0.5 s in contact: foot sum r -0.98, 1.73 N a raw unit, residual 0.9 N; the front feet alone r -0.99, 1.03 N a unit, 0.6 N; tip height r -0.98, 8.2 N a cm, 0.8 N; decoder z r +0.95, 4.7 N a unit, 1.4 N; J5 lead r +0.93, 1.6 N.
+  - **The foot sum's gain is the one the weight gave:** 1.73 against F-267's 1.74, from the dog at an assumed 19 kg.
+  - **Held out:** the fits above, applied to [the deep run](#/week/8/run/20261107T032158_reach_stand_live) from 13 s on: foot sum +1.0 N mean error, tip height -0.5 N, on 18-19 N. Both missed its first seconds by up to 6.5 to 7 N: 26 N at 8 s read as 19-20.
+- **Scope:**
+  - One spot, one cloth, one scale, one afternoon. The held-out run shares all of those. The digits are by eye, and the stepped force makes every signal correlate: the residuals say more than r.
+  - The scale read ±2.5 N at the low steps, in a slow swing of about 5 s, and steadied at 6 N told.
+  - **The zero is pose-dependent.** Zero force at this pose is 153.4 raw, against 160-162 at the start goal, a gap worth 15 N. F-267's holds moved further than that between runs at one goal, though these two runs agreed to 1.8 raw.
+  - Tip height needs the surface's height, so it would not carry to the bench without change. The foot sum does not.
+- **Implication:**
+  - **A closed loop can now be built, at a fixed spot:** read the foot sum in the air at the same pose, then press until it has dropped by the target. Nothing here shows the same along a moving stroke, where the zero moves with the pose, so that needs a pass in the air first.
+  - Told is not real: at this height told 2 N is about 11 N. Say which is meant.
+  - The Force wipe modes sit at goal 0, set before this. From the hand's stopping heights the scale looks about 3 cm tall, in which case they are about 2 cm too deep for these numbers. Check before using them.
+- **Followed by:** F-270 (2026-11-07): measured, the bench is 41.7 cm and the scale 4.1 cm, so that estimate was off. The modes were about 1 cm too deep, not 2.
+
+### F-270 — The bench is 41.7 cm, the hand runs about 3 cm lower going right to left than coming back, and the foot sensors' zero moves ±9 N along a stroke: the force wipes press one way at a corrected height, open loop, and a closed loop along a stroke is not supported yet
+
+- **Status:** provisional (real strokes re-read with no new run; the new modes simulated and against fakes, never on the dog)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "One-way force wipes". Lukas: the table is 41.7 cm with the whiteboard on it, and the scale 4.1 cm on top.
+  - **The heights.** Every "over the bench" figure from F-265 to F-269 is over 40 cm, as assumed. The bench's top is 1.7 cm higher and the scale's 45.8 cm. Force check's goal, 45.0 cm, was 0.8 cm under the scale's top.
+  - **The calculated tip reads low.** It stopped at 43.6-43.7 cm on a 45.8 cm scale and 40.5-40.9 on a 41.7 cm bench, under surfaces it cannot pass, by 2.1 and about 1 cm before any cloth. The cause is not known. Differences between runs may still hold, absolute heights do not.
+  - **The two ways across**, tip over 40 cm by yaw, all five real strokes, right to left then back: high 4.1-5.9, then 7.2-9.5; near 0.4-1.2, then 1.7-4.4; touch 0.2-1.2, then 1.7-3.0; firm -0.3-0.9, then 0.3-1.2, and 0.4-1.1, then 0.2-1.4. In free air it is about 3 cm. Right to left has always been the first pass, so direction and order are not separated.
+  - **The foot sum along a stroke**, Wipe: high, nothing pressing: 159, 156, 152, 152, 152 raw going, 161, 159, 156, 158, 160 coming back. That is about ±5 raw, ±9 N, and up to 8 raw between directions at one yaw.
+  - **Set up instead:** `live_force_0, 2, 4, 6`, goal 41.0 cm, 0.7 under the bench as Force check was under its scale. Two strokes right to left, the hand lifting 8 cm to come back. `--stand_s 40`. [Friction 2](#/week/8/run/20261107T041012_probe_seed1_oneway_f2) 4 of 4 clear of every stop, [friction 1](#/week/8/run/20261107T041201_probe_seed1_oneway_f1) 3 of 4, a lead stop at told 4. The lifted return touched nothing.
+- **Scope:** the console's "about 6, 11, 14, 19 N" are F-269's at the stroke's centre, held still, on a scale. Moving, and at the stroke's ends, the force is not known and will not be even. By the foot sum, against its 153.4 zero at the centre, near pressed about 2 N there, touch about 6 and firm about 19.
+- **Implication:**
+  - The wipes do not need a force hold first: that test only matters for a closed loop.
+  - A closed loop along a stroke would chase an error as big as its signal. A same-direction pass in the air might fix that zero, untested. The next runs carry the data: a second right-to-left pass shows whether the low side is direction or order.
+  - The wiped arc, not the label, is the result.
+- **Followed by:** F-271 (2026-11-07): the force wipes have run on the dog, and the second right-to-left stroke settles direction against order.
+
+### F-271 — The force wipes ran on the dog, eight of eight with no stop: estimated force rose with the told level, about 2 to 21 N, with both right-to-left strokes in contact, so the hand's low side is direction, not order; open loop, and what they erased is on Lukas's videos, not yet read
+
+- **Status:** provisional (eight runs on one bench with one cloth; the force is estimated from the foot sensors, not measured; the wiped result is not scored here)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "The force wipes on the dog". `week_08/figures/force_wipe_by_stroke.csv`, `force_wipe_force_by_level.png`, `wipe_hand_height_two_ways.png`, rebuilt by `force_wipe_figures.py` from the recorded runs.
+
+  | told, N | runs | stroke 1, N | stroke 2, N | hand, stroke 1 / 2, cm (calculated) | Force check at the centre, N |
+  |---|---|---|---|---|---|
+  | 0 | [1](#/week/8/run/20261107T041833_reach_stand_live), [2](#/week/8/run/20261107T042148_reach_stand_live) | 2.2, 1.3 | -0.7, 7.0 | 41.5 / 41.1 | 6.4 |
+  | 2 | [1](#/week/8/run/20261107T042503_reach_stand_live) | 11.7 | 10.7 | 41.0 / 40.3 | 10.9 |
+  | 4 | [1](#/week/8/run/20261107T043324_reach_stand_live), [2](#/week/8/run/20261107T043501_reach_stand_live) | 7.8, 11.3 | 12.0, 3.9 | 40.6 / 40.7 | 14.2 |
+  | 6 | [1](#/week/8/run/20261107T042714_reach_stand_live), [2](#/week/8/run/20261107T042857_reach_stand_live), [3](#/week/8/run/20261107T043104_reach_stand_live) | 16.7, 21.2, 12.8 | 25.3, 21.2, 17.5 | 40.0 / 40.2 | 19.0 |
+
+  - **All eight ended on `--stand_s`,** folded and lay down. Tilt at most 9.9 deg, lead at most 25.1 deg, momentary.
+  - **Force by level:** over the 16 strokes, estimate = 2.57 x told + 2.4 N, r 0.83, residual sd 4.1 N. The Force check's line, on a scale and held still, was 2.06 x told + 6.4. Told 6 agrees, told 0 and told 4 read lower than their console labels of about 6 and 14 N.
+  - **Direction, not order:** a second right-to-left stroke runs as low as the first: mean hand height within 0.7 cm at each level. Left to right in the position-only wipes it ran up to about 3 cm higher. So the low side belongs to the direction of travel. Why is not known.
+  - **Along a stroke it is uneven:** within one stroke the estimate ran from about -4 to 28 N across the five yaw bins.
+- **Scope:**
+  - **The force is an estimate.** 1.73 N a raw unit, fitted at one spot (F-269), with each run's lifted return as its zero: travelling the other way, 8 cm higher, so per F-270 a stroke's figure may be out by up to ±9 N. No scale was under these strokes.
+  - **Open loop:** nothing regulated the force. Told 2 N is one run.
+  - **Wiping is not scored.** Lukas filmed what each run erased and will add the videos. The plan's measures, 90% of the path and 80% contact, cannot be stated until they are read.
+  - One bench, one cloth, the dog walked in by eye. The hand heights are calculated and read low (F-270).
+- **Implication:**
+  - The trained force input raised the force on a real wipe, in the same direction and about the same size as on the scale. That is the first force-commanded contact task on this dog, and it is not force control.
+  - Report the told level with the estimate beside it, not the console's label.
+  - The next evidence is the videos: which levels erased a full arc. A closed loop should wait for a steadier zero (F-270).
 

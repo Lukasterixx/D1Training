@@ -1,6 +1,7 @@
 """The arm half of the reach (`demos/combiner_key/robot/reach_arm.py`): against the model the policy trained on, and the real arm."""
 import json
 import math
+import struct
 import unittest
 from pathlib import Path
 
@@ -9,12 +10,15 @@ import torch
 
 import d1_hardware
 import d1_ik
-from demos.combiner_key.robot import reach_arm
+from demos.combiner_key.robot import hand_error, leg_policy, lowlevel, reach_arm
+from position_only.workspace import load_urdf
 from unifp_isaaclab import interface
 from unifp_train import task_cfg
 from unifp_train.arm_link import ArmLink
 
 DATA = Path(__file__).resolve().parent / "data"
+REPO = Path(__file__).resolve().parent.parent
+DEPLOYED = REPO / "checkpoints/reach_force_sticky_model_66600.npz"
 DT = 0.02
 
 
@@ -291,6 +295,240 @@ class TestOnTheRealArmsRuns(unittest.TestCase):
         since = [t - tr[tr <= t][-1] for t in tc if (tr <= t).any()]
         inside = float(np.mean([reach_arm.in_window(s) for s in since]))
         self.assertGreater(inside, 0.97)
+
+
+class ThePressForce(unittest.TestCase):
+    def test_nothing_outside_its_window(self):
+        f = reach_arm.PressForce([4.0], 10.0, 20.0)
+        self.assertEqual([f.at(t) for t in (0.0, 10.0, 20.0, 25.0)], [0.0, 0.0, 0.0, 0.0])
+
+    def test_it_ramps_on_and_off(self):
+        f = reach_arm.PressForce([4.0], 10.0, 20.0)
+        self.assertAlmostEqual(f.at(10.5), 2.0)
+        self.assertAlmostEqual(f.at(15.0), 4.0)
+        self.assertAlmostEqual(f.at(19.5), 2.0)
+
+    def test_levels_share_the_time_and_ramp_between(self):
+        f = reach_arm.PressForce([0.0, 2.0, 4.0, 6.0], 0.0, 20.0)
+        self.assertEqual(f.at(4.0), 0.0)
+        self.assertAlmostEqual(f.at(5.5), 1.0)
+        self.assertAlmostEqual(f.at(9.0), 2.0)
+        self.assertAlmostEqual(f.at(17.0), 6.0)
+
+    def test_it_refuses_what_the_policy_never_trained_on(self):
+        for levels in ([8.5], [-1.0], []):
+            with self.assertRaises(ValueError):
+                reach_arm.PressForce(levels, 0.0, 20.0)
+        with self.assertRaises(ValueError):
+            reach_arm.PressForce([1.0, 2.0, 3.0], 0.0, 5.0)
+
+    def test_the_slot_is_trainings_and_the_ceiling_too(self):
+        self.assertEqual(interface.CMD_EE_FORCE.stop - 1, leg_policy.CMD_EE_FORCE_Z)
+        self.assertEqual(task_cfg.GRIPPER_FORCE_RANGE_N[1], reach_arm.MAX_FORCE_N)
+
+    def test_the_force_is_down_and_in_the_right_slot(self):
+        meta = {"num_commands": 15, "cmd_ee_radius": 3}
+        commands = leg_policy.reach_command(meta, (0.5, 0.1, 0.2), (0.1, 0.0, 0.0), 4.0)
+        self.assertEqual(commands[leg_policy.CMD_EE_FORCE_Z], -4.0)
+        self.assertEqual(float(np.abs(commands[6:11]).sum()), 0.0)
+
+
+class TheJaws(unittest.TestCase):
+    def test_the_units_are_the_arms(self):
+        import d1_hardware
+        self.assertEqual((reach_arm.JAWS_OPEN_UNITS, reach_arm.JAWS_SHUT_UNITS), (d1_hardware.GRIPPER_UNITS_OPEN, d1_hardware.GRIPPER_UNITS_CLOSED))
+
+    def test_closing_runs_from_open_to_shut_and_stays(self):
+        self.assertEqual(reach_arm.jaws_closing(0.0), reach_arm.JAWS_OPEN_UNITS)
+        self.assertAlmostEqual(reach_arm.jaws_closing(reach_arm.CLOTH_CLOSE_S), reach_arm.JAWS_SHUT_UNITS)
+        self.assertAlmostEqual(reach_arm.jaws_closing(100.0), reach_arm.JAWS_SHUT_UNITS)
+
+    def test_a_hold_carries_no_gripper_and_the_rest_do(self):
+        sent = []
+        sock = type("Sock", (), {"sendall": lambda self, b: sent.append(json.loads(b))})()
+        arm = reach_arm.ArmSender(sock)
+        arm.gripper = -19.8
+        arm.follow(np.zeros(6))
+        arm.keepalive()
+        arm.path([[0.0] * 6, [1.0] * 6])
+        arm.hold()
+        self.assertEqual([m.get("gripper") for m in sent], [-19.8, -19.8, -19.8, None])
+
+
+class TheGoalPath(unittest.TestCase):
+    START = (0.5, math.pi / 5, 0.0)
+
+    def path(self, *via, settle=3.0):
+        return reach_arm.GoalPath(self.START, via, settle)
+
+    def test_the_ranges_are_trainings(self):
+        self.assertEqual(reach_arm.GOAL_RADIUS_M, interface.EE_GOAL_RADIUS_RANGE)
+        self.assertEqual(reach_arm.GOAL_PITCH_RAD, interface.EE_GOAL_PITCH_RANGE)
+        self.assertEqual(reach_arm.GOAL_YAW_RAD, interface.EE_GOAL_YAW_RANGE)
+
+    def test_it_holds_slides_holds_and_comes_back(self):
+        far = (0.45, 0.0, 0.3)
+        p = self.path((far, 3.0, 4.0))
+        self.assertEqual(p.at(0.0).tolist(), list(self.START))
+        self.assertEqual(p.at(2.99).tolist(), list(self.START))
+        np.testing.assert_allclose(p.at(4.5), (np.array(self.START) + np.array(far)) / 2)    # in spherical coordinates, as `EeGoalTrajectory`
+        np.testing.assert_allclose(p.at(6.0), far)
+        np.testing.assert_allclose(p.at(9.99), far)
+        np.testing.assert_allclose(p.at(13.0), self.START)
+        np.testing.assert_allclose(p.at(100.0), self.START)
+        self.assertEqual(p.duration, 3.0 + 3.0 + 4.0 + 3.0 + reach_arm.BACK_HOLD_S)
+
+    def test_a_goal_never_jumps(self):
+        p = self.path(((0.35, 1.0, 1.2), 2.0, 1.0), ((0.55, -0.7, -1.2), 2.0, 1.0))
+        goals = np.array([p.at(k * 0.02) for k in range(int(p.duration / 0.02) + 10)])
+        self.assertLess(np.abs(np.diff(goals, axis=0)).max(), 0.03)
+
+    def test_outside_what_it_trained_on_is_refused(self):
+        for bad in ((0.25, 0.0, 0.0), (0.6, 0.0, 0.0), (0.5, 1.1, 0.0), (0.5, -0.8, 0.0), (0.5, 0.0, 1.3)):
+            with self.assertRaises(ValueError):
+                self.path((bad, 3.0, 1.0))
+
+    def test_the_keep_out_is_trainings(self):
+        self.assertEqual(reach_arm.GOAL_KEEP_OUT_LOWER, interface.EE_GOAL_COLLISION_LOWER)
+        self.assertEqual(reach_arm.GOAL_KEEP_OUT_UPPER, interface.EE_GOAL_COLLISION_UPPER)
+        self.assertEqual(reach_arm.GOAL_UNDERGROUND_M, interface.EE_GOAL_UNDERGROUND_LIMIT)
+        self.assertEqual(reach_arm.GOAL_CHECK_SAMPLES, interface.EE_GOAL_COLLISION_SAMPLES)
+
+    def test_a_goal_through_the_dog_or_the_floor_is_refused(self):
+        for bad in ((0.3, -0.78, 0.7), (0.58, -0.78, 0.0)):    # inside the keep-out box, 0.16 m ahead and 0.21 under the centre; under the floor's limit
+            with self.assertRaises(ValueError):
+                self.path((bad, 3.0, 1.0))
+        self.assertTrue(reach_arm.goal_is_clear(self.START, (0.45, 0.0, 0.0)))
+
+    def test_every_goal_offered_is_clear(self):
+        policies = json.loads((REPO / "demos/robot_console/policies.json").read_text())
+        modes = next(p for p in policies if p["id"] == "reach_66600")["modes"]
+        seen = 0
+        for words in modes.values():
+            now = self.START
+            for k, word in enumerate(words):
+                if word == "--reach_via":
+                    r, p, y = float(words[k + 1]), math.radians(float(words[k + 2])), math.radians(float(words[k + 3]))
+                    self.assertTrue(reach_arm.goal_is_clear(now, (r, p, y)), words)
+                    now = (r, p, y)
+                    seen += 1
+            self.assertTrue(reach_arm.goal_is_clear(now, self.START))
+        self.assertGreaterEqual(seen, 7)
+
+    def test_a_slide_faster_than_the_floor_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.path(((0.45, 0.0, 0.0), 1.0, 1.0))
+
+
+class TheSticks(unittest.TestCase):
+    def test_each_way_round(self):
+        w = reach_arm.WalkSticks(0.3, 0.2, 0.5)
+        v = lambda **k: w.velocity({"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0, **k})   # noqa: E731
+        self.assertEqual(v(ly=1.0), (0.3, 0.0, 0.0))             # up: forward
+        self.assertEqual(v(ly=-1.0), (-0.3, 0.0, 0.0))
+        self.assertEqual(v(lx=1.0), (0.0, -0.2, 0.0))            # right: -y in the base frame
+        self.assertEqual(v(rx=1.0), (0.0, 0.0, -0.5))            # right: clockwise, -z
+        self.assertEqual(v(rx=-1.0), (0.0, 0.0, 0.5))
+
+    def test_a_resting_stick_asks_nothing_and_a_pushed_one_walks(self):
+        w = reach_arm.WalkSticks(0.3, 0.2, 0.5)
+        self.assertEqual(w.velocity({"lx": 0.19, "ly": -0.19, "rx": 0.19, "ry": 1.0}), (0.0, 0.0, 0.0))
+        for k, name in enumerate(("ly", "lx", "rx")):
+            for size in (0.2, 0.21, 0.5, 0.99):
+                sticks = {"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0, name: size}
+                self.assertGreater(abs(w.velocity(sticks)[k]), leg_policy.WALK_DEAD_ZONE[k])      # never told to creep
+
+    def test_the_gaits_least_is_the_clocks(self):
+        for least, dead in zip(reach_arm.WALK_LEAST, leg_policy.WALK_DEAD_ZONE):
+            self.assertGreater(least, dead)
+        with self.assertRaises(ValueError):
+            reach_arm.WalkSticks(0.05, 0.2, 0.5)
+
+    def test_the_bytes(self):
+        raw = bytearray(40)
+        raw[4:24] = struct.pack("<5f", 0.25, -0.5, 0.75, 1.0, -1.0)      # lx, rx, ry, L2, ly
+        self.assertEqual(lowlevel.remote_sticks(raw), {"lx": 0.25, "ly": -1.0, "rx": -0.5, "ry": 0.75})
+
+    def test_bad_bytes_stand_still(self):
+        raw = bytearray(40)
+        raw[4:24] = struct.pack("<5f", math.nan, math.inf, 9.0, 0.0, -9.0)
+        self.assertEqual(lowlevel.remote_sticks(raw), {"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0})
+        self.assertEqual(lowlevel.remote_sticks(bytearray(3)), {"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0})
+
+    def test_a_thumb_resting_at_the_edge_does_not_flicker(self):
+        w = reach_arm.WalkSticks(0.3, 0.2, 0.5)
+        g = np.random.default_rng(1)
+        on = [bool(w.velocity({"lx": 0.0, "ly": 0.2 + float(v), "rx": 0.0, "ry": 0.0})[0]) for v in g.normal(0.0, 0.02, 500)]
+        self.assertLessEqual(sum(a != b for a, b in zip(on, on[1:])), 1)
+        self.assertEqual(w.velocity({"lx": 0.0, "ly": 0.1, "rx": 0.0, "ry": 0.0})[0], 0.0)       # let go, it stops
+        self.assertEqual(w.velocity({"lx": 0.0, "ly": 0.15, "rx": 0.0, "ry": 0.0})[0], 0.0)      # and does not start again below the edge
+
+    def test_it_never_asks_past_training(self):
+        self.assertEqual(reach_arm.WALK_MOST, (task_cfg.LIN_VEL_X_RANGE[1], task_cfg.LIN_VEL_Y_RANGE[1], task_cfg.ANG_VEL_YAW_RANGE[1]))
+        for most in ((0.7, 0.2, 0.5), (0.3, 0.5, 0.5), (0.3, 0.2, 0.7)):
+            with self.assertRaises(ValueError):
+                reach_arm.WalkSticks(*most)
+
+
+class TheGaitClock(unittest.TestCase):
+    """`leg_policy.gait_step` against the training's own."""
+
+    def test_the_constants(self):
+        self.assertEqual(leg_policy.GAIT_CYCLE_S, interface.CYCLE_TIME)
+        self.assertEqual(leg_policy.WALK_DEAD_ZONE, (interface.LIN_VEL_X_CLIP, interface.LIN_VEL_Y_CLIP, interface.ANG_VEL_YAW_CLIP))
+
+    def test_it_runs_as_training_runs_it(self):
+        g = np.random.default_rng(3)
+        ours, theirs = 0.0, torch.zeros(1)
+        for k in range(600):
+            v = (0.0, 0.0, 0.0) if (k // 40) % 3 == 0 else tuple(g.uniform(-0.3, 0.3, 3))
+            ours = leg_policy.gait_step(ours, v, interface.POLICY_DT)
+            commands = torch.zeros(1, 15)
+            commands[0, :3] = torch.tensor(v)
+            theirs = interface.gait_step(theirs, commands)
+            self.assertAlmostEqual(ours, float(theirs), places=4)
+
+    def test_the_frame_shows_the_phase_as_training_does(self):
+        meta = leg_policy.LegPolicy(DEPLOYED).meta
+        o = leg_policy.LegObservation(meta)
+        o.gait_phase = 0.3
+        frame = o.frame([1, 0, 0, 0], np.zeros(3), np.zeros(12), np.zeros(12), np.zeros(6), np.zeros(6), np.zeros(15))
+        self.assertAlmostEqual(frame[59], math.sin(2 * math.pi * 0.3))
+        self.assertAlmostEqual(frame[60], math.cos(2 * math.pi * 0.3))
+        o.reset()
+        self.assertEqual(o.gait_phase, 0.0)
+
+    def test_the_velocity_is_where_the_policy_reads_it(self):
+        meta = leg_policy.LegPolicy(DEPLOYED).meta
+        c = leg_policy.reach_command(meta, (0.5, 0.6, 0.1), (0.3, -0.2, 0.4))
+        self.assertEqual(c[[interface.CMD_LIN_VEL_X, interface.CMD_LIN_VEL_Y, interface.CMD_ANG_VEL_YAW]].tolist(), [0.3, -0.2, 0.4])
+        self.assertEqual(c[interface.CMD_EE_RADIUS:interface.CMD_EE_YAW + 1].tolist(), [0.5, 0.6, 0.1])
+        np.testing.assert_allclose(leg_policy.reach_command(meta, (0.5, 0.6, 0.1)), np.r_[0, 0, 0, c[3:]])
+
+
+class TheHandSum(unittest.TestCase):
+    """`hand_error.py` against numbers that were recorded, not derived: the mount counted twice read 8.4 cm too high and nobody's test said so (2026-11-07)."""
+
+    def test_the_simulators_own_first_step(self):
+        # `folded_start_probe`, `66600` at 1 N.m: arm at zero, pitch -1.3 deg, base 0.252 m: the simulator recorded 2.7 cm to the goal.
+        joints = load_urdf()[0]
+        hand = hand_error.hand_point(joints, np.radians([0.0, 0.0, 1.17, 0.0, 0.0, 0.0]), 0.252, 0.0, math.radians(-1.3))
+        goal = hand_error.goal_point((0.5, math.pi / 5, 0.0))
+        self.assertAlmostEqual(float(np.linalg.norm(hand - goal)) * 100, 2.7, delta=0.3)
+
+    def test_the_goal_is_the_tasks(self):
+        np.testing.assert_allclose(hand_error.GOAL_CENTRE_M, interface.EE_GOAL_CENTER_OFFSET)
+        np.testing.assert_allclose(hand_error.goal_point((0.5, 0.0, 0.0)), [0.5, 0.0, 0.49])
+
+    def test_a_real_run_reads_as_recorded(self):
+        rows = REPO / "results/week_08/runs/20261106T140642_reach_stand_live/policy_rows.npz"
+        if not rows.exists():
+            self.skipTest("the run's frames")
+        data = dict(np.load(rows))
+        meta = leg_policy.LegPolicy(DEPLOYED).meta
+        t, _, off = hand_error.offsets(data, meta)
+        last = np.linalg.norm(off[t > t[-1] - 3], axis=1).mean() * 100
+        self.assertAlmostEqual(last, 5.0, delta=0.2)                     # F-257's table, `handgoal.txt`
 
 
 if __name__ == "__main__":

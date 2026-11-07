@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import stat
+import subprocess
 import sys
 import tempfile
 import threading
@@ -359,6 +361,143 @@ class Stops(Base):
         self.wait(self.run_ended)
         self.assertEqual(self.c.run["estop"], "the link lost")
 
+    def whole_body(self, mode):
+        self.dry("reach_66600")
+        self.assertTrue(self.c.start("reach_66600", "live_far_low", "arm")[0])
+        self.wait(lambda: self.c.active())
+        self.report(mode)
+
+    def report(self, mode):
+        self.c.on_status(json.dumps({"mode": mode}).encode())
+
+    def lose_the_link(self, mode):
+        self.now[0] += console_server.DEADMAN_S + 0.5
+        self.report(mode)
+        self.c.deadman()
+
+    def lines(self):
+        written = self.dir / "fake.py.d" / "lines"
+        return written.read_text().split() if written.exists() else []
+
+    def test_the_link_lost_ends_a_whole_body_run_gently(self):
+        for mode in console_server.ARM_OUT:
+            with self.subTest(mode):
+                self.whole_body(mode)
+                self.lose_the_link(mode)
+                self.assertIsNone(self.c.estop_t)
+                self.assertTrue(self.c.run["ended_gently"])
+                self.wait(lambda: self.lines()[-1:] == ["q"])
+                self.wait(self.run_ended)
+
+    def test_the_link_lost_asks_once(self):
+        self.whole_body("policy")
+        self.c.write = lambda line: self.asked.append(line)
+        self.asked = []
+        self.lose_the_link("policy")
+        self.lose_the_link("policy")
+        self.assertEqual(self.asked, ["q"])
+
+    def test_the_link_lost_leaves_a_fold_to_finish(self):
+        for mode in console_server.ENDING:
+            with self.subTest(mode):
+                self.whole_body(mode)
+                self.lose_the_link(mode)
+                self.assertIsNone(self.c.estop_t)
+                self.assertFalse(self.c.run["ended_gently"])
+                self.c.write("q")
+                self.wait(self.run_ended)
+
+    def test_a_whole_body_program_that_stopped_reporting_is_e_stopped(self):
+        self.whole_body("policy")
+        self.now[0] += console_server.DEADMAN_S + 0.5
+        self.c.deadman()
+        self.wait(self.run_ended)
+        self.assertEqual(self.c.run["estop"], "the link lost")
+
+    def test_a_whole_body_program_stopped_while_folding_is_e_stopped(self):
+        self.whole_body("stand_end")
+        self.now[0] += console_server.DEADMAN_S + 0.5
+        self.c.deadman()
+        self.wait(self.run_ended)
+        self.assertEqual(self.c.run["estop"], "the link lost")
+
+    def test_before_anything_is_out_the_link_lost_is_the_e_stop(self):
+        self.whole_body("lie_down")
+        self.lose_the_link("lie_down")
+        self.wait(self.run_ended)
+        self.assertEqual(self.c.run["estop"], "the link lost")
+
+    def test_a_run_without_the_arm_is_still_e_stopped_with_its_program_alive(self):
+        self.live()
+        self.lose_the_link("policy")
+        self.wait(self.run_ended)
+        self.assertEqual(self.c.run["estop"], "the link lost")
+
+    def quick(self):
+        self.dry("reach_66600")
+        self.assertTrue(self.c.start("reach_66600", "live_far_low")[0])
+        self.wait(lambda: self.c.active())
+        self.wait(lambda: "arm" in self.lines())
+
+    def test_quick_start_needs_no_word_and_still_tells_the_program(self):
+        self.quick()
+        self.assertEqual(self.lines().count("live"), 0)                   # not before it asks: it would clear that
+        self.c.on_status(json.dumps({"mode": "preflight", "confirming": True}).encode())
+        self.wait(lambda: "live" in self.lines())
+        self.c.write("q")
+        self.wait(self.run_ended)
+
+    def test_quick_start_says_live_once(self):
+        self.quick()
+        sent = []
+        self.c.write = lambda line: sent.append(line)
+        for _ in range(5):
+            self.c.on_status(json.dumps({"mode": "preflight", "confirming": True}).encode())
+        self.assertEqual(sent, ["live"])
+
+    def sent_by(self, status):
+        """What the console writes to the program for one status, seen at the write: the program itself may be too slow, or gone."""
+        sent = []
+        self.c.write, kept = (lambda line: sent.append(line)), self.c.write
+        self.c.on_status(json.dumps(status).encode())
+        self.c.write = kept
+        return sent
+
+    def test_quick_start_waits_until_the_program_asks(self):
+        self.quick()
+        self.assertEqual(self.sent_by({"mode": "preflight"}), [])
+        self.assertEqual(self.sent_by({"mode": "preflight", "confirming": False}), [])
+        self.assertEqual(self.sent_by({"mode": "preflight", "confirming": True}), ["live"])
+
+    def test_an_e_stop_while_it_asks_is_not_answered_with_live(self):
+        self.quick()
+        self.c.estop("the button")
+        self.c.active = lambda: True                                       # still up: its own stop can take a moment
+        self.assertEqual(self.sent_by({"mode": "preflight", "confirming": True}), [])
+
+    def test_quick_start_does_not_skip_the_live_lock(self):
+        ok, why = self.c.start("reach_66600", "live_far_low")
+        self.assertFalse(ok)
+        self.assertFalse(self.c.active())
+
+    def test_a_dry_run_is_never_answered(self):
+        self.c.start("reach_66600", "dry")
+        self.wait(lambda: self.c.active())
+        self.assertEqual(self.sent_by({"mode": "preflight", "confirming": True}), [])
+        self.c.write("q")
+        self.wait(self.run_ended)
+
+    def test_only_the_proven_policy_has_it(self):
+        self.assertEqual({p["id"] for p in self.c.policies.values() if p.get("quick_start")}, {"reach_66600"})
+        self.dry("reach_gentle_67199")
+        self.assertFalse(self.c.start("reach_gentle_67199", "live_whole")[0])
+
+    def test_a_gap_in_the_heartbeat_is_written_down(self):
+        self.live()
+        self.now[0] += 1.2
+        self.c.state(heartbeat=True)
+        self.assertIn("heartbeat back after 1.2 s", "\n".join(self.c.log))
+
     def test_the_link_lost_leaves_a_dry_run_alone(self):
         self.c.start("reach_delay", "dry")
         self.wait(lambda: self.c.active())
@@ -424,7 +563,67 @@ class Http(Base):
         self.assertIn(b"E-STOP", urllib.request.urlopen(self.url + "/", timeout=3).read())
         state = json.load(urllib.request.urlopen(urllib.request.Request(self.url + "/api/state",
                                                                         headers={"X-Console": "1"}), timeout=3))
-        self.assertEqual(len(state["policies"]), 9)
+        self.assertEqual(len(state["policies"]), 10)
+
+
+class FromAPcWithoutTheHelpers(unittest.TestCase):
+    """`run_on_pc.sh --dog`, with `ssh` and `rsync` replaced by scripts that write down how they were called."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        for name in ("ssh", "rsync"):
+            tool = self.dir / name
+            tool.write_text(f'#!/bin/sh\nprintf "%s\\n" "{name} $*" >> "{self.dir}/calls"\nexit "${{FAKE_{name.upper().replace("-", "_")}_EXIT:-0}}"\n')
+            tool.chmod(tool.stat().st_mode | stat.S_IEXEC)
+
+    def run_it(self, *args, **env):
+        result = subprocess.run(
+            [str(REPO / "demos/robot_console/run_on_pc.sh"), "--no_browser", *args],
+            env={**os.environ, "PATH": f"{self.dir}:{os.environ['PATH']}", **env},
+            capture_output=True, text=True, timeout=20,
+        )
+        calls = self.dir / "calls"
+        return result, calls.read_text().splitlines() if calls.exists() else []
+
+    def test_a_preview_sends_nothing_and_starts_nothing(self):
+        result, calls = self.run_it("--dog", "unitree@dog", "--preview")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(len(calls), 1)
+        self.assertTrue(calls[0].startswith("rsync "))
+        self.assertIn("--dry-run", calls[0])
+
+    def test_it_copies_then_starts_the_console_with_the_host_key_checked(self):
+        result, calls = self.run_it("--dog", "unitree@dog")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual([c.split()[0] for c in calls], ["rsync", "ssh"])
+        self.assertNotIn("--dry-run", calls[0])
+        self.assertIn("ssh -o StrictHostKeyChecking=yes", calls[0])
+        self.assertIn("-o StrictHostKeyChecking=yes", calls[1])
+        self.assertIn("-L 8097:127.0.0.1:8097 unitree@dog", calls[1])
+        self.assertIn("-o ControlMaster=no", calls[1])
+
+    def test_the_dogs_logs_and_results_are_not_touched_by_the_delete(self):
+        _, calls = self.run_it("--dog", "unitree@dog")
+        for kept in ("/logs/", "/results/", "/generated/", "/.git/", "/checkpoints/*"):
+            self.assertIn(f"--exclude {kept}", calls[0])
+        self.assertNotIn("--delete-excluded", calls[0])
+
+    def test_no_console_starts_when_the_copy_failed(self):
+        result, calls = self.run_it("--dog", "unitree@dog", FAKE_RSYNC_EXIT="23")
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual([c.split()[0] for c in calls], ["rsync"])
+
+    def test_no_update_skips_the_copy(self):
+        _, calls = self.run_it("--dog", "unitree@dog", "--no_update")
+        self.assertEqual([c.split()[0] for c in calls], ["ssh"])
+
+    def test_it_will_not_guess_the_dog(self):
+        for args in (["--dog"], ["--dog", "192.168.1.213"], ["--preview"]):
+            result, calls = self.run_it(*args)
+            self.assertEqual(result.returncode, 2, args)
+            self.assertEqual(calls, [], args)
 
 
 if __name__ == "__main__":

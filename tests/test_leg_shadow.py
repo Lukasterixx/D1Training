@@ -72,10 +72,11 @@ class Export(unittest.TestCase):
             gyro, q, dq = rng.normal(size=3), rng.normal(size=20), rng.normal(size=20)
             commands, prev = rng.normal(size=15), rng.normal(size=12)
             obs.prev_actions = np.concatenate((prev, np.zeros(6)))
+            obs.gait_phase = float(rng.uniform())
             mine = obs.frame(quat, gyro, q[:12], dq[:12], q[12:18], dq[12:18], commands)
             f = lambda x: torch.as_tensor(np.asarray(x), dtype=torch.float64).unsqueeze(0)
             ref = interface.single_obs(f(quat), f(gyro), f(q)[:, perm], f(dq)[:, perm], f(obs.prev_actions),
-                                       torch.zeros(1, dtype=torch.float64), f(commands))[0].numpy()
+                                       torch.full((1,), obs.gait_phase, dtype=torch.float64), f(commands))[0].numpy()
             np.testing.assert_allclose(mine, ref, atol=1e-12)
 
     def test_targets_are_in_unitree_order(self):

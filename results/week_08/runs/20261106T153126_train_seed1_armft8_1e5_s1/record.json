@@ -1,0 +1,63 @@
+{
+  "id": "20261106T153126_train_seed1_armft8_1e5_s1",
+  "title": "Reach from 66600, gentle: leg friction 0-3 N.m, fixed learning rate 1e-5, no entropy bonus",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-07T03:16:24+11:00",
+  "started_utc": "2026-11-06T15:31:26+00:00",
+  "source_dir": "logs/unifp_train/20261106T153126_train_seed1_armft8_1e5_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "55b0f40a7f509bcbb35d2dbdb19b53d06b6cb9c5",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 67199,
+  "final_checkpoint": {
+    "file": "model_67199.pt",
+    "sha256": "3e47401004dd235e35b342aac7277e404515937976c67bbf2d22c270c7f9d205"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 162.31922912597656,
+      "last_step": 67199,
+      "mean_last_10": 162.8165298461914,
+      "min": 1.779375433921814,
+      "max": 163.73683166503906,
+      "points": 600
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 67199,
+      "mean_last_10": 999.0,
+      "min": 11.50943374633789,
+      "max": 999.0,
+      "points": 600
+    },
+    "Policy/mean_std": {
+      "last": 0.4696260094642639,
+      "last_step": 67199,
+      "mean_last_10": 0.46997897922992704,
+      "min": 0.4696260094642639,
+      "max": 0.5258179306983948,
+      "points": 600
+    },
+    "Perf/total_fps": {
+      "last": 11875.0,
+      "last_step": 67199,
+      "mean_last_10": 11727.0,
+      "min": 6974.0,
+      "max": 31765.0,
+      "points": 600
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

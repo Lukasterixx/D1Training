@@ -1,0 +1,22 @@
+{
+  "mode": "run_plan_probe",
+  "status": "finished",
+  "seed": 1,
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_sticky_model_66600.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 66600,
+  "plan": "tour",
+  "steps": 1350,
+  "plans": 6,
+  "clear": 6,
+  "leg_friction": 3.0,
+  "floor_grip": null,
+  "real_stance": true,
+  "handover_base_m": 0.26739099621772766,
+  "stop_at_s": null,
+  "stop_kind": "soft",
+  "tool_point": "fingertip",
+  "forces": "off",
+  "records_file": "run_plan.json",
+  "command": "./demos/unifp/run_plan_probe.py --headless --plan tour --leg_friction 3 --real_stance --checkpoint checkpoints/unifp_go2d1_isaaclab_sticky_model_66600.pt --run_name tour2_66600_f3_g1"
+}

@@ -1,0 +1,293 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.02,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.336,
+    "stand_q": [
+      -0.0191,
+      0.7231,
+      -1.4539,
+      0.0057,
+      0.633,
+      -1.4678,
+      0.0258,
+      0.7071,
+      -1.4902,
+      -0.0247,
+      0.7737,
+      -1.4965
+    ]
+  },
+  {
+    "t": 2.36,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.36,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 3.88,
+    "event": "lying",
+    "calf": [
+      -2.488,
+      -2.477,
+      -2.527,
+      -2.528
+    ]
+  },
+  {
+    "t": 3.88,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 4.02,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 4.04,
+    "event": "sport mode released"
+  },
+  {
+    "t": 4.04,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 4.46,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 4.46,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 7.962,
+    "event": "arm: unfolding"
+  },
+  {
+    "t": 12.081,
+    "event": "arm: at the policy's start"
+  },
+  {
+    "t": 12.081,
+    "event": "the jaws open: hand it the cloth, by its far end. A shuts them and the run goes on, and the arm moves within seconds"
+  },
+  {
+    "t": 19.661,
+    "event": "the jaws closing on the cloth"
+  },
+  {
+    "t": 23.68,
+    "event": "the jaws on the cloth: the policy next"
+  },
+  {
+    "t": 24.681,
+    "event": "taken at the blend",
+    "base_m": 0.298,
+    "roll_pitch_deg": [
+      -0.2,
+      -2.1
+    ],
+    "q_minus_trained_settled": [
+      0.054,
+      0.174,
+      0.137,
+      -0.03,
+      0.095,
+      0.145,
+      -0.023,
+      -0.021,
+      0.172,
+      0.011,
+      -0.049,
+      0.163
+    ]
+  },
+  {
+    "t": 24.681,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 24.703,
+    "event": "the arm's goals are going to the link"
+  },
+  {
+    "t": 27.701,
+    "event": "the sticks are live: walk it into place, let go, then A starts the goals"
+  },
+  {
+    "t": 39.661,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      -0.24
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": 0.22,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 39.921,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.12,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 40.62,
+    "event": "sticks",
+    "velocity": [
+      0.12,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.2,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 41.901,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.24
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.26,
+      "rx": -0.2,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 42.16,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.26,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 43.201,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.04,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 45.02,
+    "event": "sticks",
+    "velocity": [
+      0.12,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.2,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 45.581,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 55.96,
+    "event": "A: the sticks are off, the goals in 3 s"
+  },
+  {
+    "t": 65.104,
+    "event": "STOP (arm: joint 5 26.7 deg ahead of its report for 0.5 s (at most 25.0)): the arm held; the legs to the stand-up gains, then fold and lie down"
+  },
+  {
+    "t": 65.104,
+    "event": "mode policy -> stand_end"
+  },
+  {
+    "t": 66.622,
+    "event": "arm: folding"
+  },
+  {
+    "t": 72.261,
+    "event": "arm: folded"
+  },
+  {
+    "t": 72.261,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 76.781,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 97.141,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 97.16,
+    "event": "LowCmd stopped",
+    "sent": 46321
+  },
+  {
+    "t": 98.68,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 100.28,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 100.28,
+    "event": "mode handback -> done"
+  }
+]

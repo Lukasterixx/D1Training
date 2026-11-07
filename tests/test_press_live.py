@@ -9,6 +9,7 @@ import ast
 import json
 import math
 import re
+import struct
 import tempfile
 import types
 import unittest
@@ -407,6 +408,8 @@ class FakeRobot:
         self.lowcmd_while_sport = 0
         self.quat = np.array([1.0, 0.0, 0.0, 0.0])
         self.keys = []
+        #: The remote's sticks (lx, rx, ry, L2, ly), as `xRockerBtnDataStruct` lays them out.
+        self.sticks = (0.0, 0.0, 0.0, 0.0, 0.0)
         self.ids = 0
         self.log = []
         self.drop_selects = 0
@@ -468,6 +471,7 @@ class FakeRobot:
         for key in self.keys:
             bit = ll.KEYS.index(key)
             raw[2 + bit // 8] |= 1 << (bit % 8)
+        raw[4:24] = list(struct.pack("<5f", *self.sticks))
         return N(motor_state=[N(q=float(self.q[i]), dq=float(self.dq[i]), tau_est=0.0) for i in range(12)],
                  imu_state=N(quaternion=list(self.quat), gyroscope=[0.0, 0.0, 0.0], rpy=[0.0, 0.0, 0.0]),
                  foot_force=[20, 20, 20, 20], wireless_remote=raw)

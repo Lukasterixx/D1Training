@@ -1,0 +1,769 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.021,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.331,
+    "stand_q": [
+      -0.0212,
+      0.7028,
+      -1.4257,
+      0.0493,
+      0.7098,
+      -1.4989,
+      -0.0234,
+      0.7325,
+      -1.4732,
+      0.1654,
+      0.6717,
+      -1.4422
+    ]
+  },
+  {
+    "t": 2.82,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.82,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 4.34,
+    "event": "lying",
+    "calf": [
+      -2.476,
+      -2.486,
+      -2.542,
+      -2.512
+    ]
+  },
+  {
+    "t": 4.341,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 4.48,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 4.5,
+    "event": "sport mode released"
+  },
+  {
+    "t": 4.5,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 4.92,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 4.92,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 8.442,
+    "event": "arm: unfolding"
+  },
+  {
+    "t": 12.582,
+    "event": "arm: at the policy's start"
+  },
+  {
+    "t": 13.601,
+    "event": "taken at the blend",
+    "base_m": 0.287,
+    "roll_pitch_deg": [
+      0.5,
+      -3.8
+    ],
+    "q_minus_trained_settled": [
+      0.017,
+      0.127,
+      0.117,
+      -0.017,
+      0.115,
+      0.143,
+      -0.117,
+      -0.041,
+      0.126,
+      0.104,
+      -0.054,
+      0.154
+    ]
+  },
+  {
+    "t": 13.602,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 13.624,
+    "event": "the arm's goals are going to the link"
+  },
+  {
+    "t": 16.62,
+    "event": "sticks",
+    "velocity": [
+      0.21,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.6,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 17.121,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.24,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 17.501,
+    "event": "sticks",
+    "velocity": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.36,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 18.081,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.29,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 18.341,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 18.641,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.25
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.22,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 18.901,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.41
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.71,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 19.161,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 19.421,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.45
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.86,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 22.081,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.45
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.84,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 22.34,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.18,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 22.6,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.25
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.23,
+      "rx": -0.22,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 22.861,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.34
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.23,
+      "rx": -0.52,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 23.181,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.23,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 23.761,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.25
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.23,
+      "rx": -0.23,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 24.021,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.27
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.25,
+      "rx": -0.28,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 24.281,
+    "event": "sticks",
+    "velocity": [
+      0.16,
+      0.0,
+      0.27
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.39,
+      "rx": -0.28,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 24.561,
+    "event": "sticks",
+    "velocity": [
+      0.19,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.51,
+      "rx": -0.07,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 26.16,
+    "event": "sticks",
+    "velocity": [
+      0.12,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.22,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 26.42,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 26.74,
+    "event": "sticks",
+    "velocity": [
+      -0.15,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.33,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 27.0,
+    "event": "sticks",
+    "velocity": [
+      -0.27,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.86,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 27.26,
+    "event": "sticks",
+    "velocity": [
+      -0.21,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.6,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 28.421,
+    "event": "sticks",
+    "velocity": [
+      -0.18,
+      0.0,
+      -0.24
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.45,
+      "rx": 0.2,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 28.681,
+    "event": "sticks",
+    "velocity": [
+      -0.17,
+      0.0,
+      -0.28
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.43,
+      "rx": 0.31,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 29.801,
+    "event": "sticks",
+    "velocity": [
+      -0.17,
+      0.0,
+      -0.24
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.43,
+      "rx": 0.14,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 30.061,
+    "event": "sticks",
+    "velocity": [
+      -0.17,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.43,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 30.38,
+    "event": "sticks",
+    "velocity": [
+      -0.17,
+      0.0,
+      0.27
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.43,
+      "rx": -0.28,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 30.64,
+    "event": "sticks",
+    "velocity": [
+      -0.12,
+      0.0,
+      0.31
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": -0.13,
+      "rx": -0.4,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 30.901,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.31
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.4,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 31.28,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.35
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.54,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 32.481,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.45
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.85,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 34.021,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.43
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.03,
+      "rx": -0.8,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 34.281,
+    "event": "sticks",
+    "velocity": [
+      0.2,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.57,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 35.0,
+    "event": "sticks",
+    "velocity": [
+      0.2,
+      0.0,
+      -0.28
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.57,
+      "rx": 0.33,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 35.261,
+    "event": "sticks",
+    "velocity": [
+      0.17,
+      0.0,
+      -0.46
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.44,
+      "rx": 0.86,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 35.52,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      -0.46
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.11,
+      "rx": 0.86,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 38.421,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      -0.41
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": 0.72,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 38.681,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 41.68,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      -0.12,
+      0.0
+    ],
+    "sticks": {
+      "lx": 0.21,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 42.641,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": 0.36,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 43.625,
+    "event": "the policy is done",
+    "presses": 0
+  },
+  {
+    "t": 43.625,
+    "event": "mode policy -> stand_end"
+  },
+  {
+    "t": 45.143,
+    "event": "arm: folding"
+  },
+  {
+    "t": 50.881,
+    "event": "arm: folded"
+  },
+  {
+    "t": 50.882,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 55.401,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 80.401,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 80.421,
+    "event": "LowCmd stopped",
+    "sent": 37712
+  },
+  {
+    "t": 81.92,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 83.58,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 83.58,
+    "event": "mode handback -> done"
+  }
+]

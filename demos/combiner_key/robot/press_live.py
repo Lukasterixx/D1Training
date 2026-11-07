@@ -46,7 +46,14 @@ is `<stamp>_reach_stand[_live]/`. Not validated: it has run only against the fak
 
 `--reach_arm_obs reports` reads the real arm as the policy trained on it. With `--reach_arm_send --live` the whole body runs: the arm unfolds on the
 stand-up gains, the policy drives legs and arm, and the arm folds before the dog lies down (`reach_arm.py`). Never with the legs dry: the policy runs
-away (F-252). Not validated: it has never run on the dog.
+away (F-252). Four complete runs on the dog, one goal, standing (F-257).
+
+`--reach_via` slides the hand's goal out and back as training slides it (`reach_arm.GoalPath`). `--reach_walk` gives the remote's sticks a velocity
+(`reach_arm.WalkSticks`) and runs the gait clock (`leg_policy.gait_step`). Neither moves until
+`--reach_settle_s`, and a walking run stands for `WALK_STOP_S` before it ends. `--walk_read_only` reads the sticks in a live stand: not in a dry run, where
+sport mode still has them and walks the dog. On the whole body a tilt past `--reach_soft_tilt_deg` or a leg target past
+its bound holds the arm, takes the legs to the stand-up gains, folds and lies down; a tilt past `--tilt_limit_deg` is still damping. Not validated: none
+of this has run on the dog, and the sticks' bytes have never been read there.
 
     run_press_on_dog.sh --policy checkpoints/reach_force_corner_delay_model_59600.npz --presses 0 --stand_s 20    # dry
 
@@ -93,6 +100,9 @@ STAND_S, STAND_HOLD_S, GAIN_BLEND_S = 2.5, 1.0, 1.0
 #: stays bounded by SETTLED_TILT_DEG.
 SETTLED_MOVE_RAD, SETTLED_TICKS, SETTLE_MAX_S = 0.01, 15, 3.0
 SETTLED_TOL_RAD, SETTLED_TILT_DEG = 0.20, 5.0
+#: Standing this long, told to stand, before a walking run may end.
+WALK_STOP_S = 1.0
+WALK_LOG_S = 0.25
 END_BLEND_S, END_STAND_S, LIE_S, DAMP_S = 0.5, 1.0, 2.5, 1.5
 #: Sport mode's StandDown: how long to wait for the dog to lie, and the calf angle that counts as lying (rad).
 LIE_WAIT_S, LYING_CALF_RAD = 6.0, -2.3
@@ -302,11 +312,59 @@ class PressRun:
         if self.arm_send and not (self.live and args.live):
             # The flag and the state: a refusal resting on how the writer was built is one refactor from not refusing.
             raise SystemExit("--reach_arm_send needs --live: with the legs dry the policy runs away (F-252)")
+        #: `--reach_cloth`: the jaws wait open with the arm out, A shuts them on the operator's cloth, and they let it go before any fold.
+        self.cloth = bool(getattr(args, "reach_cloth", False))
+        if self.cloth and not self.arm_send:
+            raise SystemExit("--reach_cloth needs --reach_arm_send: the jaws are the arm's")
+        self.cloth_t0: float | None = None
+        self.cloth_shut_t0: float | None = None
         if self.reach and self.live and args.reach_arm_obs != "virtual" and not self.arm_send:
             # Shown the real folded arm on the dog (2026-11-06, dry) the policy's outputs ran away: past 1 rad at its 46th
             # step, every leg target at the 25 rad clip soon after. Live, that is the legs driven to their limits.
             raise SystemExit("a reach export shown the real folded arm runs away (Week 8 log): never live")
         self.reach_goal = np.asarray(self.meta["reach_goals"][args.reach_goal], dtype=float) if self.reach else None
+        #: A run's goals, if it goes anywhere (`--reach_via`), and its sticks (`--reach_walk`). Neither moves until the arm has settled.
+        self.settle_s = float(getattr(args, "reach_settle_s", 3.0))
+        #: `--reach_walk_first`: the sticks walk the dog into place for up to this long, then A takes them away and starts the goals. `path_t0` is when it did.
+        self.walk_first = float(getattr(args, "reach_walk_first", 0.0) or 0.0)
+        self.path_t0: float | None = None if self.walk_first else 0.0
+        self.walk_first_said = False
+        if self.walk_first and not (getattr(args, "reach_walk", False) and getattr(args, "reach_via", None)):
+            raise SystemExit("--reach_walk_first needs --reach_walk and --reach_via: it walks, then plays the goals")
+        self.goal_path = self.walk = None
+        via = getattr(args, "reach_via", None) or []
+        if via:
+            if not self.reach:
+                raise SystemExit("--reach_via is a reach export's")
+            try:
+                self.goal_path = reach_arm.GoalPath(self.reach_goal, [((r, math.radians(p), math.radians(y)), slide, hold) for r, p, y, slide, hold in via],
+                                                    self.settle_s)
+            except ValueError as error:
+                raise SystemExit(f"--reach_via: {error}")
+            if args.stand_s < self.goal_path.duration:
+                raise SystemExit(f"--stand_s {args.stand_s} is shorter than this path, {self.goal_path.duration:.1f} s: it would fold from far out")
+        self.press_force = None
+        if getattr(args, "reach_force_n", None):
+            if self.goal_path is None:
+                raise SystemExit("--reach_force_n needs --reach_via: there is nothing to press on at the start goal")
+            try:
+                self.press_force = reach_arm.PressForce(args.reach_force_n, *self.goal_path.press_window())
+            except ValueError as error:
+                raise SystemExit(f"--reach_force_n: {error}")
+        if getattr(args, "reach_walk", False):
+            if not self.reach:
+                raise SystemExit("--reach_walk is a reach export's")
+            if via and not self.walk_first:
+                raise SystemExit("--reach_walk and --reach_via together: only as --reach_walk_first, walking and then the goals, never both at once")
+            if self.walk_first and getattr(args, "walk_read_only", False):
+                raise SystemExit("--reach_walk_first and --walk_read_only: nothing would be walked")
+            try:
+                self.walk = reach_arm.WalkSticks(*args.walk_max)
+            except ValueError as error:
+                raise SystemExit(f"--walk_max: {error}")
+        #: The walking velocity last asked, and when it last was not zero: a run ends only once the legs have stopped stepping.
+        self.velocity = self.velocity_logged = (0.0, 0.0, 0.0)
+        self.walked_at = self.logged_at = -math.inf
         self.virtual_arm = (leg_policy.VirtualArm(self.meta) if self.reach and args.reach_arm_obs == "virtual" else None)
         self.obs = leg_policy.LegObservation(self.meta)
         self.kp, self.kd = float(self.meta["leg_kp"]), float(self.meta["leg_kd"])
@@ -392,7 +450,7 @@ class PressRun:
             "t", "dt", "state_age", "mode", "stage", "phase", "level", "stalled", "q", "dq", "tau_est", "quat", "gyro",
             "rpy", "foot_force", "arm_q", "arm_measured", "foot", "foot_v", "height", "commands", "frame", "action",
             "target", "kp", "kd", "sent", "estimate", "infer_ms", "goal", "offset", "go", "remote", "send_ms",
-            "arm_obs", "arm_target")}
+            "arm_obs", "arm_target", "sticks")}
         self.last_tick = None
         suffix = "_live" if self.live else ("_rehearse" if args.rehearse else "")
         stem = "reach_stand" if self.reach else "leg_press"
@@ -422,7 +480,7 @@ class PressRun:
                  "gyro": np.array(msg.imu_state.gyroscope, dtype=float),
                  "rpy": np.array(msg.imu_state.rpy, dtype=float),
                  "foot_force": np.array(msg.foot_force, dtype=float),
-                 "keys": ll.remote_keys(msg.wireless_remote)}
+                 "keys": ll.remote_keys(msg.wireless_remote), "sticks": ll.remote_sticks(msg.wireless_remote)}
 
     def event(self, what: str, **extra) -> None:
         t = 0.0 if self.start is None else time.monotonic() - self.start
@@ -510,6 +568,9 @@ class PressRun:
             self.max_tilt_deg = max(self.max_tilt_deg, float(np.abs(rp).max()))
             if np.abs(rp).max() > self.args.tilt_limit_deg:
                 self.abort(f"tilt roll {rp[0]:+.1f} pitch {rp[1]:+.1f} deg")
+            elif self.arm_send and self.mode == "policy" and np.abs(rp).max() > getattr(self.args, "reach_soft_tilt_deg", math.inf):
+                # Before the hard limit's damping, which drops the dog with the arm out: the feed is good and the legs can still hold.
+                self._arm_stop(f"tilt roll {rp[0]:+.1f} pitch {rp[1]:+.1f} deg")
             # The limits hold only while the policy drives: lying, sport mode folds the calves past the URDF's -2.72
             # (-2.78 to -2.85 rad on the dog, 2026-10-23), and the stand-up and lie-down ramp between measured poses.
             if self.mode == "policy" and out.any():
@@ -588,8 +649,7 @@ class PressRun:
             self.stand_q = state["q"].copy()
             self.event("sport mode", name=self.sport_name, stand_height_m=round(height, 3),
                        stand_q=np.round(self.stand_q, 4).tolist())
-            what = (f"Reach policy, stand only for {self.args.stand_s:.0f} s, the arm sent nothing (the policy sees "
-                    f"{self.args.reach_arm_obs}), goal {self.args.reach_goal}." if self.reach else
+            what = (self._reach_plan() if self.reach else
                     f"Plate {self.args.plate} (contact {self.plate.contact.tolist()} m, normal "
                     f"{np.round(self.plate.n, 3).tolist()}), {self.args.force_n} N for {self.args.hold_s} s (cap "
                     f"{self.args.max_force_n} N).")
@@ -776,6 +836,8 @@ class PressRun:
     def _unfolded(self) -> bool:
         """With the legs on the stand-up gains: True once the arm is at the policy's default pose. A stop aborts."""
         self._read_arm()
+        if self.arm_phase == "cloth":
+            return self._cloth()
         if self.arm_phase == "folded":
             if self.arm_reports.stamp is None:
                 self.abort("arm: no report before the unfold")
@@ -783,11 +845,38 @@ class PressRun:
             self._joint_move("unfolding", reach_arm.HOME_SERVO_DEG, reach_arm.to_servo_deg(self.obs.default[12:18]))
         self.arm_sender.keepalive()
         if reach_arm.at_start(self.arm_reports.q, self.obs.default[12:18], reach_arm.ARRIVED_DEG) is None:
-            self.arm_phase = "ready"
             self.event("arm: at the policy's start")
+            if self.cloth:
+                self.arm_phase, self.go, self.cloth_t0 = "cloth", False, time.monotonic()
+                self.arm_sender.gripper = reach_arm.JAWS_OPEN_UNITS
+                self.event("the jaws open: hand it the cloth, by its far end. A shuts them and the run goes on, and the arm moves within seconds")
+                return False
+            self.arm_phase = "ready"
             return True
         if time.monotonic() - self.arm_move_t0 > reach_arm.JOINT_MOVE_TIMEOUT_S:
             self.abort("arm: not at the policy's start in time")
+        return False
+
+    def _cloth(self) -> bool:
+        """The arm out, the legs on the stand-up gains: True once the jaws are on the cloth and the operator has had time to step back."""
+        now = time.monotonic()
+        if self.cloth_shut_t0 is None:
+            if self.end_reason is None and now - self.cloth_t0 > reach_arm.CLOTH_WAIT_S:
+                self.end_reason = f"no A in {reach_arm.CLOTH_WAIT_S:.0f} s"
+            if self.end_reason is not None:     # `q`, the console's link, or nobody came: down the normal way, the jaws still open
+                self.event(f"no cloth ({self.end_reason})")
+                self.arm_phase = "ready"
+                return True
+            if self.go:
+                self.go, self.cloth_shut_t0 = False, now
+                self.event("the jaws closing on the cloth")
+        if self.cloth_shut_t0 is not None:
+            self.arm_sender.gripper = reach_arm.jaws_closing(now - self.cloth_shut_t0)
+        self.arm_sender.keepalive()
+        if self.cloth_shut_t0 is not None and now - self.cloth_shut_t0 >= reach_arm.CLOTH_CLOSE_S + reach_arm.CLOTH_LET_GO_S:
+            self.arm_phase = "ready"
+            self.event("the jaws on the cloth: the policy next")
+            return True
         return False
 
     def _folded(self) -> bool:
@@ -797,6 +886,8 @@ class PressRun:
         self._read_arm()
         fold = reach_arm.from_servo_deg(reach_arm.FOLD_SERVO_DEG)
         if self.arm_phase != "folding":
+            if self.cloth:                      # a loose cloth goes nowhere near the lidar's cage: the fold passes it by 45 mm (F-211)
+                self.arm_sender.gripper = reach_arm.JAWS_OPEN_UNITS
             self._joint_move("folding", reach_arm.HOME_SERVO_DEG, reach_arm.TUCK_SERVO_DEG, reach_arm.FOLD_SERVO_DEG)
         self.arm_sender.keepalive()
         if reach_arm.at_start(self.arm_reports.q, fold, reach_arm.ARRIVED_DEG) is None:
@@ -852,7 +943,15 @@ class PressRun:
         if self.policy_ticks == 0:
             commands = np.zeros(15)              # the reset's frame (leg_policy.waiting_command)
         elif self.reach:
-            commands = leg_policy.reach_command(self.meta, self.reach_goal)
+            now_s = self.policy_ticks * self.args_dt()
+            if self.path_t0 is None:
+                self._walking_first(now_s)
+            path_s = 0.0 if self.path_t0 is None else now_s - self.path_t0
+            goal = self.reach_goal if self.goal_path is None else self.goal_path.at(path_s)
+            velocity = self._walk_velocity(state, now_s)
+            self.obs.gait_phase = leg_policy.gait_step(self.obs.gait_phase, velocity, self.args_dt())
+            force = 0.0 if self.press_force is None else self.press_force.at(path_s)
+            commands = leg_policy.reach_command(self.meta, goal, velocity, force)
         else:
             # --presses 0: the stand only, the foot never lifted.
             commands = task.step(foot, foot_v, go=self.go and self.args.presses > 0)
@@ -883,7 +982,11 @@ class PressRun:
             if self.arm_send and self.policy_ticks * self.args_dt() < reach_arm.GRACE_S:
                 bound = max(bound, reach_arm.LEG_OFF_GRACE_RAD)
             if off > bound:
-                self.abort(f"leg target {off:.2f} rad off default, past {bound} rad")
+                # On the whole body the arm is out: the legs hold where they are and it folds, unless the run is already going down.
+                if self.arm_send:
+                    self._arm_stop(f"leg target {off:.2f} rad off default, past {bound} rad")
+                else:
+                    self.abort(f"leg target {off:.2f} rad off default, past {bound} rad")
         if self.mode == "policy":           # an abort this tick has already sent damping
             self._send(target, self.kp, self.kd)
         infer_ms = 1000.0 * (time.perf_counter() - t0)      # state to command out, this program's part
@@ -915,12 +1018,13 @@ class PressRun:
         if now - self.last_print >= self.args.print_s:
             self.last_print = now
             self._print(state, foot, height, force_est, infer_ms, measured)
-        if self.args.presses == 0 and t > self.args.stand_s and self.end_reason is None:
+        if self.args.presses == 0 and self.path_t0 is not None and t - self.path_t0 > self.args.stand_s and self.end_reason is None:
             self.end_reason = f"--stand_s {self.args.stand_s} s"
         if self.args.policy_s and t > self.args.policy_s and self.end_reason is None:
             self.end_reason = f"--policy_s {self.args.policy_s} s"
             task.go_home("time", foot)
-        if task.stage == pl.WAITING and self.end_reason:
+        if task.stage == pl.WAITING and self.end_reason and self.mode == "policy" and self._stopped_walking():
+            # `mode`: a stop earlier in this tick has already gone to damping or the soft stop, and is not undone by a run that ends on the same tick.
             self._end_policy(state)
         elif task.stage == pl.FOOT_DOWN:
             self.down_for += pl.POLICY_DT
@@ -957,6 +1061,10 @@ class PressRun:
         if self.reach:
             off = np.abs(self.obs.prev_actions[:12]).max() * self.meta["action_scale"]
             arm = np.abs(self.obs.prev_actions[12:18]).max() * self.meta["action_scale"]
+            if self.walk is not None:
+                sticks = state.get("sticks", {})
+                log(f"sticks {[round(sticks.get(k, 0.0), 2) for k in ('lx', 'ly', 'rx', 'ry')]} (lx ly rx ry) ask {[round(v, 2) for v in self.velocity]} "
+                    f"(vx vy wz){'' if self.live else ', shown to no one: dry'}")
             log(f"{self.mode} reach  leg target off default {off:.2f} rad  arm output {arm:.2f} rad (not sent)  base "
                 f"{height:.3f} m  roll {rp[0]:+5.1f} pitch {rp[1]:+5.1f}  {infer_ms:.1f} ms  real arm "
                 f"{'measured' if measured else 'rest pose'}")
@@ -965,6 +1073,54 @@ class PressRun:
             f"{task.layer.normal_level:4.1f} N  est. foot force {force_est:5.1f} N  foot "
             f"{np.round(foot, 3).tolist()} (goal {np.round(task.commanded_goal(), 3).tolist()})  base {height:.3f} m  "
             f"roll {rp[0]:+5.1f} pitch {rp[1]:+5.1f}  {infer_ms:.1f} ms  arm {'measured' if measured else 'rest pose'}")
+
+    def _reach_plan(self) -> str:
+        """What this reach run will do, for the confirmation."""
+        arm = "legs and arm" if self.arm_send else f"the arm sent nothing (the policy sees {self.args.reach_arm_obs})"
+        plan = ("the sticks walk the dog into place, then A slides the goal out and back" if self.walk_first else
+                "the goal slides out and back" if self.goal_path is not None else
+                "the sticks are read and walk nothing" if self.walk is not None and getattr(self.args, "walk_read_only", False) else
+                "the sticks walk the dog" if self.walk is not None else "stand only")
+        return f"Reach policy, {plan}, {self.args.stand_s:.0f} s, {arm}, goal {self.args.reach_goal}."
+
+    def _walk_velocity(self, state, now_s: float) -> tuple[float, float, float]:
+        """What the sticks ask, or nothing: before the arm has settled, in the run's last `WALK_STOP_S` of standing, and once it is ending. A dry run and
+        `--walk_read_only` read and log the sticks and show the policy nothing. A dry run leaves them to sport mode, which walks the dog on them, so the sticks
+        are checked in a live stand, where it is released and they move nothing."""
+        if self.walk is None:
+            return 0.0, 0.0, 0.0
+        asked = self.walk.velocity(state["sticks"])
+        over = self.path_t0 is not None if self.walk_first else now_s > self.args.stand_s - WALK_STOP_S
+        if now_s < self.settle_s or self.end_reason is not None or over:
+            asked = (0.0, 0.0, 0.0)
+        coarse = tuple(round(v * 10) / 10 for v in asked)         # a held stick wanders: one line for a real change, not fifty a second
+        if coarse != self.velocity_logged and now_s - self.logged_at >= WALK_LOG_S:
+            self.velocity_logged, self.logged_at = coarse, now_s
+            self.event("sticks", velocity=[round(v, 2) for v in asked], sticks={k: round(v, 2) for k, v in state["sticks"].items()})
+        self.velocity = asked
+        if not self.live or getattr(self.args, "walk_read_only", False):
+            return 0.0, 0.0, 0.0
+        if any(asked):
+            self.walked_at = now_s
+        return asked
+
+    def _walking_first(self, now_s: float) -> None:
+        """Before the goals: an A in the settle does not count, A after it takes the sticks away and starts the goals' clock, and with no A the run ends."""
+        if now_s < self.settle_s:
+            self.go = False
+            return
+        if not self.walk_first_said:
+            self.walk_first_said = True
+            self.event("the sticks are live: walk it into place, let go, then A starts the goals")
+        if self.go:
+            self.go, self.path_t0 = False, now_s
+            self.event(f"A: the sticks are off, the goals in {self.settle_s:.0f} s")
+        elif now_s > self.settle_s + self.walk_first and self.end_reason is None:
+            self.end_reason = f"no A in {self.walk_first:.0f} s of walking"
+
+    def _stopped_walking(self) -> bool:
+        """Whether the legs have stood long enough to change gains: mid-step, the stand-up gains catch a foot in the air."""
+        return self.walk is None or self.policy_ticks * self.args_dt() - self.walked_at >= WALK_STOP_S
 
     def _end_policy(self, state) -> None:
         self.event("the policy is done", presses=len(self.press_results))
@@ -1067,7 +1223,8 @@ class PressRun:
                "remote": float(sum(1 << k for k, name in enumerate(ll.KEYS) if name in state["keys"])),
                "send_ms": self.send_ms if self.mode == "policy" else math.nan,
                "arm_obs": np.full(6, math.nan) if arm_obs is None else arm_obs,
-               "arm_target": np.full(6, math.nan) if arm_target is None else arm_target}
+               "arm_target": np.full(6, math.nan) if arm_target is None else arm_target,
+               "sticks": [state["sticks"][k] for k in ("lx", "ly", "rx", "ry")] if "sticks" in state else np.full(4, math.nan)}
         for key, value in row.items():
             self.rows[key].append(np.asarray(value, dtype=float))
 
@@ -1122,7 +1279,8 @@ class PressRun:
                 settled = legs[32:] if len(legs) > 32 else legs          # past the empty history
                 out["reach"] = {
                     "goal": self.args.reach_goal, "arm_obs": self.args.reach_arm_obs,
-                    "goal_sphere": self.reach_goal.tolist(),
+                    "goal_sphere": self.reach_goal.tolist(), "via": getattr(self.args, "reach_via", None),
+                    "walk_max": list(self.walk.most) if self.walk is not None else None,
                     "leg_target_off_default_rad": {"rms": round(float(np.sqrt((settled ** 2).mean())), 3),
                                                    "p95": round(float(np.quantile(np.abs(settled), 0.95)), 3),
                                                    "max": round(float(np.abs(settled).max()), 3)},
@@ -1144,7 +1302,7 @@ class PressRun:
         return out
 
 
-def main() -> int:
+def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--policy", required=True, help="a force-aware export (.npz), e.g. "
                         "checkpoints/leg_press_force_r4_model_5999.npz")
@@ -1175,6 +1333,27 @@ def main() -> int:
                              "export's start_gate, else -5 5)")
     parser.add_argument("--reach_goal", choices=("init_start", "folded"), default="init_start",
                         help="a reach export's hand goal: the one training opens on, or the folded hand's own")
+    parser.add_argument("--reach_via", type=float, nargs=5, action="append", metavar=("R", "PITCH_DEG", "YAW_DEG", "SLIDE_S", "HOLD_S"),
+                        help="a goal to slide to and hold, about the goal sphere's centre; repeat for more. The run slides back to --reach_goal "
+                             "before it ends, and --stand_s has to cover the path")
+    parser.add_argument("--reach_settle_s", type=float, default=3.0,
+                        help="on --reach_goal this long before a path or the sticks may move it: the arm's first second is the handover's")
+    parser.add_argument("--reach_force_n", type=float, nargs="+", metavar="N",
+                        help="with --reach_via: the downward force to tell the policy once the hand has arrived, 0-8 N; several levels share the time equally. Told, not measured")
+    parser.add_argument("--reach_cloth", action="store_true",
+                        help="with the arm out the jaws wait open for a cloth; A shuts them and the run goes on; they let it go before the fold")
+    parser.add_argument("--reach_walk_first", type=float, default=0.0, metavar="S",
+                        help="with --reach_walk and --reach_via: the sticks walk the dog for up to S s, then A takes them away and plays the goals. --stand_s counts from that A")
+    parser.add_argument("--reach_walk", action="store_true",
+                        help="the remote's sticks walk the dog on the policy: left stick forward and sideways, right stick turns, release to stand. Dry: "
+                             "they are read and logged and the policy is shown nothing")
+    parser.add_argument("--walk_max", type=float, nargs=3, default=(0.3, 0.2, 0.5), metavar=("VX", "VY", "WZ"),
+                        help="the most the sticks ask, m/s, m/s, rad/s")
+    parser.add_argument("--walk_read_only", action="store_true",
+                        help="--reach_walk: read and log the sticks and hold the stand. A live stand has sport mode released, so this is where to push them")
+    parser.add_argument("--reach_soft_tilt_deg", type=float, default=12.0,
+                        help="on the whole body, a tilt past this holds the arm, takes the legs to the stand-up gains, folds and lies down; "
+                             "--tilt_limit_deg stays the hard stop, damping")
     parser.add_argument("--reach_arm_obs", choices=("virtual", "measured", "reports"), default="virtual",
                         help="what a reach export sees of the arm: `leg_policy.VirtualArm`, the real folded arm, or the real "
                              "arm's reports as it trained on them (`reach_arm.ArmReports`)")
@@ -1193,6 +1372,11 @@ def main() -> int:
     parser.add_argument("--status_port", type=int, default=0,
                         help="the console's status port on 127.0.0.1; stdin closing is then an E-stop")
     parser.add_argument("--run_dir", default="logs/leg_press")
+    return parser
+
+
+def main() -> int:
+    parser = make_parser()
     args = parser.parse_args()
     if args.live and args.rehearse:
         parser.error("--rehearse is for the dry run")

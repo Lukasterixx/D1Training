@@ -1,0 +1,160 @@
+00:18:23 [press] policy reach  leg target off default 0.19 rad  arm output 0.45 rad (not sent)  base 0.281 m  roll  +3.4 pitch  -3.0  2.5 ms  real arm measured
+00:18:24 [press] policy reach  leg target off default 0.20 rad  arm output 0.23 rad (not sent)  base 0.281 m  roll  +2.8 pitch  -3.0  2.8 ms  real arm measured
+00:18:25 [press] policy reach  leg target off default 0.16 rad  arm output 0.21 rad (not sent)  base 0.281 m  roll  +2.1 pitch  -3.1  2.8 ms  real arm measured
+00:18:26 [press] policy reach  leg target off default 0.16 rad  arm output 0.20 rad (not sent)  base 0.281 m  roll  +2.0 pitch  -3.1  2.6 ms  real arm measured
+00:18:26 [press] the policy is done {'presses': 0}
+00:18:26 [press] mode policy -> stand_end
+00:18:28 [press] arm: folding
+00:18:33 [press] arm: folded
+00:18:33 [press] mode stand_end -> lie_end
+00:18:37 [press] remote: ['A']
+00:18:38 [press] mode lie_end -> damping
+00:18:38 [press] damping. Enter (A): give the legs back to sport mode (SelectMode 'mcf'); it may stand the dog up by itself
+00:18:43 [press] remote: ['A']
+00:18:43 [press] mode damping -> handback
+00:18:43 [press] LowCmd stopped {'sent': 25763}
+00:18:45 [press] SelectMode not answered; checking
+00:18:46 [press] sport mode back {'name': 'mcf'}
+00:18:46 [press] mode handback -> done
+00:18:47 [press] record: /root/D1Training/logs/leg_press/20261107T001746_reach_stand_live
+00:18:48 [run_press_on_dog] records: /home/unitree/D1Training/logs/leg_press/
+00:18:48 END reach_66600 [live_far_tour], exit 0: --stand_s 26.0 s
+00:19:02 START Reach sticky 66600 (whole body) [live_walk]
+00:19:04 [run_press_on_dog] LIVE: this program will drive the legs
+00:19:05 [press] --reach_arm_send: the whole body, for the first time: the D1 unfolds and the policy drives it and the legs. Nobody within the arm's reach, a hand on the E-stop.
+00:19:05 type 'arm' to go on: [press] arm link on 127.0.0.1:8095 (sending)
+00:19:05 [press] LIVE: force policy model_66600.pt, reach stand, goal init_start, arm seen as reports, arm sent nothing; recording to /root/D1Training/logs/leg_press/20261107T001905_reach_stand_live
+00:19:05 [press] first LowState
+00:19:05 [press] sport mode {'name': 'mcf', 'stand_height_m': 0.331, 'stand_q': [-0.0212, 0.7028, -1.4257, 0.0493, 0.7098, -1.4989, -0.0234, 0.7325, -1.4732, 0.1654, 0.6717, -1.4422]}
+00:19:05 [press] LIVE. The dog will lie down, sport mode will be released, and this program will stand it up and drive its legs. Reach policy, the sticks walk the dog, 30 s, legs and arm, goal init_start. Stops: Ctrl-C, a+Enter, the remote's B. Type live + Enter (or the remote's A) to go.
+00:19:08 [press] sport StandDown sent
+00:19:08 [press] mode preflight -> lie_down
+00:19:10 [press] lying {'calf': [-2.476, -2.486, -2.542, -2.512]}
+00:19:10 [press] mode lie_down -> release
+00:19:10 [press] ReleaseMode answered (code 0)
+00:19:10 [press] sport mode released
+00:19:10 [press] mode release -> check_lowcmd
+00:19:10 [press] /lowcmd is quiet: standing up
+00:19:10 [press] mode check_lowcmd -> stand_up
+00:19:14 [press] arm: unfolding
+00:19:18 [press] arm: at the policy's start
+00:19:19 [press] taken at the blend {'base_m': 0.287, 'roll_pitch_deg': [0.5, -3.8], 'q_minus_trained_settled': [0.017, 0.127, 0.117, -0.017, 0.115, 0.143, -0.117, -0.041, 0.126, 0.104, -0.054, 0.154]}
+00:19:19 [press] mode stand_up -> policy
+00:19:19 [press] the policy holds the stand for 30 s (q + Enter ends it sooner)
+00:19:19 [press] the arm's goals are going to the link
+00:19:19 [press] sticks [-0.0, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:19 [press] policy reach  leg target off default 0.56 rad  arm output 0.28 rad (not sent)  base 0.286 m  roll  +0.6 pitch  -3.7  2.7 ms  real arm measured
+00:19:20 [press] sticks [-0.0, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:20 [press] policy reach  leg target off default 0.21 rad  arm output 0.36 rad (not sent)  base 0.291 m  roll  +2.7 pitch  -4.5  2.6 ms  real arm measured
+00:19:21 [press] sticks [-0.0, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:21 [press] policy reach  leg target off default 0.21 rad  arm output 0.40 rad (not sent)  base 0.287 m  roll  +2.5 pitch  -3.8  2.7 ms  real arm measured
+00:19:22 [press] sticks {'velocity': [0.21, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.6, 'rx': -0.0, 'ry': -0.0}}
+00:19:22 [press] sticks [-0.0, 0.68, -0.0, -0.0] (lx ly rx ry) ask [0.23, 0.0, 0.0] (vx vy wz)
+00:19:22 [press] policy reach  leg target off default 0.53 rad  arm output 0.60 rad (not sent)  base 0.287 m  roll  +2.6 pitch  -3.6  2.8 ms  real arm measured
+00:19:22 [press] sticks {'velocity': [0.13, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.24, 'rx': -0.0, 'ry': -0.0}}
+00:19:23 [press] sticks {'velocity': [0.16, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.36, 'rx': -0.0, 'ry': -0.0}}
+00:19:23 [press] sticks [-0.0, 0.47, -0.0, -0.0] (lx ly rx ry) ask [0.18, 0.0, 0.0] (vx vy wz)
+00:19:23 [press] policy reach  leg target off default 0.42 rad  arm output 0.21 rad (not sent)  base 0.275 m  roll  +3.3 pitch  -4.6  2.7 ms  real arm measured
+00:19:23 [press] sticks {'velocity': [0.14, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.29, 'rx': -0.0, 'ry': -0.0}}
+00:19:24 [press] sticks {'velocity': [0.0, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.0, 'ry': -0.0}}
+00:19:24 [press] sticks {'velocity': [0.0, 0.0, 0.25], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.22, 'ry': -0.0}}
+00:19:24 [press] sticks [-0.0, 0.0, -0.58, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.36] (vx vy wz)
+00:19:24 [press] policy reach  leg target off default 0.43 rad  arm output 0.26 rad (not sent)  base 0.297 m  roll  +3.7 pitch  -4.5  2.6 ms  real arm measured
+00:19:24 [press] sticks {'velocity': [0.0, 0.0, 0.41], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.71, 'ry': -0.0}}
+00:19:24 [press] sticks {'velocity': [0.0, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.0, 'ry': -0.0}}
+00:19:25 [press] sticks {'velocity': [0.0, 0.0, 0.45], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.86, 'ry': -0.0}}
+00:19:25 [press] sticks [-0.0, 0.0, -0.88, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.46] (vx vy wz)
+00:19:25 [press] policy reach  leg target off default 0.53 rad  arm output 0.20 rad (not sent)  base 0.300 m  roll  +3.1 pitch  -3.5  2.6 ms  real arm measured
+00:19:26 [press] sticks [-0.0, 0.0, -0.88, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.46] (vx vy wz)
+00:19:26 [press] policy reach  leg target off default 0.48 rad  arm output 0.28 rad (not sent)  base 0.299 m  roll  +1.6 pitch  -4.9  2.5 ms  real arm measured
+00:19:27 [press] sticks [-0.0, 0.0, -0.88, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.46] (vx vy wz)
+00:19:27 [press] policy reach  leg target off default 0.53 rad  arm output 0.15 rad (not sent)  base 0.268 m  roll  +0.2 pitch  -4.9  2.6 ms  real arm measured
+00:19:27 [press] sticks {'velocity': [0.0, 0.0, 0.45], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.84, 'ry': -0.0}}
+00:19:28 [press] sticks {'velocity': [0.0, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.18, 'rx': -0.0, 'ry': -0.0}}
+00:19:28 [press] sticks {'velocity': [0.13, 0.0, 0.25], 'sticks': {'lx': -0.0, 'ly': 0.23, 'rx': -0.22, 'ry': -0.0}}
+00:19:28 [press] sticks [-0.0, 0.23, -0.52, -0.0] (lx ly rx ry) ask [0.13, 0.0, 0.34] (vx vy wz)
+00:19:28 [press] policy reach  leg target off default 0.52 rad  arm output 0.18 rad (not sent)  base 0.303 m  roll  +3.6 pitch  -5.0  2.6 ms  real arm measured
+00:19:28 [press] sticks {'velocity': [0.13, 0.0, 0.34], 'sticks': {'lx': -0.0, 'ly': 0.23, 'rx': -0.52, 'ry': -0.0}}
+00:19:28 [press] sticks {'velocity': [0.13, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.23, 'rx': -0.0, 'ry': -0.0}}
+00:19:29 [press] sticks {'velocity': [0.13, 0.0, 0.25], 'sticks': {'lx': -0.0, 'ly': 0.23, 'rx': -0.23, 'ry': -0.0}}
+00:19:29 [press] sticks [-0.0, 0.23, -0.23, -0.0] (lx ly rx ry) ask [0.13, 0.0, 0.25] (vx vy wz)
+00:19:29 [press] policy reach  leg target off default 0.47 rad  arm output 0.35 rad (not sent)  base 0.298 m  roll  +2.0 pitch  -4.0  2.7 ms  real arm measured
+00:19:29 [press] sticks {'velocity': [0.13, 0.0, 0.27], 'sticks': {'lx': -0.0, 'ly': 0.25, 'rx': -0.28, 'ry': -0.0}}
+00:19:30 [press] sticks {'velocity': [0.16, 0.0, 0.27], 'sticks': {'lx': -0.0, 'ly': 0.39, 'rx': -0.28, 'ry': -0.0}}
+00:19:30 [press] sticks {'velocity': [0.19, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.51, 'rx': -0.07, 'ry': -0.0}}
+00:19:30 [press] sticks [-0.0, 0.52, -0.0, -0.0] (lx ly rx ry) ask [0.19, 0.0, 0.0] (vx vy wz)
+00:19:30 [press] policy reach  leg target off default 0.49 rad  arm output 0.19 rad (not sent)  base 0.274 m  roll  +1.9 pitch  -5.1  2.6 ms  real arm measured
+00:19:31 [press] sticks [-0.0, 0.51, -0.0, -0.0] (lx ly rx ry) ask [0.19, 0.0, 0.0] (vx vy wz)
+00:19:31 [press] policy reach  leg target off default 0.35 rad  arm output 0.29 rad (not sent)  base 0.299 m  roll  +3.6 pitch  -4.7  2.7 ms  real arm measured
+00:19:31 [press] sticks {'velocity': [0.12, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.22, 'rx': -0.0, 'ry': -0.0}}
+00:19:32 [press] sticks {'velocity': [0.0, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.0, 'ry': -0.0}}
+00:19:32 [press] sticks {'velocity': [-0.15, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': -0.33, 'rx': -0.0, 'ry': -0.0}}
+00:19:32 [press] sticks [-0.0, -0.74, -0.0, -0.0] (lx ly rx ry) ask [-0.24, 0.0, 0.0] (vx vy wz)
+00:19:32 [press] policy reach  leg target off default 0.36 rad  arm output 0.20 rad (not sent)  base 0.299 m  roll  +3.2 pitch  -3.0  2.8 ms  real arm measured
+00:19:32 [press] sticks {'velocity': [-0.27, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': -0.86, 'rx': -0.0, 'ry': -0.0}}
+00:19:33 [press] sticks {'velocity': [-0.21, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': -0.6, 'rx': -0.0, 'ry': -0.0}}
+00:19:33 [press] sticks [-0.0, -0.45, 0.09, -0.0] (lx ly rx ry) ask [-0.18, 0.0, 0.0] (vx vy wz)
+00:19:33 [press] policy reach  leg target off default 0.59 rad  arm output 0.61 rad (not sent)  base 0.291 m  roll  -0.3 pitch  -5.0  2.7 ms  real arm measured
+00:19:34 [press] sticks {'velocity': [-0.18, 0.0, -0.24], 'sticks': {'lx': -0.0, 'ly': -0.45, 'rx': 0.2, 'ry': -0.0}}
+00:19:34 [press] sticks {'velocity': [-0.17, 0.0, -0.28], 'sticks': {'lx': -0.0, 'ly': -0.43, 'rx': 0.31, 'ry': -0.0}}
+00:19:34 [press] sticks [-0.0, -0.43, 0.31, -0.0] (lx ly rx ry) ask [-0.17, 0.0, -0.28] (vx vy wz)
+00:19:34 [press] policy reach  leg target off default 0.39 rad  arm output 0.24 rad (not sent)  base 0.302 m  roll  +2.6 pitch  -2.8  2.6 ms  real arm measured
+00:19:35 [press] sticks {'velocity': [-0.17, 0.0, -0.24], 'sticks': {'lx': -0.0, 'ly': -0.43, 'rx': 0.14, 'ry': -0.0}}
+00:19:35 [press] sticks [-0.0, -0.43, -0.0, -0.0] (lx ly rx ry) ask [-0.17, 0.0, 0.0] (vx vy wz)
+00:19:35 [press] policy reach  leg target off default 0.39 rad  arm output 0.46 rad (not sent)  base 0.285 m  roll  +2.3 pitch  -1.9  2.6 ms  real arm measured
+00:19:35 [press] sticks {'velocity': [-0.17, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': -0.43, 'rx': -0.0, 'ry': -0.0}}
+00:19:36 [press] sticks {'velocity': [-0.17, 0.0, 0.27], 'sticks': {'lx': -0.0, 'ly': -0.43, 'rx': -0.28, 'ry': -0.0}}
+00:19:36 [press] sticks {'velocity': [-0.12, 0.0, 0.31], 'sticks': {'lx': -0.0, 'ly': -0.13, 'rx': -0.4, 'ry': -0.0}}
+00:19:36 [press] sticks [-0.0, 0.0, -0.4, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.31] (vx vy wz)
+00:19:36 [press] policy reach  leg target off default 0.34 rad  arm output 0.26 rad (not sent)  base 0.316 m  roll  +1.4 pitch  -5.0  2.5 ms  real arm measured
+00:19:36 [press] sticks {'velocity': [0.0, 0.0, 0.31], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.4, 'ry': -0.0}}
+00:19:37 [press] sticks {'velocity': [0.0, 0.0, 0.35], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.54, 'ry': -0.0}}
+00:19:37 [press] sticks [-0.0, 0.0, -0.65, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.39] (vx vy wz)
+00:19:37 [press] policy reach  leg target off default 0.34 rad  arm output 0.18 rad (not sent)  base 0.305 m  roll  +1.7 pitch  -5.4  2.7 ms  real arm measured
+00:19:38 [press] sticks {'velocity': [0.0, 0.0, 0.45], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.85, 'ry': -0.0}}
+00:19:38 [press] sticks [-0.0, 0.0, -0.85, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.45] (vx vy wz)
+00:19:38 [press] policy reach  leg target off default 0.49 rad  arm output 0.19 rad (not sent)  base 0.308 m  roll  +2.2 pitch  -5.0  2.7 ms  real arm measured
+00:19:39 [press] sticks [-0.0, 0.0, -0.87, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.46] (vx vy wz)
+00:19:39 [press] policy reach  leg target off default 0.47 rad  arm output 0.17 rad (not sent)  base 0.300 m  roll  +0.5 pitch  -5.0  2.6 ms  real arm measured
+00:19:39 [press] sticks {'velocity': [0.0, 0.0, 0.43], 'sticks': {'lx': -0.0, 'ly': 0.03, 'rx': -0.8, 'ry': -0.0}}
+00:19:40 [press] sticks {'velocity': [0.2, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.57, 'rx': -0.0, 'ry': -0.0}}
+00:19:40 [press] sticks [-0.0, 0.57, -0.0, -0.0] (lx ly rx ry) ask [0.2, 0.0, 0.0] (vx vy wz)
+00:19:40 [press] policy reach  leg target off default 0.41 rad  arm output 0.26 rad (not sent)  base 0.294 m  roll  +1.4 pitch  -5.7  2.7 ms  real arm measured
+00:19:40 [press] sticks {'velocity': [0.2, 0.0, -0.28], 'sticks': {'lx': -0.0, 'ly': 0.57, 'rx': 0.33, 'ry': -0.0}}
+00:19:41 [press] sticks {'velocity': [0.17, 0.0, -0.46], 'sticks': {'lx': -0.0, 'ly': 0.44, 'rx': 0.86, 'ry': -0.0}}
+00:19:41 [press] sticks {'velocity': [0.0, 0.0, -0.46], 'sticks': {'lx': -0.0, 'ly': 0.11, 'rx': 0.86, 'ry': -0.0}}
+00:19:41 [press] sticks [-0.0, 0.0, 0.86, -0.0] (lx ly rx ry) ask [0.0, 0.0, -0.46] (vx vy wz)
+00:19:41 [press] policy reach  leg target off default 0.39 rad  arm output 0.33 rad (not sent)  base 0.279 m  roll  +2.4 pitch  -1.7  2.7 ms  real arm measured
+00:19:42 [press] sticks [-0.0, 0.0, 0.87, -0.0] (lx ly rx ry) ask [0.0, 0.0, -0.46] (vx vy wz)
+00:19:42 [press] policy reach  leg target off default 0.34 rad  arm output 0.28 rad (not sent)  base 0.310 m  roll  +4.0 pitch  -2.4  2.5 ms  real arm measured
+00:19:43 [press] sticks [-0.0, 0.0, 0.87, -0.0] (lx ly rx ry) ask [0.0, 0.0, -0.46] (vx vy wz)
+00:19:43 [press] policy reach  leg target off default 0.38 rad  arm output 0.50 rad (not sent)  base 0.316 m  roll  +3.1 pitch  -2.8  2.6 ms  real arm measured
+00:19:44 [press] sticks {'velocity': [0.0, 0.0, -0.41], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': 0.72, 'ry': -0.0}}
+00:19:44 [press] sticks {'velocity': [0.0, 0.0, 0.0], 'sticks': {'lx': -0.0, 'ly': 0.0, 'rx': -0.0, 'ry': -0.0}}
+00:19:44 [press] sticks [-0.0, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:44 [press] policy reach  leg target off default 0.23 rad  arm output 0.40 rad (not sent)  base 0.311 m  roll  +3.8 pitch  -2.7  2.6 ms  real arm measured
+00:19:45 [press] sticks [-0.0, 0.0, 0.09, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:45 [press] policy reach  leg target off default 0.23 rad  arm output 0.32 rad (not sent)  base 0.309 m  roll  +4.0 pitch  -2.8  2.7 ms  real arm measured
+00:19:46 [press] sticks [-0.0, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:46 [press] policy reach  leg target off default 0.21 rad  arm output 0.43 rad (not sent)  base 0.300 m  roll  +0.6 pitch  -4.8  2.7 ms  real arm measured
+00:19:47 [press] sticks {'velocity': [0.0, -0.12, 0.0], 'sticks': {'lx': 0.21, 'ly': 0.0, 'rx': -0.0, 'ry': -0.0}}
+00:19:47 [press] sticks [0.37, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, -0.14, 0.0] (vx vy wz)
+00:19:47 [press] policy reach  leg target off default 0.47 rad  arm output 0.48 rad (not sent)  base 0.292 m  roll  -3.0 pitch  -4.8  2.5 ms  real arm measured
+00:19:48 [press] sticks {'velocity': [0.0, 0.0, 0.0], 'sticks': {'lx': 0.36, 'ly': 0.0, 'rx': -0.0, 'ry': -0.0}}
+00:19:48 [press] sticks [0.35, 0.0, -0.0, -0.0] (lx ly rx ry) ask [0.0, 0.0, 0.0] (vx vy wz)
+00:19:48 [press] policy reach  leg target off default 0.23 rad  arm output 0.25 rad (not sent)  base 0.305 m  roll  +3.1 pitch  -3.5  2.7 ms  real arm measured
+00:19:49 [press] the policy is done {'presses': 0}
+00:19:49 [press] mode policy -> stand_end
+00:19:50 [press] arm: folding
+00:19:56 [press] arm: folded
+00:19:56 [press] mode stand_end -> lie_end
+00:20:01 [press] mode lie_end -> damping
+00:20:01 [press] damping. Enter (A): give the legs back to sport mode (SelectMode 'mcf'); it may stand the dog up by itself
+00:20:26 [press] mode damping -> handback
+00:20:26 [press] LowCmd stopped {'sent': 37712}
+00:20:27 [press] SelectMode not answered; checking
+00:20:29 [press] sport mode back {'name': 'mcf'}
+00:20:29 [press] mode handback -> done
+00:20:29 [press] record: /root/D1Training/logs/leg_press/20261107T001905_reach_stand_live
+00:20:31 [run_press_on_dog] records: /home/unitree/D1Training/logs/leg_press/
+00:20:31 END reach_66600 [live_walk], exit 0: --stand_s 30.0 s

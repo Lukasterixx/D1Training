@@ -1,0 +1,22 @@
+{
+  "mode": "run_plan_probe",
+  "status": "finished",
+  "seed": 1,
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_sticky_model_66600.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 66600,
+  "plan": "far",
+  "steps": 450,
+  "plans": 18,
+  "clear": 18,
+  "leg_friction": 1.0,
+  "floor_grip": null,
+  "real_stance": true,
+  "handover_base_m": 0.26593297719955444,
+  "stop_at_s": 9.0,
+  "stop_kind": "damping",
+  "tool_point": "fingertip",
+  "forces": "off",
+  "records_file": "run_plan.json",
+  "command": "./demos/unifp/run_plan_probe.py --headless --real_stance --checkpoint checkpoints/unifp_go2d1_isaaclab_sticky_model_66600.pt --run_name stopdamp_far_f1_66600 --plan far --leg_friction 1 --radius 0.45 0.55 --pitch_deg 0 15 36 --yaw_deg -40 0 40 --stop_at_s 9 --stop_kind damping"
+}

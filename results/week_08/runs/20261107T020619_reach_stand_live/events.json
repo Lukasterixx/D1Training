@@ -1,0 +1,384 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.02,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.34,
+    "stand_q": [
+      0.0841,
+      0.6308,
+      -1.4848,
+      -0.0468,
+      0.6949,
+      -1.4538,
+      0.0733,
+      0.8296,
+      -1.5203,
+      -0.0212,
+      0.689,
+      -1.4678
+    ]
+  },
+  {
+    "t": 3.721,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 3.721,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 5.24,
+    "event": "lying",
+    "calf": [
+      -2.497,
+      -2.485,
+      -2.558,
+      -2.521
+    ]
+  },
+  {
+    "t": 5.241,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 5.38,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 5.4,
+    "event": "sport mode released"
+  },
+  {
+    "t": 5.4,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 5.82,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 5.82,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 9.342,
+    "event": "arm: unfolding"
+  },
+  {
+    "t": 13.502,
+    "event": "arm: at the policy's start"
+  },
+  {
+    "t": 13.502,
+    "event": "the jaws open: hand it the cloth, by its far end. A shuts them and the run goes on, and the arm moves within seconds"
+  },
+  {
+    "t": 24.122,
+    "event": "the jaws closing on the cloth"
+  },
+  {
+    "t": 28.142,
+    "event": "the jaws on the cloth: the policy next"
+  },
+  {
+    "t": 29.162,
+    "event": "taken at the blend",
+    "base_m": 0.299,
+    "roll_pitch_deg": [
+      0.3,
+      -2.9
+    ],
+    "q_minus_trained_settled": [
+      0.085,
+      0.114,
+      0.12,
+      -0.084,
+      0.152,
+      0.142,
+      -0.022,
+      -0.033,
+      0.137,
+      0.022,
+      -0.044,
+      0.174
+    ]
+  },
+  {
+    "t": 29.162,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 29.184,
+    "event": "the arm's goals are going to the link"
+  },
+  {
+    "t": 32.181,
+    "event": "the sticks are live: walk it into place, let go, then A starts the goals"
+  },
+  {
+    "t": 85.341,
+    "event": "sticks",
+    "velocity": [
+      0.12,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.22,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 85.601,
+    "event": "sticks",
+    "velocity": [
+      0.17,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.74,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 85.861,
+    "event": "sticks",
+    "velocity": [
+      0.15,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.49,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 86.121,
+    "event": "sticks",
+    "velocity": [
+      0.15,
+      0.0,
+      0.37
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.46,
+      "rx": -0.83,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 86.381,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.31,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 86.641,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.33
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.35,
+      "rx": -0.65,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 86.921,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.35,
+      "rx": -0.08,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 87.181,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      0.35
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.35,
+      "rx": -0.76,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 87.441,
+    "event": "sticks",
+    "velocity": [
+      0.13,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.35,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 87.901,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      0.25
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.38,
+      "rx": -0.23,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 88.162,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      0.26
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.39,
+      "rx": -0.28,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 88.421,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.38,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 89.841,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      -0.25
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.38,
+      "rx": 0.24,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 90.101,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.0,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 93.321,
+    "event": "A: the sticks are off, the goals in 3 s"
+  },
+  {
+    "t": 119.184,
+    "event": "the policy is done",
+    "presses": 0
+  },
+  {
+    "t": 119.184,
+    "event": "mode policy -> stand_end"
+  },
+  {
+    "t": 120.702,
+    "event": "arm: folding"
+  },
+  {
+    "t": 126.502,
+    "event": "arm: folded"
+  },
+  {
+    "t": 126.502,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 131.021,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 131.481,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 131.502,
+    "event": "LowCmd stopped",
+    "sent": 62792
+  },
+  {
+    "t": 133.0,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 134.66,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 134.66,
+    "event": "mode handback -> done"
+  }
+]

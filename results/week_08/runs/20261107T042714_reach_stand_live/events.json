@@ -1,0 +1,204 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.021,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.318,
+    "stand_q": [
+      -0.0154,
+      0.8257,
+      -1.5386,
+      0.0489,
+      0.7691,
+      -1.5624,
+      -0.0134,
+      0.6296,
+      -1.5814,
+      0.0386,
+      0.8407,
+      -1.5985
+    ]
+  },
+  {
+    "t": 2.44,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.44,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 3.96,
+    "event": "lying",
+    "calf": [
+      -2.498,
+      -2.517,
+      -2.542,
+      -2.559
+    ]
+  },
+  {
+    "t": 3.961,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 4.1,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 4.12,
+    "event": "sport mode released"
+  },
+  {
+    "t": 4.12,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 4.54,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 4.54,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 8.062,
+    "event": "arm: unfolding"
+  },
+  {
+    "t": 12.222,
+    "event": "arm: at the policy's start"
+  },
+  {
+    "t": 12.222,
+    "event": "the jaws open: hand it the cloth, by its far end. A shuts them and the run goes on, and the arm moves within seconds"
+  },
+  {
+    "t": 15.661,
+    "event": "the jaws closing on the cloth"
+  },
+  {
+    "t": 19.681,
+    "event": "the jaws on the cloth: the policy next"
+  },
+  {
+    "t": 20.702,
+    "event": "taken at the blend",
+    "base_m": 0.29,
+    "roll_pitch_deg": [
+      -0.0,
+      -4.4
+    ],
+    "q_minus_trained_settled": [
+      0.041,
+      0.176,
+      0.135,
+      -0.029,
+      0.101,
+      0.147,
+      -0.102,
+      -0.053,
+      0.133,
+      0.082,
+      -0.069,
+      0.135
+    ]
+  },
+  {
+    "t": 20.702,
+    "event": "mode stand_up -> policy"
+  },
+  {
+    "t": 20.724,
+    "event": "the arm's goals are going to the link"
+  },
+  {
+    "t": 23.721,
+    "event": "the sticks are live: walk it into place, let go, then A starts the goals"
+  },
+  {
+    "t": 26.841,
+    "event": "sticks",
+    "velocity": [
+      0.14,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.43,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 27.701,
+    "event": "sticks",
+    "velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sticks": {
+      "lx": -0.0,
+      "ly": 0.12,
+      "rx": -0.0,
+      "ry": -0.0
+    }
+  },
+  {
+    "t": 28.721,
+    "event": "A: the sticks are off, the goals in 3 s"
+  },
+  {
+    "t": 68.724,
+    "event": "the policy is done",
+    "presses": 0
+  },
+  {
+    "t": 68.725,
+    "event": "mode policy -> stand_end"
+  },
+  {
+    "t": 70.242,
+    "event": "arm: folding"
+  },
+  {
+    "t": 75.962,
+    "event": "arm: folded"
+  },
+  {
+    "t": 75.962,
+    "event": "mode stand_end -> lie_end"
+  },
+  {
+    "t": 80.481,
+    "event": "mode lie_end -> damping"
+  },
+  {
+    "t": 86.222,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 86.241,
+    "event": "LowCmd stopped",
+    "sent": 40812
+  },
+  {
+    "t": 87.76,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 89.36,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 89.36,
+    "event": "mode handback -> done"
+  }
+]

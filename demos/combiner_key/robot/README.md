@@ -574,31 +574,189 @@ own base on the CPU model while at the bar's place; that is the model's margin, 
 
 ## The whole-body reach (`press_live.py --reach_arm_send --live`, 2026-11-06)
 
-`checkpoints/reach_force_locked_model_66200.npz` on the legs and the arm together. **Never run on the dog.** F-253, and `reach_arm.py` for the contract.
+`checkpoints/reach_force_sticky_model_66600.npz` on the legs and the arm together. It has finished four 10 s runs on the dog, four of four (F-257), holding the stand with the hand about 5 cm off the goal, by calculation, not measured. The goal is about 6.5 cm from where the arm starts, so a far goal is not yet tested. `66200` stopped at about 1.5 s twice (F-255, F-256) and is not to be rerun. `reach_arm.py` for the contract.
 
-Both steps below are on the console (`demos/robot_console/run_on_pc.sh`, 2026-11-06): **Arm zero test** and **Reach locked 66200**. The commands are what it runs.
+Both steps below are on the console (`demos/robot_console/run_on_pc.sh`): **Arm zero test** and **Reach sticky 66600**. The commands are what it runs.
 
 **First, without the policy**, `run_holster_on_dog.sh --live --zero_test --step --timing`: out to zero, `follow`, and back. It covers three of the five first-ever items below.
 
 **Then, the arm folded, the dog standing in sport mode, nobody within the arm's reach, a hand on the E-stop:**
 
     d1update
-    demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/reach_force_locked_model_66200.npz --presses 0 --stand_s 20 \
+    demos/combiner_key/robot/run_press_on_dog.sh --policy checkpoints/reach_force_sticky_model_66600.npz --presses 0 --stand_s 10 \
         --reach_arm_obs reports --reach_arm_send --live --start_on_blend --start_pitch_deg -10 5
 
 Type `arm`, then `live`. The dog lies down and stands up with the arm folded; on the stand-up gains the arm comes out by home to zero (~5 s); the policy holds the goal for `--stand_s`; the arm holds, then folds by home, `tuck` and `fold`; the dog lies down. The goal is fixed: `--reach_goal init_start`, 0.5 m out, 36 deg up.
 
 | what stops it | what happens |
 | --- | --- |
-| Ctrl-C, `a` + Enter, tilt, a joint limit, stale LowState | legs to damping, arm holds where it is |
+| Ctrl-C, `a` + Enter, a tilt past 15 deg, a joint limit, stale LowState | legs to damping, arm holds where it is |
+| a tilt past 12 deg | the arm holds, the legs go to the stand-up gains, it folds, the dog lies down |
 | E-stop | damping, sport mode at once, arm holds |
 | no arm report for 0.34 s | as Ctrl-C |
 | target 25 deg ahead of the arm for 0.5 s, or 60 at once; 20 deg in a tick | after the first second: the arm holds, the legs go to the stand-up gains, it folds, the dog lies down |
 | a target not finite | as Ctrl-C |
-| a leg target past 0.9 rad (1.2 in the first second) | as Ctrl-C, before the send |
+| a leg target past 0.9 rad (1.2 in the first second) | the arm holds, the legs go to the stand-up gains, it folds, the dog lies down; the target is not sent |
 | the arm not out or not folded in 20 s | as Ctrl-C |
 | the stand not the trained one | the arm folds, the dog lies down |
 
 The arm link holds on its own if the program goes quiet for 0.5 s. **Never release the arm** (F-028): after a stop it stays out, powered, and folds by home, `tuck` and `fold`, not straight, which hits the lidar cage.
 
 **First-ever on the real arm, in this run** (the arm at zero, `follow` on a locked stream and the fold back from there were done without the policy, dog sitting, F-254): the policy on the legs with the arm out; a stop from there, on a dog going to damping with the arm held out, whose effect on balance is not known; a fold-back from a policy pose.
+
+## Far goals and walking on the whole body (`--reach_via`, `--reach_walk`, prepared 2026-11-07)
+
+`reach_force_sticky_model_66600.npz`, the policy that finished four stands on the dog (F-257). **All five far modes and Walk have finished on the dog, one run each: held 1.5-4.0 cm off, 3.1 cm median walking, by calculation (F-261, F-263). The Stick check and Walk, slow have not run, sideways walking is 1.0 s, and the soft stop has not fired.** The tables below are the simulation and replay they were planned from (F-259). The replay is a screen, not a forecast (F-258), and this simulator has been wrong about a live run before (F-255). The console has every step below, under **Reach sticky 66600**.
+
+### Before anything moves
+
+    d1update
+    demos/robot_console/run_on_pc.sh
+
+Press **B** in a dry run, then run **Dry** with the dog standing for at least 5 s. Live stays locked until both are done. **Do not touch the sticks in a dry run:** sport mode is in charge, so they walk the dog. This program only reads and sends nothing.
+
+### Far goals: in this order, one at a time
+
+Each slides the goal out over 3 s, holds, slides back to the start goal and folds as usual, so the fold starts where it has started on the dog. Nobody within 1 m of the arm.
+
+| console | goal: radius m, pitch, yaw | where the hand goes | main joint, sim to replay | sim: hand, cm | replay: worst lead, deg |
+| --- | --- | --- | --- | --- | --- |
+| **Far: low** | 0.45, 0, 0 | 30 cm down and forward, 0.49 m off the floor | J2 +32 to +46 | 2.5-3.3 | 13 |
+| **Far: left** | 0.45, 36, +40 | 24 cm to the dog's left | J1 +36 | 2.4-4.0 | 11 |
+| **Far: right** | 0.45, 36, -40 | 24 cm to the dog's right | J1 -25 to -38 | 2.2-3.0 | 13 |
+| **Far: forward** | 0.55, 15, 0 | out and down, 0.63 m off the floor | J2 +28 to +42 | 4.2-6.1 | 13 |
+| **Far: tour** | low, left, right | all three in one 26 s run | | 2.4-10.7 | 13 |
+
+Goals are UniFP's, about the sphere's centre: 0.49 m over the ground under the base, in the yaw frame. Pitch is up, yaw is left. All are inside what training drew. No joint goes past about half its range. The simulator and the replay disagree on the arm's pose (F-258), so if the real arm is somewhere between them, that is not by itself a fault.
+
+**Stay away from close, high goals.** The simulator does not see the lidar cage, so its zero contact says nothing near the head. Every goal here has radius 0.45 or more.
+
+### Walking
+
+**Stick check first.** It is a live stand of 20 s: sport mode is released, so the sticks move nothing, and the program reads them and walks nothing. They have never been read on this dog, only the buttons. After the first 3 s the log prints `sticks [lx, ly, rx, ry] ask [vx, vy, wz]` each second. Check all four, and do not go on if any is wrong:
+
+| push | `ask` should read |
+| --- | --- |
+| left stick up | vx +0.30 |
+| left stick down | vx -0.30 |
+| left stick right | vy -0.20 |
+| right stick right | wz -0.50 |
+
+**Walk, slow** next: at most 0.2 m/s, 0.15 sideways, 0.4 rad/s, for 20 s. **Walk** after it: 0.3, 0.2, 0.5, for 30 s. A clear floor, at least 4 m each way, and someone on the console's E-stop as well as the remote.
+
+- The sticks do nothing for the first 3 s, until the arm has settled. Left stick walks, right stick turns.
+- **Let go of the sticks to stand.** That is the normal way to stop: the gait clock goes to 0 and the policy stands, as in training.
+- The run ends with the dog standing: the sticks stop counting a second before the time is up, and **End gently** stands for a second before it folds.
+- Start with small pushes, forward only. Then turn, then sideways, then back. Do not combine directions at first: the hardest combined input is the one plan that trips the leg bound in simulation.
+
+### What stops it
+
+| what happens | the dog |
+| --- | --- |
+| sticks released | stands, arm held on the goal, run continues |
+| **End gently** | stands, folds, lies down |
+| leg target past 0.9 rad, tilt past 12 deg, the arm's lead or step stops | the soft stop: arm holds, legs to the stand-up gains, folds by home, tuck and fold, lies down. Simulated from far goals and at four points of the gait: tilt at most 10.7 deg, the dog stays up. **It has never fired on the dog**, but after the hold its legs and fold are a normal run's end, which has run four times (F-257) |
+| tilt past 15 deg, a joint limit, stale LowState, `a` + Enter | damping with the arm held out. Simulated: the dog sinks to its belly, base 7.6 cm, tilt at most 13 deg, the hand at least 27 cm off the floor |
+| the console losing the page for 3.5 s | as End gently, or left alone if already folding (F-262). If the program stops reporting, the E-stop |
+| **B** or the E-stop | damping and sport mode at once, arm held. Use it if anything looks wrong: a soft stop is not worth waiting for. **Let go of the sticks as you press it**: sport mode walks on them, with the arm out |
+
+If the remote loses its link the sticks stop updating, and B with them. The console's E-stop is the answer, and `--stand_s` ends the run regardless.
+
+### If `66600` is rough
+
+If the walking runs end on the leg bound, or the hand ends well off its goals, **Reach gentle 67199** is the fallback (F-260). It does better on sticky legs in simulation, it misses the real-frame screen, and it has never run on the dog. It needs its own dry run. Then **Live whole body** first, and go no further if it does not hold as `66600` did.
+
+### After each run
+
+    python3 demos/combiner_key/robot/hand_error.py <run>/policy_rows.npz       # `press.npz`'s rows with mode == 1
+
+gives the hand against the goal it was shown on each row, and for each hold what it settled to. Calculated from the reports, not measured. Walking speed is not in the record: the dog has no odometry here, so film it or mark the floor.
+
+## Wiping a bench (`--reach_cloth`, prepared 2026-11-07)
+
+**Run on the dog on 2026-11-07, position-only, five strokes read (F-270).** Before them: simulation with an invented pad, and the runner against fakes (F-265, F-266). `reach_force_sticky_model_66600.npz` on position goals alone: it has no wipe training, and nothing measures the force. The dog walks in on the sticks, then stands still to wipe.
+
+### The setup
+
+- **The bench:** the goals were set for 40 cm and this one is 41.7 cm with its whiteboard, so read the ladder below as 1.7 cm deeper. Flat, steady enough not to shift under a 15 N push on its edge, at least 60 cm long and 20 cm deep. Across the dog's front, square to it.
+- **The dog:** start it at least 1 m back from the bench, facing it. It lies down, stands and unfolds out there, and you walk it in afterwards.
+- **Where it has to end:** centred, square to the bench, its nose about **5 cm** from the edge (the edge 42 cm ahead of the body's centre). Further off and the hand runs off the near edge at the ends of the stroke. Closer and the head is on it. The stroke is laid out from where the dog stands, so a crooked dog wipes a crooked arc.
+- **The cloth:** thick matters more than big, because the hand's height repeats to about 2 cm. Fold it into a pad 3 cm or more thick, with no more than about 15 cm hanging free, clear of the wrist camera.
+
+The hand sweeps an arc about 46 cm across, at most 54 cm ahead of the body's centre. It starts on the dog's right.
+
+### The ladder
+
+One at a time, from the top. All are on the console under **Reach sticky 66600**, and each starts with the page's OK.
+
+| console | the goal over the bench | in simulation, bare hand |
+| --- | --- | --- |
+| **Wipe: high** | +6 cm | nothing touches. Check the stroke and that the cloth stays in |
+| **Wipe: near** | +2 cm | nothing touches, with a cloth it may brush |
+| **Wipe: touch** | 0 | tip 2-4 cm over the bench |
+| **Wipe: firm** | -2 cm | light contact at some leg frictions, 2 N or less |
+| **Wipe: hard** | -3 cm | 3-13 N. The lead stop fired at one friction. The last rung: -4 cm lost the goal by 30 cm |
+
+The hand rides 2-4 cm over its goal, and a cloth adds its own thickness, so expect contact a rung or two sooner than the table. After a walk the height can also vary by up to 4 cm along the stroke in simulation (F-266), so touching at one end only may be the stance, not the rung. Stop climbing at the first rung where the cloth stays on the bench along the whole stroke. If a rung ends on a stop, that one is too deep.
+
+### One run
+
+1. Console up, B in a dry run, **Dry**, as for any run. **Don't touch the sticks in the dry run.**
+2. Pick the rung and click OK. The dog lies down and stands, and the arm comes out to about 0.82 m.
+3. The log says `the jaws open: hand it the cloth`. They wait up to 90 s, and with no A the run folds and ends.
+4. Put the cloth between the jaws, **holding it by its far end, fingers well clear**, and press **A** (or Continue on the page). They close over 2 s and go on squeezing.
+5. Let go and step back past 1 m. The policy starts about 3 s after the jaws have shut, and the sticks come alive 3 s after that.
+6. When the log says `the sticks are live`, walk it in: at most 0.2 m/s, 0.15 sideways, 0.4 rad/s. Go gently. In simulation a blind walk crept forward 10-65 cm and turned about 10 deg, so steer by eye. Sideways has had only 1 s on the dog.
+7. Let go of the sticks, check the 5 cm gap and that it is square, then press **A**. You have 120 s, and with no A the run folds and ends.
+8. The sticks are now off for the rest of the run. After 3 s the hand goes down onto the right end (4 s), left along the stroke (6 s), back (6 s) and up to the start goal (6 s).
+9. The jaws open and the arm folds, so the cloth drops. The dog lies down where it is, close to the bench, so check there is room. Press A to end, and pick the cloth up before the next run.
+
+### What stops it
+
+As in the table above. If the dog meets the bench while walking, let go of the sticks and use **End gently**. Two more differences:
+
+- **A soft stop** (lead, tilt past 12 deg, leg bound) opens the jaws, then folds. Simulated from mid-stroke: the hand comes up off the bench, tilt 8 deg, the dog stays up.
+- **B, the E-stop or a hard stop with the hand on the bench loads the arm.** Simulated, the dog sinks 21 cm with the hand still on the bench and every arm joint at its torque limit. Use **End gently** if it only looks imperfect. If anything is really wrong, B is still the answer.
+
+If the console loses the page while the jaws wait, the run ends with them open. The jaws never shut without A.
+
+### After each run
+
+    python3 demos/combiner_key/robot/hand_error.py <run>/policy_rows.npz       # `press.npz`'s rows with mode == 1
+
+The test is the plan's: **at least 90% of the path wiped, and contact for at least 80% of the motion.** Nothing on the dog measures contact, so mark it: dust or a dry-wipe line along the arc, a photo before and after, and a video from the side. A wipe that does not leave a clean arc did not touch, whatever the numbers say.
+
+## Wiping with the force input (`--reach_force_n`, prepared 2026-11-07)
+
+**Force check and all four force wipes have run on the dog (F-269, F-271).** The same run as *Wiping a bench*, with the policy told a downward force through the input it trained on. Read that section first: the setup, the cloth, the two A presses and the stops are all the same.
+
+**What this is, and is not.** The policy is told a force. It takes that as the hand's target moved 5 mm per newton, which is the 200 N/m spring it trained with (F-267). Nothing measures the real force, so this is **open loop**, and the number on the button is what it was told, not what the bench feels. In simulation 6 N told gave anything from nothing to 16 N, depending on the leg friction, the walk and where along the stroke the hand was. The cloth's stiffness hardly changed it: the dog gives way first. Regulating the real force needs a measurement the dog does not have yet, and **Force check** is the first step towards one.
+
+### Force check first
+
+You need a kitchen scale, ideally one that reads to 5 kg, and a phone. Put the scale on the bench, straight ahead of where the nose will be, its middle about 10 cm in from the edge. The hand comes down at about 53 cm ahead of the body's centre. Zero it. Film its display, and note the time you press the second A.
+
+1. **Force check** on the console: OK, cloth, A, walk it in, let go, A, as for a wipe. The arm's goal is the centre of the stroke, so line the dog up with the scale.
+2. The hand comes down on the scale and stays there, told 0, 2, 4 and 6 N for 4.5 s each. It then goes up, the jaws open and it folds.
+3. Reading grams to newtons: 100 g is about 1 N.
+
+Measure the scale's height. **Force check** is for one up to 3 cm tall and **Force check: tall scale** for 3 to 5 cm: told nothing, the hand's goal is about the scale's top, so the steps go about 3 cm deeper, as far as Wipe: firm went on the bench. The change from step to step is the result. If it ends on the lead stop, that is a result too: note the step it reached.
+
+That one run gives the real force against the told force, and against the foot sensors and the policy's own estimate in the record. Those two are the candidates for a real force reading, and neither can be judged without it.
+
+### Then wipe
+
+Take the scale off. These are on a bench **41.7 cm** tall, whiteboard included: the goal is 41.0 cm, 0.7 cm under its top, as Force check's was under its scale. On a different bench, change it.
+
+The hand runs about 3 cm lower going right to left than coming back (F-270), so each mode presses right to left, lifts, comes back in the air and presses right to left again.
+
+| console | told | real, at the stroke's centre, held still (F-269) | estimated along a stroke, by the foot sensors (F-271) |
+| --- | --- | --- | --- |
+| **Force wipe: about 6 N** | 0 N | 6 N | about 2 N |
+| **Force wipe: about 11 N** | 2 N | 11 N | about 11 N, one run |
+| **Force wipe: about 14 N** | 4 N | 14 N | about 9 N |
+| **Force wipe: about 19 N** | 6 N | 19 N | about 19 N |
+
+Those labels come from one spot on a scale. Moving along the stroke the force is not measured, it is not even, and nothing regulates it. No stop fired in eight runs on the dog, and the lead stop fired once in eight simulated runs. It lifts and folds.
+
+After the second A, in seconds: 3 waiting, 4 down onto the right end, stroke one from 8 to 14, lift to 17, back in the air to 22, down to 24, stroke two from 25 to 31, up to 38, then the fold. Run them lightest first, one at a time. Draw a dry-wipe line along the arc on the whiteboard, 5 to 11 cm in from the edge and about 46 cm long, photograph it, run, photograph it again.

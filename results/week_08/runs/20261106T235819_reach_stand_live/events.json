@@ -1,0 +1,110 @@
+[
+  {
+    "t": 0.0,
+    "event": "first LowState"
+  },
+  {
+    "t": 0.021,
+    "event": "sport mode",
+    "name": "mcf",
+    "stand_height_m": 0.328,
+    "stand_q": [
+      -0.0455,
+      0.7225,
+      -1.4456,
+      0.0524,
+      0.7091,
+      -1.5287,
+      -0.0137,
+      0.7728,
+      -1.5048,
+      0.1849,
+      0.6641,
+      -1.4285
+    ]
+  },
+  {
+    "t": 2.381,
+    "event": "sport StandDown sent"
+  },
+  {
+    "t": 2.381,
+    "event": "mode preflight -> lie_down"
+  },
+  {
+    "t": 3.9,
+    "event": "lying",
+    "calf": [
+      -2.487,
+      -2.496,
+      -2.544,
+      -2.504
+    ]
+  },
+  {
+    "t": 3.901,
+    "event": "mode lie_down -> release"
+  },
+  {
+    "t": 4.04,
+    "event": "ReleaseMode answered (code 0)"
+  },
+  {
+    "t": 4.06,
+    "event": "sport mode released"
+  },
+  {
+    "t": 4.06,
+    "event": "mode release -> check_lowcmd"
+  },
+  {
+    "t": 4.48,
+    "event": "/lowcmd is quiet: standing up"
+  },
+  {
+    "t": 4.48,
+    "event": "mode check_lowcmd -> stand_up"
+  },
+  {
+    "t": 8.002,
+    "event": "arm: unfolding"
+  },
+  {
+    "t": 12.161,
+    "event": "arm: at the policy's start"
+  },
+  {
+    "t": 12.74,
+    "event": "E-STOP (the console)"
+  },
+  {
+    "t": 12.74,
+    "event": "STOP (E-stop: the console): damping, every motor kp 0 kd 3.0"
+  },
+  {
+    "t": 12.74,
+    "event": "mode stand_up -> damping"
+  },
+  {
+    "t": 12.742,
+    "event": "mode damping -> handback"
+  },
+  {
+    "t": 12.761,
+    "event": "LowCmd stopped",
+    "sent": 4128
+  },
+  {
+    "t": 14.26,
+    "event": "SelectMode not answered; checking"
+  },
+  {
+    "t": 15.961,
+    "event": "sport mode back",
+    "name": "mcf"
+  },
+  {
+    "t": 15.961,
+    "event": "mode handback -> done"
+  }
+]

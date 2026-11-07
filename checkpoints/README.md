@@ -8,9 +8,30 @@ Both drive the **same** 18-action interface and load through the same code path
 (`unifp_train.eval.EvaluablePolicy`), which reads UniFP's single-module layout and rsl-rl 5.x's
 split-actor layout alike. Verify what you copied against `SHA256SUMS`.
 
+## The reach on the dog: `reach_force_sticky_model_66600.npz` (2026-11-07)
+
+**The one whole-body policy that has finished a run on the dog, four times out of four, 10 s each (F-257).** The tip, calculated from the frames, not measured, ended about 5 cm from the goal in all four (about 4 cm back, 2.5 cm left, at the right height), from about 6.5 at handover; the simulator's test of the same goal ends at 3.8 cm with legs at 1 N·m and 7.8 at 2. That goal is close to where the arm starts, so this shows the policy holding a goal, not reaching a far one. `reach_force_sticky_model_66600.npz` is the numpy export, `unifp_go2d1_isaaclab_sticky_model_66600.pt` the checkpoint: `66200` below, then `armft6b`, with leg friction (`--leg_friction_range 0 2`), the Follower in the loop and a wrist penalty (`--arm_follower --arm_wrist_weight -0.3`).
+
+It missed the replay gate when it went on the console, 17-21 deg of lead against 15, and was tried for the data. Lead on the dog from 1 s on: 4.4-6.9 deg in three quiet runs, 19.5 in the one where the legs moved in steps, so that is no bound. Nothing later in `armft6b` or `armft6c` beat it (F-258). Frozen set with legs at 1 N·m through the Follower: 2.89 / 3.94 cm, no falls, 35% reversals, over the 30% gate.
+
+## A fallback, never on the dog: `reach_force_gentle_model_67199.npz` (2026-11-07)
+
+**Not a replacement for `66600`, and it has never run on the dog.** From `66600`, 600 iterations with legs at 0-3 N·m, a fixed learning rate of 3e-6 and no entropy bonus (`armft8_3e6`, F-260). `unifp_go2d1_isaaclab_gentle_model_67199.pt` is the checkpoint.
+
+| | `66600` | `gentle 67199` |
+| --- | --- | --- |
+| frozen set through the Follower, legs 1 N·m, cm | 2.89 / 3.94 | 2.42 / 3.69 |
+| reversals, gate 30% | 35% | 29% |
+| walking plans clear at 1 / 2 / 3 N·m, of 19 | 18 / 18 / 13 | 18 / 18 / 17 |
+| far goals at 3 N·m, hand median, cm | 8.9 | 5.7 |
+| real-frame screen, worst lead, deg, mark 15 | 12 on its own frames, 17-21 on the older | 18 on `66600`'s frames, 30-32 and 11 on the older |
+| on the dog | four complete stands | never |
+
+It is for one case: `66600` turns out rough on real legs. Stand it live first.
+
 ## The reach for the real arm: `reach_force_locked_model_66200.npz` (2026-11-06)
 
-**The reach candidate for the dog (F-253), and the only policy trained on the arm as it is.** `reach_force_locked_model_66200.npz` is the numpy export for the dog (numpy against torch 2.4e-5); `unifp_go2d1_isaaclab_locked_model_66200.pt` the checkpoint. Lineage: the delay arm's `59600`, then five stages on the arm link, the last two with a penalty on what the arm receives (`--arm_locked --arm_locked_range --arm_step_weight`; Week 8 log).
+**Stopped on the dog twice at about 1.5 s (F-255, F-256): not to be rerun.** Its J4 target ran away when the real legs did not answer. What follows is what it scored in simulation, kept as the record. `reach_force_locked_model_66200.npz` is the numpy export for the dog (numpy against torch 2.4e-5); `unifp_go2d1_isaaclab_locked_model_66200.pt` the checkpoint. Lineage: the delay arm's `59600`, then five stages on the arm link, the last two with a penalty on what the arm receives (`--arm_locked --arm_locked_range --arm_step_weight`; Week 8 log).
 
 | on the frozen validation set, light legs | quiet goal error, cm | fell | worst command step RMS | worst reversals |
 | --- | --- | --- | --- | --- |

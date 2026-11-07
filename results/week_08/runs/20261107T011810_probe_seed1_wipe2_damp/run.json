@@ -1,0 +1,22 @@
+{
+  "mode": "run_plan_probe",
+  "status": "finished",
+  "seed": 1,
+  "checkpoint": "/home/victor/D1Training/checkpoints/unifp_go2d1_isaaclab_sticky_model_66600.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 66600,
+  "plan": "wipe",
+  "steps": 500,
+  "plans": 2,
+  "clear": 2,
+  "leg_friction": 2.0,
+  "floor_grip": null,
+  "real_stance": true,
+  "handover_base_m": 0.26734352111816406,
+  "stop_at_s": 10.0,
+  "stop_kind": "damping",
+  "tool_point": "fingertip",
+  "forces": "off",
+  "records_file": "run_plan.json",
+  "command": "demos/unifp/run_plan_probe.py --headless --plan wipe --real_stance --bench --bench_edge_m 0.42 --wipe_radius 0.54 --leg_friction 2 --wipe_heights -0.03 -0.05 --stop_at_s 10 --stop_kind damping --run_name wipe2_damp"
+}

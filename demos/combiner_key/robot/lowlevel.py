@@ -20,6 +20,7 @@ Sources:
 from __future__ import annotations
 
 import json
+import math
 import struct
 
 import numpy as np
@@ -131,6 +132,18 @@ def remote_keys(wireless_remote) -> set[str]:
         return set()
     bits = raw[2] | (raw[3] << 8)
     return {name for k, name in enumerate(KEYS) if bits & (1 << k)}
+
+
+def remote_sticks(wireless_remote) -> dict[str, float]:
+    """The sticks, -1 to 1: `xRockerBtnDataStruct`'s floats lx, rx, ry, L2, ly after the header and keys. Up and right are positive. Anything that is not a
+    stick's value, not a number or out of range, reads 0, so a bad field stands the dog still and is never a full push. The layout is Unitree's; only the key
+    field has been read on this dog."""
+    raw = bytes(int(b) & 0xFF for b in wireless_remote)
+    if len(raw) < 24:
+        return {"lx": 0.0, "ly": 0.0, "rx": 0.0, "ry": 0.0}
+    lx, rx, ry, _, ly = struct.unpack_from("<5f", raw, 4)
+    clean = lambda v: max(-1.0, min(1.0, v)) if math.isfinite(v) and abs(v) <= 1.05 else 0.0  # noqa: E731
+    return {"lx": clean(lx), "ly": clean(ly), "rx": clean(rx), "ry": clean(ry)}
 
 
 class RemoteButtons:
