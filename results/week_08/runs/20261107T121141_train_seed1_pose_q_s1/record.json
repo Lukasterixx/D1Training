@@ -1,0 +1,63 @@
+{
+  "id": "20261107T121141_train_seed1_pose_q_s1",
+  "title": "Pose, quiet: primitives, a still hand rewarded on held goals, step penalty doubled, action noise cut to 0.5, from pose A's end, 1500 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-08T01:26:18+11:00",
+  "started_utc": "2026-11-07T12:11:41+00:00",
+  "source_dir": "logs/unifp_train/20261107T121141_train_seed1_pose_q_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 71098,
+  "final_checkpoint": {
+    "file": "model_71098.pt",
+    "sha256": "04122ba9fbb44faff48faf1e7f76f9974c3adbc9ea082005728ecfba2491d6a4"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 197.58865356445312,
+      "last_step": 71098,
+      "mean_last_10": 195.06353912353515,
+      "min": 2.5571627616882324,
+      "max": 197.85256958007812,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 71098,
+      "mean_last_10": 997.7619995117187,
+      "min": 13.051724433898926,
+      "max": 999.0,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.4107376039028168,
+      "last_step": 71098,
+      "mean_last_10": 0.41092169880867,
+      "min": 0.4107376039028168,
+      "max": 0.5007311105728149,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 13071.0,
+      "last_step": 71098,
+      "mean_last_10": 12945.3,
+      "min": 6224.0,
+      "max": 24017.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

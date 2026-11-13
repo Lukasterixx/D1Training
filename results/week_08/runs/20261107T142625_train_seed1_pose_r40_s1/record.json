@@ -1,0 +1,63 @@
+{
+  "id": "20261107T142625_train_seed1_pose_r40_s1",
+  "title": "Pose, lead priced: pose_q's recipe with arm_lead_weight -40 and base_tilt_weight -20, 1500 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-08T04:01:06+11:00",
+  "started_utc": "2026-11-07T14:26:25+00:00",
+  "source_dir": "logs/unifp_train/20261107T142625_train_seed1_pose_r40_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 72597,
+  "final_checkpoint": {
+    "file": "model_72597.pt",
+    "sha256": "6a5a17c705841367b8b3f801473ab0271ae5fbd308c4e8bc9658958385e1676b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 174.90150451660156,
+      "last_step": 72597,
+      "mean_last_10": 177.86135864257812,
+      "min": -1337.12841796875,
+      "max": 184.0963897705078,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 72597,
+      "mean_last_10": 998.0519958496094,
+      "min": 12.877193450927734,
+      "max": 999.0,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.3851456642150879,
+      "last_step": 72597,
+      "mean_last_10": 0.38544743955135347,
+      "min": 0.3851456642150879,
+      "max": 0.43499818444252014,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 19481.0,
+      "last_step": 72597,
+      "mean_last_10": 11000.6,
+      "min": 6471.0,
+      "max": 19481.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

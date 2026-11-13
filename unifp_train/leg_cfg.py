@@ -395,3 +395,92 @@ KEY_MAX_N_LIMITS = (15.0, 55.0)
 #: head RealSense's case ~0.36): the analytic plant checks the foot, the knee and this.
 HEAD_POINT_B = (0.30, 0.0, 0.03)
 HEAD_RADIUS_M = 0.065
+
+# === the key held by the arm while the foot turns it (Lukas, 2026-11-10; `keyhold_env.py`) ==========================
+#
+# The box raised so the lock is slightly above the head (the head RealSense's top ~0.38 m at the settled stance, ~0.43 m
+# at sport mode's 0.32-0.33 m stand), and placed where the D1 holds the key level from the stance the foot turns it
+# from. CPU scan of 2026-11-10 (arm_kin, soft limits, the hand level along the shaft, roll +1, the key at 0 and at 45
+# degrees): at 0.47 m the hold solves with the lock's face 0.46-0.52 m ahead and 0.12-0.20 m right, Joint5 at -1.23 to
+# -1.40 (soft limit -1.41); with the face 0.50 m ahead it survives the body rearing up to 10 degrees about its rear feet,
+# sinking 6 cm, rising 6 cm, rolling 10 degrees or moving 6 cm back / 4 cm forward, but not rearing 15 (the key policies
+# of F-169 reared ~35 degrees to reach the platform at 0.51 m).
+
+#: Round 1 (2026-11-10 00:38) used the lock 0.47 m up, its face 0.47-0.52 m ahead and 0.12-0.18 m right: the arm holds
+#: there, but the foot does not reach the pad's pre-contact point with less than 10-12.5 deg of rear (more at 0.15-0.18 m
+#: right: not at all up to 30), where the arm's hold ends at ~10 (CPU scan with the Go2 leg's joint limits, both against
+#: the rear about the rear feet). Both policies learned to hold the key and never lift the foot. This band, with the pad
+#: pressed 7.5-9.5 cm out, has the foot needing 2.5-7.5 deg (0-5 with the base 2 cm up) and the arm holding to 8-10.
+#: Its face starts 0.50 m ahead: from the arm-out stance (3.6 deg nose down) the hold fails at 0.49 (`tests/test_keyhold`).
+KEYHOLD_AXIS_HEIGHT_M = 0.45
+KEYHOLD_AXIS_HEIGHT_JITTER_M = 0.008
+KEYHOLD_DOOR_AHEAD_M = (0.495, 0.525)
+KEYHOLD_AXIS_SIDE_M = (-0.125, -0.095)
+KEYHOLD_DOOR_YAW_RAD = (-0.05, 0.05)
+KEYHOLD_REACH_M = (0.075, 0.095)
+#: The frozen set: 3 x 3 x 3 x 2 x 2 = 108 keys, the lock light (Lukas's lever turns at ~0.2-0.5 N·m; the corner key
+#: policies of F-229 trained on 0.15-0.6).
+KEYHOLD_EVAL_DOOR_AHEAD_M = (0.50, 0.51, 0.52)
+KEYHOLD_EVAL_AXIS_SIDE_M = (-0.12, -0.11, -0.10)
+KEYHOLD_EVAL_FRICTION_NM = (0.2, 0.4, 0.6)
+KEYHOLD_EVAL_DETENT_NM = (0.0, 0.2)
+KEYHOLD_EVAL_AXIS_HEIGHT_M = (0.445, 0.455)
+KEYHOLD_EVAL_DOOR_YAW_RAD = 0.04
+#: Round 1's band, for its record.
+KEYHOLD_R1 = {"height": 0.47, "door_ahead": (0.47, 0.52), "axis_side": (-0.18, -0.12), "yaw": (-0.06, 0.06)}
+#: The grip: the dog's (`demos/combiner_key/holster.GRIP_ALONG_M` 0, `GRIP_ROLL` +1): the jaw centre on the shaft's
+#: axis, 21.5 mm out from the key's back face (`holster.KEY_ORIGIN_LINK6` z 0.1266 against the jaw centre's 0.1051),
+#: which stands on the adapter's face 17 mm off the door.
+KEYHOLD_JAW_OFF_DOOR_M = KEY_ADAPTER_FACE_M + (0.1266 - 0.1051)
+KEYHOLD_GRIP_ROLL = +1
+#: Joint6 per radian of the key's turn: with roll +1 the clockwise turn (theta up) lowers Joint6 (the CPU scan: -0.79
+#: rad for 45 degrees).
+KEYHOLD_J6_SIGN = -1.0
+#: The jaws' spring to the key (the key demo's grip, `demos/combiner_key/env.py`), and where the key is lost: 2.5 cm, 20 N.
+KEYHOLD_GRIP_K_N_PER_M = 800.0
+KEYHOLD_GRIP_C_N_S_PER_M = 8.0
+KEYHOLD_LOST_M = 0.025
+#: Training, until `hold_loss_start_iteration`: lost only past this (round 1 learned to keep the foot down rather than
+#: risk the key; this lets the resumed foot keep lifting while the arm learns to follow).
+KEYHOLD_LOST_EARLY_M = 0.06
+#: The jaws slip past this force: the spring is capped there (N).
+KEYHOLD_GRIP_MAX_N = 30.0
+#: Policy steps after a reset in which the key cannot be lost and the hold is not scored: the spawn's bounce (2026-11-10:
+#: with zero actions from the measured arm-out stance, `demos/combiner_key/assets/keyhold_settled_arm_out.json`, the
+#: hand swung up to 24 mm in the first 0.2 s and settled to 2-3 mm by 0.6 s).
+KEYHOLD_GRACE_STEPS = 20
+#: `--key_stance_sink_weight`'s free band: how far the base may sink below its height at the episode's start (m) before
+#: it is priced. Round 12's lift crouches to about 0.24 m whatever the start (1.5 cm from the settled 0.259 m, 5 cm from
+#: the dog's 0.288), then rises 8-9 cm for the turn (0.32-0.34 m), which is not priced.
+KEYHOLD_SINK_FREE_M = 0.02
+#: `--key_support_target_weight`'s free band (rad off the default, per joint): round 16's support legs reach 0.4-0.6 at
+#: the median and about 0.9 at worst on legs that answer; the runner stops at 0.9 after the first second.
+KEYHOLD_SUPPORT_FREE_RAD = 0.6
+#: `--key_turn_follow_weight`'s free band (rad): how far the key may run ahead of the task layer's reference angle
+#: before it is priced (F-283). A foot that follows the arc keeps the key -8 to +3 deg off it (10th-90th percentile over
+#: the evaluations with the foot on the key, 2026-11-13); the jolt runs it 35-45 deg ahead.
+KEYHOLD_TURN_AHEAD_FREE_RAD = math.radians(10.0)
+#: The miss in the observation, metres x this (then x `interface.COMMANDS_SCALE` 0.5): 5 cm reads 0.5.
+KEYHOLD_OBS_SCALE = 20.0
+#: The classical hold (`hold_arm="ik"`) re-solves every this many policy steps: 10 Hz.
+KEYHOLD_IK_EVERY_STEPS = 5
+#: Joint1-3 seeds for the reset's IK (the scan's solutions have Joint1 -0.2 to -0.8, Joint2 0.7-1.2, Joint3 0.0-0.7).
+KEYHOLD_IK_SEEDS = ((-0.4, 0.9, 0.4), (-0.6, 1.0, 0.2), (-0.3, 0.8, 0.6), (0.0, -0.5, 0.5), (-0.4, 0.5, 0.8),
+                    (-0.6, 1.2, -0.1))
+#: The reset's first try, one seed (the scan's typical hold); the six seeds above only where it fails.
+KEYHOLD_IK_NOMINAL = (-0.45, 0.90, 0.35, -0.47, -1.28, 1.42)
+#: A placement the arm cannot hold from the stance drawn is drawn again this many times (training).
+KEYHOLD_REDRAWS = 4
+#: The hold's reward: the jaw centre on the key (1 cm and 4 cm kernels), the hand's tilt off the shaft (rad), and the
+#: arm residual's step-to-step change.
+KEYHOLD_SIGMA_M = 0.01
+KEYHOLD_COARSE_SIGMA_M = 0.04
+KEYHOLD_WEIGHTS = {
+    "key_hold": 3.0,
+    "key_hold_coarse": 1.0,
+    "key_tilt": -2.0,
+    "arm_action_rate": -0.05,
+}
+#: The staged demo's episode (`demos/combiner_key/keyhold_staged.py`): the holster draw and the insertion (~20 s), then
+#: the turn (~12 s).
+KEYHOLD_STAGED_EPISODE_S = 40.0

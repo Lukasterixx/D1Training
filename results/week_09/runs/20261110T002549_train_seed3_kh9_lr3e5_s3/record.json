@@ -1,0 +1,63 @@
+{
+  "id": "20261110T002549_train_seed3_kh9_lr3e5_s3",
+  "title": "Key hold r9: round 8's recipe (learning rate 3e-5, D1 link) with seed 3, from r2 force 4800, 600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T12:34:00+11:00",
+  "started_utc": "2026-11-10T00:25:49+00:00",
+  "source_dir": "logs/unifp_train/20261110T002549_train_seed3_kh9_lr3e5_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 5399,
+  "final_checkpoint": {
+    "file": "model_5399.pt",
+    "sha256": "8e49a22ec479eeebcbf1515d409ab43d0e86bc93e3e6d4e77401cd01d988070a"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 150.8686981201172,
+      "last_step": 5399,
+      "mean_last_10": 150.17046356201172,
+      "min": 3.46215558052063,
+      "max": 155.1645050048828,
+      "points": 600
+    },
+    "Train/mean_episode_length": {
+      "last": 512.6599731445312,
+      "last_step": 5399,
+      "mean_last_10": 507.0639953613281,
+      "min": 18.889999389648438,
+      "max": 619.27001953125,
+      "points": 600
+    },
+    "Policy/mean_std": {
+      "last": 0.09352120012044907,
+      "last_step": 5399,
+      "mean_last_10": 0.09370859041810035,
+      "min": 0.09352120012044907,
+      "max": 0.16025486588478088,
+      "points": 600
+    },
+    "Perf/total_fps": {
+      "last": 12997.0,
+      "last_step": 5399,
+      "mean_last_10": 12870.3,
+      "min": 4331.0,
+      "max": 13347.0,
+      "points": 600
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

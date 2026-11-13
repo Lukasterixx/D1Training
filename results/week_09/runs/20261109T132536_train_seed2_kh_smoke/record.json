@@ -1,0 +1,63 @@
+{
+  "id": "20261109T132536_train_seed2_kh_smoke",
+  "title": "Key hold: 3-iteration training smoke (corner force 4000 padded to 18 actions, 64 envs)",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T00:26:15+11:00",
+  "started_utc": "2026-11-09T13:25:36+00:00",
+  "source_dir": "logs/unifp_train/20261109T132536_train_seed2_kh_smoke",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 3,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4002,
+  "final_checkpoint": {
+    "file": "model_4002.pt",
+    "sha256": "a7be0e7822761869c626d8a79040f65bc536c0e3d7e42293b6b0a7f50e010412"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 1.8556362390518188,
+      "last_step": 4002,
+      "mean_last_10": 2.1296431620915732,
+      "min": 1.8556362390518188,
+      "max": 2.426450252532959,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 8.979999542236328,
+      "last_step": 4002,
+      "mean_last_10": 11.559583028157553,
+      "min": 8.979999542236328,
+      "max": 12.979999542236328,
+      "points": 3
+    },
+    "Policy/mean_std": {
+      "last": 0.23402372002601624,
+      "last_step": 4002,
+      "mean_last_10": 0.2338638703028361,
+      "min": 0.23366029560565948,
+      "max": 0.23402372002601624,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 293.0,
+      "last_step": 4002,
+      "mean_last_10": 327.6666666666667,
+      "min": 293.0,
+      "max": 382.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

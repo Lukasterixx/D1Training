@@ -1,0 +1,63 @@
+{
+  "id": "20261108T095402_train_seed3_pose_g_s3_more",
+  "title": "Pose, the deployable recipe, seed 3, continued 2000 iterations to 6000 from 66600",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-09T00:04:32+11:00",
+  "started_utc": "2026-11-08T09:54:02+00:00",
+  "source_dir": "logs/unifp_train/20261108T095402_train_seed3_pose_g_s3_more",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 72598,
+  "final_checkpoint": {
+    "file": "model_72598.pt",
+    "sha256": "8eeae4749f8fba281739eeb1299d8e5c7d39ce30dcedb5a089415ade204a4ad3"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 165.986572265625,
+      "last_step": 72598,
+      "mean_last_10": 163.57147979736328,
+      "min": -22649.46484375,
+      "max": 170.37533569335938,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 998.4000244140625,
+      "last_step": 72598,
+      "mean_last_10": 997.2760009765625,
+      "min": 10.75,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 0.35015925765037537,
+      "last_step": 72598,
+      "mean_last_10": 0.3502161741256714,
+      "min": 0.3501591086387634,
+      "max": 0.4218830466270447,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 9755.0,
+      "last_step": 72598,
+      "mean_last_10": 9877.4,
+      "min": 6841.0,
+      "max": 23531.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

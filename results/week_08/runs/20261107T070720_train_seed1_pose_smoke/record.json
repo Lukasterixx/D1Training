@@ -1,0 +1,63 @@
+{
+  "id": "20261107T070720_train_seed1_pose_smoke",
+  "title": "Smoke: pose objective from 66600, 64 envs, 3 iterations (runs; nothing learnt)",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-07T18:08:05+11:00",
+  "started_utc": "2026-11-07T07:07:20+00:00",
+  "source_dir": "logs/unifp_train/20261107T070720_train_seed1_pose_smoke",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 3,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 66602,
+  "final_checkpoint": {
+    "file": "model_66602.pt",
+    "sha256": "425d36deb0cfda3d27e87e85699050e7ea70ca5614e9100116eb7244919ae884"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 8.12752628326416,
+      "last_step": 66602,
+      "mean_last_10": 4.661442736784617,
+      "min": 0.9969510436058044,
+      "max": 8.12752628326416,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 42.0,
+      "last_step": 66602,
+      "mean_last_10": 24.333333333333332,
+      "min": 6.0,
+      "max": 42.0,
+      "points": 3
+    },
+    "Policy/mean_std": {
+      "last": 0.5271420478820801,
+      "last_step": 66602,
+      "mean_last_10": 0.5270377596219381,
+      "min": 0.5268874168395996,
+      "max": 0.5271420478820801,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 1988.0,
+      "last_step": 66602,
+      "mean_last_10": 1898.6666666666667,
+      "min": 1749.0,
+      "max": 1988.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

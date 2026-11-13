@@ -42,6 +42,7 @@ from isaaclab.sensors import ContactSensor, ContactSensorCfg
 from isaaclab.utils import configclass
 
 from unifp_isaaclab import interface
+from unifp_train import arm_kin, pose_goals
 from unifp_train.env import Go2D1PosForceEnv
 from unifp_train.env_cfg import Go2D1PosForceEnvCfg
 
@@ -56,6 +57,12 @@ from .script import Command, DemoScript, base_velocity_command
 #: y = -/+0.0296 in Link6 -- so +z is the approach and +y is the axis the jaws open along.
 LINK6_APPROACH_LOCAL = (0.0, 0.0, 1.0)
 LINK6_JAW_LOCAL = (0.0, 1.0, 0.0)
+#: `--told_force_n`: the phases in which the script works a mechanism.
+TOLD_FORCE_PHASES = ("turn", "crack", "pull")
+#: `--pose`: how fast the commanded hand may turn, rad/s: the top of `pose_goals.SPEED_RAD_S`.
+HAND_SLEW_RAD_S = 0.6
+#: `--pose`: the jaw axis's starting sense, in the yaw frame: mostly +y, the neutral hand's, leaning down so a tie goes that way.
+JAW_START_YAW_FRAME = (0.0, 0.8, -0.6)
 
 
 @configclass
@@ -256,6 +263,13 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
         #: geometry, the goal can be offset by exactly that, which is the task interface doing the
         #: job the observation cannot. Off measures the cost of not doing it.
         self.jaw_compensation = True
+        #: `--told_force_n`: the force told along the script's path in the phases that work the mechanism, N, and the last point.
+        self.told_force_n = 0.0
+        self._told_prev = torch.zeros(self.num_envs, 3, device=self.device)
+        self._told_dir = torch.zeros(self.num_envs, 3, device=self.device)
+        #: `--pose`: the hand the script wants, as the policy is commanded it, world frame, and the jaw axis it last used.
+        self._hand_cmd_w = torch.eye(3, device=self.device).expand(self.num_envs, 3, 3).clone()
+        self._jaw_axis_w = torch.zeros(self.num_envs, 3, device=self.device)
         # The generator's own `step` is what writes `commands[3:6]`; replacing it is how a fixed
         # or scripted goal reaches the policy through the path the task already uses.
         self._goals.step = self._scripted_goal          # type: ignore[assignment]
@@ -417,6 +431,10 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
             self._spawn_yaw_quat, targets)
         tip_goal = world if self.command_tip else self._tip_goal_from_jaw_centre(world)
         self._jaw_targets = torch.stack((jaws, -jaws), dim=-1)
+        if self.cfg.pose_objective:
+            self._command_hand(yaw_quat)
+        if self.told_force_n:
+            self._tell_force(world, yaw_quat)
 
         centre = self._goal_centre() + self.scene.env_origins
         local = interface.quat_rotate_inverse(yaw_quat, tip_goal - centre)
@@ -428,6 +446,59 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
         self._goals.start = self._goal_sphere
         self._goals.goal = self._goal_sphere
         return self._goal_sphere
+
+    def _command_hand(self, yaw_quat: torch.Tensor) -> None:
+        """The script's hand as the orientation command, slewed as training's goals are.
+
+        `Command.approach` and `object_axis` have always given the hand a phase wants; only the wrist servo read them. The jaw
+        axis comes out of them as `wrist.desired_jaw_axis`, an axis, so its sense is kept from step to step, and a phase
+        boundary that turns it is walked at `HAND_SLEW_RAD_S`, as a goal is slid in training, not stepped.
+        """
+        approach = torch.zeros(self.num_envs, 3, device=self.device)
+        approach[:, 0] = 1.0
+        axis = torch.zeros(self.num_envs, 3, device=self.device)
+        axis[:, 2] = 1.0
+        for index, command in enumerate(self.commands):
+            if command is not None:
+                approach[index] = torch.as_tensor(command.approach, device=self.device)
+                axis[index] = torch.as_tensor(command.object_axis, device=self.device)
+        approach = wrist.unit(interface.quat_apply(self._spawn_yaw_quat, approach))
+        axis = wrist.unit(interface.quat_apply(self._spawn_yaw_quat, axis))
+        jaw = wrist.unit(wrist.desired_jaw_axis(approach, axis))
+        same = (jaw * self._jaw_axis_w).sum(-1, keepdim=True) >= 0.0
+        jaw = torch.where(same, jaw, -jaw)
+        self._jaw_axis_w = jaw
+        wanted = torch.stack((torch.cross(jaw, approach, dim=-1), jaw, approach), dim=-1)
+        turn = pose_goals.rotvec_from_matrix(self._hand_cmd_w.transpose(1, 2) @ wanted)
+        angle = turn.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+        limit = HAND_SLEW_RAD_S * interface.POLICY_DT
+        self._hand_cmd_w = self._hand_cmd_w @ pose_goals.matrix_from_rotvec(turn * (limit / angle).clamp(max=1.0))
+        hand = pose_goals.matrix_from_quat(yaw_quat).transpose(1, 2) @ self._hand_cmd_w
+        self._goals.current_rotation = hand
+        self._goals.current_rotvec = pose_goals.rotvec_from_matrix(self._goals.neutral.T @ hand)
+
+    def _tell_force(self, world: torch.Tensor, yaw_quat: torch.Tensor) -> None:
+        """Tell the policy to push along the script's path, through the force channel it was trained on.
+
+        Open loop: a constant told force where the script works the mechanism, along the way its point is moving, smoothed
+        so a phase boundary does not swing it. Nothing compares it with the force on the handle. It is what a task layer that knows
+        a mechanism is stiff can do with no force sensor, and it runs on any policy that has the channel.
+        """
+        step = world - self._told_prev
+        self._told_prev = world.clone()
+        length = step.norm(dim=-1, keepdim=True)
+        moving = length > 1e-5
+        unit = step / length.clamp(min=1e-9)
+        self._told_dir = torch.where(moving, 0.9 * self._told_dir + 0.1 * unit, self._told_dir)
+        active = torch.tensor([c is not None and c.phase in TOLD_FORCE_PHASES for c in self.commands], device=self.device).unsqueeze(-1)
+        direction = self._told_dir / self._told_dir.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+        told = interface.quat_rotate_inverse(yaw_quat, direction) * self.told_force_n
+        self._commands[:, interface.CMD_EE_FORCE] = torch.where(active, told, torch.zeros_like(told))
+
+    def hand_script_error_deg(self) -> torch.Tensor:
+        """The hand's angle from the hand the script wants, whatever the policy was commanded."""
+        hand = pose_goals.matrix_from_quat(self._robot.data.body_quat_w[:, self._hand_body])
+        return torch.rad2deg(arm_kin.rotation_angle(hand, self._hand_cmd_w))
 
     def _state_of(self, index: int) -> dict:
         """What a script's phase functions may read. Never the thing being worked."""
@@ -487,8 +558,17 @@ class UniFPDemoEnv(Go2D1PosForceEnv):
             interface.yaw_from_quat(self._robot.data.root_quat_w[env_ids]))
         self._base_cmd[env_ids] = 0.0
         self._commands[env_ids, :3] = 0.0
+        self._told_dir[env_ids] = 0.0
         for index in env_ids.tolist():
             self._base_desired_prev[index] = None
+        if self.cfg.pose_objective:
+            # Every episode starts on the arm's all-zero hand. The jaw axis starts on the side the real door's grip takes
+            # (F-264: Joint6 +97 deg, and Joint6 positive turns Link6's +y down): a level lever is a tie the sense check
+            # alone cannot break.
+            spawn = pose_goals.matrix_from_quat(self._spawn_yaw_quat[env_ids])
+            self._hand_cmd_w[env_ids] = spawn @ self._goals.neutral
+            self._jaw_axis_w[env_ids] = interface.quat_apply(
+                self._spawn_yaw_quat[env_ids], torch.tensor(JAW_START_YAW_FRAME, device=self.device).expand(len(env_ids), 3))
 
         self._place_props(env_ids)
         centre, _, _ = self._hand_frame()

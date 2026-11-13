@@ -348,6 +348,14 @@ class DoorTiming:
     back_s: float = 1.5
     standoff_m: float = 0.12
     door_deg: float = props.DOOR_PULL_DEG
+    #: Start and stop the swing smoothly rather than on a step of walking command.
+    ease_pull: bool = False
+
+
+def _eased(u: float) -> float:
+    """A smooth start and stop for a walk. A step of walking command leaves a hand 5 cm behind a door it is holding: past 5 cm of lag
+    in the first 1.5 s the grip held to the end in 42% of attempts, under it in 90% (2026-11-08)."""
+    return u * u * (3.0 - 2.0 * u)
 
 
 def door_phases(timing: DoorTiming = DoorTiming()) -> list[Phase]:
@@ -363,7 +371,7 @@ def door_phases(timing: DoorTiming = DoorTiming()) -> list[Phase]:
     approach = lambda st, door=0.0: site(st).approach_unit(door)
     axis = lambda st, door=0.0: site(st).lever_axis_unit(0.0, door)
     at = lambda st, door=0.0: site(st).grasp_point_m(0.0, door)
-    door = lambda u: timing.door_deg * u
+    door = lambda u: timing.door_deg * (_eased(u) if timing.ease_pull else u)
     end = lambda st: site(st).base_pose_m(timing.door_deg)
     reach = dict(approach=lambda st: approach(st), object_axis=lambda st: axis(st))
     swung = dict(approach=lambda st: approach(st, timing.door_deg),
@@ -391,6 +399,59 @@ def door_phases(timing: DoorTiming = DoorTiming()) -> list[Phase]:
         # Back to the ready pose in front of the robot where it now stands, not where it started.
         Phase("back", timing.back_s, jaw_m=JAW_LEVER_OPEN_M,
               target=lambda st: site(st).from_base(end(st), HOME_POINT), **swung),
+    ]
+
+
+def lever_door_phases(timing: CombinerTiming = CombinerTiming(), walk_s: float = 6.2, door_deg: float = props.DOOR_PULL_DEG,
+                      ease_pull: bool = False) -> list[Phase]:
+    """Turn the lever, then walk the door open: the combiner's reach and turn, the door pull's swing.
+
+    `combiner_phases` opens the door standing, the hand swinging with it by the arm alone. Commanded as a whole pose that swing is
+    out of reach: of its hand poses 10% solve on the arm and 41% with the body, where every pose of the walking pull solves
+    (2026-11-07). The real dog walks the door open too (F-219). So the lever is turned from where the robot stands, and from the
+    crack the base goes round the hinge with the door (`BoxSite.base_pose_m`), the lever held at `ease_deg`.
+    """
+    site = lambda st: st["box_site"]
+    approach = lambda st, door=0.0: site(st).approach_unit(door)
+    axis = lambda st, handle=0.0, door=0.0: site(st).lever_axis_unit(handle, door)
+    at = lambda st, handle=0.0, door=0.0: site(st).grasp_point_m(handle, door)
+    base = lambda st, door: site(st).base_pose_m(door)
+    reach = dict(approach=lambda st: approach(st), object_axis=lambda st: axis(st))
+    turn, crack, ease = timing.turn_deg, timing.crack_deg, timing.ease_deg
+    swung = dict(approach=lambda st: approach(st, door_deg), object_axis=lambda st: axis(st, ease, door_deg),
+                 base=lambda st, u: base(st, door_deg))
+    swing = lambda u: crack + (door_deg - crack) * (_eased(u) if ease_pull else u)
+    return [
+        Phase("stand", timing.stand_s, target=lambda st: HOME_POINT, jaw_m=JAW_LEVER_OPEN_M, **reach),
+        Phase("approach", timing.approach_s, jaw_m=JAW_LEVER_OPEN_M, **reach,
+              target=lambda st: offset(at(st), approach(st), timing.standoff_m)),
+        Phase("settle", timing.settle_s, jaw_m=JAW_LEVER_OPEN_M, measure=True, servo=True, **reach,
+              target=lambda st: offset(at(st), approach(st), timing.standoff_m)),
+        Phase("enter", timing.enter_s, target=lambda st: at(st), jaw_m=JAW_LEVER_OPEN_M, servo=True, **reach),
+        Phase("arrive", timing.arrive_s, target=lambda st: at(st), jaw_m=JAW_LEVER_OPEN_M, measure=True, servo=True, **reach),
+        Phase("grip", timing.grip_s, target=lambda st: at(st), jaw_m=JAW_BAR_SHUT_M, measure=True, servo=True, **reach),
+        Phase("turn", timing.turn_s, jaw_m=JAW_BAR_SHUT_M, servo=True, path=lambda st, u: at(st, handle=turn * u),
+              approach=lambda st: approach(st), object_axis=lambda st: axis(st, handle=turn)),
+        Phase("crack", timing.crack_s, jaw_m=JAW_BAR_SHUT_M, servo=True,
+              path=lambda st, u: at(st, handle=turn, door=crack * u),
+              approach_path=lambda st, u: approach(st, crack * u),
+              object_axis_path=lambda st, u: axis(st, turn, crack * u),
+              base=lambda st, u: base(st, crack * u)),
+        Phase("ease", timing.ease_s, jaw_m=JAW_BAR_SHUT_M, servo=True,
+              path=lambda st, u: at(st, handle=turn + (ease - turn) * u, door=crack),
+              approach=lambda st: approach(st, crack),
+              object_axis_path=lambda st, u: axis(st, turn + (ease - turn) * u, crack),
+              base=lambda st, u: base(st, crack)),
+        Phase("pull", walk_s, jaw_m=JAW_BAR_SHUT_M, measure=True, servo=True,
+              path=lambda st, u: at(st, handle=ease, door=swing(u)),
+              approach_path=lambda st, u: approach(st, swing(u)),
+              object_axis_path=lambda st, u: axis(st, ease, swing(u)),
+              base=lambda st, u: base(st, swing(u))),
+        Phase("hold", 1.5, target=lambda st: at(st, handle=ease, door=door_deg), jaw_m=JAW_BAR_SHUT_M,
+              measure=True, servo=True, **swung),
+        Phase("release", timing.release_s, target=lambda st: at(st, handle=ease, door=door_deg), jaw_m=JAW_LEVER_OPEN_M,
+              servo=True, **swung),
+        Phase("back", timing.back_s, jaw_m=JAW_LEVER_OPEN_M, target=lambda st: site(st).from_base(base(st, door_deg), HOME_POINT), **swung),
     ]
 
 

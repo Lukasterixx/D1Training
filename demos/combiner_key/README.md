@@ -209,3 +209,33 @@ out. The key in it is the mirrored v3, the simulation's.
 - Results: 25/25 drawn at the first timing (as planned, up to 3 and up to 6 mm off); 8/8 at the default (up to 3 mm off). The key comes out turned 180° about its shaft from
   the insertion's grip (`geometry.GRASP_ROLL` -1 does not slide onto the bar). Not modelled: the spring grip's give, the
   holster's mounting, the wrist camera's mass; the real arm's reach to it is not checked.
+
+## The arm holds the key while the front-right foot turns it (2026-11-10)
+
+Lukas: draw the key from the holster and insert it classically, then keep the arm holding it in the lock while the
+front-right foot turns the lever; the box raised so the lock is just above the head; the policy takes over standing
+with the arm out. One policy drives the legs and the arm (`unifp_train/keyhold_env.py`); the classical part runs before
+it in `keyhold_staged.py`. Results and their limits: the Week 9 log, 2026-11-10.
+
+```bash
+# train (the corner key recipe with the hold; logs/unifp_train/keyhold/recipe.sh has the flags)
+source logs/unifp_train/keyhold/recipe.sh && logs/unifp_train/keyhold/train.sh <name> $KH --leg_variant force \
+    --seed 2 --iterations 2000 --hold_loss_start_iteration 300 --resume_from $FORCE_CK
+# the frozen 108 keys, the arm by the policy, by IK at 10 Hz (--hold_arm ik) or held fixed (--hold_arm fixed)
+logs/unifp_train/keyhold/lev.sh <run> "<title>" <model.pt> --leg_variant force --hold_arm policy \
+    --spawn_states demos/combiner_key/assets/keyhold_settled_arm_out.json --eval_spawn_states
+# the whole sequence in the viewer: holster draw, insertion, handover, turn (no --spawn_states: it starts folded)
+python run_unifp_train.py play --task leg --leg_object key --key_hold --key_hold_staged --leg_variant force \
+    --checkpoint <model.pt> --leg_rows 0 --steps 2000 --real_time \
+    --key_turn_deg 0 45 30 --key_overdrive_deg -5 --key_hold_s 0.3 --key_max_force_n 6 20 \
+    --leg_actuator unitree_geared --leg_armature 0.0002 --leg_knee_armature 0.0007 --leg_delay_min_steps 3 --leg_delay_steps 4
+python -m unittest tests.test_keyhold          # the arm's reach to every frozen key from the arm-out stance, no simulator
+```
+
+| what | how | not validated |
+| --- | --- | --- |
+| the box | raised so the lock is 0.45 m up (the head RealSense's top ~0.38 m at the settled stance), its face 0.50-0.52 m ahead and 0.09-0.125 m right: the narrow band where the arm holds a level key and the foot reaches the pad together (CPU scans, Week 9 log) | the real box on a plinth |
+| the grip | the dog's: the jaws on the shaft's axis, so the turn is Joint6 alone, which follows the lock's angle by script | the real wrist following the foot's turn |
+| the hold | an 800 N/m spring from the jaw centre to the key, capped at 30 N (the jaws slip); the key is lost past 2.5 cm | the jaws' real grip, the key's play in the adapter |
+| the arm | UniFP's PD at 50 Hz, its commands carrying the gravity sag; `--arm_locked --arm_follower` puts the D1's 9 Hz report-locked link between them instead | the D1's own sag (F-222) |
+| the classical part | `holster.draw_plan` and an insertion along the keyway's axis at 10 mm/s, at 10 Hz by IK, the legs at their default targets; the key, the holster, the adapter and the box are drawn, not simulated | their contacts here (the earlier demos test them: F-189, F-208, F-164) |

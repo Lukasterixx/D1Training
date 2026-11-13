@@ -1,0 +1,63 @@
+{
+  "id": "20261108T235713_train_seed2_pose_gk_s2",
+  "title": "Pose, the deployable recipe (pose_g_s2's flags) with one keypoint reward in place of separate position and orientation terms (Portela et al. 2024: separate terms collapse onto one), seed 2, 4000 iterations",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-09T16:41:59+11:00",
+  "started_utc": "2026-11-08T23:57:13+00:00",
+  "source_dir": "logs/unifp_train/20261108T235713_train_seed2_pose_gk_s2",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 4000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 70599,
+  "final_checkpoint": {
+    "file": "model_70599.pt",
+    "sha256": "d39f2db903015442b910755f66293eb4193929900bf4588615201bcabeadb4d8"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 172.8245849609375,
+      "last_step": 70599,
+      "mean_last_10": 170.25008392333984,
+      "min": -309563.5625,
+      "max": 177.66941833496094,
+      "points": 4000
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 70599,
+      "mean_last_10": 993.6650085449219,
+      "min": 12.103447914123535,
+      "max": 999.0,
+      "points": 4000
+    },
+    "Policy/mean_std": {
+      "last": 0.3182237148284912,
+      "last_step": 70599,
+      "mean_last_10": 0.3182570576667786,
+      "min": 0.3182237148284912,
+      "max": 0.571648359298706,
+      "points": 4000
+    },
+    "Perf/total_fps": {
+      "last": 24815.0,
+      "last_step": 70599,
+      "mean_last_10": 20597.8,
+      "min": 6582.0,
+      "max": 25032.0,
+      "points": 4000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

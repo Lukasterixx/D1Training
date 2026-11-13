@@ -1,0 +1,63 @@
+{
+  "id": "20261112T132832_train_seed31_ki1_force",
+  "title": "Key insertion r1: force-aware from kh16_6800, 66600's legs, dog stance, cam lock (PLA key, metal lock), 600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T00:52:19+11:00",
+  "started_utc": "2026-11-12T13:28:32+00:00",
+  "source_dir": "logs/unifp_train/20261112T132832_train_seed31_ki1_force",
+  "mode": "train",
+  "seed": 31,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7035,
+  "final_checkpoint": {
+    "file": "model_7035.pt",
+    "sha256": "47fddddc3bee9b3307f850d91100c122212da7d69d25c9a64dcea8a7e6638f90"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 175.94178771972656,
+      "last_step": 7035,
+      "mean_last_10": 169.24229583740234,
+      "min": 2.4827518463134766,
+      "max": 186.39747619628906,
+      "points": 236
+    },
+    "Train/mean_episode_length": {
+      "last": 791.719970703125,
+      "last_step": 7035,
+      "mean_last_10": 787.8730041503907,
+      "min": 12.597015380859375,
+      "max": 799.0,
+      "points": 236
+    },
+    "Policy/mean_std": {
+      "last": 0.1533251851797104,
+      "last_step": 7035,
+      "mean_last_10": 0.15318324714899062,
+      "min": 0.14994899928569794,
+      "max": 0.1533251851797104,
+      "points": 236
+    },
+    "Perf/total_fps": {
+      "last": 5684.0,
+      "last_step": 7035,
+      "mean_last_10": 6266.4,
+      "min": 5601.0,
+      "max": 17691.0,
+      "points": 236
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

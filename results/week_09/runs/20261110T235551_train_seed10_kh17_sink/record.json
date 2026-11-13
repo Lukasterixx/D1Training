@@ -1,0 +1,63 @@
+{
+  "id": "20261110T235551_train_seed10_kh17_sink",
+  "title": "Key hold r17: position-only from kh15_6600.pt, 66600's legs, dog stance, stops priced + the crouch below the start (-1000) and pressing x4 (-80), lr 3e-5, 1600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-11T13:13:19+11:00",
+  "started_utc": "2026-11-10T23:55:51+00:00",
+  "source_dir": "logs/unifp_train/20261110T235551_train_seed10_kh17_sink",
+  "mode": "train",
+  "seed": 10,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7548,
+  "final_checkpoint": {
+    "file": "model_7548.pt",
+    "sha256": "ca2845a82fcfcdfc785b2e71fdfbce56e377ced379faa2b90b75bb019231cf2b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 158.92237854003906,
+      "last_step": 7548,
+      "mean_last_10": 158.24159088134766,
+      "min": 3.7000701427459717,
+      "max": 160.2361602783203,
+      "points": 949
+    },
+    "Train/mean_episode_length": {
+      "last": 492.3999938964844,
+      "last_step": 7548,
+      "mean_last_10": 491.47499694824216,
+      "min": 21.969999313354492,
+      "max": 543.4500122070312,
+      "points": 949
+    },
+    "Policy/mean_std": {
+      "last": 0.08741424232721329,
+      "last_step": 7548,
+      "mean_last_10": 0.08751460909843445,
+      "min": 0.08741424232721329,
+      "max": 0.1504577398300171,
+      "points": 949
+    },
+    "Perf/total_fps": {
+      "last": 6594.0,
+      "last_step": 7548,
+      "mean_last_10": 5340.9,
+      "min": 4717.0,
+      "max": 14726.0,
+      "points": 949
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

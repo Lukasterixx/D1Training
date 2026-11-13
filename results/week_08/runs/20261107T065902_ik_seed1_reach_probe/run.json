@@ -1,0 +1,110 @@
+{
+  "mode": "pose_reach",
+  "status": "finished",
+  "seed": 1,
+  "goals": 147,
+  "orientations_per_goal": 64,
+  "radii": [
+    0.35,
+    0.45,
+    0.55
+  ],
+  "legacy_frame": false,
+  "check_body": false,
+  "base_variants": 1,
+  "base_ranges": {
+    "pitch_deg": [
+      0.0
+    ],
+    "roll_deg": [
+      0.0
+    ],
+    "height_m": [
+      0.3
+    ],
+    "shift_m": [
+      0.0
+    ]
+  },
+  "arm_alone_fraction": 0.1168,
+  "whole_body_fraction": 0.1168,
+  "by_approach": [
+    {
+      "approach_from_outward_deg": [
+        0,
+        30
+      ],
+      "poses": 571,
+      "arm_alone": 0.3257,
+      "whole_body": 0.3257,
+      "arm_r0.35": 0.1991,
+      "whole_r0.35": 0.1991,
+      "arm_r0.45": 0.3652,
+      "whole_r0.45": 0.3652,
+      "arm_r0.55": 0.4341,
+      "whole_r0.55": 0.4341
+    },
+    {
+      "approach_from_outward_deg": [
+        30,
+        60
+      ],
+      "poses": 1701,
+      "arm_alone": 0.3457,
+      "whole_body": 0.3457,
+      "arm_r0.35": 0.3565,
+      "whole_r0.35": 0.3565,
+      "arm_r0.45": 0.3433,
+      "whole_r0.45": 0.3433,
+      "arm_r0.55": 0.3369,
+      "whole_r0.55": 0.3369
+    },
+    {
+      "approach_from_outward_deg": [
+        60,
+        90
+      ],
+      "poses": 2389,
+      "arm_alone": 0.1289,
+      "whole_body": 0.1289,
+      "arm_r0.35": 0.2323,
+      "whole_r0.35": 0.2323,
+      "arm_r0.45": 0.1448,
+      "whole_r0.45": 0.1448,
+      "arm_r0.55": 0.0178,
+      "whole_r0.55": 0.0178
+    },
+    {
+      "approach_from_outward_deg": [
+        90,
+        120
+      ],
+      "poses": 2336,
+      "arm_alone": 0.0073,
+      "whole_body": 0.0073,
+      "arm_r0.35": 0.0223,
+      "whole_r0.35": 0.0223,
+      "arm_r0.45": 0.0,
+      "whole_r0.45": 0.0,
+      "arm_r0.55": 0.0,
+      "whole_r0.55": 0.0
+    },
+    {
+      "approach_from_outward_deg": [
+        120,
+        180
+      ],
+      "poses": 2411,
+      "arm_alone": 0.0,
+      "whole_body": 0.0,
+      "arm_r0.35": 0.0,
+      "whole_r0.35": 0.0,
+      "arm_r0.45": 0.0,
+      "whole_r0.45": 0.0,
+      "arm_r0.55": 0.0,
+      "whole_r0.55": 0.0
+    }
+  ],
+  "solver": "arm_kin: analytic through the spherical wrist, 45 elbow seeds, both wrist branches, soft limits",
+  "command": "unifp_train/pose_reach.py --orientations 64 --run_name reach_probe --base_pitch_deg 0 --base_roll_deg 0 --base_height_m 0.30 --base_shift_m 0"
+}

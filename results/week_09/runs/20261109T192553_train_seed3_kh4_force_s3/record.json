@@ -1,0 +1,63 @@
+{
+  "id": "20261109T192553_train_seed3_kh4_force_s3",
+  "title": "Key hold r4: the round-2 force-aware recipe from another parent (corner force s3 3600), seed 3, 1000 it: does it reproduce",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T08:52:45+11:00",
+  "started_utc": "2026-11-09T19:25:53+00:00",
+  "source_dir": "logs/unifp_train/20261109T192553_train_seed3_kh4_force_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4599,
+  "final_checkpoint": {
+    "file": "model_4599.pt",
+    "sha256": "4001d593f74232a28e78e31ea24cca38db0fe79a414df2a8736d7785a325a727"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 153.08482360839844,
+      "last_step": 4599,
+      "mean_last_10": 152.8996154785156,
+      "min": 1.439673662185669,
+      "max": 156.19740295410156,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 632.9400024414062,
+      "last_step": 4599,
+      "mean_last_10": 634.4989929199219,
+      "min": 10.816326141357422,
+      "max": 639.6099853515625,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.11342364549636841,
+      "last_step": 4599,
+      "mean_last_10": 0.11295120343565941,
+      "min": 0.10905717313289642,
+      "max": 0.1689327359199524,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 7401.0,
+      "last_step": 4599,
+      "mean_last_10": 6630.0,
+      "min": 4545.0,
+      "max": 7799.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

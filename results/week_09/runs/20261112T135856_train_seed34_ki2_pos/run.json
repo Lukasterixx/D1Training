@@ -1,0 +1,852 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    2048,
+    2432
+  ],
+  "agent": {
+    "actor": {
+      "activation": "elu",
+      "class_name": "unifp_train.models.UniFPActor",
+      "distribution_cfg": {
+        "class_name": "GaussianDistribution",
+        "init_std": 1.0,
+        "std_type": "scalar"
+      },
+      "hidden_dims": [
+        512,
+        256,
+        128
+      ],
+      "obs_normalization": false
+    },
+    "algorithm": {
+      "class_name": "unifp_train.algorithm.UniFPPPO",
+      "clip_param": 0.2,
+      "desired_kl": 0.01,
+      "entropy_coef": 0.0005,
+      "fixed_learning_rate": 3e-05,
+      "gamma": 0.99,
+      "lam": 0.95,
+      "learning_rate": 0.001,
+      "max_grad_norm": 1.0,
+      "normalize_advantage_per_mini_batch": false,
+      "num_learning_epochs": 5,
+      "num_mini_batches": 4,
+      "rnd_cfg": null,
+      "schedule": "adaptive",
+      "symmetry_cfg": null,
+      "use_clipped_value_loss": true,
+      "value_loss_coef": 1.0
+    },
+    "check_for_nan": true,
+    "critic": {
+      "activation": "elu",
+      "class_name": "MLPModel",
+      "hidden_dims": [
+        512,
+        256,
+        128
+      ],
+      "obs_normalization": false
+    },
+    "device": "cuda:0",
+    "empirical_normalization": false,
+    "experiment_name": "unifp_go2d1",
+    "load_checkpoint": "model_.*.pt",
+    "load_run": ".*",
+    "logger": "tensorboard",
+    "max_iterations": 600,
+    "num_steps_per_env": 24,
+    "obs_groups": {
+      "actor": [
+        "policy"
+      ],
+      "critic": [
+        "critic"
+      ]
+    },
+    "resume": false,
+    "run_name": "ki2_pos",
+    "save_interval": 200,
+    "seed": 34
+  },
+  "arguments": {
+    "action_rate_weight": -0.1,
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "arm_command_hz": null,
+    "arm_command_mean": false,
+    "arm_feedback_hz": 9.0,
+    "arm_follower": true,
+    "arm_lead_weight": -30.0,
+    "arm_lock_offset_s": null,
+    "arm_locked": true,
+    "arm_locked_range": true,
+    "arm_plan": null,
+    "arm_planner": true,
+    "arm_quantum_deg": null,
+    "arm_real": false,
+    "arm_report_age_s": null,
+    "arm_servo": true,
+    "arm_servo_lag_s": null,
+    "arm_skip_probability": null,
+    "arm_stall_interval_s": null,
+    "arm_stalls": false,
+    "arm_step_weight": -60.0,
+    "arm_wrist_lag_s": null,
+    "arm_wrist_weight": 0.0,
+    "base_tilt_weight": -50.0,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/thesis_b_legacy/UniFP/logs/go2d1_pos_force/Sep18_11-10-15_/model_48800.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "enable_cameras": false,
+    "entropy_coef": 0.0005,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "eval_spawn_states": false,
+    "eval_start_delay_steps": null,
+    "fixed_learning_rate": 3e-05,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "foot_push_n": 10.0,
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_ramp_iterations": 1,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "handle_fraction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_arm": "policy",
+    "hold_arm_std": 0.04,
+    "hold_command": null,
+    "hold_loss_start_iteration": 0,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insert_error_scale": 1.0,
+    "insert_press_n": null,
+    "insertion_fraction": null,
+    "iterations": 600,
+    "key_damage_n": null,
+    "key_detent_range_nm": [
+      0.0,
+      0.2
+    ],
+    "key_door_push_weight": -10.0,
+    "key_eval_detent_nm": null,
+    "key_eval_lock_nm": null,
+    "key_grip_k": null,
+    "key_hold": true,
+    "key_hold_s": 0.3,
+    "key_hold_staged": false,
+    "key_insert": true,
+    "key_lock_range_nm": [
+      0.15,
+      1.6
+    ],
+    "key_lost_m": null,
+    "key_max_force_n": [
+      6.0,
+      20.0
+    ],
+    "key_overdrive_deg": -5.0,
+    "key_press_limit_n": 30.0,
+    "key_press_weight": -80.0,
+    "key_stance_sink_weight": -1000.0,
+    "key_support_target_weight": 0.0,
+    "key_turn_deg": [
+      0.0,
+      45.0,
+      30.0
+    ],
+    "key_turn_follow_weight": 0.0,
+    "key_waypoint": null,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "leg_actuator": "unitree_geared",
+    "leg_answer_range": null,
+    "leg_armature": null,
+    "leg_armature_range": [
+      0.0,
+      0.002
+    ],
+    "leg_bar_radius": null,
+    "leg_delay_min_steps": 1,
+    "leg_delay_steps": 4,
+    "leg_frame_every": 5,
+    "leg_frames": 0,
+    "leg_friction_range": [
+      0.0,
+      2.0
+    ],
+    "leg_knee_armature": null,
+    "leg_knee_armature_factor": 3.67,
+    "leg_knee_friction_factor": 1.917,
+    "leg_object": "key",
+    "leg_rows": null,
+    "leg_shadow_dump": 0,
+    "leg_start_noise": 0.0,
+    "leg_target_weight": 0.0,
+    "leg_variant": "position",
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_test": false,
+    "mechanism_fraction": null,
+    "mode": "train",
+    "mount_pos": null,
+    "no_arm_jitter": false,
+    "no_curriculum": false,
+    "num_envs": 2048,
+    "obs_noise": true,
+    "obs_noise_dof_vel": null,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "payload": "physical",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "plate_set": "v2",
+    "pose_blind": false,
+    "pose_joint_weight": 0.0,
+    "pose_naive": false,
+    "pose_objective": false,
+    "pose_orn_scale": 1.0,
+    "pose_primitives": false,
+    "pose_reward": "separate",
+    "pose_still_weight": 0.0,
+    "pose_wrench": false,
+    "press": false,
+    "press_fraction": null,
+    "press_hand_fraction": 0.0,
+    "press_hand_levels_n": [
+      3.0,
+      10.0
+    ],
+    "press_hold_correction": false,
+    "press_hold_loop": "hybrid",
+    "press_level": null,
+    "press_orientation_weight": null,
+    "press_plate_face_only": false,
+    "press_release_from_press_point": false,
+    "press_set": "panel",
+    "press_tools": null,
+    "press_up_cap_n": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_fresh_optimizer": false,
+    "resume_from": "logs/unifp_train/keyinsert/kh17_7000_legs12.pt",
+    "resume_leg_std": 0.2,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "ki2_pos",
+    "seed": 34,
+    "small_physx": false,
+    "spawn_states": "demos/combiner_key/assets/keyhold_stances_dog3_settled1.json",
+    "spawn_states_fraction": 1.0,
+    "start_delay_steps": null,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "leg",
+    "tilt_excess_deg": null,
+    "tilt_excess_weight": 0.0,
+    "tilt_stages": "all",
+    "tool_point": "jaw_centre",
+    "torques_weight": -0.0002,
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "arm_joints_loaded": {
+    "armature": [
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01
+    ],
+    "damping": [
+      400.0,
+      400.0,
+      400.0,
+      400.0,
+      400.0,
+      400.0
+    ],
+    "effort_limit_sim": [
+      3.3,
+      3.33,
+      3.33,
+      1.7,
+      1.7,
+      1.7
+    ],
+    "groups": {
+      "d1_servo": "ImplicitActuator",
+      "legs_hip_thigh": "UnitreeActuator",
+      "legs_knee": "UnitreeActuator",
+      "unifp": "IdealPDActuator"
+    },
+    "stiffness": [
+      4000.0,
+      4000.0,
+      4000.0,
+      4000.0,
+      4000.0,
+      4000.0
+    ],
+    "velocity_limit_sim": [
+      1.25,
+      1.29,
+      1.23,
+      1.21,
+      1.25,
+      1.25
+    ]
+  },
+  "arm_link": {
+    "command_hz": null,
+    "command_mean": false,
+    "feedback_hz": 9.0,
+    "follower": true,
+    "lock_offset_s": 0.02,
+    "locked": true,
+    "planner": {
+      "accel_rad_s2": 400.0,
+      "dead_time_s": 0.005,
+      "decel_rad_s2": 400.0,
+      "replan_velocity_retention": 0.0
+    },
+    "quantum_deg": 0.1,
+    "report_age_s": [
+      0.0,
+      0.02
+    ],
+    "servo": true,
+    "servo_lag_s": [
+      0.06,
+      0.09
+    ],
+    "skip_probability": 0.0015,
+    "stall_duration_s": null,
+    "stall_interval_s": null,
+    "stalls": false,
+    "wrist_lag_s": null
+  },
+  "critic_obs": [
+    2048,
+    459
+  ],
+  "d1_urdf_sha256": "a848ee41d51def2956fcb6f0af12048e723a1d7f3f3f52b007fcca571a586691",
+  "departures_from_unifp": {
+    "entropy_coef": 0.0005,
+    "fixed_learning_rate": 3e-05,
+    "key_hold_padded_from": {
+      "arm_rows": "zero",
+      "arm_std": 0.04,
+      "checkpoint": "/home/victor/D1Training/logs/unifp_train/keyinsert/kh17_7000_legs12.pt",
+      "optimizer": "not loaded (its moments are the 12-action network's)"
+    },
+    "resume_leg_std": {
+      "from": [
+        0.1513,
+        0.1634,
+        0.1479,
+        0.1483,
+        0.1284,
+        0.131,
+        0.172,
+        0.1531,
+        0.1318,
+        0.1703,
+        0.1377,
+        0.1385
+      ],
+      "to": 0.2
+    }
+  },
+  "episode_length_steps": 800,
+  "estimate_obs": [
+    2048,
+    12
+  ],
+  "expected_actor": [
+    2048,
+    2432
+  ],
+  "expected_critic": [
+    2048,
+    459
+  ],
+  "expected_estimates": [
+    2048,
+    12
+  ],
+  "final_checkpoint": "/home/victor/D1Training/logs/unifp_train/20261112T135856_train_seed34_ki2_pos/model_7343.pt",
+  "fixture": null,
+  "force_start_iteration": 500,
+  "force_start_step": 12000,
+  "forces_active_at_resume": true,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_status": "M demos/combiner_key/README.md\n M demos/unifp/env.py\n M demos/unifp/mech_env.py\n M demos/unifp/run_demo.py\n M demos/unifp/run_plan_probe.py\n M demos/unifp/script.py\n M docs/thesis_b_plan.md\n M results/findings.md\n M results/week_08/notes.md\n M results/week_09/notes.md\n M run_unifp_train.py\n M unifp_train/arm_link.py\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/eval.py\n M unifp_train/leg_cfg.py\n M unifp_train/leg_env.py\n M unifp_train/leg_eval.py\n M unifp_train/rewards.py\n M unifp_train/task_cfg.py\n?? checkpoints/unifp_go2d1_isaaclab_pose_r10_candidate.pt\n?? demos/combiner_key/assets/keyhold_dog_arm_out_66600.json\n?? demos/combiner_key/assets/keyhold_settled_arm_out.json\n?? demos/combiner_key/assets/keyhold_stances_dog3_settled1.json\n?? demos/combiner_key/keyhold_staged.py\n?? demos/combiner_key/plot_keyhold.py\n?? results/manifests/unifp_pose_development.json\n?? results/manifests/unifp_pose_primitives_development.json\n?? results/manifests/unifp_pose_validation.json\n?? results/week_08/runs/20261107T065902_ik_seed1_reach_probe/\n?? results/week_08/runs/20261107T070720_train_seed1_pose_smoke/\n?? results/week_08/runs/20261107T070811_train_seed1_pose_a_s1/\n?? results/week_08/runs/20261107T070854_train_seed1_pose_naive_s1/\n?? results/week_08/runs/20261107T071000_manifest_seed101_pose_manifest_development/\n?? results/week_08/runs/20261107T071146_manifest_seed202_pose_manifest_validation/\n?? results/week_08/runs/20261107T071448_eval_seed1_pb_66600/\n?? results/week_08/runs/20261107T071818_eval_seed1_pb_zero/\n?? results/week_08/runs/20261107T072250_eval_seed1_pb2_66600/\n?? results/week_08/runs/20261107T072626_eval_seed1_pb2_zero/\n?? results/week_08/runs/20261107T073017_smoke_door/\n?? results/week_08/runs/20261107T073503_smoke_lever/\n?? results/week_08/runs/20261107T073905_b_door_alone_s1/\n?? results/week_08/runs/20261107T074832_b_door_wrist_s1/\n?? results/week_08/runs/20261107T075816_b_door_alone_s2/\n?? results/week_08/runs/20261107T080741_b_door_wrist_s2/\n?? results/week_08/runs/20261107T081725_b_combiner_alone_s1/\n?? results/week_08/runs/20261107T082407_ik_seed1_reach_map/\n?? results/week_08/runs/20261107T082613_b_combiner_wrist_s1/\n?? results/week_08/runs/20261107T082622_ik_seed1_reach_map_legacy/\n?? results/week_08/runs/20261107T083458_b_combiner_alone_s2/\n?? results/week_08/runs/20261107T084141_train_seed1_pose_t_s1/\n?? results/week_08/runs/20261107T084214_eval_seed1_pe_a_67400/\n?? results/week_08/runs/20261107T084318_b_combiner_wrist_s2/\n?? results/week_08/runs/20261107T084536_eval_seed1_pe_n_67600/\n?? results/week_08/runs/20261107T085235_a_door_s1/\n?? results/week_08/runs/20261107T090127_a_combiner_s1/\n?? results/week_08/runs/20261107T090943_a_door_s2/\n?? results/week_08/runs/20261107T091836_a_combiner_s2/\n?? results/week_08/runs/20261107T092652_b_door_wristcorr_s1/\n?? results/week_08/runs/20261107T093552_b_combiner_recipe_s1/\n?? results/week_08/runs/20261107T094415_a2_door_corr_s1/\n?? results/week_08/runs/20261107T095316_a2_door_s1/\n?? results/week_08/runs/20261107T100205_a2_combiner_corr_s1/\n?? results/week_08/runs/20261107T101030_b_door_wristcorr_s2/\n?? results/week_08/runs/20261107T101209_eval_seed1_pe_t_67400/\n?? results/week_08/runs/20261107T101757_manifest_seed303_pose_manifest_primitives/\n?? results/week_08/runs/20261107T102043_b_combiner_recipe_s2/\n?? results/week_08/runs/20261107T102923_a3_door_corr_s1/\n?? results/week_08/runs/20261107T103127_train_seed1_pose_p_s1/\n?? results/week_08/runs/20261107T103703_a3_combiner_corr_s1/\n?? results/week_08/runs/20261107T104359_a3_door_corr_s2/\n?? results/week_08/runs/20261107T105125_a3_combiner_corr_s2/\n?? results/week_08/runs/20261107T105821_b_leverwalk_s1/\n?? results/week_08/runs/20261107T110654_b_leverwalk_s2/\n?? results/week_08/runs/20261107T111757_probe_seed1_bench_66600/\n?? results/week_08/runs/20261107T112017_probe_seed1_bench_pose/\n?? results/week_08/runs/20261107T112542_eval_seed1_pe3_66600/\n?? results/week_08/runs/20261107T112804_eval_seed1_pe3_a_68200/\n?? results/week_08/runs/20261107T113227_train_seed1_pose_p2_s1/\n?? results/week_08/runs/20261107T113237_manifest_seed303_pose_manifest_primitives/\n?? results/week_08/runs/20261107T113252_eval_seed1_pe4_66600/\n?? results/week_08/runs/20261107T113609_eval_seed1_pe4_a_68200/\n?? results/week_08/runs/20261107T121141_train_seed1_pose_q_s1/\n?? results/week_08/runs/20261107T121205_eval_seed1_s_afin_dev/\n?? results/week_08/runs/20261107T121500_eval_seed1_s_afin_prim/\n?? results/week_08/runs/20261107T121807_s_afin_door_s1/\n?? results/week_08/runs/20261107T122708_s_afin_lever_s1/\n?? results/week_08/runs/20261107T123739_s_afin_door_s2/\n?? results/week_08/runs/20261107T124638_s_afin_lever_s2/\n?? results/week_08/runs/20261107T125957_probe_seed1_s_afin_bench/\n?? results/week_08/runs/20261107T130154_probe_seed1_s_afin_far/\n?? results/week_08/runs/20261107T130449_probe_seed1_ref_66600_far/\n?? results/week_08/runs/20261107T130646_probe_seed1_q70k_far/\n?? results/week_08/runs/20261107T130935_probe_seed1_q70k_bench/\n?? results/week_08/runs/20261107T130941_eval_seed1_pe_q_70000/\n?? results/week_08/runs/20261107T141657_eval_seed1_s_p2_dev/\n?? results/week_08/runs/20261107T141851_eval_seed1_s_p2_prim/\n?? results/week_08/runs/20261107T142053_s_p2_door_s1/\n?? results/week_08/runs/20261107T142620_s_p2_lever_s1/\n?? results/week_08/runs/20261107T142624_train_seed1_pose_r10_s1/\n?? results/week_08/runs/20261107T142625_train_seed1_pose_r40_s1/\n?? results/week_08/runs/20261107T143632_s_p2_door_s2/\n?? results/week_08/runs/20261107T144533_s_p2_lever_s2/\n?? results/week_08/runs/20261107T145900_probe_seed1_s_p2_bench/\n?? results/week_08/runs/20261107T150058_probe_seed1_s_p2_far/\n?? results/week_08/runs/20261107T150103_eval_seed1_s_q_dev/\n?? results/week_08/runs/20261107T150359_eval_seed1_s_q_prim/\n?? results/week_08/runs/20261107T150710_s_q_door_s1/\n?? results/week_08/runs/20261107T151613_s_q_lever_s1/\n?? results/week_08/runs/20261107T152648_s_q_door_s2/\n?? results/week_08/runs/20261107T153557_s_q_lever_s2/\n?? results/week_08/runs/20261107T154918_probe_seed1_s_q_bench/\n?? results/week_08/runs/20261107T155116_probe_seed1_s_q_far/\n?? results/week_08/runs/20261107T155226_c_q_door_s1/\n?? results/week_08/runs/20261107T160132_c_a_door_s1/\n?? results/week_08/runs/20261107T161041_c_q_wide_s1/\n?? results/week_08/runs/20261107T161947_c_q_wide_s2/\n?? results/week_08/runs/20261107T162853_c_a_wide_s1/\n?? results/week_08/runs/20261107T163909_train_seed1_wrench_smoke/\n?? results/week_08/runs/20261107T170107_train_seed1_pose_wp_s1/\n?? results/week_08/runs/20261107T170111_train_seed1_pose_wa_s1/\n?? results/week_08/runs/20261107T170122_eval_seed1_s_r10_dev/\n?? results/week_08/runs/20261107T170415_eval_seed1_s_r10_prim/\n?? results/week_08/runs/20261107T171020_s_r10_door_s1/\n?? results/week_08/runs/20261107T171920_s_r10_lever_s1/\n?? results/week_08/runs/20261107T172950_s_r10_door_s2/\n?? results/week_08/runs/20261107T173851_s_r10_lever_s2/\n?? results/week_08/runs/20261107T175203_probe_seed1_s_r10_bench/\n?? results/week_08/runs/20261107T175359_probe_seed1_s_r10_far/\n?? results/week_08/runs/20261107T175401_e_q_s1/\n?? results/week_08/runs/20261107T180304_e_a_s1/\n?? results/week_08/runs/20261107T181205_e_b_s1/\n?? results/week_08/runs/20261107T182101_e_q_s2/\n?? results/week_08/runs/20261107T183002_e_a_s2/\n?? results/week_08/runs/20261107T183903_e_b_s2/\n?? results/week_08/runs/20261107T184806_eval_seed1_v_r10/\n?? results/week_08/runs/20261107T185402_probe_seed1_ref_66600_bench2/\n?? results/week_08/runs/20261107T185403_f_r10_lever0.8_t0/\n?? results/week_08/runs/20261107T190432_f_b_lever0.8_t0/\n?? results/week_08/runs/20261107T191500_f_r10_lever1.2_t0/\n?? results/week_08/runs/20261107T192525_f_b_lever1.2_t0/\n?? results/week_08/runs/20261107T193553_f_r10_door4_t0/\n?? results/week_08/runs/20261107T194456_f_b_door4_t0/\n?? results/week_08/runs/20261107T195354_f_r10_door8_t0/\n?? results/week_08/runs/20261107T200255_f_b_door8_t0/\n?? results/week_08/runs/20261107T201152_f_r10_lever0.8_t6/\n?? results/week_08/runs/20261107T202222_f_b_lever0.8_t6/\n?? results/week_08/runs/20261107T203203_train_seed2_pose_f_s2/\n?? results/week_08/runs/20261107T203234_f_r10_lever1.2_t6/\n?? results/week_08/runs/20261107T203349_train_seed3_pose_f_s3/\n?? results/week_08/runs/20261107T204252_f_b_lever1.2_t6/\n?? results/week_08/runs/20261107T205320_f_r10_door4_t6/\n?? results/week_08/runs/20261107T205426_train_seed1_pose_s_s1/\n?? results/week_08/runs/20261107T210215_f_b_door4_t6/\n?? results/week_08/runs/20261107T211118_f_r10_door8_t6/\n?? results/week_08/runs/20261107T212022_f_b_door8_t6/\n?? results/week_08/runs/20261107T212930_eval_seed1_v_66600/\n?? results/week_08/runs/20261107T213224_eval_seed1_v2_r10/\n?? results/week_08/runs/20261107T213519_eval_seed1_d2_r10/\n?? results/week_08/runs/20261107T213810_t_a_door_s1/\n?? results/week_08/runs/20261107T214713_t_r10_door_s1/\n?? results/week_08/runs/20261107T215617_rl_r10_t0/\n?? results/week_08/runs/20261107T220647_rl_b_t0/\n?? results/week_08/runs/20261107T221715_rl_r10_t6/\n?? results/week_08/runs/20261107T222747_rl_b_t6/\n?? results/week_08/runs/20261107T232201_eval_seed1_s_s_dev/\n?? results/week_08/runs/20261107T232258_train_seed1_pose_s2_s1/\n?? results/week_08/runs/20261107T232420_eval_seed1_s_s_prim/\n?? results/week_08/runs/20261107T233027_s_s_door_s1/\n?? results/week_08/runs/20261107T233930_s_s_lever_s1/\n?? results/week_08/runs/20261107T235000_s_s_door_s2/\n?? results/week_08/runs/20261107T235902_s_s_lever_s2/\n?? results/week_08/runs/20261108T001219_probe_seed1_s_s_bench/\n?? results/week_08/runs/20261108T001418_probe_seed1_s_s_far/\n?? results/week_08/runs/20261108T001615_probe_seed1_s_s_sticky/\n?? results/week_08/runs/20261108T001625_ov_r10_62_t0/\n?? results/week_08/runs/20261108T002658_ov_r10_62_t8/\n?? results/week_08/runs/20261108T003731_ov_r10_70_t0/\n?? results/week_08/runs/20261108T004803_ov_r10_70_t8/\n?? results/week_08/runs/20261108T014846_eval_seed1_s_s2_dev/\n?? results/week_08/runs/20261108T014915_train_seed1_pose_s3_s1/\n?? results/week_08/runs/20261108T015119_eval_seed1_s_s2_prim/\n?? results/week_08/runs/20261108T015726_s_s2_door_s1/\n?? results/week_08/runs/20261108T020632_s_s2_lever_s1/\n?? results/week_08/runs/20261108T021705_s_s2_door_s2/\n?? results/week_08/runs/20261108T022614_s_s2_lever_s2/\n?? results/week_08/runs/20261108T023936_probe_seed1_s_s2_bench/\n?? results/week_08/runs/20261108T024133_probe_seed1_s_s2_far/\n?? results/week_08/runs/20261108T024331_probe_seed1_s_s2_sticky/\n?? results/week_08/runs/20261108T024339_ov_b_70_s1/\n?? results/week_08/runs/20261108T025404_ov_b_70_s2/\n?? results/week_08/runs/20261108T030434_ov_r10_70_s2/\n?? results/week_08/runs/20261108T031808_eval_seed1_s_s3_dev/\n?? results/week_08/runs/20261108T031846_eval_seed1_s_s3_prim/\n?? results/week_08/runs/20261108T031905_train_seed3_pose_g_s3/\n?? results/week_08/runs/20261108T031915_train_seed2_pose_g_s2/\n?? results/week_08/runs/20261108T032317_s_s3_door_s1/\n?? results/week_08/runs/20261108T033231_s_s3_lever_s1/\n?? results/week_08/runs/20261108T034313_s_s3_door_s2/\n?? results/week_08/runs/20261108T035225_s_s3_lever_s2/\n?? results/week_08/runs/20261108T040553_probe_seed1_s_s3_bench/\n?? results/week_08/runs/20261108T040751_probe_seed1_s_s3_far/\n?? results/week_08/runs/20261108T040950_probe_seed1_s_s3_sticky/\n?? results/week_08/runs/20261108T041004_eval_seed1_s_f2_dev/\n?? results/week_08/runs/20261108T041301_eval_seed1_s_f2_prim/\n?? results/week_08/runs/20261108T041913_s_f2_door_s1/\n?? results/week_08/runs/20261108T042820_s_f2_lever_s1/\n?? results/week_08/runs/20261108T043858_s_f2_door_s2/\n?? results/week_08/runs/20261108T044808_s_f2_lever_s2/\n?? results/week_08/runs/20261108T050142_probe_seed1_s_f2_bench/\n?? results/week_08/runs/20261108T050341_probe_seed1_s_f2_far/\n?? results/week_08/runs/20261108T050539_probe_seed1_s_f2_sticky/\n?? results/week_08/runs/20261108T050554_eval_seed1_s_r40_dev/\n?? results/week_08/runs/20261108T050852_eval_seed1_s_r40_prim/\n?? results/week_08/runs/20261108T051508_s_r40_door_s1/\n?? results/week_08/runs/20261108T052421_s_r40_lever_s1/\n?? results/week_08/runs/20261108T053503_s_r40_door_s2/\n?? results/week_08/runs/20261108T054415_s_r40_lever_s2/\n?? results/week_08/runs/20261108T055746_probe_seed1_s_r40_bench/\n?? results/week_08/runs/20261108T055943_probe_seed1_s_r40_far/\n?? results/week_08/runs/20261108T060143_probe_seed1_s_r40_sticky/\n?? results/week_08/runs/20261108T060158_eval_seed1_s_wa_dev/\n?? results/week_08/runs/20261108T060456_eval_seed1_s_wa_prim/\n?? results/week_08/runs/20261108T061109_s_wa_door_s1/\n?? results/week_08/runs/20261108T062022_s_wa_lever_s1/\n?? results/week_08/runs/20261108T063108_s_wa_door_s2/\n?? results/week_08/runs/20261108T064023_s_wa_lever_s2/\n?? results/week_08/runs/20261108T065355_probe_seed1_s_wa_bench/\n?? results/week_08/runs/20261108T065554_probe_seed1_s_wa_far/\n?? results/week_08/runs/20261108T065753_probe_seed1_s_wa_sticky/\n?? results/week_08/runs/20261108T065807_eval_seed1_s_wp_dev/\n?? results/week_08/runs/20261108T070105_eval_seed1_s_wp_prim/\n?? results/week_08/runs/20261108T070717_s_wp_door_s1/\n?? results/week_08/runs/20261108T071630_s_wp_lever_s1/\n?? results/week_08/runs/20261108T072718_s_wp_door_s2/\n?? results/week_08/runs/20261108T073634_s_wp_lever_s2/\n?? results/week_08/runs/20261108T075006_probe_seed1_s_wp_bench/\n?? results/week_08/runs/20261108T075205_probe_seed1_s_wp_far/\n?? results/week_08/runs/20261108T075405_probe_seed1_s_wp_sticky/\n?? results/week_08/runs/20261108T095402_train_seed3_pose_g_s3_more/\n?? results/week_08/runs/20261108T095529_train_seed2_pose_g_s2_more/\n?? results/week_08/runs/20261108T095556_eval_seed1_s_g2_dev/\n?? results/week_08/runs/20261108T095853_eval_seed1_s_g2_prim/\n?? results/week_08/runs/20261108T100503_s_g2_door_s1/\n?? results/week_08/runs/20261108T101413_s_g2_lever_s1/\n?? results/week_08/runs/20261108T102454_s_g2_door_s2/\n?? results/week_08/runs/20261108T103404_s_g2_lever_s2/\n?? results/week_08/runs/20261108T104732_probe_seed1_s_g2_bench/\n?? results/week_08/runs/20261108T104931_probe_seed1_s_g2_far/\n?? results/week_08/runs/20261108T105130_probe_seed1_s_g2_sticky/\n?? results/week_08/runs/20261108T105154_eval_seed1_s_g3_dev/\n?? results/week_08/runs/20261108T105450_eval_seed1_s_g3_prim/\n?? results/week_08/runs/20261108T110101_s_g3_door_s1/\n?? results/week_08/runs/20261108T111010_s_g3_lever_s1/\n?? results/week_08/runs/20261108T112047_s_g3_door_s2/\n?? results/week_08/runs/20261108T112953_s_g3_lever_s2/\n?? results/week_08/runs/20261108T114316_probe_seed1_s_g3_bench/\n?? results/week_08/runs/20261108T114514_probe_seed1_s_g3_far/\n?? results/week_08/runs/20261108T114713_probe_seed1_s_g3_sticky/\n?? results/week_09/figures/keyhold_r2F4800_arms.png\n?? results/week_09/figures/keyhold_staged_r2F4800_box.mp4\n?? results/week_09/figures/keyhold_staged_r2F4800_box.png\n?? results/week_09/figures/keyhold_staged_r2F4800_side.png\n?? results/week_09/figures/keyhold_staged_r8link5200_box.mp4\n?? results/week_09/figures/keyhold_staged_r8link5200_box.png\n?? results/week_09/runs/\n?? tests/test_arm_kin.py\n?? tests/test_keyhold.py\n?? tests/test_keyhold_turn.py\n?? tests/test_keylock.py\n?? tests/test_leg_eval_stops.py\n?? unifp_train/arm_kin.py\n?? unifp_train/keyhold.py\n?? unifp_train/keyhold_env.py\n?? unifp_train/keyinsert_env.py\n?? unifp_train/keyinsert_eval.py\n?? unifp_train/keylock.py\n?? unifp_train/pose_goals.py\n?? unifp_train/pose_reach.py",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "iterations_completed": 7343,
+  "iterations_requested": 600,
+  "joint_order_ok": true,
+  "leg": {
+    "arm_jitter": true,
+    "arm_look_pose": [
+      -0.3,
+      -0.2,
+      -0.6,
+      0.0,
+      1.3,
+      0.0
+    ],
+    "arm_pose": "rest",
+    "damage_n": 120.0,
+    "eval_start_delay_steps": 25,
+    "foot_command_n": 35.0,
+    "foot_force_kp": 400.0,
+    "foot_force_range_n": [
+      -35.0,
+      35.0
+    ],
+    "foot_push_n": 10.0,
+    "force_ramp_iterations": 1,
+    "handle_fraction": 1.0,
+    "handle_weights": {
+      "approach_contact": -2.0,
+      "door_push": -10.0,
+      "handle_contact": 1.0,
+      "handle_open": 2.0,
+      "handle_progress": 1.5,
+      "handle_slip": -3.0
+    },
+    "key_detent_range_nm": [
+      0.0,
+      0.2
+    ],
+    "key_eval_detent_nm": [
+      0.0,
+      0.2
+    ],
+    "key_eval_lock_nm": [
+      0.2,
+      0.4,
+      0.6
+    ],
+    "key_hold_s": 0.3,
+    "key_lock_range_nm": [
+      0.15,
+      1.6
+    ],
+    "key_max_force_n": [
+      6.0,
+      20.0
+    ],
+    "key_overdrive_deg": -5.0,
+    "key_turn_deg": [
+      0.0,
+      45.0,
+      30.0
+    ],
+    "knee_armature_factor": 3.67,
+    "knee_friction_factor": 1.917,
+    "leg_actuator": "unitree_geared",
+    "leg_actuator_model": {
+      "delay_physics_steps": [
+        1,
+        4
+      ],
+      "friction": 0.01,
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": [
+        20.2,
+        23.4
+      ],
+      "knee_nm": [
+        38.72,
+        44.85
+      ],
+      "knee_ratio": 1.9169,
+      "name": "unitree_geared",
+      "speed": "hip, thigh flat to 13.5, 0 at 30.0; knee flat to 7.04, 0 at 15.65 rad/s"
+    },
+    "leg_armature_range": [
+      0.0,
+      0.002
+    ],
+    "leg_delay_steps": 4,
+    "leg_friction_range": [
+      0.0,
+      2.0
+    ],
+    "object": "key",
+    "obs_noise": {
+      "ang_vel": 0.2,
+      "dof_pos": 0.01,
+      "dof_vel": 1.5,
+      "roll_pitch": 0.05
+    },
+    "press": null,
+    "press_excess_weight": -80.0,
+    "press_hand_fraction": 0.0,
+    "press_hand_levels_n": [
+      3.0,
+      10.0
+    ],
+    "press_limit_n": 30.0,
+    "press_orientation_weight": null,
+    "press_up_cap_n": null,
+    "settled_spawn": true,
+    "spawn_states": "/home/victor/D1Training/demos/combiner_key/assets/keyhold_stances_dog3_settled1.json",
+    "spawn_states_fraction": 1.0,
+    "stance_weight": 4.0,
+    "start_delay_steps": [
+      15,
+      50
+    ],
+    "tilt_excess_deg": 9.998,
+    "tilt_excess_weight": 0.0,
+    "tilt_stages": "all",
+    "variant": "position",
+    "weights": {
+      "action_rate": -0.1,
+      "alive": 1.0,
+      "ang_vel_xy": -0.05,
+      "base_height": -2.0,
+      "base_still": 1.0,
+      "base_yaw_still": 0.5,
+      "collision": -5.0,
+      "dof_acc": -2.5e-07,
+      "dof_pos_limits": -10.0,
+      "dof_vel": -0.0008,
+      "dof_vel_arm": -0.0002,
+      "feet_contact_forces": -0.001,
+      "foot_lift": 1.5,
+      "foot_tracking": 1.0,
+      "foot_tracking_fine": 2.0,
+      "foot_tracking_mid": 3.0,
+      "lin_vel_z": -1.5,
+      "orientation": -1.0,
+      "support_contact": 1.0,
+      "support_hip_pos": -0.5,
+      "support_slip": -1.0,
+      "torque_limits": -0.005,
+      "torques": -0.0002
+    }
+  },
+  "leg_joints_loaded": {
+    "armature": [
+      0.000264,
+      0.000264,
+      0.000968,
+      0.000264,
+      0.000264,
+      0.000968,
+      0.000264,
+      0.000264,
+      0.000968,
+      0.000264,
+      0.000264,
+      0.000968
+    ],
+    "effort_limit_sim": [
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0
+    ],
+    "friction": [
+      0.210345,
+      0.210345,
+      0.403232,
+      0.210345,
+      0.210345,
+      0.403232,
+      0.210345,
+      0.210345,
+      0.403232,
+      0.210345,
+      0.210345,
+      0.403232
+    ],
+    "groups": {
+      "d1_servo": "ImplicitActuator",
+      "legs_hip_thigh": "UnitreeActuator",
+      "legs_knee": "UnitreeActuator",
+      "unifp": "IdealPDActuator"
+    },
+    "velocity_limit_sim": [
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999
+    ]
+  },
+  "legs": {
+    "actuator_model": {
+      "delay_physics_steps": [
+        1,
+        4
+      ],
+      "friction": 0.01,
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": [
+        20.2,
+        23.4
+      ],
+      "knee_nm": [
+        38.72,
+        44.85
+      ],
+      "knee_ratio": 1.9169,
+      "name": "unitree_geared",
+      "speed": "hip, thigh flat to 13.5, 0 at 30.0; knee flat to 7.04, 0 at 15.65 rad/s"
+    },
+    "armature_range": [
+      0.0,
+      0.002
+    ],
+    "friction_range": [
+      0.0,
+      2.0
+    ],
+    "knee_armature_factor": 3.67,
+    "knee_friction_factor": 1.917
+  },
+  "mechanism": null,
+  "mode": "train",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 2048,
+  "payload": {
+    "bodies": [
+      {
+        "body": "base",
+        "com_m": [
+          [
+            0.0211,
+            0.0,
+            -0.0054
+          ],
+          [
+            0.0297,
+            -0.0,
+            0.0013
+          ]
+        ],
+        "mass_kg": [
+          6.921,
+          7.3409
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.265,
+            "name": "mid360",
+            "source": "published: Livox Mid-360 user manual, approx. 265 g"
+          },
+          {
+            "mass_kg": 0.1549,
+            "name": "mid360_mount",
+            "source": "estimated: the CAD's closed parts, 124.9 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      },
+      {
+        "body": "Link6",
+        "com_m": [
+          [
+            -0.0069,
+            -0.0,
+            0.0397
+          ],
+          [
+            -0.0234,
+            0.0001,
+            0.0421
+          ]
+        ],
+        "mass_kg": [
+          0.1679,
+          0.2666
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.072,
+            "name": "d435i",
+            "source": "published: Intel RealSense D400 series datasheet, D435/D435i 72 g"
+          },
+          {
+            "mass_kg": 0.0267,
+            "name": "wrist_bracket",
+            "source": "estimated: the CAD's 21.6 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      }
+    ],
+    "mode": "physical"
+  },
+  "pid": 2758977,
+  "pose_naive": false,
+  "pose_objective": false,
+  "pose_primitives": false,
+  "pose_reward": "separate",
+  "pose_wrench": false,
+  "press": null,
+  "resumed_from": "/home/victor/D1Training/logs/unifp_train/keyinsert/kh17_7000_legs12.pt",
+  "resumed_iteration": 7000,
+  "reward_weights": {
+    "action_rate": -0.1,
+    "alive": 1.0,
+    "ang_vel_xy": -0.05,
+    "approach_contact": -2.0,
+    "arm_action_rate": -0.05,
+    "arm_command_step": -60.0,
+    "arm_lead": -30.0,
+    "base_height": -2.0,
+    "base_still": 1.0,
+    "base_tilt": -50.0,
+    "base_yaw_still": 0.5,
+    "collision": -5.0,
+    "dof_acc": -2.5e-07,
+    "dof_pos_limits": -10.0,
+    "dof_vel": -0.0008,
+    "dof_vel_arm": -0.0002,
+    "door_push": -10.0,
+    "feet_contact_forces": -0.001,
+    "foot_lift": 1.5,
+    "foot_tracking": 1.0,
+    "foot_tracking_fine": 2.0,
+    "foot_tracking_mid": 3.0,
+    "handle_contact": 1.0,
+    "handle_open": 2.0,
+    "handle_progress": 1.5,
+    "handle_slip": -3.0,
+    "ins_depth": 2.0,
+    "ins_fine": 3.0,
+    "ins_lost": -25.0,
+    "ins_press_excess": -50.0,
+    "ins_seated": 4.0,
+    "key_hold": 3.0,
+    "key_hold_coarse": 1.0,
+    "key_tilt": -2.0,
+    "lin_vel_z": -1.5,
+    "orientation": -1.0,
+    "press_excess": -80.0,
+    "stance_sink": -1000.0,
+    "support_contact": 1.0,
+    "support_hip_pos": -0.5,
+    "support_slip": -1.0,
+    "support_stance": 4.0,
+    "torque_limits": -0.005,
+    "torques": -0.0002
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1_payload.usd",
+  "robot_usd_sha256": "61290b5a5d9a7943a8b82743d6363ddd1ea2823bbc79d0612b78d9b86da915cd",
+  "roll_objective": false,
+  "rope": null,
+  "run_dir": "/home/victor/D1Training/logs/unifp_train/20261112T135856_train_seed34_ki2_pos",
+  "seed": 34,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "interrupted",
+  "task": "leg",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wall_clock_s": 3684.4,
+  "wipe": null
+}

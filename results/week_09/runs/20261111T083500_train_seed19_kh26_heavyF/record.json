@@ -1,0 +1,63 @@
+{
+  "id": "20261111T083500_train_seed19_kh26_heavyF",
+  "title": "Key hold r26: force-aware on the heavy half of 66600's leg armature (0.001-0.002), from round 24's kh25_heavy 6799, seed 19, 1200 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-11T22:17:43+11:00",
+  "started_utc": "2026-11-11T08:35:00+00:00",
+  "source_dir": "logs/unifp_train/20261111T083500_train_seed19_kh26_heavyF",
+  "mode": "train",
+  "seed": 19,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1200,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7998,
+  "final_checkpoint": {
+    "file": "model_7998.pt",
+    "sha256": "b2e3fe4744f963bc3d2264332c563888711503e0c57ac1876a9811f01013dab7"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 159.82508850097656,
+      "last_step": 7998,
+      "mean_last_10": 160.62192077636718,
+      "min": 2.880349636077881,
+      "max": 163.96441650390625,
+      "points": 1200
+    },
+    "Train/mean_episode_length": {
+      "last": 491.25,
+      "last_step": 7998,
+      "mean_last_10": 492.9359985351563,
+      "min": 13.551281929016113,
+      "max": 529.4299926757812,
+      "points": 1200
+    },
+    "Policy/mean_std": {
+      "last": 0.07702332735061646,
+      "last_step": 7998,
+      "mean_last_10": 0.0771697998046875,
+      "min": 0.07702332735061646,
+      "max": 0.15044286847114563,
+      "points": 1200
+    },
+    "Perf/total_fps": {
+      "last": 6689.0,
+      "last_step": 7998,
+      "mean_last_10": 6730.3,
+      "min": 4676.0,
+      "max": 15753.0,
+      "points": 1200
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

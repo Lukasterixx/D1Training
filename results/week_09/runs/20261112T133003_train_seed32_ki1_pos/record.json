@@ -1,0 +1,63 @@
+{
+  "id": "20261112T133003_train_seed32_ki1_pos",
+  "title": "Key insertion r1: position-only from kh17_7000, 66600's legs, dog stance, cam lock (PLA key, metal lock), 600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T00:52:19+11:00",
+  "started_utc": "2026-11-12T13:30:03+00:00",
+  "source_dir": "logs/unifp_train/20261112T133003_train_seed32_ki1_pos",
+  "mode": "train",
+  "seed": 32,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7204,
+  "final_checkpoint": {
+    "file": "model_7204.pt",
+    "sha256": "bc60fa4c5d4df66a17926decbb1c3d70827072e8813f659b0f50f1592ed933fb"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 183.73106384277344,
+      "last_step": 7204,
+      "mean_last_10": 166.3731460571289,
+      "min": -6.273651599884033,
+      "max": 186.50868225097656,
+      "points": 205
+    },
+    "Train/mean_episode_length": {
+      "last": 788.5700073242188,
+      "last_step": 7204,
+      "mean_last_10": 772.4700073242187,
+      "min": 13.964912414550781,
+      "max": 799.0,
+      "points": 205
+    },
+    "Policy/mean_std": {
+      "last": 0.15073052048683167,
+      "last_step": 7204,
+      "mean_last_10": 0.15066158026456833,
+      "min": 0.1494073122739792,
+      "max": 0.15081101655960083,
+      "points": 205
+    },
+    "Perf/total_fps": {
+      "last": 5862.0,
+      "last_step": 7204,
+      "mean_last_10": 6540.9,
+      "min": 5095.0,
+      "max": 11136.0,
+      "points": 205
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

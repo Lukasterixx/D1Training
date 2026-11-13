@@ -1,0 +1,22 @@
+{
+  "mode": "run_plan_probe",
+  "status": "finished",
+  "seed": 1,
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/tool/final_f2.pt",
+  "checkpoint_source": "isaaclab",
+  "checkpoint_iteration": 70599,
+  "plan": "far",
+  "steps": 800,
+  "plans": 60,
+  "clear": 60,
+  "leg_friction": 1.0,
+  "floor_grip": null,
+  "real_stance": true,
+  "handover_base_m": 0.26600155234336853,
+  "stop_at_s": null,
+  "stop_kind": "soft",
+  "tool_point": "fingertip",
+  "forces": "off",
+  "records_file": "run_plan.json",
+  "command": "demos/unifp/run_plan_probe.py --headless --run_name s_f2_far --plan far --pose --hand_along_goal --checkpoint logs/unifp_train/tool/final_f2.pt --leg_friction 1 --real_stance"
+}

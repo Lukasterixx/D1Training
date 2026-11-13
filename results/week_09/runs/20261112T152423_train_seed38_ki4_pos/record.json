@@ -1,0 +1,63 @@
+{
+  "id": "20261112T152423_train_seed38_ki4_pos",
+  "title": "Key insertion r4: position-only from ki3 7495, final layer, 20 s episodes, 1500 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T04:58:29+11:00",
+  "started_utc": "2026-11-12T15:24:23+00:00",
+  "source_dir": "logs/unifp_train/20261112T152423_train_seed38_ki4_pos",
+  "mode": "train",
+  "seed": 38,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8994,
+  "final_checkpoint": {
+    "file": "model_8994.pt",
+    "sha256": "b433dc87fb6ca1459a497e827ba7757f8fc508a2844149493cf18d73a9ba5363"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 282.63555908203125,
+      "last_step": 8994,
+      "mean_last_10": 298.72247619628905,
+      "min": 2.1041030883789062,
+      "max": 310.868896484375,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 804.3800048828125,
+      "last_step": 8994,
+      "mean_last_10": 839.6470031738281,
+      "min": 10.428571701049805,
+      "max": 942.0499877929688,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.08742738515138626,
+      "last_step": 8994,
+      "mean_last_10": 0.08762879520654679,
+      "min": 0.08742738515138626,
+      "max": 0.14087069034576416,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 10511.0,
+      "last_step": 8994,
+      "mean_last_10": 12384.4,
+      "min": 5734.0,
+      "max": 19319.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

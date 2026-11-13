@@ -1,0 +1,63 @@
+{
+  "id": "20261109T133446_train_seed3_kh_position_s3",
+  "title": "Key hold r1: position-only foot + learned arm hold, from corner position s3 3600, 2000 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T00:37:58+11:00",
+  "started_utc": "2026-11-09T13:34:46+00:00",
+  "source_dir": "logs/unifp_train/20261109T133446_train_seed3_kh_position_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 3608,
+  "final_checkpoint": {
+    "file": "model_3608.pt",
+    "sha256": "a714276d00dcdbd9f95ca1e2bde6c5c130b62afd0209c166654c53151ab10014"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 15.100289344787598,
+      "last_step": 3608,
+      "mean_last_10": 10.66963987880283,
+      "min": 3.4292914867401123,
+      "max": 15.100289344787598,
+      "points": 9
+    },
+    "Train/mean_episode_length": {
+      "last": 113.9000015258789,
+      "last_step": 3608,
+      "mean_last_10": 76.03222232394748,
+      "min": 22.040000915527344,
+      "max": 117.91000366210938,
+      "points": 9
+    },
+    "Policy/mean_std": {
+      "last": 0.16196811199188232,
+      "last_step": 3608,
+      "mean_last_10": 0.16138092511230046,
+      "min": 0.1604532152414322,
+      "max": 0.16196811199188232,
+      "points": 9
+    },
+    "Perf/total_fps": {
+      "last": 2196.0,
+      "last_step": 3608,
+      "mean_last_10": 2573.8888888888887,
+      "min": 2063.0,
+      "max": 3680.0,
+      "points": 9
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

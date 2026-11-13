@@ -254,6 +254,13 @@ def main() -> int:
                         help="soft: `press_live._arm_stop`: the arm held, the legs blended to the stand-up gains and the default stance, then the fold by home, "
                              "tuck and fold. damping: `abort`: kp 0, kd 3 on the legs, the arm held out")
     parser.add_argument("--hold_s", type=float, default=1.0)
+    parser.add_argument("--pose", action="store_true",
+                        help="A --pose_objective checkpoint: the jaw-centre tool point, and the hand commanded as --hand_* say, slid there over --move_s.")
+    parser.add_argument("--hand_elevation_deg", type=float, default=0.0, help="--pose: the approach above level; -90 points the hand down")
+    parser.add_argument("--hand_roll_deg", type=float, default=0.0, help="--pose: the jaws' turn about the approach")
+    parser.add_argument("--hand_heading_deg", type=float, default=0.0, help="--pose: the approach's heading off the base's")
+    parser.add_argument("--hand_along_goal", action="store_true",
+                        help="--pose: the approach follows the goal's bearing, as a hand reaching outward does, not the base's heading")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--run_name", default="plan")
     parser.add_argument("--output", default=str(ROOT / "logs/unifp_demos"))
@@ -295,6 +302,11 @@ def main() -> int:
     cfg.robot_usd = robot_usd
     cfg.force_start_step = 10 ** 9
     cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
+    if args.pose:
+        from unifp_train import task_cfg  # noqa: E402
+
+        cfg.tool_body, cfg.tool_offset_m = task_cfg.TOOL_BODY, task_cfg.TOOL_OFFSET_M
+        cfg.pose_objective = True
     cfg.episode_length_s = 10 ** 4
     shrink_physx(cfg.sim)
     leg_actuators.swap_legs(cfg.robot, "unitree_geared", 4, 0.0002, 0.0007, 3)
@@ -343,14 +355,36 @@ def main() -> int:
     vel_table = torch.tensor([t[1] for t in tables], dtype=torch.float32, device=device).permute(1, 0, 2).contiguous()
     tick = {"k": 0}
 
+    hand_turn = None
+    if args.pose:
+        from unifp_train import pose_goals, pose_reach  # noqa: E402
+
+        one = lambda deg: torch.tensor([math.radians(deg)], dtype=torch.float64)  # noqa: E731
+        wanted = pose_reach.hand_rotations(one(args.hand_heading_deg), one(args.hand_elevation_deg), one(args.hand_roll_deg))[0].float().to(device)
+        hand_turn = pose_goals.rotvec_from_matrix((env._goals.neutral.T @ wanted).unsqueeze(0))[0]
+        print(f"[pose] hand {math.degrees(float(hand_turn.norm())):.0f} deg from neutral, slid over {args.move_s} s after {args.settle_s} s", flush=True)
+
     def goal_now():
         # `current` too: `_goal_world`, which the hand is scored against, reads it, not what `step` returned.
         env._goals.current = goal_table[min(tick["k"], T - 1)]
+        if hand_turn is not None:
+            s = min(max((tick["k"] * dt - args.settle_s) / args.move_s, 0.0), 1.0)
+            env._goals.current_rotvec = (hand_turn * s).expand(count, 3).contiguous()
+            env._goals.current_rotation = env._goals.neutral @ pose_goals.matrix_from_rotvec(env._goals.current_rotvec)
+            if args.hand_along_goal:
+                # Turned about the vertical by the goal's yaw: the same hand, pointing where the goal lies.
+                bearing = env._goals.current[:, 2]
+                c, sn, zero, one = bearing.cos(), bearing.sin(), torch.zeros_like(bearing), torch.ones_like(bearing)
+                spin = torch.stack((c, -sn, zero, sn, c, zero, zero, zero, one), dim=-1).view(-1, 3, 3)
+                env._goals.current_rotation = spin @ env._goals.current_rotation
+                env._goals.current_rotvec = pose_goals.rotvec_from_matrix(env._goals.neutral.T @ env._goals.current_rotation)
         return env._goals.current
 
     env._goals.step = goal_now          # type: ignore[assignment]
     env._resample_velocity_commands = lambda ids: None
     start = torch.tensor(START, dtype=torch.float32, device=device).expand(count, 3).clone()
+    if args.pose:
+        start = env._goals.pose_of(torch.zeros(count, 6, device=device))[0]
     for buffer in ("current", "start", "goal"):
         setattr(env._goals, buffer, start.clone())
 
@@ -399,10 +433,11 @@ def main() -> int:
     contact, tilt, base_h, drift = z(), z(2), z(), z()
     speed = z(3)
     tip, press, base_pose = z(3), z(), z(3)
+    hand_err = z()
     arm_order = env._order[12:18]
     fell_at = torch.full((count,), -1, dtype=torch.long, device=device)
     decoder = None
-    if args.plan == "wipe":
+    if args.plan == "wipe" and not args.pose:
         import numpy as np  # noqa: E402
         from demos.combiner_key.robot import leg_policy  # noqa: E402
         decoder = leg_policy.LegPolicy(str(ROOT / "checkpoints/reach_force_sticky_model_66600.npz"))
@@ -433,7 +468,11 @@ def main() -> int:
             speed[step, :, :2] = env._robot.data.root_lin_vel_b[:, :2]
             speed[step, :, 2] = env._robot.data.root_ang_vel_b[:, 2]
             tip[step] = env._tip_pos()
-            if decoder is not None:
+            if args.pose:
+                # The policy under test's own adaptation decoder, not `66600`'s export.
+                est_force[step] = policy.estimate(obs["policy"])[:, 6:9] / 0.01
+                hand_err[step] = torch.rad2deg(env._hand_error_angle())
+            elif decoder is not None:
                 # The adaptation decoder's external force at the tool, yaw frame, N: what the dog logs in `estimate[6:9]`.
                 est_force[step] = torch.as_tensor(decoder.estimate(obs["policy"].cpu().numpy())[:, 6:9] / decoder.meta["obs_scale_ee_force"], dtype=torch.float32, device=device)
             q_w = env._robot.data.root_quat_w
@@ -482,7 +521,7 @@ def main() -> int:
             if a2 >= end or b <= a:
                 continue
             b2 = min(b, end)
-            w = {"label": label, "goal": list(g), "error_cm": float(err[a2:b2, i].mean()) * 100, "arm_deg": [round(float(v), 1) for v in torch.rad2deg(q_arm[b2 - 1, i])],
+            w = {"label": label, "goal": list(g), "error_cm": float(err[a2:b2, i].mean()) * 100, "hand_err_deg": float(hand_err[a2:b2, i].mean()), "arm_deg": [round(float(v), 1) for v in torch.rad2deg(q_arm[b2 - 1, i])],
                  "pitch_deg": float(tilt[a2:b2, i, 1].mean()), "roll_deg": float(tilt[a2:b2, i, 0].mean()), "speed": [float(v) for v in speed[a2:b2, i].mean(dim=0)], "drift_m": float(drift[b2 - 1, i])}
             if args.plan == "wipe":
                 over = tip[a2:b2, i, 2] - args.bench_top_m
@@ -498,7 +537,7 @@ def main() -> int:
         print(f"wipe: r {args.wipe_radius} yaw +-{args.wipe_yaw_deg} bench {'in' if args.bench else 'absent'} top {args.bench_top_m} edge {args.bench_edge_m} pad {args.pad_n_per_m} N/m")
         for r in records:
             for w in r["windows"]:
-                print(f"  {r['name']} {w['label'][:10]:10s} err {w['error_cm']:.1f} tip over bench min/mean/max {w['tip_over_bench_cm']} cm x {w['tip_x_m']} press mean/max {w['press_n']} N touching {w['touching']} arm {w['arm_deg']} pitch {w['pitch_deg']:.1f} est z {w['est_force_z_n']} base {w['base_x_y_yaw']}")
+                print(f"  {r['name']} {w['label'][:10]:10s} err {w['error_cm']:.1f} tip over bench min/mean/max {w['tip_over_bench_cm']} cm x {w['tip_x_m']} press mean/max {w['press_n']} N touching {w['touching']} hand {w['hand_err_deg']:.1f} deg arm {w['arm_deg']} pitch {w['pitch_deg']:.1f} est z {w['est_force_z_n']} base {w['base_x_y_yaw']}")
     print(f"{args.plan}, friction {args.leg_friction}, {'the dog stance' if args.real_stance else 'the simulator stance'}, handover base {base_z:.3f}")
     print(f"{'plan':18s} lead  over25 step | legs 1st after | tilt  contact base | windows (cm off; speed for walking) | stops")
     for r in records:

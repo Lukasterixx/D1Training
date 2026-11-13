@@ -1,0 +1,63 @@
+{
+  "id": "20261110T224314_train_seed9_kh16_sink",
+  "title": "Key hold r16: force-aware from kh14_6400.pt, 66600's legs, dog stance, stops priced + the crouch below the start (-1000) and pressing x4 (-80), lr 3e-5, 1600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-11T11:50:36+11:00",
+  "started_utc": "2026-11-10T22:43:14+00:00",
+  "source_dir": "logs/unifp_train/20261110T224314_train_seed9_kh16_sink",
+  "mode": "train",
+  "seed": 9,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7286,
+  "final_checkpoint": {
+    "file": "model_7286.pt",
+    "sha256": "59fffe4597113a2bd45ca0b89db1c28a5a10224041091b7c298a2c67ce067131"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 157.45242309570312,
+      "last_step": 7286,
+      "mean_last_10": 157.53195037841797,
+      "min": 3.166065216064453,
+      "max": 159.8826904296875,
+      "points": 887
+    },
+    "Train/mean_episode_length": {
+      "last": 492.9599914550781,
+      "last_step": 7286,
+      "mean_last_10": 495.2989990234375,
+      "min": 17.108434677124023,
+      "max": 528.9299926757812,
+      "points": 887
+    },
+    "Policy/mean_std": {
+      "last": 0.09057297557592392,
+      "last_step": 7286,
+      "mean_last_10": 0.09070781543850899,
+      "min": 0.09057297557592392,
+      "max": 0.15101711452007294,
+      "points": 887
+    },
+    "Perf/total_fps": {
+      "last": 6827.0,
+      "last_step": 7286,
+      "mean_last_10": 6375.9,
+      "min": 4774.0,
+      "max": 15151.0,
+      "points": 887
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

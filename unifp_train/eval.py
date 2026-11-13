@@ -31,6 +31,7 @@ prediction scored rather than trained.
 from __future__ import annotations
 
 import hashlib
+import math
 import statistics as st
 
 import torch
@@ -38,7 +39,12 @@ import torch
 from unifp_go2d1 import eval_manifest as _em
 from unifp_isaaclab import interface
 
-from . import observations, rewards, task_cfg
+from . import observations, pose_goals, rewards, task_cfg
+
+#: The pose objective's settled measure: steps at least this long into a goal's hold (0.4 s), and how near counts. The
+#: episode's opening hold on the all-zero pose does not count: zero actions pass it, reading 6 degrees (2026-11-07).
+SETTLED_STEPS = 20
+POSE_WITHIN_M, POSE_WITHIN_DEG = 0.03, 10.0
 
 #: Distinct from `unifp_go2d1_eval_manifest_v1` on purpose: an Isaac Lab manifest cannot be run in
 #: Isaac Gym or the reverse, and a format that says so fails early rather than at the digest check.
@@ -100,6 +106,10 @@ def conditions_of(env) -> dict:
         "tool_body": cfg.tool_body,
         "tool_offset_m": list(cfg.tool_offset_m),
         "roll_objective": bool(getattr(cfg, "roll_objective", False)),
+        "pose_objective": bool(getattr(cfg, "pose_objective", False)),
+        "pose_naive": bool(getattr(cfg, "pose_naive", False)),
+        "pose_primitives": bool(getattr(cfg, "pose_primitives", False)),
+        "pose_wrench": bool(getattr(cfg, "pose_wrench", False)),
         "terrain": "flat plane",
         "solver_iterations": [cfg.robot.spawn.articulation_props.solver_position_iteration_count,
                               cfg.robot.spawn.articulation_props.solver_velocity_iteration_count],
@@ -127,6 +137,30 @@ def _stats(values):
 
 def _pool(records, key, field="median"):
     return _stats([r[key][field] for r in records if r.get(key)])
+
+
+def _hold_shake(trace, i, quiet) -> tuple[list[float], list[float]]:
+    """Per unforced hold of at least half a second, standing: the tool point's RMS about its mean, cm, and the orientation error's spread, deg.
+
+    Tracking error, step size and reversals all pass a hand circling a held goal (2026-11-07: a 4-5 cm band read as ordinary
+    on the frozen set), because they pool the moving steps with the still ones.
+    """
+    runs, current = [], []
+    for j, held in enumerate(trace["settled"][i]):
+        if held and j in quiet and trace["standing"][i][j]:
+            current.append(j)
+            continue
+        if len(current) >= 25:
+            runs.append(current)
+        current = []
+    if len(current) >= 25:
+        runs.append(current)
+    shake, turn = [], []
+    for run in runs:
+        points = torch.tensor([trace["local_tip"][i][j] for j in run])
+        shake.append(100.0 * float((points - points.mean(dim=0)).pow(2).sum(dim=-1).mean().sqrt()))
+        turn.append(st.pstdev([trace["orn_err"][i][j] for j in run]))
+    return shake, turn
 
 
 def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
@@ -164,9 +198,16 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
 
     fell_at: list[int | None] = [None] * n
     digests = [hashlib.sha256() for _ in range(n)]
+    #: Sums for the hand's displacement regressed on the told and the felt force, per axis pooled, once a goal is held.
+    moments = torch.zeros(5, dtype=torch.float64, device=env.device)
+    #: The same sums per episode, for a bootstrap over episodes: one set's told figure ranged 2.9 to 4.95 on one policy.
+    per_episode = torch.zeros(n, 5, dtype=torch.float64, device=env.device)
+    #: The hand's turn regressed on the moment, off-centre pushes only (`pose_wrench`): sum of (turn . moment), of (moment . moment).
+    turning = torch.zeros(2, dtype=torch.float64, device=env.device)
     trace = {k: [[] for _ in range(n)] for k in
              ("goal_err", "unified_err", "force_cmd", "force_applied", "force_along_cmd",
-              "est_err", "base_vel_err", "base_z", "roll_err")}
+              "est_err", "base_vel_err", "base_z", "roll_err", "orn_err", "settled", "local_tip", "standing")}
+    pose = bool(getattr(env.cfg, "pose_objective", False))
 
     try:
         with torch.no_grad():
@@ -192,6 +233,23 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
 
                 goal_err = torch.norm(tip - goal, dim=1)
                 unified_err = torch.norm(tip - unified_target, dim=1)
+                # UniFP's law says the hand moves 1/K per newton, told or felt. Measured while a goal is held, so the slide's
+                # lag is not read as compliance; each episode's own mean offset comes off below.
+                alive = ~fell
+                if getattr(env.cfg, "pose_objective", False):
+                    alive = alive & ((env._goals.timer - env._goals.traj_steps) >= SETTLED_STEPS) & (env._goals.goals_drawn > 0)
+                if bool(alive.any()):
+                    d, c, e = ((tip - goal)[alive].double(), cmd_world[alive].double(), applied[alive].double())
+                    moments += torch.stack(((c * c).sum(), (c * e).sum(), (e * e).sum(), (d * c).sum(), (d * e).sum()))
+                    index = alive.nonzero(as_tuple=False).flatten()
+                    per_episode[index] += torch.stack(((c * c).sum(-1), (c * e).sum(-1), (e * e).sum(-1),
+                                                       (d * c).sum(-1), (d * e).sum(-1)), dim=-1)
+                    if getattr(env.cfg, "pose_wrench", False):
+                        tau = env._push_moment_yaw()[alive].double()
+                        turn = pose_goals.rotvec_from_matrix(
+                            env._hand_rotation_yaw() @ env._goals.current_rotation.transpose(1, 2))[alive].double()
+                        turning += torch.stack(((turn * tau).sum(), (tau * tau).sum()))
+
                 cmd_mag = torch.norm(cmd_world, dim=1)
                 applied_mag = torch.norm(applied, dim=1)
                 direction = cmd_world / cmd_mag.clamp(min=1e-6).unsqueeze(1)
@@ -223,6 +281,17 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
                         fell_at[i] = step
 
                 sph, fcl, vcm = goal_sphere.tolist(), cmd_local.tolist(), vel_cmd.tolist()
+                if pose:
+                    # The goal's orientation joins the digest: two schedules with one path and different hands are two sets.
+                    orn = torch.rad2deg(env._hand_error_angle()).tolist()
+                    settled = (((env._goals.timer - env._goals.traj_steps) >= SETTLED_STEPS)
+                               & (env._goals.goals_drawn > 0)).tolist()
+                    sph = [a + b for a, b in zip(sph, env._goals.current_rotvec.tolist())]
+                    # The tool point in the yaw frame about the goal, for the shake on a held goal.
+                    local_tip = interface.quat_rotate_inverse(env._base_yaw_quat(), tip - goal).tolist()
+                else:
+                    orn, settled, local_tip = [None] * n, [False] * n, [None] * n
+                standing = (vel_cmd.abs().amax(dim=1) == 0.0).tolist()
                 ge, ue = goal_err.tolist(), unified_err.tolist()
                 cm, am, rl = cmd_mag.tolist(), applied_mag.tolist(), realised.tolist()
                 ve, bz, re_ = vel_err.tolist(), base_z.tolist(), roll_err.tolist()
@@ -242,15 +311,51 @@ def run_episodes(env, manifest, policy=None, progress=None) -> list[dict]:
                         trace["base_vel_err"][i].append(ve[i])
                         trace["base_z"][i].append(bz[i])
                         trace["roll_err"][i].append(re_[i])
+                        trace["orn_err"][i].append(orn[i])
+                        trace["settled"][i].append(settled[i])
+                        trace["local_tip"][i].append(local_tip[i])
+                        trace["standing"][i].append(standing[i])
     finally:
         env._get_dones = original_dones
 
+    cc, ce, ee, dc, de = moments.tolist()
+    determinant = cc * ee - ce * ce
+    compliance = None if determinant <= 0.0 else {
+        "told_mm_per_n": 1000.0 * (dc * ee - de * ce) / determinant,
+        "felt_mm_per_n": 1000.0 * (de * cc - dc * ce) / determinant}
+    if compliance is not None:
+        draw = torch.Generator(device=env.device).manual_seed(1)
+        picks = torch.randint(0, n, (2000, n), generator=draw, device=env.device)
+        cc_, ce_, ee_, dc_, de_ = per_episode[picks].sum(dim=1).unbind(-1)
+        det = (cc_ * ee_ - ce_ * ce_).clamp(min=1e-9)
+        told_draws = 1000.0 * (dc_ * ee_ - de_ * ce_) / det
+        felt_draws = 1000.0 * (de_ * cc_ - dc_ * ce_) / det
+        interval = lambda v: [round(float(v.quantile(0.025)), 2), round(float(v.quantile(0.975)), 2)]
+        compliance["told_95"], compliance["felt_95"] = interval(told_draws), interval(felt_draws)
+    if compliance is not None and float(turning[1]) > 0.0:
+        compliance["turn_deg_per_nm"] = math.degrees(float(turning[0] / turning[1]))
     records = []
     for i, spec in enumerate(episodes):
         quiet = {j for j, (c, a) in enumerate(zip(trace["force_cmd"][i], trace["force_applied"][i]))
                  if c < 0.1 and a < 0.1}
         pushed = [j for j in range(len(trace["force_cmd"][i])) if j not in quiet]
+        still = [j for j in sorted(quiet) if trace["settled"][i][j]]
+        held = [j for j in pushed if trace["settled"][i][j]]
+        shake, turn_shake = _hold_shake(trace, i, quiet) if pose else ([], [])
+        pose_fields = {} if not pose else {
+            "hold_shake_cm": _stats(shake), "hold_turn_shake_deg": _stats(turn_shake),
+            "orn_err_quiet_deg": _stats([trace["orn_err"][i][j] for j in sorted(quiet)]),
+            "orn_err_pushed_deg": _stats([trace["orn_err"][i][j] for j in pushed]),
+            "orn_err_settled_deg": _stats([trace["orn_err"][i][j] for j in still]),
+            "goal_settled_m": _stats([trace["goal_err"][i][j] for j in still]),
+            "orn_err_settled_pushed_deg": _stats([trace["orn_err"][i][j] for j in held]),
+            "unified_settled_pushed_m": _stats([trace["unified_err"][i][j] for j in held]),
+            "within_settled": (sum(1 for j in still if trace["goal_err"][i][j] < POSE_WITHIN_M
+                                   and trace["orn_err"][i][j] < POSE_WITHIN_DEG) / len(still)) if still else None,
+        }
         records.append({
+            **pose_fields,
+            "compliance": compliance,
             "index": spec["index"],
             "steps": fell_at[i] if fell_at[i] is not None else max_steps,
             "fell": fell_at[i] is not None,
@@ -296,6 +401,18 @@ def summarise(records, manifest, controller, conditions=None) -> dict:
         "base_vel_err_m_s": _pool(records, "base_vel_err_m_s"),
         "base_z_m": _pool(records, "base_z_m"),
         "roll_err_deg": _pool(records, "roll_err_deg"),
+        "compliance": records[0].get("compliance") if records else None,
+        **({} if "orn_err_quiet_deg" not in (records[0] if records else {}) else {
+            "orn_err_quiet_deg": _pool(records, "orn_err_quiet_deg"),
+            "orn_err_pushed_deg": _pool(records, "orn_err_pushed_deg"),
+            "orn_err_settled_deg": _pool(records, "orn_err_settled_deg"),
+            "hold_shake_cm": _pool(records, "hold_shake_cm"),
+            "hold_turn_shake_deg": _pool(records, "hold_turn_shake_deg"),
+            "goal_settled_m": _pool(records, "goal_settled_m"),
+            "orn_err_settled_pushed_deg": _pool(records, "orn_err_settled_pushed_deg"),
+            "unified_settled_pushed_m": _pool(records, "unified_settled_pushed_m"),
+            "within_settled": st.mean(r["within_settled"] for r in records if r["within_settled"] is not None),
+        }),
         "condition_mismatches": conditions or [],
     }
 

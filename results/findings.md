@@ -3477,7 +3477,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 
 ### F-099 — The D1 has essentially no dexterous workspace at this reach: 86% of UniFP's goal sphere admits a position, 43% a levelled hand and 8% a freely chosen orientation, so a full-pose objective would train mostly on unreachable targets — while roll alone costs nothing
 
-- **Status:** confirmed (kinematics; solver-dependent, see scope)
+- **Status:** superseded by [F-272](#f-272) as a limit on commanding the pose. The arm-alone ordering stands; the conclusion drawn from it (roll only, "no dexterous workspace") does not. Was: confirmed (kinematics; solver-dependent, see scope)
 - **Week:** 2
 - **Date:** 2026-09-24
 - **Evidence:** [Week 2 log, 2026-09-24](week_02/notes.md), "What to constrain, measured rather than
@@ -8614,6 +8614,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - Next on the dog, with no door: hold the lever's goal while walking the pull's arc in free air. It tests items 2, 5 and 6 with the stops as they are.
   - J6 can be set apart from the policy (F-146's `--wrist`; the controlled point lies on its axis, so the roll does not move it). That covers the roll, not the 18 deg of pitch.
   - An open hand pushing the door from behind, after the script has opened it, would avoid 1, 3 and most of 2. Not simulated yet.
+- **Followed by:** 2026-11-07: "not confirmed through the fine-tunes" in the scope above is now settled: they did train under the pushes. A resume restores the step counter (F-082), and every `armft` run records `forces_active_at_resume: true`.
 
 ### F-265 — A standing wipe across a 40 cm bench is prepared: in simulation `66600` holds the stroke's height and presses 2-15 N on position goals alone, but a hard stop with the hand on the bench puts every arm joint at its torque limit (simulation and fakes; never on the dog)
 
@@ -8798,3 +8799,447 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - Report the told level with the estimate beside it, not the console's label.
   - The next evidence is the videos: which levels erased a full arc. A closed loop should wait for a steadier zero (F-270).
 
+### F-272 — The D1 has a dexterous workspace where the tasks are: its wrist is spherical, and F-099's 8% counted hands pointing back at the robot; with the body, a level hand takes every roll at any heading within 60 deg over nearly the whole forward workspace, the real door pull's hand included
+
+- **Status:** confirmed (kinematics, analytic; no simulator, and no arm-on-body check in the map)
+- **Week:** 8
+- **Date:** 2026-11-07
+- **Supersedes:** [F-099](#f-099) (as a limit on commanding the pose)
+- **Evidence:** [Week 8 log, 2026-11-07](week_08/notes.md), "How much pose the robot has". `unifp_train/arm_kin.py`, `unifp_train/pose_reach.py`; [the map](#/week/8/run/20261107T082407_ik_seed1_reach_map), [in F-099's frame](#/week/8/run/20261107T082622_ik_seed1_reach_map_legacy).
+  - **The wrist is spherical.** Joint4's and Joint5's axes meet; Joint6's passes 1.1 mm from that point; the wrist centre does not move with Joint4-6 at all, and the jaw centre stays 18.6 cm from it to 2 mm (`tests/test_arm_kin.py`, forward kinematics held to the numpy chain to 1e-12). A pose solves exactly: 99.8% of drawn poses round-trip, 2 mm and 3e-6 deg.
+  - **Uniform SO(3), the same 147 goals, 200 orientations each:**
+
+    | | arm alone | jaw half-turn counted | with the body |
+    |---|---|---|---|
+    | F-099's frame | 9.1% | 11.5% | |
+    | correct frame | 11.3% | 14.1% | 28.6% |
+
+    "With the body" is the base within +/-12 deg pitch, +/-8 roll, 0.26-0.33 m, +/-4 cm, feet fixed. F-099's `sphere_point` built goals about the arm's mount and handed them to a solver whose frame has the mount in it, 8.6 cm low; it reported 8.2% with one seed and 8 orientations. Goals admitting no orientation at all: 17 of 147, against F-099's 81 and 37 in its frame with this solver.
+  - **Why uniform SO(3) was the wrong question.** By the approach's angle from the outward line through the shoulder: 0-60 deg admits 32% arm alone and 65-70% with the body; 120-180 deg admits 0%. A hand pointing back needs its wrist 18.6 cm further out than the goal.
+  - **Where the tasks are**, every roll, heading within +/-60 deg, % admitted, arm alone / with the body:
+
+    | goal pitch | r 0.45 | r 0.55 | r 0.60 | r 0.65 |
+    |---|---|---|---|---|
+    | level hand, +40 | 100 / 100 | 100 / 100 | 100 / 100 | 0 / 100 |
+    | level hand, +20 | 100 / 100 | 100 / 100 | 100 / 100 | 44 / 100 |
+    | level hand, +10 | 100 / 100 | 100 / 100 | 100 / 100 | 89 / 100 |
+    | level hand, 0 | 8 / 100 | 100 / 100 | 100 / 100 | 0 / 100 |
+    | hand 45 deg down, +20 | 100 / 100 | 0 / 100 | 0 / 100 | 0 / 0 |
+    | hand 45 deg down, 0 | 100 / 100 | 100 / 100 | 0 / 100 | 0 / 100 |
+
+    The real door pull's hand (radius 0.54-0.58, pitch 12-18, F-264) is in the first block.
+- **Scope:** kinematics only. Soft limits (0.9). It says a pose exists, not that a policy finds it, holds it under load, or gets there at the Follower's 45 deg/s. No arm-on-body check, so close-in goals may be optimistic; the lidar cage of F-211 is not in it. The body's range is what a stance could give with feet fixed, not what `66600` was seen to use (pitch -3.5 to -5.6 on the dog). Jaws counted as symmetric in the band table: a tool with a top side loses that half turn. CAD lengths, not measured on the arm.
+- **Implication:**
+  - Orientation tracking is not limited to roll. `docs/thesis_b_plan.md` is corrected.
+  - Goals must come from the reachable set, not from SO(3): `pose_goals.py` draws joint angles and takes forward kinematics.
+  - A spherical wrist means hand orientation can also be solved outside the policy, exactly, for a controller that wants that.
+
+### F-273 — UniFP learns the whole hand's orientation beside its force half when its goals are drawn from joint angles: from `66600`'s uncontrolled 73 deg to 8-11 deg on the fitted arm through the Follower, with the force input kept; drawn as F-099 drew them, the same recipe learns nothing
+
+- **Status:** confirmed in simulation (one training seed for the matched comparison; frozen sets)
+- **Week:** 8
+- **Date:** 2026-11-08
+- **Evidence:** [Week 8 log, 2026-11-07 and 08](week_08/notes.md), "Commanding the hand's whole pose" onward. `unifp_train/pose_goals.py`, `--pose_objective` in `run_unifp_train.py`; frozen sets `unifp_pose_development` and `unifp_pose_validation`, 64 episodes each, written before any pose policy was scored.
+  - **The design.** No width changes: `CMD_EE_ORN_R/P/Y`, zero in every earlier policy, carry the hand as a rotation vector from the all-zero attitude in the yaw frame. Goals are joint angles taken through forward kinematics, one wrist branch, slid in joint space under the Follower's speed, so every commanded pose is reachable by construction (with precedent: Portela, Cramariuc et al. 2024).
+  - **Settled hand, development set:** [`66600`](#/week/8/run/20261107T072250_eval_seed1_pb2_66600) 3.31 cm, 72.9 deg (zero actions 79.0); [the control, F-099's uniform SO(3) draw, 1,000 iterations](#/week/8/run/20261107T084536_eval_seed1_pe_n_67600) 2.63 cm, 68.7 deg; [goals from joint angles, 800 iterations](#/week/8/run/20261107T084214_eval_seed1_pe_a_67400) 3.38 cm, **16.2 deg**; [the same at 3,000](#/week/8/run/20261107T121205_eval_seed1_s_afin_dev) 2.68 cm, **8.38 deg**. The control's training error stayed at 110-118 deg throughout.
+  - **Force kept:** no falls in any; felt compliance unchanged (14-16 mm/N for every policy). The told figure has a 95% interval of about +/-3 mm/N over 64 episodes (`66600` 7.26 [4.02, 11.13] on validation), too wide to judge the 20% bar it was meant for.
+  - **Recipes that cost something, kept as results:** an IK teacher (reward on the goal's joint angles) cut orientation to 14 deg at 800 iterations and told compliance to 3.32 mm/N, pulling the joints against the force offset.
+- **Scope:** simulation only. One seed for the matched comparison. The orientation is commanded inside the reachable set the goals were drawn from; a script that asks outside it (the standing door swing of `combiner_phases`, 10% reachable) gets the error it asks for. The frozen-set orientation figure is not a door result (F-274).
+- **Implication:** F-099's reading is replaced (F-272): a full orientation is a goal-distribution problem, not a capacity one. Draw goals from what the arm can reach. The P0-P4 ladder can carry a pose interface in all variants, as the plan asked.
+
+### F-274 — On the fitted arm through the Follower, a whole-hand pose policy with its arm's lead priced opened 32 of 32 doors and does the lever then walked door 31 of 32 times, against 18 and 4 for the best position-only controller; at the real lever's stiffness, commanded past its stop, 32 of 32 against 0; told force within the trained 8 N barely changes stiffer mechanisms
+
+- **Status:** provisional (simulation; one training seed, the recipe found on these same door placements; fresh seeds running)
+- **Week:** 8
+- **Date:** 2026-11-08
+- **Evidence:** [Week 8 log, 2026-11-07 and 08](week_08/notes.md), from "Door and lever on the real-arm model" to "A pose policy passes the replay". `demos/unifp/run_demo.py --real_arm --pose --goal_correction`, `script.lever_door_phases` (`--walk_pull`), `logs/unifp_train/tool/suite.sh`. Seeds 1 and 2 of placements, 16 attempts each.
+
+  | | doors at 85 deg at the end of the hold | lever (0.4 N·m) then walked door past 85 | real lever 0.65 N·m, commanded to 70 deg | far plans the dog would stop |
+  |---|---|---|---|---|
+  | `66600` + wrist servo + goal correction | 18 of 32 | 4 of 32 | [0 of 32](#/week/8/run/20261108T024339_ov_b_70_s1) | 0 of 60 |
+  | [pose, lead unpriced (`pose_a`; far plans with a straight-ahead hand, the others' along the goal)](#/week/8/run/20261107T121807_s_afin_door_s1) | 25 of 32 | 22 of 32 | | 52 of 60 |
+  | [pose, lead priced (`pose_r10`)](#/week/8/run/20261107T171020_s_r10_door_s1) | **32 of 32** | **31 of 32** | [**32 of 32**](#/week/8/run/20261108T003731_ov_r10_70_t0) | **0 of 60** |
+
+  - `66600` alone reads 0 of 32 doors: its goal sits past its trained radius and it stops short. The fair baseline has the goal correction.
+  - **What decided the door, measured, after three wrong readings:** not arrival precision (a later policy arrived better and opened fewer), not a stiffer wrist (degrees given per N·m 17.5-18.8 for the policies that opened 10 and 25), not a softer arm from the priced lead (the most-loaded joint sits at its 3.33 N·m limit through the pull for both). Over 67 held grips, a hand more than 5 cm behind its target in the pull's first 1.5 s kept the door in 42% of attempts, under 5 cm in 90%; pricing the lead (its median 30-40 deg to 2-6) is what removed it.
+  - **Force, hand held:** on the bench the press follows told force at about 1.2-1.5 N a newton to a stall near 14 N with the hand held to 9-11 deg. On stiffer mechanisms 6 N told moved levers 1-7 deg and did nothing against a door closer; at 0.65 N·m commanded to 55 deg it took the latch from 1 to 4 of 16. Commanding the lever past its 60 deg stop took it to 16 of 16 on its own.
+- **Scope:** simulation only: a friction grip, a free or modelled door, the fitted arm. One training seed, reached through a chain of recipes chosen on the development set and on these placements, so the counts flatter it; F-098's warning on per-placement outcomes applies. **`pose_r10` fails the replay on the dog's own frames** (F-275) and must not run on the dog.
+- **Note (2026-11-08, later): the 32 of 32 does not reproduce.** [A fresh seed of the same final recipe straight from `66600`](#/week/8/run/20261108T041004_eval_seed1_s_f2_dev) (seed 2, 4,000 iterations, against the chain's ~6,000 on seed 1) opens 9 of 32 doors held at 85 deg (24 of 32 peaking past it), the lever then door 16 of 32 (24 latches), with 0 of 60 far plans stopped and a hand of 3.17 cm and 12.7 deg. So the door count rests on the chain, the budget or the seed, which one is not separated; the stops and the latch gain held. Two more seeds are running and will be scored at 4,000 and 6,000 iterations.
+- **Note (2026-11-09): the count follows the chain through `pose_a`, not the final stage's seed.** The deployable recipe straight from `66600` (sticky legs, [week 9 log](week_09/notes.md)) holds 10 and 0 of 32 doors at 4,000 iterations (seeds 2, 3) and 10 and 24 at 6,000. A second chain from `pose_a`'s end, with the lead priced at -10 and the rotational law (`pose_wa`, [31 of 32 held, lever then door 31 of 32](#/week/8/run/20261108T061109_s_wa_door_s1)), nearly matches `pose_r10`'s count (31 against 32). Both chains start from `pose_a`, which learned the pose with free legs and no lead price; budgets are not matched, so "the chain" and "the budget" are still not separated.
+- **Implication:** what the whole-hand command buys on the door and the lever is getting there and holding on, and pushing past a stop with the hand's attitude kept; not force capacity, which the arm limits either way. Price the arm's lead in any policy for this arm: it is the dog's stop and, here, the door's problem too. Use the walked pull for a pose: the standing swing asks for poses that do not exist.
+
+### F-275 — A pose policy that reaches with its whole body fails the replay on the dog's own frames, because the dog's legs do not answer; trained on sticky legs with its leg targets and lead priced, it passes, at a cost in precision
+
+- **Status:** provisional (offline replay on four real stands; simulation for the rest; one seed)
+- **Week:** 8
+- **Date:** 2026-11-08
+- **Evidence:** [Week 8 log, 2026-11-08](week_08/notes.md), "The pose candidate fails the replay" onward. `gate4.py` through `logs/unifp_train/tool/gate.sh` (export by `export_policy.py`, numpy to 3.1e-5).
+
+  | | replay: lead from 1 s | leg target first s / after | hand last 3 s | doors held at 85 / peaking past 85 | hand, frozen set | shake standing |
+  |---|---|---|---|---|---|---|
+  | `66600` | 12.3 deg | 0.57 / 0.34 rad | 7.5-9.7 cm | | 3.31 cm | 0.21 cm, 0.45 deg |
+  | `pose_r10` | 43.8 | 0.61 / 1.43 | 68-73 | 32 / 32 | 3.18 cm, 10.3 deg | 0.81, 0.77 |
+  | `pose_s` (legs answer 0.1-1) | 23.2 | 1.01 / 1.54 | 21-32 | 31 / 31 | 4.08, 10.1 | 0.65, 0.50 |
+  | `pose_s2` (+ leg targets priced) | 21.9 | 0.48 / 0.48 | 7.4-10.0 | 20 / 24 | 4.20, 11.2, **2 falls** | 0.63, 0.41 |
+  | [`pose_s3` (+ lead -30)](#/week/8/run/20261108T031808_eval_seed1_s_s3_dev) | **12.3** | **0.52 / 0.53** | **6.2-11.8** | 17 / 31 | 4.10, 10.3, 0 falls | **0.48, 0.52** |
+  | gate | 15 | 1.2 / 0.9 | | | | |
+
+  - In `pose_r10`'s replay J1 swings to -82 to -96 deg and the legs are asked 1.3 rad: F-252's runaway, on the legs F-256 measured answering 0.17. Every simulated screen had legs that answer.
+  - A far-goal screen in simulation on legs answering 0.17 agreed with the replay each time (`pose_s` 60 of 60 stopped on legs, `pose_s2` and `pose_s3` 0 of 60).
+  - `pose_s3`'s doors reach 85 deg in 31 of 32 and are held there in 17: the hand stays on the handle at 14-20 N and holds the door 83-93 deg, 2-3 cm off its target.
+- **Scope:** the replay holds `66600`'s legs as they moved and cannot show how the dog's legs would answer another policy (F-256, F-258); passing it says a policy would not be stopped there, not that it does the task on the dog. One seed; `pose_s3` was found after six other recipes. The export does not record the controlled point (the jaw centre) or what channels 6:9 mean, and `press_live.py` checks neither, so an export would today run as a fingertip policy with the hand uncommanded.
+- **Note (2026-11-09): the pass reproduces on fresh seeds, the precision does not.** The deployable recipe straight from `66600`, seeds 2 and 3 ([week 9 log](week_09/notes.md)), passes the replay at 4,000 iterations on both (lead 8.3 and 11.8 deg) and on seed 3 at 6,000 (12.7). Seed 2 at 6,000 fails (17.5), so the pass is not stable along training either. Their hands are 3.75-5.06 cm and **19-29 deg** on the frozen set, against `pose_s3`'s 4.10 cm and 10.3 deg, and they hold 0-24 of 32 doors. `pose_s3`'s orientation came from its chain, not from the recipe alone. The rotational-law policies `pose_wa` and `pose_wp` and the lead -40 run `pose_r40`, none trained on sticky legs, fail the replay (lead 46.3, 59.7, 43.2).
+- **Implication:** for the dog, train a pose policy on sticky legs with its leg targets and lead priced, and gate it by this replay before anything else. The precision it loses is the next problem: 4.1 cm where the door wants the hand within about 2. Before any pose export reaches the console, the export and the runner need the controlled point and the orientation channels named and checked (the dog's session has proposed `controlled_point` and `commands_6_9`; Lukas's call).
+
+
+### F-276 — Trained on SoftMimic's rotational law at a fixed 1.5 N·m/rad, the pose policies did not learn it: the hand gives 13.6-15.0 deg per N·m against the law's 38.2, stiffer than the policy one of them started from, and across twelve policies the value runs 3.6-53 with no relation to whether the law was trained
+
+- **Status:** provisional (simulation; one training seed each; slow pushes off the tool point on the development set)
+- **Week:** 9
+- **Date:** 2026-11-09
+- **Evidence:** [Week 9 log, 2026-11-09](week_09/notes.md), "Rotational compliance was not learned". `run_unifp_train.py eval --pose_wrench` through `logs/unifp_train/tool/ev.sh`, on `results/manifests/unifp_pose_development.json`; re-run after a crash at the evaluation's last print, and the values reproduce the crashed runs' `eval.json` exactly.
+
+  | policy | trained on the law | deg given per N·m (law: 38.2) | doors held at 85 / lever then door, of 32 | hand, frozen set |
+  |---|---|---|---|---|
+  | `pose_r10` | no | 28.9 | 32 / 31 | 3.18 cm, 10.3 deg |
+  | `pose_wp` (from `pose_r10`'s end) | **yes** | **15.0** | 30 / 25 | 2.72, 7.8 |
+  | `pose_wa` (from `pose_a`'s end) | **yes** | **13.6** | 31 / 31 | 3.20, 9.4 |
+  | `pose_r40`, `pose_f_s2` | no | 19.3, 18.9 | 12, 9 | 4.82, 12.2; 3.17, 12.7 |
+  | `pose_s`, `pose_s2`, `pose_s3` (sticky legs) | no | 13.1, 3.6, 31.3 | 31, 20, 17 | 4.1-4.2, 10-11 |
+  | `pose_g_s2`, `pose_g_s3` at 4,000 and 6,000 | no | 40.9-53.2 | 0-24 | 3.75-5.06, **19-29** |
+
+  - The softest hands are the ones with the worst orientation tracking, so their give reads as a weak hold, not a compliance.
+  - Week 8's `pose_a`, quiet and primitives policies measured 17.5, 18.3 and 18.8 on the same test.
+- **Scope:** one seed per policy. The law's moments come from pushes 3-4 cm off the tool point (`task_cfg.POSE_WRENCH_ARM_M`). A typical one, about 0.4 N·m, is worth 15 deg by the law, beside a held orientation error of 8-12 deg. K_r was fixed, never commanded or varied. Nothing here bears on a commanded stiffness or on compliance about one axis. `pose_wa`'s and `pose_wp`'s door counts stand as task results, but not as evidence of a compliant wrist: with their lead priced at -10, as `pose_r10`'s, they fit F-274's account (the hand keeping up as the pull starts).
+- **Implication:** the 2026-11-07 "working idea", that a stiff wrist twists the hand out of its pinch, has no supporting measurement. Rotational compliance as a means is untested in a form the policy learned, not refuted. A fair test follows SoftMimic (Margolis et al. 2025, §III) more closely. Make the stiffness a command, log-uniform over 0.1-10 N·m/rad, with compliance about chosen axes (for a door, the hinge's) and moments large enough to read over the held error. A hook at the handle, which both legged door papers use (Zhang et al. 2024, Lim et al. 2026), removes the need instead.
+
+### F-277 — On the deployable recipe, keypoints in place of separate position and orientation terms pull 32 of 32 doors past 85 deg and turn the lever then the door in 20 of 32, against 11 and 7, without tracking orientation better (24.5 deg against 21.6 on the frozen goals); the UMI joint kernel collapses onto position (58 deg) and fails both tasks; the keypoint policy misses the replay gate by 0.8 deg of lead
+
+- **Status:** provisional (simulation; one training seed per reward form; scored on the suites' usual sets)
+- **Week:** 9
+- **Date:** 2026-11-10
+- **Evidence:** [Week 9 log, 2026-11-10](week_09/notes.md), "The reward's form on the deployable recipe". The runs: [keypoints](#/week/9/run/20261108T235713_train_seed2_pose_gk_s2) and [joint kernel](#/week/9/run/20261108T235705_train_seed2_pose_gj_s2), each `pose_g_s2`'s flags with only `--pose_reward` changed; the control is `pose_g_s2` (F-275's note of 2026-11-09).
+- **Scope:**
+  - One seed per form, 4,000 iterations, the fitted arm through the Follower, sticky legs.
+  - The door and lever counts are the demo's scripted pulls on two box seeds (32 each), not a manifest evaluation.
+  - The replay gate is gate4's, on four real 66600 runs. `gk`'s lead from 1 s is 15.8 deg against 15.
+- **Implication:**
+  - The literature's warning (Portela et al. 2024, UMI on Legs) holds for the joint kernel, not for separate terms on this recipe. The keypoint form is the one worth a second seed and a lead-priced variant to bring it inside the gate.
+  - Better door and lever results do not need better frozen-set orientation, so F-274's account (the hand keeping up as the pull starts) stays the working explanation.
+
+### F-278 — One policy for the legs and the arm keeps Lukas's key in the lock while the front-right foot unlocks it: with the arm commanded as the D1 is on the dog, 108 of 108 frozen keys unlocked, held and the foot back down, and 101 of 108 on locks of 0.8-1.6 N·m, the hand a median 3.9 mm off the key; the same trained legs with a classical 10 Hz IK arm get 18 of 108 and with the arm's joints fixed none, and the earlier key policies, given the arm out, lose the key in 96-108 of 108
+
+- **Status:** provisional (simulation; one training lineage, corner force-aware seed 2; checkpoints chosen on the frozen set they are scored on; reproduction runs under way)
+- **Week:** 9
+- **Date:** 2026-11-10
+- **Evidence:** [Week 9 log, 2026-11-10](week_09/notes.md), "The key held by the arm while the front-right foot turns it". The best checkpoints:
+  - [`kh5_link_stable` 5000](#/week/9/run/20261109T201015_leg_eval_seed1_kh5_5000), [stiffer locks](#/week/9/run/20261109T201426_leg_eval_seed1_kh5_5000_stiff): the D1 report-locked at 9 Hz through the Follower.
+  - [round 2 force-aware `4800`](#/week/9/run/20261109T154629_leg_eval_seed1_r2F4800_policy): UniFP's 50 Hz arm. Its legs with the [IK arm](#/week/9/run/20261109T155104_leg_eval_seed1_r2F4800_ik) and [fixed joints](#/week/9/run/20261109T155553_leg_eval_seed1_r2F4800_fixed).
+  - [position-only child `4800`](#/week/9/run/20261109T155027_leg_eval_seed1_r2P4800_policy).
+  - The rendered staged sequence: [run](#/week/9/run/20261109T191821_leg_eval_seed1_render_r2F4800box), `figures/keyhold_staged_r2F4800_box.mp4`.
+
+  | policy (frozen 108; lock 0.2-0.6 / 0.8-1.6 N·m) | arm | unlocked, held, foot back | keys lost | contact peak median | miss median / max median |
+  |---|---|---|---|---|---|
+  | earlier key policies, zero-shot (4 runs) | fixed or 10 Hz IK | 0 | 96-108 | | 3.8-15 / 20-24 mm |
+  | round 2 force-aware `4800` | its residual, 50 Hz PD | 104 / 79 | 0 / 0 | 33 N | 7.6 / 18.8 mm |
+  | its legs | 10 Hz IK, true base pose | ~~22~~ 18 | 0 | | 4.0 / 19.8 mm |
+  | its legs | joints fixed | 0 | 1 | | 13.1 / 22.6 mm |
+  | position-only child `4800` | its residual, 50 Hz PD | 106 / 45 | 0 / 0 | 47 N | 3.8 / 12.7 mm |
+  | `kh5_link_stable` `5000` | its residual, **the D1's 9 Hz link** | **108 / 101** | 0 / 0 | | 3.9 / 13.6 mm |
+- **Scope:**
+  - Simulation.
+  - The lock is the trained analytic plant, and the box is drawn, not simulated.
+  - The hand is tied to the key by an 800 N/m spring capped at 30 N; the key is lost past 2.5 cm.
+  - Joint6 follows the lock's angle by script (the grip is on the shaft's axis).
+  - The box is raised to a narrow band (lock 0.445-0.455 m up, face 0.50-0.52 m ahead, 0.09-0.125 m right) where a CPU scan found both the arm's hold and the foot's reach possible. Round 1's band was not, and its policies never lifted the foot.
+  - On the light locks both variants unlock with a sweep: the foot pushes the lever down on its way over, before the task layer's press. The force-aware layer's press only appears on stiffer locks (79 against 45 for position-only).
+  - The body rears about 17-19 degrees and rolls up to about 24.
+  - The classical holster draw and insertion in the staged sequence run as arm motions; their contacts are F-189, F-208 and F-164's.
+  - Every run of this lineage broke near iteration 5160, the later ones' scores falling to 0-69; the checkpoints above are from before. A second parent (corner force seed 3) has not learned the approach in 680 iterations.
+  - Not run on the dog.
+- **Implication:**
+  - Holding a tool at a world point while the body moves under it is learnable here, and the policy's own arm commands matter: the same legs with a classical IK arm hold the key but stop reaching it.
+  - A deployment would also need:
+    - the lean checked on the dog's legs;
+    - the wrist's follow of the turn;
+    - the real lock's stiffness;
+    - a training that does not break, or one stopped by evaluation.
+- **Note (2026-11-10, after rounds 6-9):**
+  - At a fixed learning rate of 3e-5 the fine-tune trains without breaking (F-279). Round 8's [5200](#/week/9/run/20261109T235447_leg_eval_seed1_kh8_5200) on the D1's link matches `kh5_link_stable`'s 5000: 108 of 108, the hand a median 2.1 mm off the key, and [~~95~~ 94 on stiffer locks](#/week/9/run/20261109T235907_leg_eval_seed1_kh8_5200_stiff). A second seed (round 9) gets 107 and 80. The three fine-tunes from `4800` (rounds 5, 6 and 8) all reached 108.
+  - **Learning the approach from the corner key policies reproduced in one try of three.** Round 7 (the same parent, seed 3) and round 4 (corner seed 3's parent) never brought the foot within 20-30 cm of the pre-contact point in 1,000 iterations.
+  - The best policy is fragile to the legs' armature, the legs' delay and the starting stance (F-280).
+- **Correction (2026-11-10 14:30):** the title first read "101 of 108 on locks up to 2.7 times stiffer than trained". That ratio is round 2's training range (to 0.6 N·m). `kh5_link_stable` itself trained on locks drawn up to 1.6 N·m (round 3's wide range), so the 0.8-1.6 test is inside its training. The title now gives the locks' values. Only round 2's `4800` (79 of 108) was scored on locks stiffer than it trained on.
+- **Note (2026-11-10, rounds 10-11): the force-aware lead on stiffer locks is retracted as a property of the force channel.** On the 50 Hz arm, F-278's table had force-aware ahead 79 to 45, but both policies trained on light locks only. Trained on locks up to 1.6 N·m on the D1's link, a position-only fine-tune of the same parent ([round 11, 5399](#/week/9/run/20261110T031229_leg_eval_seed1_kh11_5399_stiff)) gets **104 of 108** on the stiffer locks, against round 8's force-aware ~~95~~ 94. Its parent is force-aware, so this is not an independent position-only lineage.
+- **Correction (2026-11-10, late): two counts were the evaluator's `success`, not all four.** The title first read "with a classical 10 Hz IK arm get 22 of 108". 22 [unlocked](#/week/9/run/20261109T155104_leg_eval_seed1_r2F4800_ik), with no key lost, but 4 of them did not bring the foot back down, so the "unlocked, held, foot back" count is 18; the week 9 baselines table already gave "22 (18 with the foot back)". Round 8's `5200` on stiffer locks is 94, not 95 (one key lost after unlocking). The 108 and 101 headlines are all-four counts and stand. The full list is in the [week 9 log](week_09/notes.md), 2026-11-10, "Counting correction".
+- **Note (2026-11-10, late): on the legs the dog is known to work with, this result does not hold** ([F-281](#f-281)). `66600` trained on leg joint friction 0-2 N·m and this lineage on none. At 2 N·m the best key-hold policies get 0 of 108. The deployment list above should start with training on `66600`'s leg model and from the dog's arm-out stance.
+- **Note (2026-11-11): the D1-link rounds' arm penalties were never applied.** Every D1-link round from round 3 on (`kh3_link` to round 13) passed `--arm_step_weight -60 --arm_lead_weight -30`. `Go2D1LegEnv` rebuilds the reward table after `env.py` adds those terms, so neither reached any key-hold training: no `arm_command_step` or `arm_lead` appears in their logs. The results here, and F-279's and F-280's, are of an arm commanded through the link's model but not priced for its lead or its steps. Fixed from 2026-11-11 (`env._arm_link_terms`, `keyhold_env._add_hold_terms`); the first priced key-hold rounds are F-282's. [Week 9 log, 2026-11-11](week_09/notes.md).
+
+### F-279 — Fine-tuning the key-hold policy at UniFP's fixed learning rate of 1e-4 broke all five runs, 230-1,160 iterations in: the KL climbed over a dozen updates (to 13-117) and every key was lost, while their frozen scores fell from 103-108 of 108 to 0-69; at 3e-5 two runs (seeds 2 and 3) passed the same iterations calmly (KL at most 0.026 and 0.044) and scored 94-108 throughout; neither the arm's exploration noise nor the loaded optimizer state was the cause
+
+- **Status:** provisional (simulation; five runs at 1e-4 from one lineage, two at 3e-5)
+- **Week:** 9
+- **Date:** 2026-11-10
+- **Evidence:** [Week 9 log, 2026-11-10](week_09/notes.md), the key-hold rounds 2-9.
+  - The breaks:
+    - round 2's [force-aware run](#/week/9/run/20261109T140414_train_seed2_kh2_force_s2) (5160);
+    - [`kh3_wide`](#/week/9/run/20261109T170953_train_seed2_kh3_wide) (5175);
+    - [`kh3_link`](#/week/9/run/20261109T182720_train_seed2_kh3_link) (5160);
+    - [`kh5_link_stable`](#/week/9/run/20261109T193054_train_seed2_kh5_link_stable) (5160, the arm's noise held at 0.08);
+    - [`kh6_fresh`](#/week/9/run/20261109T220030_train_seed2_kh6_fresh) (5032-5044, a fresh optimizer).
+  - The calm runs: [`kh8_lr3e5`](#/week/9/run/20261109T225702_train_seed2_kh8_lr3e5) (its 5000 / 5200 / 5400 / 5599: 94 / 108 / 106 / 100 of 108) and `kh9_lr3e5_s3` ([5000](#/week/9/run/20261110T010429_leg_eval_seed1_kh9_5000) and [5200](#/week/9/run/20261110T011909_leg_eval_seed1_kh9_5200): 105 and 107).
+- **Scope:**
+  - One parent lineage: all five breaks carried round 2's `4800` or were round 2.
+  - The corner key recipe's `--fixed_learning_rate 1e-4` switches the adaptive schedule off.
+  - Lowering the rate also slows adaptation: 94 against 103-108 at 200 iterations.
+  - Two runs at 3e-5 are not proof of stability, only no break where every 1e-4 run broke.
+  - The training's own success figure did not show the breaks' aftermath: it engages on the deadline wherever the foot is, and one broken run's training reward recovered to 147 while its frozen score stayed at 0.
+- **Implication:**
+  - Fine-tunes of this task run at 3e-5 (or with the adaptive schedule), and their checkpoints are chosen by the frozen set, not by training reward.
+  - The earlier key and foot-press recipes ran at 1e-4 for 2,000 iterations without a reported break. Whether they were lucky or this task is touchier is not known.
+- **Correction (2026-11-10, late):** the title first read "scored 100-108 throughout". Its own evidence has round 8's `5000` at 94 (the first checkpoint, 200 iterations in) and round 9's `5399` at 99. The title now reads 94-108.
+
+### F-280 — The best key-hold policy (round 8's `5200`, the D1's link) depends on the conditions it was scored in: 108 of 108 on the light legs it is scored on and with no leg delay, but 21 on zero-armature legs and 38 on heavy ones (keys lost in 75 and 60), 77 at a 20-25 ms leg delay, 81 on UniFP's 50 Hz arm, and none from the dog's measured 0.33 m sport-mode stand, where the arm cannot even hold 64 of the 108 placements at the start; round 2's 50 Hz policy is as fragile (47 on zero armature, 1 on heavy legs)
+
+- **Status:** provisional (simulation; one checkpoint, one seed; the armature extremes are the training range's own ends, 0 and 0.002 with the knee 3.67 times that)
+- **Week:** 9
+- **Date:** 2026-11-10
+- **Evidence:** [Week 9 log, 2026-11-10](week_09/notes.md), "the robustness checks".
+  - Round 8's `5200`: [zero armature](#/week/9/run/20261110T002944_leg_eval_seed1_rob_zero_arm), [heavy legs](#/week/9/run/20261110T003835_leg_eval_seed1_rob_heavy), [no delay](#/week/9/run/20261110T004259_leg_eval_seed1_rob_delay0), [20-25 ms](#/week/9/run/20261110T004717_leg_eval_seed1_rob_delay5), [sport-mode stand](#/week/9/run/20261110T005135_leg_eval_seed1_rob_sport33), [the 50 Hz arm](#/week/9/run/20261110T005851_leg_eval_seed1_rob_no_link).
+  - Round 2's `4800`: [zero armature](#/week/9/run/20261110T010136_leg_eval_seed1_rob2_zero_arm), [heavy](#/week/9/run/20261110T011024_leg_eval_seed1_rob2_heavy).
+- **Scope:**
+  - Simulation.
+  - The leg models are this repository's (`leg_actuators.py`: the geared knee, armature and delay).
+  - The dog's own leg corner is F-227's estimate (armature 0-0.002, 10-20 ms), not a measurement.
+  - The stance test spawns the arm out at 0.33 m, which is not how a handover would go: the arm would insert from wherever the dog stands. It shows that this policy only knows its own 0.259 m arm-out stance.
+- **Implication:**
+  - Before the dog, the policy needs:
+    - the leg corner measured;
+    - training that covers the armature's ends (round 10 tries 0-0.004);
+    - a handover that brings the dog down to its trained stance before the insertion, or training from the sport-mode stand with a box placed for it.
+  - The hold is the fragile part: at the armature's ends the keys are lost rather than left unturned.
+- **Note (2026-11-10, rounds 10-11):**
+  - Fine-tuning round 8's `5200` for 600 iterations on armature 0-0.004 (round 10) made it worse everywhere: [5400](#/week/9/run/20261110T021414_leg_eval_seed1_kh10_5400) 100 / 93 / ~~45~~ 38 / 27 on light legs / stiffer locks / zero / heavy, and [5799](#/week/9/run/20261110T031402_leg_eval_seed1_kh10_5799) 26 / 37 / 0 / 0.
+  - Round 11's position-only `5399` is as fragile as round 8: [~~26~~ 22 on zero armature](#/week/9/run/20261110T031900_leg_eval_seed1_rob11_zero_arm), [17 on heavy legs](#/week/9/run/20261110T032030_leg_eval_seed1_rob11_heavy), [51 at 20-25 ms](#/week/9/run/20261110T032202_leg_eval_seed1_rob11_delay5).
+  - The fragility belongs to the lineage, and widening the range is not the fix at this length of fine-tune.
+- **Note (2026-11-10, late): the first implication is superseded by [F-281](#f-281), and the stance test used the wrong stance.**
+  - **The leg model to train on already exists.** Lukas pointed out that the UniFP demos had dealt with the legs. `66600`, which stood, reached, walked and wiped on the dog (F-257 to F-271), trained on these legs: the same actuator and armature range (0-0.002), a delay of 1-4 steps, and leg joint friction of 0-2 N·m (knees 1.917 times). It also passed the replay on the dog's frames (F-256). No key-hold round had joint friction. So the next step for the key hold is to train on `66600`'s legs, not to measure the leg corner. F-227's estimate is no longer the best evidence for the dog's legs: a policy trained on this range works on the dog.
+  - **The armature ends tested here lie inside both trainings' range,** and `66600` copes with zero armature (F-253). The fragility here is the key-hold policy's, not a gap in the leg model.
+  - **On `66600`'s friction** the key hold gets 88 / 50 of 108 at 1 N·m and 0 / 0 at 2 N·m (rounds 8 / 11).
+  - **The 0.33 m stance is the sport-mode stand with the arm folded.** With the arm out the dog stood at 0.288 m and 3.7 deg nose-up (`66600`'s four runs), and from there the key hold gets 48 / 25 (F-281).
+- **Correction (2026-11-10, late): some counts were the evaluator's `success`, not all four.**
+  - The title first read "but 44 on zero-armature legs ... 83 on UniFP's 50 Hz arm ... (51 on zero armature, 1 on heavy legs)".
+  - Those were `success` (unlocked and held open, no fall or damage), which counts keys lost after unlocking and feet not back down. Counted as the week 9 table's heading says (unlocked, key kept, foot back), they are 21, 81 and 47. In round 8's zero-armature run, 23 keys were lost after unlocking.
+  - In the note above, round 10's `5400` on zero armature is 38 (not 45) and round 11's `5399` is 22 (not 26).
+  - The heavy-leg, delay and stance counts were already all four.
+  - The fragility reads worse than this finding first said.
+
+### F-281 — The key-hold policies never trained on the leg joint friction that `66600` trained on (0-2 N·m, knees 1.917 times) and works with on the dog, and they do not survive it: at 1 N·m round 8's `5200` keeps 88 of 108 and round 11's `5399` 50, and at 2 N·m both get 0, the foot coming over the bar but never reaching the key; from the dog's own arm-out stance (0.288 m, `66600`'s four runs) they get 48 and 25, mostly keys lost
+
+- **Status:** provisional (simulation; two checkpoints of one lineage; friction fixed per run; nothing combined)
+- **Week:** 9
+- **Date:** 2026-11-10
+- **Evidence:** [Week 9 log, 2026-11-10](week_09/notes.md), "Had the UniFP demos not fixed the legs already?". The training configs compared from each run's `env.yaml` ([`armft6b`](#/week/8/run/20261106T122207_train_seed1_armft6b_s1), [`kh8_lr3e5`](#/week/9/run/20261109T225702_train_seed2_kh8_lr3e5)).
+
+  | policy (frozen 108, light legs, the D1's link) | no friction, trained stance | 1 N·m | 2 N·m | the dog's arm-out stance |
+  |---|---|---|---|---|
+  | round 8 force-aware `5200`: all four (unlocked) | [108](#/week/9/run/20261109T235447_leg_eval_seed1_kh8_5200) (108) | [**88**](#/week/9/run/20261110T123538_leg_eval_seed1_sticky8_f1) (104; 16 keys lost) | [**0**](#/week/9/run/20261110T123855_leg_eval_seed1_sticky8_f2) (104 missed, 4 keys lost) | [**48**](#/week/9/run/20261110T124228_leg_eval_seed1_stance8_dog) (55; 44 keys lost) |
+  | round 11 position-only `5399` | [106](#/week/9/run/20261110T031059_leg_eval_seed1_kh11_5399) (106) | [**50**](#/week/9/run/20261110T123716_leg_eval_seed1_sticky11_f1) (63; 39 damaged) | [**0**](#/week/9/run/20261110T124034_leg_eval_seed1_sticky11_f2) (108 missed) | [**25**](#/week/9/run/20261110T124410_leg_eval_seed1_stance11_dog) (34; 64 keys lost) |
+  | foot from its goal at the approach's end, median (rounds 8 / 11) | 2.2 / 1.4 cm | 6.6 / 6.4 cm | 21.6 / 29.9 cm | 5.6 / 7.4 cm |
+
+  - What the two trainings share: the Unitree geared knee at kp 25 / kd 0.5, leg armature 0-0.002 (knees 3.67 times), and the D1's link.
+  - What differs:
+    - joint friction: `66600` 0-2 N·m, the key hold none;
+    - delay: 1-4 physics steps against 2-4;
+    - the handover stance: the dog's own against the simulator's 0.259 m, 3.6 deg nose-down.
+  - `66600` at the same frictions clears 60 of 60 far goals at 1-3 N·m and 18 of 19 walking plans at 1 and 2 ([F-259](#f-259)).
+- **Scope:**
+  - Simulation. Friction is PhysX joint friction, static and dynamic alike.
+  - Where the dog's legs sit is bracketed, not measured (week 8 log, 2026-11-06). Its target-minus-joint RMS matches 0.5-1 N·m. Its legs moving 0.165 of their targets is past anything simulated (0.28-0.32 at 0.5-2 N·m).
+  - The stance is `66600`'s under another policy. The dog's stance after a classical draw and insertion has not been measured.
+  - Sticky legs and the dog's stance were not tested together.
+  - "Foot from its goal" is the trace's foot against the policy's current goal, not the engage rule's distance to the pre-contact point.
+- **Implication:**
+  - Supersedes [F-280](#f-280)'s "the leg corner measured". The leg model to train a dog key-hold policy on is `66600`'s: friction 0-2 N·m, armature 0-0.002 and delay 1-4 steps, from the dog's arm-out stance, scored at 1 and 2 N·m and from that stance.
+  - Its arm then goes through the replay of the dog's frames (F-256, F-275), which tests the arm's lead with the legs as recorded. For a task where a foot lifts, that is a necessary check, not a sufficient one.
+  - F-278's result stands for the legs it was trained and scored on, not for the dog's.
+- **Note (2026-11-11): the replay cannot take a key-hold policy as built** (F-282). `gate4.py`'s frames carry reach commands, and no key-hold export or runner exists. The runner's bounds are read in simulation instead, with the legs-answering-0.17 screen F-275 found to agree with the replay. The training this implication asks for is F-282's.
+
+### F-282 — On `66600`'s leg model and from the dog's arm-out stance the key hold turns the key again once the runner's stops, the lift's crouch and the presses are priced: 400 iterations of that recipe give 54-78 of 108 at 1 N·m and 97-100 at 2 N·m force-aware (three seeds), 36-65 and 78-96 position-only; on the same legs the arm held still or by IK gets none, and heavy legs (1-5) or a later delay (4-22) undo it
+
+- **Status:** provisional (simulation; three seeds per variant, each from one parent; the stopping point, +400, chosen on the frozen set it is scored on; never on the dog)
+- **Week:** 9
+- **Date:** 2026-11-11
+- **Evidence:** [Week 9 log, 2026-11-11](week_09/notes.md), "The key hold fine-tuned on `66600`'s legs from the dog's stance". Scripts: `logs/unifp_train/keyhold/round12.sh` to `round24.sh`, `final.sh`, `summ.py`, `runner_ok.py`. Every run is from the dog's arm-out stance (0.288 m, `keyhold_dog_arm_out_66600.json`) on `lev.sh`'s light legs (the legs of `66600`'s own probes), with the D1's link, unless marked. Counts are all four (unlocked, key kept, foot back) of 108. In brackets: those also inside every runner bound but the front-right leg's (lead at most 15 deg after 1 s, tilt at most 15 deg, support legs at most 1.2 / 0.9 rad, no fall).
+
+  | stage of the chain | 1 N·m | 2 N·m | settled stance, no friction |
+  |---|---|---|---|
+  | parents: round 8 `5200` force / round 11 `5399` position | [50](#/week/9/run/20261110T194330_leg_eval_seed1_par2_kh8_dog_f1) (0) / [35](#/week/9/run/20261110T195231_leg_eval_seed1_par2_kh11_dog_f1) (0) | [0](#/week/9/run/20261110T194759_leg_eval_seed1_par2_kh8_dog_f2) / [0](#/week/9/run/20261110T195655_leg_eval_seed1_par2_kh11_dog_f2) | 108 / 106 |
+  | `66600`'s legs and stance only, +400 (rounds 12 / 13) | [31](#/week/9/run/20261110T201318_leg_eval_seed1_kh12_5600_dog_f1) / [22](#/week/9/run/20261110T202552_leg_eval_seed1_kh13_5800_dog_f1) | [**72**](#/week/9/run/20261110T201730_leg_eval_seed1_kh12_5600_dog_f2) / [**47**](#/week/9/run/20261110T203021_leg_eval_seed1_kh13_5800_dog_f2) | 101 / 97 |
+  | + the arm's lead and steps (J1-J5) and the tilt priced, +800 (rounds 14 / 15) | [46](#/week/9/run/20261110T222850_leg_eval_seed1_kh14_6400_dog_f1) / [14](#/week/9/run/20261110T224137_leg_eval_seed1_kh15_6600_dog_f1) | [75](#/week/9/run/20261110T223307_leg_eval_seed1_kh14_6400_dog_f2) / [13](#/week/9/run/20261110T224535_leg_eval_seed1_kh15_6600_dog_f2) | 23 / 84 |
+  | the control: round 14 on, +400 more | [8](#/week/9/run/20261110T232405_leg_eval_seed1_kh14_6800_dog_f1) | [53](#/week/9/run/20261110T232832_leg_eval_seed1_kh14_6800_dog_f2) | 29 |
+  | **+ the crouch below the start and the presses ×4, +400 (round 16's recipe), force, seeds 9 / 13 / 15** | [**78**](#/week/9/run/20261110T233850_leg_eval_seed1_kh16_6800_dog_f1) (62) / [**54**](#/week/9/run/20261111T042054_leg_eval_seed1_kh20_6800_dog_f1) (52) / [**64**](#/week/9/run/20261111T062123_leg_eval_seed1_kh22_6800_dog_f1) (63) | [**99**](#/week/9/run/20261110T234254_leg_eval_seed1_kh16_6800_dog_f2) (99) / [**100**](#/week/9/run/20261111T042506_leg_eval_seed1_kh20_6800_dog_f2) (97) / [**97**](#/week/9/run/20261111T062534_leg_eval_seed1_kh22_6800_dog_f2) (97) | 106 / 85 / 82 |
+  | **the same, position-only, seeds 10 / 14 / 16** | [**65**](#/week/9/run/20261111T005529_leg_eval_seed1_kh17_7000_dog_f1) (65) / [**63**](#/week/9/run/20261111T043330_leg_eval_seed1_kh21_7000_dog_f1) (63) / [**36**](#/week/9/run/20261111T063356_leg_eval_seed1_kh23_7000_dog_f1) (35) | [**96**](#/week/9/run/20261111T005936_leg_eval_seed1_kh17_7000_dog_f2) (96) / [**78**](#/week/9/run/20261111T043751_leg_eval_seed1_kh21_7000_dog_f2) (78) / [**88**](#/week/9/run/20261111T063809_leg_eval_seed1_kh23_7000_dog_f2) (88) | 105 / 96 / 107 |
+  | trained on to +800: force / position | 86, 3, 32 / 57, 66, 6 | 87, 60, 92 / 89, 105, 71 | 89, 84, 30 / 105, 108, 104 |
+
+  - The parents' 50 and 35 at 1 N·m are inside the runner's bounds in no episode: they tilt past 15 deg in every one, and lead the arm past 15 deg in 91-96.
+  - **The arm is the policy's to hold.** On the same trained legs the arm held at its start (Lukas's position-only hold) and the 10 Hz IK arm get 0 of 108, losing 97-108 keys ([round 16 `6800`](#/week/9/run/20261111T002138_leg_eval_seed1_r16_6800_fixed), [IK](#/week/9/run/20261111T002619_leg_eval_seed1_r16_6800_ik); rounds 17 and 21 the same).
+  - Robustness at 1 N·m, round 16 `6800` / round 17 `7000` / round 21 `7399`: zero armature 86 / 99 / 88; **heavy legs** (0.002 / 0.0073, the top of `66600`'s range) **5 / 1 / 2**; **20-25 ms of delay 15 / 22 / 4**; stiffer locks (0.8-1.6 N·m) 60 / 63 / 44.
+  - The replay's stand-in (legs answering 0.17, F-275's screen): the foot never arrives, nothing falls, no key is lost. The support legs are asked past 0.9 rad in 81 / 1 / 83 of 108, a runner stop. A price on them (round 18) made it worse (107) and is not kept.
+  - The arm's held lead (13-22 deg, in the stand-in and from the settled stance) is J2's: the commands carry the sag of UniFP's arm gains (kp 60) under the arm's weight.
+  - Why the keys go at 1 N·m: from the dog's 0.288 m the lift crouches to about 0.24 m, as from the simulator's 0.259 m rest, and at 15-20 ms of leg delay the held hand loses the key. Training at 5-20 ms rarely does. The body then rises 8-9 cm (0.32-0.34 m) to reach the key above head height.
+- **Scope:**
+  - Simulation. The lock is the trained analytic plant, the hand is tied to the key by a spring, and Joint6 follows the key's turn by script (its lead reaches 40-46 deg in a turn).
+  - The replay of the dog's frames cannot take a key-hold policy: its frames carry reach commands, and no key-hold export or runner exists. The stops above are the runner's bounds read in simulation.
+  - The frozen evaluation loses more keys from the dog's stance than training does, and why is not known. Ruled out: determinism, `--small_physx`, the placements, key-loss leniency, a per-step delay draw.
+  - The arm penalties named in every D1-link round before this one were never applied (F-278's note); these are the first key-hold rounds with them.
+  - One parent per variant. The +400 point is where rounds 16 and 17 scored best on this set; trained on, three of four runs fell at 1 N·m.
+- **Implication:**
+  - Lukas's question of 2026-11-10 is answered: `66600`'s leg model was what the key hold lacked. With it, and with its stops priced, the task is learnable from the dog's stance.
+  - Four things stand before the dog that are not the policy's:
+    - the runner's 0.9 rad leg bound, which the lift exceeds by design (about 2.2 rad on the front-right leg);
+    - how the wrist follows the key;
+    - a stop that opens the jaws before the legs go to damping;
+    - how heavy and how late the dog's legs are inside `66600`'s model, since heavy legs give 1-5 of 108.
+  - Force-aware and position-only are level within the seeds' spread: force-aware 65 and 99 at the mean, position-only 55 and 87, with the ranges overlapping at 1 N·m.
+- **Note (2026-11-11 19:35): two fixes for the slow legs did not work in 400 iterations** ([week 9 log](week_09/notes.md), "Round 24"). Pricing the crouch three times as hard gave 59 / 103 / 81, 5 on heavy legs and 2 at 20-25 ms. Training on the heavy half of the armature range (0.001-0.002) gave 65 / 104 / 80 and **0** on heavy legs. With them, round 16's three seeds score 5 / 3 / 10 on heavy legs and 15 / 0 / 2 at 20-25 ms. Round 26 (1,200 more iterations on the heavy half, both variants) is running.
+- **Correction (2026-11-11 19:40): the title's ranges for heavy legs (1-5) and the later delay (4-22) are the three suite checkpoints'.** Over the six checkpoints with those runs (adding seeds 13 and 15 at +400, round 24's note), they are 1-10 and 0-22.
+- **Note (2026-11-11 22:50): "heavy legs (1-5)" in the title is heavy legs at the slow half of the delay. Heavy legs alone do not undo the key hold** ([week 9 log](week_09/notes.md), "Heavy legs fail only with the slow half of the delay"; `gap16.sh`, `gap26.sh`).
+  - The heaviest legs of `66600`'s range (0.002 / 0.0073), from the dog's stance at 1 N·m, scored at training's 5-20 ms instead of `lev.sh`'s 15-20 ms:
+    - round 16 `6800`: [69](#/week/9/run/20261111T113736_leg_eval_seed1_gap16_F_heavy_d14) of 108, 57 inside the runner's bounds (at 15-20 ms: 5);
+    - round 17 `7000`: [50](#/week/9/run/20261111T113854_leg_eval_seed1_gap16_P_heavy_d14), 45 inside (at 15-20 ms: 1).
+  - On their own training legs (armature 0-0.002, friction 0-2, 5-20 ms) they score [78](#/week/9/run/20261111T114013_leg_eval_seed1_gap16_F_trainlegs) (63 inside) and [76](#/week/9/run/20261111T114130_leg_eval_seed1_gap16_P_trainlegs) (70 inside).
+  - **Round 26 did not fix heavy legs.** It ran 1,200 more iterations on the heavy half of the armature range (both variants) and scored 0-13 on heavy legs at 15-20 ms at every checkpoint.
+    - At 5-20 ms its force-aware end (`7998`) [scores 72](#/week/9/run/20261111T113246_leg_eval_seed1_gap26_F_heavy_d14) with 27 inside, no better than round 16's 69 with 57.
+    - On the light legs its raw counts rose (91 / 102 at 1 / 2 N·m) as its counts inside the runner fell (18 / 25), as in every run trained past +400.
+    - Its position-only `7400` (74 / 99, all inside) is the best position-only checkpoint from the dog's stance, but it collapsed by +800.
+  - **Implication, in place of the fourth blocker's "how heavy and how late":** the delay is the measurement the dog's key hold rests on. At heavy armature the key hold goes from 50-69 at 5-20 ms to 1-5 at 15-20 ms, and the dog's leg delay is not measured (F-230's scope). The nearest evidence is F-196: the dog's rattle was reproduced by light legs (0.0002) at 15-20 ms, the condition every score here is on. That is a match, not a measurement, and it does not rule heavy legs out.
+  - The frozen evaluation on the policies' own training legs still loses 19-26 keys of 108, where training's `Hold/lost_fraction` is 0.00-0.04. The training metric is sampled at reset, over three dog stances to one settled. Why the two differ is still not known.
+- **Note (2026-11-13 00:40): the wrist blocker in the implication has a cause, F-283.** Joint6's 40-46 deg lead in a turn comes from the foot turning the key 45 deg in about 0.1 s at first contact, ahead of the task layer's arc, which the reward pays for. It is not the scripted wrist following too slowly. The fix belongs to the turn's reward, before the question of how the real wrist follows.
+
+### F-283 — Every key-hold policy turns the key in one stroke at first contact, 45 deg in about 0.1 s (460-600 deg/s), ahead of the task layer's arc, then traces the arc in the air: the reward pays the key's angle and the open latch, not the arc; the jolt is also Joint6's 40-46 deg lead
+
+- **Status:** provisional (simulation; read from the recorded evaluation traces, nothing retrained)
+- **Week:** 9
+- **Date:** 2026-11-13
+- **Evidence:** [Week 9 log, 2026-11-13](week_09/notes.md), "The foot jolts the key open, then traces the arc in the air". Lukas saw it in the viewer ([run](#/week/9/run/20261112T125717_play_seed1_view16_staged_row12)). Script: `logs/unifp_train/keyhold/turn_speed.py`.
+  - Key 12 of the [staged run](#/week/9/run/20261112T125252_leg_eval_seed1_staged16_f1) (round 16's `6800`):
+    - the foot runs 22 mm below the layer's descending reference before contact;
+    - it turns the key from 0 to 45.7 deg in 0.1 s at 3-27 N, with the reference still at -0.7 deg;
+    - it then follows the layer's 0-40 deg arc (about 50 deg/s) with 0 N of contact.
+  - Over the frozen 108 the key passes 30 deg before the reference passes 10 deg in nearly every unlocking episode:
+    - round 16 `6800` (force-aware): [79 of 80](#/week/9/run/20261110T233850_leg_eval_seed1_kh16_6800_dog_f1) from the dog's stance, [108 of 108](#/week/9/run/20261110T234659_leg_eval_seed1_kh16_6800_old) settled and [98 of 98](#/week/9/run/20261112T125252_leg_eval_seed1_staged16_f1) staged;
+    - round 17 `7000` (position-only): [79 of 79](#/week/9/run/20261111T005529_leg_eval_seed1_kh17_7000_dog_f1) and [108 of 108](#/week/9/run/20261111T010345_leg_eval_seed1_kh17_7000_old);
+    - the parents: round 8's `5200` [90 of 92](#/week/9/run/20261110T194330_leg_eval_seed1_par2_kh8_dog_f1) and round 11's `5399` [38 of 39](#/week/9/run/20261110T195231_leg_eval_seed1_par2_kh11_dog_f1).
+    - The median from first contact to 30 deg is 0.08-0.14 s (round 11's parent: 1.16 s), and the median peak key speed 459-598 deg/s.
+  - The week 7 foot-only key policies (arm folded) ran ahead less often: F-229's [`4000`](#/week/7/run/20261025T180142_leg_eval_seed1_r_keyF_4000_L) in 73 of 107 (0.20 s, 269 deg/s) and its position-only [`3600`](#/week/7/run/20261025T184849_leg_eval_seed1_r_keyP_3600_L) in 19 of 57.
+  - `lead_j6` peaks at 0.80 rad (46 deg) within 0.5 s of the key passing 30 deg.
+  - The contact peak around the jolt is a median 13-15 N (max 38-56 N).
+- **Scope:**
+  - Simulation: the analytic lock plant, the hand tied to the key by a spring, Joint6 following the key's angle by script.
+  - The cause is read from the reward's definition (`leg_rewards.handle_progress`, `handle_open`; `leg_cfg.HANDLE_WEIGHTS`), not tested by retraining.
+  - In the staged run, 28 of the 31 keys lost after unlocking go 0.5-2 s after the jolt. That timing is consistent with the jolt causing them and is not tested.
+  - The real key (PLA in a metal lock), the real lock's give and the real wrist at this speed are not modelled.
+- **Implication:**
+  - The turn the key-hold policies learned is not the layer's planned, force-regulated turn. The scores in F-278 to F-282 are for this stroke. They count unlocking, not how it was done.
+  - In rounds 16 and 17 the force-aware and position-only policies turn the key the same way (0.10 and 0.08 s), so the turn itself does not compare them.
+  - The fix to try is in the reward: pay the progress only up to the reference's angle, and price the key running ahead of the reference by more than a few degrees while the layer presses. Then fine-tune from round 16's `6800` and round 17's `7000` and score the same 108 with `turn_speed.py`, `lead_j6` and the losses. Its cost in successes is unknown.
+  - The real wrist cannot follow 500 deg/s. A dog run with this stroke would twist the key in the jaws however the wrist is made to follow.
+- **Note (2026-11-13 11:05): "at first contact" holds for round 16's force-aware policy only, and the staged losses are not the jolt's** ([week 9 log](week_09/notes.md), "Round 28"; `logs/unifp_train/keyhold/lead6.py`).
+  - Round 16's `6800` unlocks at the layer's first contact: leg_env stage 4 (engaged), layer phase 1 (pressing), in all its unlocks.
+  - Round 17's position-only `7000` unlocks during the foot's lift, with the layer idle: stage 1, phase 0, in [79 of 79](#/week/9/run/20261111T005529_leg_eval_seed1_kh17_7000_dog_f1), [107 of 107](#/week/9/run/20261111T005936_leg_eval_seed1_kh17_7000_dog_f2) and [108 of 108](#/week/9/run/20261111T010345_leg_eval_seed1_kh17_7000_old). That is about 1.2 s before the layer starts pressing.
+  - The parents unlock during the approach (stages 2-3, phase 0) in [74 of 92](#/week/9/run/20261110T194330_leg_eval_seed1_par2_kh8_dog_f1) and [31 of 39](#/week/9/run/20261110T195231_leg_eval_seed1_par2_kh11_dog_f1).
+  - The stroke's speed and Joint6's 44-46 deg lead are the same in every policy. The second implication, that the turn does not compare the variants, still holds; where in the sequence it comes does differ.
+  - The fix also reaches the early stroke: the turn's progress and latch are paid only while the layer presses or holds, so a key turned at the lift earns nothing until then, and is then capped and priced.
+  - Round 28's force-aware run at +200, trained with the fix, still loses [34 keys after unlocking](#/week/9/run/20261112T234652_leg_eval_seed1_kh28_7000_staged) in the staged run (round 16 `6800`: 31), with no jolt, so the scope's "28 of the 31 ... consistent with the jolt causing them" did not hold up as a cause.
+  - With the fix, no key from the dog's or the settled stance passes 30 deg before the reference passes 10 deg (0 of 285), and Joint6's median peak lead from the dog's stance is 18-19 deg. The checkpoints' end scores and the position-only run follow in the log.
+- **Note (2026-11-13 11:45): the fix, retrained, is [F-285](#f-285).** Paying the turn only up to the reference removes the jolt in both variants. Force-aware keeps its success; position-only stalls. "Its cost in successes is unknown" (the implication) is answered there.
+
+### F-284 — Trained in simulation on Lukas's cam lock as measured (a PLA key in a metal keyway, 0.1-0.25 mm of play), knowing the lock only to 3.5 mm across, 8 mm along and 4 deg in roll, a whole-body policy with a touch-feeling task layer seats 69-81 of 96 frozen keys inside the dog runner's 15 deg tilt stop once training stops it there too; force-aware and position-only then trade places: position-only is better on the lock's variations (59-81 against 48-69), force-aware far more robust to the leg model and the stance (61 against 4 on heavy legs at 15-20 ms, 58 against 44 from the settled stance); the classical arm on the same legs gets 11-25, and nothing of it has run on the dog
+
+- **Status:** provisional (simulation only; rounds 4-5 two seeds, round 6 one; the lock's edge breaks, friction, the grip's slip and the damage line are drawn or estimated, not measured)
+- **Week:** 9
+- **Date:** 2026-11-13
+- **Note (revised 10:05, before it was reported):** the 08:40 draft of this finding said force-aware led inside the tilt stop (70-71 against 32-37) and read that lead as force awareness's. Round 6 (09:00-09:58) shows the lead was the recipe's tilt price: priced at -50 past 8 deg, position-only leaned 15-20 deg and the stop cut it. Stopped at 15 deg in training, it leads at the nominal conditions.
+- **Evidence:** [Week 9 log, 2026-11-13](week_09/notes.md), "A force-aware key insertion into the cam lock". Code: `unifp_train/keylock.py` (the lock, the PLA key, the task layer; `tests/test_keylock.py`, 11 tests), `keyinsert_env.py` (`run_unifp_train.py --key_hold --key_insert`), `keyinsert_eval.py` (96 frozen locks). Scripts and checkpoints: `logs/unifp_train/keyinsert/`.
+  - **The task.**
+    - The key hold's environment with the key in the jaws and the foot's turn off. Its legs are on `66600`'s model (friction 0-2 N·m, delay 1-4 steps, the dog's stance in 3 starts of 4). The arm goes through the D1's link, a residual on a 10 Hz IK reference with the sag compensated. The actor sees only the dog's signals: joints, IMU, the arm's reported angles, the goal less the jaw centre by their kinematics, and (force-aware) the commanded press.
+    - The task layer is `d1doginsert`'s insertion on those reported angles. It feels the face by the lag, then makes a 3 mm sideways feel (held means the keyway holds it), a spiral with the wrist rolling, goes on to the floor, jiggles if stuck, and holds.
+    - Force-aware commands a press and is paid UniFP's compliant target (1/800 m/N along the axis, 1/3000 across); position-only presses by position.
+  - **Success:** the key within 0.8 mm of the floor and within the play plus 0.5 mm of the keyway's axis when the layer ends its hold, nothing past 50 N, the robot standing; "within" adds the runner's 15 deg tilt stop. 1 N·m, the probe legs (15-20 ms), the dog's stance unless varied.
+  - **Before training,** on the key hold's own legs, every variant got 0 of 96: they sway under a free hand.
+  - **Rounds 4-5** (the tilt priced at -50; seeds 1 and 2), the best checkpoints within the stop:
+    - force-aware `7600` [70 (70)](#/week/9/run/20261112T154829_leg_eval_seed1_ki4_force_7600_f1) and `7800` [71 (71)](#/week/9/run/20261112T185921_leg_eval_seed1_ki5_force_7800_f1);
+    - position-only `8000` [60 (37)](#/week/9/run/20261112T162002_leg_eval_seed1_ki4_pos_8000_f1) and `7600` [43 (36)](#/week/9/run/20261112T181857_leg_eval_seed1_ki5_pos_7600_f1).
+    - Their later checkpoints lean 15-20 deg and seat keys straight from the approach: position-only's last succeed on 38-67 with 0 within the stop.
+  - **Round 6** (round 4's two selections fine-tuned 800 iterations with episodes ended past 15 deg and the tilt priced at -200):
+    - force-aware `7800`-`8399`: 66-69, every one within;
+    - position-only `8200` [79 (78)](#/week/9/run/20261112T212753_leg_eval_seed1_ki6_pos_8200_f1), `8600` [81 (81)](#/week/9/run/20261112T222043_leg_eval_seed1_ki6_pos_8600_f1), `8799` [66 (66)](#/week/9/run/20261112T223641_leg_eval_seed1_ki6_pos_8799_f1).
+  - **Held out**, success (within), at 1 N·m from the dog's stance unless varied:
+
+    | condition | force-aware r6 `8200` | position-only r6 `8600` | force-aware r4 `7600` | position-only r4 `8000` |
+    |---|---|---|---|---|
+    | settled stance | [58 (58)](#/week/9/run/20261112T223934_leg_eval_seed1_s6F_set) | [44 (44)](#/week/9/run/20261112T224932_leg_eval_seed1_s6P_set) | [58 (58)](#/week/9/run/20261112T180406_leg_eval_seed1_s4F_set) | [6 (0)](#/week/9/run/20261112T185553_leg_eval_seed1_s4P_set) |
+    | delay 5-20 ms | [70 (70)](#/week/9/run/20261112T224029_leg_eval_seed1_s6F_d14) | [71 (71)](#/week/9/run/20261112T225026_leg_eval_seed1_s6P_d14) | [50 (47)](#/week/9/run/20261112T181136_leg_eval_seed1_s4F_d14) | [46 (23)](#/week/9/run/20261112T190311_leg_eval_seed1_s4P_d14) |
+    | heavy legs, 15-20 ms | [61 (61)](#/week/9/run/20261112T224131_leg_eval_seed1_s6F_heavy) | [4 (2)](#/week/9/run/20261112T225128_leg_eval_seed1_s6P_heavy) | [4 (4)](#/week/9/run/20261112T181508_leg_eval_seed1_s4F_heavy) | [11 (2)](#/week/9/run/20261112T191028_leg_eval_seed1_s4P_heavy) |
+    | sticky lock | [59 (59)](#/week/9/run/20261112T224226_leg_eval_seed1_s6F_mu45) | [76 (76)](#/week/9/run/20261112T225216_leg_eval_seed1_s6P_mu45) | [65 (65)](#/week/9/run/20261112T182157_leg_eval_seed1_s4F_mu45) | [70 (43)](#/week/9/run/20261112T191421_leg_eval_seed1_s4P_mu45) |
+    | tight lock | [55 (55)](#/week/9/run/20261112T224328_leg_eval_seed1_s6F_tight) | [70 (70)](#/week/9/run/20261112T225318_leg_eval_seed1_s6P_tight) | [61 (61)](#/week/9/run/20261112T182537_leg_eval_seed1_s4F_tight) | [56 (33)](#/week/9/run/20261112T191743_leg_eval_seed1_s4P_tight) |
+    | no edge breaks | [48 (48)](#/week/9/run/20261112T224429_leg_eval_seed1_s6F_sharp) | [59 (59)](#/week/9/run/20261112T225420_leg_eval_seed1_s6P_sharp) | [47 (47)](#/week/9/run/20261112T182919_leg_eval_seed1_s4F_sharp) | [46 (29)](#/week/9/run/20261112T192116_leg_eval_seed1_s4P_sharp) |
+    | errors x1.3 / x1.5 | [61 (61)](#/week/9/run/20261112T224526_leg_eval_seed1_s6F_far) | [70 (70)](#/week/9/run/20261112T225522_leg_eval_seed1_s6P_far) | [49 (49)](#/week/9/run/20261112T183658_leg_eval_seed1_s4F_far) | [52 (27)](#/week/9/run/20261112T192448_leg_eval_seed1_s4P_far) |
+    | classical arm on its legs | [25 (25)](#/week/9/run/20261112T224830_leg_eval_seed1_s6F_cls) | [20 (11)](#/week/9/run/20261112T225623_leg_eval_seed1_s6P_cls) | [16 (16)](#/week/9/run/20261112T185209_leg_eval_seed1_s4F_cls) | [15 (5)](#/week/9/run/20261112T192815_leg_eval_seed1_s4P_cls) |
+
+    - Force-aware's press at 5 / 10 N: r6 [68 (68)](#/week/9/run/20261112T224628_leg_eval_seed1_s6F_p5) / [71 (71)](#/week/9/run/20261112T224730_leg_eval_seed1_s6F_p10), r4 [70 (70)](#/week/9/run/20261112T184045_leg_eval_seed1_s4F_p5) / [73 (73)](#/week/9/run/20261112T184819_leg_eval_seed1_s4F_p10).
+    - Round 5's force-aware `7800`: the settled stance [56 (56)](#/week/9/run/20261112T205732_leg_eval_seed1_s5F_set), heavy legs [27 (27)](#/week/9/run/20261112T210503_leg_eval_seed1_s5F_heavy), sticky [69 (69)](#/week/9/run/20261112T210855_leg_eval_seed1_s5F_mu45).
+  - **The touch:** the layer feels the face to a median 0.5-2 mm where the key meets it.
+  - **Forces:** median peaks are 21-28 N for both variants, and 0-7 of 96 pass 50 N. Position-only presses harder (median press 17-20 N against 11-16).
+  - **One position-only checkpoint collapsed** (round 5's `7800`, 2 of 96) while its training ran calm. Easing the press through the sideways feel did not recover it (1 of 96). Not explained.
+- **Scope:**
+  - **Simulation only.** No dog runner, export or replay gate exists for a key-hold-family policy.
+  - **The contact is the 5 ms physics step's,** about 21,000 N/m for the whole tip, far softer than PLA on chromed metal. Keys rest 0.3-0.7 mm off the keyway's axis in it, which the success test allows.
+  - **The arm in contact is the simulator's** (UniFP's PD through the link, J2 kp 60). What the real D1 pushes with at a few mm of lag is not measured (`insert_plan.py`), and the layer's 3 mm contact lag and 0.8 mm feel rest on it.
+  - **Selection and tuning:** the layer was tuned on the same frozen set over rounds 1-3, and the checkpoints were picked on it. One evaluation of 96 spreads about +-4.5, and checkpoints 200 iterations apart moved by up to 30. Round 6 is one seed per variant.
+  - The box is the key hold's, raised to 0.45 m; the real box's lock is at 0.42 m. The estimate's errors are drawn, not taken from the wrist camera's finds.
+- **Implication:**
+  - **The learned whole body is what makes the touch-feeling insertion work:** 66-81 within the stop against 11-25 for the classical arm on the same legs.
+  - **Whether force awareness helps depends on what the dog is.** On the nominal legs position-only is as good or better; on heavy legs at 15-20 ms (the dog's delay is unmeasured, F-230) only force-aware survives (61 against 4).
+  - **For a dog test take round 6's force-aware `8200`.** Before any run it needs a runner for an 18-output policy with the IK reference and the layer (numpy), a replay gate, the box raised as here, and the D1's push at a lag measured.
+  - **Any insertion recipe must keep the tilt inside the runner's stop in training,** or the comparison between variants is the tilt price's.
+
+### F-285 — Paying the key's turn only up to the task layer's reference and pricing a run ahead of it (`--key_turn_follow_weight -15`) removes F-283's jolt in both variants: no key from the dog's or the settled stance runs ahead (0 of 911), the turn takes 1.2-1.5 s, and Joint6's lead falls to a median 13-23 deg; force-aware keeps its successes (round 28's `7000`: 85 / 94 / 106 of 108, 55 staged) but still leans as it trains on, while position-only stalls short of the latch and falls to 29-68 by +400
+
+- **Status:** provisional (simulation; one seed per variant)
+- **Week:** 9
+- **Date:** 2026-11-13
+- **Evidence:** [Week 9 log, 2026-11-13](week_09/notes.md), "Round 28: the turn made to follow the arc".
+  - Code: `keyhold.turn_ahead` and `keyhold.follow_turn`, `Go2D1KeyHoldEnv._object_state`, `tests/test_keyhold_turn.py`. Scripts: `logs/unifp_train/keyhold/round28.sh`, `turn_speed.py`, `lead6.py`, `summ.py`, `runner_ok.py`.
+  - The setup: round 16's recipe plus the fix, 400 iterations. Force-aware from round 16's `6800` (seed 23, [training](#/week/9/run/20261112T230824_train_seed23_kh28_followF)); position-only from round 17's `7000` (seed 24, [training](#/week/9/run/20261112T230954_train_seed24_kh29_followP)).
+  - Scored on the frozen 108 with `lev.sh`'s legs (15-20 ms) and the D1's link. In brackets: those inside the runner's bounds (FR bound lifted). The order is dog's stance at 1 N·m / at 2 N·m / settled / staged.
+  - **Force-aware:**
+    - the parent `6800`: 78 (62) / 99 (99) / 106 / 56;
+    - +200, [85](#/week/9/run/20261112T233429_leg_eval_seed1_kh28_7000_dog_f1) (58) / [94](#/week/9/run/20261112T233835_leg_eval_seed1_kh28_7000_dog_f2) (87) / [106](#/week/9/run/20261112T234245_leg_eval_seed1_kh28_7000_old) / [55](#/week/9/run/20261112T234652_leg_eval_seed1_kh28_7000_staged);
+    - +400, [85](#/week/9/run/20261113T001301_leg_eval_seed1_kh28_7199_dog_f1) (18) / [81](#/week/9/run/20261113T001420_leg_eval_seed1_kh28_7199_dog_f2) (72) / [107](#/week/9/run/20261113T001540_leg_eval_seed1_kh28_7199_old) / [40](#/week/9/run/20261113T001658_leg_eval_seed1_kh28_7199_staged);
+    - the no-fix continuation to `7200`: [86](#/week/9/run/20261111T003708_leg_eval_seed1_kh16_7200_dog_f1) (21) / [87](#/week/9/run/20261111T004113_leg_eval_seed1_kh16_7200_dog_f2) (68) / [89](#/week/9/run/20261111T004523_leg_eval_seed1_kh16_7200_old).
+  - **Position-only:**
+    - the parent `7000`: 65 (65) / 96 (96) / 105 / [84](#/week/9/run/20261112T231155_leg_eval_seed1_staged17_f1);
+    - +200, [67](#/week/9/run/20261112T235846_leg_eval_seed1_kh29_7200_dog_f1) (67) / [64](#/week/9/run/20261113T000259_leg_eval_seed1_kh29_7200_dog_f2) (64) / [77](#/week/9/run/20261113T000652_leg_eval_seed1_kh29_7200_old) / [50](#/week/9/run/20261113T000917_leg_eval_seed1_kh29_7200_staged);
+    - +400, [29](#/week/9/run/20261113T002038_leg_eval_seed1_kh29_7399_dog_f1) (28) / [33](#/week/9/run/20261113T002157_leg_eval_seed1_kh29_7399_dog_f2) (33) / [68](#/week/9/run/20261113T002316_leg_eval_seed1_kh29_7399_old) / [31](#/week/9/run/20261113T002433_leg_eval_seed1_kh29_7399_staged);
+    - the no-fix continuation to `7400`: [57](#/week/9/run/20261111T015232_leg_eval_seed1_kh17_7400_dog_f1) / [89](#/week/9/run/20261111T020046_leg_eval_seed1_kh17_7400_dog_f2) / [105](#/week/9/run/20261111T020859_leg_eval_seed1_kh17_7400_old).
+  - **The turn**, from the dog's and the settled stance:
+    - no key passes 30 deg before the reference passes 10 deg at either checkpoint of either run (0 of 911 unlocks; the parents: 293 of 295 and 294 of 294);
+    - contact to 30 deg takes a median 1.14-1.51 s (parents 0.06-0.14 s), at a median peak of 74-188 deg/s (500-653);
+    - the foot stays on the key through the arc in every unlock.
+  - **Joint6's median peak lead** from the dog's stance is 13-23 deg (parents 42-46 deg), past 30 deg in 9 of 553 unlocks.
+  - **Position-only's failures are stalls:** the foot is on the bar and the lock never opens, in 41 / 60 / 27 / 39 of 108 at +400.
+    - Its stalled keys reach a median 25.6-26.9 deg, against a latch at 30.
+    - They stay about 13-15 deg behind a reference at 40 deg.
+    - The foot presses a median 2.6-4.2 N.
+  - In the staged run the force-aware +200 still loses 34 keys after the unlock (parent: 31) with no jolt.
+- **Scope:**
+  - Simulation: the analytic lock plant, the hand tied to the key by a spring, Joint6 following the key's angle by script, `lev.sh`'s light legs at 15-20 ms.
+  - One seed per variant, from different parents. Position-only's parent struck the key during the lift (F-283's note), a larger change than force-aware's.
+  - Why position-only stalls is not tested. The likeliest reading: the fix prices running ahead and leaves running behind costing only the reward not earned, so a policy with no force sense keeps a margin behind, against a lock that gives way past its detent.
+  - The real wrist at 75-190 deg/s, the real lock's give and the dog's leg delay (F-230) are not validated.
+- **Implication:**
+  - **F-283's cause is confirmed by retraining:** the reward paid the jolt, and paying the arc removes it.
+  - The best key-hold checkpoint that turns the key along the layer's arc is round 28's `7000` (`logs/unifp_train/keyhold/kh28_7000.pt`). It replaces round 16's `6800` as the force-aware candidate, at the same success and 4-12 fewer inside the runner's bounds. Nothing of it has run on the dog, and the key hold has no runner (F-282).
+  - Training on past +200 makes the force-aware policy lean, as in F-282 and F-284. The tilt stop in training, which fixed it for the insertion (F-284's round 6), is the next thing to try. The position-only fix needs running behind priced as well (a band both ways) before the variants can be compared on a following turn.
+  - F-283's open question about the staged losses is answered in the negative: they do not need the jolt. Their cause is not found.

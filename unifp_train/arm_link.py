@@ -126,6 +126,8 @@ class ArmLink:
         self.follow_waited = 0
         #: rad², this step: the squared change the arm was just sent, zero on a step with no command. `--arm_step_weight`.
         self.sent_step = zeros(num_envs)
+        #: The same per joint (n, 6), for a task that prices only some of them (the key hold: J6 follows the key by script).
+        self.sent_step_joints = zeros(num_envs, NUM_ARM)
         self.target_count = zeros(num_envs, 1)
         self.track = bool(track)
         if self.track:
@@ -226,7 +228,9 @@ class ArmLink:
             wanted = self._follow(wanted, executed)
         if self.track:
             self._count(executed, asked, wanted, q)
-        self.sent_step = torch.where(executed, (wanted - self.target).square().sum(dim=1), torch.zeros_like(self.sent_step))
+        self.sent_step_joints = torch.where(executed.unsqueeze(-1), (wanted - self.target).square(),
+                                            torch.zeros_like(self.sent_step_joints))
+        self.sent_step = self.sent_step_joints.sum(dim=1)
         self.target[executed] = wanted[executed]
         if self.tracker is not None:
             self.tracker.command(executed, self.target)

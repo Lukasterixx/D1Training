@@ -1,0 +1,63 @@
+{
+  "id": "20261111T073007_train_seed18_kh25_heavy",
+  "title": "Key hold r25: round 16's recipe on the heavy half of 66600's leg armature (0.001-0.002), force-aware from round 14's 6400, seed 18, 400 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-11T19:22:06+11:00",
+  "started_utc": "2026-11-11T07:30:07+00:00",
+  "source_dir": "logs/unifp_train/20261111T073007_train_seed18_kh25_heavy",
+  "mode": "train",
+  "seed": 18,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 6799,
+  "final_checkpoint": {
+    "file": "model_6799.pt",
+    "sha256": "da5af6251461b13c011b5b838e2e45383cea67dce795763cfadaa5215c39c51b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 157.92263793945312,
+      "last_step": 6799,
+      "mean_last_10": 157.0181427001953,
+      "min": 3.2115209102630615,
+      "max": 159.0028533935547,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 498.260009765625,
+      "last_step": 6799,
+      "mean_last_10": 496.51100158691406,
+      "min": 18.280000686645508,
+      "max": 525.239990234375,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.11302569508552551,
+      "last_step": 6799,
+      "mean_last_10": 0.11339931041002274,
+      "min": 0.11302569508552551,
+      "max": 0.15085679292678833,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 7594.0,
+      "last_step": 6799,
+      "mean_last_10": 7522.0,
+      "min": 4767.0,
+      "max": 15087.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

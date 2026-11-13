@@ -1111,6 +1111,407 @@ He filmed what each run erased and will add the videos, so the wiped result is n
 
 **Not shown:** erasure, a measured force on any stroke, a regulated force. Told 2 N is one run.
 
+### 2026-11-07 · Force-aware, in the plan's sense
+
+Lukas asked whether the force wipes were force-aware, if not force control. By the plan they were: UniFP is its force-aware controller, and "position-only" means no force-control inputs or objective, so a policy told a force through its trained input is not position-only. It is not force control: nothing compared the hand's force with a target. Say force-aware and open loop.
+
+Two consequences. The Wipe: ladder ran the same force-trained policy with its force input at zero, so it is position-commanded, not the plan's position-only reference P0, which needs a policy trained without force inputs or objective. And on training: every run from `cad333_model_58400` to `66600` was under 8,000 iterations (the longest 3,000), and the force schedule opens at iteration 8,000 of a run, so none of those fine-tunes pushed the tool. That settles F-264's open point: the 5 mm a newton came through about 8,000 iterations without force training. It rests on the environment's step counter restarting with each run, read from the code, not logged.
+
+**Correction, 2026-11-07 (later):** the last paragraph's second consequence is wrong; the first stands. The step counter does not restart on a resume: `run_unifp_train.py` restores it from the checkpoint's iteration (`env.common_step_counter = done * NUM_STEPS_PER_ENV`, the F-082 fix, in since 2026-09-25). So the fine-tunes from `58400` to `66600` trained under the tool pushes throughout, and it is logged: `armft5_s1.out` line 122 reads `resumed at iteration 65799; force curriculum ACTIVE`, and `forces_active_at_resume` is true in `armft5`'s and `armft6b`'s `run.json`. The 5 mm a newton was trained through, not carried across a gap. That also closes F-264's "Training's tool pushes reach 8 N, not confirmed through the fine-tunes": they ran, at the schedule's +/-8 N.
+
+### 2026-11-07 · Commanding the hand's whole pose: the question, and the bars set before any score
+
+Lukas: UniFP struggles pulling doors and turning levers; find a way to command yaw, pitch and roll and keep it force-aware, with several days of GPU. This entry is written before any pose policy has been scored, so the bars below cannot move to fit a result.
+
+**What the record already said.** Roll works (F-100). The door and lever successes are the decoupled IK arm's (F-153, F-219), not UniFP's: UniFP with the wrist servo opens 15 of 32 doors in simulation, and on the measured robot the lever stalls at 32.5 degrees (F-129). F-150 traced the fold to the same gap, three numbers commanded on a six-joint arm. F-099 closed off the full pose with 8.2% of goals admitting a freely chosen orientation, and said itself that was a lower bound on a harsh sample.
+
+**Three things read today that change that reading**, numbers to follow from `pose_reach.py`:
+
+- The D1's wrist is spherical: Joint4's and Joint5's axes meet, and Joint6's passes 1.1 mm from that point (`arm_kin.py`, checked against the numpy chain to 1e-12). So a hand's orientation is Joint4-6's and the wrist centre Joint1-3's, and a pose can be solved exactly, with no iteration on the wrist.
+- `pose_feasibility.py` hands `d1_ik.solve` a goal built about the arm's mount, in a frame that has the mount in it already, 8.6 cm off. It moves the total from 9.4% to 11.5%, so F-099's ordering stands; the sample is the larger issue. Uniform SO(3) counts hands pointing back at the robot, which need the wrist 18.6 cm further out than the goal.
+- A first map on the arm alone: a level hand takes every roll at any heading within +/-60 degrees at goal pitch +10 to +40 and radius 0.40-0.60 m. The real door pull's hand is inside that (radius 0.54-0.58, pitch 12-18, F-264).
+
+**The design under test.** No width changes, so `66600` loads and the dog's runner keeps its shape. `CMD_EE_ORN_R/P/Y`, zero in every policy so far, carry the hand as a rotation vector from the all-zero attitude, in the yaw frame the position is in. Goals are drawn as joint angles and taken through forward kinematics (`pose_goals.py`), one wrist branch, slid in joint space under the Follower's speed, so every commanded pose is reachable by construction. Drawing goals from arm joint sweeps has precedent (Portela, Cramariuc et al. 2024, arXiv 2409.16048); the force half, unchanged, is what is added here. Training is `66600`'s recipe on the fitted arm through the Follower, the wrist penalty off, the jaw-centre tool point, the pushes on.
+
+**The control.** Same budget, same recipe, with F-099's objective: UniFP's sphere and orientations uniform over SO(3). Scored on the same frozen goals. Without it nothing separates the draw from the extra reward.
+
+**Bars, frozen now.** Sets `unifp_pose_development` (seed 101, chooses checkpoints) and `unifp_pose_validation` (seed 202, reported once per candidate), 64 episodes each, through the Follower, legs at 1 N·m.
+
+| what | bar |
+|---|---|
+| hand, settled and unforced | position at most 3 cm and orientation at most 10 deg, median over episodes |
+| falls | 0 of 64 |
+| force kept: realised over commanded on the frozen set | within 20% of `66600`'s on the same set |
+| force kept: press against told force at a bench spot, as F-269 | slope within 30% of `66600`'s, in the same probe |
+| would the dog stop it (`run_plan_probe`: lead, step, legs, tilt) | no worse than `66600` at matched goals |
+| door pull, same placements, same arm interface | more than the position-only policy with the wrist servo; 24 of 32 to call it working |
+| lever and door, same | latch released and door past 30 deg in more attempts than the position-only policy with the wrist servo |
+
+**What these will not show.** All simulation. The arm model is the fitted one, the door free or with the model closer, the grip PhysX friction. Passing them says a pose policy is worth a dry run, no more (F-258).
+
+### 2026-11-07 · The evaluator's settled window, fixed before any pose policy was scored
+
+The first baseline runs on the frozen pose goals gave [zero actions](#/week/8/run/20261107T071818_eval_seed1_pb_zero) 6.2 deg of settled orientation error, which cannot be right. The settled window counted each episode's opening hold on the all-zero pose, and unforced steps come mostly before the first push, so that hold dominated. Fixed in `eval.py` (a goal must have been drawn); the bar is unchanged and no pose policy had been scored. The two first runs stand as the record of the fault.
+
+Also added: the hand's displacement regressed on told and felt force, once a goal is held, because `force_realised` picks up any tracking bias along the command.
+
+Frozen development set, through the Follower, legs at 1 N·m:
+
+| | position, settled, cm (median / p90) | orientation, settled, deg (median / p90) | told, mm/N | felt, mm/N | falls |
+|---|---|---|---|---|---|
+| [`66600`, channels at zero](#/week/8/run/20261107T072250_eval_seed1_pb2_66600) | 3.31 / 5.92 | 72.9 / 128.8 | 5.19 | 15.58 | 0 |
+| [zero actions](#/week/8/run/20261107T072626_eval_seed1_pb2_zero) | 30.49 / 50.00 | 79.0 / 130.7 | noise | 27.25 | 0 |
+
+**What this shows.** `66600`'s hand is uncontrolled, as F-095 found for an older policy: 73 deg against 79 for standing still. The told figure reproduces F-267's 5 mm a newton from a different measurement, which is the check on the regression. **What is new:** felt compliance is three times the law's, 15.6 mm/N. UniFP's reward asks 5 mm/N of a push, and against a real push `66600` gives three times that, on the stiff arm model with its torque limits. So the force the policy is told and the force it feels are not the same spring, and a held handle meets the second. `66600` is fingertip-controlled and these goals are the jaw centre's, 2.4 cm apart, so its position column is slightly unfair to it (conditions flagged in the run). Zero actions' told column is chance correlation with a hand 30 cm from its goal.
+
+### 2026-11-07 · How much pose the robot has
+
+    python unifp_train/pose_reach.py --orientations 200 --run_name reach_map --threads 6
+
+[The map](#/week/8/run/20261107T082407_ik_seed1_reach_map): 147 goals, 200 orientations each, every elbow seed and both wrist branches through `arm_kin`, then 135 base poses with the feet fixed. [The same in F-099's frame](#/week/8/run/20261107T082622_ik_seed1_reach_map_legacy). A [first pass](#/week/8/run/20261107T065902_ik_seed1_reach_probe) on 64 orientations read 9.4% and 11.5%; these replace the two figures in the entry above, 9.1% and 11.3%.
+
+Uniform SO(3) goes 11.3% arm alone, 28.6% with the body. By itself that would still argue against a full pose. The tables by approach and by band are the result: F-272, which supersedes F-099 as a limit. `docs/thesis_b_plan.md` is corrected (the 2026-09-24 note there is kept, with the new one under it).
+
+**Does not show:** that a policy can hold any of this. No arm-on-body check, and the lidar cage is not in it.
+
+### 2026-11-07 · The first pose policy: the hand follows, and force-awareness survives
+
+Both runs: `66600`'s recipe at 2,048 environments, `--pose_objective`, `--tool_point jaw_centre`, the wrist penalty off, the arm through the Follower, pushes on (the commands are in `logs/unifp_train/tool/`). The control is the same with `--pose_naive`. I stopped the control at 1,000 iterations, not 3,000: its orientation had been flat since about 100 and the GPU was better used. Frozen development set, deterministic:
+
+| | iterations | position, settled, cm (median / p90) | orientation, settled, deg (median / p90) | orientation, unforced | orientation, held under force | told, mm/N | felt, mm/N | falls |
+|---|---|---|---|---|---|---|---|---|
+| [`66600`](#/week/8/run/20261107T072250_eval_seed1_pb2_66600) | | 3.31 / 5.92 | 72.9 / 128.8 | 39.8 | 50.7 | 5.19 | 15.58 | 0 |
+| [control, uniform SO(3)](#/week/8/run/20261107T084536_eval_seed1_pe_n_67600) | 1,000 | 2.63 / 5.86 | 68.7 / 144.9 | 41.3 | 58.3 | 3.91 | 19.16 | 0 |
+| [A, goals from joint angles](#/week/8/run/20261107T084214_eval_seed1_pe_a_67400) | 800 | 3.38 / 6.01 | **16.2 / 42.9** | 11.2 | 22.6 | 4.59 | 15.26 | 0 |
+
+**What this shows.** On the fitted arm through the Follower, a hand orientation is learnable alongside position from `66600` in about 3 hours, and what decides it is the goals. With F-099's draw the same recipe learns nothing: 69 deg against `66600`'s 73 with no orientation command at all, and its training error stayed at 110-118 deg, near the mean of a random rotation. Told compliance holds at 4.59 mm/N against 5.19 (12% down, inside the 20% bar), felt compliance is unchanged, no falls.
+
+**What it does not show.** The bars are not met: 16 deg against 10, 3.4 cm against 3, and the p90 of 43 deg is a poor tail. Training-time orientation stopped improving near 28-30 deg at about iteration 400 while the action noise rose from 0.53 to 0.68, so the noise may be what limits it. One seed. No contact yet: compliance here is free-air against scheduled pushes. Nothing here has been near the dog.
+
+### 2026-11-07 · Door and lever on the real-arm model: the pose policy against a fair baseline
+
+All on the fitted arm through the Follower, the dog's legs at 1 N·m, the physical payload, the same placements by seed, 16 attempts a run, `demos/unifp/run_demo.py --real_arm`. A door counts at 85 deg or more at the end of the hold. Only seed 1 of the corrected baseline and pose runs below; pose A at 67400, then 67800.
+
+| controller | doors, seeds 1 + 2 | lever: latch released | notes |
+|---|---|---|---|
+| [`66600` alone](#/week/8/run/20261107T073905_b_door_alone_s1) | 0 of 32 | 0 of 32 | hand stops 5 cm short, fingers never touch |
+| [`66600` + wrist](#/week/8/run/20261107T074832_b_door_wrist_s1) | 0 of 32 | 0 of 32 | 7.5 cm short |
+| [`66600` + wrist + goal correction](#/week/8/run/20261107T092652_b_door_wristcorr_s1) | **13 of 16** (seed 1) | see below | lateral 0.8 cm at arrival |
+| [pose A 67400](#/week/8/run/20261107T085235_a_door_s1) | 14 of 32 | 17 of 32, lever 47-51 deg | lateral 4.4 cm |
+| [pose A 67800](#/week/8/run/20261107T095316_a2_door_s1) | 6 of 16 (seed 1) | | lateral 3.0 cm |
+| [pose A 67800, pose outer loop](#/week/8/run/20261107T094415_a2_door_corr_s1) | 2 of 16 (seed 1) | [13 of 16](#/week/8/run/20261107T100205_a2_combiner_corr_s1), lever 54 deg | 12 of 16 keep the grip, doors stop at 78-86 |
+
+**I told Lukas `66600` opened 0 of 32, flagged as possibly unfair. It was unfair.** The goal is at radius 0.60, past the 0.58 it trained on, and it stops short. With the existing goal correction the position-only policy and the wrist servo open 13 of 16, more than the pose policy so far. F-146's 15 of 32 was on the old arm and is not this comparison. That is the bar: the pose policy has to beat this controller, not `66600` alone. [F-129's lever recipe](#/week/8/run/20261107T093552_b_combiner_recipe_s1) reads 5 of 16 with 7 latches released, seed 1.
+
+**Why the pose policy trails, from the traces.** During `enter`, a straight 12 cm slide at a fixed attitude, its hand swings up to 34 deg and 7 cm and comes back. In training position and orientation only ever change together, along joint lines, so it has never met a pure translation, and that is what reaching a handle is. Success follows arrival: attempts in within about 2 cm and 12 deg mostly open the door.
+
+**The outer loop, my error.** It slides the commanded pose by the hand's steady miss in the holds. Held through the pull it left the goal 9-11 cm off the handle, so doors stopped short of 85, which is why it scored 2 where it kept more grips. Now it fades over 1 s after the grip; not yet re-run.
+
+**The IK teacher**, reward on the goal's joint angles as well as its pose, [at 800 iterations](#/week/8/run/20261107T101209_eval_seed1_pe_t_67400): position 2.77 cm, orientation 14.1 / 31.6 deg, against A's 3.38 and 16.2 / 42.9, but told compliance 3.32 mm/N, 36% under `66600` and outside the bar. A term pinning the joints also pulls against the force offset. Stopped: the accuracy is not worth the force-awareness. Worth knowing as a way to lose it.
+
+**The next step.** `pose_goals.TASK_MIX` adds the primitives: translations, half along the hand's own approach, turns in place, and arcs about a pivot 6-40 cm off the hand, each checked with the analytic IK at three points. Run `pose_p` continues from A's 67800, so A's own continuation to 69600 is its control.
+
+**Training-time metrics are noisy.** `Metrics/pose_*` averages only the environments that reset that iteration; single readings run 15-87 deg with no change in the policy. Use windows, or the frozen set.
+
+### 2026-11-07 · The pose policy passes the position-only controller on the lever, and edges it on the door
+
+The outer loop, fading after the grip, on pose A `68200` (still no primitives), against the fair baseline. Real-arm model, seeds 1 and 2, 16 attempts each, same placements:
+
+| | doors at 85 deg or more at the end of the hold | lever: latch released | lever then door past 30 deg |
+|---|---|---|---|
+| `66600` + servo + goal correction ([door](#/week/8/run/20261107T092652_b_door_wristcorr_s1), [2](#/week/8/run/20261107T101030_b_door_wristcorr_s2); [lever](#/week/8/run/20261107T093552_b_combiner_recipe_s1), [2](#/week/8/run/20261107T102043_b_combiner_recipe_s2)) | 13 + 5 = **18 of 32** | 7 + 6 = **13 of 32** | 5 + 1 = 6 |
+| pose A + outer loop ([door](#/week/8/run/20261107T102923_a3_door_corr_s1), [2](#/week/8/run/20261107T104359_a3_door_corr_s2); [lever](#/week/8/run/20261107T103703_a3_combiner_corr_s1), [2](#/week/8/run/20261107T105125_a3_combiner_corr_s2)) | 10 + 11 = **21 of 32** | 13 + 15 = **28 of 32** | 5 + 6 = 11 |
+
+No falls in any. Lateral arrival 1.5-1.9 cm against the baseline's 0.6-0.8, so the baseline still arrives better; the pose hand then holds better. 30 of 32 pose doors peak past 85 deg (seed 2: all 16 at 87 or more); some drift back in the hold, which is what the count reads. **21 of 32 is short of the 24 set for "working"**, and 21 against 18 is inside the noise of two seeds, as F-098 warns. 28 against 13 on the lever is not. The lever's turn used 52 deg for pose and 55 for the baseline's recipe, its ease differing too: a small mismatch to remove in the final comparison.
+
+**The standing pull was the wrong test for a pose.** I checked the script's commanded hand against the analytic IK. Everything through `ease`, and the whole walking door pull, solves 100%. The standing `pull` of `combiner_phases` solves 9.9% on the arm and 41% with the body: it swings the hand with the door by the arm alone, to poses that do not exist. The position-only baseline never meets this because it does not command that axis. So the 40-75 deg of error there was the script, not the policy. `script.lever_door_phases` (`--walk_pull`) turns the lever, then walks the door open, as the dog does (F-219); all of it solves 100%.
+
+### 2026-11-07 · The pose hand shakes on a held goal, and the jitter gate did not see it
+
+The bench probe, told force against real force at one spot, as F-269 ([`66600`](#/week/8/run/20261107T111757_probe_seed1_bench_66600), [pose A `68200`, hand 60 deg down](#/week/8/run/20261107T112017_probe_seed1_bench_pose)), through the Follower, legs at 1 N·m, the dog's stance:
+
+| holding a goal | tip height band | lead over reports | command step per cycle | leg target off default | tilt |
+|---|---|---|---|---|---|
+| `66600` | **0.14 cm** | 5-9 deg | 3-7 deg | 0.22 rad | 5.5 deg |
+| pose A `68200` | **4-5 cm** | 24-31 deg | 23-31 deg | 0.55 rad | 9 deg |
+
+**This would stop on the dog**, or close to it: the lead stop is 25 deg held 0.5 s. Door and lever counts hid it, and so did the frozen set, where command steps and reversals read like `66600`'s (J1-6 2.1-3.5 deg RMS against 2.1-3.0), because they pool moving steps with still ones. In the door demo the hand's spread on a hold is 0.85 cm against the baseline's 0.34. The 50 Hz `action_rate_arm` term grew six-fold through training, and action noise from 0.53 to 0.77, so `arm_command_step` was largely charging noise and not the mean. **Pose A must not go on the dog as it stands.**
+
+`66600` on the bench: the tip drops 5.4 mm a newton told, and presses only once it reaches the bench, at told 6 and 8 N from 1 cm. Pose A's numbers there are swamped by the shake and say nothing yet about force in contact.
+
+**Done about it:** `eval` now reports the shake on held goals (`hold_shake_cm`, `hold_turn_shake_deg`), and `pose_still` rewards a hand at rest on a held goal, F-104's fix for a tool. `pose_q` tests it with the step penalty doubled and action noise cut to 0.5.
+
+[The lever then walked door baseline](#/week/8/run/20261107T105821_b_leverwalk_s1), [seed 2](#/week/8/run/20261107T110654_b_leverwalk_s2): 16 of 32 latches released, 8 doors past 30 deg, 4 of them at 85 or more.
+
+### 2026-11-07 · How much the pose hand shakes, and a bar for it
+
+Standing, unforced, on held goals of the frozen set ([`66600`](#/week/8/run/20261107T113252_eval_seed1_pe4_66600), [pose A `68200`](#/week/8/run/20261107T113609_eval_seed1_pe4_a_68200)): 0.21 cm and 0.45 deg against **1.20 cm and 1.85 deg**, six times. A [first version of the measure](#/week/8/run/20261107T112804_eval_seed1_pe3_a_68200) pooled in the walking steps and read 1.59 against 1.58, a tie that was only the gait. So the entry above is right that the hand shakes and too strong in size: the bench's 4-5 cm is that hand, 60 deg down near the bench, and the median hold is 1.2 cm.
+
+The same set, pose A `68200`: position 2.95 cm, orientation 11.05 deg settled, 8.33 unforced, told 4.33 mm/N (17% under `66600`), felt 15.20, no falls. A's own training is still improving it: 16.2 deg at 800 iterations, 11.05 at 1,600.
+
+**New bars, set before `pose_q` is scored:** standing, on held goals, shake at most 0.5 cm and 1 deg median, and on the bench no plan past the 25 deg lead for 0.5 s. `66600` passes both.
+
+**A run lost.** `pose_p`, the first primitives run, did 120 iterations in an hour: its reachability checks launched thousands of small kernels a step, 32 s an iteration. Stopped, solves batched (`pose_goals._resample_cartesian`), goals drawn every 5 steps, restarted as `pose_p2` at 5 s. The first primitives set was rebuilt for the new draw order; nothing had been scored on it.
+
+### 2026-11-08 · Pose A's end: every task bar met, and the dog's stops failed
+
+`pose_a` at 69599, 3,000 iterations from `66600`, through `suite.sh`: the same tests in the same order, for every candidate from here on. Real-arm model, seeds 1 and 2, outer loop on.
+
+| | pose A `69599` | bar | fair baseline |
+|---|---|---|---|
+| [hand, settled](##/week/8/run/20261107T121205_eval_seed1_s_afin_dev) | 2.68 / 5.58 cm, 8.38 / 29.45 deg | at most 3 cm and 10 deg: **met** | `66600` 3.31 cm, 72.9 deg |
+| on [primitive goals](##/week/8/run/20261107T121500_eval_seed1_s_afin_prim), never trained on | 2.45 cm, 9.47 deg | | |
+| told, felt | 5.74, 14.10 mm/N | within 20% of 5.19: **met** | 5.19, 15.58 |
+| falls | 0 of 64 | 0: **met** | 0 |
+| [doors](##/week/8/run/20261107T121807_s_afin_door_s1) | **25 of 32** | at least 24, and more than the baseline: **met** | 18 of 32 |
+| [lever then walked door](##/week/8/run/20261107T122708_s_afin_lever_s1) | 25 latches, 24 doors past 30 deg, **22 past 85** | more than the baseline: **met** | 16 latches, 8 past 30, 4 past 85 |
+| [would the dog stop it, far goals](##/week/8/run/20261107T130154_probe_seed1_s_afin_far) | 52 of 60 plans stopped, lead to 237 deg, tilt 22 deg | no worse than `66600`: **failed** | |
+| [bench](##/week/8/run/20261107T125957_probe_seed1_s_afin_bench) | 14 of 15 stopped, lead to 150 deg | **failed** | none stopped |
+| shake, standing | 1.68 cm, 2.10 deg | at most 0.5 cm and 1 deg: **failed** | 0.21 cm, 0.45 deg |
+
+**What this shows.** In simulation, on the fitted arm, one policy now takes the whole hand and keeps the force input, and with a task-layer outer loop it opens more doors than the best position-only controller and does the lever then door sequence about five times as often at the 85 deg mark. The task result rests on one seed of training, two seeds of placements, a friction grip and a free door.
+
+**What this does not show, and it matters more.** It is not deployable. Hard lead (past 60 deg) stops 47 of the 60 far plans, though the hand arrives (2.5-5.7 cm off): it asks far more of the arm than the arm can do and gets there anyway, targets used as torques, F-255's failure. Training further improved the task scores and worsened this. `66600` passed the same kind of screen only because its lead was selected for.
+
+**Next.** `arm_lead_weight` prices exactly what `ArmWatch` stops on, past 10 deg, which nothing in training did. To be judged with `pose_q` (still hand, doubled step penalty, less noise) on the same suite.
+
+### 2026-11-08 · Primitives track better and open fewer doors; arrival is what decides
+
+`pose_p2`, from pose A `67800` with the task primitives, against A's own continuation to `69599`, the matched control. Same suite.
+
+| | A `69599` | [primitives `69599`](#/week/8/run/20261107T141657_eval_seed1_s_p2_dev) |
+|---|---|---|
+| hand on joint-line goals, cm, deg (median / p90) | 2.68 / 5.58, 8.38 / 29.45 | 2.75 / 4.89, **7.77 / 16.25** |
+| hand on primitive goals | 2.45 / 5.54, 9.47 / 21.19 | 2.64 / 4.57, 7.50 / 17.71 |
+| told on primitive goals, mm/N | 3.23 | 1.57 |
+| [doors](#/week/8/run/20261107T142053_s_p2_door_s1) | **25 of 32** | 10 of 32 |
+| latches | 25 | 26 |
+| [lever then door past 85](#/week/8/run/20261107T142620_s_p2_lever_s1) | **22 of 32** | 12 of 32 |
+
+Primitives cut the orientation tail nearly in half, as designed, and doors fell. I expected the opposite and my guess from the compliance figure, a hand too stiff for the hinge, was wrong: the grip is rarely lost in the pull. Half the failed attempts end at arrival, 14-30 N on the fingers before the grip and 20-34 deg of hand error. The time series shows why: the hand's orientation swings 3-20 deg with a period of 1-1.5 s through the hold, in A as well, and an attempt that lands 3-6 cm off puts a finger on a bar it clears by 11.5 mm a side, which knocks it 30-40 deg out. Median lateral arrival is 2.4 cm here, 1.8 for A, 0.8 for the position-only baseline. One seed each, so the 25 against 10 may be partly chance (F-098), but the mechanism is in the traces.
+
+**Correction, same day, after `pose_q`:** arrival is not what decides, see the next entry. **What it means.** Free-space tracking on the frozen goals does not predict the door; arrival precision does, and that is set by the hold's oscillation. The likely cause ties it to the blocker: a policy demanding 50 deg of lead keeps the Follower at its speed cap, overshoots and reverses. If so the lead penalty should improve arrival as well as the stops. `pose_r10` and `pose_r40` test that.
+
+The far screen's hand changed between these runs: A's far numbers used a straight-ahead hand at every goal, `p2`'s a hand along the goal's bearing, so 52 and 39 of 60 are not comparable.
+
+### 2026-11-08 · The quiet policy passes the dog's far goals and loses the door; a hand too rigid for the hinge
+
+`pose_q`, from A's end: primitives, `pose_still`, the step penalty doubled, action noise cut to 0.5, 1,500 iterations. Suite, against `p2`:
+
+| | [`pose_q` `71098`](#/week/8/run/20261107T150103_eval_seed1_s_q_dev) | `p2` | A |
+|---|---|---|---|
+| hand, cm, deg | **2.36, 7.01** | 2.75, 7.77 | 2.68, 8.38 |
+| told, felt, mm/N | 4.94, 14.42 | 4.93, 14.10 | 5.74, 14.10 |
+| [far plans stopped, hand along the goal](#/week/8/run/20261107T155116_probe_seed1_s_q_far) | **1 of 60**, lead to 57 deg | 39 of 60 | not run that way |
+| [bench plans stopped](#/week/8/run/20261107T154918_probe_seed1_s_q_bench) | 7 of 15, lead to 79 deg | 10 of 15 | 14 of 15 |
+| shake, standing | 1.24 cm, 2.01 deg | 1.35, 2.25 | 1.68, 2.10 |
+| doors | 10 of 32 | 10 of 32 | **25 of 32** |
+| lever then door past 85 | 16 of 32 | 12 of 32 | **22 of 32** |
+
+The screen improved from 39 stopped to 1, the shake bar is still far off (1.24 cm against 0.5), and doors did not recover. [`66600` on the same far goals](##/week/8/run/20261107T130449_probe_seed1_ref_66600_far): 0 of 60, lead 3 to 4 deg.
+
+**I had the door wrong twice.** First I put it down to a stiff hand, then in the entry above to arrival precision. Arrival is not it: `pose_q` arrives better than A (lateral 1.20 cm against 1.58, hand 6.5 deg against 8.4) and touches the bar as often (23 of 32 each), yet 6 of those 23 open against A's 16. The [door traces](##/week/8/run/20261107T155226_c_q_door_s1) settle it. On seed 1 `pose_q` grips well in most attempts, 12-14 N at 0.7-1.0 cm, the door starts, and then the grip goes at a door angle of 20-25 deg, in nearly every attempt, and 0 of 16 open. [A on the same placements](##/week/8/run/20261107T160132_c_a_door_s1) holds 14-15 N to 90 deg and past.
+
+**The working idea.** The door moves on its hinge, not on the script's arc, and a hand holding the commanded orientation to a few degrees is twisted out of a friction pinch. UniFP gives position a spring and pushes only at the tool point, so training never creates a moment about it: every twist at the hand is an error to reject, and the better the pose tracking, the harder it rejects. That fits this table but is not shown. `--pose_wrench` tests it: pushes land off the tool point and the orientation target gives way by `Exp(tau / K_r)`, SoftMimic's law (Margolis et al. 2025) on UniFP's task, K_r 1.5 N·m/rad; `eval` measures degrees given per N·m. Both factors are run: with primitives (`pose_wp`) and without (`pose_wa`), because primitives are also a suspect, both primitive-trained policies having opened 10.
+
+**Wide jaws** (`--jaw_wide`, 18.5 mm of clearance a side, not 11.5): [A 15 of 16](##/week/8/run/20261107T162853_c_a_wide_s1) against 12 of 16 on seed 1; `pose_q` [9](##/week/8/run/20261107T161041_c_q_wide_s1) + [12](##/week/8/run/20261107T161947_c_q_wide_s2) of 32 against 10. A free choice on the real gripper, and worth taking in the script.
+
+### 2026-11-08 · What the door actually turns on: the hand keeping up when the walk starts
+
+**The rotational idea, measured: not supported.** Pushes off the tool point, degrees the hand gives per N·m ([A](), [quiet](), [primitives]()): 17.5, 18.3, 18.8. About the same, A if anything the stiffest, so A's doors do not come from a softer wrist, at least against a slow push. The entry above calls that "the working idea", and it was wrong as an explanation of the difference. `pose_wa` and `pose_wp` still run: a measured law for rotation is worth having, but they no longer rest on this story.
+
+**What the traces show instead.** In the first second of the pull the door does not move for `pose_q` and the hand climbs to 4.8 cm ahead of its target, pressing the door it should be drawing back. Then the base lurches (pitch +5 to -5.5 deg), the door jerks 15 deg and the bar slips out upward. For A the door opens from 0.3 s and the hand stays within 1-2.5 cm. Over 67 attempts on five runs in which the grip held through the first 1.5 s, by the peak of that lag:
+
+| hand ahead of target, first 1.5 s | attempts | opened |
+|---|---|---|
+| under 5 cm | 41 | 37 (90%) |
+| over 5 cm | 26 | 11 (42%) |
+
+A's median is 3.3 cm, `pose_q`'s 5.5. So the door turns on tracking bandwidth at the walk's start, and the likely cost of the quiet recipe is arm response: the still-hand term and the doubled step penalty make small corrections expensive, and those keep the hand on the bar. Correlation over one seed of training each; the dependence on the recipe is not separated.
+
+**The trade this exposes.** The recipe that passes the dog's stops slows the arm that opens the door. On the stops themselves, lead is what the policy asks, not what the arm gets: the Follower already caps what is sent. So whether a 25 deg lead stop should read the raw target or the Follower's output is a real question, and it is Lukas's: that stop is a safety device, and F-255's target running away is what it exists to catch.
+
+**A free fix tried.** The script starts the walk on a step of velocity. `--ease_pull` starts it smoothly, for any controller; queued for pose A, `pose_q` and the baseline, wide jaws, both seeds.
+
+### 2026-11-08 · Pricing the lead: 32 of 32 doors, 31 of 32 lever then door, and nothing the dog would stop
+
+`pose_r10`, from `pose_q`'s end, 1,500 iterations: its recipe plus `--arm_lead_weight -10` (the arm targets' lead over the arm's reports past 10 deg, rad² summed) and `--base_tilt_weight -20` (past 8 deg). Suite, real-arm model, seeds 1 and 2, outer loop on:
+
+| | [`pose_r10`](#/week/8/run/20261107T170122_eval_seed1_s_r10_dev) | `pose_q` | fair baseline | bar |
+|---|---|---|---|---|
+| [doors](#/week/8/run/20261107T171020_s_r10_door_s1) | **32 of 32** | 10 | 18 | 24: **met** |
+| [lever then walked door](#/week/8/run/20261107T171920_s_r10_lever_s1) | 31 latches, **31 of 32 past 85** | 16 | 16 latches, 4 past 85 | more than baseline: **met** |
+| [far plans stopped](#/week/8/run/20261107T175359_probe_seed1_s_r10_far) | **0 of 60**, lead 6 median, 8 worst | 1, 57 worst | 0 of 60, 3-4 deg | **met** |
+| [bench plans stopped](#/week/8/run/20261107T175203_probe_seed1_s_r10_bench) | **0 of 15**, lead to 18 deg | 7, 79 worst | 0 | **met** |
+| tilt, legs on the far goals | 10.8 deg, 0.49 rad | 14.3, 0.65 | 7.8, 0.30 | under the dog's 15 and 0.9 |
+| falls | 0 of 64 | 0 | 0 | **met** |
+| shake, standing | 0.81 cm, 0.77 deg | 1.24, 2.01 | 0.21, 0.45 | 0.5 cm: not met, 1 deg: **met** |
+| hand, frozen set | 3.18 cm, 10.32 deg | 2.36, 7.01 | 3.31, 72.9 | 3 cm, 10 deg: just missed |
+| told in free air | 2.90 mm/N | 4.94 | 5.19 | within 20%: **not met** |
+
+**What this shows.** The lead was the door's problem as well as the dog's. I said in the entry above that the quiet recipe was slowing the arm, and that an arm slow enough for the stops would lose the door. Wrong: pricing the lead took doors from 10 to 32. A policy asking 50 deg past the arm holds the Follower at its cap, and that, not a cautious arm, is the most likely source of the lag and lurch; not separately tested.
+
+**Force in contact, hand held.** Bench, the hand commanded 60 deg down and held to 9-11 deg, compliant pad, one spot. From 1 cm above: 5.2, 7.7, 10.9, 13.8, 13.9 N for told 0, 2, 4, 6, 8 N. From 3 cm: 0.6, 2.7, 4.8, 6.8, 10.8 N. So a slope of about 1.2-1.5 N a newton, stalling near 14 N, with no stop. On the dog F-269 had 6 to 19 N for 0 to 6 N, stalling near 18, for a hand left to fall where it would. The free-air 2.90 mm/N misses its bar, but the contact slope, which is the bar that is about force, wants its matched `66600` run (queued; `66600` only touched at told 6 and 8 N on this bench).
+
+**What it does not show.** One training seed, reached through a chain of four recipes chosen on the development set and on these same door placements, so these counts flatter it. Not yet scored on `unifp_pose_validation`. Simulation throughout: a friction grip, a free door, the fitted arm. Nothing has been replayed against the dog's own frames, the gate F-256 and F-258 say a simulator cannot replace; the leg and tilt margins here are not forecasts of the dog. The told bar and the shake bar are not met.
+
+**Next.** Validation; stiffer levers and door closers with told force on and off, against the baseline; and two fresh seeds of the final recipe straight from `66600`, so the result does not rest on this lineage.
+
+### 2026-11-08 · The pose candidate fails the replay on the dog's own frames
+
+`pose_r10` exported with `demos/combiner_key/robot/export_policy.py` (numpy against torch 3.1e-5 on actions), then `logs/unifp_train/armlink/gate4.py` with `GATE_GLOB='reach_pose_r10_*.npz'`: the four real `66600` stands' legs and body, the arm closed through the real Follower, the gate F-256 made the one for a policy on the dog.
+
+| | lead from 1 s | leg target, first s / after | hand, last 3 s | gate |
+|---|---|---|---|---|
+| `66600` | 12.3 deg | 0.57 / 0.34 rad | 7.5-9.7 cm | pass |
+| `pose_r10` | **43.8 deg** | 0.61 / **1.43 rad** | **68-73 cm** | **fail** |
+
+The trace says why. With the dog's legs as they were, J1 swings to -82 to -96 deg by 4 s, the arm turned to the side, and the legs are asked 1.3 rad. F-256 measured the dog's legs answering 0.17 of what they are asked; this policy reaches with its whole body and needs them to answer as simulated, and when they do not it runs away, F-252's failure. My recipe was `armft6b`'s, without `armft6c`'s `--leg_answer_range` and `--leg_start_noise`, and every simulated screen above, the dog's stops included, had legs that answer. So those screens could not see this.
+
+**So: `pose_r10` must not run on the dog.** Its door and lever counts stand as simulation results and say nothing about the dog. The export also records neither the controlled point (this policy's is the jaw centre) nor what channels 6:9 mean, so a runner reading it would take it for a fingertip policy with the hand uncommanded; told to the dog's session, no dog-side file changed.
+
+**Next.** `pose_s`: r10's recipe with `--leg_answer_range 0.1 1 --leg_start_noise 0.15`, from r10's end, gated by this replay. F-258 and F-260 found that hard for `66600`'s fine-tunes, and it may be harder for a policy that leans on its legs. One fresh seed of the final recipe (`pose_f_s2`) keeps running for the simulation result's reproducibility; the other was stopped for `pose_s`.
+
+**Force tests so far** (seed 1, 16 attempts each, lever then walked door; [r10 0.8 N·m told 0](#/week/8/run/20261107T185403_f_r10_lever0.8_t0), [told 6](#/week/8/run/20261107T201152_f_r10_lever0.8_t6)): with no told force both controllers stall stiffer levers short of the 45 deg latch (0.8 N·m: 36.8 and 33.9 deg; 1.2: 30.8 and 29.5), and a 4 N·m door closer stops both (0 of 16; door to 38 and 36 deg). Told 6 N moves the lever 3 deg (39.7 and 37.4). Force is used, and is not enough to change these outcomes at the trained range. The real lever is about 0.65 N·m (F-183), between the 0.4 both pass and the 0.8 both do not: worth a run there.
+
+### 2026-11-08 · Is the force useful with the pose? Within the trained 8 N, barely
+
+Seed 1, 16 attempts each, `--told_force_n` along the script's path in turn, crack and pull, for `pose_r10` and the position-only baseline (`66600` + servo + goal correction). Lever cases are the lever then walked door; door cases the walked door with a closer.
+
+| mechanism | told | `pose_r10` | baseline |
+|---|---|---|---|
+| lever 0.8 N·m | 0 / 6 N | lever to 36.8 / [39.7 deg](#/week/8/run/20261107T201152_f_r10_lever0.8_t6), 0 / 1 opened | 33.9 / 37.4 deg, 0 / 0 |
+| lever 1.2 N·m | 0 / 6 N | 30.8 / 32.1 deg, none | 29.5 / 36.2 deg, none |
+| door closer 4 N·m | 0 / 6 N | door to 37.7 / [37.0 deg](#/week/8/run/20261107T205320_f_r10_door4_t6), none | 35.9 / 36.7 deg, none |
+| door closer 8 N·m | 0 / 6 N | 21.1 / 20.9 deg, none | 23.4 / 21.8 deg, none |
+
+The latch needs 45 deg. **So within the trained range the told force barely changes these outcomes**: a few degrees on levers, nothing against a closer, the same for both controllers. It is used (the bench showed it in contact force, hand held), but 6 N told is small against what these need, and the arm stalls near 14 N in simulation (bench) and 18 N on the dog (F-269). The mechanism policy's 80 N (F-108) came from an arm without the D1's servo, link and limits. What the pose buys is not force capacity; it is getting there and holding on.
+
+What this leaves for the thesis's force-awareness claim on these tasks: the light door and the 0.4 N·m lever do not need force, and the stiffer ones are past the arm with or without it. The real lever's 0.65 N·m (F-183) is the case where it might matter; not yet run.
+
+### 2026-11-08 · Two of my readings, measured: the told figure is too noisy to judge, and the lead does not bound the force
+
+**The told compliance, with its 95% interval over episodes** (a bootstrap of the 64 episodes, now in `eval.py`):
+
+| | told, mm/N | felt, mm/N |
+|---|---|---|
+| [`66600`, validation](#/week/8/run/20261107T212930_eval_seed1_v_66600) | 7.26 [4.02, 11.13] | 17.02 [12.47, 22.55] |
+| [`pose_r10`, validation](#/week/8/run/20261107T213224_eval_seed1_v2_r10) | 4.95 [1.98, 8.42] | 15.81 [11.99, 20.17] |
+| [`pose_r10`, development](#/week/8/run/20261107T213519_eval_seed1_d2_r10) | 2.90 [1.02, 4.99] | 13.58 [9.88, 17.16] |
+
+So the "within 20%" bar on told compliance cannot be judged with 64 episodes on this measure, and I should not have called it met or missed for any policy, nor said r10 lost 44%. The bench's contact slope, told against real force at a spot, is the better evidence that force is kept (entry above, and its matched `66600` run is queued). The bar stands as written; the measure it named does not resolve it.
+
+**The lead and the force.** I suggested a priced lead turns the stiff servo into a softer arm, since on a position servo the lead is what pushes. The solver's own joint force through the door says no (`get_dof_projected_joint_forces`, now logged by `run_demo.py`): the arm's most-loaded joint is at its 3.33 N·m limit through the pull and hold for [pose A](#/week/8/run/20261107T213810_t_a_door_s1) and [`pose_r10`](#/week/8/run/20261107T214713_t_r10_door_s1) alike. What differs is the lead itself: A's median 29-42 deg (p90 to 91), r10's 1.6-5.8 (p90 under 8.1). So r10 opens the door with the arm as loaded as A's, through a calm command stream rather than a Follower held at its cap. Why that keeps the grip is not shown.
+
+Validation for the bars: `pose_r10` 3.82 cm and 10.70 deg settled against `66600`'s 3.45 cm and 59.5 deg; shake 0.77 cm and 0.66 deg against 0.21 and 0.84. The position, orientation and position-shake bars are missed by small margins, the turn-shake bar met.
+
+### 2026-11-08 · Sticky legs halve the replay's lead and the legs then ask more
+
+`pose_s`: `pose_r10`'s recipe with `--leg_answer_range 0.1 1 --leg_start_noise 0.15`, from r10's end, 1,500 iterations. Replay on the four real `66600` stands (`gate4.py`):
+
+| | lead from 1 s | leg target, first s / after | hand, last 3 s | J2 at 10 s |
+|---|---|---|---|---|
+| `66600` | 12.3 deg | 0.57 / 0.34 rad | 7.5-9.7 cm | 19-22 |
+| `pose_r10` | 43.8 | 0.61 / 1.43 | 68-73 | 12-24 |
+| `pose_s` | **23.2** | 1.01 / **1.54** | **21-32** | 45-52 |
+| gate | 15 | 1.2 / 0.9 | | |
+
+Better on the arm and the hand, worse on the legs, and still failing. On legs that may not answer, it learned to ask them for more: `armft6c`'s pattern (F-258). Nothing in training prices how far the legs are asked to go, and the dog stops at 0.9 rad. `pose_s2` adds `--leg_target_weight -20`, the leg targets past 0.4 rad, from `pose_s`'s end.
+
+**Real lever stiffness**, 0.65 N·m (F-183), lever then walked door, seed 1: `pose_r10` releases the latch in 1 of 16 told nothing and **4 of 16 told 6 N** (lever 41.4 and 43.6 deg); the baseline 0 and 1 (38.0, 39.1). Every latch released went on to open the door past 85 deg. The first case here where the told force changes the outcome, and the lever at the box's real stiffness is what limits both controllers. Lever commanded past its stop, with the told force at the trained 8 N, is queued.
+
+### 2026-11-08 · The real lever, opened by commanding it past its stop
+
+`pose_r10`, lever at the box's real 0.65 N·m (F-183), lever then walked door, seed 1, 16 attempts: the lever commanded to `--turn_deg` against its 60 deg stop.
+
+| commanded | told 0 N | told 8 N |
+|---|---|---|
+| 55 deg | 1 latch | (6 N: 4) |
+| [62 deg](#/week/8/run/20261108T001625_ov_r10_62_t0) | 9, lever 45.6 deg | 9 |
+| [70 deg](#/week/8/run/20261108T003731_ov_r10_70_t0) | **16 of 16**, lever 52.5 | 16 |
+
+Every latch released went on to open the door past 85. **So the real lever is a task-layer choice, not a force one.** A goal past where the mechanism can go is a push through the policy's compliance, UniFP's own idea, and the stop limits it; the told force adds nothing once the goal is past the stop. The real lever also turns to a stop (F-184). The position-only baseline with the same 70 deg and a second seed for both are queued, since one seed of placements is what F-098 warns against quoting.
+
+### 2026-11-08 · Pricing the leg targets passes the legs and the hand on the dog's frames, and costs the tasks
+
+`pose_s2`: `pose_s`'s recipe plus `--leg_target_weight -20` (leg targets past 0.4 rad), from `pose_s`'s end, 1,500 iterations.
+
+| | `66600` | `pose_r10` | `pose_s` | [`pose_s2`](#/week/8/run/20261108T014846_eval_seed1_s_s2_dev) |
+|---|---|---|---|---|
+| replay: lead from 1 s (gate 15) | 12.3 | 43.8 | 23.2 | **21.9** |
+| replay: leg target first s / after (1.2 / 0.9) | 0.57 / 0.34 | 0.61 / 1.43 | 1.01 / 1.54 | **0.48 / 0.48** |
+| replay: hand, last 3 s, cm | 7.5-9.7 | 68-73 | 21-32 | **7.4-10.0** |
+| [far goals on legs answering 0.17](#/week/8/run/20261108T024331_probe_seed1_s_s2_sticky) | | | 60 of 60 stopped (legs) | **0 of 60**, legs 0.41 |
+| doors | | 32 of 32 | 31 | **20** |
+| lever then door past 85 | | 31 of 32 | 12 | **10** |
+| hand, frozen set | 3.31 cm, 72.9 deg | 3.18, 10.32 | 4.08, 10.09 | 4.20, 11.20 |
+| falls, frozen set | 0 | 0 | 0 | **2 of 64** |
+
+**What this shows.** On the dog's own frames the legs and the hand are now where `66600`'s are, and only the replay's lead (21.9 against its 15 gate; the console's stop is 25 for 0.5 s) is past. The sticky-leg far screen in simulation agreed with the replay both times (`pose_s` stopped on legs, `pose_s2` clear), so it is a usable screen before export. But the price is the tasks: doors 32 to 20, lever then door 31 to 10, and two falls where there were none. A pose policy that reaches with its whole body is what opened the doors in simulation, and the dog's legs do not answer like that.
+
+**Not shown:** that any of these would behave on the dog as the replay says; the replay holds `66600`'s legs (F-258).
+
+### 2026-11-08 · A pose policy passes the replay on the dog's frames; and at the real lever only the pose turns it
+
+**`pose_s3`**, `pose_s2`'s recipe with the lead priced at -30 (from -10), from `pose_s2`'s end, 1,000 iterations. `gate4.py` on the four real `66600` stands:
+
+| | lead from 1 s | leg target first s / after | hand, last 3 s | J2 at 10 s | gate |
+|---|---|---|---|---|---|
+| `66600` | 12.3 deg | 0.57 / 0.34 rad | 7.5-9.7 cm | 19-22 | pass |
+| `pose_s3` | **12.3** | **0.52 / 0.53** | **6.2-11.8** | 23-28 | **pass** |
+
+The first policy here that commands the hand's orientation and clears the gate F-256 made the one for the dog. Its suite (the tasks, the stops, the bars) is running; until then this says it would not be stopped on the replay, not that it does the tasks.
+
+**The real lever, commanded past its stop, both controllers, two seeds:** `pose_r10` [16 of 16](#/week/8/run/20261108T003731_ov_r10_70_t0) and [16 of 16](#/week/8/run/20261108T030434_ov_r10_70_s2), the latch and the door every time; the position-only baseline with the same 70 deg, [0](#/week/8/run/20261108T024339_ov_b_70_s1) and [0 of 16](#/week/8/run/20261108T025404_ov_b_70_s2), its lever at 41-42 deg. So at the box's real stiffness the whole-hand command separates the two completely. Commanding past a stop only works if the hand keeps its attitude on the bar while it pushes, which is what the orientation command adds and the wrist servo, with the pitch free, does not.
+
+**Fresh seeds of the deployable recipe** (`pose_g_s2`, `pose_g_s3`), straight from `66600`, 4,000 iterations each, both lanes: the final recipe in one step, so that what passes does not depend on the chain of seven recipes that found it.
+
+### 2026-11-08 · RSS 2027 Stage 1: what the 4 December deadline asks, and where the work stands
+
+**Why.** Lukas's supervisor asked whether he is on track to submit an extended abstract to RSS by 4 December. No run. This entry reads the call for papers and checks the record against it.
+
+**The call** ([roboticsconference.org/information/cfp](https://roboticsconference.org/information/cfp/), read 2026-11-08). RSS 2027 (Athens, 6-11 July 2027) reviews in two stages:
+- **4 Dec 2026, 11:59 pm AoE:** a 6-page extended abstract (5 pages of content, 1 of references). RSS LaTeX or Word template, anonymised, no links, no supplementary material or video, through OpenReview. The call asks for "a semi-complete paper": the problem, hypotheses and method fully written, and experiments "missing or preliminary".
+- **5 Feb 2027:** reject, or an invitation to rebut (5-12 Feb).
+- **26 Feb:** reject, or an "Extension Charter" listing the evaluations the reviewers require.
+- **16 Apr:** the full paper, 8 pages, carrying out the charter. Decision 30 Apr.
+
+Negative results are not a reason to reject. Every author needs an OpenReview account; a profile without an institutional email can take up to two weeks to clear moderation. The author list is "generally considered final" at submission. The page does not say outright that the abstract is required for the April paper, but it describes Stage 2 only for papers that come through Stage 1. It says nothing about simulation-only results. Week 3's dates (4 Dec, 16 Apr) were right.
+
+**Where the work stands against it.**
+- **No question is chosen and no draft exists.** The RSS decision was carried as not done in Updates 3, 4 and 5 and has been on no plan since Week 6.
+- **The Week 3 idea has not moved, and its premise changed.** That idea was the body amplifying a weak arm's force (series against parallel load paths). It rested on 3.3 / 1.7 N·m joints. The shoulder and elbow motor is rated 3.14 N·m, with 4.90 continuous and 9.80 at stall (F-142). The bench torque measurement it needed was never done, and its scoop check (CTCS, Brace Yourself, FORTE) dates from 1 October.
+- **The freshest clean contrast is the whole-hand pose command.** At the real lever stiffness, commanded past its stop, `pose_r10` opens 16 of 16 on each of two seeds and the position-only baseline 0 of 16 on each (simulation). `pose_s3` passes the replay gate on the dog's frames. Two days old, and not yet on the dog.
+- **On the dog:** whole-body reaching, far goals and a 30 s walk (F-257, F-261, F-263), with the hand's error calculated, not measured. Real force follows the told force, 6 to 19 N, at one spot on a scale (F-269). Eight force wipes ran open loop (F-271).
+- **The gates a paper's claims would lean on are open:** G3 not started (three seeds, matched budgets), G6 in progress, G7 not started.
+
+**Does not show.** Whether a pose-and-force result is new: no literature search on it has been done. Whether the supervisor means the main track, and who the authors are.
+
+### 2026-11-08 · A fresh seed of the final recipe does not reproduce the 32 of 32
+
+[`pose_f_s2`](#/week/8/run/20261108T041004_eval_seed1_s_f2_dev): `pose_r10`'s recipe in one run from `66600`, seed 2, 4,000 iterations (no sticky legs). Doors 9 of 32 held at 85 deg, 24 of 32 peaking past it; lever then door 16 of 32, 24 latches; far and bench plans 0 stopped; hand 3.17 cm, 12.66 deg; [replay](#/week/8/run/20261108T041004_eval_seed1_s_f2_dev) fails (lead 21.7, legs 0.89 / 0.97, hand 30-37 cm), as a policy not trained on sticky legs should.
+
+So `pose_r10`'s 32 of 32 rests on the chain (A 3,000 + q 1,500 + r10 1,500 iterations), the budget or the seed; one more seed cannot say which. Noted on F-274, whose title now says "opened". `pose_g_s2` and `pose_g_s3`, the deployable recipe from `66600`, are extended to 6,000 iterations and scored at both points.
+
+### 2026-11-08 · Literature re-check: the whole body giving a weak arm the force human objects need
+
+**Why.** Lukas wants to steer the thesis from tools to the whole body: how a weak robot's body gives it the force objects designed for people need. His proposed show pieces are a freezer pulled open with a foot braced on the wall beside it, and a lever pulled with the body helping the arm. Is this already done? No run. Seven web searches on top of the [Week 3 report](../../reports/Body%20force%20amplification%20for%20weak%20arms.md) (1 October, about 40 papers), and two papers read in full.
+
+**New since Week 3:**
+- **[arXiv 2507.22042](https://arxiv.org/html/2507.22042)**, a Go2 with a 4.4 kg Kinova arm: "the fridge door requires substantial force to open, which causes noticeable displacement of the quadrupedal robot. To counteract this, the robot uses the fridge surface as frontal support." Teleoperated. The paper does not say which part of the robot touches the fridge. It gives no door force, no measurement, no trial count and no comparison without the support.
+- **[arXiv 2511.19709](https://arxiv.org/html/2511.19709v1)**, ETH, B2 with a Z1: pulls 10 kg on hardware, and 14 kg in simulation. "Overheating of the third arm joint prevents achieving higher loads." The arm sets the ceiling, with no way around it tried.
+- **[arXiv 2610.23548](https://arxiv.org/html/2610.23548)** (October 2026): whole-body RL for a quadruped manipulator under payload load. Not about bracing.
+- Nothing after CTCS and Brace Yourself (both September 2026) turned up on bracing or on the body raising a weak arm's force.
+
+**How the show pieces map onto the Week 3 framing.** A force path in series with the arm is capped by the arm; a parallel path is not.
+- **The freezer.** A foot on the wall is a path in parallel with the legs, not with the arm. The whole pull still runs through the arm and the jaws. What the foot relieves is the dog being dragged and tipped toward the door.
+  - *A rough static estimate, mine, not measured:* the 18.2 kg dog (F-079) pulled forward at a 0.5 m handle tips over its front feet at about W·d/h = 178 N × 0.15-0.19 m / 0.5 m ≈ 55-70 N. A fridge patent ([US11072960B2](https://patents.google.com/patent/US11072960)) gives 6 kgf (≈ 60 N) for a person to open a door.
+  - The arm holds about 9 N bent and 40-60 N drawn straight along the pull (F-101, F-103, simulation). The jaws' hold is unmeasured and slipped first on the lever (F-073).
+  - So the freezer needs three things at once: the arm straight along the pull, a grip that holds (likely a hook), and the foot or a lean against tipping.
+- **The lever.** If the body helps only by posture, with the arm rigid, it lands near the 1.3× already measured (RoLoMa; F-077 by static model). Going past the arm's own ceiling needs the body to take load directly: the arm locked straight while the body moves, or the body or a foot on the lever. The real combiner lever (0.65 N·m, F-183) is within what the arm turns alone, so it cannot show this.
+
+**Does not show.** Seven web searches are not an arXiv sweep. Wolfslag et al. (IROS 2020) and Natarajan et al. (ICRA 2023) are still not read in full. The tipping figure is a hand calculation that ignores the arm's forward shift of the centre of mass and any lean. Lukas's freezer is unmeasured.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->

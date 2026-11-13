@@ -1,0 +1,63 @@
+{
+  "id": "20261109T133811_train_seed2_kh_force_s2",
+  "title": "Key hold r1: force-aware foot + learned arm hold, from corner force s2 4000, 2000 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T01:03:03+11:00",
+  "started_utc": "2026-11-09T13:38:11+00:00",
+  "source_dir": "logs/unifp_train/20261109T133811_train_seed2_kh_force_s2",
+  "mode": "train",
+  "seed": 2,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4193,
+  "final_checkpoint": {
+    "file": "model_4193.pt",
+    "sha256": "5ddcff219691343d76ef2f6d4c2db6c420b8b0efefe2666015ba8607a73b7d73"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 91.38227844238281,
+      "last_step": 4193,
+      "mean_last_10": 91.72999725341796,
+      "min": 2.952974557876587,
+      "max": 96.33596801757812,
+      "points": 194
+    },
+    "Train/mean_episode_length": {
+      "last": 570.1199951171875,
+      "last_step": 4193,
+      "mean_last_10": 583.1179992675782,
+      "min": 22.690000534057617,
+      "max": 613.6199951171875,
+      "points": 194
+    },
+    "Policy/mean_std": {
+      "last": 0.16640107333660126,
+      "last_step": 4193,
+      "mean_last_10": 0.16651805639266967,
+      "min": 0.16045744717121124,
+      "max": 0.16675515472888947,
+      "points": 194
+    },
+    "Perf/total_fps": {
+      "last": 6964.0,
+      "last_step": 4193,
+      "mean_last_10": 6743.2,
+      "min": 4815.0,
+      "max": 13573.0,
+      "points": 194
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20261109T182720_train_seed2_kh3_link",
+  "title": "Key hold r3: as kh3_wide, with the D1 as on the dog (report-locked 9 Hz, Follower, lead and step priced), from r2 force 4800, 1000 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T06:30:34+11:00",
+  "started_utc": "2026-11-09T18:27:20+00:00",
+  "source_dir": "logs/unifp_train/20261109T182720_train_seed2_kh3_link",
+  "mode": "train",
+  "seed": 2,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 5235,
+  "final_checkpoint": {
+    "file": "model_5235.pt",
+    "sha256": "4cb2266931a067ec95b7a7042bb4432adac5d7891fb6aaeb6429305b104b29c2"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 131.45494079589844,
+      "last_step": 5235,
+      "mean_last_10": 144.81497497558593,
+      "min": 4.085113525390625,
+      "max": 157.23512268066406,
+      "points": 436
+    },
+    "Train/mean_episode_length": {
+      "last": 557.2999877929688,
+      "last_step": 5235,
+      "mean_last_10": 607.5380004882812,
+      "min": 22.34000015258789,
+      "max": 631.4299926757812,
+      "points": 436
+    },
+    "Policy/mean_std": {
+      "last": 0.1801079958677292,
+      "last_step": 5235,
+      "mean_last_10": 0.17988793402910233,
+      "min": 0.1675105094909668,
+      "max": 0.18728923797607422,
+      "points": 436
+    },
+    "Perf/total_fps": {
+      "last": 5351.0,
+      "last_step": 5235,
+      "mean_last_10": 5189.1,
+      "min": 4393.0,
+      "max": 13239.0,
+      "points": 436
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

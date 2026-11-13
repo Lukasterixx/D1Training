@@ -1,0 +1,63 @@
+{
+  "id": "20261107T103127_train_seed1_pose_p_s1",
+  "title": "Pose with task primitives: translations, turns in place and arcs added to the goals, from pose A 67800, 1800 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-07T22:32:22+11:00",
+  "started_utc": "2026-11-07T10:31:27+00:00",
+  "source_dir": "logs/unifp_train/20261107T103127_train_seed1_pose_p_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1800,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 67924,
+  "final_checkpoint": {
+    "file": "model_67924.pt",
+    "sha256": "1de9373c33deb394b2b071f788408fbfeddd44973e4cc4f44fcf200ea5c1a8d4"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 174.1426239013672,
+      "last_step": 67924,
+      "mean_last_10": 173.03191375732422,
+      "min": 2.4252233505249023,
+      "max": 176.40872192382812,
+      "points": 125
+    },
+    "Train/mean_episode_length": {
+      "last": 999.0,
+      "last_step": 67924,
+      "mean_last_10": 996.847998046875,
+      "min": 12.982758522033691,
+      "max": 999.0,
+      "points": 125
+    },
+    "Policy/mean_std": {
+      "last": 0.7322785258293152,
+      "last_step": 67924,
+      "mean_last_10": 0.7318758487701416,
+      "min": 0.7200263738632202,
+      "max": 0.7322785258293152,
+      "points": 125
+    },
+    "Perf/total_fps": {
+      "last": 1792.0,
+      "last_step": 67924,
+      "mean_last_10": 1787.5,
+      "min": 1424.0,
+      "max": 8880.0,
+      "points": 125
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

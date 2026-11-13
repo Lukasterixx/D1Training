@@ -182,6 +182,23 @@ def build_parser() -> argparse.ArgumentParser:
                              "alone, which levels the jaws and barely moves the jaw centre; '56' "
                              "adds the pitch, which also aims the approach and costs the reach.")
     parser.add_argument("--wrist_gain", type=float, default=None)
+    parser.add_argument("--pose", action="store_true",
+                        help="Command the script's whole hand through the orientation channels (a --pose_objective "
+                             "checkpoint), on the jaw-centre tool point. No wrist servo: the policy holds it.")
+    parser.add_argument("--walk_pull", action="store_true",
+                        help="--task combiner: turn the lever, then walk the door open round the hinge (script.lever_door_phases), "
+                             "from the door pull's placements, instead of pulling it standing.")
+    parser.add_argument("--told_force_n", type=float, default=0.0,
+                        help="Tell the policy this force along the script's path while it works the mechanism (turn, crack, pull): "
+                             "the trained force channel, open loop.")
+    parser.add_argument("--ease_pull", action="store_true",
+                        help="Start and stop the walked door's swing smoothly, not on a step of walking command.")
+    parser.add_argument("--jaw_wide", action="store_true",
+                        help="Come in with the jaws fully open (77 mm), not the grip's 63 mm: 18.5 mm of clearance a side on the 40 mm bar, not 11.5.")
+    parser.add_argument("--real_arm", action="store_true",
+                        help="The D1 as on the dog, as run_plan_probe.py has it: commands locked to its 9 Hz reports, the "
+                             "Follower, the stiff servo drive and the fitted lag. Set --leg_actuator to match.")
+    parser.add_argument("--leg_friction", type=float, default=None, help="Leg joint friction, N·m (--real_arm's dog is about 1).")
     parser.add_argument("--mech", action="store_true",
                         help="Combiner only: run the mechanism-trained policy as it was trained -- jaw-centre "
                              "tool point, 0.01 kg*m^2 arm armature, roll command, claw, force law. See the "
@@ -343,6 +360,8 @@ def main() -> int:
         parser.error(f"--door_deg must be between 10 and {GEOMETRY.open_limit_deg - 5.0:g}")
     if args.mech and args.wrist:
         parser.error("--mech commands the roll itself; do not add --wrist")
+    if args.pose and (args.mech or args.wrist):
+        parser.error("--pose commands the hand itself; do not add --mech or --wrist")
     decoupled_run = args.controller == "decoupled"
     head_perception = args.perception == "head"
     if head_perception and not (decoupled_run and args.task == "door"):
@@ -363,6 +382,10 @@ def main() -> int:
     force_law = args.mech and not args.no_force_law
     controller = ("mech_law" if force_law else "mech_goal") if args.mech else (
         "unifp_wrist" if args.wrist else ("zero_actions" if args.zero_actions else "unifp"))
+    if args.pose:
+        controller = "unifp_pose"
+    if args.real_arm:
+        controller += "_realarm"
     if decoupled_run:
         controller = "combiner_door" if head_perception else "decoupled_walk_ik"
     if claw and not args.mech:
@@ -452,6 +475,7 @@ def main() -> int:
             timing = dataclasses.replace(timing, pull_s=args.pull_s)
         if args.grip_s is not None:
             timing = dataclasses.replace(timing, grip_s=args.grip_s)
+        timing = dataclasses.replace(timing, ease_pull=args.ease_pull)
         phases = demo_script.door_phases(timing)
         if lips:
             jaws = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
@@ -473,13 +497,17 @@ def main() -> int:
             args.ease_deg = timing.turn_deg
         if args.ease_deg is not None:
             timing = dataclasses.replace(timing, ease_deg=args.ease_deg)
-        phases = demo_script.combiner_phases(timing)
+        phases = (demo_script.lever_door_phases(timing, ease_pull=args.ease_pull) if args.walk_pull
+                  else demo_script.combiner_phases(timing))
         if lips:
             # The lips narrow the way in: at the friction grip's 41.2 mm opening the lip tips are 1.2 mm apart
             # and no bar gets between them, so the jaws come in fully open (37.2 mm between the tips). They close
             # as the friction grip does, onto the bar: beyond the fingertips the lips overbite and stop nothing.
             jaws = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
             phases = [dataclasses.replace(p, jaw_m=jaws.get(p.jaw_m, p.jaw_m)) for p in phases]
+    if args.jaw_wide:
+        wide = {demo_script.JAW_LEVER_OPEN_M: demo_script.JAW_WIDE_M}
+        phases = [dataclasses.replace(p, jaw_m=wide.get(p.jaw_m, p.jaw_m)) for p in phases]
     if args.close and not (head_perception and args.task == "door"):
         parser.error("--close is the combiner door demo's: --task door --controller decoupled --perception head")
     if head_perception:
@@ -537,6 +565,20 @@ def main() -> int:
         for name in ("Joint7_1", "Joint7_2"):
             actuator.effort_limit[name] = args.jaw_effort_n
             actuator.effort_limit_sim[name] = args.jaw_effort_n
+    if args.pose:
+        cfg.tool_body, cfg.tool_offset_m = task_cfg.TOOL_BODY, task_cfg.TOOL_OFFSET_M
+        cfg.pose_objective = True
+    if args.leg_friction:
+        cfg.leg_friction_range = (args.leg_friction, args.leg_friction)
+    if args.real_arm:
+        import motor_model  # noqa: E402
+        from unifp_train import arm_link  # noqa: E402
+
+        arm_link.swap_arm(cfg.robot)
+        cfg.arm_servo = True
+        cfg.arm_link = {"locked": True, "feedback_hz": motor_model.D1_FEEDBACK_HZ, "quantum_deg": motor_model.D1_FEEDBACK_QUANTUM_DEG,
+                        "planner": True, "plan": motor_model.arm_trajectory("locked"), "servo_lag_s": motor_model.D1_LOCKED_SERVO_LAG_S,
+                        "report_age_s": motor_model.D1_LOCKED_REPORT_AGE_S, "follower": True}
     if use_mech_env:
         cfg.claw = claw and not lips
         cfg.claw_lips = lips
@@ -633,12 +675,14 @@ def main() -> int:
         env.open_gripper_stop(demo_script.JAW_BAR_SHUT_M)
         # Unlocked for the door pull: the door is free, and the lever's spring still holds it up.
         env.attach_latches(locked=args.task == "combiner")
+    env.told_force_n = args.told_force_n
     env.hide_object = args.no_object
     env.hide_furniture = args.free_space
-    env.command_tip = args.command_tip
+    # `--pose` controls the jaw centre itself, so the script's point is the goal.
+    env.command_tip = args.command_tip or args.pose
     env.jaw_override = args.jaw_hold
     # The jaw centre does not move with the jaws' travel; only the fingertip needs the correction.
-    env.jaw_compensation = not args.no_jaw_compensation and not args.mech
+    env.jaw_compensation = not args.no_jaw_compensation and not args.mech and not args.pose
     env.scripts = [demo_script.DemoScript(phases) for _ in range(env.num_envs)]
     if not args.headless:
         env.set_debug_vis(args.markers)
@@ -706,6 +750,13 @@ def main() -> int:
         "tool_point": {"body": cfg.tool_body, "offset_m": list(cfg.tool_offset_m)},
         "arm_armature_kg_m2": 0.01 if args.mech else robot_mod.ARM_ARMATURE,
         "roll_objective": bool(cfg.roll_objective),
+        "pose_command": bool(args.pose),
+        "walk_pull": bool(args.walk_pull),
+        "jaw_wide": bool(args.jaw_wide),
+        "ease_pull": bool(args.ease_pull),
+        "told_force_n": args.told_force_n,
+        "real_arm": bool(args.real_arm),
+        "leg_friction_nm": args.leg_friction,
         "claw": (_claw_record(cfg, lips) if claw else None),
         "force_law": ({"gains": list(cfg.force_law_gains), "bleed_s": cfg.force_law_bleed_s}
                       if force_law else None),
@@ -736,7 +787,7 @@ def main() -> int:
     rng = random.Random(args.seed)
     if args.task == "cup":
         sampler = props.sample_cup_site
-    elif args.task == "door":
+    elif args.task == "door" or args.walk_pull:
         sampler = props.sample_door_site
     else:
         # The same draws at every stance: a stance sweep compares the same placements, turned.
@@ -967,6 +1018,11 @@ class _AttemptRecord:
         time_s = round(step * interface.POLICY_DT, 3)
 
         self.arm_speed_peak = torch.maximum(self.arm_speed_peak, arm_speed)
+        hand_error = env.hand_script_error_deg() if env.cfg.pose_objective else None
+        if env._arm_link is not None:
+            arm_lead = torch.rad2deg((env._joint_targets[:, 12:] - env._arm_link.reported).abs().amax(dim=1))
+            # The solver's force in the joint. `computed_torque` is Isaac Lab's stiffness x error, which on the stiff drive reads any lag as the limit.
+            arm_torque = env._robot.root_physx_view.get_dof_projected_joint_forces()[:, env._order[12:interface.NUM_ACTIONS]].abs().amax(dim=1)
         for index in range(self.count):
             command = commands[index]
             best = self.best[index]
@@ -974,6 +1030,7 @@ class _AttemptRecord:
                 "attempt": self.batch * env.num_envs + index, "step": step, "time_s": time_s,
                 "phase": command.phase,
                 "jaw_centre_error_m": round(float(jaw_error[index]), 5),
+                "error_up_m": round(float(delta[index, 2]), 5),
                 "lateral_error_m": round(float(lateral[index]), 5),
                 "along_error_m": round(float(along[index]), 5),
                 "tip_goal_error_m": round(float(tip_error[index]), 5),
@@ -993,6 +1050,12 @@ class _AttemptRecord:
                 "fell": int(bool(self.fell[index])),
                 "step_wall_ms": round(getattr(self, "step_wall_ms", float("nan")), 2),
             }
+            if env.cfg.pose_objective:
+                row["hand_orn_error_deg"] = round(float(hand_error[index]), 2)
+            if env._arm_link is not None:
+                # What the policy asks past the arm's last report, and what the servo drive is putting out for it.
+                row["arm_lead_deg"] = round(float(arm_lead[index]), 2)
+                row["arm_torque_nm"] = round(float(arm_torque[index]), 3)
             if self.task == "cup":
                 row["cup_lift_m"] = round(float(truth["lift_m"][index]), 4)
                 row["cup_tilt_deg"] = round(float(truth["tilt_deg"][index]), 2)

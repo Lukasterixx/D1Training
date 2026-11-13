@@ -1,0 +1,63 @@
+{
+  "id": "20261112T205503_train_seed41_ki6_force",
+  "title": "Key insertion r6: force-aware from ki4 7600, tilt stop 15 deg in training, tilt x4, 800 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T09:33:33+11:00",
+  "started_utc": "2026-11-12T20:55:03+00:00",
+  "source_dir": "logs/unifp_train/20261112T205503_train_seed41_ki6_force",
+  "mode": "train",
+  "seed": 41,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8399,
+  "final_checkpoint": {
+    "file": "model_8399.pt",
+    "sha256": "c535dc64488c952a01e70e50b43ee50ebaa01768c8814cbf89fb157dff928756"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 307.8696594238281,
+      "last_step": 8399,
+      "mean_last_10": 305.6719177246094,
+      "min": 2.457425832748413,
+      "max": 321.0747375488281,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 907.3900146484375,
+      "last_step": 8399,
+      "mean_last_10": 891.4010070800781,
+      "min": 12.08510684967041,
+      "max": 942.9000244140625,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.09200052917003632,
+      "last_step": 8399,
+      "mean_last_10": 0.09213583916425705,
+      "min": 0.09200052917003632,
+      "max": 0.14015385508537292,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 8810.0,
+      "last_step": 8399,
+      "mean_last_10": 8827.4,
+      "min": 5669.0,
+      "max": 15637.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

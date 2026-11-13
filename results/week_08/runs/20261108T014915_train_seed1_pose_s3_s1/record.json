@@ -1,0 +1,63 @@
+{
+  "id": "20261108T014915_train_seed1_pose_s3_s1",
+  "title": "Pose on sticky legs, lead priced three times harder: pose_s2's recipe with arm_lead_weight -30, from pose_s2's end, 1000 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-08T14:17:41+11:00",
+  "started_utc": "2026-11-08T01:49:15+00:00",
+  "source_dir": "logs/unifp_train/20261108T014915_train_seed1_pose_s3_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 76594,
+  "final_checkpoint": {
+    "file": "model_76594.pt",
+    "sha256": "23b4d585c5b9f181ff6ea3f1e56fa784bd81af05bdef46ab7e0eac6742246076"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 168.2826385498047,
+      "last_step": 76594,
+      "mean_last_10": 167.76382598876953,
+      "min": -0.5868261456489563,
+      "max": 172.78121948242188,
+      "points": 1000
+    },
+    "Train/mean_episode_length": {
+      "last": 998.8699951171875,
+      "last_step": 76594,
+      "mean_last_10": 996.6130065917969,
+      "min": 12.522727012634277,
+      "max": 999.0,
+      "points": 1000
+    },
+    "Policy/mean_std": {
+      "last": 0.33061471581459045,
+      "last_step": 76594,
+      "mean_last_10": 0.3304924786090851,
+      "min": 0.3302431106567383,
+      "max": 0.3407953381538391,
+      "points": 1000
+    },
+    "Perf/total_fps": {
+      "last": 24724.0,
+      "last_step": 76594,
+      "mean_last_10": 24629.0,
+      "min": 7335.0,
+      "max": 25631.0,
+      "points": 1000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

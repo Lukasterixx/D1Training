@@ -122,6 +122,12 @@ class TaskState:
     # --- the roll's true target where a task layer's loop shifts the command (insertion, `--ins_true_targets`).
     roll_true: torch.Tensor | None = None           # (N,) rad
     roll_true_mask: torch.Tensor | None = None      # (N,) bool: score against `roll_true` rather than the command
+    # --- the pose objective (`pose_goals.py`).
+    ee_orn_error: torch.Tensor | None = None        # (N,) rad, the hand's geodesic angle from the commanded orientation
+    ee_keypoint_error: torch.Tensor | None = None   # (N,) m, mean distance of three hand points from where the command puts them
+    ee_speed: torch.Tensor | None = None            # (N,) m/s, the tool point's speed relative to the base's yaw frame
+    ee_turn_rate: torch.Tensor | None = None        # (N,) rad/s, the hand's turn rate, the same
+    goal_held: torch.Tensor | None = None           # (N,) 1.0 while the goal is not moving
 
 
 def _walking(state: TaskState) -> torch.Tensor:
@@ -477,4 +483,53 @@ def tracking_ee_orn_approach(state: TaskState) -> torch.Tensor:
 
 APPROACH_TERMS = {
     "tracking_ee_orn_approach": tracking_ee_orn_approach,
+}
+
+
+# --- the pose objective (2026-11-07) -----------------------------------------------------------------------------
+#
+# The whole orientation, on goals drawn so the arm can take them (`pose_goals.py`), where F-099's uniform draw could not be.
+# The fine position term scores the same displaced target as `tracking_ee_force_world`, so a commanded or felt force moves
+# what the hand is paid for and the policy stays free to give way: force-awareness is unchanged by asking for the pose.
+
+def tracking_ee_orn_pose(state: TaskState) -> torch.Tensor:
+    """How near the hand is to its commanded orientation, tens of degrees wide: the gradient from far away."""
+    return torch.exp(-state.ee_orn_error / task_cfg.TRACKING_EE_ORN_SIGMA)
+
+
+def tracking_ee_orn_pose_fine(state: TaskState) -> torch.Tensor:
+    """The same, a few degrees wide."""
+    return torch.exp(-state.ee_orn_error / task_cfg.TRACKING_EE_ORN_SIGMA_FINE)
+
+
+def tracking_ee_pos_fine(state: TaskState) -> torch.Tensor:
+    """The tool point on the force-displaced target, to about a centimetre."""
+    error = torch.norm(state.ee_pos_w - ee_target(state), dim=1)
+    return torch.exp(-error / task_cfg.TRACKING_EE_POS_SIGMA_FINE)
+
+
+def tracking_ee_pose_joint(state: TaskState) -> torch.Tensor:
+    """Both errors in one exponential: a good position with a bad hand pays little, and the reverse."""
+    error = torch.norm(state.ee_pos_w - ee_target(state), dim=1)
+    return torch.exp(-(error / task_cfg.POSE_JOINT_SIGMA_M + state.ee_orn_error / task_cfg.POSE_JOINT_SIGMA_RAD))
+
+
+def tracking_ee_pose_keypoints(state: TaskState) -> torch.Tensor:
+    """Three points on the hand against where the command puts them: position and orientation in one length."""
+    return torch.exp(-state.ee_keypoint_error / task_cfg.POSE_KEYPOINT_SIGMA_M)
+
+
+def pose_still(state: TaskState) -> torch.Tensor:
+    """While a goal is held, a hand at rest: the term a limit cycle cannot collect."""
+    moving = state.ee_speed / task_cfg.POSE_STILL_SPEED_M_S + state.ee_turn_rate / task_cfg.POSE_STILL_TURN_RAD_S
+    return torch.exp(-moving) * state.goal_held
+
+
+POSE_TERMS = {
+    "pose_still": pose_still,
+    "tracking_ee_orn_pose": tracking_ee_orn_pose,
+    "tracking_ee_orn_pose_fine": tracking_ee_orn_pose_fine,
+    "tracking_ee_pos_fine": tracking_ee_pos_fine,
+    "tracking_ee_pose_joint": tracking_ee_pose_joint,
+    "tracking_ee_pose_keypoints": tracking_ee_pose_keypoints,
 }

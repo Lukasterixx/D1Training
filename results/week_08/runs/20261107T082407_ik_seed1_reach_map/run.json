@@ -1,0 +1,402 @@
+{
+  "mode": "pose_reach",
+  "status": "finished",
+  "seed": 1,
+  "goals": 147,
+  "orientations_per_goal": 200,
+  "radii": [
+    0.35,
+    0.45,
+    0.55
+  ],
+  "legacy_frame": false,
+  "check_body": false,
+  "base_variants": 135,
+  "base_ranges": {
+    "pitch_deg": [
+      -12.0,
+      -6.0,
+      0.0,
+      6.0,
+      12.0
+    ],
+    "roll_deg": [
+      -8.0,
+      0.0,
+      8.0
+    ],
+    "height_m": [
+      0.26,
+      0.3,
+      0.33
+    ],
+    "shift_m": [
+      -0.04,
+      0.0,
+      0.04
+    ]
+  },
+  "arm_alone_fraction": 0.1133,
+  "arm_alone_jaw_symmetric_fraction": 0.1413,
+  "goals_with_no_orientation_arm": 17,
+  "band_radii": [
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65
+  ],
+  "bands_by_hand_elevation_deg": {
+    "0.0": [
+      {
+        "goal_pitch_deg": -20.0,
+        "arm": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          0.0,
+          0.0,
+          0.0,
+          0.778,
+          1.0,
+          0.667
+        ]
+      },
+      {
+        "goal_pitch_deg": -10.0,
+        "arm": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          0.778,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 0.0,
+        "arm": [
+          0.0,
+          0.083,
+          1.0,
+          1.0,
+          1.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 10.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.889
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 20.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.444
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 30.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 40.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    ],
+    "-45.0": [
+      {
+        "goal_pitch_deg": -20.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": -10.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.236,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 0.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 10.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.556
+        ]
+      },
+      {
+        "goal_pitch_deg": 20.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 30.0,
+        "arm": [
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "goal_pitch_deg": 40.0,
+        "arm": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "body": [
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "whole_body_fraction": 0.2857,
+  "by_approach": [
+    {
+      "approach_from_outward_deg": [
+        0,
+        30
+      ],
+      "poses": 2009,
+      "arm_alone": 0.3211,
+      "whole_body": 0.6954,
+      "arm_r0.35": 0.21,
+      "whole_r0.35": 0.5863,
+      "arm_r0.45": 0.311,
+      "whole_r0.45": 0.6921,
+      "arm_r0.55": 0.4288,
+      "whole_r0.55": 0.7953
+    },
+    {
+      "approach_from_outward_deg": [
+        30,
+        60
+      ],
+      "poses": 5383,
+      "arm_alone": 0.3244,
+      "whole_body": 0.6461,
+      "arm_r0.35": 0.356,
+      "whole_r0.35": 0.5992,
+      "arm_r0.45": 0.3176,
+      "whole_r0.45": 0.6298,
+      "arm_r0.55": 0.2985,
+      "whole_r0.55": 0.7125
+    },
+    {
+      "approach_from_outward_deg": [
+        60,
+        90
+      ],
+      "poses": 7246,
+      "arm_alone": 0.1214,
+      "whole_body": 0.4033,
+      "arm_r0.35": 0.2237,
+      "whole_r0.35": 0.4915,
+      "arm_r0.45": 0.1255,
+      "whole_r0.45": 0.4797,
+      "arm_r0.55": 0.0102,
+      "whole_r0.55": 0.2326
+    },
+    {
+      "approach_from_outward_deg": [
+        90,
+        120
+      ],
+      "poses": 7326,
+      "arm_alone": 0.0082,
+      "whole_body": 0.0822,
+      "arm_r0.35": 0.025,
+      "whole_r0.35": 0.2091,
+      "arm_r0.45": 0.0,
+      "whole_r0.45": 0.0409,
+      "arm_r0.55": 0.0,
+      "whole_r0.55": 0.0
+    },
+    {
+      "approach_from_outward_deg": [
+        120,
+        180
+      ],
+      "poses": 7436,
+      "arm_alone": 0.0,
+      "whole_body": 0.0,
+      "arm_r0.35": 0.0,
+      "whole_r0.35": 0.0,
+      "arm_r0.45": 0.0,
+      "whole_r0.45": 0.0,
+      "arm_r0.55": 0.0,
+      "whole_r0.55": 0.0
+    }
+  ],
+  "solver": "arm_kin: analytic through the spherical wrist, 45 elbow seeds, both wrist branches, soft limits",
+  "command": "unifp_train/pose_reach.py --orientations 200 --run_name reach_map --threads 6"
+}

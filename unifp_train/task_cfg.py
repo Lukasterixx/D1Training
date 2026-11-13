@@ -95,6 +95,48 @@ TRACKING_EE_APPROACH_SIGMA_FINE = 0.05
 TRACKING_EE_APPROACH_SIGMA_COARSE = 0.3
 
 
+#: The pose objective (`pose_goals.py`): the hand's whole orientation commanded, on goals the arm can reach. Coarse and fine
+#: orientation terms, and a fine position term: UniFP's own position reward is `exp(-2 |e|_1)`, flat to a few centimetres,
+#: where a jaw clears a bar by 11.5 mm a side (F-115: "nothing has ever asked for a precise arrival").
+POSE_WEIGHTS = {
+    "tracking_ee_orn_pose": 1.5,
+    "tracking_ee_orn_pose_fine": 1.0,
+    "tracking_ee_pos_fine": 1.0,
+}
+TRACKING_EE_ORN_SIGMA = 0.5
+TRACKING_EE_ORN_SIGMA_FINE = 0.1
+TRACKING_EE_POS_SIGMA_FINE = 0.04
+#: `pose_wrench`: UniFP's spring, carried over to rotation. A push lands at a point on the hand up to this far from the tool point,
+#: in Link6's axes, so it turns as well as pushes, and the orientation target gives way by `Exp(tau / K_r)`: SoftMimic's law
+#: (Margolis et al. 2025) on UniFP's task. K_r is sized so a typical off-centre push (8 N at 5 cm, 0.4 N·m) is worth about 15 deg,
+#: as 8 N is worth 4 cm through 200 N/m. Without this every moment at the hand is an error to reject, and a finger on a bar jams.
+POSE_WRENCH_ARM_M = (0.04, 0.04, 0.03)
+POSE_ROT_STIFFNESS_NM_RAD = 1.5
+POSE_ROT_GIVE_MAX_RAD = 0.6
+#: The moment in the critic's and the decoder's base-force block, per N·m: about the size the force block's newtons reach.
+POSE_MOMENT_OBS_SCALE = 0.2
+#: `arm_lead_weight`'s free band: the arm link's own lead (`arm_link.FOLLOW_LEAD_DEG`) is 10 deg, and the Follower's ceiling 15.
+ARM_LEAD_FREE_RAD = math.radians(10.0)
+#: `leg_target_weight`'s free band: about `66600`'s own on the dog's frames after the first second (0.34 rad, gate4).
+LEG_TARGET_FREE_RAD = 0.4
+#: `base_tilt_weight`'s free band: about what `66600` used on the far goals (7.8 deg at worst).
+BASE_TILT_FREE_RAD = math.radians(8.0)
+#: `pose_still_weight`: how still counts while a goal is held. F-104's lesson for a tool: nothing else pays for a hand at rest, and a
+#: policy paid sharply for pose on an arm with 100 ms of lag finds a limit cycle (2026-11-07: a 4-5 cm band at a held goal).
+POSE_STILL_SPEED_M_S = 0.05
+POSE_STILL_TURN_RAD_S = 0.4
+#: `pose_joint_weight`'s width: the mean joint error, rad, at which the teacher's term falls to 1/e.
+POSE_JOINT_TEACHER_RAD = 0.2
+#: `pose_reward="joint"`: one term on both errors, UMI-on-Legs' form, `exp(-(e_p / s_p + e_o / s_o))`, so neither pays alone.
+POSE_JOINT_WEIGHTS = {"tracking_ee_pose_joint": 3.5}
+POSE_JOINT_SIGMA_M, POSE_JOINT_SIGMA_RAD = 0.06, 0.25
+#: `pose_reward="keypoints"`: one term on three points fixed to the hand (Portela, Cramariuc et al. 2024), the mean distance to where
+#: the command puts them. A point `POSE_KEYPOINT_M` off the jaw centre turns a degree into 1.7 mm at this length.
+POSE_KEYPOINT_WEIGHTS = {"tracking_ee_pose_keypoints": 3.5}
+POSE_KEYPOINT_M = 0.10
+POSE_KEYPOINT_SIGMA_M = 0.06
+
+
 def scaled_extension_weights() -> dict[str, float]:
     """`EXTENSION_WEIGHTS` multiplied by the policy timestep, as the environment applies them."""
     return {name: weight * interface.POLICY_DT for name, weight in EXTENSION_WEIGHTS.items()}

@@ -1,0 +1,63 @@
+{
+  "id": "20261112T152254_train_seed37_ki4_force",
+  "title": "Key insertion r4: force-aware from ki3 7356, final layer, 20 s episodes, 1500 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T04:55:58+11:00",
+  "started_utc": "2026-11-12T15:22:54+00:00",
+  "source_dir": "logs/unifp_train/20261112T152254_train_seed37_ki4_force",
+  "mode": "train",
+  "seed": 37,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8855,
+  "final_checkpoint": {
+    "file": "model_8855.pt",
+    "sha256": "4793f389b3eafe46c9531def1d613aea6a747326eafd907db0e95fa5699bce56"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 320.82537841796875,
+      "last_step": 8855,
+      "mean_last_10": 321.02358093261716,
+      "min": 2.4512643814086914,
+      "max": 336.4783020019531,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 889.8599853515625,
+      "last_step": 8855,
+      "mean_last_10": 893.743994140625,
+      "min": 11.830188751220703,
+      "max": 944.3900146484375,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.07650406658649445,
+      "last_step": 8855,
+      "mean_last_10": 0.07657915353775024,
+      "min": 0.07650406658649445,
+      "max": 0.1402636617422104,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 8596.0,
+      "last_step": 8855,
+      "mean_last_10": 8753.5,
+      "min": 5960.0,
+      "max": 20903.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

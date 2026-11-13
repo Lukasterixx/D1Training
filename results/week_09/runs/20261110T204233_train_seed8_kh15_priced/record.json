@@ -1,0 +1,63 @@
+{
+  "id": "20261110T204233_train_seed8_kh15_priced",
+  "title": "Key hold r15: round 13's 5800 (position-only, 66600's legs, dog stance) with the arm's lead and steps (J1-J5) and the tilt priced, lr 3e-5, 1600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-11T09:42:34+11:00",
+  "started_utc": "2026-11-10T20:42:33+00:00",
+  "source_dir": "logs/unifp_train/20261110T204233_train_seed8_kh15_priced",
+  "mode": "train",
+  "seed": 8,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 6659,
+  "final_checkpoint": {
+    "file": "model_6659.pt",
+    "sha256": "488511890fa0c172986074c434b330d2763b50247266ff8314a71f5ec221aa4d"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 151.3563232421875,
+      "last_step": 6659,
+      "mean_last_10": 152.9113967895508,
+      "min": 4.124602317810059,
+      "max": 154.4408416748047,
+      "points": 860
+    },
+    "Train/mean_episode_length": {
+      "last": 492.489990234375,
+      "last_step": 6659,
+      "mean_last_10": 495.8400024414062,
+      "min": 22.200000762939453,
+      "max": 554.3900146484375,
+      "points": 860
+    },
+    "Policy/mean_std": {
+      "last": 0.09534897655248642,
+      "last_step": 6659,
+      "mean_last_10": 0.09529999867081643,
+      "min": 0.09516666829586029,
+      "max": 0.15994708240032196,
+      "points": 860
+    },
+    "Perf/total_fps": {
+      "last": 4952.0,
+      "last_step": 6659,
+      "mean_last_10": 5282.2,
+      "min": 4751.0,
+      "max": 8259.0,
+      "points": 860
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

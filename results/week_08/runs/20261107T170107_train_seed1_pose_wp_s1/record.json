@@ -1,0 +1,63 @@
+{
+  "id": "20261107T170107_train_seed1_pose_wp_s1",
+  "title": "Pose, rotational compliance, with primitives: pushes off the tool point and the orientation target gives way, from pose_r10's end, 2000 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-08T07:31:57+11:00",
+  "started_utc": "2026-11-07T17:01:07+00:00",
+  "source_dir": "logs/unifp_train/20261107T170107_train_seed1_pose_wp_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 74596,
+  "final_checkpoint": {
+    "file": "model_74596.pt",
+    "sha256": "fa02ea3aac42cf0f296d6761df4c1f6975832801c68b6a9a5dc3e78195c25309"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 188.46180725097656,
+      "last_step": 74596,
+      "mean_last_10": 191.89130096435548,
+      "min": 2.531644821166992,
+      "max": 196.53167724609375,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 982.469970703125,
+      "last_step": 74596,
+      "mean_last_10": 994.9549926757812,
+      "min": 12.877193450927734,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 0.32135772705078125,
+      "last_step": 74596,
+      "mean_last_10": 0.3214092642068863,
+      "min": 0.32134097814559937,
+      "max": 0.37383899092674255,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 7932.0,
+      "last_step": 74596,
+      "mean_last_10": 7875.2,
+      "min": 5907.0,
+      "max": 25402.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

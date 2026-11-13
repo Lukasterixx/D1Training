@@ -40,6 +40,7 @@ import torch
 from isaaclab.utils import configclass
 
 from unifp_isaaclab import interface
+from unifp_train import pose_goals
 
 from demos.combiner.geometry import GEOMETRY
 from demos.cup.pick_demo.grasp import JAW_CENTRE_LINK6
@@ -71,6 +72,13 @@ LAW_GOAL = {"turn": "reference", "crack": "handle", "ease": "handle", "pull": "h
 #: Holds in which the goal correction integrates, and the moving phase between them that keeps its offset.
 CORRECTION_PHASES = ("settle", "arrive", "grip")
 CORRECTION_HELD_PHASES = ("enter",)
+#: `--pose`: the holds the outer loop integrates in. Not the grip: there the bar pushes back, and from then on the hand's miss is
+#: the mechanism's doing, which the policy is meant to give way to.
+POSE_CORRECTION_PHASES = ("settle", "arrive")
+#: The phases the offset is kept whole through, and how fast it fades after them, s. Held through the pull it left the goal 9-11 cm
+#: off the handle and stopped doors at 78-86 degrees (2026-11-07); dropped at once it would jerk the bar.
+POSE_CORRECTION_HELD_PHASES = ("settle", "enter", "arrive", "grip")
+POSE_CORRECTION_FADE_S = 1.0
 
 
 @configclass
@@ -113,6 +121,8 @@ class MechDemoEnvCfg(UniFPDemoEnvCfg):
     #: be against the fingers). For a policy whose miss drifts while the goal moves, which otherwise brings the bar onto a
     #: lip tip (the lever-trained policy, 2026-09-25). Off by default.
     goal_correction_enter: bool = False
+    #: `--pose`: the most the hand's orientation command may be turned off the script's, rad.
+    pose_correction_max_rad: float = 0.6
 
 
 class MechDemoEnv(UniFPDemoEnv):
@@ -148,8 +158,10 @@ class MechDemoEnv(UniFPDemoEnv):
         self._lip_where = torch.zeros(n, 4, device=device)
         self._held_roll = torch.zeros(n, device=device)
         self._roll_held = torch.zeros(n, dtype=torch.bool, device=device)
-        #: The goal correction's offset, world frame, m.
+        #: The goal correction's offset, world frame, m (`--pose`: yaw frame, so it turns with a base that walks).
         self.goal_offset = torch.zeros(n, 3, device=device)
+        #: `--pose`: the orientation command's offset, a rotation vector in the yaw frame.
+        self.hand_offset = torch.zeros(n, 3, device=device)
 
     # --- the lever, as a body --------------------------------------------------------------------
 
@@ -219,7 +231,7 @@ class MechDemoEnv(UniFPDemoEnv):
         sphere = super()._scripted_goal()
         phases = [c.phase if c is not None else "" for c in self.commands]
         if self.cfg.goal_correction:
-            sphere = self._corrected_goal(sphere, phases)
+            sphere = self._corrected_pose(phases) if self.cfg.pose_objective else self._corrected_goal(sphere, phases)
         if self.cfg.claw:
             self._hook_and_release(phases)
         if self.cfg.claw_lips:
@@ -260,6 +272,44 @@ class MechDemoEnv(UniFPDemoEnv):
         goal = self._tip_goal_from_jaw_centre(target + self.goal_offset)
         local = interface.quat_rotate_inverse(self._base_yaw_quat(), goal - (self._goal_centre() + self.scene.env_origins))
         corrected = torch.where(keep.unsqueeze(-1), interface.cart2sphere(local), sphere)
+        self._goals.current = corrected
+        self._goals.start = corrected
+        self._goals.goal = corrected
+        return corrected
+
+    def _corrected_pose(self, phases: list[str]) -> torch.Tensor:
+        """The outer loop for a pose policy: slide the commanded pose by the hand's steady miss, position and orientation.
+
+        As the insertion's task layer does (F-120), on what the dog can compute too: the hand from joint reports and the base's
+        attitude. Both offsets live in the yaw frame, because the miss is the policy's at this pose in the robot's frame and the
+        door pull walks that frame round the hinge. They fade once the hand is on the mechanism. `_hand_cmd_w` stays the script's, so the record scores the hand against
+        the script and a corrected command cannot hide a miss.
+        """
+        integrate = torch.tensor([p in POSE_CORRECTION_PHASES for p in phases], device=self.device).unsqueeze(-1)
+        fading = ~torch.tensor([p in POSE_CORRECTION_HELD_PHASES for p in phases], device=self.device).unsqueeze(-1)
+        fade = math.exp(-interface.POLICY_DT / POSE_CORRECTION_FADE_S)
+        self.goal_offset = torch.where(fading, self.goal_offset * fade, self.goal_offset)
+        self.hand_offset = torch.where(fading, self.hand_offset * fade, self.hand_offset)
+        gain = self.cfg.goal_correction_gain * interface.POLICY_DT
+        yaw_quat = self._base_yaw_quat()
+        yaw = pose_goals.matrix_from_quat(yaw_quat)
+        target = self._script_target_world()
+        centre, _ = self._jaw_centre_state()
+        offset = self.goal_offset + integrate * gain * interface.quat_rotate_inverse(yaw_quat, target - centre)
+        norm = offset.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+        self.goal_offset = offset * (self.cfg.goal_correction_max_m / norm).clamp(max=1.0)
+
+        wanted = yaw.transpose(1, 2) @ self._hand_cmd_w
+        hand = self._hand_rotation_yaw()
+        turn = self.hand_offset + integrate * gain * pose_goals.rotvec_from_matrix(wanted @ hand.transpose(1, 2))
+        norm = turn.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+        self.hand_offset = turn * (self.cfg.pose_correction_max_rad / norm).clamp(max=1.0)
+        commanded = pose_goals.matrix_from_rotvec(self.hand_offset) @ wanted
+        self._goals.current_rotation = commanded
+        self._goals.current_rotvec = pose_goals.rotvec_from_matrix(self._goals.neutral.T @ commanded)
+
+        goal = target + interface.quat_apply(yaw_quat, self.goal_offset)
+        corrected = interface.cart2sphere(interface.quat_rotate_inverse(yaw_quat, goal - (self._goal_centre() + self.scene.env_origins)))
         self._goals.current = corrected
         self._goals.start = corrected
         self._goals.goal = corrected
@@ -462,6 +512,7 @@ class MechDemoEnv(UniFPDemoEnv):
         self.lip_captured[ids] = False
         self._out_steps[ids] = 0
         self.goal_offset[ids] = 0.0
+        self.hand_offset[ids] = 0.0
         self._roll_held[ids] = False
         super()._reset_idx(env_ids)
         if self.cfg.claw and self._handle_body_ids is not None:

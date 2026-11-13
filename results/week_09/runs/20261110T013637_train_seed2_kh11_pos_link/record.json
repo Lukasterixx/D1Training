@@ -1,0 +1,63 @@
+{
+  "id": "20261110T013637_train_seed2_kh11_pos_link",
+  "title": "Key hold r11: position-only on the D1 link with round 8's recipe (lr 3e-5), from r2 force 4800, 600 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T14:10:37+11:00",
+  "started_utc": "2026-11-10T01:36:37+00:00",
+  "source_dir": "logs/unifp_train/20261110T013637_train_seed2_kh11_pos_link",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 5399,
+  "final_checkpoint": {
+    "file": "model_5399.pt",
+    "sha256": "1a6a552bc6af6325bb591b122fa84c9b864c4e91dbfa66185721a87680503fa6"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 150.0685577392578,
+      "last_step": 5399,
+      "mean_last_10": 151.0420135498047,
+      "min": 4.054014682769775,
+      "max": 155.19371032714844,
+      "points": 600
+    },
+    "Train/mean_episode_length": {
+      "last": 501.1099853515625,
+      "last_step": 5399,
+      "mean_last_10": 504.1009979248047,
+      "min": 21.959999084472656,
+      "max": 614.739990234375,
+      "points": 600
+    },
+    "Policy/mean_std": {
+      "last": 0.09506720304489136,
+      "last_step": 5399,
+      "mean_last_10": 0.09525607824325562,
+      "min": 0.09506720304489136,
+      "max": 0.16034027934074402,
+      "points": 600
+    },
+    "Perf/total_fps": {
+      "last": 11738.0,
+      "last_step": 5399,
+      "mean_last_10": 12210.2,
+      "min": 4184.0,
+      "max": 13032.0,
+      "points": 600
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20261109T141141_train_seed2_kh_link_smoke",
+  "title": "Key hold: 2-iteration smoke with the D1 arm link (locked 9 Hz, the Follower, lead and step priced), 32 envs",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T01:12:07+11:00",
+  "started_utc": "2026-11-09T14:11:41+00:00",
+  "source_dir": "logs/unifp_train/20261109T141141_train_seed2_kh_link_smoke",
+  "mode": "train",
+  "seed": 2,
+  "status": "complete",
+  "error": null,
+  "num_envs": 32,
+  "iterations": 2,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 4001,
+  "final_checkpoint": {
+    "file": "model_4001.pt",
+    "sha256": "05d991f9789769b01540c47118f2450ff6bae852651f5f621a059bd72ea3caaf"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 4.182647228240967,
+      "last_step": 4001,
+      "mean_last_10": 3.363553762435913,
+      "min": 2.5444602966308594,
+      "max": 4.182647228240967,
+      "points": 2
+    },
+    "Train/mean_episode_length": {
+      "last": 31.959999084472656,
+      "last_step": 4001,
+      "mean_last_10": 26.091110229492188,
+      "min": 20.22222137451172,
+      "max": 31.959999084472656,
+      "points": 2
+    },
+    "Policy/mean_std": {
+      "last": 0.16049152612686157,
+      "last_step": 4001,
+      "mean_last_10": 0.16037482768297195,
+      "min": 0.16025812923908234,
+      "max": 0.16049152612686157,
+      "points": 2
+    },
+    "Perf/total_fps": {
+      "last": 98.0,
+      "last_step": 4001,
+      "mean_last_10": 110.5,
+      "min": 98.0,
+      "max": 123.0,
+      "points": 2
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

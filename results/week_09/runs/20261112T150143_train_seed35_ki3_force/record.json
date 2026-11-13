@@ -1,0 +1,63 @@
+{
+  "id": "20261112T150143_train_seed35_ki3_force",
+  "title": "Key insertion r3: force-aware from ki2 7169, layer reworked, 1000 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T02:22:09+11:00",
+  "started_utc": "2026-11-12T15:01:43+00:00",
+  "source_dir": "logs/unifp_train/20261112T150143_train_seed35_ki3_force",
+  "mode": "train",
+  "seed": 35,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7356,
+  "final_checkpoint": {
+    "file": "model_7356.pt",
+    "sha256": "cfdbd5436a3fe69945f6a96d7f5eb09ba0bf6b14b1e1dd0e6d14af9c19023010"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 242.3509521484375,
+      "last_step": 7356,
+      "mean_last_10": 248.36555938720704,
+      "min": 2.6435253620147705,
+      "max": 257.6849365234375,
+      "points": 188
+    },
+    "Train/mean_episode_length": {
+      "last": 772.239990234375,
+      "last_step": 7356,
+      "mean_last_10": 792.3649963378906,
+      "min": 11.916666984558105,
+      "max": 799.0,
+      "points": 188
+    },
+    "Policy/mean_std": {
+      "last": 0.12348154187202454,
+      "last_step": 7356,
+      "mean_last_10": 0.1239069513976574,
+      "min": 0.12348154187202454,
+      "max": 0.14176957309246063,
+      "points": 188
+    },
+    "Perf/total_fps": {
+      "last": 6576.0,
+      "last_step": 7356,
+      "mean_last_10": 6404.9,
+      "min": 6116.0,
+      "max": 21535.0,
+      "points": 188
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

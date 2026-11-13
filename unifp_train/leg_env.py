@@ -250,6 +250,7 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
         legs = torch.clip(actions, -interface.CLIP_ACTIONS, interface.CLIP_ACTIONS)
         self._actions = torch.cat((legs, torch.zeros(self.num_envs, 6, device=self.device)), dim=-1)
         self._joint_targets = interface.joint_targets(self._actions)
+        self._answer_legs()
         self._joint_targets[:, 12:18] = self._arm_pose
         self._track_chatter()
         self._step_forces()

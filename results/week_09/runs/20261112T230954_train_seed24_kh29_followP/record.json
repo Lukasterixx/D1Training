@@ -1,0 +1,63 @@
+{
+  "id": "20261112T230954_train_seed24_kh29_followP",
+  "title": "Key hold r29: F-283's fix (the turn follows the layer's arc, --key_turn_follow_weight -15), position-only from round 17's 7000, round 16's recipe, seed 24, 400 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T11:08:55+11:00",
+  "started_utc": "2026-11-12T23:09:54+00:00",
+  "source_dir": "logs/unifp_train/20261112T230954_train_seed24_kh29_followP",
+  "mode": "train",
+  "seed": 24,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7399,
+  "final_checkpoint": {
+    "file": "model_7399.pt",
+    "sha256": "978d2cd0efefa326926114a7976cf6b80a0468deeee9174a814cc658c9503bb1"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 154.5545654296875,
+      "last_step": 7399,
+      "mean_last_10": 154.26466217041016,
+      "min": 3.0982635021209717,
+      "max": 155.3768768310547,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 492.510009765625,
+      "last_step": 7399,
+      "mean_last_10": 493.2320037841797,
+      "min": 16.850000381469727,
+      "max": 524.6500244140625,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.11034435778856277,
+      "last_step": 7399,
+      "mean_last_10": 0.11082690358161926,
+      "min": 0.11034435778856277,
+      "max": 0.15002451837062836,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 7675.0,
+      "last_step": 7399,
+      "mean_last_10": 7544.2,
+      "min": 4736.0,
+      "max": 12251.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

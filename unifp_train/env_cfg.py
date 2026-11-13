@@ -93,6 +93,30 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: never written -- so **no observation or action width changes** and every existing checkpoint
     #: still loads. What changes is what the policy is asked for.
     roll_objective: bool = False
+    #: Command and reward the hand's whole pose (`pose_goals.py`): orientation in `CMD_EE_ORN_R/P/Y` as a rotation vector, on
+    #: goals drawn from joint angles so the arm can reach them. As with the roll, no width changes and any checkpoint loads.
+    pose_objective: bool = False
+    #: F-099's objective, the control: the position as UniFP draws it, the orientation uniform over SO(3).
+    pose_naive: bool = False
+    #: Add the task primitives to the goals (`pose_goals.TASK_MIX`): straight translations, turns in place, arcs about a pivot.
+    #: Off: joint lines alone, which is how the frozen `unifp_pose_*` sets were drawn.
+    pose_primitives: bool = False
+    #: Draw and score the pose goals but leave the orientation channels at zero, for a policy that was never told one: the
+    #: position-only policies' uncontrolled hand on the same goals, with inputs they have never seen kept out of them.
+    pose_blind: bool = False
+    #: Push the hand off its tool point, and let the orientation target give way to the moment (`task_cfg.POSE_WRENCH_ARM_M`).
+    pose_wrench: bool = False
+    #: Reward a still hand while the goal is held (`rewards.pose_still`). 0: off.
+    pose_still_weight: float = 0.0
+    #: Reward on the arm's closeness to the joint angles the goal was drawn from (`pose_goals.PoseGoalTrajectory.q_current`): the
+    #: inverse kinematics as a teacher, dense where the pose terms are not. Training only, and the policy is still told the pose
+    #: alone. Possible because the goals come from joint angles: F-099's draw has none. 0: off.
+    pose_joint_weight: float = 0.0
+    #: How position and orientation are paid: "separate" (`POSE_WEIGHTS`), "joint" or "keypoints" (one term on both).
+    pose_reward: str = "separate"
+    #: Multiplies `task_cfg.POSE_WEIGHTS`' two orientation terms; 0 leaves them out, for a run that tracks the goal's
+    #: position alone on the same goals.
+    pose_orn_scale: float = 1.0
 
     #: Policy steps of position-only training before the force curriculum opens. Upstream gates on
     #: `global_steps > force_start_step * num_steps_per_env`, and this is that product, so the
@@ -124,6 +148,17 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: Reward on the wrist's squared distance from its default (rad²). Nothing else fixes it: with `roll_objective` off the hand's orientation
     #: is free, so Joint4-6 wander. On the dog that became a target running away at 90 deg/s (F-255). Negative to penalise; 0: none.
     arm_wrist_weight: float = 0.0
+    #: Reward on how far the policy's arm targets run past the arm's last report, beyond `task_cfg.ARM_LEAD_FREE_RAD` (rad², summed
+    #: over joints). The dog's arm watch reads exactly this and stops at 25 deg held 0.5 s (F-255); nothing else in training prices it,
+    #: and a policy free to lead uses its targets as torques. Negative to penalise; 0: none.
+    arm_lead_weight: float = 0.0
+    #: Reward on the leg targets' distance from the stance past `task_cfg.LEG_TARGET_FREE_RAD`, rad², summed over joints. The dog stops past
+    #: 1.2 rad in the first second and 0.9 after (`press_live`), and a policy on legs that answer 0.1-1 of what they are asked learns to ask
+    #: more (2026-11-08: 1.54 rad on the dog's frames). Negative to penalise; 0: none.
+    leg_target_weight: float = 0.0
+    #: Reward on the base's roll or pitch past `task_cfg.BASE_TILT_FREE_RAD`, rad², the larger of the two. Goals are drawn reachable
+    #: from a level base, so a lean buys only speed, and the dog stops at 15 deg (2026-11-08: a pose policy leaned 22). 0: none.
+    base_tilt_weight: float = 0.0
     #: Leg joints start this far from default at each reset, uniform, rad. The dog handed over 0.16 rad off the trained stance, and what the
     #: policy asks of the arm swings with the stance (J4 -33 or -49 in the same chain). 0: as every earlier run.
     leg_start_noise_rad: float = 0.0

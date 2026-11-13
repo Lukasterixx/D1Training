@@ -1,0 +1,63 @@
+{
+  "id": "20261107T203349_train_seed3_pose_f_s3",
+  "title": "Pose, the final recipe straight from 66600, seed 3: primitives, still hand, lead and tilt priced, noise cut, 4000 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-08T07:54:21+11:00",
+  "started_utc": "2026-11-07T20:33:49+00:00",
+  "source_dir": "logs/unifp_train/20261107T203349_train_seed3_pose_f_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 4000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 66793,
+  "final_checkpoint": {
+    "file": "model_66793.pt",
+    "sha256": "d70a8533bf074eda1ffec74b1342e83c37b3478dbb1d56075d14383a480c85bf"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 157.18792724609375,
+      "last_step": 66793,
+      "mean_last_10": 159.76572875976564,
+      "min": -2634.446044921875,
+      "max": 163.47389221191406,
+      "points": 194
+    },
+    "Train/mean_episode_length": {
+      "last": 997.97998046875,
+      "last_step": 66793,
+      "mean_last_10": 998.897998046875,
+      "min": 11.660377502441406,
+      "max": 999.0,
+      "points": 194
+    },
+    "Policy/mean_std": {
+      "last": 0.49762991070747375,
+      "last_step": 66793,
+      "mean_last_10": 0.49849892854690553,
+      "min": 0.49762991070747375,
+      "max": 0.5099619030952454,
+      "points": 194
+    },
+    "Perf/total_fps": {
+      "last": 7750.0,
+      "last_step": 66793,
+      "mean_last_10": 8159.9,
+      "min": 7372.0,
+      "max": 10562.0,
+      "points": 194
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

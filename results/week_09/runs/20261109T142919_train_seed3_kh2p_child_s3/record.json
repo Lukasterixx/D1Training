@@ -1,0 +1,63 @@
+{
+  "id": "20261109T142919_train_seed3_kh2p_child_s3",
+  "title": "Key hold r2: position-only foot + learned arm hold, fine-tuned from the r2 force run's 4200 (a matched child), 1800 it",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-10T05:15:22+11:00",
+  "started_utc": "2026-11-09T14:29:19+00:00",
+  "source_dir": "logs/unifp_train/20261109T142919_train_seed3_kh2p_child_s3",
+  "mode": "train",
+  "seed": 3,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1800,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 5999,
+  "final_checkpoint": {
+    "file": "model_5999.pt",
+    "sha256": "b402b668b74828db0108b7a99aa23538fc0e58653e75f2c5e7f7c22737f30a7a"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 153.7594451904297,
+      "last_step": 5999,
+      "mean_last_10": 154.48741912841797,
+      "min": 2.1910855770111084,
+      "max": 157.95887756347656,
+      "points": 1800
+    },
+    "Train/mean_episode_length": {
+      "last": 494.1600036621094,
+      "last_step": 5999,
+      "mean_last_10": 500.21300048828124,
+      "min": 10.816326141357422,
+      "max": 648.6699829101562,
+      "points": 1800
+    },
+    "Policy/mean_std": {
+      "last": 0.15354298055171967,
+      "last_step": 5999,
+      "mean_last_10": 0.15371205955743789,
+      "min": 0.1406208574771881,
+      "max": 0.1679103821516037,
+      "points": 1800
+    },
+    "Perf/total_fps": {
+      "last": 6995.0,
+      "last_step": 5999,
+      "mean_last_10": 6905.1,
+      "min": 3867.0,
+      "max": 15120.0,
+      "points": 1800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -230,6 +230,16 @@ retain the tagged system for the core control evaluation and report the limit.
    “orientation commands” as one degree of freedom throughout this plan, and
    size the tolerances in the Week 2 freeze accordingly.
 
+   **Corrected again 2026-11-07 (F-272, superseding F-099 on this): the full
+   pose is not ruled out.** The figures above score uniformly random
+   orientations, most of them hands pointing back at the robot, on the arm alone,
+   in a frame 8.6 cm off. The D1's wrist is spherical; with the body, a level hand
+   takes every roll at any heading within 60° over nearly the whole forward
+   workspace, including the real door pull's hand, and a hand 45° down over most
+   of it. So “orientation commands” can mean the whole orientation, provided goals
+   are drawn from the reachable set rather than from SO(3). Kinematics only:
+   whether a policy tracks it is a separate result, in `results/findings.md`.
+
 The current task uses 200 Hz physics and 50 Hz policy steps. Its default
 `--latency estimated` profile holds D1 arm targets for 5 policy steps (the SDK's
 10 Hz streaming rate, since measured at 9 Hz locked to the reports: F-239), samples arm joint angles at the **measured** 9 Hz (F-020)

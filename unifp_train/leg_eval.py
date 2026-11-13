@@ -34,6 +34,22 @@ FIELDS = ("stage", "phase", "theta", "theta_ref", "latch_open", "on_bar", "touch
 JOINTS = ("hip", "thigh", "calf")
 TORQUE_FIELDS = (tuple(f"{k}_fr_{j}" for k in ("tau", "dem", "qd") for j in JOINTS)
                  + tuple(f"{k}_sup_{j}" for k in ("tau", "dem", "qd") for j in JOINTS) + ("sat_fr", "sat_legs"))
+#: The key held by the arm (`keyhold_env`, 2026-11-10): the jaw centre's miss from the key (m), the hand's tilt off the
+#: shaft (rad), the grip spring's force (N), whether it still holds and whether the key was lost this step.
+HOLD_FIELDS = ("hold_err", "hold_tilt", "grip_n", "holding", "hold_active", "lost")
+#: The dog runner's stops read in simulation (2026-11-11), with the arm link (`--arm_locked`) only:
+#: - the arm's lead: its target less the link's last report, the largest of J1-J5, and J4 and J6 apart (J6 follows the
+#:   key's turn by script);
+#: - how far the legs are asked off their default (|action| x `interface.ACTION_SCALE`, the largest joint), the
+#:   front-right leg and the three support legs apart.
+#: These are `gate4.py`'s two quantities, but on the simulated legs, not on the dog's frames, so passing them is not passing
+#: that replay.
+STOP_FIELDS = ("lead_j15", "lead_j4", "lead_j6", "leg_target_fr", "leg_target_sup")
+#: Each arm joint's lead apart (rad), for finding which one leads (2026-11-11: a held 15-22 deg in J1-J5 with J4 small).
+LEAD_JOINT_FIELDS = tuple(f"lead_joint{j}" for j in range(1, 7))
+#: The runner's bounds (`demos/unifp/run_plan_probe.py`, gate4): lead 15 deg from 1 s on (stop at 25 held 0.5 s), legs
+#: 1.2 rad in the first second and 0.9 after, tilt 15 deg.
+STOP_LEAD_DEG, STOP_LEAD_HARD_DEG, STOP_LEG_FIRST_RAD, STOP_LEG_AFTER_RAD, STOP_TILT_DEG = 15.0, 25.0, 1.2, 0.9, 15.0
 #: A joint is clipped when its demand exceeds what was applied by more than this (N·m).
 SATURATED_NM = 0.5
 #: Isaac Lab's stock Go2 knee cap and where the geared knee's torque starts to fall (`leg_actuators`).
@@ -57,7 +73,7 @@ def build_key_plan(device) -> tuple[dict, list[dict]]:
     sym = lambda a: ((2 * torch.rand(n, generator=g) - 1) * a)
     mid = lambda r: torch.full((n,), 0.5 * (r[0] + r[1]))
     col = lambda key: torch.tensor([r[key] for r in rows], dtype=torch.float32)
-    keys = {"door_ahead": col("door_ahead"), "door_yaw": sym(0.12), "height": col("height"),
+    keys = {"door_ahead": col("door_ahead"), "door_yaw": sym(getattr(c, "KEY_EVAL_DOOR_YAW_RAD", 0.12)), "height": col("height"),
             "axis_side": col("axis_side"), "inertia": mid(c.KEY_INERTIA_KG_M2), "friction": col("friction_nm"),
             "detent": col("detent_nm"), "damping": mid(c.KEY_DAMPING), "mu": mid(c.KEY_MU), "reach": mid(c.KEY_REACH_M),
             "err_side": sym(c.KEY_EST_ERROR_SIDE_M), "err_up": sym(c.KEY_EST_ERROR_UP_M),
@@ -140,6 +156,17 @@ def record_step(env, done: torch.Tensor, ended: torch.Tensor) -> dict:
     clipped = dem.abs() - tau.abs() > SATURATED_NM
     out["sat_fr"] = clipped[:, list(leg_cfg.FR_JOINTS)].any(dim=1).float()
     out["sat_legs"] = clipped.any(dim=1).float()
+    if hasattr(env, "_hold_err"):
+        out.update({"hold_err": env._hold_err, "hold_tilt": env._hold_tilt, "grip_n": env._grip_force_w.norm(dim=-1),
+                    "holding": env._holding.float(), "hold_active": env._hold_active.float(), "lost": env._lost.float()})
+        if getattr(env, "_arm_link", None) is not None:
+            lead = (env._joint_targets[:, 12:18] - env._arm_link.reported).abs()
+            asked = (env._actions[:, :12] * interface.ACTION_SCALE).abs()
+            sup = [3 * f + k for f in leg_cfg.SUPPORT_FEET for k in range(3)]
+            out.update({f"lead_joint{j + 1}": lead[:, j] for j in range(6)})
+            out.update({"lead_j15": lead[:, :5].amax(dim=1), "lead_j4": lead[:, 3], "lead_j6": lead[:, 5],
+                        "leg_target_fr": asked[:, list(leg_cfg.FR_JOINTS)].amax(dim=1),
+                        "leg_target_sup": asked[:, sup].amax(dim=1)})
     blank = (done | ended).cpu().numpy()
     result = {k: np.where(blank, np.nan, v.detach().float().cpu().numpy()) for k, v in out.items()}
     ended_np = ended.cpu().numpy()
@@ -209,6 +236,14 @@ def score_episode(trace: dict, env: int, row: dict, dt: float = interface.POLICY
              "stance_max_cm": _r(float(np.nanmax(stance)), 2) if np.isfinite(stance).any() else None}
     if all(k in trace for k in TORQUE_FIELDS):
         extra.update(_torque_extras({k: trace[k][:, env] for k in TORQUE_FIELDS}, alive, pushing, dt))
+    if "hold_err" in trace:
+        extra.update(_hold_extras({k: trace[k][:, env] for k in HOLD_FIELDS}, alive))
+        if extra["lost"] and not success and reason not in ("fell", "damaged"):
+            reason = "key lost"
+        elif extra["lost"] and success:
+            reason = "ok, key lost"
+    if "lead_j15" in trace:
+        extra.update(_stop_extras({k: trace[k][:, env] for k in STOP_FIELDS}, alive))
     if row.get("key"):
         last = np.flatnonzero(alive)
         extra.update({
@@ -232,6 +267,72 @@ def score_episode(trace: dict, env: int, row: dict, dt: float = interface.POLICY
         "max_tilt_deg": _r(math.degrees(float(np.max(np.abs(np.concatenate((roll, pitch)))))), 2),
         "foot_err_engaged_mm": _r(1000.0 * float(np.nanmedian(col["foot_err"][pushing])) if pushing.any() else None, 1),
     }
+
+
+def _hold_extras(col: dict, alive: np.ndarray) -> dict:
+    """One episode's hold of the key by the arm (`HOLD_FIELDS`): its miss (mm), tilt (deg), grip force (N), loss."""
+    active = alive & (np.nan_to_num(col["hold_active"]) > 0.5)
+    active[:leg_cfg.KEYHOLD_GRACE_STEPS] = False           # the reset's bounce (keyhold_env); every episode starts at step 0
+    holding = active & (np.nan_to_num(col["holding"]) > 0.5)
+    if not active.any():
+        return {"hold_active": False, "lost": False, "hold_err_mm_median": None, "hold_err_mm_p95": None,
+                "hold_err_mm_max": None, "hold_tilt_deg_max": None, "grip_n_max": None, "grip_n_p95": None}
+    err, tilt, grip = 1000.0 * col["hold_err"][holding], np.degrees(col["hold_tilt"][holding]), col["grip_n"][holding]
+    lost = bool(np.nansum(col["lost"][alive]) > 0)
+    some = len(err) > 0
+    return {"hold_active": True, "lost": lost,
+            "hold_err_mm_median": _r(float(np.median(err)), 2) if some else None,
+            "hold_err_mm_p95": _r(float(np.quantile(err, 0.95)), 2) if some else None,
+            "hold_err_mm_max": _r(float(err.max()), 2) if some else None,
+            "hold_tilt_deg_max": _r(float(tilt.max()), 2) if some else None,
+            "grip_n_max": _r(float(grip.max()), 2) if some else None,
+            "grip_n_p95": _r(float(np.quantile(grip, 0.95)), 2) if some else None}
+
+
+def _stop_extras(col: dict, alive: np.ndarray) -> dict:
+    """One episode's `STOP_FIELDS` as the runner reads them: lead (deg) from 1 s on, leg targets (rad) in the first second
+    and after. Steps count from the episode's start, as gate4's from the handover."""
+    one_s = int(round(1.0 / interface.POLICY_DT))
+    first, after = alive.copy(), alive.copy()
+    first[one_s:], after[:one_s] = False, False
+
+    def peak(name, mask, deg=False):
+        v = col[name][mask]
+        v = v[np.isfinite(v)]
+        return _r(math.degrees(float(v.max())) if deg else float(v.max()), 3) if len(v) else None
+
+    return {"lead_deg_after_1s": peak("lead_j15", after, True), "lead_j4_deg_after_1s": peak("lead_j4", after, True),
+            "lead_j6_deg_after_1s": peak("lead_j6", after, True),
+            "leg_fr_rad_first_s": peak("leg_target_fr", first), "leg_fr_rad_after": peak("leg_target_fr", after),
+            "leg_sup_rad_first_s": peak("leg_target_sup", first), "leg_sup_rad_after": peak("leg_target_sup", after)}
+
+
+def _stop_summary(episodes: list[dict]) -> dict:
+    """The runner's stops over the episodes: medians, worst cases and how many episodes pass each bound (`STOP_*`)."""
+    get = lambda k: [e.get(k) for e in episodes]
+    over = lambda k, bound: sum(1 for v in get(k) if v is not None and v > bound)
+    out = {"note": "simulated legs and the link's model: the runner's bounds, not gate4's replay of the dog's frames"}
+    for k in ("lead_deg_after_1s", "lead_j4_deg_after_1s", "lead_j6_deg_after_1s", "leg_fr_rad_first_s",
+              "leg_fr_rad_after", "leg_sup_rad_first_s", "leg_sup_rad_after", "max_tilt_deg"):
+        vals = [v for v in get(k) if v is not None]
+        out[k] = {"median": _median(vals), "p90": _quantile(vals, 0.9), "max": _r(max(vals), 3) if vals else None}
+    out["episodes_over"] = {
+        f"lead_{STOP_LEAD_DEG:g}_deg": over("lead_deg_after_1s", STOP_LEAD_DEG),
+        f"lead_{STOP_LEAD_HARD_DEG:g}_deg": over("lead_deg_after_1s", STOP_LEAD_HARD_DEG),
+        f"leg_fr_first_{STOP_LEG_FIRST_RAD:g}_rad": over("leg_fr_rad_first_s", STOP_LEG_FIRST_RAD),
+        f"leg_fr_after_{STOP_LEG_AFTER_RAD:g}_rad": over("leg_fr_rad_after", STOP_LEG_AFTER_RAD),
+        f"leg_sup_first_{STOP_LEG_FIRST_RAD:g}_rad": over("leg_sup_rad_first_s", STOP_LEG_FIRST_RAD),
+        f"leg_sup_after_{STOP_LEG_AFTER_RAD:g}_rad": over("leg_sup_rad_after", STOP_LEG_AFTER_RAD),
+        f"tilt_{STOP_TILT_DEG:g}_deg": over("max_tilt_deg", STOP_TILT_DEG)}
+    clear = [e for e in episodes
+             if all(e.get(k) is not None for k in ("lead_deg_after_1s", "leg_fr_rad_after", "leg_sup_rad_after"))
+             and e["lead_deg_after_1s"] <= STOP_LEAD_DEG and e["max_tilt_deg"] <= STOP_TILT_DEG
+             and max(e["leg_sup_rad_first_s"] or 0.0, e["leg_fr_rad_first_s"] or 0.0) <= STOP_LEG_FIRST_RAD
+             and max(e["leg_sup_rad_after"], e["leg_fr_rad_after"]) <= STOP_LEG_AFTER_RAD]
+    out["episodes_within_all"] = len(clear)
+    out["all_four_within_all"] = sum(1 for e in clear if e.get("success") and not e.get("lost")
+                                     and e.get("foot_down", False))
+    return out
 
 
 def _torque_extras(col: dict, alive: np.ndarray, pushing: np.ndarray, dt: float) -> dict:
@@ -331,6 +432,22 @@ def score(trace: dict, rows: list[dict]) -> dict:
         summary.update({"by_contact_side": group("contact_side"), "by_left": group("left")})
     if episodes and "fr_calf_peak_nm" in episodes[0]:
         summary["torques"] = _torque_summary(episodes)
+    if episodes and "hold_active" in episodes[0]:
+        held = [e for e in episodes if e["hold_active"]]
+        summary["hold"] = {
+            "active": len(held), "lost": sum(e["lost"] for e in held),
+            "unlocked_and_held": sum(e.get("unlocked", False) and not e["lost"] for e in held),
+            "success_and_held": sum(e["success"] and not e["lost"] for e in held),
+            "all_four": sum(e["success"] and not e["lost"] and e.get("foot_down", False) for e in held),
+            "err_mm_median": _median([e["hold_err_mm_median"] for e in held]),
+            "err_mm_p95_median": _median([e["hold_err_mm_p95"] for e in held]),
+            "err_mm_max_median": _median([e["hold_err_mm_max"] for e in held]),
+            "err_mm_max_p90": _quantile([e["hold_err_mm_max"] for e in held], 0.9),
+            "grip_n_max_median": _median([e["grip_n_max"] for e in held]),
+            "grip_n_max_p90": _quantile([e["grip_n_max"] for e in held], 0.9),
+            "tilt_deg_max_median": _median([e["hold_tilt_deg_max"] for e in held])}
+    if episodes and "lead_deg_after_1s" in episodes[0]:
+        summary["stops"] = _stop_summary(episodes)
     return {"summary": summary, "episodes": episodes}
 
 

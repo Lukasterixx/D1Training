@@ -1,0 +1,63 @@
+{
+  "id": "20261107T084141_train_seed1_pose_t_s1",
+  "title": "Pose with the IK teacher: reward on the goal's joint angles as well, from 66600, 2000 iterations",
+  "notes": "",
+  "week": 8,
+  "recorded_at": "2026-11-07T21:31:23+11:00",
+  "started_utc": "2026-11-07T08:41:41+00:00",
+  "source_dir": "logs/unifp_train/20261107T084141_train_seed1_pose_t_s1",
+  "mode": "train",
+  "seed": 1,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "aeb0c825c76a2cdbc6df6f077d72b8c62c97e292",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 67604,
+  "final_checkpoint": {
+    "file": "model_67604.pt",
+    "sha256": "6b3b4aebbe4b3f05997818825ec2dbbc387893f513f10a2cac1fc9d2a2ff9f2e"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 178.9968719482422,
+      "last_step": 67604,
+      "mean_last_10": 181.53888549804688,
+      "min": 2.9036879539489746,
+      "max": 187.3249053955078,
+      "points": 1005
+    },
+    "Train/mean_episode_length": {
+      "last": 995.6900024414062,
+      "last_step": 67604,
+      "mean_last_10": 994.3710021972656,
+      "min": 13.017241477966309,
+      "max": 999.0,
+      "points": 1005
+    },
+    "Policy/mean_std": {
+      "last": 0.7389876842498779,
+      "last_step": 67604,
+      "mean_last_10": 0.7381418228149415,
+      "min": 0.526914656162262,
+      "max": 0.7389876842498779,
+      "points": 1005
+    },
+    "Perf/total_fps": {
+      "last": 7880.0,
+      "last_step": 67604,
+      "mean_last_10": 7618.7,
+      "min": 5616.0,
+      "max": 9688.0,
+      "points": 1005
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

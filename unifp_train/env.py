@@ -35,7 +35,7 @@ from isaaclab.sensors import ContactSensor
 from unifp_isaaclab import interface, task as goal_task
 from unifp_isaaclab.policy import ObsHistory
 
-from . import arm_link, debug_vis, forces, gait, leg_chatter, observations, rewards, task_cfg
+from . import arm_kin, arm_link, debug_vis, forces, gait, leg_chatter, observations, pose_goals, rewards, task_cfg
 from .env_cfg import Go2D1PosForceEnvCfg
 
 
@@ -90,6 +90,11 @@ class Go2D1PosForceEnv(DirectRLEnv):
             self.cfg.tool_offset_m, device=self.device).expand(self.num_envs, 1, 3).contiguous()
         self._forces = forces.GripperForces(self.num_envs, self.device)
         self._ee_force_w = zeros(self.num_envs, 3)
+        #: `pose_wrench`: where this push lands on the hand from the tool point, in the tip body's axes. Drawn from its own generator
+        #: while no push is on, so a frozen manifest's schedule is the same with it on or off.
+        self._push_arm = zeros(self.num_envs, 3)
+        self._push_draw = torch.Generator(device=self.device)
+        self._push_draw.manual_seed(int(cfg.seed or 0) + 31)
         #: Never written -- upstream's base push is commented out of its `step()`. Kept as a named
         #: buffer rather than a literal zero so the reward and observation calls read the same way
         #: as the end-effector ones, and so turning it on is one schedule rather than a rewrite.
@@ -104,6 +109,11 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._goals = goal_task.EeGoalTrajectory(
             self.num_envs, device=str(self.device),
             roll_range=task_cfg.EE_ROLL_RANGE_RAD if cfg.roll_objective else None)
+        if cfg.pose_objective:
+            if cfg.roll_objective:
+                raise ValueError("The pose objective's orientation channels are the roll's: ask for one or the other.")
+            self._goals = pose_goals.PoseGoalTrajectory(self.num_envs, self.device, naive=cfg.pose_naive,
+                                                        mix=pose_goals.TASK_MIX if cfg.pose_primitives else None)
         self._actor_history = ObsHistory(self.num_envs, device=str(self.device))
         self._critic_history = ObsHistory(
             self.num_envs, device=str(self.device),
@@ -121,7 +131,25 @@ class Go2D1PosForceEnv(DirectRLEnv):
             # record and is asserted term-for-term against a recorded Isaac Gym rollout.
             self._weights.update(task_cfg.scaled_extension_weights())
             self._terms.update(rewards.EXTENSION_TERMS)
+        if cfg.pose_objective:
+            pose_weights = {"separate": task_cfg.POSE_WEIGHTS, "joint": task_cfg.POSE_JOINT_WEIGHTS,
+                            "keypoints": task_cfg.POSE_KEYPOINT_WEIGHTS}[cfg.pose_reward]
+            for name, weight in pose_weights.items():
+                scale = cfg.pose_orn_scale if "orn" in name else 1.0
+                if scale:
+                    self._weights[name] = weight * scale * interface.POLICY_DT
+                    self._terms[name] = rewards.POSE_TERMS[name]
+            if cfg.pose_still_weight:
+                self._weights["pose_still"] = cfg.pose_still_weight * interface.POLICY_DT
+                self._terms["pose_still"] = rewards.pose_still
+            if cfg.pose_joint_weight:
+                self._weights["tracking_arm_joint"] = cfg.pose_joint_weight * interface.POLICY_DT
+                self._terms["tracking_arm_joint"] = lambda state: torch.exp(
+                    -(state.dof_pos[:, 12:interface.NUM_ACTIONS] - self._goals.q_current).abs().mean(dim=1) / task_cfg.POSE_JOINT_TEACHER_RAD)
         self._episode_sums = {name: zeros(self.num_envs) for name in self._weights}
+        #: The pose objective's running errors over an episode (rad, m, steps), for the log: training-time, through every
+        #: slide and push, so not what `eval` reports.
+        self._pose_sums = zeros(self.num_envs, 3)
 
         self._command_interval = int(task_cfg.COMMAND_RESAMPLING_TIME_S / interface.POLICY_DT)
 
@@ -138,15 +166,15 @@ class Go2D1PosForceEnv(DirectRLEnv):
             self._arm_link = arm_link.ArmLink(self.num_envs, self.device, interface.POLICY_DT,
                                               lower=limits[:, 0], upper=limits[:, 1], seed=cfg.seed or 0,
                                               track=cfg.track_leg_chatter, **(cfg.arm_link or {}))
-            if cfg.arm_step_weight:
-                self._weights["arm_command_step"] = cfg.arm_step_weight * interface.POLICY_DT
-                self._terms["arm_command_step"] = lambda state: self._arm_link.sent_step
-                self._episode_sums["arm_command_step"] = zeros(self.num_envs)
-            if cfg.arm_wrist_weight:
-                self._weights["arm_wrist_pose"] = cfg.arm_wrist_weight * interface.POLICY_DT
-                self._terms["arm_wrist_pose"] = lambda state: torch.sum(torch.square(state.dof_pos[:, 15:18]), dim=1)
-                self._episode_sums["arm_wrist_pose"] = zeros(self.num_envs)
+            link_weights, link_terms = self._arm_link_terms()
+            self._weights.update(link_weights)
+            self._terms.update(link_terms)
+            self._episode_sums.update({name: zeros(self.num_envs) for name in link_weights})
 
+        shaping_weights, shaping_terms = self._shaping_terms()
+        self._weights.update(shaping_weights)
+        self._terms.update(shaping_terms)
+        self._episode_sums.update({name: zeros(self.num_envs) for name in shaping_weights})
         if cfg.leg_armature_range is not None:
             self._draw_leg_armature()
         if cfg.leg_friction_range is not None:
@@ -154,6 +182,39 @@ class Go2D1PosForceEnv(DirectRLEnv):
         # Over every step, and over the steps told to stand (no velocity command), so a gait is not read as a rattle.
         self._chatter = ({scope: leg_chatter.LegChatter(self.num_envs, 12, self.device) for scope in self.CHATTER_SCOPES}
                          if cfg.track_leg_chatter else None)
+
+    def _arm_link_terms(self) -> tuple[dict, dict]:
+        """The arm link's penalties (`--arm_step_weight`, `--arm_lead_weight`, `--arm_wrist_weight`) as (weights, terms),
+        empty without a link. A subclass that rebuilds the reward table (`leg_env.Go2D1LegEnv` does) adds them again."""
+        cfg, weights, terms = self.cfg, {}, {}
+        if self._arm_link is None:
+            return weights, terms
+        if cfg.arm_step_weight:
+            weights["arm_command_step"] = cfg.arm_step_weight * interface.POLICY_DT
+            terms["arm_command_step"] = lambda state: self._arm_link.sent_step
+        if cfg.arm_lead_weight:
+            weights["arm_lead"] = cfg.arm_lead_weight * interface.POLICY_DT
+            terms["arm_lead"] = lambda state: torch.sum(torch.square(torch.relu(
+                (self._joint_targets[:, 12:interface.NUM_ACTIONS] - self._arm_link.reported).abs()
+                - task_cfg.ARM_LEAD_FREE_RAD)), dim=1)
+        if cfg.arm_wrist_weight:
+            weights["arm_wrist_pose"] = cfg.arm_wrist_weight * interface.POLICY_DT
+            terms["arm_wrist_pose"] = lambda state: torch.sum(torch.square(state.dof_pos[:, 15:18]), dim=1)
+        return weights, terms
+
+    def _shaping_terms(self) -> tuple[dict, dict]:
+        """The legs' and the body's penalties (`--leg_target_weight`, `--base_tilt_weight`) as (weights, terms). Like
+        `_arm_link_terms`, a subclass that rebuilds the reward table adds them again."""
+        cfg, weights, terms = self.cfg, {}, {}
+        if cfg.leg_target_weight:
+            weights["leg_target"] = cfg.leg_target_weight * interface.POLICY_DT
+            terms["leg_target"] = lambda state: torch.sum(torch.square(torch.relu(
+                (state.actions[:, :12] * interface.ACTION_SCALE).abs() - task_cfg.LEG_TARGET_FREE_RAD)), dim=1)
+        if cfg.base_tilt_weight:
+            weights["base_tilt"] = cfg.base_tilt_weight * interface.POLICY_DT
+            terms["base_tilt"] = lambda state: torch.square(torch.relu(
+                interface.body_roll_pitch(self._robot.data.root_quat_w).abs().amax(dim=1) - task_cfg.BASE_TILT_FREE_RAD))
+        return weights, terms
 
     def _draw_leg_armature(self) -> None:
         """Each environment's leg armature, once (a start-up randomisation: writing it costs a copy of every joint's)."""
@@ -200,13 +261,19 @@ class Go2D1PosForceEnv(DirectRLEnv):
         self._last_actions = self._actions
         self._actions = torch.clip(actions, -interface.CLIP_ACTIONS, interface.CLIP_ACTIONS)
         self._joint_targets = interface.joint_targets(self._actions)
-        if self._leg_answer is not None:
-            stance = self._default_dof_pos[:12]
-            self._joint_targets[:, :12] = stance + self._leg_answer * (self._joint_targets[:, :12] - stance)
+        self._answer_legs()
         if self._arm_link is not None:
             self._arm_link.command(self._joint_targets[:, 12:], self._dof()[0][:, 12:interface.NUM_ACTIONS])
         self._track_chatter()
         self._step_forces()
+
+    def _answer_legs(self) -> None:
+        """`--leg_answer_range`: only that share of each leg target's offset from the stance reaches the legs (the dog's
+        answered 0.17, F-256). Subclasses that build their own targets call this too (the leg task's did not until
+        2026-11-11)."""
+        if self._leg_answer is not None:
+            stance = self._default_dof_pos[:12]
+            self._joint_targets[:, :12] = stance + self._leg_answer * (self._joint_targets[:, :12] - stance)
 
     def _track_chatter(self) -> None:
         """Feed this step's leg targets to the chatter tracker; upright as `_get_dones` has it."""
@@ -239,6 +306,11 @@ class Go2D1PosForceEnv(DirectRLEnv):
         commanded, external = self._forces.step(self.episode_length_buf)
         self._commands[:, interface.CMD_EE_FORCE] = commanded
         self._ee_force_w = external
+        if self.cfg.pose_wrench:
+            idle = external.norm(dim=-1, keepdim=True) < 0.1
+            reach = torch.as_tensor(task_cfg.POSE_WRENCH_ARM_M, device=self.device)
+            draw = (2.0 * torch.rand(self.num_envs, 3, device=self.device, generator=self._push_draw) - 1.0) * reach
+            self._push_arm = torch.where(idle, draw, self._push_arm)
         self._write_wrench()
 
     def _write_wrench(self) -> None:
@@ -253,7 +325,7 @@ class Go2D1PosForceEnv(DirectRLEnv):
         quat = self._robot.data.body_quat_w[:, self._tip_body]
         local = interface.quat_rotate_inverse(quat, self._ee_force_w)
         self._robot.permanent_wrench_composer.set_forces_and_torques(
-            forces=local.unsqueeze(1).contiguous(), positions=self._tool_offset,
+            forces=local.unsqueeze(1).contiguous(), positions=(self._tool_offset + self._push_arm.unsqueeze(1)).contiguous(),
             body_ids=self._tip_body_ids)
         self._wrench_active = True
 
@@ -327,6 +399,9 @@ class Go2D1PosForceEnv(DirectRLEnv):
             penalised_contact_forces=self._contact_forces(self._penalised_contacts),
             ee_pos_w=self._tip_pos(), ee_goal_w=self._goal_world(),
             **self._hand_frame_terms(),
+            ee_orn_error=self._hand_error_angle() if self.cfg.pose_objective else None,
+            ee_keypoint_error=self._hand_keypoint_error() if self.cfg.pose_reward == "keypoints" else None,
+            **(self._hand_motion() if self.cfg.pose_still_weight else {}),
             thigh_pos_w=self._robot.data.body_pos_w[:, self._thigh_bodies] - self.scene.env_origins.unsqueeze(1),
             feet_vel_w=self._robot.data.body_lin_vel_w[:, self._feet_bodies],
             last_contacts=self._last_contacts, base_yaw_quat=yaw,
@@ -356,6 +431,60 @@ class Go2D1PosForceEnv(DirectRLEnv):
             torch.as_tensor((1.0, 0.0, 0.0), device=self.device).expand(self.num_envs, 3))
         return {"ee_approach_w": axis((0.0, 0.0, 1.0)), "ee_jaw_w": axis((0.0, 1.0, 0.0)),
                 "base_forward_w": forward}
+
+    def _hand_rotation_yaw(self) -> torch.Tensor:
+        """Link6's orientation in the yaw-only base frame, (N, 3, 3): the frame the orientation command is in."""
+        hand = pose_goals.matrix_from_quat(self._robot.data.body_quat_w[:, self._hand_body])
+        return pose_goals.matrix_from_quat(self._base_yaw_quat()).transpose(1, 2) @ hand
+
+    def _push_moment_yaw(self) -> torch.Tensor:
+        """The moment of this push about the tool point, yaw frame, N·m."""
+        arm = interface.quat_apply(self._robot.data.body_quat_w[:, self._tip_body], self._push_arm)
+        return interface.quat_rotate_inverse(self._base_yaw_quat(), torch.cross(arm, self._ee_force_w, dim=-1))
+
+    def _hand_target_rotation(self) -> torch.Tensor:
+        """Where the hand is asked to point: the command, turned by the moment on it through `POSE_ROT_STIFFNESS_NM_RAD`.
+
+        `ee_target`'s rotational twin. With `pose_wrench` off it is the command.
+        """
+        goal = self._goals.current_rotation
+        if not self.cfg.pose_wrench:
+            return goal
+        turn = self._push_moment_yaw() / task_cfg.POSE_ROT_STIFFNESS_NM_RAD
+        angle = turn.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+        turn = turn * (task_cfg.POSE_ROT_GIVE_MAX_RAD / angle).clamp(max=1.0)
+        return pose_goals.matrix_from_rotvec(turn) @ goal
+
+    def _hand_error_angle(self) -> torch.Tensor:
+        """The hand's geodesic angle from where it is asked to point, rad."""
+        return arm_kin.rotation_angle(self._hand_rotation_yaw(), self._hand_target_rotation())
+
+    def _hand_motion(self) -> dict:
+        """The tool point's speed and the hand's turn rate against the base, and whether the goal is held: for `pose_still`.
+
+        Against the base, because a held goal rides with it: a walking robot's hand should move with the robot.
+        """
+        quat = self._robot.data.body_quat_w[:, self._tip_body]
+        omega = self._robot.data.body_ang_vel_w[:, self._tip_body]
+        arm = interface.quat_apply(quat, self._tool_offset[:, 0])
+        velocity = self._robot.data.body_lin_vel_w[:, self._tip_body] + torch.cross(omega, arm, dim=-1)
+        relative = self._tip_pos() - (self._robot.data.root_pos_w - self.scene.env_origins)
+        base_omega = self._robot.data.root_ang_vel_w
+        carried = self._robot.data.root_lin_vel_w + torch.cross(base_omega, relative, dim=-1)
+        held = self._goals.timer >= self._goals.traj_steps
+        return {"ee_speed": (velocity - carried).norm(dim=-1), "ee_turn_rate": (omega - base_omega).norm(dim=-1),
+                "goal_held": held.float()}
+
+    def _hand_keypoint_error(self) -> torch.Tensor:
+        """Mean distance of three points on the hand from where the command puts them, m: the force-displaced target's, as the
+        position terms have it, turned by the commanded orientation."""
+        yaw = pose_goals.matrix_from_quat(self._base_yaw_quat())
+        target = self._goal_world() + (self._ee_force_w + interface.quat_apply(
+            self._base_yaw_quat(), self._commands[:, interface.CMD_EE_FORCE])) / self._gripper_force_kp
+        arm = task_cfg.POSE_KEYPOINT_M * torch.eye(3, device=self.device)
+        here = self._tip_pos().unsqueeze(1) + torch.einsum("nij,kj->nki", yaw @ self._hand_rotation_yaw(), arm)
+        there = target.unsqueeze(1) + torch.einsum("nij,kj->nki", yaw @ self._goals.current_rotation, arm)
+        return (here - there).norm(dim=-1).mean(dim=1)
 
     def _goal_centre(self) -> torch.Tensor:
         return goal_task.goal_sphere_center(
@@ -401,6 +530,10 @@ class Go2D1PosForceEnv(DirectRLEnv):
             base_ang_vel_b=self._robot.data.root_ang_vel_b,
             dof_pos=dof_pos, dof_vel=dof_vel, actions=self._actions,
             gait_phase=self._gait_phase, commands=self._commands)
+        if self.cfg.pose_wrench:
+            # The base-force block is zero for the whole run, so the moment takes it: the decoder learns it, the critic sees it,
+            # and no width changes.
+            critic[:, 9:12] = self._push_moment_yaw() * task_cfg.POSE_MOMENT_OBS_SCALE
         critic = torch.clip(critic, -interface.CLIP_OBSERVATIONS, interface.CLIP_OBSERVATIONS)
 
         return {
@@ -418,9 +551,15 @@ class Go2D1PosForceEnv(DirectRLEnv):
         """The critic's 22-wide `mass_params` block: zero, because mass randomisation is off.
 
         A method rather than a literal so a task built on this one can carry its own privileged
-        state in the block without changing the critic's width (`hook_env` does).
+        state in the block without changing the critic's width (`hook_env` does). The pose objective puts the hand's
+        orientation error in it, the critic's counterpart of the tool-point error it has always been given.
         """
-        return torch.zeros(self.num_envs, 22, device=self.device)
+        extra = torch.zeros(self.num_envs, 22, device=self.device)
+        if self.cfg.pose_objective:
+            hand = self._hand_rotation_yaw()
+            extra[:, 0:3] = pose_goals.rotvec_from_matrix(self._hand_target_rotation().transpose(1, 2) @ hand)
+            extra[:, 3:6] = pose_goals.rotvec_from_matrix(self._goals.neutral.T @ hand)
+        return extra
 
     def _get_rewards(self) -> torch.Tensor:
         # Resample velocity commands on their timer and advance the gait before scoring, which is
@@ -434,8 +573,14 @@ class Go2D1PosForceEnv(DirectRLEnv):
             # As (sin 2phi, cos 2phi) -- see `rewards.commanded_roll` for why not the angle.
             self._commands[:, interface.CMD_EE_ORN_R:interface.CMD_EE_ORN_P + 1] = (
                 rewards.encode_roll(self._goals.current_roll))
+        if self.cfg.pose_objective and not self.cfg.pose_blind:
+            self._commands[:, interface.CMD_EE_ORN_R:interface.CMD_EE_ORN_Y + 1] = self._goals.current_rotvec
 
         state = self._task_state()
+        if self.cfg.pose_objective:
+            self._pose_sums[:, 0] += state.ee_orn_error
+            self._pose_sums[:, 1] += torch.norm(state.ee_pos_w - rewards.ee_target(state), dim=1)
+            self._pose_sums[:, 2] += 1.0
         total = torch.zeros(self.num_envs, device=self.device)
         for name, weight in self._weights.items():
             value = self._terms[name](state) * weight
@@ -566,4 +711,10 @@ class Go2D1PosForceEnv(DirectRLEnv):
             extras[f"Episode_Reward/{name}"] = torch.mean(
                 total[env_ids] / self.max_episode_length_s)
             total[env_ids] = 0.0
+        if self.cfg.pose_objective:
+            sums = self._pose_sums[env_ids]
+            steps = sums[:, 2].clamp(min=1.0)
+            extras["Metrics/pose_orn_error_deg"] = torch.rad2deg((sums[:, 0] / steps).mean())
+            extras["Metrics/pose_pos_error_cm"] = 100.0 * (sums[:, 1] / steps).mean()
+            self._pose_sums[env_ids] = 0.0
         self.extras.setdefault("log", {}).update(extras)
