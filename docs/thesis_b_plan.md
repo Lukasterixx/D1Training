@@ -14,6 +14,10 @@ alongside pressing, the lever/box sequence and wiping. The
 [contact-task progression](#contact-task-progression) now says where each task is
 built in simulation and how far it has got.
 
+Proposed 13 November 2026, not yet agreed with the supervisor: a tool-focused direction for the RSS 2027 submission
+and early Thesis C (tool conditioning P4 against P3, matched twins from a common parent, a learned insertion on the
+dog). The simulation work packages are in [the tool paper plan](tool_paper_plan.md).
+
 ## Immediate objective
 
 Deliver a repeatable, AprilTag-guided combiner-box demonstration on the physical

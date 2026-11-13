@@ -1334,6 +1334,66 @@ Lukas asked for his nine latest screenshots to be added to this week's evidence.
 
 - **What they show:** the staged key hold's stages and the insertion's seated key, as the viewers draw them. They are replays of policies already scored above. Not new evidence, and nothing here is measured on the dog.
 
+### 2026-11-13 · An RSS 2027 Stage 1 draft
+
+Lukas asked for an RSS submission for the 4 December round. That round is RSS 2027's new Stage 1: an extended abstract
+of 5 pages of content plus 1 page of references, double-blind, judged on its hypotheses and methodology, with preliminary
+experiments allowed. Drafted in `paper/rss2027/` (`main.tex`, `references.bib`, `README.md`). It compiles to 6 pages
+with tectonic, content ending on page 5.
+
+**Direction:** deploying the force-aware whole-body policy through the D1's slow, closed interface, as four
+falsifiable hypotheses. H1 is report-locked commanding (F-238 to F-240, F-245, F-250). H2 is training through the fitted
+arm and scoring the command stream the arm receives (F-241, F-243, F-251, F-253). H3 is leg response and the real-frame
+replay (F-252, F-255 to F-258). H4 is the trained force input, open loop (F-268, F-269, F-271). The hardware runs of
+`66600` are F-257, F-261 and F-263. The paper also plans experiments E1 to E5, including a decoupled baseline it admits
+may win. Left out: the box chain, the leg policies, the rope, insertion and the pose policies (simulation, or not
+learned whole-body control on the dog). The README maps every number to its finding.
+
+`paper/rss2027/figures/make_figures.py` builds Fig. 2 from `logs/` and `results/`. (a) reproduces F-238's 590 held
+cycles and 52 skips exactly. Its moving curve has 11 runs, 2,154 cycles, because only those have feedback samples in
+`logs/`, against F-238's 13 runs and 2,806 cycles. (b) averages every 0.5 s scale reading at each steady told level:
+7.1, 11.3, 14.6 and 19.1 N, fit 1.96 x told + 7.1. F-269's 6.4 to 19.0 N (2.06 x told + 6.4) came from a selection the
+CSV does not record. The paper quotes the figure's numbers.
+
+References were checked against primary sources. One changes the framing: Schperberg et al. (ICRA 2026) run a D1 on a
+Go2 and report its send/receive rate as 40 Hz, against the 9.00 Hz we measure (F-020). The paper therefore says
+"through the vendor DDS interface" and makes the difference part of E1. How they reach the arm is not yet read.
+
+**Not shown:** nothing new. No run, and no finding. The hand positions the paper quotes are still forward kinematics,
+and it says so.
+
+### 2026-11-13 · A second RSS draft: tool-mediated force-position control
+
+Lukas expects his supervisor to want the tool and force-position work, and thinks the interface paper is too narrow, so
+there is a second draft in `paper/rss2027_tools/` (`main.tex`, `references.bib`, `README.md`,
+`figures/make_figures.py`). It is the same format and fits it: content ends on page 5.
+
+**The framing:** a task layer turns a tool's or mechanism's state into force-position references for the UniFP-style
+policy, and the policy is trained with the layer in the loop and paid to follow it. Four hypotheses:
+- H1, the layer against position scripting and outcome training: F-105 to F-108, F-110, F-164, F-217, F-219, F-221,
+  F-224, F-274, F-278 and F-284.
+- H2, pay the reference, not the outcome: F-109, F-283 and F-285.
+- H3, force awareness is conditional (P3 against P2): F-284's twins and F-285. F-278's stiffer-lock lead is cited as
+  retracted.
+- H4, tool conditioning (P4 against P3): pre-registered, no result.
+
+The real-robot motivation is the scripted chain's 5 of 11 and its contact failures. The only learned tool result on the
+dog is the force wipes (F-269, F-271).
+
+**Fig. 2 (`fig_matched`):** the counts are typed in from F-284's held-out table and F-285, not recomputed. Insertion
+counts are those inside the tilt stop, so heavy legs reads 61 against 2, not the headline's 61 against 4. The nominal
+69 and 81 come from round 6 in this week's log.
+
+The draft says that T1 and the claw demo predate the identified arm model, that the twins come from different parents,
+and that every learned tool result is simulation.
+
+The reference check found that a layer issuing force commands to a learned tracker is not new on its own. UniFP's own
+diffusion policy does it from demonstrations, and Ctrl-F (arXiv 2611.05507, humanoid, November 2026) plans forces from
+object state. Both are cited, and the claim is narrowed to analytic laws on a held tool's state, low-level training with
+the layer in the loop, and the matched-twin test.
+
+**Not shown:** nothing new. No run, and no finding.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
