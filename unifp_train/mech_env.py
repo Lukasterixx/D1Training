@@ -75,6 +75,22 @@ class Go2D1MechEnvCfg(Go2D1PosForceEnvCfg):
     lever_handle_pitch_range: tuple[float, float] = hook_cfg.HANDLE_PITCH_RANGE
     force_law_gains: tuple[float, float, float] = (mech_cfg.FORCE_LAW_KP_N_PER_M, mech_cfg.FORCE_LAW_KI_N_PER_M_S,
                                                    mech_cfg.FORCE_LAW_MAX_N)
+    #: The dog runner's tilt stop (rad; S4, `--mech_tilt_stop_deg`): an episode ends, as a failure, once the body's roll or
+    #: pitch passes it. None (every run before S4): only falls and tears end one.
+    tilt_stop_rad: float | None = None
+    #: The grasp closes only with the tool within this of its goal (the handle), m (S4c, `--mech_grasp_within_m`), the
+    #: settle rule's fallback included; never otherwise. None (every run before S4c): wherever the tool is (F-115, F-304).
+    #: With it, the goal is also held on the handle from the approach's arrival until the grasp
+    #: (`_hold_handle_until_grasp`): UniFP's generator would otherwise draw a new goal 0.5-2 s after arriving, and the
+    #: gate then measured the tool against that (2026-11-19 15:40; S4c-1's first run, the week 10 log).
+    grasp_within_m: float | None = None
+    #: The settle rule's fallback, policy steps (`--mech_engage_max_wait_s`); None: `hook_cfg.ENGAGE_MAX_WAIT_STEPS`.
+    engage_max_wait_steps: int | None = None
+    #: Weight, per second, of `mech_approach` (S4c, `--mech_approach_weight`): exp(-|tool - goal| / 4 cm)
+    #: (`task_cfg.TRACKING_EE_POS_SIGMA_FINE`, the pose objective's fine width) in mechanism episodes until the grasp,
+    #: and its full 1 from the grasp on, so hovering near the handle never pays more than grasping it.
+    #: UniFP's tracking term alone still pays 0.82 at 6 cm, and nothing else paid the last centimetres (S4c-0). 0: off.
+    approach_weight: float = 0.0
     #: The D1's own links, for the evaluator (see `hook_env.Go2D1HookEnvCfg.arm_contact_sensor`).
     arm_contact_sensor: ContactSensorCfg = ContactSensorCfg(
         prim_path="/World/envs/env_.*/Robot/D1/.*", history_length=0, update_period=0.0,
@@ -103,6 +119,7 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         self._torn_now = flags()
         self._term_torn = flags()
         self._term_fallen = flags()
+        self._term_tilt = flags()
         self._offset = torch.as_tensor(self.cfg.tool_offset_m, device=device).expand(n, 3)
         #: Per episode: the peak force the mechanism needs, the ceiling it was drawn under, which way
         #: it opens (index into `mech_cfg.OPENING_NAMES`), and the furthest the handle has got.
@@ -146,6 +163,9 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
             self._terms["fixture_force_tracking"] = hook_rewards.fixture_force_tracking
         if cfg.offpath_weight:
             self._weights.update(mech_cfg.scaled_weights({"mech_offpath": -abs(cfg.offpath_weight)}))
+        if getattr(cfg, "approach_weight", 0.0):
+            self._weights.update(mech_cfg.scaled_weights({"mech_approach": abs(cfg.approach_weight)}))
+            self._terms["mech_approach"] = self._approach_reward
         for name in self._weights:
             self._episode_sums.setdefault(name, zeros(n))
 
@@ -227,11 +247,25 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
 
     # --- grasping, and the goal on the path ---------------------------------------------------
 
+    def _approach_reward(self, state) -> torch.Tensor:
+        """`mech_approach` (S4c): the tool on its goal (the handle, along the approach), to about a centimetre, in
+        mechanism episodes not yet grasped; 1 from the grasp on (the most it pays: a grasp is never worth less than a
+        hover); zero in episodes without a mechanism."""
+        dist = torch.norm(state.ee_pos_w - state.ee_goal_w, dim=1)
+        near = torch.exp(-dist / task_cfg.TRACKING_EE_POS_SIGMA_FINE)
+        return torch.where(self._ever_grasped, torch.ones_like(near), near) * self._mech_env.float()
+
     def _engage_due(self) -> None:
         waited = self._since_reset - self._engage_step
         settled = self._tool_vel_w().norm(dim=-1) < hook_cfg.ENGAGE_SETTLE_SPEED_M_S
+        max_wait = getattr(self.cfg, "engage_max_wait_steps", None)
+        max_wait = hook_cfg.ENGAGE_MAX_WAIT_STEPS if max_wait is None else int(max_wait)
         due = (self._mech_env & ~self._ever_grasped & (waited >= 0)
-               & (settled | (waited >= hook_cfg.ENGAGE_MAX_WAIT_STEPS)))
+               & (settled | (waited >= max_wait)))
+        within = getattr(self.cfg, "grasp_within_m", None)
+        if within is not None:
+            # S4c: a gripper closes only at the handle; the fallback no longer grasps wherever the tool is.
+            due = due & ((self._tip_pos() - self._goal_world()).norm(dim=-1) <= float(within))
         if not bool(due.any()):
             return
         ids = due.nonzero(as_tuple=False).flatten()
@@ -399,9 +433,25 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
                 "friction_kinetic": profile["friction_kinetic"], "latch_n": profile["latch_n"],
                 "grasp_k": full(plan["conditions"]["grasp_k"]), "grip_n": full(mech_cfg.GRIP_N)}
 
+    def _hold_handle_until_grasp(self) -> None:
+        """With `grasp_within_m`: hold each mechanism episode's goal on its handle from the step its approach arrives
+        until the grasp, so the gate and the approach term measure the tool against the handle, and the policy is
+        asked for the handle, however long it takes to arrive (the dog's layer holds the handle too)."""
+        if getattr(self.cfg, "grasp_within_m", None) is None:
+            return
+        g = self._goals
+        arrived = (self._mech_env & ~self._ever_grasped & ~g.hold_mask & (g.timer >= g.traj_steps))
+        if not bool(arrived.any()):
+            return
+        g.hold_mask = g.hold_mask | arrived
+        g.hold_goal = torch.where(arrived.unsqueeze(-1), self._handle_sphere, g.hold_goal)
+        g.hold_roll = torch.where(arrived, g.goal_roll, g.hold_roll)
+
     def _hold_goals_on_path(self) -> None:
-        """Put each held goal on the path's reference point, in the goal sphere of the base now."""
-        held = self._goals.hold_mask
+        """Put each held goal on the path's reference point, in the goal sphere of the base now. Only grasped ones: a
+        goal held on its handle before the grasp (`_hold_handle_until_grasp`) stays there; without the gate every held
+        goal is a grasped one."""
+        held = self._goals.hold_mask & self._ever_grasped
         if not bool(held.any()):
             return
         # The baseline holds the goal on the handle and asks for force; this task asks for the reference.
@@ -412,6 +462,7 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
 
     def _get_rewards(self) -> torch.Tensor:
         self._since_reset += 1
+        self._hold_handle_until_grasp()
         self._engage_due()
         grasped = self._mech.grasped
         self._travel_goal.step(grasped, self._mech.travel)
@@ -468,9 +519,13 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         fallen, timed_out = super()._get_dones()
         self._torn_now = self._mech.torn.clone()
+        tilted = torch.zeros_like(fallen)
+        if self.cfg.tilt_stop_rad is not None:
+            tilt = interface.body_roll_pitch(self._robot.data.root_quat_w).abs().amax(dim=1)
+            tilted = (tilt > self.cfg.tilt_stop_rad) & (self._since_reset > 5) & ~fallen
         # Kept through the reset that follows, for an evaluator stepping from outside.
-        self._term_torn, self._term_fallen = self._torn_now.clone(), fallen.clone()
-        return fallen | self._torn_now, timed_out
+        self._term_torn, self._term_fallen, self._term_tilt = self._torn_now.clone(), fallen.clone(), tilted
+        return fallen | self._torn_now | tilted, timed_out
 
     def _resample_velocity_commands(self, env_ids: torch.Tensor) -> None:
         """UniFP's draw, except that an episode with a mechanism stands."""
@@ -488,6 +543,11 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
         Episodes cut short by the random start lengths of a fresh run say nothing and are skipped.
         """
         log = self.extras.setdefault("log", {})
+        # S4c: of the mechanism episodes that ended at least a second past the engage step, the share that grasped (with
+        # `grasp_within_m`, the share that arrived); and their grasp error, on every grasp.
+        waited = env_ids[self._mech_env[env_ids] & (self._since_reset[env_ids] >= self._engage_step[env_ids] + 50)]
+        if len(waited) > 0:
+            log["Mechanism/grasped_fraction"] = float(self._ever_grasped[waited].float().mean())
         grasped = env_ids[self._ever_grasped[env_ids]]
         if len(grasped) > 0:
             held_steps = self._since_reset[grasped] - self._grasp_step[grasped]
@@ -535,6 +595,8 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
             self._last_promotion_step = self.common_step_counter
             self._opened_ema = None
         log["Mechanism/peak_ceiling_n"] = self._ceiling
+        if self.cfg.tilt_stop_rad is not None:
+            log["Mechanism/tilt_stopped_fraction"] = float(self._term_tilt[env_ids].float().mean())
         if self._opened_ema is not None:
             log["Mechanism/frontier_opened_ema"] = self._opened_ema
 
@@ -589,3 +651,22 @@ class Go2D1MechEnv(Go2D1PosForceEnv):
             self._handle_sphere[ids] = handles
             self._goals.aim(ids, handles, roll)
             self._engage_step[ids] = self._goals.traj_steps[ids].long() + delay.long()
+
+    # --- the viewer ---------------------------------------------------------------------------------------------------
+
+    def _set_debug_vis_impl(self, enable: bool) -> None:
+        """The mechanism's overlay (`mech_vis`) beside UniFP's, which `unifp_markers = False` leaves out (clean frames)."""
+        if getattr(self.cfg, "unifp_markers", True):
+            Go2D1PosForceEnv._set_debug_vis_impl(self, enable)
+        if enable and not hasattr(self, "_mech_markers"):
+            from .mech_vis import MechMarkers
+
+            self._mech_markers = MechMarkers("/Visuals/mechanism", self.num_envs, str(self.device))
+        if hasattr(self, "_mech_markers"):
+            self._mech_markers.set_visibility(enable)
+
+    def _debug_vis_callback(self, event) -> None:
+        if hasattr(self, "_markers"):
+            Go2D1PosForceEnv._debug_vis_callback(self, event)
+        if hasattr(self, "_mech_markers"):
+            self._mech_markers.update(self)

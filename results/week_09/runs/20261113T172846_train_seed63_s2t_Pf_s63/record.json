@@ -1,0 +1,63 @@
+{
+  "id": "20261113T172846_train_seed63_s2t_Pf_s63",
+  "title": "S2 twin force from ki6_pos_8600 seed 63: 800 it, round 6's recipe (v4 key)",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-14T06:15:54+11:00",
+  "started_utc": "2026-11-13T17:28:46+00:00",
+  "source_dir": "logs/unifp_train/20261113T172846_train_seed63_s2t_Pf_s63",
+  "mode": "train",
+  "seed": 63,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 9399,
+  "final_checkpoint": {
+    "file": "model_9399.pt",
+    "sha256": "825f7213fbed7055b18cde9922851a9a1292856d75fc72347f9398966f61e1e5"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 355.1473693847656,
+      "last_step": 9399,
+      "mean_last_10": 344.37620239257814,
+      "min": 2.319694995880127,
+      "max": 359.79058837890625,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 975.7100219726562,
+      "last_step": 9399,
+      "mean_last_10": 967.2909973144531,
+      "min": 11.22449016571045,
+      "max": 996.4099731445312,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.09515491873025894,
+      "last_step": 9399,
+      "mean_last_10": 0.09530168548226356,
+      "min": 0.09515491873025894,
+      "max": 0.14101095497608185,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 5814.0,
+      "last_step": 9399,
+      "mean_last_10": 5971.1,
+      "min": 5360.0,
+      "max": 13726.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

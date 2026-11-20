@@ -1311,6 +1311,9 @@ Lukas asked to see the insertion. The GPU was free: d1training-f0's round 28 end
   - the true keyway is 3.5 mm off the estimate at 225°, 6 mm nearer than estimated, roll -3°;
   - in [round 6's scoring of `8200`](#/week/9/run/20261112T221314_leg_eval_seed1_ki6_force_8200_f1) it was a success: touch at 3.0 s, seated 4.1 s later, tilt at most 8.7°, peak 21.7 N, the episode 6.2 s.
 - **What it shows:** the same frozen lock and policy as that evaluation, replayed for the eye. It is not new evidence.
+- **Closed at 12:25:51**, after about 2.5 min, with exit 137 (killed rather than shut down cleanly). Its `run.json` therefore still reads `running`, with no step count.
+  - Recorded as [the viewer run](#/week/9/run/20261113T012232_play_seed1_view_ki6_force_8200_row84).
+  - Lukas's shots 7-9 below are from it.
 
 ### 2026-11-13 · Lukas's screenshots from the two viewers (added 12:45)
 
@@ -1394,6 +1397,389 @@ the layer in the loop, and the matched-twin test.
 
 **Not shown:** nothing new. No run, and no finding.
 
+### 2026-11-13 · S1, tool conditioning on the key insertion (H4): the build, the key family and the selection rule, before any checkpoint is scored
+
+Lukas: "pushed to main by another pc is the plan for tool conditioning for this thesis. can you pull it and begin working
+through it. you have multiple days of gpu". The plan is [`docs/tool_paper_plan.md`](../../docs/tool_paper_plan.md)
+(commit `3acb837a`); S1 comes first. The GPU was free at 14:28 (15 MiB, no peer session holding it). d1training-29 and
+d1training-12 were told at 14:56.
+
+**What was built** (simulation only; with no key set every earlier number is unchanged, checked by test):
+- `unifp_train/keylock.py`: the key is per environment (`KeyLock.set_tool`):
+  - the tip's reach beyond the jaw centre along Link6 z (v4's 31.5 mm is the only measured value);
+  - the shaft's axis off the jaws' (Link6 x, y; F-224 measured 2 mm on the dog);
+  - its give in the jaws: m/N on every axis, relaxed toward compliance x contact force, its rate fed to the contact's dampers;
+  - its mass, applied by the environment as a weight at the key's back face.
+
+  `keylock.descriptor` gives the 10-wide descriptor (below). The shaft, wards and tip stay v4's, so the keyway fits every key and only the tool varies. The grip's slip force and the tip's edge break stay the lock's draws.
+- `unifp_train/keyinsert_env.py`: a **true** key (the plant, its weight, the scoring) and a **believed** key (the layer's tip, the IK goal, the start pose, the measured tip, P4's descriptor). They are equal except in the wrong-descriptor set.
+  - `cfg.tools`: the training keys, one per episode, uniformly.
+  - `cfg.tool_obs`: `descriptor` (P4) or `zero` (P3, the specialist) adds an actor group `tool` and a critic group `tool_true`, the true key's for every arm.
+  - Training logs `Insert/seated_fraction_<key>` for each training key.
+- `unifp_train/models.py`: `UniFPActor(num_tool_obs=...)`. The tool group comes after the 32-frame stack and is read once, not per frame, by the encoder and by the actor beside the newest frame.
+- `run_unifp_train.py`:
+  - `--insert_tools train|specialist` and `--insert_tool_obs descriptor|zero`;
+  - `--insert_tool_set validation|test|test_train|wrong` and `--insert_tool_manifest`;
+  - `widen_tool_checkpoint`: a parent gets zero columns on the encoder's, the actor's and the critic's first layers.
+- `unifp_train/eval.py`: `EvaluablePolicy` reads the tool width from the checkpoint; `act(stacked, tool)` feeds zeros when no tool group is given.
+- `unifp_train/keyinsert_eval.py`: per-key summaries (`by_tool`), `started` (the start pose solved) and the key's largest give.
+- `unifp_train/keytools.py`: the family and the frozen sets, in `results/manifests/keyinsert_tools_v2.json` (written once; `python -m unifp_train.keytools --check` compares it with the code).
+- Tests: `tests/test_keylock.py` +3 (two keys seat at their own tips; the give settles at the softest key; v4 through `set_tool` is the old key) and `tests/test_tool_conditioning.py` (4: the widened actor and critic compute the parent to 1e-6, the new inputs are live, `EvaluablePolicy` reads the width, the descriptor width). 18 of 18 pass.
+
+**Smokes and a design fault found before training** (1 N·m, the dog's stance, `lev.sh`'s probe legs):
+- [Training smoke](#/week/9/run/20261113T034728_train_seed51_s1_smoke_p4): 3 iterations at 64 environments from the widened `ki6_force_8200`. `tool_widened_from` is in its `run.json`, and the three keys' seated fractions are logged.
+- [The parent on v1's validation keys](#/week/9/run/20261113T034558_leg_eval_seed1_s1_smoke_parent_val_f1): v4 34 of 48, T-short 15, **T-long 0** (47 false seats, the face "felt" 29-89 mm short of it).
+  - The arm swung away within 0.2 s of the spawn: the jaw was a median 189 mm off its goal for T-long, 124 mm for T-short and 65 mm for v4 (the known spawn swing, settled by step 30-40). The layer read that lag as a touch.
+  - **Cause: v1's masses were past what the D1 can hold at the lock.** With the env's own arm model at a typical start, Joint2 holds 2.66 of its 3.33 N·m for the arm and the RealSense. T-long's 150 g at 45 mm adds 0.74 N·m (3.40 in total), and H-high's 250 g adds 1.23. The 3.33 N·m is URDF-unverified (`motor_model.py`): the servo is rated 3.14 N·m, 4.9 continuous, 9.8 stall.
+  - [The same keys at 10 g each](#/week/9/run/20261113T035023_leg_eval_seed1_s1_diag_parent_val_mass10_f1) (a scratch copy of the manifest): T-short 27, T-long 11, v4 34 (unchanged), touch errors 2-7 mm. Mass was most of it.
+  - T-long still had 24 of 48 damaged (median peak 48.6 N). The peaks were 1-4 policy steps long near the keyway's floor, with 2.7-3.5 mm of give at v1's 0.2 mm/N. The give then moved the key without the contact's dampers seeing it. Its rate now feeds them.
+- **So the family is v2** ([F-286](../findings.md#f-286); v1's file is kept and superseded; its test set was never scored). Its locks are v1's, with masses of 5-60 g (keys, not tools: Joint2 at most about 90% of its limit standing still) and compliance of 0-0.12 mm/N.
+
+**The key family, v2** (reach mm, shaft offset x / y mm, compliance mm/N, mass g):
+
+| set | key | reach | offset x / y | compliance | mass |
+|---|---|---|---|---|---|
+| train | T-short | 24.0 | 1.5 / 0 | 0.04 | 25 |
+| train, specialist | **v4** (the current key) | 31.5 | 0 / 0 | 0 | 10 |
+| train | T-long | 45.0 | 0 / -1.5 | 0.08 | 40 |
+| held out, gap | H-gap-a | 28.0 | 0.75 / -0.75 | 0.02 | 15 |
+| held out, gap | H-gap-b | 38.0 | -0.75 / -0.75 | 0.06 | 32 |
+| held out, below | H-low | 19.0 | 2.5 / 0 | 0 | 5 |
+| held out, above | H-high | 55.0 | 0 / -2.5 | 0.12 | 60 |
+| held out, mixed | H-mix-a | 45.0 | 1.5 / 0 | 0 | 10 |
+| held out, mixed | H-mix-b | 24.0 | 0 / -1.5 | 0.08 | 40 |
+
+- **Wrong descriptor**, all on T-long's true key: W-geom believes 42 mm and no offset; W-dyn believes v4's compliance and mass; W-all believes it holds v4.
+- **The descriptor** (10, zero for v4): the tip's offset from the jaw centre / 2 mm, 2 mm, (reach − 31.5 mm) / 10 mm; the shaft's axis less the jaws' (3, zero for this family); the shaft's length less 10 mm (zero here); the offset's size / 2 mm; the compliance / 0.1 mm/N; (mass − 10 g) / 30 g.
+- **The sets** (each key on every lock of its set):
+  - validation: the train keys on 48 new locks (seed 20261116), 144 episodes;
+  - test: the held-out keys on 48 other new locks (seed 20261117), 288;
+  - test_train: the train keys on the test locks, 144;
+  - wrong: 144.
+
+  The locks come from training's own distributions (the estimate off to 3.5 mm across, 8 mm along, 4 deg in roll, 0.8 deg in tilt; the lock's play, edge breaks, friction and the grip's slip drawn). The box is placed within the key hold's frozen grid, and the press is 8 N. None of `keyinsert_eval`'s 96 locks is reused, and these locks are harder (a median 2.7 mm across, to ±8 mm along), so their numbers are not comparable with the 96's.
+
+**Design choices to read the result by:**
+- **The layer knows the key's geometry in every arm** (the plan's step 2, and the Thesis B plan's "do not accidentally give only P4 an accurate target frame"). So H4 here asks whether the *policy* gains from a descriptor beyond a layer that already places the believed tip. What only the descriptor carries:
+  - the give and the mass (the D1's Joint2 margin);
+  - the geometry's effect on the policy's own residual (the moment arm of a longer key).
+
+  If P4 ties P3, that answers this question, not "does knowing the tool help".
+- **P3 is P4's network with the descriptor held at zero**, so the capacity and the warm start are identical (test: the widened parent with zero input computes the parent). The specialist is the same network on v4 alone.
+- **The same seed (51) and budget (1,500 iterations) for all three arms**, with round 6's recipe (`keyinsert/round6.sh`: the insertion recipe, `66600`'s legs, the dog's stance 3 : settled 1, the D1 link, lr 3e-5, the 15 deg tilt stop in training, tilt priced −200).
+  - One departure from round 6, the same for all three arms: the widened network's optimizer starts fresh, because its moments have the narrower network's shapes.
+- The sag compensation does not know the key's mass: the layer uses the key's geometry only.
+
+**The selection rule, stated here before any checkpoint is scored** (`logs/unifp_train/s1tools/select.py`):
+- The candidates are each arm's saved checkpoints after the parent: 8400 to 9600 every 200, and the last, 9699.
+- Each candidate is scored on the validation set at 1 and 2 N·m (the dog's stance, the probe legs, as `iev.sh`).
+- Selected: the fewest falls, 1 and 2 N·m summed (the plan's "no falls" first); then the most successes inside the 15 deg tilt stop, 1 and 2 N·m summed; ties go to the earlier checkpoint.
+- Each arm's selected checkpoint is scored **once** on test, test_train and wrong, at 1 and 2 N·m. Nothing else is scored on the test locks except the parent, as an unselected reference, once all three selections are made.
+- Reported per held-out key and pooled: successes inside the tilt stop, false seats, peak force, touch error. All of it is labelled a one-seed pilot. The plan's falsification of H4 (P4 no better than P3, or than the specialist, within seed spread) needs the three seeds.
+
+**Queued** (`logs/unifp_train/s1tools/`: `runner.sh` lanes t1, t2 and e; `queue_arm.sh`; status in `status`; from 14:55):
+- t1: P4, then the specialist;
+- t2: P3;
+- e: the parent on validation, then each checkpoint's validation as it is saved, the selections, the tests.
+- **Throughput:** 7.6-8.1 s an iteration each, with two trainings and the evaluation lane together (round 6's median was 7.6 s), so each 1,500-iteration arm takes about 3.2 h. `docs/tool_paper_plan.md` said 2.8 s, which is one training alone, and is corrected.
+
+### 2026-11-13 · S2, twins from a common parent (H3): the parents, the grid and the rule, before any checkpoint is scored
+
+F-284's and F-285's twins come from different parents and seeds. The plan's S2 asks for twins from one parent, scored on
+a grid of body and tool shifts.
+
+**The parent, and why:** both of the plan's option (a), as two families, so that the parent is a factor and not a confound:
+- **F**: round 6's force-aware `ki6_force_8200` (F-284's selection), fine-tuned into a force-aware twin and a position-only twin;
+- **P**: round 6's position-only `ki6_pos_8600`, fine-tuned into both likewise.
+
+In family F, position-only inherits force-trained features (the plan's caveat). In family P, force-aware inherits position-trained ones. If the variant-by-shift interaction holds in both families, it does not come from the parent. Option (b), a parent from before the force curriculum, would mean retraining the key hold and the insertion from far back. It is not done.
+
+**What `--leg_variant position` removes in the insertion** (checked in `keyinsert_env.py`, as the plan asks):
+- the press command in the actor (`CMD_EE_FORCE` 0);
+- the force law in the layer (it presses by position, 2 mm in);
+- UniFP's compliant target in the reward (the goal is paid);
+- the contact force in the critic.
+
+Neither variant's latent is force-supervised: the insertion zeroes the end-effector force the estimator is trained on (`_ee_force_w`), for F-284's force-aware policies as well. So force-aware here means a commanded press and a compliant target, not a force estimate.
+
+**Runs** (queued behind S1's pilot, `logs/unifp_train/s1tools/queue_twin.sh`): F and P, each twin with seeds 61, 62 and 63 (12 runs). Each is 800 iterations of round 6's recipe with its optimizer resumed as round 6 did, on the v4 key (rigid and massless, as every insertion run before S1).
+
+**Sets** (`results/manifests/keyinsert_twins_v1.json`, new streams): 48 validation locks (seed 20261120) and 96 test locks (seed 20261121), drawn as S1's are, with the twins' key. Two reach-only keys (45 and 24 mm, rigid, massless) are scored on the test locks.
+
+**Selection** (stated before scoring, S1's rule): the four saved checkpoints of each run (+200, +400, +600, last) on the validation locks at 1 and 2 N·m. The fewest falls, then the most successes inside 15 deg, then the earliest.
+
+**The grid** (`grid.sh`; the selected checkpoint once on the 96 test locks; the dog's stance, the probe legs, 1 N·m unless the condition says otherwise):
+- nominal;
+- body: friction 2 N·m, zero leg armature, heavy (0.002 / knees 0.0073), leg delay 0 ms, delay 5-20 ms, the settled stance;
+- lock and tool: sticky (mu 0.45), tight (0.1 mm a side), sharp (no edge breaks), the estimate's errors ×1.3 and ×1.5, the lock's contact stiffness ×0.5 and ×1.5 (`--insert_contact_k_scale`), keys reaching 45 and 24 mm.
+
+**The analysis, stated before scoring:**
+- Success inside the 15 deg stop is modelled as variant × shift type (body or tool, each against nominal), with the family as a fixed effect, seed and condition as random effects (a mixed-effects logistic).
+- H3 holds if the interaction is distinguishable from zero in the direction F-284 found (force-aware better under body shifts, position-only better under tool shifts), in both families.
+- statsmodels is not installed in any environment here, so the analysis gets its own environment when the numbers exist. (Set up 2026-11-13: `logs/analysis_venv`, statsmodels 0.15, and `logs/unifp_train/s1tools/s2_analysis.py` recovers a planted interaction of 2.0 as 2.12 on synthetic data.) The ×1.5 stiffness may be past the penalty contact's stable range at the 5 ms step (`keylock.CONTACT_K_N_PER_M`'s note). It is dropped if its peaks show that, and that will be said.
+
+- **2026-11-14 00:10:** the first twin's two reach conditions (`s2t_Ff_s61_8600_g_reach45`, `_reach24`) failed in argument parsing (exit 2, no run directory, nothing to record): `--insert_tool_set` accepted only S1's set names. The list is removed (`keytools.build_plan` refuses a set the manifest lacks) and both are rerun (`g_03r_`). The other twins' reach conditions had not run yet.
+
+### 2026-11-13 · S3, the reference against the outcome reward on the key hold (H2): the band, the runs and the rule, before scoring
+
+F-285's following reward priced only the key running ahead of the layer's arc. Its position-only twin stalled short of
+the latch, priced for nothing. So its stalls may be the reward's, not a lack of force sense.
+
+**Built** (simulation only; nothing changes without the new flag):
+- `keyhold.turn_behind` and `--key_turn_behind_weight`: the key falling behind the reference, past the same 10 deg band, priced squared while the layer presses or holds. This is the "band both ways".
+- `leg_eval.draw_key_plan` and `--key_eval_draw validation|test`: the key hold's 108 keys drawn anew within the frozen grid's span on new streams (seeds 20261122 and 20261123), for selection and a once-only test. The frozen 108 are spent.
+- `logs/unifp_train/s1tools/kev.sh` (`lev.sh`'s legs and key flags, the D1 link, the dog's stance), `select3.py` and `queue_s3.sh`.
+- **Smokes** (15:05-15:12):
+  - [The parent `kh16_6800` on the drawn validation keys](#/week/9/run/20261113T040549_leg_eval_seed1_s3_parent_kh16_6800_val_f1), 1 N·m, the dog's stance: 75 of 108 all four, 62 of them inside the runner's bounds, 1 fall. That is in line with its 54-78 on the frozen 108 (F-282).
+  - The first training smoke died in PhysX's start-up ("Failed to get DOF velocities from backend"), beside two 2048-environment trainings and without `--small_physx`. Its buffers did not fit, it made no run directory and is not recorded, and **its process still exited 0**. So a training's "ended exit 0" in `status` is not proof it ran: the evaluation jobs check for the checkpoint itself.
+  - [Rerun with `--small_physx`](#/week/9/run/20261113T041142_train_seed70_s3_smoke_band2): 3 iterations at 64 environments, `Episode_Reward/key_turn_behind` logged in each.
+
+**Runs** (queued behind S2): 400 iterations of round 28's recipe (`keyhold/round28.sh`: round 16's on `66600`'s legs from the dog's stance) from one parent, round 16's force-aware `kh16_6800`. Seeds 71, 72 and 73 for each arm:
+- A: force-aware, the outcome reward (no following);
+- B: force-aware, following (`--key_turn_follow_weight -15`, F-285's);
+- C: force-aware, following and the band (behind −15);
+- D: position-only, following and the band;
+- E: position-only, following.
+
+A against B against C tests H2. D against C, both under the band, is the plan's H3 key-turn comparison. D against E shows whether the band frees position-only's stall. Position-only from the force-aware parent inherits its features, as S2's family F does.
+
+**Selection, stated before scoring** (`select3.py`): both saved checkpoints (+200, last) on the drawn validation keys at 1 and 2 N·m from the dog's stance. The fewest falls, then the most episodes all four (unlocked, key kept, foot back) and inside the dog runner's bounds (`keyhold/runner_ok.py`'s test), then the earliest.
+
+**Scored once on the drawn test keys:** 1 and 2 N·m from the dog's stance, the settled stance with no friction, and the staged sequence at 1 N·m, with `turn_speed.py`, `lead6.py` and `runner_ok.py`. Reported:
+- success and keys lost after unlocking;
+- the fraction of keys running ahead of the reference;
+- the peak key speed;
+- Joint6's lead;
+- the stall angle.
+
+### 2026-11-13 · S1's pilot (seed 51): the trainings, the selections and the held-out keys
+
+**The trainings** (14:55-18:04; [P4](#/week/9/run/20261113T035503_train_seed51_s1p_P4_s51), [P3](#/week/9/run/20261113T035614_train_seed51_s1p_P3_s51)): 1,500 iterations each at 7.6-8.4 s an iteration.
+- Training's own seated fractions rose (P4 0.71 to 0.80-0.89, P3 0.64 to 0.82-0.87, v4 near 0.95), while the frozen validation fell or swung: P4 87 / 96 at 8400 down to 60 / 80 at 9400, then 99 / 95 at 9600; P3 between 48 and 89. That is F-121's and F-282's pattern: training's fraction is sampled at reset on `66600`'s legs from mixed stances, the frozen sets use the probe legs from the dog's stance.
+- **The fine-tune traded damage for false seats.** The parent damaged 25-28 of 144 validation keys (peak median 27-29 N) with 24-31 false seats. Both arms press more gently (peaks 18-22 N, the press median 6-11 N against 13.6-14.7), with 4-15 damaged but 34-80 false seats. Training does not end an episode on damage (only frozen evaluations do), and it prices the press past 20 N. So pressing lighter pays in training even where it leaves a key short of the floor.
+
+**The selections** (the rule stated before scoring, `select.py`; validation at 1 + 2 N·m, of 288):
+- P4: `9600`, [99](#/week/9/run/20261113T064734_leg_eval_seed1_s1p_P4_s51_9600_val_f1) + [95](#/week/9/run/20261113T065110_leg_eval_seed1_s1p_P4_s51_9600_val_f2) = 194, no falls, 82 false seats.
+- P3: `8400`, [82](#/week/9/run/20261113T042729_leg_eval_seed1_s1p_P3_s51_8400_val_f1) + [85](#/week/9/run/20261113T043041_leg_eval_seed1_s1p_P3_s51_8400_val_f2) = 167, no falls, 113 false seats.
+- The parent: 180 ([85](#/week/9/run/20261113T035727_leg_eval_seed1_s1_parent_8200_val_f1) + [95](#/week/9/run/20261113T040149_leg_eval_seed1_s1_parent_8200_val_f2)), no falls, 55 false seats.
+- The specialist ([training](#/week/9/run/20261113T070053_train_seed51_s1p_SP_s51), v4 alone, 18:00-21:25): `8400`, [80](#/week/9/run/20261113T073625_leg_eval_seed1_s1p_SP_s51_8400_val_f1) + [78](#/week/9/run/20261113T074051_leg_eval_seed1_s1p_SP_s51_8400_val_f2) = 158, no falls, 80 false seats. It falls further than the multi-key arms as it trains (33 / 46 at `9400`), on its own key as well (v4 31 down to 18-30). So the decline is the training-versus-frozen gap, not the mixture of keys.
+
+**The held-out keys, scored once** (the test locks; successes inside 15 deg, of 48 per key; 1 / 2 N·m):
+
+| arm | H-gap-a | H-gap-b | H-low | H-high | H-mix-a | H-mix-b | pooled 1 N·m (95% CI) | pooled 2 N·m (95% CI) |
+|---|---|---|---|---|---|---|---|---|
+| P4 `9600` | 33 / 32 | 26 / 25 | 29 / 28 | **3** / 18 | 25 / 25 | 20 / 26 | [136](#/week/9/run/20261113T081649_leg_eval_seed1_s1p_P4_s51_9600_test_f1) / 288 (0.41-0.53) | [154](#/week/9/run/20261113T082122_leg_eval_seed1_s1p_P4_s51_9600_test_f2) / 288 (0.48-0.59) |
+| P3 `8400` | 29 / 27 | 28 / 28 | 27 / 23 | 24 / 18 | 28 / 25 | 12 / 25 | [148](#/week/9/run/20261113T072014_leg_eval_seed1_s1p_P3_s51_8400_test_f1) / 288 (0.46-0.57) | [146](#/week/9/run/20261113T072405_leg_eval_seed1_s1p_P3_s51_8400_test_f2) / 288 (0.45-0.56) |
+| specialist `8400` | 27 / 30 | 22 / 23 | 31 / 30 | 10 / 16 | 17 / 22 | 17 / 20 | [124](#/week/9/run/20261113T104636_leg_eval_seed1_s1p_SP_s51_8400_test_f1) / 288 (0.38-0.49) | [141](#/week/9/run/20261113T105124_leg_eval_seed1_s1p_SP_s51_8400_test_f2) / 288 (0.43-0.55) |
+| the parent `8200` (not selected) | 25 / 28 | 23 / 27 | 30 / 40 | 9 / 11 | 30 / 31 | 17 / 17 | [134](#/week/9/run/20261113T114313_leg_eval_seed1_s1_parent_8200_test_f1) / 288 (0.41-0.52) | [154](#/week/9/run/20261113T114758_leg_eval_seed1_s1_parent_8200_test_f2) / 288 (0.48-0.59) |
+
+- **On held-out keys the descriptor did not help in this pilot, and no fine-tune improved on the parent.**
+  - Episode by episode on the same locks (exact McNemar): P4 against P3 at 1 N·m, 52 succeed only for P4 and 64 only for P3 (p 0.31); at 2 N·m, 69 and 61 (p 0.54).
+  - P4 against the specialist: 61 / 49 (p 0.29) and 67 / 54 (p 0.28).
+  - P3 against the specialist: 81 / 57 (p 0.05) and 72 / 67 (p 0.73).
+  - The parent, never trained on another key, scores 134 / 154, level with P4. 1,500 iterations on the train keys bought nothing on held-out keys, with or without the descriptor.
+- **The extrapolated key exposes it.** H-high lies past every end of the training range: in descriptor units its reach is 2.35 (training at most 1.35), its mass 1.67 (1.0) and its compliance 1.2 (0.8). On it at 1 N·m, P4 presses at a median peak of 10.7 N against P3's 18.8. Its key ends a median 0.16 mm in, resting on the face, and the layer takes it as seated (43 false seats; P3 16). So P4 carried its response to the descriptor beyond anything it trained on, into too light a press. With three training keys, the descriptor is closer to a label for three keys than a scale it can follow.
+- **On the training keys at the test locks** P4 leads: [89](#/week/9/run/20261113T084329_leg_eval_seed1_s1p_P4_s51_9600_test_train_f1) / [86](#/week/9/run/20261113T084648_leg_eval_seed1_s1p_P4_s51_9600_test_train_f2) against [79](#/week/9/run/20261113T072840_leg_eval_seed1_s1p_P3_s51_8400_test_train_f1) / [69](#/week/9/run/20261113T073146_leg_eval_seed1_s1p_P3_s51_8400_test_train_f2) of 144 (p 0.28 and 0.04). The two were selected at different points (`9600`, `8400`), so this does not separate the descriptor from the training's length. The specialist scores [72](#/week/9/run/20261113T110355_leg_eval_seed1_s1p_SP_s51_8400_test_train_f1) / [75](#/week/9/run/20261113T110744_leg_eval_seed1_s1p_SP_s51_8400_test_train_f2), weakest on T-long (15 / 17 against 26 / 22 for both multi-key arms), the key it never trained on. The parent scores [69](#/week/9/run/20261113T115230_leg_eval_seed1_s1_parent_8200_test_train_f1) / [90](#/week/9/run/20261113T115623_leg_eval_seed1_s1_parent_8200_test_train_f2).
+- **A wrong belief**, all on T-long's true key (of 48; 1 / 2 N·m). For reference, T-long with its true descriptor on the same locks scores 26 / 22 for P4 and P3, 15 / 17 for the specialist and the parent.
+
+  | belief | P4 `9600` | P3 `8400` | specialist `8400` | parent |
+  |---|---|---|---|---|
+  | W-dyn: v4's compliance and mass | [27](#/week/9/run/20261113T090659_leg_eval_seed1_s1p_P4_s51_9600_wrong_f1) / [24](#/week/9/run/20261113T091019_leg_eval_seed1_s1p_P4_s51_9600_wrong_f2) | [27](#/week/9/run/20261113T075212_leg_eval_seed1_s1p_P3_s51_8400_wrong_f1) / [24](#/week/9/run/20261113T075602_leg_eval_seed1_s1p_P3_s51_8400_wrong_f2) | [20](#/week/9/run/20261113T112631_leg_eval_seed1_s1p_SP_s51_8400_wrong_f1) / [18](#/week/9/run/20261113T113100_leg_eval_seed1_s1p_SP_s51_8400_wrong_f2) | [23](#/week/9/run/20261113T120032_leg_eval_seed1_s1_parent_8200_wrong_f1) / [19](#/week/9/run/20261113T120433_leg_eval_seed1_s1_parent_8200_wrong_f2) |
+  | W-geom: 3 mm short, the 1.5 mm offset missed | 18 / 25 | 24 / 26 | 27 / 29 | 24 / 29 |
+  | W-all: believes it holds v4 | 1 / 1 | 2 / 11 | 7 / 14 | 4 / 16 |
+
+  - **P4 does not use the descriptor's dynamics on T-long:** told v4's compliance and mass, it scores the same as told the truth (27 / 24 against 26 / 22). That is graceful only because nothing was being used.
+  - A wrong geometry hurts both arms through the layer, which places the believed tip. A 13.5 mm reach error (W-all) loses almost everything. P4's 18 at 1 N·m under W-geom, against P3's 24, is within one evaluation's spread.
+
+**What it means for S1's design** ([F-287](../findings.md#f-287)):
+- Three training keys give the descriptor three values to learn from. P4 treats it as a label and extrapolates it badly (H-high).
+- The fine-tune itself degrades the frozen conditions, by pressing too lightly and seating falsely. That swamps any difference the descriptor makes.
+- Before the plan's three seeds are spent on this design:
+  - train on keys drawn from a continuous range, holding out regions rather than keys;
+  - end training episodes on damage, as the frozen sets do, so a light press stops paying;
+  - shorten the fine-tune (each arm's best was early or noisy).
+  The seeds 52 and 53 are not queued.
+
+**Not shown:** one seed, so H4 is neither supported nor falsified (the plan's test needs three seeds and their spread). Nothing of it has run on the dog. The keys other than v4 are designed, not measured.
+
+### 2026-11-13 · S1b, the pilot redesigned after F-287: built and queued, the rule before scoring
+
+F-287 says the pilot's design cannot credit or discredit the descriptor: three training keys make it a label, and the
+fine-tune's drift toward light presses and false seats is larger than any descriptor effect. So the plan's seeds 52 and
+53 are not run on it. A redesign is queued behind S3 for Lukas to keep or cancel before it starts (lanes t1 and t2,
+`t_24`/`t_25`, about 2026-11-14 afternoon).
+
+**What changes** (simulation only; nothing changes without the new flags):
+- **Continuous training keys** (`--insert_tools continuous`, `keyinsert_env.cfg.tool_ranges`, `keytools.S1B_RANGES`): each episode draws a key from a region, so the descriptor varies continuously. The region is reach 22-47 mm less a held-out band of 33-40 mm, the shaft's offset within 1.8 mm, compliance 0-0.09 mm/N and mass 8-45 g.
+- **Damaged keys end training episodes** (`--insert_damage_stop`), as every frozen evaluation already does.
+- **600 iterations**, the candidates `8400`, `8600` and `8799`.
+- **New sets** (`results/manifests/keyinsert_tools_v3.json`; locks on new streams, 20261124 and 20261125):
+  - validation: 6 keys drawn from the region on 24 locks (144 episodes);
+  - test: 6 held-out keys on 48 locks. G-35 and G-38 are in the band; X-low and X-high are past the reach's ends; X-dyn has compliance and mass past the region with its geometry inside; X-all is v2's H-high, kept so the two designs compare on it;
+  - test_train: 3 more drawn keys on the test locks;
+  - wrong: v2's three, on T-long, which lies inside the region.
+- The arms are as before (P4, P3, the specialist on v4 alone), from the same widened `ki6_force_8200`, seed 51, round 6's recipe otherwise. `tests/test_keylock.py` checks that drawn keys stay out of the band and that held-out keys lie outside the region (22 tests pass).
+- [Smoke](#/week/9/run/20261113T121557_train_seed51_s1b_smoke) (23:16, 3 iterations at 64 environments): its `env.yaml` holds the region, `tool_obs: descriptor` and `damage_stop: true`, and the parent was widened with zero columns. The parent on the v3 validation keys runs next.
+
+**The rule, stated before scoring:** S1's (`select.py`): the fewest falls, then the most successes inside 15 deg on the validation keys at 1 + 2 N·m, then the earliest. Each selection is scored once on test, test_train and wrong at 1 and 2 N·m; the parent once on each after all three selections.
+
+**What would read as support for H4 in this one-seed pilot:**
+- P4 above P3 on the held-out keys pooled, with the paired comparison's discordant pairs in P4's favour (McNemar p < 0.05 at both frictions);
+- P4 above the specialist the same way;
+- P4 at least as good as P3 on X-all.
+
+One seed is not the plan's test; three would follow only if this design holds up.
+
+### 2026-11-14 · S1b's pilot (seed 51): the continuous keys did not make the descriptor help either
+
+The redesign was queued at 23:30 for Lukas to keep or cancel. Nothing cancelled it, and it ran 13:47-17:18 with the rule
+and the criteria stated in the entry above.
+
+**The trainings** (600 iterations each, damaged keys ending episodes): [P4](#/week/9/run/20261114T045431_train_seed51_s1b_P4_s51), [P3](#/week/9/run/20261114T024729_train_seed51_s1b_P3_s51),
+[the specialist](#/week/9/run/20261114T041239_train_seed51_s1b_SP_s51). The parent on v3's validation keys: [70](#/week/9/run/20261113T121623_leg_eval_seed1_s1b_parent_8200_val_f1) / [85](#/week/9/run/20261113T122038_leg_eval_seed1_s1b_parent_8200_val_f2) of 144, with 41-42 damaged.
+
+**Selections** (validation, 1 + 2 N·m, of 288; no falls anywhere):
+
+| arm | `8400` | `8600` | `8799` | selected | false seats there |
+|---|---|---|---|---|---|
+| P4 | 64 + 16 | 75 + 23 | [101](#/week/9/run/20261114T061834_leg_eval_seed1_s1b_P4_s51_8799_val_f1) + [38](#/week/9/run/20261114T062309_leg_eval_seed1_s1b_P4_s51_8799_val_f2) | `8799` (139) | 132 |
+| P3 | 88 + 44 | 81 + 72 | [80](#/week/9/run/20261114T041546_leg_eval_seed1_s1b_P3_s51_8799_val_f1) + [76](#/week/9/run/20261114T041959_leg_eval_seed1_s1b_P3_s51_8799_val_f2) | `8799` (156) | 99 |
+| the specialist | 90 + 81 | [84](#/week/9/run/20261114T051201_leg_eval_seed1_s1b_SP_s51_8600_val_f1) + [88](#/week/9/run/20261114T051614_leg_eval_seed1_s1b_SP_s51_8600_val_f2) | 79 + 92 | `8600` (172) | 50 |
+
+- **Ending episodes on damage did not stop the multi-key arms' drift.** P3 damages 11-22 of 144 (the parent 41-42) and false-seats 37-84 (the parent 17-32). Ending an episode on damage also forfeits what seating would have earned after it, so damage costs more, and the lighter press that leaves keys short pays all the more.
+- **The specialist, trained with the same stop, is the exception:** 172 against the parent's 155, with 22-47 false seats. In S1 without the stop it fell short of the parent (158 against 180). One seed and a different validation set, so this is a lead, not a result.
+- **P4 depends on the leg friction.** At 1 N·m it is the best arm. At 2 N·m its median press falls to 3.4-6.8 N (8.7-11.4 at 1 N·m) and 101-125 of 144 are false seats.
+
+**The held-out keys, scored once** (v3's test locks; successes inside 15 deg, of 48 per key; 1 / 2 N·m):
+
+| arm | G-35 | G-38 | X-low | X-high | X-dyn | X-all | pooled 1 N·m (95% CI) | pooled 2 N·m (95% CI) |
+|---|---|---|---|---|---|---|---|---|
+| P4 `8799` | 32 / 13 | 33 / 13 | 36 / 20 | 31 / 11 | 11 / 17 | 20 / 13 | [163](#/week/9/run/20261114T062802_leg_eval_seed1_s1b_P4_s51_8799_test_f1) (0.51-0.62) | [87](#/week/9/run/20261114T063348_leg_eval_seed1_s1b_P4_s51_8799_test_f2) (0.25-0.36) |
+| P3 `8799` | 30 / 24 | 29 / 28 | 33 / 25 | 26 / 24 | 8 / 12 | 18 / 19 | [144](#/week/9/run/20261114T043157_leg_eval_seed1_s1b_P3_s51_8799_test_f1) (0.44-0.56) | [132](#/week/9/run/20261114T043635_leg_eval_seed1_s1b_P3_s51_8799_test_f2) (0.40-0.52) |
+| the specialist `8600` | 29 / 34 | 33 / 34 | 35 / 34 | 22 / 28 | 6 / 9 | 17 / 15 | [142](#/week/9/run/20261114T054219_leg_eval_seed1_s1b_SP_s51_8600_test_f1) (0.44-0.55) | [154](#/week/9/run/20261114T054731_leg_eval_seed1_s1b_SP_s51_8600_test_f2) (0.48-0.59) |
+| the parent (not selected) | 30 / 33 | 31 / 38 | 40 / 33 | 24 / 27 | 8 / 6 | 14 / 16 | [147](#/week/9/run/20261114T063138_leg_eval_seed1_s1b_parent_8200_test_f1) (0.45-0.57) | [153](#/week/9/run/20261114T063725_leg_eval_seed1_s1b_parent_8200_test_f2) (0.47-0.59) |
+
+- Episode by episode (exact McNemar):
+  - P4 against P3: at 1 N·m 62 only P4, 43 only P3 (p 0.08); at 2 N·m 37 and 82 (p < 0.001).
+  - P4 against the specialist: 68 / 47 (p 0.06) and 36 / 103 (p < 0.001).
+  - P3 against the specialist: p 0.93 and 0.04 (the specialist).
+- **The stated criteria for support are not met.** P4 is ahead at 1 N·m and far behind at 2 N·m, and on X-all it is level with P3 at 1 N·m (20 against 18) and behind at 2 N·m (13 against 19).
+- **On the training keys at the test locks** (of 144): P4 [95](#/week/9/run/20261114T062934_leg_eval_seed1_s1b_P4_s51_8799_test_train_f1) / [45](#/week/9/run/20261114T063404_leg_eval_seed1_s1b_P4_s51_8799_test_train_f2), P3 83 / 83, the specialist 81 / 89, the parent 88 / 90. P4's 2 N·m collapse is there on keys it trained on too, so it is not about generalising.
+- **X-dyn** (compliance and mass past the region, the geometry inside) defeats every arm, the parent included: 6-17 of 48. P4 does best there at 2 N·m (17).
+- **Wrong beliefs** (T-long's key): P4 [75](#/week/9/run/20261114T063054_leg_eval_seed1_s1b_P4_s51_8799_wrong_f1) / 51, P3 55 / 64, the specialist 53 / 60, the parent 53 / 65 of 144. On W-all (believing v4), P4 keeps 21 / 26 against 10-19. Its policy seems to correct part of the layer's geometry error, which the zero-descriptor arms cannot be told about.
+
+**Reading the two pilots together** ([F-288](../findings.md#f-288)): no fine-tune, with or without the descriptor, beats the unadapted parent on held-out keys at both frictions. The descriptor moves P4's press, and that changes its success more than any generalization does: S1's P4 pressed too lightly on an out-of-range key, S1b's on the higher leg friction. Whether the friction collapse is the seed or the design is what seeds 52 and 53 answer. They are queued behind the evaluation backlog (`gate_s1b_seeds.sh`, which first stops evaluation lanes e2-e5 so two trainings fit).
+
+**Not shown:** one seed per arm. Simulation only; the keys are designed.
+
+### 2026-11-14 · S1b's seeds 52 and 53: P4's collapse at 2 N·m was seed 51's, and the descriptor still does not help (written 2026-11-17)
+
+`gate_s1b_seeds.sh` stopped evaluation lanes e2-e5 at 18:29 and queued the six trainings (600 iterations each, S1b's
+recipe, seeds 52 and 53). They ran 18:30-22:36. The selections, the held-out tests, the training keys at the test
+locks and the wrong beliefs finished by 23:13. The rule and the criteria are the ones stated before scoring in "S1b, the
+pilot redesigned after F-287". Summary: `python3 logs/unifp_train/s1tools/s1_summary.py --prefix s1b 51 52 53`
+(`s1b_summary.json`).
+
+| seed | arm | training | validation by checkpoint (1 + 2 N·m, of 288) | selected | held-out 1 N·m | held-out 2 N·m | false seats (both) | median press 1 / 2 N·m |
+|---|---|---|---|---|---|---|---|---|
+| 52 | P4 | [train](#/week/9/run/20261114T073020_train_seed52_s1b_P4_s52) | `8400` 87 + 81, `8600` 93 + 87, `8799` 84 + 66 | `8600` | [166/288](#/week/9/run/20261114T110704_leg_eval_seed1_s1b_P4_s52_8600_test_f1) | [169/288](#/week/9/run/20261114T111147_leg_eval_seed1_s1b_P4_s52_8600_test_f2) | 160 | 11.1 / 10.5 |
+| 52 | P3 | [train](#/week/9/run/20261114T073013_train_seed52_s1b_P3_s52) | `8400` 93 + 81, `8600` 99 + 71, `8799` 76 + 77 | `8400` | [169/288](#/week/9/run/20261114T100633_leg_eval_seed1_s1b_P3_s52_8400_test_f1) | [167/288](#/week/9/run/20261114T101105_leg_eval_seed1_s1b_P3_s52_8400_test_f2) | 155 | 10.4 / 7.9 |
+| 52 | the specialist | [train](#/week/9/run/20261114T085313_train_seed52_s1b_SP_s52) | `8400` 73 + 85, `8600` 77 + 72, `8799` 76 + 75 | `8400` | [139/288](#/week/9/run/20261114T115950_leg_eval_seed1_s1b_SP_s52_8400_test_f1) | [149/288](#/week/9/run/20261114T120102_leg_eval_seed1_s1b_SP_s52_8400_test_f2) | 126 | 13.5 / 12.3 |
+| 53 | P4 | [train](#/week/9/run/20261114T085336_train_seed53_s1b_P4_s53) | `8400` 86 + 37, `8600` 73 + 77, `8799` 78 + 76 | `8799` | [137/288](#/week/9/run/20261114T115253_leg_eval_seed1_s1b_P4_s53_8799_test_f1) | [144/288](#/week/9/run/20261114T115410_leg_eval_seed1_s1b_P4_s53_8799_test_f2) | 185 | 13.4 / 9.2 |
+| 53 | P3 | [train](#/week/9/run/20261114T101407_train_seed53_s1b_P3_s53) | `8400` 91 + 74, `8600` 88 + 81, `8799` 91 + 95 | `8799` | [178/288](#/week/9/run/20261114T114306_leg_eval_seed1_s1b_P3_s53_8799_test_f1) | [163/288](#/week/9/run/20261114T114423_leg_eval_seed1_s1b_P3_s53_8799_test_f2) | 139 | 11.3 / 9.3 |
+| 53 | the specialist | [train](#/week/9/run/20261114T101524_train_seed53_s1b_SP_s53) | `8400` 69 + 80, `8600` 80 + 78, `8799` 79 + 85 | `8799` | [131/288](#/week/9/run/20261114T120652_leg_eval_seed1_s1b_SP_s53_8799_test_f1) | [146/288](#/week/9/run/20261114T120807_leg_eval_seed1_s1b_SP_s53_8799_test_f2) | 165 | 13.0 / 11.8 |
+
+No falls in any selection. Seed 51 (the pilot entry above): P4 163 / 87, P3 144 / 132, the specialist 142 / 154, the unadapted parent 147 / 153.
+
+**Pooled over the three seeds** (successes inside 15 deg, of 864 per friction): P4 466 / 400, P3 491 / 462, the specialist 412 / 449.
+
+**P4 against P3, the same episodes, per seed** (exact McNemar; "+" is P4 ahead):
+
+| seed | 1 N·m: only P4 / only P3 (p) | 2 N·m |
+|---|---|---|
+| 51 | 62 / 43 (0.08) | 37 / 82 (< 0.001) |
+| 52 | 48 / 51 (0.84) | 49 / 47 (0.92) |
+| 53 | 20 / 61 (< 0.001) | 42 / 61 (0.08) |
+
+- **The friction collapse was seed 51's.** Seed 52's P4 presses 10.5 N at 2 N·m and seats 169 of 288. Seed 53's presses 9.2 N and seats 144, with P3 at 9.3 N. Seed 51's 7.1 N and 87 of 288 are the outlier. So F-288's "P4 collapses at 2 N·m" is one seed's, not the design's.
+- **The descriptor does not help in any seed.** P4 is ahead of P3 only in seed 51 at 1 N·m (p 0.08), level in seed 52, and behind in seed 53 at 1 N·m (p < 0.001). By the plan's rule ("no better than P3 on held-out keys within seed spread"), **H4 is falsified on this design.**
+- **Training on several keys beats the specialist in two seeds of three.** P3 against the specialist at 1 N·m: seed 52 68 / 38 (p 0.005), seed 53 68 / 21 (p < 0.001); seed 51 58 / 56. That is the key family's contribution without a descriptor, the other half of H4's question.
+- **P3 beats the unadapted parent only in some seeds:** 169 and 178 at 1 N·m (seeds 52 and 53) against the parent's 147, 144 in seed 51. At 2 N·m: 132, 167 and 163 against 153. The parent is one checkpoint, so its spread is unknown.
+- **On the train-region keys at the test locks** (of 144, 1 / 2 N·m): P4 95 / 45, 94 / 98, 86 / 78; P3 83 / 83, 95 / 91, 98 / 106; the specialist 81 / 89, 84 / 76, 81 / 89. P4 is no better than P3 on keys it trained on either.
+- **Wrong beliefs** (T-long's key told as another, of 144 at 1 N·m): P4 75, 75, 54; P3 55, 83, 73. Seed 51's lead on W-all (P4 21 / 26 against 10-19) does not repeat: 17 / 19 against P3's 21 / 24 in seed 52, and 7 / 21 against 18 / 30 in seed 53. The pilot's reading that "P4 corrects part of the layer's geometry error" was one seed's.
+- **False seats stay high in every multi-key arm** (P4 and P3, 139-264 of 576 at the test locks; the specialist 115-165, the parent 102). The drift F-287 and F-288 named is there in all three seeds.
+
+Finding: [F-289](../findings.md#f-289). F-288 gets a dated note that its friction collapse was one seed's.
+
+**Not shown:** S1b's keys are a designed family, and the descriptor is the key's true geometry and dynamics. A descriptor
+measured on the dog (a camera's estimate of the reach, say) has not been tried. Simulation only.
+
+### 2026-11-14 · S3's test (H2, and H3 on the key turn): following the arc removes the jolt in every seed; the band trades lean for 2 N·m; position-only's stall is not the reward's (written 2026-11-17)
+
+The 15 runs (five arms, seeds 71-73, 400 iterations each from `kh16_6800`, recipe and rule in "S3, the reference
+against the outcome reward on the key hold") trained 13 Nov 17:45 to 14 Nov 15:00, selections included. The selected
+checkpoints were scored once on the drawn test keys (seed 20261123, 108 keys), 14 Nov 18:03 to 15 Nov 00:16. No test
+was rerun. The tables come from `logs/unifp_train/s1tools/s3_summary.py` (on `s3_turns.txt`, the output of
+`turn_speed.py`, `lead6.py` and `runner_ok.py`). The paired tests come from `s3_paired.py`: the same 108 keys in every
+run, checked by each key's lock friction, with exact McNemar on the discordant pairs summed over the three seeds.
+
+Columns:
+- all four: unlocked, key kept, foot back;
+- inside runner: all four inside the runner's J1-J5 lead, tilt and support-leg bounds. Joint6 is not among them: it follows the key by script and is reported apart.
+- dog's stance at 1 and 2 N·m;
+- settled: the settled stance with no friction;
+- staged: the holster draw, insertion and turn at 1 N·m.
+
+| arm | seed | selected | all four, 1 N·m (inside runner) | 2 N·m | settled, no friction | staged | keys ahead of the arc (all four sets) | peak key rate, deg/s (1 / 2 N·m) | J6 lead, deg (1 / 2 N·m) |
+|---|---|---|---|---|---|---|---|---|---|
+| A | 71 | `7000` | [71 (14)](#/week/9/run/20261114T070314_leg_eval_seed1_s3k_A_s71_7000_test_f1) | [95 (75)](#/week/9/run/20261114T070829_leg_eval_seed1_s3k_A_s71_7000_test_f2) | [81](#/week/9/run/20261114T071302_leg_eval_seed1_s3k_A_s71_7000_test_old) | [46](#/week/9/run/20261114T071734_leg_eval_seed1_s3k_A_s71_7000_test_staged) | 405 of 405 | 589 / 585 | 44.6 / 43.9 |
+| A | 72 | `7000` | [78 (58)](#/week/9/run/20261114T070331_leg_eval_seed1_s3k_A_s72_7000_test_f1) | [103 (98)](#/week/9/run/20261114T070849_leg_eval_seed1_s3k_A_s72_7000_test_f2) | [105](#/week/9/run/20261114T071323_leg_eval_seed1_s3k_A_s72_7000_test_old) | [101](#/week/9/run/20261114T071757_leg_eval_seed1_s3k_A_s72_7000_test_staged) | 411 of 411 | 615 / 564 | 44.5 / 43.2 |
+| A | 73 | `7000` | [62 (31)](#/week/9/run/20261114T070339_leg_eval_seed1_s3k_A_s73_7000_test_f1) | [93 (85)](#/week/9/run/20261114T070856_leg_eval_seed1_s3k_A_s73_7000_test_f2) | [90](#/week/9/run/20261114T071337_leg_eval_seed1_s3k_A_s73_7000_test_old) | [69](#/week/9/run/20261114T071811_leg_eval_seed1_s3k_A_s73_7000_test_staged) | 390 of 390 | 599 / 598 | 45.2 / 44.0 |
+| B | 71 | `7199` | [75 (10)](#/week/9/run/20261114T070347_leg_eval_seed1_s3k_B_s71_7199_test_f1) | [101 (85)](#/week/9/run/20261114T070858_leg_eval_seed1_s3k_B_s71_7199_test_f2) | [107](#/week/9/run/20261114T071335_leg_eval_seed1_s3k_B_s71_7199_test_old) | [88](#/week/9/run/20261114T071808_leg_eval_seed1_s3k_B_s71_7199_test_staged) | 0 of 383 | 159 / 151 | 16.3 / 17.2 |
+| B | 72 | `7000` | [76 (47)](#/week/9/run/20261114T072928_leg_eval_seed1_s3k_B_s72_7000_test_f1) | [99 (91)](#/week/9/run/20261114T073244_leg_eval_seed1_s3k_B_s72_7000_test_f2) | [107](#/week/9/run/20261114T073702_leg_eval_seed1_s3k_B_s72_7000_test_old) | [94](#/week/9/run/20261114T074120_leg_eval_seed1_s3k_B_s72_7000_test_staged) | 3 of 376 | 195 / 171 | 19.2 / 18.6 |
+| B | 73 | `7199` | [70 (10)](#/week/9/run/20261114T075254_leg_eval_seed1_s3k_B_s73_7199_test_f1) | [101 (73)](#/week/9/run/20261114T075712_leg_eval_seed1_s3k_B_s73_7199_test_f2) | [106](#/week/9/run/20261114T080132_leg_eval_seed1_s3k_B_s73_7199_test_old) | [84](#/week/9/run/20261114T080548_leg_eval_seed1_s3k_B_s73_7199_test_staged) | 0 of 377 | 117 / 157 | 14.7 / 16.8 |
+| C | 71 | `7000` | [72 (50)](#/week/9/run/20261114T085127_leg_eval_seed1_s3k_C_s71_7000_test_f1) | [92 (67)](#/week/9/run/20261114T085540_leg_eval_seed1_s3k_C_s71_7000_test_f2) | [107](#/week/9/run/20261114T085957_leg_eval_seed1_s3k_C_s71_7000_test_old) | [95](#/week/9/run/20261114T090417_leg_eval_seed1_s3k_C_s71_7000_test_staged) | 2 of 368 | 185 / 205 | 16.4 / 19.0 |
+| C | 72 | `7199` | [74 (18)](#/week/9/run/20261114T121333_leg_eval_seed1_s3k_C_s72_7199_test_f1) | [91 (75)](#/week/9/run/20261114T121457_leg_eval_seed1_s3k_C_s72_7199_test_f2) | [108](#/week/9/run/20261114T121618_leg_eval_seed1_s3k_C_s72_7199_test_old) | [88](#/week/9/run/20261114T121741_leg_eval_seed1_s3k_C_s72_7199_test_staged) | 0 of 364 | 125 / 138 | 14.9 / 16.0 |
+| C | 73 | `7000` | [73 (45)](#/week/9/run/20261114T122130_leg_eval_seed1_s3k_C_s73_7000_test_f1) | [74 (47)](#/week/9/run/20261114T122253_leg_eval_seed1_s3k_C_s73_7000_test_f2) | [105](#/week/9/run/20261114T122415_leg_eval_seed1_s3k_C_s73_7000_test_old) | [84](#/week/9/run/20261114T122536_leg_eval_seed1_s3k_C_s73_7000_test_staged) | 0 of 339 | 129 / 128 | 13.4 / 14.7 |
+| D | 71 | `7000` | [63 (27)](#/week/9/run/20261114T122924_leg_eval_seed1_s3k_D_s71_7000_test_f1) | [77 (54)](#/week/9/run/20261114T123046_leg_eval_seed1_s3k_D_s71_7000_test_f2) | [86](#/week/9/run/20261114T123208_leg_eval_seed1_s3k_D_s71_7000_test_old) | [96](#/week/9/run/20261114T123330_leg_eval_seed1_s3k_D_s71_7000_test_staged) | 0 of 327 | 77 / 80 | 11.9 / 14.0 |
+| D | 72 | `7000` | [61 (52)](#/week/9/run/20261114T123717_leg_eval_seed1_s3k_D_s72_7000_test_f1) | [20 (20)](#/week/9/run/20261114T123838_leg_eval_seed1_s3k_D_s72_7000_test_f2) | [95](#/week/9/run/20261114T124000_leg_eval_seed1_s3k_D_s72_7000_test_old) | [101](#/week/9/run/20261114T124122_leg_eval_seed1_s3k_D_s72_7000_test_staged) | 0 of 282 | 80 / 55 | 14.0 / 10.3 |
+| D | 73 | `7000` | [56 (38)](#/week/9/run/20261114T124508_leg_eval_seed1_s3k_D_s73_7000_test_f1) | [35 (30)](#/week/9/run/20261114T124630_leg_eval_seed1_s3k_D_s73_7000_test_f2) | [83](#/week/9/run/20261114T124752_leg_eval_seed1_s3k_D_s73_7000_test_old) | [93](#/week/9/run/20261114T124914_leg_eval_seed1_s3k_D_s73_7000_test_staged) | 0 of 274 | 67 / 84 | 12.4 / 14.0 |
+| E | 71 | `7000` | [55 (3)](#/week/9/run/20261114T125300_leg_eval_seed1_s3k_E_s71_7000_test_f1) | [31 (15)](#/week/9/run/20261114T125424_leg_eval_seed1_s3k_E_s71_7000_test_f2) | [87](#/week/9/run/20261114T125546_leg_eval_seed1_s3k_E_s71_7000_test_old) | [98](#/week/9/run/20261114T125707_leg_eval_seed1_s3k_E_s71_7000_test_staged) | 0 of 279 | 80 / 69 | 14.7 / 11.1 |
+| E | 72 | `7000` | [61 (18)](#/week/9/run/20261114T130056_leg_eval_seed1_s3k_E_s72_7000_test_f1) | [38 (29)](#/week/9/run/20261114T130218_leg_eval_seed1_s3k_E_s72_7000_test_f2) | [78](#/week/9/run/20261114T130340_leg_eval_seed1_s3k_E_s72_7000_test_old) | [96](#/week/9/run/20261114T130502_leg_eval_seed1_s3k_E_s72_7000_test_staged) | 0 of 278 | 86 / 102 | 15.0 / 15.3 |
+| E | 73 | `7199` | [59 (11)](#/week/9/run/20261114T130850_leg_eval_seed1_s3k_E_s73_7199_test_f1) | [82 (72)](#/week/9/run/20261114T131012_leg_eval_seed1_s3k_E_s73_7199_test_f2) | [105](#/week/9/run/20261114T131134_leg_eval_seed1_s3k_E_s73_7199_test_old) | [97](#/week/9/run/20261114T131256_leg_eval_seed1_s3k_E_s73_7199_test_staged) | 0 of 361 | 82 / 114 | 16.7 / 20.4 |
+
+Pooled over seeds (of 324), dog's stance 1 / 2 N·m, then settled, then staged:
+- A: 211 / 291, 276, 216;
+- B: 221 / 301, 320, 266;
+- C: 219 / 257, 320, 267;
+- D: 180 / 132, 264, 290;
+- E: 175 / 151, 270, 291.
+
+Falls are 0-6 per arm and set. Keys lost after unlocking: B staged 23, A at 2 N·m 19; the rest 0-16.
+
+Paired (all four; discordant pairs over the three seeds, "a / b" = only the first arm / only the second):
+
+| pair | 1 N·m | 2 N·m | settled | staged | inside runner 1 N·m | inside runner 2 N·m |
+|---|---|---|---|---|---|---|
+| A-B (outcome against following) | 21 / 31 (p 0.21) | 22 / 32 (0.22) | 3 / 47 (< 0.001) | 39 / 89 (< 0.001) | 48 / 12 (< 0.001) | 39 / 30 (0.34) |
+| B-C (the band, force-aware) | 7 / 5 (0.77) | 47 / 3 (< 0.001) | 3 / 3 (1.0) | 33 / 34 (1.0) | 30 / 76 (< 0.001) | 81 / 21 (< 0.001) |
+| D-E (the band, position-only) | 27 / 22 (0.57) | 53 / 72 (0.11) | 25 / 31 (0.50) | 24 / 25 (1.0) | 89 / 4 (< 0.001) | 52 / 64 (0.31) |
+| C-D (force-aware against position-only, both banded) | 42 / 3 (< 0.001) | 145 / 20 (< 0.001) | 58 / 2 (< 0.001) | 20 / 43 (0.005) | 36 / 40 (0.73) | 115 / 30 (< 0.001) |
+
+- **H2, the turn:** paying the turn only up to the arc removes the jolt in every seed and every set. Without it (A), every unlocked key (1,206 of 1,206) runs past 30 deg before the arc passes 10, at a median 550-650 deg/s, with Joint6 leading by 43-45 deg. With it (B-E), 5 of 4,008 do, at 55-215 deg/s, and Joint6 leads 10-20 deg from the dog's stance. This is F-283 and F-285 again, now with three seeds and a fresh test set.
+- **H2, the success:** at the dog's stance following costs nothing (A-B p 0.21 and 0.22). It gains from the settled stance (320 against 276, p < 0.001) and in the staged sequence (266 against 216, p < 0.001), though not in every seed (seed 72's A has 101 staged against B's 94).
+- **The runner's bounds at 1 N·m are its 15 deg tilt stop:** every arm's median tilt there is 14.4-16.0 deg. A's quick jolt leaves it inside more often than B's slower following turn (48 / 12). The band reduces the lean: B to C 30 / 76, E to D 89 / 4.
+- **At 2 N·m the band costs force-aware.** B to C loses 47 to 3 in all four and 81 to 21 inside the runner. C fails the J1-J5 lead bound in 46 of 257 (B 9 of 301) and the support legs in 23 (B 2).
+- **The band does not free position-only's stall** (D-E all four p 0.57 and 0.11; D is worse at 2 N·m, 132 against 151). F-285's implication ("its stalls may be the reward's") is answered: they are not the following reward's one-sidedness. Position-only unlocks later on the arc (median reference at unlock 33-40 deg against force-aware's 32-38). At 2 N·m it fails to unlock in 190 and 163 of 324 keys (D, E), where force-aware fails in 66 (C).
+- **H3 on the key turn** (C against D, the same seeds and reward): force-aware is ahead from the dog's stance (42 / 3 at 1 N·m and 145 / 20 at 2 N·m) and from the settled stance (58 / 2). Position-only is ahead in the staged sequence (43 / 20, p 0.005; 290 against 267). The direction from the dog's stance holds in every seed: 1 N·m 72-74 against 56-63, 2 N·m 74-92 against 20-77. Both variants come from the same force-aware parent, so position-only inherits force-trained features (S2's family F caveat).
+
+Finding: [F-290](../findings.md#f-290).
+
+**Not shown:**
+- The selection keeps 400-iteration fine-tunes of one parent; whether longer training changes the band's cost at 2 N·m is not tested.
+- The real wrist's 130-200 deg/s is not validated (F-282's issue).
+- Simulation only; nothing on the dog.
+
 ## Results
 
 <!-- Tables of metrics and links to figures. Recorded runs are listed by the dashboard automatically. -->
@@ -1407,7 +1793,7 @@ the layer in the loop, and the matched-twin test.
 
 ## Findings this week
 
-- F-276 (rotational compliance not learned), F-277 (the pose reward's form), F-278 (the key held while the foot turns it), F-279 (the fine-tune's breaks and the learning rate), F-280 (the key hold's robustness), F-281 (the key hold on `66600`'s sticky legs and the dog's stance), F-282 (the key hold trained on `66600`'s legs from the dog's stance), F-283 (the foot turns the key in one stroke ahead of the arc), F-284 (the force-aware key insertion into the cam lock, in simulation), F-285 (the turn made to follow the arc: the jolt gone, force-aware keeps its success, position-only stalls).
+- F-276 (rotational compliance not learned), F-277 (the pose reward's form), F-278 (the key held while the foot turns it), F-279 (the fine-tune's breaks and the learning rate), F-280 (the key hold's robustness), F-281 (the key hold on `66600`'s sticky legs and the dog's stance), F-282 (the key hold trained on `66600`'s legs from the dog's stance), F-283 (the foot turns the key in one stroke ahead of the arc), F-284 (the force-aware key insertion into the cam lock, in simulation), F-285 (the turn made to follow the arc: the jolt gone, force-aware keeps its success, position-only stalls). F-286 (the D1's Joint2 caps a held tool near 60 g at the insertion's reach). F-287 (S1's one-seed pilot: the tool descriptor did not help on held-out keys). F-288 (S1b, the redesigned pilot: still no help; P4 collapses at 2 N·m, which seeds 52 and 53 show was seed 51's). F-289 (S1b over three seeds: the descriptor does not help; H4 falsified on this design). F-290 (S3: following the arc removes the jolt in every seed at no cost from the dog's stance; the band does not free position-only's stall; force-aware ahead on the turn from the dog's stance).
 
 ## Issues and risks
 

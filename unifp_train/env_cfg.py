@@ -162,6 +162,11 @@ class Go2D1PosForceEnvCfg(DirectRLEnvCfg):
     #: Leg joints start this far from default at each reset, uniform, rad. The dog handed over 0.16 rad off the trained stance, and what the
     #: policy asks of the arm swings with the stance (J4 -33 or -49 in the same chain). 0: as every earlier run.
     leg_start_noise_rad: float = 0.0
+    #: The share of resets that start from the dog's own arm-out stance (`task_cfg.DOG_STANCE_*`: leg offsets, base 0.288 m,
+    #: 3.7 deg nose-up) instead of UniFP's default; the arm at its default either way. The tool plan's default for training is
+    #: 3 starts in 4 (0.75), and evaluations from the dog's stance take 1. Drawn only strictly between 0 and 1, so a frozen
+    #: evaluation's stream is unchanged at 0 and at 1. 0: as every earlier run.
+    dog_stance_fraction: float = 0.0
     #: How much of each leg action reaches the legs, drawn per environment in this range. The dog's joints moved 0.165 of what their targets did over
     #: the first whole-body run, where the legs simulated as trained move 0.51 and no joint friction gets below 0.28: something more than friction,
     #: which this stands for without saying what it is. The policy's own action is what it reads back. Empty: all of it.

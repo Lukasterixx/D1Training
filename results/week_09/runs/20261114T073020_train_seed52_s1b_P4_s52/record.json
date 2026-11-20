@@ -1,0 +1,63 @@
+{
+  "id": "20261114T073020_train_seed52_s1b_P4_s52",
+  "title": "S1b P4 (continuous keys, descriptor) seed 52: 600 it from widened ki6_force_8200, round 6's recipe, damage stops episodes, keys v3",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-14T19:53:06+11:00",
+  "started_utc": "2026-11-14T07:30:20+00:00",
+  "source_dir": "logs/unifp_train/20261114T073020_train_seed52_s1b_P4_s52",
+  "mode": "train",
+  "seed": 52,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 600,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8799,
+  "final_checkpoint": {
+    "file": "model_8799.pt",
+    "sha256": "1d3973b1ea2e28ffa3e6bb3fd1a16636308607e26625ba486f7942a174ff7d75"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 266.7342224121094,
+      "last_step": 8799,
+      "mean_last_10": 258.5764892578125,
+      "min": 2.4246346950531006,
+      "max": 299.8211364746094,
+      "points": 600
+    },
+    "Train/mean_episode_length": {
+      "last": 789.1400146484375,
+      "last_step": 8799,
+      "mean_last_10": 761.0849975585937,
+      "min": 12.186046600341797,
+      "max": 878.3699951171875,
+      "points": 600
+    },
+    "Policy/mean_std": {
+      "last": 0.11028042435646057,
+      "last_step": 8799,
+      "mean_last_10": 0.11052497550845146,
+      "min": 0.11028042435646057,
+      "max": 0.13985575735569,
+      "points": 600
+    },
+    "Perf/total_fps": {
+      "last": 5571.0,
+      "last_step": 8799,
+      "mean_last_10": 5832.9,
+      "min": 5223.0,
+      "max": 8669.0,
+      "points": 600
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

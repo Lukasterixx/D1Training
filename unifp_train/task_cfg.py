@@ -121,6 +121,19 @@ ARM_LEAD_FREE_RAD = math.radians(10.0)
 LEG_TARGET_FREE_RAD = 0.4
 #: `base_tilt_weight`'s free band: about what `66600` used on the far goals (7.8 deg at worst).
 BASE_TILT_FREE_RAD = math.radians(8.0)
+#: The dog's own arm-out stance at the handover, from its four `66600` runs (`demos/unifp/run_plan_probe.py`'s `REAL_*`,
+#: F-259): the leg joints' offsets from UniFP's default (UniFP's order), the base's height and its pitch and roll
+#: (pitch negative: nose up). `env_cfg.dog_stance_fraction` starts that share of episodes here.
+DOG_STANCE_LEG_OFFSETS = (-0.007, 0.062, -0.162, 0.011, 0.074, -0.184, 0.099, -0.061, -0.182, -0.111, -0.05, -0.206)
+DOG_STANCE_BASE_M, DOG_STANCE_PITCH_DEG, DOG_STANCE_ROLL_DEG = 0.288, -3.7, 0.4
+
+
+def dog_stance_quat() -> tuple[float, float, float, float]:
+    """The dog stance's base orientation (w, x, y, z): roll then pitch, as `run_plan_probe.py --real_stance` writes it."""
+    half_p, half_r = math.radians(DOG_STANCE_PITCH_DEG) / 2, math.radians(DOG_STANCE_ROLL_DEG) / 2
+    return (math.cos(half_r) * math.cos(half_p), math.sin(half_r) * math.cos(half_p),
+            math.cos(half_r) * math.sin(half_p), -math.sin(half_r) * math.sin(half_p))
+
 #: `pose_still_weight`: how still counts while a goal is held. F-104's lesson for a tool: nothing else pays for a hand at rest, and a
 #: policy paid sharply for pose on an arm with 100 ms of lag finds a limit cycle (2026-11-07: a 4-5 cm band at a held goal).
 POSE_STILL_SPEED_M_S = 0.05

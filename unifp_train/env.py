@@ -661,6 +661,15 @@ class Go2D1PosForceEnv(DirectRLEnv):
         )
         self._commands[env_ids, :3] *= moving.unsqueeze(1)
 
+    def _dog_stance(self, count: int) -> torch.Tensor | None:
+        """Which of `count` resetting environments start from the dog's stance (`cfg.dog_stance_fraction`), or None."""
+        share = float(self.cfg.dog_stance_fraction)
+        if share <= 0.0:
+            return None
+        if share >= 1.0:
+            return torch.ones(count, dtype=torch.bool, device=self.device)
+        return torch.rand(count, device=self.device) < share
+
     def _reset_idx(self, env_ids: torch.Tensor | None) -> None:
         if env_ids is None or len(env_ids) == self.num_envs:
             env_ids = self._robot._ALL_INDICES
@@ -677,10 +686,20 @@ class Go2D1PosForceEnv(DirectRLEnv):
         if self.cfg.leg_start_noise_rad:
             legs = self._order[:12]
             joint_pos[:, legs] += self.cfg.leg_start_noise_rad * (2.0 * torch.rand(len(env_ids), 12, device=self.device) - 1.0)
+        dog = self._dog_stance(len(env_ids))
+        if dog is not None:
+            legs = self._order[:12]
+            offsets = torch.tensor(task_cfg.DOG_STANCE_LEG_OFFSETS, device=self.device)
+            rows = dog.nonzero().squeeze(1)
+            joint_pos[rows[:, None], legs[None, :]] = self._robot.data.default_joint_pos[env_ids[rows]][:, legs] + offsets
         self._robot.write_joint_state_to_sim(joint_pos, joint_vel, env_ids=env_ids)
 
         root_state = self._robot.data.default_root_state[env_ids].clone()
         root_state[:, :3] += self.scene.env_origins[env_ids]
+        if dog is not None:
+            root_state[dog, 2] = self.scene.env_origins[env_ids[dog], 2] + task_cfg.DOG_STANCE_BASE_M
+            root_state[dog, 3:7] = torch.tensor(task_cfg.dog_stance_quat(), device=self.device)
+            root_state[dog, 7:] = 0.0
         self._robot.write_root_pose_to_sim(root_state[:, :7], env_ids)
         self._robot.write_root_velocity_to_sim(root_state[:, 7:], env_ids)
 

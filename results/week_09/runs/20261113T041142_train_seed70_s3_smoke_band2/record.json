@@ -1,0 +1,63 @@
+{
+  "id": "20261113T041142_train_seed70_s3_smoke_band2",
+  "title": "S3 smoke: the band both ways (follow -15, behind -15), 3 iterations at 64 envs from kh16_6800",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T15:12:13+11:00",
+  "started_utc": "2026-11-13T04:11:42+00:00",
+  "source_dir": "logs/unifp_train/20261113T041142_train_seed70_s3_smoke_band2",
+  "mode": "train",
+  "seed": 70,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 3,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 6802,
+  "final_checkpoint": {
+    "file": "model_6802.pt",
+    "sha256": "951af68efe77064eded0812e8b42076ed83bdf7855ae15d6b00cd1b148bdc6bd"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 9.031930923461914,
+      "last_step": 6802,
+      "mean_last_10": 5.626721382141113,
+      "min": 2.570582389831543,
+      "max": 9.031930923461914,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 44.5,
+      "last_step": 6802,
+      "mean_last_10": 26.811111132303875,
+      "min": 13.333333015441895,
+      "max": 44.5,
+      "points": 3
+    },
+    "Policy/mean_std": {
+      "last": 0.15081317722797394,
+      "last_step": 6802,
+      "mean_last_10": 0.15059501429398855,
+      "min": 0.15040065348148346,
+      "max": 0.15081317722797394,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 194.0,
+      "last_step": 6802,
+      "mean_last_10": 206.33333333333334,
+      "min": 194.0,
+      "max": 222.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

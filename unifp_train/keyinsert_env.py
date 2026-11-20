@@ -51,16 +51,14 @@ from .keylock import APPROACH, DONE, HOLD, SEARCH, SEAT
 #: 0.01. At 50 (2026-11-13 00:40) round 16's legs chased the spawn's 5-8 cm swing, 2.5 times anything they had seen, and
 #: tipped the robot 35 degrees in 1.6 s.
 INSERT_OBS_SCALE = leg_cfg.KEYHOLD_OBS_SCALE
-#: The estimate's errors (training): across the axis to this radius (uniform in area), along it, the keyway's roll, the
-#: axis's tilt. The frozen set's are `keyinsert_eval`'s.
-ERR_LATERAL_M = 0.0035
-ERR_DEPTH_M = 0.008
-ERR_ROLL_RAD = math.radians(4.0)
-ERR_TILT_RAD = math.radians(0.8)
-#: The tip's reference starts this far short of the estimated face.
-START_OFF_M = (0.015, 0.020)
+#: The estimate's errors (training) and the start, `keylock`'s (plain torch, so `keytools` can draw locks without Isaac).
+ERR_LATERAL_M, ERR_DEPTH_M = keylock.ERR_LATERAL_M, keylock.ERR_DEPTH_M
+ERR_ROLL_RAD, ERR_TILT_RAD = keylock.ERR_ROLL_RAD, keylock.ERR_TILT_RAD
+START_OFF_M = keylock.START_OFF_M
 #: The layer starts once the spawn has settled (`leg_cfg.KEYHOLD_GRACE_STEPS`).
 START_STEPS = 40
+#: `base_source="legs"`: a foot counts as planted above this contact force (N).
+BASE_ODOMETRY_CONTACT_N = 10.0
 #: The classical outer loop on the hand (the dog program's, `insert_plan.LOOP_GAIN`, `LOOP_MAX_M`): the jaw centre's miss
 #: by the reported joints, integrated into the IK's goal (not the policy's): across the axis except while the keyway
 #: holds the key (held sideways, seating, holding); along it only position-only, approaching, before any lag.
@@ -107,6 +105,34 @@ class Go2D1KeyInsertEnvCfg(Go2D1KeyHoldEnvCfg):
     tilt_stop_rad: float | None = None
     #: `keylock.InsertLayer.light_probe`: ease the press through the feel after the touch (opt-in, 2026-11-13 06:00).
     light_probe: bool = False
+    #: `keylock.InsertLayer.seat_test`: "old" (every number before S1c) or "located" (S1c, 2026-11-18: the face touched
+    #: with the wrist rolled first, seated only past it by the keyway's depth, a key stuck short retried then refused).
+    seat_test: str = "old"
+    #: S1 (tool conditioning, `docs/tool_paper_plan.md`): the keys training draws from, one per episode uniformly, each
+    #: (reach m, offset x m, offset y m, compliance m/N, mass kg) as `keytools` lists them; empty: the v4 key, rigid and
+    #: massless, as every run before S1. A frozen plan's own keys replace these (`keytools.build_plan`).
+    tools: tuple = ()
+    tool_names: tuple = ()
+    #: The actor's tool input (`keylock.descriptor`, the "tool" observation group; the critic's "tool_true" is the true
+    #: key's): None (no such groups: every checkpoint before S1), "descriptor" (P4: the believed key's) or "zero" (P3 and
+    #: the specialist: the same widened network, the input held at zero).
+    tool_obs: str | None = None
+    #: S2's lock-stiffness shift: the lock's penalty stiffness x this (`keylock.CONTACT_K_N_PER_M`); 1 before S2.
+    contact_k_scale: float = 1.0
+    #: The strict keyway (`keylock.KeyLock.strict_roll`, 2026-11-19): a key rolled past the wards' clearance cannot pass the
+    #: edge break. False: the contact every run before used, which lets keys in 4-10 deg misrolled (F-292).
+    strict_keyway: bool = False
+    #: Where the layer and the reference take the base's position from (item 1b, 2026-11-19): "true" the simulator's (every
+    #: run before); "fixed" where it was when the layer started, held (S5's gate, a dog runner with no odometry); "legs" a
+    #: planted-feet leg odometry from then on (`demos/combiner_key/robot/base_odometry.py` with exact kinematics: the true
+    #: base plus the loaded feet's mean slip since each was anchored). The attitude is the simulator's (the IMU's) in all.
+    base_source: str = "true"
+    #: S1b (F-287): training keys drawn from a continuous region instead of `tools`: (reach low, high, the held-out reach
+    #: band's low, high, the shaft offset's largest radius, compliance's largest, mass low, high), SI; empty: not used.
+    tool_ranges: tuple = ()
+    #: S1b (F-287): end a training episode when the key is damaged (`keylock.DAMAGE_N`), as frozen evaluations always do.
+    #: Every run before it trained on past damage, which paid a light press that left keys short of the floor.
+    damage_stop: bool = False
 
 
 class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
@@ -120,8 +146,11 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         super().__init__(cfg, render_mode, **kwargs)
         n, device = self.num_envs, self.device
         self._lock = keylock.KeyLock(n, device)
+        self._lock.k_point = self._lock.k_point * cfg.contact_k_scale
+        self._lock.strict_roll = bool(cfg.strict_keyway)
         self._layer_ins = keylock.InsertLayer(n, device)
         self._layer_ins.light_probe = cfg.light_probe
+        self._layer_ins.seat_test = cfg.seat_test
         self._fk = arm_kin.ArmKinematics(device, torch.float32)
         zeros = lambda *shape: torch.zeros(*shape, device=device)
         #: The estimated lock's frame (env frame): what the robot believes, and plans from.
@@ -135,6 +164,13 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         self._ins_ref, self._ins_geo = zeros(n, 6), zeros(n, 6)
         self._meas_depth, self._meas_lateral = zeros(n), zeros(n, 2)
         self._miss_b = zeros(n, 3)
+        if cfg.base_source not in ("true", "fixed", "legs"):
+            raise ValueError(f"base_source {cfg.base_source!r}")
+        #: `base_source`'s estimate: on from the layer's start, the base then, the feet's anchors and which are anchored.
+        self._base_est_on = torch.zeros(n, dtype=torch.bool, device=device)
+        self._base_est, self._base_at_start = zeros(n, 3), zeros(n, 3)
+        self._foot_anchor = zeros(n, 4, 3)
+        self._foot_anchored = torch.zeros(n, 4, dtype=torch.bool, device=device)
         self._ins_active = torch.zeros(n, dtype=torch.bool, device=device)
         self._done_for = zeros(n)
         # Episode bookkeeping.
@@ -148,6 +184,14 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         self._insert_eval: dict | None = None
         self._start_depth, self._press_draw = zeros(n), zeros(n)
         self._layer_started = torch.zeros(n, dtype=torch.bool, device=device)
+        # The key in each hand (S1): the true one (the plant, its weight, the scoring) and the one the robot believes it
+        # holds (the layer, the IK, the measured tip, P4's descriptor). Equal except in a wrong-descriptor plan.
+        self._tool_true = {"reach": torch.full((n,), keylock.TIP_FROM_JAW_M, device=device), "offset": zeros(n, 2),
+                           "compliance": zeros(n), "mass": zeros(n)}
+        self._tool_bel = {k: v.clone() for k, v in self._tool_true.items()}
+        self._tool_idx = torch.zeros(n, dtype=torch.long, device=device)
+        self._tools = (torch.tensor(cfg.tools, dtype=torch.float32, device=device) if len(cfg.tools)
+                       else torch.zeros(0, 5, device=device))
         self._add_insert_terms()
 
     # --- rewards ------------------------------------------------------------------------------------------------------
@@ -188,25 +232,90 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         return (self._est_o + lateral[:, :1] * self._est_u + lateral[:, 1:2] * self._est_t
                 + depth.unsqueeze(-1) * self._est_a)
 
+    def _tip_off(self, believed: bool = True) -> torch.Tensor:
+        """The key's tip from the jaw centre in Link6 (N, 3): the believed key's, or the true one's (rigid, as gripped)."""
+        tool = self._tool_bel if believed else self._tool_true
+        return keylock.tip_offset_local(tool["reach"], tool["offset"])
+
     def _fk_depth(self, true_joints: bool = False) -> torch.Tensor:
-        """The tip's depth along the estimated axis by the forward kinematics (of the reported joints, or the true)."""
+        """The tip's depth along the estimated axis by the forward kinematics (of the reported joints and the believed
+        key, or the true joints and the true key)."""
         q = self._dof()[0][:, 12:18] if true_joints or self._arm_link is None else self._arm_link.reported
         rot_b, jaw_b = self._fk.tool(q)
         base = self._robot.data.root_pos_w - self.scene.env_origins
         quat = self._robot.data.root_quat_w
-        tip = base + interface.quat_apply(quat, jaw_b + keylock.TIP_FROM_JAW_M * rot_b[:, :, 2])
+        off = self._tip_off(believed=not true_joints)
+        tip = base + interface.quat_apply(quat, jaw_b + torch.einsum("nij,nj->ni", rot_b, off))
         return ((tip - self._est_o) * self._est_a).sum(-1)
 
-    def _measure(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """The jaw centre and Link6's z as the dog measures them: the forward kinematics of the arm's reported angles
-        (the link's), placed by the base's pose. Env frame."""
+    def _base_now(self) -> torch.Tensor:
+        """The base's position (env frame) as the layer and the reference take it (`cfg.base_source`)."""
+        true = self._robot.data.root_pos_w - self.scene.env_origins
+        if self.cfg.base_source == "true":
+            return true
+        return torch.where(self._base_est_on.unsqueeze(-1), self._base_est, true)
+
+    def _update_base_estimate(self) -> None:
+        """Once a policy step, before the measurement: the "fixed" or "legs" estimate for the environments it is on in."""
+        if self.cfg.base_source == "true" or not bool(self._base_est_on.any()):
+            return
+        on = self._base_est_on
+        if self.cfg.base_source == "fixed":
+            self._base_est = torch.where(on.unsqueeze(-1), self._base_at_start, self._base_est)
+            return
+        true = self._robot.data.root_pos_w - self.scene.env_origins
+        feet = self._robot.data.body_pos_w[:, self._feet_bodies] - self.scene.env_origins.unsqueeze(1)
+        contact = self._contact_forces(self._feet_contacts)[..., 2] > BASE_ODOMETRY_CONTACT_N
+        planted = contact & self._foot_anchored
+        count = planted.sum(-1, keepdim=True)
+        # Exact kinematics: each planted foot's anchor less the leg's reach puts the base at true + (anchor - foot now).
+        slip = ((self._foot_anchor - feet) * planted.unsqueeze(-1)).sum(1) / count.clamp(min=1)
+        est = torch.where(count > 0, true + slip, self._base_est)
+        self._base_est = torch.where(on.unsqueeze(-1), est, self._base_est)
+        # A foot that is up loses its anchor; one that has come down is anchored where the estimate puts it.
+        landed = contact & ~self._foot_anchored
+        self._foot_anchor = torch.where(landed.unsqueeze(-1), feet + (self._base_est - true).unsqueeze(1), self._foot_anchor)
+        self._foot_anchored = contact
+
+    def _start_base_estimate(self, ids: torch.Tensor) -> None:
+        """The layer starts for `ids`: the estimate begins at the true base, the feet in contact anchored where they are."""
+        if self.cfg.base_source == "true":
+            return
+        true = self._robot.data.root_pos_w[ids] - self.scene.env_origins[ids]
+        self._base_est[ids], self._base_at_start[ids] = true, true
+        self._foot_anchor[ids] = self._robot.data.body_pos_w[ids][:, self._feet_bodies] - self.scene.env_origins[ids].unsqueeze(1)
+        self._foot_anchored[ids] = self._contact_forces(self._feet_contacts)[ids][..., 2] > BASE_ODOMETRY_CONTACT_N
+        self._base_est_on[ids] = True
+
+    def _in_base(self, point_env: torch.Tensor, rot_w: torch.Tensor | None = None, ids: torch.Tensor | None = None):
+        """`keyhold_env`'s, with the base's position from `cfg.base_source` (the dog's estimate), its attitude true."""
+        if self.cfg.base_source == "true":
+            return super()._in_base(point_env, rot_w, ids)
+        base, quat = self._base_now(), self._robot.data.root_quat_w
+        if ids is not None:
+            base, quat = base[ids], quat[ids]
+        p = interface.quat_rotate_inverse(quat, point_env - base)
+        if rot_w is None:
+            return p
+        return p, quat_matrix(quat).transpose(1, 2) @ rot_w
+
+    def _measure(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """The jaw centre, Link6's z and the believed key's tip as the dog measures them: the forward kinematics of the
+        arm's reported angles (the link's), placed by the base's pose. Env frame (the jaw also in the base's)."""
         q = self._arm_link.reported if self._arm_link is not None else self._dof()[0][:, 12:18]
         rot_b, jaw_b = self._fk.tool(q)
-        base = self._robot.data.root_pos_w - self.scene.env_origins
+        base = self._base_now()
         quat = self._robot.data.root_quat_w
         jaw = base + interface.quat_apply(quat, jaw_b)
         z6 = interface.quat_apply(quat, rot_b[:, :, 2])
-        return jaw, z6, jaw_b
+        tip = base + interface.quat_apply(quat, jaw_b + torch.einsum("nij,nj->ni", rot_b, self._tip_off()))
+        return jaw, z6, jaw_b, tip
+
+    def _jaw_for_tip(self, tip: torch.Tensor, ids: torch.Tensor | None = None) -> torch.Tensor:
+        """Where the jaw centre goes for the believed key's tip at `tip` (env frame), the hand on the estimated axis."""
+        sel = slice(None) if ids is None else ids
+        rot = hand_rotation(self._est_a[sel], self._est_u[sel])
+        return tip - torch.einsum("nij,nj->ni", rot, self._tip_off()[sel])
 
     # --- acting -------------------------------------------------------------------------------------------------------
 
@@ -256,6 +365,16 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         torques = torch.zeros(self.num_envs, 4, 3, device=self.device)
         forces[:, 3] = interface.quat_rotate_inverse(quat6, self._lock.force_w)
         torques[:, 3] = interface.quat_rotate_inverse(quat6, self._lock.torque_w)
+        mass = self._tool_true["mass"] * self._handle_env
+        if bool((mass > 0.0).any()):
+            # The key's weight (S1), at its back face on the shaft's axis: about the jaw centre, where the wrench acts.
+            g_w = torch.zeros_like(self._lock.force_w)
+            g_w[:, 2] = -9.81 * mass
+            g_l = interface.quat_rotate_inverse(quat6, g_w)
+            com = self._tip_off(believed=False)
+            com[:, 2] = com[:, 2] - keylock.KEY_LENGTH_M
+            forces[:, 3] = forces[:, 3] + g_l
+            torques[:, 3] = torques[:, 3] + torch.cross(com, g_l, dim=-1)
         self._grip_force_w = self._lock.force_w
         self._grip_peak = torch.maximum(self._grip_peak, self._lock.force_w.norm(dim=-1))
         self._robot.permanent_wrench_composer.set_forces_and_torques(
@@ -270,8 +389,8 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         if self._first_step is None:
             self._first_step = self.common_step_counter
         lk, ly = self._lock, self._layer_ins
-        jaw_m, z6_m, jaw_b = self._measure()
-        tip_m = jaw_m + keylock.TIP_FROM_JAW_M * z6_m
+        self._update_base_estimate()
+        jaw_m, z6_m, jaw_b, tip_m = self._measure()
         rel = tip_m - self._est_o
         self._meas_depth = (rel * self._est_a).sum(-1)
         self._meas_lateral = torch.stack(((rel * self._est_u).sum(-1), (rel * self._est_t).sum(-1)), -1)
@@ -281,10 +400,11 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
             ly.start(ids, self._start_depth[ids], torch.full((len(ids),), self._force_aware, device=self.device),
                      self._press_draw[ids])
             self._layer_started[ids] = True
+            self._start_base_estimate(ids)
         ly.step(self._meas_depth, self._meas_lateral, interface.POLICY_DT)
         depth, lateral = ly.goal()
         tip_goal = self._est_point(depth, lateral)
-        self._goal_jaw = tip_goal - keylock.TIP_FROM_JAW_M * self._est_a
+        self._goal_jaw = self._jaw_for_tip(tip_goal)
         # The outer loop, on what the robot measures.
         dt = interface.POLICY_DT
         running = self._ins_active & self._layer_started & (ly.phase < DONE)
@@ -292,7 +412,10 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         lat_miss = ly.ref_lateral - self._meas_lateral
         self._loop[:, :2] = torch.where(free_lat.unsqueeze(-1), self._loop[:, :2] + LOOP_GAIN * dt * lat_miss,
                                         self._loop[:, :2])
-        free_ax = running & (ly.phase == APPROACH) & (ly.phase_for < keylock.BASE_S)
+        # Not while the located layer turns the wrist with the reference standing (its stages 0 and 1, S1c): integrating
+        # then put the hand ~7 mm ahead of the reference and the rolled approach felt the face in free air. Every other
+        # layer is in stage 2 throughout.
+        free_ax = running & (ly.phase == APPROACH) & (ly.phase_for < keylock.BASE_S) & (ly.locate_stage >= 2)
         ax_miss = ly.ref_depth - self._meas_depth
         self._loop[:, 2] = torch.where(free_ax, self._loop[:, 2] + LOOP_GAIN * dt * ax_miss, self._loop[:, 2])
         self._loop = self._loop.clamp(-LOOP_MAX_M, LOOP_MAX_M)
@@ -347,8 +470,55 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
     def _get_observations(self) -> dict:
         self._commands[:, interface.CMD_EE_ORN_R:interface.CMD_EE_ORN_Y + 1] = self._miss_b * INSERT_OBS_SCALE
         if self._arm_link is None:
-            return Go2D1LegEnv._get_observations(self)
-        return self._observations_through_link()
+            obs = Go2D1LegEnv._get_observations(self)
+        else:
+            obs = self._observations_through_link()
+        if self.cfg.tool_obs is not None:
+            # S1: the actor's tool input (P4 the believed key's descriptor, P3 zeros) and the critic's (the true key's).
+            on = self._handle_env.float().unsqueeze(-1)
+            believed = keylock.descriptor(self._tool_bel["reach"], self._tool_bel["offset"],
+                                          self._tool_bel["compliance"], self._tool_bel["mass"])
+            obs["tool"] = believed * on if self.cfg.tool_obs == "descriptor" else torch.zeros_like(believed)
+            obs["tool_true"] = keylock.descriptor(self._tool_true["reach"], self._tool_true["offset"],
+                                                  self._tool_true["compliance"], self._tool_true["mass"]) * on
+        return obs
+
+    def _set_tools(self, ids: torch.Tensor, draw: dict[str, torch.Tensor] | None) -> None:
+        """The key in each of `ids`' hands: a frozen plan's (`tool_*` true, `bel_*` believed), else one of `cfg.tools`
+        drawn uniformly (believed as it is), else the v4 key, rigid and massless (every run before S1)."""
+        k = len(ids)
+        if draw is not None and "tool_reach" in draw:
+            true = {"reach": draw["tool_reach"], "offset": torch.stack((draw["tool_ox"], draw["tool_oy"]), -1),
+                    "compliance": draw["tool_compliance"], "mass": draw["tool_mass"]}
+            bel = {"reach": draw["bel_reach"], "offset": torch.stack((draw["bel_ox"], draw["bel_oy"]), -1),
+                   "compliance": draw["bel_compliance"], "mass": draw["bel_mass"]}
+            self._tool_idx[ids] = draw["tool_index"].long()
+        elif self._insert_eval is not None:
+            return                                  # a frozen plan without keys (the 96 locks): the v4 key
+        elif len(self.cfg.tool_ranges):
+            r_lo, r_hi, gap_lo, gap_hi, off_max, comp_hi, m_lo, m_hi = self.cfg.tool_ranges
+            u = lambda: torch.rand(k, device=self.device)
+            # The reach uniform over [r_lo, r_hi] less the held-out band (`gap_lo`, `gap_hi`): drawn on the joined length.
+            span = (r_hi - r_lo) - (gap_hi - gap_lo)
+            x = r_lo + u() * span
+            reach = torch.where(x >= gap_lo, x + (gap_hi - gap_lo), x)
+            ang, rad = 2 * math.pi * u(), off_max * torch.sqrt(u())
+            offset = torch.stack((rad * torch.cos(ang), rad * torch.sin(ang)), -1)
+            true = {"reach": reach, "offset": offset, "compliance": comp_hi * u(), "mass": m_lo + (m_hi - m_lo) * u()}
+            bel = true
+            self._tool_idx[ids] = 0
+        elif len(self._tools):
+            pick = torch.randint(len(self._tools), (k,), device=self.device)
+            row = self._tools[pick]
+            true = {"reach": row[:, 0], "offset": row[:, 1:3], "compliance": row[:, 3], "mass": row[:, 4]}
+            bel = true
+            self._tool_idx[ids] = pick
+        else:
+            return
+        for name in self._tool_true:
+            self._tool_true[name][ids] = true[name]
+            self._tool_bel[name][ids] = bel[name]
+        self._lock.set_tool(ids, true["reach"], true["offset"], true["compliance"])
 
     def _privileged_extra(self) -> torch.Tensor:
         """The insertion as the critic sees it (22 wide): the true lock against the estimate, where the tip is, the
@@ -386,7 +556,7 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         self._term_lost = self._lost.clone()
         self._term_ins_lost = self._lost.clone()
         terminated = terminated | self._lost
-        if self._evaluation is not None:
+        if self._evaluation is not None or self.cfg.damage_stop:
             terminated = terminated | self._damaged
         # Over once the layer has finished its hold, frozen or not: the dog's next step is the turn.
         timed_out = timed_out | (self._ins_active & (self._done_for >= END_AFTER_DONE_S))
@@ -441,7 +611,7 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         # The foot's turn never starts.
         self._start_delay[env_ids] = 10 ** 9
         for buf in (self._hold_active, self._holding, self._lost, self._ins_active, self._seated_ever, self._damaged,
-                    self._layer_started, self._term_ins_lost):
+                    self._layer_started, self._term_ins_lost, self._base_est_on):
             buf[env_ids] = False
         for buf in (self._hold_err, self._hold_tilt, self._grip_peak, self._hold_err_sum, self._hold_err_max,
                     self._hold_steps, self._done_for, self._press_sum, self._press_steps):
@@ -461,8 +631,10 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
             return
         if self._insert_eval is not None:
             draw = {k: v[ids] for k, v in self._insert_eval.items()}
+            self._set_tools(ids, draw)
         else:
             draw = self._draw_insert(ids)
+            self._set_tools(ids, None)
         self._place_insert(ids, draw)
         q, ok = self._solve_start(ids)
         tries = 0
@@ -492,7 +664,7 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
     def _solve_start(self, ids: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """The arm's joints with the key's tip at its start, short of the estimated face on the estimated axis."""
         tip = self._est_o[ids] + self._start_depth[ids].unsqueeze(-1) * self._est_a[ids]
-        jaw = tip - keylock.TIP_FROM_JAW_M * self._est_a[ids]
+        jaw = self._jaw_for_tip(tip, ids)
         self._goal_jaw[ids] = jaw
         rot = hand_rotation(self._est_a[ids], self._est_u[ids])
         p_b, r_b = self._in_base(jaw, rot, ids)
@@ -566,6 +738,12 @@ class Go2D1KeyInsertEnv(Go2D1KeyHoldEnv):
         log["Insert/err_mm"] = 1000.0 * float(self._hold_err[held].median())
         log["Insert/tilt_stopped_fraction"] = float(self._tilt_stopped[held].float().mean())
         log["Insert/ik_fail_fraction"] = float((self._ik_fail[held] / self._ik_calls[held].clamp(min=1.0)).mean())
+        # S1: each training key's own (`cfg.tool_names`), so a key the others hide shows.
+        for k in range(len(self._tools)):
+            mine = held[self._tool_idx[held] == k]
+            if len(mine):
+                name = self.cfg.tool_names[k] if k < len(self.cfg.tool_names) else str(k)
+                log[f"Insert/seated_fraction_{name}"] = float(lk.seated[mine].float().mean())
 
 
 def _pose_error(kin, q: torch.Tensor, p_goal: torch.Tensor, r_goal: torch.Tensor) -> torch.Tensor:

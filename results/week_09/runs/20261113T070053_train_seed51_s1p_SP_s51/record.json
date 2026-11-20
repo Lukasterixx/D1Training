@@ -1,0 +1,63 @@
+{
+  "id": "20261113T070053_train_seed51_s1p_SP_s51",
+  "title": "S1 pilot specialist (v4 alone, zero) seed 51: 1500 it from widened ki6_force_8200, round 6's recipe, keys v2",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T21:25:27+11:00",
+  "started_utc": "2026-11-13T07:00:53+00:00",
+  "source_dir": "logs/unifp_train/20261113T070053_train_seed51_s1p_SP_s51",
+  "mode": "train",
+  "seed": 51,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 9699,
+  "final_checkpoint": {
+    "file": "model_9699.pt",
+    "sha256": "25755bba697e188dba9f9178af9013a0fcf6274c50e5744bae7f6112f5bcd455"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 328.40936279296875,
+      "last_step": 9699,
+      "mean_last_10": 326.14781799316404,
+      "min": 2.6698155403137207,
+      "max": 358.069091796875,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 869.0900268554688,
+      "last_step": 9699,
+      "mean_last_10": 865.0929992675781,
+      "min": 12.857142448425293,
+      "max": 955.52001953125,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.07532495260238647,
+      "last_step": 9699,
+      "mean_last_10": 0.07537143006920814,
+      "min": 0.07532495260238647,
+      "max": 0.13989588618278503,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 6015.0,
+      "last_step": 9699,
+      "mean_last_10": 6111.5,
+      "min": 5203.0,
+      "max": 8926.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

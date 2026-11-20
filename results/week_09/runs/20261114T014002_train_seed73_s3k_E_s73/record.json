@@ -1,0 +1,63 @@
+{
+  "id": "20261114T014002_train_seed73_s3k_E_s73",
+  "title": "S3 key hold position-only, following, seed 73: 400 it of round 28's recipe from kh16_6800",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-14T13:47:22+11:00",
+  "started_utc": "2026-11-14T01:40:02+00:00",
+  "source_dir": "logs/unifp_train/20261114T014002_train_seed73_s3k_E_s73",
+  "mode": "train",
+  "seed": 73,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 400,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7199,
+  "final_checkpoint": {
+    "file": "model_7199.pt",
+    "sha256": "0bb66324ec0ccca377e1d9f6f281bb32b691fe12b90f1fc592c8862fabcc4ae3"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 154.9984130859375,
+      "last_step": 7199,
+      "mean_last_10": 154.36410827636718,
+      "min": 3.037076950073242,
+      "max": 155.24742126464844,
+      "points": 400
+    },
+    "Train/mean_episode_length": {
+      "last": 493.44000244140625,
+      "last_step": 7199,
+      "mean_last_10": 493.87000427246096,
+      "min": 15.740740776062012,
+      "max": 511.1000061035156,
+      "points": 400
+    },
+    "Policy/mean_std": {
+      "last": 0.11129681020975113,
+      "last_step": 7199,
+      "mean_last_10": 0.11168473660945892,
+      "min": 0.11129681020975113,
+      "max": 0.15047453343868256,
+      "points": 400
+    },
+    "Perf/total_fps": {
+      "last": 4966.0,
+      "last_step": 7199,
+      "mean_last_10": 4967.1,
+      "min": 4493.0,
+      "max": 6861.0,
+      "points": 400
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -120,7 +120,7 @@ STANDING_MIN_HEIGHT_M = 0.25
 #: The rehearsal's pretend hand: it stops the pretend foot this close to the plate's contact point, across its normal.
 REHEARSAL_HAND_M = 0.05
 #: The modes in which the legs are ours (live), so a stop means damping.
-DRIVEN = ("stand_up", "policy", "stand_end", "lie_end")
+DRIVEN = ("stand_up", "policy", "stand_end", "lie_end", "arm_settle")    # arm_settle: insert_live.py's
 
 
 def log(msg: str) -> None:

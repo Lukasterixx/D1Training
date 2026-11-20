@@ -1,0 +1,63 @@
+{
+  "id": "20261119T043635_train_seed91_s4c2_A_s91",
+  "title": "S4c-2 A seed 91 (STOPPED at about 66920 of 68600): S4c-1 with the goal held on the handle until the grasp; stopped by the leg probe's stated rule",
+  "notes": "Aborted 16:06 on 2026-11-19: S4c-1's 67600 grasps 126 of 384 with the legs as trained and 4 with legs answering 0.17, so the arrival rests on the legs; replaced by s4c3 (legs answering 0.1-1 in training).",
+  "week": 10,
+  "recorded_at": "2026-11-19T16:03:42+11:00",
+  "started_utc": "2026-11-19T04:36:35+00:00",
+  "source_dir": "logs/unifp_train/20261119T043635_train_seed91_s4c2_A_s91",
+  "mode": "train",
+  "seed": 91,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 66918,
+  "final_checkpoint": {
+    "file": "model_66918.pt",
+    "sha256": "b58cde63e0e1f1bb21e87183d216b0af1ff4fdbe2000f2d4bc72e3096f953366"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 205.84364318847656,
+      "last_step": 66918,
+      "mean_last_10": 199.08204193115233,
+      "min": 1.5509796142578125,
+      "max": 210.033203125,
+      "points": 319
+    },
+    "Train/mean_episode_length": {
+      "last": 983.5599975585938,
+      "last_step": 66918,
+      "mean_last_10": 978.9910034179687,
+      "min": 12.574073791503906,
+      "max": 998.9199829101562,
+      "points": 319
+    },
+    "Policy/mean_std": {
+      "last": 0.6259533762931824,
+      "last_step": 66918,
+      "mean_last_10": 0.6254657924175262,
+      "min": 0.5269489288330078,
+      "max": 0.6259533762931824,
+      "points": 319
+    },
+    "Perf/total_fps": {
+      "last": 12344.0,
+      "last_step": 66918,
+      "mean_last_10": 11399.8,
+      "min": 7015.0,
+      "max": 23660.0,
+      "points": 319
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

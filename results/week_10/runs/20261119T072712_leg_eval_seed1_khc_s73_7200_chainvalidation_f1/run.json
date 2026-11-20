@@ -1,0 +1,3338 @@
+{
+  "action_space": 18,
+  "actor_obs": [
+    37,
+    2432
+  ],
+  "arguments": {
+    "action_rate_weight": null,
+    "active_gpu": 0,
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "arm_command_hz": null,
+    "arm_command_mean": false,
+    "arm_effort_scale": null,
+    "arm_feedback_hz": 9.0,
+    "arm_follower": true,
+    "arm_lead_weight": 0.0,
+    "arm_lock_offset_s": null,
+    "arm_locked": true,
+    "arm_locked_range": true,
+    "arm_plan": null,
+    "arm_planner": true,
+    "arm_quantum_deg": null,
+    "arm_real": false,
+    "arm_report_age_s": null,
+    "arm_servo": true,
+    "arm_servo_lag_s": null,
+    "arm_skip_probability": null,
+    "arm_stall_interval_s": null,
+    "arm_stalls": false,
+    "arm_step_weight": 0.0,
+    "arm_wrist_lag_s": null,
+    "arm_wrist_weight": 0.0,
+    "base_tilt_weight": 0.0,
+    "button_fraction": null,
+    "checkpoint": "/home/victor/D1Training/logs/unifp_train/chain/khc_s73_7200.pt",
+    "cpu": false,
+    "create_new_stage": false,
+    "curriculum_rule": null,
+    "detect_never_prob": null,
+    "device": "cuda:0",
+    "diagnose_storage": false,
+    "dog_stance_fraction": 0.0,
+    "enable_cameras": false,
+    "entropy_coef": null,
+    "estimator_learning_rate": null,
+    "eval_levels": null,
+    "eval_spawn_states": true,
+    "eval_start_delay_steps": null,
+    "fixed_learning_rate": null,
+    "fixture_fraction": null,
+    "fixture_kind": "ring",
+    "foot_push_n": null,
+    "force_ceiling": null,
+    "force_ceiling_max": null,
+    "force_law": false,
+    "force_law_bleed": null,
+    "force_law_gains": null,
+    "force_ramp_iterations": null,
+    "force_start_iteration": null,
+    "freeze_legs": false,
+    "ground_friction": null,
+    "handle_fraction": null,
+    "headless": true,
+    "hide_ui": true,
+    "hold_arm": "policy",
+    "hold_arm_std": 0.3,
+    "hold_command": null,
+    "hold_loss_start_iteration": 0,
+    "info": false,
+    "init_std": null,
+    "ins_approach_weight": null,
+    "ins_attitude_gain": null,
+    "ins_compliant_grip": false,
+    "ins_debug": null,
+    "ins_elevation_max_deg": null,
+    "ins_engage_attitude_deg": null,
+    "ins_level": null,
+    "ins_no_hold": false,
+    "ins_promote_every": null,
+    "ins_roll_max_deg": null,
+    "ins_set": "lateral",
+    "ins_tip_gain": null,
+    "ins_tip_max": null,
+    "ins_true_targets": false,
+    "insert_base_source": "true",
+    "insert_contact_k_scale": 1.0,
+    "insert_damage_stop": false,
+    "insert_error_scale": 1.0,
+    "insert_eval_set": null,
+    "insert_light_probe": false,
+    "insert_press_n": null,
+    "insert_seat_test": "old",
+    "insert_shadow_dump": 0,
+    "insert_strict_keyway": false,
+    "insert_tilt_stop_deg": null,
+    "insert_tool_manifest": null,
+    "insert_tool_obs": null,
+    "insert_tool_set": null,
+    "insert_tools": null,
+    "insert_trace_body": false,
+    "insertion_fraction": null,
+    "iterations": 60000,
+    "key_damage_n": 60.0,
+    "key_detent_range_nm": null,
+    "key_door_push_weight": null,
+    "key_eval_detent_nm": null,
+    "key_eval_draw": null,
+    "key_eval_lock_nm": null,
+    "key_eval_rows": "/home/victor/D1Training/logs/unifp_train/chain/ki7_s62_9200_validation_f1/handover_rows.json",
+    "key_grip_k": null,
+    "key_hold": true,
+    "key_hold_axis_side": null,
+    "key_hold_door_ahead": null,
+    "key_hold_door_yaw": null,
+    "key_hold_s": 0.3,
+    "key_hold_staged": false,
+    "key_insert": false,
+    "key_lock_range_nm": null,
+    "key_lost_m": null,
+    "key_max_force_n": [
+      6.0,
+      20.0
+    ],
+    "key_overdrive_deg": -5.0,
+    "key_press_limit_n": null,
+    "key_press_weight": 0.0,
+    "key_stance_sink_weight": 0.0,
+    "key_support_target_weight": 0.0,
+    "key_turn_behind_weight": 0.0,
+    "key_turn_deg": [
+      0.0,
+      45.0,
+      30.0
+    ],
+    "key_turn_follow_weight": 0.0,
+    "key_waypoint": null,
+    "kit_args": "",
+    "law_variant": "v1",
+    "learning_rate_scale": null,
+    "leg_actuator": "unitree_geared",
+    "leg_answer_range": null,
+    "leg_armature": 0.0002,
+    "leg_armature_range": null,
+    "leg_bar_radius": null,
+    "leg_delay_min_steps": 3,
+    "leg_delay_steps": 4,
+    "leg_frame_every": 5,
+    "leg_frames": 0,
+    "leg_friction_range": [
+      1.0,
+      1.0
+    ],
+    "leg_knee_armature": 0.0007,
+    "leg_knee_armature_factor": 3.67,
+    "leg_knee_friction_factor": 1.917,
+    "leg_object": "key",
+    "leg_rows": null,
+    "leg_shadow_dump": 0,
+    "leg_start_noise": 0.0,
+    "leg_target_weight": 0.0,
+    "leg_variant": "force",
+    "lever_fraction": null,
+    "lever_high": false,
+    "manifest": null,
+    "manifest_out": null,
+    "mech_approach_weight": 0.0,
+    "mech_budget_n": null,
+    "mech_engage_max_wait_s": null,
+    "mech_grasp_within_m": null,
+    "mech_kinds": null,
+    "mech_levels": null,
+    "mech_set": null,
+    "mech_shadow_dump": 0,
+    "mech_test": false,
+    "mech_tilt_stop_deg": null,
+    "mechanism_fraction": null,
+    "mode": "leg_eval",
+    "mount_pos": null,
+    "no_arm_jitter": false,
+    "no_curriculum": false,
+    "num_envs": 37,
+    "obs_noise": false,
+    "obs_noise_dof_vel": null,
+    "offpath_weight": null,
+    "opening_probs": null,
+    "output": "/home/victor/D1Training/logs/unifp_train",
+    "payload": "physical",
+    "peak_ceiling": null,
+    "peak_ceiling_max": null,
+    "physics_gpu": 0,
+    "plate_set": "v2",
+    "pose_blind": false,
+    "pose_joint_weight": 0.0,
+    "pose_naive": false,
+    "pose_objective": false,
+    "pose_orn_scale": 1.0,
+    "pose_primitives": false,
+    "pose_reward": "separate",
+    "pose_still_weight": 0.0,
+    "pose_wrench": false,
+    "press": false,
+    "press_fraction": null,
+    "press_hand_fraction": 0.0,
+    "press_hand_levels_n": [
+      3.0,
+      10.0
+    ],
+    "press_hold_correction": false,
+    "press_hold_loop": "hybrid",
+    "press_level": null,
+    "press_orientation_weight": null,
+    "press_plate_face_only": false,
+    "press_release_from_press_point": false,
+    "press_set": "panel",
+    "press_tools": null,
+    "press_up_cap_n": null,
+    "real_time": false,
+    "release_prob": null,
+    "rendering_mode": null,
+    "repeats": 4,
+    "resume_arm_std": null,
+    "resume_fresh_optimizer": false,
+    "resume_from": null,
+    "resume_leg_std": null,
+    "robot_usd": null,
+    "role": "validation",
+    "roll_objective": false,
+    "rope_demo": false,
+    "rope_fraction": null,
+    "rope_length_range": null,
+    "rope_ramp": null,
+    "rope_set": "dev",
+    "rope_stiffness": null,
+    "rope_stiffness_range": null,
+    "rope_weight": null,
+    "run_name": "khc_s73_7200_chainvalidation_f1",
+    "seed": 1,
+    "small_physx": true,
+    "spawn_states": "/home/victor/D1Training/logs/unifp_train/chain/ki7_s62_9200_validation_f1/handover_spawn.json",
+    "spawn_states_fraction": null,
+    "spawn_states_ordered": true,
+    "start_delay_steps": null,
+    "std_type": null,
+    "steps": 100,
+    "stochastic": false,
+    "task": "leg",
+    "tilt_excess_deg": null,
+    "tilt_excess_weight": 0.0,
+    "tilt_stages": "all",
+    "tool_point": "jaw_centre",
+    "torques_weight": null,
+    "verbose": false,
+    "wipe_fraction": null,
+    "wipe_level": null,
+    "xr": false,
+    "zero_actions": false
+  },
+  "arm_armature_kg_m2": 0.01,
+  "arm_effort_limits_nm": [
+    3.3,
+    3.33,
+    3.33,
+    1.7,
+    1.7,
+    1.7
+  ],
+  "arm_joints_loaded": {
+    "armature": [
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01
+    ],
+    "damping": [
+      400.0,
+      400.0,
+      400.0,
+      400.0,
+      400.0,
+      400.0
+    ],
+    "effort_limit_sim": [
+      3.3,
+      3.33,
+      3.33,
+      1.7,
+      1.7,
+      1.7
+    ],
+    "groups": {
+      "d1_servo": "ImplicitActuator",
+      "legs_hip_thigh": "UnitreeActuator",
+      "legs_knee": "UnitreeActuator",
+      "unifp": "IdealPDActuator"
+    },
+    "stiffness": [
+      4000.0,
+      4000.0,
+      4000.0,
+      4000.0,
+      4000.0,
+      4000.0
+    ],
+    "velocity_limit_sim": [
+      1.25,
+      1.29,
+      1.23,
+      1.21,
+      1.25,
+      1.25
+    ]
+  },
+  "arm_link": {
+    "command_hz": null,
+    "command_mean": false,
+    "feedback_hz": 9.0,
+    "follower": true,
+    "lock_offset_s": 0.02,
+    "locked": true,
+    "planner": {
+      "accel_rad_s2": 400.0,
+      "dead_time_s": 0.005,
+      "decel_rad_s2": 400.0,
+      "replan_velocity_retention": 0.0
+    },
+    "quantum_deg": 0.1,
+    "report_age_s": [
+      0.0,
+      0.02
+    ],
+    "servo": true,
+    "servo_lag_s": [
+      0.06,
+      0.09
+    ],
+    "skip_probability": 0.0015,
+    "stall_duration_s": null,
+    "stall_interval_s": null,
+    "stalls": false,
+    "wrist_lag_s": null
+  },
+  "checkpoint": "/home/victor/D1Training/logs/unifp_train/chain/khc_s73_7200.pt",
+  "checkpoint_iteration": 7200,
+  "checkpoint_source": "isaaclab",
+  "controller": "khc_s73_7200.pt",
+  "critic_obs": [
+    37,
+    459
+  ],
+  "d1_urdf_sha256": "a848ee41d51def2956fcb6f0af12048e723a1d7f3f3f52b007fcca571a586691",
+  "episode_length_steps": 900,
+  "estimate_obs": [
+    37,
+    12
+  ],
+  "expected_actor": [
+    37,
+    2432
+  ],
+  "expected_critic": [
+    37,
+    459
+  ],
+  "expected_estimates": [
+    37,
+    12
+  ],
+  "fixture": null,
+  "force_start_iteration": 500,
+  "force_start_step": 12000,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_status": "M demos/combiner_key/robot/export_policy.py\n M demos/combiner_key/robot/press_live.py\n M docs/tool_paper_plan.md\n M results/findings.md\n M results/gates.md\n M results/week_09/notes.md\n M results/week_10/notes.md\n M run_unifp_train.py\n M tests/test_keylock.py\n M unifp_train/env.py\n M unifp_train/env_cfg.py\n M unifp_train/eval.py\n M unifp_train/keyhold.py\n M unifp_train/keyhold_env.py\n M unifp_train/keyinsert_env.py\n M unifp_train/keyinsert_eval.py\n M unifp_train/keyinsert_vis.py\n M unifp_train/keylock.py\n M unifp_train/leg_env.py\n M unifp_train/leg_eval.py\n M unifp_train/mech_cfg.py\n M unifp_train/mech_env.py\n M unifp_train/mech_eval.py\n M unifp_train/models.py\n M unifp_train/task_cfg.py\n?? checkpoints/insert_force_ki6_8200.npz\n?? checkpoints/insert_force_ki7_s62_9200.npz\n?? checkpoints/unifp_go2d1_isaaclab_pose_r10_candidate.pt\n?? demos/combiner_key/insert_handover.py\n?? demos/combiner_key/robot/base_odometry.py\n?? demos/combiner_key/robot/check_armwatch.py\n?? demos/combiner_key/robot/check_insert.py\n?? demos/combiner_key/robot/check_mech.py\n?? demos/combiner_key/robot/check_odometry.py\n?? demos/combiner_key/robot/insert_gate.py\n?? demos/combiner_key/robot/insert_live.py\n?? demos/combiner_key/robot/insert_policy.py\n?? demos/combiner_key/robot/mech_gate.py\n?? demos/combiner_key/robot/mech_layer.py\n?? logs/analysis_venv/\n?? results/manifests/keyinsert_chain_v1.json\n?? results/manifests/keyinsert_ki7_v1.json\n?? results/manifests/keyinsert_tools_v1.json\n?? results/manifests/keyinsert_tools_v2.json\n?? results/manifests/keyinsert_tools_v3.json\n?? results/manifests/keyinsert_tools_v4.json\n?? results/manifests/keyinsert_twins_v1.json\n?? results/manifests/mech_t1_v2.json\n?? results/manifests/mech_t1_v3.json\n?? results/week_09/runs/20261113T034558_leg_eval_seed1_s1_smoke_parent_val_f1/\n?? results/week_09/runs/20261113T034728_train_seed51_s1_smoke_p4/\n?? results/week_09/runs/20261113T035023_leg_eval_seed1_s1_diag_parent_val_mass10_f1/\n?? results/week_09/runs/20261113T035503_train_seed51_s1p_P4_s51/\n?? results/week_09/runs/20261113T035614_train_seed51_s1p_P3_s51/\n?? results/week_09/runs/20261113T035727_leg_eval_seed1_s1_parent_8200_val_f1/\n?? results/week_09/runs/20261113T040149_leg_eval_seed1_s1_parent_8200_val_f2/\n?? results/week_09/runs/20261113T040549_leg_eval_seed1_s3_parent_kh16_6800_val_f1/\n?? results/week_09/runs/20261113T041142_train_seed70_s3_smoke_band2/\n?? results/week_09/runs/20261113T041837_leg_eval_seed1_s1p_P4_s51_8400_val_f1/\n?? results/week_09/runs/20261113T042258_leg_eval_seed1_s1p_P4_s51_8400_val_f2/\n?? results/week_09/runs/20261113T042729_leg_eval_seed1_s1p_P3_s51_8400_val_f1/\n?? results/week_09/runs/20261113T043041_leg_eval_seed1_s1p_P3_s51_8400_val_f2/\n?? results/week_09/runs/20261113T044318_leg_eval_seed1_s1p_P4_s51_8600_val_f1/\n?? results/week_09/runs/20261113T044725_leg_eval_seed1_s1p_P4_s51_8600_val_f2/\n?? results/week_09/runs/20261113T045143_leg_eval_seed1_s1p_P3_s51_8600_val_f1/\n?? results/week_09/runs/20261113T045538_leg_eval_seed1_s1p_P3_s51_8600_val_f2/\n?? results/week_09/runs/20261113T050733_leg_eval_seed1_s1p_P4_s51_8800_val_f1/\n?? results/week_09/runs/20261113T051156_leg_eval_seed1_s1p_P4_s51_8800_val_f2/\n?? results/week_09/runs/20261113T051627_leg_eval_seed1_s1p_P3_s51_8800_val_f1/\n?? results/week_09/runs/20261113T052050_leg_eval_seed1_s1p_P3_s51_8800_val_f2/\n?? results/week_09/runs/20261113T053235_leg_eval_seed1_s1p_P4_s51_9000_val_f1/\n?? results/week_09/runs/20261113T053657_leg_eval_seed1_s1p_P4_s51_9000_val_f2/\n?? results/week_09/runs/20261113T054131_leg_eval_seed1_s1p_P3_s51_9000_val_f1/\n?? results/week_09/runs/20261113T054554_leg_eval_seed1_s1p_P3_s51_9000_val_f2/\n?? results/week_09/runs/20261113T055835_leg_eval_seed1_s1p_P4_s51_9200_val_f1/\n?? results/week_09/runs/20261113T060240_leg_eval_seed1_s1p_P4_s51_9200_val_f2/\n?? results/week_09/runs/20261113T060713_leg_eval_seed1_s1p_P3_s51_9200_val_f1/\n?? results/week_09/runs/20261113T061132_leg_eval_seed1_s1p_P3_s51_9200_val_f2/\n?? results/week_09/runs/20261113T062320_leg_eval_seed1_s1p_P4_s51_9400_val_f1/\n?? results/week_09/runs/20261113T062746_leg_eval_seed1_s1p_P4_s51_9400_val_f2/\n?? results/week_09/runs/20261113T063120_leg_eval_seed1_s1p_P3_s51_9400_val_f1/\n?? results/week_09/runs/20261113T063549_leg_eval_seed1_s1p_P3_s51_9400_val_f2/\n?? results/week_09/runs/20261113T064734_leg_eval_seed1_s1p_P4_s51_9600_val_f1/\n?? results/week_09/runs/20261113T065110_leg_eval_seed1_s1p_P4_s51_9600_val_f2/\n?? results/week_09/runs/20261113T065528_leg_eval_seed1_s1p_P3_s51_9600_val_f1/\n?? results/week_09/runs/20261113T065846_leg_eval_seed1_s1p_P3_s51_9600_val_f2/\n?? results/week_09/runs/20261113T070053_train_seed51_s1p_SP_s51/\n?? results/week_09/runs/20261113T070318_leg_eval_seed1_s1p_P4_s51_9699_val_f1/\n?? results/week_09/runs/20261113T070414_train_seed61_s2t_Ff_s61/\n?? results/week_09/runs/20261113T070729_leg_eval_seed1_s1p_P4_s51_9699_val_f2/\n?? results/week_09/runs/20261113T071207_leg_eval_seed1_s1p_P3_s51_9699_val_f1/\n?? results/week_09/runs/20261113T071541_leg_eval_seed1_s1p_P3_s51_9699_val_f2/\n?? results/week_09/runs/20261113T072014_leg_eval_seed1_s1p_P3_s51_8400_test_f1/\n?? results/week_09/runs/20261113T072405_leg_eval_seed1_s1p_P3_s51_8400_test_f2/\n?? results/week_09/runs/20261113T072840_leg_eval_seed1_s1p_P3_s51_8400_test_train_f1/\n?? results/week_09/runs/20261113T073146_leg_eval_seed1_s1p_P3_s51_8400_test_train_f2/\n?? results/week_09/runs/20261113T073625_leg_eval_seed1_s1p_SP_s51_8400_val_f1/\n?? results/week_09/runs/20261113T074051_leg_eval_seed1_s1p_SP_s51_8400_val_f2/\n?? results/week_09/runs/20261113T074523_leg_eval_seed1_s2t_Ff_s61_8400_val_f1/\n?? results/week_09/runs/20261113T074901_leg_eval_seed1_s2t_Ff_s61_8400_val_f2/\n?? results/week_09/runs/20261113T075212_leg_eval_seed1_s1p_P3_s51_8400_wrong_f1/\n?? results/week_09/runs/20261113T075602_leg_eval_seed1_s1p_P3_s51_8400_wrong_f2/\n?? results/week_09/runs/20261113T080044_leg_eval_seed1_s1p_SP_s51_8600_val_f1/\n?? results/week_09/runs/20261113T080510_leg_eval_seed1_s1p_SP_s51_8600_val_f2/\n?? results/week_09/runs/20261113T080940_leg_eval_seed1_s2t_Ff_s61_8600_val_f1/\n?? results/week_09/runs/20261113T081335_leg_eval_seed1_s2t_Ff_s61_8600_val_f2/\n?? results/week_09/runs/20261113T081649_leg_eval_seed1_s1p_P4_s51_9600_test_f1/\n?? results/week_09/runs/20261113T082122_leg_eval_seed1_s1p_P4_s51_9600_test_f2/\n?? results/week_09/runs/20261113T082627_leg_eval_seed1_s1p_SP_s51_8800_val_f1/\n?? results/week_09/runs/20261113T083050_leg_eval_seed1_s1p_SP_s51_8800_val_f2/\n?? results/week_09/runs/20261113T083527_leg_eval_seed1_s2t_Ff_s61_8800_val_f1/\n?? results/week_09/runs/20261113T083925_leg_eval_seed1_s2t_Ff_s61_8800_val_f2/\n?? results/week_09/runs/20261113T084329_leg_eval_seed1_s1p_P4_s51_9600_test_train_f1/\n?? results/week_09/runs/20261113T084648_leg_eval_seed1_s1p_P4_s51_9600_test_train_f2/\n?? results/week_09/runs/20261113T085122_leg_eval_seed1_s1p_SP_s51_9000_val_f1/\n?? results/week_09/runs/20261113T085214_train_seed61_s2t_Fp_s61/\n?? results/week_09/runs/20261113T085539_leg_eval_seed1_s1p_SP_s51_9000_val_f2/\n?? results/week_09/runs/20261113T090012_leg_eval_seed1_s2t_Ff_s61_8999_val_f1/\n?? results/week_09/runs/20261113T090342_leg_eval_seed1_s2t_Ff_s61_8999_val_f2/\n?? results/week_09/runs/20261113T090659_leg_eval_seed1_s1p_P4_s51_9600_wrong_f1/\n?? results/week_09/runs/20261113T091019_leg_eval_seed1_s1p_P4_s51_9600_wrong_f2/\n?? results/week_09/runs/20261113T091346_leg_eval_seed1_s2t_Ff_s61_8600_g_d14/\n?? results/week_09/runs/20261113T091750_leg_eval_seed1_s2t_Ff_s61_8600_g_delay0/\n?? results/week_09/runs/20261113T092203_leg_eval_seed1_s2t_Fp_s61_8400_val_f1/\n?? results/week_09/runs/20261113T092557_leg_eval_seed1_s2t_Fp_s61_8400_val_f2/\n?? results/week_09/runs/20261113T092952_leg_eval_seed1_s1p_SP_s51_9200_val_f1/\n?? results/week_09/runs/20261113T093413_leg_eval_seed1_s1p_SP_s51_9200_val_f2/\n?? results/week_09/runs/20261113T093836_leg_eval_seed1_s2t_Ff_s61_8600_g_err13/\n?? results/week_09/runs/20261113T094242_leg_eval_seed1_s2t_Ff_s61_8600_g_err15/\n?? results/week_09/runs/20261113T094658_leg_eval_seed1_s2t_Fp_s61_8600_val_f1/\n?? results/week_09/runs/20261113T095051_leg_eval_seed1_s2t_Fp_s61_8600_val_f2/\n?? results/week_09/runs/20261113T095457_leg_eval_seed1_s1p_SP_s51_9400_val_f1/\n?? results/week_09/runs/20261113T095918_leg_eval_seed1_s1p_SP_s51_9400_val_f2/\n?? results/week_09/runs/20261113T100342_leg_eval_seed1_s2t_Ff_s61_8600_g_heavy/\n?? results/week_09/runs/20261113T100748_leg_eval_seed1_s2t_Ff_s61_8600_g_mu45/\n?? results/week_09/runs/20261113T101154_leg_eval_seed1_s2t_Ff_s61_8600_g_nominal_f2/\n?? results/week_09/runs/20261113T101611_leg_eval_seed1_s2t_Fp_s61_8800_val_f1/\n?? results/week_09/runs/20261113T101930_leg_eval_seed1_s2t_Fp_s61_8800_val_f2/\n?? results/week_09/runs/20261113T102304_leg_eval_seed1_s1p_SP_s51_9600_val_f1/\n?? results/week_09/runs/20261113T102534_train_seed61_s2t_Pf_s61/\n?? results/week_09/runs/20261113T102715_leg_eval_seed1_s1p_SP_s51_9600_val_f2/\n?? results/week_09/runs/20261113T103145_leg_eval_seed1_s1p_SP_s51_9699_val_f1/\n?? results/week_09/runs/20261113T103533_leg_eval_seed1_s1p_SP_s51_9699_val_f2/\n?? results/week_09/runs/20261113T103956_train_seed62_s2t_Ff_s62/\n?? results/week_09/runs/20261113T104008_leg_eval_seed1_s2t_Fp_s61_8999_val_f1/\n?? results/week_09/runs/20261113T104323_leg_eval_seed1_s2t_Fp_s61_8999_val_f2/\n?? results/week_09/runs/20261113T104636_leg_eval_seed1_s1p_SP_s51_8400_test_f1/\n?? results/week_09/runs/20261113T105124_leg_eval_seed1_s1p_SP_s51_8400_test_f2/\n?? results/week_09/runs/20261113T105630_leg_eval_seed1_s2t_Pf_s61_8800_val_f1/\n?? results/week_09/runs/20261113T110021_leg_eval_seed1_s2t_Pf_s61_8800_val_f2/\n?? results/week_09/runs/20261113T110355_leg_eval_seed1_s1p_SP_s51_8400_test_train_f1/\n?? results/week_09/runs/20261113T110744_leg_eval_seed1_s1p_SP_s51_8400_test_train_f2/\n?? results/week_09/runs/20261113T111151_leg_eval_seed1_s2t_Ff_s62_8400_val_f1/\n?? results/week_09/runs/20261113T111539_leg_eval_seed1_s2t_Ff_s62_8400_val_f2/\n?? results/week_09/runs/20261113T111940_leg_eval_seed1_s2t_Pf_s61_9000_val_f1/\n?? results/week_09/runs/20261113T112328_leg_eval_seed1_s2t_Pf_s61_9000_val_f2/\n?? results/week_09/runs/20261113T112631_leg_eval_seed1_s1p_SP_s51_8400_wrong_f1/\n?? results/week_09/runs/20261113T113100_leg_eval_seed1_s1p_SP_s51_8400_wrong_f2/\n?? results/week_09/runs/20261113T113538_leg_eval_seed1_s2t_Ff_s62_8600_val_f1/\n?? results/week_09/runs/20261113T113926_leg_eval_seed1_s2t_Ff_s62_8600_val_f2/\n?? results/week_09/runs/20261113T114313_leg_eval_seed1_s1_parent_8200_test_f1/\n?? results/week_09/runs/20261113T114758_leg_eval_seed1_s1_parent_8200_test_f2/\n?? results/week_09/runs/20261113T115230_leg_eval_seed1_s1_parent_8200_test_train_f1/\n?? results/week_09/runs/20261113T115623_leg_eval_seed1_s1_parent_8200_test_train_f2/\n?? results/week_09/runs/20261113T120032_leg_eval_seed1_s1_parent_8200_wrong_f1/\n?? results/week_09/runs/20261113T120433_leg_eval_seed1_s1_parent_8200_wrong_f2/\n?? results/week_09/runs/20261113T120830_leg_eval_seed1_s2t_Ff_s62_8800_val_f1/\n?? results/week_09/runs/20261113T121002_train_seed61_s2t_Pp_s61/\n?? results/week_09/runs/20261113T121209_leg_eval_seed1_s2t_Ff_s62_8800_val_f2/\n?? results/week_09/runs/20261113T121557_train_seed51_s1b_smoke/\n?? results/week_09/runs/20261113T121623_leg_eval_seed1_s1b_parent_8200_val_f1/\n?? results/week_09/runs/20261113T122038_leg_eval_seed1_s1b_parent_8200_val_f2/\n?? results/week_09/runs/20261113T122454_leg_eval_seed1_s2t_Pf_s61_9200_val_f1/\n?? results/week_09/runs/20261113T122458_train_seed62_s2t_Fp_s62/\n?? results/week_09/runs/20261113T122836_leg_eval_seed1_s2t_Pf_s61_9200_val_f2/\n?? results/week_09/runs/20261113T123129_leg_eval_seed1_s2t_Ff_s62_8999_val_f1/\n?? results/week_09/runs/20261113T123518_leg_eval_seed1_s2t_Ff_s62_8999_val_f2/\n?? results/week_09/runs/20261113T123831_leg_eval_seed1_s2t_Pp_s61_8800_val_f1/\n?? results/week_09/runs/20261113T124141_leg_eval_seed1_s2t_Pp_s61_8800_val_f2/\n?? results/week_09/runs/20261113T124534_leg_eval_seed1_s2t_Pf_s61_9399_val_f1/\n?? results/week_09/runs/20261113T124835_leg_eval_seed1_s2t_Pf_s61_9399_val_f2/\n?? results/week_09/runs/20261113T125138_leg_eval_seed1_s2t_Fp_s62_8400_val_f1/\n?? results/week_09/runs/20261113T125525_leg_eval_seed1_s2t_Fp_s62_8400_val_f2/\n?? results/week_09/runs/20261113T125912_leg_eval_seed1_s2t_Ff_s61_8600_g_nominal/\n?? results/week_09/runs/20261113T130318_leg_eval_seed1_s2t_Pp_s61_9000_val_f1/\n?? results/week_09/runs/20261113T130639_leg_eval_seed1_s2t_Pp_s61_9000_val_f2/\n?? results/week_09/runs/20261113T130954_leg_eval_seed1_s2t_Ff_s61_8600_g_settled/\n?? results/week_09/runs/20261113T131251_leg_eval_seed1_s2t_Ff_s61_8600_g_reach24/\n?? results/week_09/runs/20261113T131654_leg_eval_seed1_s2t_Ff_s61_8600_g_reach45/\n?? results/week_09/runs/20261113T132107_leg_eval_seed1_s2t_Fp_s62_8600_val_f1/\n?? results/week_09/runs/20261113T132457_leg_eval_seed1_s2t_Fp_s62_8600_val_f2/\n?? results/week_09/runs/20261113T132847_leg_eval_seed1_s2t_Ff_s61_8600_g_sharp/\n?? results/week_09/runs/20261113T133258_leg_eval_seed1_s2t_Pp_s61_9200_val_f1/\n?? results/week_09/runs/20261113T133620_leg_eval_seed1_s2t_Pp_s61_9200_val_f2/\n?? results/week_09/runs/20261113T133921_leg_eval_seed1_s2t_Ff_s61_8600_g_soft/\n?? results/week_09/runs/20261113T134321_leg_eval_seed1_s2t_Ff_s61_8600_g_stiff/\n?? results/week_09/runs/20261113T134739_leg_eval_seed1_s2t_Fp_s62_8800_val_f1/\n?? results/week_09/runs/20261113T135127_leg_eval_seed1_s2t_Fp_s62_8800_val_f2/\n?? results/week_09/runs/20261113T135508_leg_eval_seed1_s2t_Ff_s61_8600_g_tight/\n?? results/week_09/runs/20261113T135558_train_seed62_s2t_Pf_s62/\n?? results/week_09/runs/20261113T135916_leg_eval_seed1_s2t_Pp_s61_9399_val_f1/\n?? results/week_09/runs/20261113T140252_leg_eval_seed1_s2t_Pp_s61_9399_val_f2/\n?? results/week_09/runs/20261113T140607_leg_eval_seed1_s2t_Ff_s61_8600_g_zeroarm/\n?? results/week_09/runs/20261113T141014_leg_eval_seed1_s2t_Pf_s61_9000_g_d14/\n?? results/week_09/runs/20261113T141036_train_seed63_s2t_Ff_s63/\n?? results/week_09/runs/20261113T141411_leg_eval_seed1_s2t_Fp_s62_8999_val_f1/\n?? results/week_09/runs/20261113T141703_leg_eval_seed1_s2t_Fp_s62_8999_val_f2/\n?? results/week_09/runs/20261113T141950_leg_eval_seed1_s2t_Pf_s61_9000_g_delay0/\n?? results/week_09/runs/20261113T142300_leg_eval_seed1_s2t_Pf_s62_8800_val_f1/\n?? results/week_09/runs/20261113T142613_leg_eval_seed1_s2t_Pf_s62_8800_val_f2/\n?? results/week_09/runs/20261113T142938_leg_eval_seed1_s2t_Pf_s61_9000_g_err13/\n?? results/week_09/runs/20261113T143322_leg_eval_seed1_s2t_Pf_s61_9000_g_err15/\n?? results/week_09/runs/20261113T143727_leg_eval_seed1_s2t_Pf_s61_9000_g_heavy/\n?? results/week_09/runs/20261113T144144_leg_eval_seed1_s2t_Ff_s63_8400_val_f1/\n?? results/week_09/runs/20261113T144528_leg_eval_seed1_s2t_Ff_s63_8400_val_f2/\n?? results/week_09/runs/20261113T144900_leg_eval_seed1_s2t_Pf_s62_9000_val_f1/\n?? results/week_09/runs/20261113T145220_leg_eval_seed1_s2t_Pf_s62_9000_val_f2/\n?? results/week_09/runs/20261113T145510_leg_eval_seed1_s2t_Pf_s61_9000_g_mu45/\n?? results/week_09/runs/20261113T145847_leg_eval_seed1_s2t_Pf_s61_9000_g_nominal_f2/\n?? results/week_09/runs/20261113T150208_leg_eval_seed1_s2t_Pf_s61_9000_g_nominal/\n?? results/week_09/runs/20261113T150610_leg_eval_seed1_s2t_Ff_s63_8600_val_f1/\n?? results/week_09/runs/20261113T150955_leg_eval_seed1_s2t_Ff_s63_8600_val_f2/\n?? results/week_09/runs/20261113T151328_leg_eval_seed1_s2t_Pf_s61_9000_g_reach24/\n?? results/week_09/runs/20261113T151743_leg_eval_seed1_s2t_Pf_s62_9200_val_f1/\n?? results/week_09/runs/20261113T152104_leg_eval_seed1_s2t_Pf_s62_9200_val_f2/\n?? results/week_09/runs/20261113T152345_leg_eval_seed1_s2t_Pf_s61_9000_g_reach45/\n?? results/week_09/runs/20261113T152753_leg_eval_seed1_s2t_Pf_s61_9000_g_settled/\n?? results/week_09/runs/20261113T153052_leg_eval_seed1_s2t_Pf_s61_9000_g_sharp/\n?? results/week_09/runs/20261113T153514_leg_eval_seed1_s2t_Ff_s63_8800_val_f1/\n?? results/week_09/runs/20261113T153749_leg_eval_seed1_s2t_Ff_s63_8800_val_f2/\n?? results/week_09/runs/20261113T154106_leg_eval_seed1_s2t_Pf_s61_9000_g_soft/\n?? results/week_09/runs/20261113T154128_train_seed62_s2t_Pp_s62/\n?? results/week_09/runs/20261113T154509_leg_eval_seed1_s2t_Pf_s62_9399_val_f1/\n?? results/week_09/runs/20261113T154902_leg_eval_seed1_s2t_Pf_s62_9399_val_f2/\n?? results/week_09/runs/20261113T155158_leg_eval_seed1_s2t_Pf_s61_9000_g_stiff/\n?? results/week_09/runs/20261113T155605_leg_eval_seed1_s2t_Pf_s61_9000_g_tight/\n?? results/week_09/runs/20261113T155759_train_seed63_s2t_Fp_s63/\n?? results/week_09/runs/20261113T155955_leg_eval_seed1_s2t_Ff_s63_8999_val_f1/\n?? results/week_09/runs/20261113T160236_leg_eval_seed1_s2t_Ff_s63_8999_val_f2/\n?? results/week_09/runs/20261113T160536_leg_eval_seed1_s2t_Pf_s61_9000_g_zeroarm/\n?? results/week_09/runs/20261113T160929_leg_eval_seed1_s2t_Pp_s62_8800_val_f1/\n?? results/week_09/runs/20261113T161237_leg_eval_seed1_s2t_Pp_s62_8800_val_f2/\n?? results/week_09/runs/20261113T161607_leg_eval_seed1_s2t_Fp_s61_8800_g_d14/\n?? results/week_09/runs/20261113T161918_leg_eval_seed1_s2t_Fp_s61_8800_g_delay0/\n?? results/week_09/runs/20261113T162234_leg_eval_seed1_s2t_Fp_s61_8800_g_err13/\n?? results/week_09/runs/20261113T162546_leg_eval_seed1_s2t_Fp_s63_8400_val_f1/\n?? results/week_09/runs/20261113T162935_leg_eval_seed1_s2t_Fp_s63_8400_val_f2/\n?? results/week_09/runs/20261113T163310_leg_eval_seed1_s2t_Fp_s61_8800_g_err15/\n?? results/week_09/runs/20261113T163726_leg_eval_seed1_s2t_Pp_s62_9000_val_f1/\n?? results/week_09/runs/20261113T164025_leg_eval_seed1_s2t_Pp_s62_9000_val_f2/\n?? results/week_09/runs/20261113T164320_leg_eval_seed1_s2t_Fp_s61_8800_g_heavy/\n?? results/week_09/runs/20261113T164720_leg_eval_seed1_s2t_Fp_s61_8800_g_mu45/\n?? results/week_09/runs/20261113T165029_leg_eval_seed1_s2t_Fp_s61_8800_g_nominal_f2/\n?? results/week_09/runs/20261113T165426_leg_eval_seed1_s2t_Fp_s63_8600_val_f1/\n?? results/week_09/runs/20261113T165730_leg_eval_seed1_s2t_Fp_s63_8600_val_f2/\n?? results/week_09/runs/20261113T170032_leg_eval_seed1_s2t_Fp_s61_8800_g_nominal/\n?? results/week_09/runs/20261113T170410_leg_eval_seed1_s2t_Pp_s62_9200_val_f1/\n?? results/week_09/runs/20261113T170731_leg_eval_seed1_s2t_Pp_s62_9200_val_f2/\n?? results/week_09/runs/20261113T171017_leg_eval_seed1_s2t_Fp_s61_8800_g_reach24/\n?? results/week_09/runs/20261113T171325_leg_eval_seed1_s2t_Fp_s61_8800_g_reach45/\n?? results/week_09/runs/20261113T171639_leg_eval_seed1_s2t_Fp_s61_8800_g_settled/\n?? results/week_09/runs/20261113T172008_leg_eval_seed1_s2t_Fp_s63_8800_val_f1/\n?? results/week_09/runs/20261113T172305_leg_eval_seed1_s2t_Fp_s63_8800_val_f2/\n?? results/week_09/runs/20261113T172557_leg_eval_seed1_s2t_Fp_s61_8800_g_sharp/\n?? results/week_09/runs/20261113T172846_train_seed63_s2t_Pf_s63/\n?? results/week_09/runs/20261113T172929_leg_eval_seed1_s2t_Pp_s62_9399_val_f1/\n?? results/week_09/runs/20261113T173151_leg_eval_seed1_s2t_Pp_s62_9399_val_f2/\n?? results/week_09/runs/20261113T173500_leg_eval_seed1_s2t_Fp_s61_8800_g_soft/\n?? results/week_09/runs/20261113T173821_leg_eval_seed1_s2t_Fp_s61_8800_g_stiff/\n?? results/week_09/runs/20261113T174151_leg_eval_seed1_s2t_Fp_s61_8800_g_tight/\n?? results/week_09/runs/20261113T174503_train_seed71_s3k_A_s71/\n?? results/week_09/runs/20261113T174527_leg_eval_seed1_s2t_Fp_s63_8999_val_f1/\n?? results/week_09/runs/20261113T174831_leg_eval_seed1_s2t_Fp_s63_8999_val_f2/\n?? results/week_09/runs/20261113T175143_leg_eval_seed1_s2t_Fp_s61_8800_g_zeroarm/\n?? results/week_09/runs/20261113T175510_leg_eval_seed1_s2t_Pf_s63_8800_val_f1/\n?? results/week_09/runs/20261113T175817_leg_eval_seed1_s2t_Pf_s63_8800_val_f2/\n?? results/week_09/runs/20261113T180201_leg_eval_seed1_s2t_Pp_s61_9200_g_d14/\n?? results/week_09/runs/20261113T180540_leg_eval_seed1_s2t_Pp_s61_9200_g_delay0/\n?? results/week_09/runs/20261113T180840_leg_eval_seed1_s2t_Pp_s61_9200_g_err13/\n?? results/week_09/runs/20261113T181154_leg_eval_seed1_s2t_Pp_s61_9200_g_err15/\n?? results/week_09/runs/20261113T181606_leg_eval_seed1_s2t_Pp_s61_9200_g_heavy/\n?? results/week_09/runs/20261113T182028_leg_eval_seed1_s3k_A_s71_7000_val_f1/\n?? results/week_09/runs/20261113T182458_leg_eval_seed1_s3k_A_s71_7000_val_f2/\n?? results/week_09/runs/20261113T182936_leg_eval_seed1_s2t_Pf_s63_9000_val_f1/\n?? results/week_09/runs/20261113T183319_leg_eval_seed1_s2t_Pf_s63_9000_val_f2/\n?? results/week_09/runs/20261113T183615_leg_eval_seed1_s2t_Pp_s61_9200_g_mu45/\n?? results/week_09/runs/20261113T183931_leg_eval_seed1_s2t_Pp_s61_9200_g_nominal_f2/\n?? results/week_09/runs/20261113T184315_leg_eval_seed1_s2t_Pp_s61_9200_g_nominal/\n?? results/week_09/runs/20261113T184644_leg_eval_seed1_s2t_Pp_s61_9200_g_reach24/\n?? results/week_09/runs/20261113T185046_leg_eval_seed1_s2t_Pf_s63_9200_val_f1/\n?? results/week_09/runs/20261113T185238_train_seed71_s3k_C_s71/\n?? results/week_09/runs/20261113T185417_leg_eval_seed1_s2t_Pf_s63_9200_val_f2/\n?? results/week_09/runs/20261113T185716_leg_eval_seed1_s3k_A_s71_7199_val_f1/\n?? results/week_09/runs/20261113T190144_leg_eval_seed1_s3k_A_s71_7199_val_f2/\n?? results/week_09/runs/20261113T190614_leg_eval_seed1_s2t_Pp_s61_9200_g_reach45/\n?? results/week_09/runs/20261113T190931_leg_eval_seed1_s2t_Pp_s61_9200_g_settled/\n?? results/week_09/runs/20261113T191244_leg_eval_seed1_s2t_Pp_s61_9200_g_sharp/\n?? results/week_09/runs/20261113T191601_train_seed63_s2t_Pp_s63/\n?? results/week_09/runs/20261113T191626_leg_eval_seed1_s2t_Pf_s63_9399_val_f1/\n?? results/week_09/runs/20261113T192022_leg_eval_seed1_s2t_Pf_s63_9399_val_f2/\n?? results/week_09/runs/20261113T192317_leg_eval_seed1_s2t_Pp_s61_9200_g_soft/\n?? results/week_09/runs/20261113T192709_leg_eval_seed1_s3k_C_s71_7000_val_f1/\n?? results/week_09/runs/20261113T193138_leg_eval_seed1_s3k_C_s71_7000_val_f2/\n?? results/week_09/runs/20261113T193606_leg_eval_seed1_s2t_Pp_s61_9200_g_stiff/\n?? results/week_09/runs/20261113T193942_leg_eval_seed1_s2t_Pp_s61_9200_g_tight/\n?? results/week_09/runs/20261113T194309_leg_eval_seed1_s2t_Pp_s61_9200_g_zeroarm/\n?? results/week_09/runs/20261113T194658_leg_eval_seed1_s2t_Pp_s63_8800_val_f1/\n?? results/week_09/runs/20261113T195045_leg_eval_seed1_s2t_Pp_s63_8800_val_f2/\n?? results/week_09/runs/20261113T195440_leg_eval_seed1_s2t_Ff_s62_8400_g_d14/\n?? results/week_09/runs/20261113T195847_leg_eval_seed1_s2t_Ff_s62_8400_g_delay0/\n?? results/week_09/runs/20261113T195937_train_seed71_s3k_E_s71/\n?? results/week_09/runs/20261113T200300_leg_eval_seed1_s3k_C_s71_7199_val_f1/\n?? results/week_09/runs/20261113T200724_leg_eval_seed1_s3k_C_s71_7199_val_f2/\n?? results/week_09/runs/20261113T201203_leg_eval_seed1_s2t_Pp_s63_9000_val_f1/\n?? results/week_09/runs/20261113T201455_leg_eval_seed1_s2t_Pp_s63_9000_val_f2/\n?? results/week_09/runs/20261113T201825_leg_eval_seed1_s2t_Ff_s62_8400_g_err13/\n?? results/week_09/runs/20261113T202230_leg_eval_seed1_s2t_Ff_s62_8400_g_err15/\n?? results/week_09/runs/20261113T202640_leg_eval_seed1_s2t_Ff_s62_8400_g_heavy/\n?? results/week_09/runs/20261113T203034_leg_eval_seed1_s2t_Ff_s62_8400_g_mu45/\n?? results/week_09/runs/20261113T203450_leg_eval_seed1_s3k_E_s71_7000_val_f1/\n?? results/week_09/runs/20261113T203922_leg_eval_seed1_s3k_E_s71_7000_val_f2/\n?? results/week_09/runs/20261113T204401_leg_eval_seed1_s2t_Pp_s63_9200_val_f1/\n?? results/week_09/runs/20261113T204728_leg_eval_seed1_s2t_Pp_s63_9200_val_f2/\n?? results/week_09/runs/20261113T205058_leg_eval_seed1_s2t_Ff_s62_8400_g_nominal_f2/\n?? results/week_09/runs/20261113T205508_leg_eval_seed1_s2t_Ff_s62_8400_g_nominal/\n?? results/week_09/runs/20261113T205913_leg_eval_seed1_s2t_Ff_s62_8400_g_reach24/\n?? results/week_09/runs/20261113T210309_leg_eval_seed1_s2t_Ff_s62_8400_g_reach45/\n?? results/week_09/runs/20261113T210621_train_seed71_s3k_B_s71/\n?? results/week_09/runs/20261113T210700_train_seed72_s3k_B_s72/\n?? results/week_09/runs/20261113T210715_leg_eval_seed1_s3k_E_s71_7199_val_f1/\n?? results/week_09/runs/20261113T211137_leg_eval_seed1_s3k_E_s71_7199_val_f2/\n?? results/week_09/runs/20261113T211610_leg_eval_seed1_s2t_Pp_s63_9399_val_f1/\n?? results/week_09/runs/20261113T211926_leg_eval_seed1_s2t_Pp_s63_9399_val_f2/\n?? results/week_09/runs/20261113T212207_leg_eval_seed1_s2t_Ff_s62_8400_g_settled/\n?? results/week_09/runs/20261113T212518_leg_eval_seed1_s2t_Ff_s62_8400_g_sharp/\n?? results/week_09/runs/20261113T212907_leg_eval_seed1_s2t_Ff_s62_8400_g_soft/\n?? results/week_09/runs/20261113T213312_leg_eval_seed1_s2t_Ff_s62_8400_g_stiff/\n?? results/week_09/runs/20261113T213721_leg_eval_seed1_s2t_Ff_s62_8400_g_tight/\n?? results/week_09/runs/20261113T214141_leg_eval_seed1_s3k_B_s71_7000_val_f1/\n?? results/week_09/runs/20261113T214606_leg_eval_seed1_s3k_B_s71_7000_val_f2/\n?? results/week_09/runs/20261113T215037_leg_eval_seed1_s3k_B_s72_7000_val_f1/\n?? results/week_09/runs/20261113T215503_leg_eval_seed1_s3k_B_s72_7000_val_f2/\n?? results/week_09/runs/20261113T215927_leg_eval_seed1_s2t_Ff_s62_8400_g_zeroarm/\n?? results/week_09/runs/20261113T220334_leg_eval_seed1_s2t_Pf_s62_8800_g_d14/\n?? results/week_09/runs/20261113T220710_leg_eval_seed1_s2t_Pf_s62_8800_g_delay0/\n?? results/week_09/runs/20261113T221011_leg_eval_seed1_s2t_Pf_s62_8800_g_err13/\n?? results/week_09/runs/20261113T221344_train_seed71_s3k_D_s71/\n?? results/week_09/runs/20261113T221423_leg_eval_seed1_s3k_B_s71_7199_val_f1/\n?? results/week_09/runs/20261113T221546_train_seed72_s3k_D_s72/\n?? results/week_09/runs/20261113T221848_leg_eval_seed1_s3k_B_s71_7199_val_f2/\n?? results/week_09/runs/20261113T222321_leg_eval_seed1_s3k_B_s72_7199_val_f1/\n?? results/week_09/runs/20261113T222745_leg_eval_seed1_s3k_B_s72_7199_val_f2/\n?? results/week_09/runs/20261113T223211_leg_eval_seed1_s2t_Pf_s62_8800_g_err15/\n?? results/week_09/runs/20261113T223618_leg_eval_seed1_s2t_Pf_s62_8800_g_heavy/\n?? results/week_09/runs/20261113T223928_leg_eval_seed1_s2t_Pf_s62_8800_g_mu45/\n?? results/week_09/runs/20261113T224246_leg_eval_seed1_s2t_Pf_s62_8800_g_nominal_f2/\n?? results/week_09/runs/20261113T224628_leg_eval_seed1_s2t_Pf_s62_8800_g_nominal/\n?? results/week_09/runs/20261113T225045_leg_eval_seed1_s3k_D_s71_7000_val_f1/\n?? results/week_09/runs/20261113T225510_leg_eval_seed1_s3k_D_s71_7000_val_f2/\n?? results/week_09/runs/20261113T225945_leg_eval_seed1_s3k_D_s72_7000_val_f1/\n?? results/week_09/runs/20261113T230413_leg_eval_seed1_s3k_D_s72_7000_val_f2/\n?? results/week_09/runs/20261113T230840_leg_eval_seed1_s2t_Pf_s62_8800_g_reach24/\n?? results/week_09/runs/20261113T231252_leg_eval_seed1_s2t_Pf_s62_8800_g_reach45/\n?? results/week_09/runs/20261113T231651_leg_eval_seed1_s2t_Pf_s62_8800_g_settled/\n?? results/week_09/runs/20261113T231939_leg_eval_seed1_s2t_Pf_s62_8800_g_sharp/\n?? results/week_09/runs/20261113T232156_train_seed72_s3k_A_s72/\n?? results/week_09/runs/20261113T232335_leg_eval_seed1_s3k_D_s71_7199_val_f1/\n?? results/week_09/runs/20261113T232422_train_seed73_s3k_A_s73/\n?? results/week_09/runs/20261113T232759_leg_eval_seed1_s3k_D_s71_7199_val_f2/\n?? results/week_09/runs/20261113T233236_leg_eval_seed1_s3k_D_s72_7199_val_f1/\n?? results/week_09/runs/20261113T233702_leg_eval_seed1_s3k_D_s72_7199_val_f2/\n?? results/week_09/runs/20261113T234133_leg_eval_seed1_s2t_Pf_s62_8800_g_soft/\n?? results/week_09/runs/20261113T234541_leg_eval_seed1_s2t_Pf_s62_8800_g_stiff/\n?? results/week_09/runs/20261113T234952_leg_eval_seed1_s2t_Pf_s62_8800_g_tight/\n?? results/week_09/runs/20261113T235406_leg_eval_seed1_s2t_Pf_s62_8800_g_zeroarm/\n?? results/week_09/runs/20261113T235826_leg_eval_seed1_s3k_A_s72_7000_val_f1/\n?? results/week_09/runs/20261114T000249_leg_eval_seed1_s3k_A_s72_7000_val_f2/\n?? results/week_09/runs/20261114T000718_leg_eval_seed1_s3k_A_s73_7000_val_f1/\n?? results/week_09/runs/20261114T001144_leg_eval_seed1_s3k_A_s73_7000_val_f2/\n?? results/week_09/runs/20261114T001608_leg_eval_seed1_s2t_Fp_s62_8400_g_d14/\n?? results/week_09/runs/20261114T002012_leg_eval_seed1_s2t_Fp_s62_8400_g_delay0/\n?? results/week_09/runs/20261114T002414_leg_eval_seed1_s2t_Fp_s62_8400_g_err13/\n?? results/week_09/runs/20261114T002818_leg_eval_seed1_s2t_Fp_s62_8400_g_err15/\n?? results/week_09/runs/20261114T002937_train_seed72_s3k_C_s72/\n?? results/week_09/runs/20261114T003217_train_seed73_s3k_C_s73/\n?? results/week_09/runs/20261114T003228_leg_eval_seed1_s3k_A_s72_7199_val_f1/\n?? results/week_09/runs/20261114T003658_leg_eval_seed1_s3k_A_s72_7199_val_f2/\n?? results/week_09/runs/20261114T004134_leg_eval_seed1_s3k_A_s73_7199_val_f1/\n?? results/week_09/runs/20261114T004600_leg_eval_seed1_s3k_A_s73_7199_val_f2/\n?? results/week_09/runs/20261114T005023_leg_eval_seed1_s2t_Fp_s62_8400_g_heavy/\n?? results/week_09/runs/20261114T005341_leg_eval_seed1_s2t_Fp_s62_8400_g_mu45/\n?? results/week_09/runs/20261114T005745_leg_eval_seed1_s2t_Fp_s62_8400_g_nominal_f2/\n?? results/week_09/runs/20261114T010148_leg_eval_seed1_s2t_Fp_s62_8400_g_nominal/\n?? results/week_09/runs/20261114T010600_leg_eval_seed1_s3k_C_s72_7000_val_f1/\n?? results/week_09/runs/20261114T011020_leg_eval_seed1_s3k_C_s72_7000_val_f2/\n?? results/week_09/runs/20261114T011452_leg_eval_seed1_s3k_C_s73_7000_val_f1/\n?? results/week_09/runs/20261114T011912_leg_eval_seed1_s3k_C_s73_7000_val_f2/\n?? results/week_09/runs/20261114T012331_leg_eval_seed1_s2t_Fp_s62_8400_g_reach24/\n?? results/week_09/runs/20261114T012732_leg_eval_seed1_s2t_Fp_s62_8400_g_reach45/\n?? results/week_09/runs/20261114T013131_leg_eval_seed1_s2t_Fp_s62_8400_g_settled/\n?? results/week_09/runs/20261114T013451_leg_eval_seed1_s2t_Fp_s62_8400_g_sharp/\n?? results/week_09/runs/20261114T013724_train_seed72_s3k_E_s72/\n?? results/week_09/runs/20261114T013858_leg_eval_seed1_s3k_C_s72_7199_val_f1/\n?? results/week_09/runs/20261114T014002_train_seed73_s3k_E_s73/\n?? results/week_09/runs/20261114T014314_leg_eval_seed1_s3k_C_s72_7199_val_f2/\n?? results/week_09/runs/20261114T014745_leg_eval_seed1_s3k_C_s73_7199_val_f1/\n?? results/week_09/runs/20261114T015203_leg_eval_seed1_s3k_C_s73_7199_val_f2/\n?? results/week_09/runs/20261114T015624_leg_eval_seed1_s2t_Fp_s62_8400_g_soft/\n?? results/week_09/runs/20261114T020020_leg_eval_seed1_s2t_Fp_s62_8400_g_stiff/\n?? results/week_09/runs/20261114T020428_leg_eval_seed1_s2t_Fp_s62_8400_g_tight/\n?? results/week_09/runs/20261114T020833_leg_eval_seed1_s2t_Fp_s62_8400_g_zeroarm/\n?? results/week_09/runs/20261114T021241_leg_eval_seed1_s3k_E_s72_7000_val_f1/\n?? results/week_09/runs/20261114T021701_leg_eval_seed1_s3k_E_s72_7000_val_f2/\n?? results/week_09/runs/20261114T022131_leg_eval_seed1_s3k_E_s73_7000_val_f1/\n?? results/week_09/runs/20261114T022552_leg_eval_seed1_s3k_E_s73_7000_val_f2/\n?? results/week_09/runs/20261114T023014_leg_eval_seed1_s2t_Pp_s62_9200_g_d14/\n?? results/week_09/runs/20261114T023314_leg_eval_seed1_s2t_Pp_s62_9200_g_delay0/\n?? results/week_09/runs/20261114T023629_leg_eval_seed1_s2t_Pp_s62_9200_g_err13/\n?? results/week_09/runs/20261114T023943_leg_eval_seed1_s2t_Pp_s62_9200_g_err15/\n?? results/week_09/runs/20261114T024352_leg_eval_seed1_s2t_Pp_s62_9200_g_heavy/\n?? results/week_09/runs/20261114T024441_train_seed73_s3k_B_s73/\n?? results/week_09/runs/20261114T024729_train_seed51_s1b_P3_s51/\n?? results/week_09/runs/20261114T024756_leg_eval_seed1_s3k_E_s72_7199_val_f1/\n?? results/week_09/runs/20261114T025218_leg_eval_seed1_s3k_E_s72_7199_val_f2/\n?? results/week_09/runs/20261114T025652_leg_eval_seed1_s3k_E_s73_7199_val_f1/\n?? results/week_09/runs/20261114T030113_leg_eval_seed1_s3k_E_s73_7199_val_f2/\n?? results/week_09/runs/20261114T030533_leg_eval_seed1_s2t_Pp_s62_9200_g_mu45/\n?? results/week_09/runs/20261114T030845_leg_eval_seed1_s2t_Pp_s62_9200_g_nominal_f2/\n?? results/week_09/runs/20261114T031151_leg_eval_seed1_s2t_Pp_s62_9200_g_nominal/\n?? results/week_09/runs/20261114T031508_leg_eval_seed1_s2t_Pp_s62_9200_g_reach24/\n?? results/week_09/runs/20261114T031851_leg_eval_seed1_s3k_B_s73_7000_val_f1/\n?? results/week_09/runs/20261114T032316_leg_eval_seed1_s3k_B_s73_7000_val_f2/\n?? results/week_09/runs/20261114T032747_leg_eval_seed1_s1b_P3_s51_8400_val_f1/\n?? results/week_09/runs/20261114T033156_leg_eval_seed1_s1b_P3_s51_8400_val_f2/\n?? results/week_09/runs/20261114T033606_leg_eval_seed1_s2t_Pp_s62_9200_g_reach45/\n?? results/week_09/runs/20261114T033910_leg_eval_seed1_s2t_Pp_s62_9200_g_settled/\n?? results/week_09/runs/20261114T034221_leg_eval_seed1_s2t_Pp_s62_9200_g_sharp/\n?? results/week_09/runs/20261114T034554_leg_eval_seed1_s1b_P3_s51_8600_val_f1/\n?? results/week_09/runs/20261114T035014_leg_eval_seed1_s1b_P3_s51_8600_val_f2/\n?? results/week_09/runs/20261114T035023_train_seed73_s3k_D_s73/\n?? results/week_09/runs/20261114T035432_leg_eval_seed1_s3k_B_s73_7199_val_f1/\n?? results/week_09/runs/20261114T035840_leg_eval_seed1_s3k_B_s73_7199_val_f2/\n?? results/week_09/runs/20261114T040249_leg_eval_seed1_s2t_Pp_s62_9200_g_soft/\n?? results/week_09/runs/20261114T040550_leg_eval_seed1_s2t_Pp_s62_9200_g_stiff/\n?? results/week_09/runs/20261114T040843_leg_eval_seed1_s2t_Pp_s62_9200_g_tight/\n?? results/week_09/runs/20261114T041206_leg_eval_seed1_s2t_Pp_s62_9200_g_zeroarm/\n?? results/week_09/runs/20261114T041239_train_seed51_s1b_SP_s51/\n?? results/week_09/runs/20261114T041546_leg_eval_seed1_s1b_P3_s51_8799_val_f1/\n?? results/week_09/runs/20261114T041959_leg_eval_seed1_s1b_P3_s51_8799_val_f2/\n?? results/week_09/runs/20261114T042337_leg_eval_seed1_s3k_D_s73_7000_val_f1/\n?? results/week_09/runs/20261114T042748_leg_eval_seed1_s3k_D_s73_7000_val_f2/\n?? results/week_09/runs/20261114T043157_leg_eval_seed1_s1b_P3_s51_8799_test_f1/\n?? results/week_09/runs/20261114T043635_leg_eval_seed1_s1b_P3_s51_8799_test_f2/\n?? results/week_09/runs/20261114T044043_leg_eval_seed1_s1b_P3_s51_8799_test_train_f1/\n?? results/week_09/runs/20261114T044457_leg_eval_seed1_s1b_P3_s51_8799_test_train_f2/\n?? results/week_09/runs/20261114T044816_leg_eval_seed1_s1b_SP_s51_8400_val_f1/\n?? results/week_09/runs/20261114T045232_leg_eval_seed1_s1b_SP_s51_8400_val_f2/\n?? results/week_09/runs/20261114T045431_train_seed51_s1b_P4_s51/\n?? results/week_09/runs/20261114T045646_leg_eval_seed1_s3k_D_s73_7199_val_f1/\n?? results/week_09/runs/20261114T050055_leg_eval_seed1_s3k_D_s73_7199_val_f2/\n?? results/week_09/runs/20261114T050506_leg_eval_seed1_s1b_P3_s51_8799_wrong_f1/\n?? results/week_09/runs/20261114T050840_leg_eval_seed1_s1b_P3_s51_8799_wrong_f2/\n?? results/week_09/runs/20261114T051201_leg_eval_seed1_s1b_SP_s51_8600_val_f1/\n?? results/week_09/runs/20261114T051614_leg_eval_seed1_s1b_SP_s51_8600_val_f2/\n?? results/week_09/runs/20261114T052030_leg_eval_seed1_s2t_Ff_s63_8800_g_d14/\n?? results/week_09/runs/20261114T052417_leg_eval_seed1_s1b_P4_s51_8400_val_f1/\n?? results/week_09/runs/20261114T052825_leg_eval_seed1_s1b_P4_s51_8400_val_f2/\n?? results/week_09/runs/20261114T053143_leg_eval_seed1_s2t_Ff_s63_8800_g_delay0/\n?? results/week_09/runs/20261114T053511_leg_eval_seed1_s1b_SP_s51_8799_val_f1/\n?? results/week_09/runs/20261114T053611_leg_eval_seed1_s2t_Ff_s63_8800_g_err13/\n?? results/week_09/runs/20261114T053633_leg_eval_seed1_s2t_Ff_s63_8800_g_err15/\n?? results/week_09/runs/20261114T053843_leg_eval_seed1_s1b_SP_s51_8799_val_f2/\n?? results/week_09/runs/20261114T053943_leg_eval_seed1_s2t_Ff_s63_8800_g_mu45/\n?? results/week_09/runs/20261114T053952_leg_eval_seed1_s2t_Ff_s63_8800_g_nominal_f2/\n?? results/week_09/runs/20261114T054219_leg_eval_seed1_s1b_SP_s51_8600_test_f1/\n?? results/week_09/runs/20261114T054250_leg_eval_seed1_s1b_SP_s51_8600_test_train_f1/\n?? results/week_09/runs/20261114T054403_leg_eval_seed1_s1b_SP_s51_8600_wrong_f1/\n?? results/week_09/runs/20261114T054731_leg_eval_seed1_s1b_SP_s51_8600_test_f2/\n?? results/week_09/runs/20261114T054732_leg_eval_seed1_s1b_SP_s51_8600_test_train_f2/\n?? results/week_09/runs/20261114T054852_leg_eval_seed1_s1b_SP_s51_8600_wrong_f2/\n?? results/week_09/runs/20261114T055221_leg_eval_seed1_s1b_P4_s51_8600_val_f1/\n?? results/week_09/runs/20261114T055245_leg_eval_seed1_s2t_Ff_s63_8800_g_nominal/\n?? results/week_09/runs/20261114T055342_leg_eval_seed1_s2t_Ff_s63_8800_g_reach24/\n?? results/week_09/runs/20261114T055553_leg_eval_seed1_s2t_Ff_s63_8800_g_reach45/\n?? results/week_09/runs/20261114T055638_leg_eval_seed1_s1b_P4_s51_8600_val_f2/\n?? results/week_09/runs/20261114T055649_leg_eval_seed1_s2t_Ff_s63_8800_g_settled/\n?? results/week_09/runs/20261114T055852_leg_eval_seed1_s2t_Ff_s63_8800_g_sharp/\n?? results/week_09/runs/20261114T060011_leg_eval_seed1_s2t_Ff_s63_8800_g_soft/\n?? results/week_09/runs/20261114T060026_leg_eval_seed1_s2t_Ff_s63_8800_g_stiff/\n?? results/week_09/runs/20261114T060155_leg_eval_seed1_s2t_Ff_s63_8800_g_tight/\n?? results/week_09/runs/20261114T060324_leg_eval_seed1_s2t_Ff_s63_8800_g_zeroarm/\n?? results/week_09/runs/20261114T060342_leg_eval_seed1_s2t_Pf_s63_8800_g_d14/\n?? results/week_09/runs/20261114T060505_leg_eval_seed1_s2t_Pf_s63_8800_g_delay0/\n?? results/week_09/runs/20261114T060632_leg_eval_seed1_s2t_Pf_s63_8800_g_err13/\n?? results/week_09/runs/20261114T060648_leg_eval_seed1_s2t_Pf_s63_8800_g_err15/\n?? results/week_09/runs/20261114T060811_leg_eval_seed1_s2t_Pf_s63_8800_g_heavy/\n?? results/week_09/runs/20261114T061038_leg_eval_seed1_s2t_Pf_s63_8800_g_mu45/\n?? results/week_09/runs/20261114T061049_leg_eval_seed1_s2t_Pf_s63_8800_g_nominal_f2/\n?? results/week_09/runs/20261114T061104_leg_eval_seed1_s2t_Pf_s63_8800_g_nominal/\n?? results/week_09/runs/20261114T061415_leg_eval_seed1_s2t_Pf_s63_8800_g_reach24/\n?? results/week_09/runs/20261114T061418_leg_eval_seed1_s2t_Pf_s63_8800_g_reach45/\n?? results/week_09/runs/20261114T061502_leg_eval_seed1_s2t_Pf_s63_8800_g_settled/\n?? results/week_09/runs/20261114T061807_leg_eval_seed1_s2t_Pf_s63_8800_g_sharp/\n?? results/week_09/runs/20261114T061812_leg_eval_seed1_s2t_Pf_s63_8800_g_soft/\n?? results/week_09/runs/20261114T061834_leg_eval_seed1_s1b_P4_s51_8799_val_f1/\n?? results/week_09/runs/20261114T061850_leg_eval_seed1_s2t_Pf_s63_8800_g_stiff/\n?? results/week_09/runs/20261114T062000_leg_eval_seed1_s2t_Pf_s63_8800_g_tight/\n?? results/week_09/runs/20261114T062207_leg_eval_seed1_s2t_Pf_s63_8800_g_zeroarm/\n?? results/week_09/runs/20261114T062216_leg_eval_seed1_s2t_Fp_s63_8400_g_d14/\n?? results/week_09/runs/20261114T062309_leg_eval_seed1_s1b_P4_s51_8799_val_f2/\n?? results/week_09/runs/20261114T062316_leg_eval_seed1_s2t_Fp_s63_8400_g_delay0/\n?? results/week_09/runs/20261114T062449_leg_eval_seed1_s2t_Fp_s63_8400_g_err13/\n?? results/week_09/runs/20261114T062653_leg_eval_seed1_s2t_Fp_s63_8400_g_err15/\n?? results/week_09/runs/20261114T062701_leg_eval_seed1_s2t_Fp_s63_8400_g_heavy/\n?? results/week_09/runs/20261114T062800_leg_eval_seed1_s2t_Fp_s63_8400_g_mu45/\n?? results/week_09/runs/20261114T062802_leg_eval_seed1_s1b_P4_s51_8799_test_f1/\n?? results/week_09/runs/20261114T062934_leg_eval_seed1_s1b_P4_s51_8799_test_train_f1/\n?? results/week_09/runs/20261114T063054_leg_eval_seed1_s1b_P4_s51_8799_wrong_f1/\n?? results/week_09/runs/20261114T063138_leg_eval_seed1_s1b_parent_8200_test_f1/\n?? results/week_09/runs/20261114T063251_leg_eval_seed1_s2t_Fp_s63_8400_g_nominal_f2/\n?? results/week_09/runs/20261114T063348_leg_eval_seed1_s1b_P4_s51_8799_test_f2/\n?? results/week_09/runs/20261114T063404_leg_eval_seed1_s1b_P4_s51_8799_test_train_f2/\n?? results/week_09/runs/20261114T063608_leg_eval_seed1_s1b_P4_s51_8799_wrong_f2/\n?? results/week_09/runs/20261114T063716_leg_eval_seed1_s2t_Fp_s63_8400_g_nominal/\n?? results/week_09/runs/20261114T063725_leg_eval_seed1_s1b_parent_8200_test_f2/\n?? results/week_09/runs/20261114T063816_leg_eval_seed1_s2t_Fp_s63_8400_g_reach24/\n?? results/week_09/runs/20261114T063912_leg_eval_seed1_s2t_Fp_s63_8400_g_reach45/\n?? results/week_09/runs/20261114T064044_leg_eval_seed1_s2t_Fp_s63_8400_g_settled/\n?? results/week_09/runs/20261114T064200_leg_eval_seed1_s2t_Fp_s63_8400_g_sharp/\n?? results/week_09/runs/20261114T064251_leg_eval_seed1_s1b_parent_8200_test_train_f1/\n?? results/week_09/runs/20261114T064300_leg_eval_seed1_s2t_Fp_s63_8400_g_soft/\n?? results/week_09/runs/20261114T064400_leg_eval_seed1_s2t_Fp_s63_8400_g_stiff/\n?? results/week_09/runs/20261114T064442_leg_eval_seed1_s2t_Fp_s63_8400_g_tight/\n?? results/week_09/runs/20261114T064629_leg_eval_seed1_s2t_Fp_s63_8400_g_zeroarm/\n?? results/week_09/runs/20261114T064750_leg_eval_seed1_s2t_Pp_s63_9399_g_d14/\n?? results/week_09/runs/20261114T064802_leg_eval_seed1_s1b_parent_8200_test_train_f2/\n?? results/week_09/runs/20261114T064849_leg_eval_seed1_s2t_Pp_s63_9399_g_delay0/\n?? results/week_09/runs/20261114T064930_leg_eval_seed1_s2t_Pp_s63_9399_g_err13/\n?? results/week_09/runs/20261114T065117_leg_eval_seed1_s2t_Pp_s63_9399_g_err15/\n?? results/week_09/runs/20261114T065136_leg_eval_seed1_s2t_Pp_s63_9399_g_heavy/\n?? results/week_09/runs/20261114T065235_leg_eval_seed1_s2t_Pp_s63_9399_g_mu45/\n?? results/week_09/runs/20261114T065252_leg_eval_seed1_s1b_parent_8200_wrong_f1/\n?? results/week_09/runs/20261114T065308_leg_eval_seed1_s2t_Pp_s63_9399_g_nominal_f2/\n?? results/week_09/runs/20261114T065600_leg_eval_seed1_s2t_Pp_s63_9399_g_nominal/\n?? results/week_09/runs/20261114T065612_leg_eval_seed1_s2t_Pp_s63_9399_g_reach24/\n?? results/week_09/runs/20261114T065613_leg_eval_seed1_s2t_Pp_s63_9399_g_reach45/\n?? results/week_09/runs/20261114T065629_leg_eval_seed1_s2t_Pp_s63_9399_g_settled/\n?? results/week_09/runs/20261114T065817_leg_eval_seed1_s1b_parent_8200_wrong_f2/\n?? results/week_09/runs/20261114T065931_leg_eval_seed1_s2t_Pp_s63_9399_g_sharp/\n?? results/week_09/runs/20261114T065932_leg_eval_seed1_s2t_Pp_s63_9399_g_soft/\n?? results/week_09/runs/20261114T065941_leg_eval_seed1_s2t_Pp_s63_9399_g_stiff/\n?? results/week_09/runs/20261114T070002_leg_eval_seed1_s2t_Pp_s63_9399_g_tight/\n?? results/week_09/runs/20261114T070313_leg_eval_seed1_s2t_Pp_s63_9399_g_zeroarm/\n?? results/week_09/runs/20261114T070314_leg_eval_seed1_s3k_A_s71_7000_test_f1/\n?? results/week_09/runs/20261114T070331_leg_eval_seed1_s3k_A_s72_7000_test_f1/\n?? results/week_09/runs/20261114T070339_leg_eval_seed1_s3k_A_s73_7000_test_f1/\n?? results/week_09/runs/20261114T070347_leg_eval_seed1_s3k_B_s71_7199_test_f1/\n?? results/week_09/runs/20261114T070829_leg_eval_seed1_s3k_A_s71_7000_test_f2/\n?? results/week_09/runs/20261114T070849_leg_eval_seed1_s3k_A_s72_7000_test_f2/\n?? results/week_09/runs/20261114T070856_leg_eval_seed1_s3k_A_s73_7000_test_f2/\n?? results/week_09/runs/20261114T070858_leg_eval_seed1_s3k_B_s71_7199_test_f2/\n?? results/week_09/runs/20261114T071302_leg_eval_seed1_s3k_A_s71_7000_test_old/\n?? results/week_09/runs/20261114T071323_leg_eval_seed1_s3k_A_s72_7000_test_old/\n?? results/week_09/runs/20261114T071335_leg_eval_seed1_s3k_B_s71_7199_test_old/\n?? results/week_09/runs/20261114T071337_leg_eval_seed1_s3k_A_s73_7000_test_old/\n?? results/week_09/runs/20261114T071734_leg_eval_seed1_s3k_A_s71_7000_test_staged/\n?? results/week_09/runs/20261114T071757_leg_eval_seed1_s3k_A_s72_7000_test_staged/\n?? results/week_09/runs/20261114T071808_leg_eval_seed1_s3k_B_s71_7199_test_staged/\n?? results/week_09/runs/20261114T071811_leg_eval_seed1_s3k_A_s73_7000_test_staged/\n?? results/week_09/runs/20261114T072928_leg_eval_seed1_s3k_B_s72_7000_test_f1/\n?? results/week_09/runs/20261114T073013_train_seed52_s1b_P3_s52/\n?? results/week_09/runs/20261114T073020_train_seed52_s1b_P4_s52/\n?? results/week_09/runs/20261114T073244_leg_eval_seed1_s3k_B_s72_7000_test_f2/\n?? results/week_09/runs/20261114T073702_leg_eval_seed1_s3k_B_s72_7000_test_old/\n?? results/week_09/runs/20261114T074120_leg_eval_seed1_s3k_B_s72_7000_test_staged/\n?? results/week_09/runs/20261114T075254_leg_eval_seed1_s3k_B_s73_7199_test_f1/\n?? results/week_09/runs/20261114T075712_leg_eval_seed1_s3k_B_s73_7199_test_f2/\n?? results/week_09/runs/20261114T080132_leg_eval_seed1_s3k_B_s73_7199_test_old/\n?? results/week_09/runs/20261114T080548_leg_eval_seed1_s3k_B_s73_7199_test_staged/\n?? results/week_09/runs/20261114T081751_leg_eval_seed1_s1b_P3_s52_8400_val_f1/\n?? results/week_09/runs/20261114T082145_leg_eval_seed1_s1b_P3_s52_8400_val_f2/\n?? results/week_09/runs/20261114T082545_leg_eval_seed1_s1b_P4_s52_8400_val_f1/\n?? results/week_09/runs/20261114T082958_leg_eval_seed1_s1b_P4_s52_8400_val_f2/\n?? results/week_09/runs/20261114T083424_leg_eval_seed1_s1b_P3_s52_8600_val_f1/\n?? results/week_09/runs/20261114T083837_leg_eval_seed1_s1b_P3_s52_8600_val_f2/\n?? results/week_09/runs/20261114T084306_leg_eval_seed1_s1b_P4_s52_8600_val_f1/\n?? results/week_09/runs/20261114T084714_leg_eval_seed1_s1b_P4_s52_8600_val_f2/\n?? results/week_09/runs/20261114T085127_leg_eval_seed1_s3k_C_s71_7000_test_f1/\n?? results/week_09/runs/20261114T085313_train_seed52_s1b_SP_s52/\n?? results/week_09/runs/20261114T085336_train_seed53_s1b_P4_s53/\n?? results/week_09/runs/20261114T085540_leg_eval_seed1_s3k_C_s71_7000_test_f2/\n?? results/week_09/runs/20261114T085957_leg_eval_seed1_s3k_C_s71_7000_test_old/\n?? results/week_09/runs/20261114T090417_leg_eval_seed1_s3k_C_s71_7000_test_staged/\n?? results/week_09/runs/20261114T091604_leg_eval_seed1_s1b_P3_s52_8799_val_f1/\n?? results/week_09/runs/20261114T092019_leg_eval_seed1_s1b_P3_s52_8799_val_f2/\n?? results/week_09/runs/20261114T092443_leg_eval_seed1_s1b_P4_s53_8400_val_f1/\n?? results/week_09/runs/20261114T092837_leg_eval_seed1_s1b_P4_s53_8400_val_f2/\n?? results/week_09/runs/20261114T093255_leg_eval_seed1_s1b_SP_s52_8400_val_f1/\n?? results/week_09/runs/20261114T093712_leg_eval_seed1_s1b_SP_s52_8400_val_f2/\n?? results/week_09/runs/20261114T094135_leg_eval_seed1_s1b_P4_s52_8799_val_f1/\n?? results/week_09/runs/20261114T094540_leg_eval_seed1_s1b_P4_s52_8799_val_f2/\n?? results/week_09/runs/20261114T094949_leg_eval_seed1_s1b_P4_s53_8600_val_f1/\n?? results/week_09/runs/20261114T095404_leg_eval_seed1_s1b_P4_s53_8600_val_f2/\n?? results/week_09/runs/20261114T095806_leg_eval_seed1_s1b_SP_s52_8600_val_f1/\n?? results/week_09/runs/20261114T100224_leg_eval_seed1_s1b_SP_s52_8600_val_f2/\n?? results/week_09/runs/20261114T100633_leg_eval_seed1_s1b_P3_s52_8400_test_f1/\n?? results/week_09/runs/20261114T101105_leg_eval_seed1_s1b_P3_s52_8400_test_f2/\n?? results/week_09/runs/20261114T101407_train_seed53_s1b_P3_s53/\n?? results/week_09/runs/20261114T101524_train_seed53_s1b_SP_s53/\n?? results/week_09/runs/20261114T101552_leg_eval_seed1_s1b_P4_s53_8799_val_f1/\n?? results/week_09/runs/20261114T102014_leg_eval_seed1_s1b_P4_s53_8799_val_f2/\n?? results/week_09/runs/20261114T102446_leg_eval_seed1_s1b_SP_s52_8799_val_f1/\n?? results/week_09/runs/20261114T102911_leg_eval_seed1_s1b_SP_s52_8799_val_f2/\n?? results/week_09/runs/20261114T103333_leg_eval_seed1_s1b_P3_s52_8400_test_train_f1/\n?? results/week_09/runs/20261114T103718_leg_eval_seed1_s1b_P3_s52_8400_test_train_f2/\n?? results/week_09/runs/20261114T104114_leg_eval_seed1_s1b_P3_s52_8400_wrong_f1/\n?? results/week_09/runs/20261114T104536_leg_eval_seed1_s1b_P3_s52_8400_wrong_f2/\n?? results/week_09/runs/20261114T104943_leg_eval_seed1_s1b_P3_s53_8400_val_f1/\n?? results/week_09/runs/20261114T105401_leg_eval_seed1_s1b_P3_s53_8400_val_f2/\n?? results/week_09/runs/20261114T105826_leg_eval_seed1_s1b_SP_s53_8400_val_f1/\n?? results/week_09/runs/20261114T110244_leg_eval_seed1_s1b_SP_s53_8400_val_f2/\n?? results/week_09/runs/20261114T110704_leg_eval_seed1_s1b_P4_s52_8600_test_f1/\n?? results/week_09/runs/20261114T111147_leg_eval_seed1_s1b_P4_s52_8600_test_f2/\n?? results/week_09/runs/20261114T111644_leg_eval_seed1_s1b_P3_s53_8600_val_f1/\n?? results/week_09/runs/20261114T112059_leg_eval_seed1_s1b_P3_s53_8600_val_f2/\n?? results/week_09/runs/20261114T112523_leg_eval_seed1_s1b_SP_s53_8600_val_f1/\n?? results/week_09/runs/20261114T112945_leg_eval_seed1_s1b_SP_s53_8600_val_f2/\n?? results/week_09/runs/20261114T113405_leg_eval_seed1_s1b_P4_s52_8600_test_train_f1/\n?? results/week_09/runs/20261114T113704_leg_eval_seed1_s1b_P4_s52_8600_test_train_f2/\n?? results/week_09/runs/20261114T113828_leg_eval_seed1_s1b_P3_s53_8799_val_f1/\n?? results/week_09/runs/20261114T113940_leg_eval_seed1_s1b_P3_s53_8799_val_f2/\n?? results/week_09/runs/20261114T114058_leg_eval_seed1_s1b_SP_s53_8799_val_f1/\n?? results/week_09/runs/20261114T114205_leg_eval_seed1_s1b_SP_s53_8799_val_f2/\n?? results/week_09/runs/20261114T114306_leg_eval_seed1_s1b_P3_s53_8799_test_f1/\n?? results/week_09/runs/20261114T114423_leg_eval_seed1_s1b_P3_s53_8799_test_f2/\n?? results/week_09/runs/20261114T114542_leg_eval_seed1_s1b_P3_s53_8799_test_train_f1/\n?? results/week_09/runs/20261114T114646_leg_eval_seed1_s1b_P3_s53_8799_test_train_f2/\n?? results/week_09/runs/20261114T114758_leg_eval_seed1_s1b_P3_s53_8799_wrong_f1/\n?? results/week_09/runs/20261114T114912_leg_eval_seed1_s1b_P3_s53_8799_wrong_f2/\n?? results/week_09/runs/20261114T115026_leg_eval_seed1_s1b_P4_s52_8600_wrong_f1/\n?? results/week_09/runs/20261114T115138_leg_eval_seed1_s1b_P4_s52_8600_wrong_f2/\n?? results/week_09/runs/20261114T115253_leg_eval_seed1_s1b_P4_s53_8799_test_f1/\n?? results/week_09/runs/20261114T115410_leg_eval_seed1_s1b_P4_s53_8799_test_f2/\n?? results/week_09/runs/20261114T115522_leg_eval_seed1_s1b_P4_s53_8799_test_train_f1/\n?? results/week_09/runs/20261114T115634_leg_eval_seed1_s1b_P4_s53_8799_test_train_f2/\n?? results/week_09/runs/20261114T115739_leg_eval_seed1_s1b_P4_s53_8799_wrong_f1/\n?? results/week_09/runs/20261114T115852_leg_eval_seed1_s1b_P4_s53_8799_wrong_f2/\n?? results/week_09/runs/20261114T115950_leg_eval_seed1_s1b_SP_s52_8400_test_f1/\n?? results/week_09/runs/20261114T120102_leg_eval_seed1_s1b_SP_s52_8400_test_f2/\n?? results/week_09/runs/20261114T120217_leg_eval_seed1_s1b_SP_s52_8400_test_train_f1/\n?? results/week_09/runs/20261114T120326_leg_eval_seed1_s1b_SP_s52_8400_test_train_f2/\n?? results/week_09/runs/20261114T120430_leg_eval_seed1_s1b_SP_s52_8400_wrong_f1/\n?? results/week_09/runs/20261114T120539_leg_eval_seed1_s1b_SP_s52_8400_wrong_f2/\n?? results/week_09/runs/20261114T120652_leg_eval_seed1_s1b_SP_s53_8799_test_f1/\n?? results/week_09/runs/20261114T120807_leg_eval_seed1_s1b_SP_s53_8799_test_f2/\n?? results/week_09/runs/20261114T120920_leg_eval_seed1_s1b_SP_s53_8799_test_train_f1/\n?? results/week_09/runs/20261114T121021_leg_eval_seed1_s1b_SP_s53_8799_test_train_f2/\n?? results/week_09/runs/20261114T121116_leg_eval_seed1_s1b_SP_s53_8799_wrong_f1/\n?? results/week_09/runs/20261114T121230_leg_eval_seed1_s1b_SP_s53_8799_wrong_f2/\n?? results/week_09/runs/20261114T121333_leg_eval_seed1_s3k_C_s72_7199_test_f1/\n?? results/week_09/runs/20261114T121457_leg_eval_seed1_s3k_C_s72_7199_test_f2/\n?? results/week_09/runs/20261114T121618_leg_eval_seed1_s3k_C_s72_7199_test_old/\n?? results/week_09/runs/20261114T121741_leg_eval_seed1_s3k_C_s72_7199_test_staged/\n?? results/week_09/runs/20261114T122130_leg_eval_seed1_s3k_C_s73_7000_test_f1/\n?? results/week_09/runs/20261114T122253_leg_eval_seed1_s3k_C_s73_7000_test_f2/\n?? results/week_09/runs/20261114T122415_leg_eval_seed1_s3k_C_s73_7000_test_old/\n?? results/week_09/runs/20261114T122536_leg_eval_seed1_s3k_C_s73_7000_test_staged/\n?? results/week_09/runs/20261114T122924_leg_eval_seed1_s3k_D_s71_7000_test_f1/\n?? results/week_09/runs/20261114T123046_leg_eval_seed1_s3k_D_s71_7000_test_f2/\n?? results/week_09/runs/20261114T123208_leg_eval_seed1_s3k_D_s71_7000_test_old/\n?? results/week_09/runs/20261114T123330_leg_eval_seed1_s3k_D_s71_7000_test_staged/\n?? results/week_09/runs/20261114T123717_leg_eval_seed1_s3k_D_s72_7000_test_f1/\n?? results/week_09/runs/20261114T123838_leg_eval_seed1_s3k_D_s72_7000_test_f2/\n?? results/week_09/runs/20261114T124000_leg_eval_seed1_s3k_D_s72_7000_test_old/\n?? results/week_09/runs/20261114T124122_leg_eval_seed1_s3k_D_s72_7000_test_staged/\n?? results/week_09/runs/20261114T124508_leg_eval_seed1_s3k_D_s73_7000_test_f1/\n?? results/week_09/runs/20261114T124630_leg_eval_seed1_s3k_D_s73_7000_test_f2/\n?? results/week_09/runs/20261114T124752_leg_eval_seed1_s3k_D_s73_7000_test_old/\n?? results/week_09/runs/20261114T124914_leg_eval_seed1_s3k_D_s73_7000_test_staged/\n?? results/week_09/runs/20261114T125300_leg_eval_seed1_s3k_E_s71_7000_test_f1/\n?? results/week_09/runs/20261114T125424_leg_eval_seed1_s3k_E_s71_7000_test_f2/\n?? results/week_09/runs/20261114T125546_leg_eval_seed1_s3k_E_s71_7000_test_old/\n?? results/week_09/runs/20261114T125707_leg_eval_seed1_s3k_E_s71_7000_test_staged/\n?? results/week_09/runs/20261114T130056_leg_eval_seed1_s3k_E_s72_7000_test_f1/\n?? results/week_09/runs/20261114T130218_leg_eval_seed1_s3k_E_s72_7000_test_f2/\n?? results/week_09/runs/20261114T130340_leg_eval_seed1_s3k_E_s72_7000_test_old/\n?? results/week_09/runs/20261114T130502_leg_eval_seed1_s3k_E_s72_7000_test_staged/\n?? results/week_09/runs/20261114T130850_leg_eval_seed1_s3k_E_s73_7199_test_f1/\n?? results/week_09/runs/20261114T131012_leg_eval_seed1_s3k_E_s73_7199_test_f2/\n?? results/week_09/runs/20261114T131134_leg_eval_seed1_s3k_E_s73_7199_test_old/\n?? results/week_09/runs/20261114T131256_leg_eval_seed1_s3k_E_s73_7199_test_staged/\n?? results/week_10/runs/\n?? tests/test_base_odometry.py\n?? tests/test_check_armwatch.py\n?? tests/test_insert_live.py\n?? tests/test_insert_policy.py\n?? tests/test_keytools_manifests.py\n?? tests/test_mech_layer.py\n?? tests/test_s4b.py\n?? tests/test_s4c.py\n?? tests/test_tool_conditioning.py\n?? unifp_train/keyinsert_shadow.py\n?? unifp_train/keytools.py\n?? unifp_train/mech_shadow.py",
+  "ground_friction": 1.0,
+  "insertion": null,
+  "joint_order_ok": true,
+  "leg": {
+    "arm_jitter": true,
+    "arm_look_pose": [
+      -0.3,
+      -0.2,
+      -0.6,
+      0.0,
+      1.3,
+      0.0
+    ],
+    "arm_pose": "rest",
+    "damage_n": 60.0,
+    "eval_start_delay_steps": 25,
+    "foot_command_n": 35.0,
+    "foot_force_kp": 400.0,
+    "foot_force_range_n": [
+      -35.0,
+      35.0
+    ],
+    "foot_push_n": 35.0,
+    "force_ramp_iterations": 1000,
+    "handle_fraction": 1.0,
+    "handle_weights": {
+      "approach_contact": -2.0,
+      "door_push": -1.0,
+      "handle_contact": 1.0,
+      "handle_open": 2.0,
+      "handle_progress": 1.5,
+      "handle_slip": -3.0
+    },
+    "key_detent_range_nm": [
+      0.0,
+      1.0
+    ],
+    "key_eval_detent_nm": [
+      0.0,
+      0.2
+    ],
+    "key_eval_lock_nm": [
+      0.2,
+      0.4,
+      0.6
+    ],
+    "key_hold_s": 0.3,
+    "key_lock_range_nm": [
+      0.3,
+      2.5
+    ],
+    "key_max_force_n": [
+      6.0,
+      20.0
+    ],
+    "key_overdrive_deg": -5.0,
+    "key_turn_deg": [
+      0.0,
+      45.0,
+      30.0
+    ],
+    "knee_armature_factor": 3.67,
+    "knee_friction_factor": 1.917,
+    "leg_actuator": "unitree_geared",
+    "leg_actuator_model": {
+      "armature_kg_m2": {
+        "hip_thigh": 0.0002,
+        "knee": 0.0007
+      },
+      "delay_physics_steps": [
+        3,
+        4
+      ],
+      "friction": 0.01,
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": [
+        20.2,
+        23.4
+      ],
+      "knee_nm": [
+        38.72,
+        44.85
+      ],
+      "knee_ratio": 1.9169,
+      "name": "unitree_geared",
+      "speed": "hip, thigh flat to 13.5, 0 at 30.0; knee flat to 7.04, 0 at 15.65 rad/s"
+    },
+    "leg_armature_range": null,
+    "leg_delay_steps": 4,
+    "leg_friction_range": [
+      1.0,
+      1.0
+    ],
+    "object": "key",
+    "obs_noise": null,
+    "press": null,
+    "press_excess_weight": 0.0,
+    "press_hand_fraction": 0.0,
+    "press_hand_levels_n": [
+      3.0,
+      10.0
+    ],
+    "press_limit_n": 30.0,
+    "press_orientation_weight": null,
+    "press_up_cap_n": null,
+    "settled_spawn": true,
+    "spawn_states": "/home/victor/D1Training/logs/unifp_train/chain/ki7_s62_9200_validation_f1/handover_spawn.json",
+    "spawn_states_fraction": 1.0,
+    "stance_weight": 4.0,
+    "start_delay_steps": [
+      15,
+      50
+    ],
+    "tilt_excess_deg": 9.998,
+    "tilt_excess_weight": 0.0,
+    "tilt_stages": "all",
+    "variant": "force",
+    "weights": {
+      "action_rate": -0.02,
+      "alive": 1.0,
+      "ang_vel_xy": -0.05,
+      "base_height": -2.0,
+      "base_still": 1.0,
+      "base_yaw_still": 0.5,
+      "collision": -5.0,
+      "dof_acc": -2.5e-07,
+      "dof_pos_limits": -10.0,
+      "dof_vel": -0.0008,
+      "dof_vel_arm": -0.0002,
+      "feet_contact_forces": -0.001,
+      "foot_lift": 1.5,
+      "foot_tracking": 1.0,
+      "foot_tracking_fine": 2.0,
+      "foot_tracking_mid": 3.0,
+      "lin_vel_z": -1.5,
+      "orientation": -1.0,
+      "support_contact": 1.0,
+      "support_hip_pos": -0.5,
+      "support_slip": -1.0,
+      "torque_limits": -0.005,
+      "torques": -5e-06
+    }
+  },
+  "leg_joints_loaded": {
+    "armature": [
+      0.0002,
+      0.0002,
+      0.0007,
+      0.0002,
+      0.0002,
+      0.0007,
+      0.0002,
+      0.0002,
+      0.0007,
+      0.0002,
+      0.0002,
+      0.0007
+    ],
+    "effort_limit_sim": [
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0,
+      1000000000.0
+    ],
+    "friction": [
+      1.0,
+      1.0,
+      1.917,
+      1.0,
+      1.0,
+      1.917,
+      1.0,
+      1.0,
+      1.917,
+      1.0,
+      1.0,
+      1.917
+    ],
+    "groups": {
+      "d1_servo": "ImplicitActuator",
+      "legs_hip_thigh": "UnitreeActuator",
+      "legs_knee": "UnitreeActuator",
+      "unifp": "IdealPDActuator"
+    },
+    "velocity_limit_sim": [
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999,
+      30.1,
+      30.1,
+      15.699999
+    ]
+  },
+  "leg_rows": [
+    {
+      "axis_side": -0.101342,
+      "detent_nm": 0.2,
+      "door_ahead": 0.54837,
+      "door_yaw": 0.100595,
+      "err_depth": -0.00733,
+      "err_rating": 0.09173,
+      "err_side": -0.00078,
+      "err_up": -0.00231,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.4451,
+      "insert_box": {
+        "axis_side": -0.1193,
+        "door_ahead": 0.5112,
+        "door_yaw": 0.0269,
+        "height": 0.4451
+      },
+      "insert_episode": 2,
+      "key": true,
+      "key_row": 2,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.121484,
+      "detent_nm": 0.2,
+      "door_ahead": 0.515174,
+      "door_yaw": 0.019826,
+      "err_depth": 0.00021,
+      "err_rating": 0.05591,
+      "err_side": 0.00661,
+      "err_up": 0.00423,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.447,
+      "insert_box": {
+        "axis_side": -0.1176,
+        "door_ahead": 0.5123,
+        "door_yaw": 0.02,
+        "height": 0.447
+      },
+      "insert_episode": 3,
+      "key": true,
+      "key_row": 3,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.084565,
+      "detent_nm": 0.0,
+      "door_ahead": 0.547315,
+      "door_yaw": 0.110664,
+      "err_depth": -0.00138,
+      "err_rating": 0.16608,
+      "err_side": 0.00202,
+      "err_up": -0.0059,
+      "friction_nm": 0.4,
+      "full_nm": 0.4,
+      "height": 0.4466,
+      "insert_box": {
+        "axis_side": -0.1031,
+        "door_ahead": 0.5139,
+        "door_yaw": 0.0346,
+        "height": 0.4466
+      },
+      "insert_episode": 4,
+      "key": true,
+      "key_row": 4,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.09371,
+      "detent_nm": 0.0,
+      "door_ahead": 0.566201,
+      "door_yaw": 0.111415,
+      "err_depth": -0.00431,
+      "err_rating": -0.12867,
+      "err_side": -0.0023,
+      "err_up": 0.00964,
+      "friction_nm": 0.4,
+      "full_nm": 0.4,
+      "height": 0.4494,
+      "insert_box": {
+        "axis_side": -0.1149,
+        "door_ahead": 0.5144,
+        "door_yaw": 0.0177,
+        "height": 0.4494
+      },
+      "insert_episode": 5,
+      "key": true,
+      "key_row": 5,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.111957,
+      "detent_nm": 0.2,
+      "door_ahead": 0.541112,
+      "door_yaw": 0.072706,
+      "err_depth": 0.00352,
+      "err_rating": -0.04886,
+      "err_side": -0.00014,
+      "err_up": 0.00572,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.4464,
+      "insert_box": {
+        "axis_side": -0.1072,
+        "door_ahead": 0.5055,
+        "door_yaw": 0.0281,
+        "height": 0.4464
+      },
+      "insert_episode": 6,
+      "key": true,
+      "key_row": 6,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.075867,
+      "detent_nm": 0.2,
+      "door_ahead": 0.54929,
+      "door_yaw": 0.12761,
+      "err_depth": -0.00112,
+      "err_rating": -0.18798,
+      "err_side": -0.00669,
+      "err_up": -0.00926,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.445,
+      "insert_box": {
+        "axis_side": -0.1018,
+        "door_ahead": 0.5009,
+        "door_yaw": 0.0291,
+        "height": 0.445
+      },
+      "insert_episode": 7,
+      "key": true,
+      "key_row": 7,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.092323,
+      "detent_nm": 0.0,
+      "door_ahead": 0.531306,
+      "door_yaw": 0.064764,
+      "err_depth": 0.00603,
+      "err_rating": 0.00687,
+      "err_side": -0.0086,
+      "err_up": -0.00623,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.453,
+      "insert_box": {
+        "axis_side": -0.1102,
+        "door_ahead": 0.5157,
+        "door_yaw": -0.0281,
+        "height": 0.453
+      },
+      "insert_episode": 8,
+      "key": true,
+      "key_row": 8,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.078255,
+      "detent_nm": 0.0,
+      "door_ahead": 0.549223,
+      "door_yaw": 0.079302,
+      "err_depth": -0.0003,
+      "err_rating": 0.13176,
+      "err_side": -0.00322,
+      "err_up": 0.00608,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.4482,
+      "insert_box": {
+        "axis_side": -0.1082,
+        "door_ahead": 0.5136,
+        "door_yaw": -0.0273,
+        "height": 0.4482
+      },
+      "insert_episode": 9,
+      "key": true,
+      "key_row": 9,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.057139,
+      "detent_nm": 0.2,
+      "door_ahead": 0.567878,
+      "door_yaw": 0.129697,
+      "err_depth": 0.00356,
+      "err_rating": 0.20226,
+      "err_side": -0.00225,
+      "err_up": 0.00386,
+      "friction_nm": 0.6,
+      "full_nm": 0.8,
+      "height": 0.4459,
+      "insert_box": {
+        "axis_side": -0.1016,
+        "door_ahead": 0.5106,
+        "door_yaw": -0.0127,
+        "height": 0.4459
+      },
+      "insert_episode": 10,
+      "key": true,
+      "key_row": 10,
+      "latch_deg": 30.0,
+      "required_n": 9.0,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.104365,
+      "detent_nm": 0.2,
+      "door_ahead": 0.548463,
+      "door_yaw": 0.072189,
+      "err_depth": -0.00066,
+      "err_rating": 0.10942,
+      "err_side": -0.00206,
+      "err_up": -0.00419,
+      "friction_nm": 0.6,
+      "full_nm": 0.8,
+      "height": 0.4515,
+      "insert_box": {
+        "axis_side": -0.1193,
+        "door_ahead": 0.5175,
+        "door_yaw": 0.0029,
+        "height": 0.4515
+      },
+      "insert_episode": 11,
+      "key": true,
+      "key_row": 11,
+      "latch_deg": 30.0,
+      "required_n": 9.0,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.071492,
+      "detent_nm": 0.0,
+      "door_ahead": 0.534643,
+      "door_yaw": 0.08932,
+      "err_depth": 0.00259,
+      "err_rating": 0.02283,
+      "err_side": 0.00453,
+      "err_up": 0.00717,
+      "friction_nm": 0.2,
+      "full_nm": 0.2,
+      "height": 0.4503,
+      "insert_box": {
+        "axis_side": -0.105,
+        "door_ahead": 0.5025,
+        "door_yaw": -0.026,
+        "height": 0.4503
+      },
+      "insert_episode": 12,
+      "key": true,
+      "key_row": 12,
+      "latch_deg": 30.0,
+      "required_n": 1.94,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.089952,
+      "detent_nm": 0.0,
+      "door_ahead": 0.558229,
+      "door_yaw": 0.047546,
+      "err_depth": 0.00573,
+      "err_rating": 0.01844,
+      "err_side": 0.0076,
+      "err_up": -0.00696,
+      "friction_nm": 0.2,
+      "full_nm": 0.2,
+      "height": 0.4475,
+      "insert_box": {
+        "axis_side": -0.1089,
+        "door_ahead": 0.515,
+        "door_yaw": -0.0395,
+        "height": 0.4475
+      },
+      "insert_episode": 13,
+      "key": true,
+      "key_row": 13,
+      "latch_deg": 30.0,
+      "required_n": 1.94,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.082115,
+      "detent_nm": 0.2,
+      "door_ahead": 0.575838,
+      "door_yaw": 0.123894,
+      "err_depth": -0.0016,
+      "err_rating": 0.0028,
+      "err_side": -0.00744,
+      "err_up": -0.0029,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.4518,
+      "insert_box": {
+        "axis_side": -0.1132,
+        "door_ahead": 0.5194,
+        "door_yaw": 0.0098,
+        "height": 0.4518
+      },
+      "insert_episode": 14,
+      "key": true,
+      "key_row": 14,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.111304,
+      "detent_nm": 0.2,
+      "door_ahead": 0.517855,
+      "door_yaw": 0.035276,
+      "err_depth": 0.00564,
+      "err_rating": -0.13461,
+      "err_side": 0.0036,
+      "err_up": -0.00251,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.4516,
+      "insert_box": {
+        "axis_side": -0.1157,
+        "door_ahead": 0.52,
+        "door_yaw": 0.0193,
+        "height": 0.4516
+      },
+      "insert_episode": 15,
+      "key": true,
+      "key_row": 15,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.102885,
+      "detent_nm": 0.0,
+      "door_ahead": 0.513943,
+      "door_yaw": 0.052809,
+      "err_depth": -0.00247,
+      "err_rating": -0.26761,
+      "err_side": -0.00933,
+      "err_up": 0.00095,
+      "friction_nm": 0.4,
+      "full_nm": 0.4,
+      "height": 0.4458,
+      "insert_box": {
+        "axis_side": -0.1095,
+        "door_ahead": 0.5156,
+        "door_yaw": 0.0289,
+        "height": 0.4458
+      },
+      "insert_episode": 16,
+      "key": true,
+      "key_row": 16,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.077274,
+      "detent_nm": 0.2,
+      "door_ahead": 0.557792,
+      "door_yaw": 0.108225,
+      "err_depth": 0.00427,
+      "err_rating": 0.04171,
+      "err_side": 0.0041,
+      "err_up": -0.00292,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.4534,
+      "insert_box": {
+        "axis_side": -0.1117,
+        "door_ahead": 0.5102,
+        "door_yaw": -0.0058,
+        "height": 0.4534
+      },
+      "insert_episode": 18,
+      "key": true,
+      "key_row": 18,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.095372,
+      "detent_nm": 0.2,
+      "door_ahead": 0.524185,
+      "door_yaw": 0.094268,
+      "err_depth": -0.00632,
+      "err_rating": -0.14113,
+      "err_side": 0.00139,
+      "err_up": -0.00341,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.4504,
+      "insert_box": {
+        "axis_side": -0.1066,
+        "door_ahead": 0.5199,
+        "door_yaw": 0.032,
+        "height": 0.4504
+      },
+      "insert_episode": 19,
+      "key": true,
+      "key_row": 19,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.110729,
+      "detent_nm": 0.0,
+      "door_ahead": 0.509806,
+      "door_yaw": 0.031902,
+      "err_depth": 0.00598,
+      "err_rating": -0.03535,
+      "err_side": 0.00466,
+      "err_up": -0.00421,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.4504,
+      "insert_box": {
+        "axis_side": -0.1171,
+        "door_ahead": 0.5012,
+        "door_yaw": -0.0317,
+        "height": 0.4504
+      },
+      "insert_episode": 20,
+      "key": true,
+      "key_row": 20,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.069984,
+      "detent_nm": 0.0,
+      "door_ahead": 0.562028,
+      "door_yaw": 0.142268,
+      "err_depth": -0.00486,
+      "err_rating": 0.02304,
+      "err_side": 0.0074,
+      "err_up": -0.00658,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.4549,
+      "insert_box": {
+        "axis_side": -0.1032,
+        "door_ahead": 0.5047,
+        "door_yaw": 0.0245,
+        "height": 0.4549
+      },
+      "insert_episode": 21,
+      "key": true,
+      "key_row": 21,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.087813,
+      "detent_nm": 0.2,
+      "door_ahead": 0.554694,
+      "door_yaw": 0.023936,
+      "err_depth": -0.00582,
+      "err_rating": -0.19706,
+      "err_side": 0.00776,
+      "err_up": -0.00045,
+      "friction_nm": 0.6,
+      "full_nm": 0.8,
+      "height": 0.4548,
+      "insert_box": {
+        "axis_side": -0.102,
+        "door_ahead": 0.5198,
+        "door_yaw": -0.0343,
+        "height": 0.4548
+      },
+      "insert_episode": 22,
+      "key": true,
+      "key_row": 22,
+      "latch_deg": 30.0,
+      "required_n": 9.0,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.070104,
+      "detent_nm": 0.2,
+      "door_ahead": 0.550168,
+      "door_yaw": 0.07112,
+      "err_depth": -0.00072,
+      "err_rating": -0.11672,
+      "err_side": 0.006,
+      "err_up": 0.00856,
+      "friction_nm": 0.6,
+      "full_nm": 0.8,
+      "height": 0.4495,
+      "insert_box": {
+        "axis_side": -0.1003,
+        "door_ahead": 0.5018,
+        "door_yaw": -0.0391,
+        "height": 0.4495
+      },
+      "insert_episode": 23,
+      "key": true,
+      "key_row": 23,
+      "latch_deg": 30.0,
+      "required_n": 9.0,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.119596,
+      "detent_nm": 0.0,
+      "door_ahead": 0.509603,
+      "door_yaw": -0.038403,
+      "err_depth": 0.0024,
+      "err_rating": -0.10425,
+      "err_side": -0.00147,
+      "err_up": -0.00864,
+      "friction_nm": 0.2,
+      "full_nm": 0.2,
+      "height": 0.4465,
+      "insert_box": {
+        "axis_side": -0.1111,
+        "door_ahead": 0.5011,
+        "door_yaw": -0.0383,
+        "height": 0.4465
+      },
+      "insert_episode": 24,
+      "key": true,
+      "key_row": 24,
+      "latch_deg": 30.0,
+      "required_n": 1.94,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.089102,
+      "detent_nm": 0.0,
+      "door_ahead": 0.563212,
+      "door_yaw": 0.08053,
+      "err_depth": 0.0062,
+      "err_rating": -0.29552,
+      "err_side": 0.00502,
+      "err_up": 0.00735,
+      "friction_nm": 0.2,
+      "full_nm": 0.2,
+      "height": 0.4505,
+      "insert_box": {
+        "axis_side": -0.1116,
+        "door_ahead": 0.5107,
+        "door_yaw": -0.026,
+        "height": 0.4505
+      },
+      "insert_episode": 25,
+      "key": true,
+      "key_row": 25,
+      "latch_deg": 30.0,
+      "required_n": 1.94,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.098579,
+      "detent_nm": 0.2,
+      "door_ahead": 0.56104,
+      "door_yaw": 0.065639,
+      "err_depth": -0.00418,
+      "err_rating": 0.13457,
+      "err_side": 0.00275,
+      "err_up": 0.00865,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.4479,
+      "insert_box": {
+        "axis_side": -0.1195,
+        "door_ahead": 0.5094,
+        "door_yaw": -0.0326,
+        "height": 0.4479
+      },
+      "insert_episode": 26,
+      "key": true,
+      "key_row": 26,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.121676,
+      "detent_nm": 0.2,
+      "door_ahead": 0.518632,
+      "door_yaw": -0.011256,
+      "err_depth": 0.00024,
+      "err_rating": -0.28097,
+      "err_side": 0.00466,
+      "err_up": -0.00102,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.4452,
+      "insert_box": {
+        "axis_side": -0.1125,
+        "door_ahead": 0.5166,
+        "door_yaw": -0.0252,
+        "height": 0.4452
+      },
+      "insert_episode": 27,
+      "key": true,
+      "key_row": 27,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.084467,
+      "detent_nm": 0.0,
+      "door_ahead": 0.54316,
+      "door_yaw": 0.118996,
+      "err_depth": -0.00116,
+      "err_rating": -0.25992,
+      "err_side": 0.00279,
+      "err_up": -0.00049,
+      "friction_nm": 0.4,
+      "full_nm": 0.4,
+      "height": 0.4528,
+      "insert_box": {
+        "axis_side": -0.1099,
+        "door_ahead": 0.51,
+        "door_yaw": 0.0105,
+        "height": 0.4528
+      },
+      "insert_episode": 28,
+      "key": true,
+      "key_row": 28,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.1025,
+      "detent_nm": 0.0,
+      "door_ahead": 0.514326,
+      "door_yaw": 0.066351,
+      "err_depth": -0.00637,
+      "err_rating": -0.20861,
+      "err_side": -0.00995,
+      "err_up": -0.00487,
+      "friction_nm": 0.4,
+      "full_nm": 0.4,
+      "height": 0.4458,
+      "insert_box": {
+        "axis_side": -0.1037,
+        "door_ahead": 0.5004,
+        "door_yaw": 0.0135,
+        "height": 0.4458
+      },
+      "insert_episode": 29,
+      "key": true,
+      "key_row": 29,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.07086,
+      "detent_nm": 0.2,
+      "door_ahead": 0.559652,
+      "door_yaw": 0.105705,
+      "err_depth": 0.00436,
+      "err_rating": 0.22369,
+      "err_side": -0.00288,
+      "err_up": 0.00981,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.4455,
+      "insert_box": {
+        "axis_side": -0.1034,
+        "door_ahead": 0.5165,
+        "door_yaw": 0.0025,
+        "height": 0.4455
+      },
+      "insert_episode": 30,
+      "key": true,
+      "key_row": 30,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.097071,
+      "detent_nm": 0.2,
+      "door_ahead": 0.542364,
+      "door_yaw": 0.097324,
+      "err_depth": 0.00027,
+      "err_rating": 0.03489,
+      "err_side": -0.00855,
+      "err_up": -0.00585,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.4526,
+      "insert_box": {
+        "axis_side": -0.108,
+        "door_ahead": 0.502,
+        "door_yaw": 0.0332,
+        "height": 0.4526
+      },
+      "insert_episode": 31,
+      "key": true,
+      "key_row": 31,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.086257,
+      "detent_nm": 0.0,
+      "door_ahead": 0.547598,
+      "door_yaw": 0.093417,
+      "err_depth": -0.00302,
+      "err_rating": 0.21721,
+      "err_side": 0.00018,
+      "err_up": 0.00706,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.4523,
+      "insert_box": {
+        "axis_side": -0.1101,
+        "door_ahead": 0.5118,
+        "door_yaw": 0.0011,
+        "height": 0.4523
+      },
+      "insert_episode": 32,
+      "key": true,
+      "key_row": 32,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.070546,
+      "detent_nm": 0.0,
+      "door_ahead": 0.564249,
+      "door_yaw": 0.148702,
+      "err_depth": 0.0065,
+      "err_rating": -0.04671,
+      "err_side": 0.00557,
+      "err_up": -0.00404,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.4475,
+      "insert_box": {
+        "axis_side": -0.102,
+        "door_ahead": 0.5172,
+        "door_yaw": 0.0335,
+        "height": 0.4475
+      },
+      "insert_episode": 33,
+      "key": true,
+      "key_row": 33,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.096142,
+      "detent_nm": 0.2,
+      "door_ahead": 0.541129,
+      "door_yaw": 0.083971,
+      "err_depth": 0.00401,
+      "err_rating": 0.14079,
+      "err_side": 0.00373,
+      "err_up": 0.00604,
+      "friction_nm": 0.6,
+      "full_nm": 0.8,
+      "height": 0.4501,
+      "insert_box": {
+        "axis_side": -0.1139,
+        "door_ahead": 0.5066,
+        "door_yaw": 0.0074,
+        "height": 0.4501
+      },
+      "insert_episode": 35,
+      "key": true,
+      "key_row": 35,
+      "latch_deg": 30.0,
+      "required_n": 9.0,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.083291,
+      "detent_nm": 0.0,
+      "door_ahead": 0.552407,
+      "door_yaw": 0.071463,
+      "err_depth": 0.00183,
+      "err_rating": 0.23654,
+      "err_side": 0.00797,
+      "err_up": -0.00234,
+      "friction_nm": 0.2,
+      "full_nm": 0.2,
+      "height": 0.4546,
+      "insert_box": {
+        "axis_side": -0.1174,
+        "door_ahead": 0.5094,
+        "door_yaw": -0.0335,
+        "height": 0.4546
+      },
+      "insert_episode": 36,
+      "key": true,
+      "key_row": 36,
+      "latch_deg": 30.0,
+      "required_n": 1.94,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.098773,
+      "detent_nm": 0.2,
+      "door_ahead": 0.549687,
+      "door_yaw": 0.073084,
+      "err_depth": -0.00152,
+      "err_rating": -0.23455,
+      "err_side": 0.00448,
+      "err_up": -0.0084,
+      "friction_nm": 0.2,
+      "full_nm": 0.4,
+      "height": 0.4511,
+      "insert_box": {
+        "axis_side": -0.1171,
+        "door_ahead": 0.5159,
+        "door_yaw": -0.0276,
+        "height": 0.4511
+      },
+      "insert_episode": 39,
+      "key": true,
+      "key_row": 39,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.08527,
+      "detent_nm": 0.0,
+      "door_ahead": 0.562767,
+      "door_yaw": 0.095352,
+      "err_depth": -0.00373,
+      "err_rating": 0.27464,
+      "err_side": 0.00393,
+      "err_up": -0.00183,
+      "friction_nm": 0.4,
+      "full_nm": 0.4,
+      "height": 0.4501,
+      "insert_box": {
+        "axis_side": -0.1068,
+        "door_ahead": 0.5177,
+        "door_yaw": 0.004,
+        "height": 0.4501
+      },
+      "insert_episode": 40,
+      "key": true,
+      "key_row": 40,
+      "latch_deg": 30.0,
+      "required_n": 4.29,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.105773,
+      "detent_nm": 0.2,
+      "door_ahead": 0.510311,
+      "door_yaw": -0.008836,
+      "err_depth": -0.00106,
+      "err_rating": 0.02226,
+      "err_side": 1e-05,
+      "err_up": -0.00063,
+      "friction_nm": 0.4,
+      "full_nm": 0.6,
+      "height": 0.4493,
+      "insert_box": {
+        "axis_side": -0.1094,
+        "door_ahead": 0.5053,
+        "door_yaw": -0.0164,
+        "height": 0.4493
+      },
+      "insert_episode": 42,
+      "key": true,
+      "key_row": 42,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    },
+    {
+      "axis_side": -0.099686,
+      "detent_nm": 0.0,
+      "door_ahead": 0.55865,
+      "door_yaw": 0.100118,
+      "err_depth": 0.00173,
+      "err_rating": -0.07961,
+      "err_side": -0.00042,
+      "err_up": 0.00927,
+      "friction_nm": 0.6,
+      "full_nm": 0.6,
+      "height": 0.4513,
+      "insert_box": {
+        "axis_side": -0.1191,
+        "door_ahead": 0.5022,
+        "door_yaw": 0.0089,
+        "height": 0.4513
+      },
+      "insert_episode": 45,
+      "key": true,
+      "key_row": 45,
+      "latch_deg": 30.0,
+      "required_n": 6.64,
+      "theta_max_deg": 45.0
+    }
+  ],
+  "legs": {
+    "actuator_model": {
+      "armature_kg_m2": {
+        "hip_thigh": 0.0002,
+        "knee": 0.0007
+      },
+      "delay_physics_steps": [
+        3,
+        4
+      ],
+      "friction": 0.01,
+      "gains": [
+        25.0,
+        0.5
+      ],
+      "hip_thigh_nm": [
+        20.2,
+        23.4
+      ],
+      "knee_nm": [
+        38.72,
+        44.85
+      ],
+      "knee_ratio": 1.9169,
+      "name": "unitree_geared",
+      "speed": "hip, thigh flat to 13.5, 0 at 30.0; knee flat to 7.04, 0 at 15.65 rad/s"
+    },
+    "armature_range": null,
+    "dog_stance_fraction": 0.0,
+    "friction_range": [
+      1.0,
+      1.0
+    ],
+    "knee_armature_factor": 3.67,
+    "knee_friction_factor": 1.917
+  },
+  "mechanism": null,
+  "mode": "leg_eval",
+  "mount_pos_m": [
+    -0.019,
+    0.0,
+    0.0855
+  ],
+  "num_envs": 37,
+  "payload": {
+    "bodies": [
+      {
+        "body": "base",
+        "com_m": [
+          [
+            0.0211,
+            0.0,
+            -0.0054
+          ],
+          [
+            0.0297,
+            -0.0,
+            0.0013
+          ]
+        ],
+        "mass_kg": [
+          6.921,
+          7.3409
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.265,
+            "name": "mid360",
+            "source": "published: Livox Mid-360 user manual, approx. 265 g"
+          },
+          {
+            "mass_kg": 0.1549,
+            "name": "mid360_mount",
+            "source": "estimated: the CAD's closed parts, 124.9 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      },
+      {
+        "body": "Link6",
+        "com_m": [
+          [
+            -0.0069,
+            -0.0,
+            0.0397
+          ],
+          [
+            -0.0234,
+            0.0001,
+            0.0421
+          ]
+        ],
+        "mass_kg": [
+          0.1679,
+          0.2666
+        ],
+        "parts": [
+          {
+            "mass_kg": 0.072,
+            "name": "d435i",
+            "source": "published: Intel RealSense D400 series datasheet, D435/D435i 72 g"
+          },
+          {
+            "mass_kg": 0.0267,
+            "name": "wrist_bracket",
+            "source": "estimated: the CAD's 21.6 cm^3 x 1.24 g/cm^3 (PLA, solid); weigh it"
+          }
+        ]
+      }
+    ],
+    "mode": "physical"
+  },
+  "pose_naive": false,
+  "pose_objective": false,
+  "pose_primitives": false,
+  "pose_reward": "separate",
+  "pose_wrench": false,
+  "press": null,
+  "reward_weights": {
+    "action_rate": -0.02,
+    "alive": 1.0,
+    "ang_vel_xy": -0.05,
+    "approach_contact": -2.0,
+    "arm_action_rate": -0.05,
+    "base_height": -2.0,
+    "base_still": 1.0,
+    "base_yaw_still": 0.5,
+    "collision": -5.0,
+    "dof_acc": -2.5e-07,
+    "dof_pos_limits": -10.0,
+    "dof_vel": -0.0008,
+    "dof_vel_arm": -0.0002,
+    "door_push": -1.0,
+    "feet_contact_forces": -0.001,
+    "foot_lift": 1.5,
+    "foot_tracking": 1.0,
+    "foot_tracking_fine": 2.0,
+    "foot_tracking_mid": 3.0,
+    "handle_contact": 1.0,
+    "handle_open": 2.0,
+    "handle_progress": 1.5,
+    "handle_slip": -3.0,
+    "key_hold": 3.0,
+    "key_hold_coarse": 1.0,
+    "key_tilt": -2.0,
+    "lin_vel_z": -1.5,
+    "orientation": -1.0,
+    "support_contact": 1.0,
+    "support_hip_pos": -0.5,
+    "support_slip": -1.0,
+    "support_stance": 4.0,
+    "torque_limits": -0.005,
+    "torques": -5e-06
+  },
+  "robot_usd": "/home/victor/D1Training/generated/go2_d1_payload.usd",
+  "robot_usd_sha256": "61290b5a5d9a7943a8b82743d6363ddd1ea2823bbc79d0612b78d9b86da915cd",
+  "roll_objective": false,
+  "rope": null,
+  "seed": 1,
+  "shapes_ok": true,
+  "stack": {
+    "isaaclab": "0.54.3",
+    "isaaclab-rl": "0.5.0",
+    "isaacsim": "5.1.0.0",
+    "rsl-rl-lib": "5.0.1",
+    "torch": "2.7.0+cu128"
+  },
+  "status": "evaluated",
+  "summary": {
+    "by_axis_side": [
+      {
+        "axis_side": -0.121676,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 2.95,
+        "peak_n_median": 10.93,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.5
+      },
+      {
+        "axis_side": -0.121484,
+        "hold_force_n_median": 0.09,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.98,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "axis_side": -0.119596,
+        "hold_force_n_median": 0.2,
+        "of": 1,
+        "peak_at_stop_n_median": 6.21,
+        "peak_n_median": 7.15,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.38
+      },
+      {
+        "axis_side": -0.111957,
+        "hold_force_n_median": 0.1,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 16.07,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "axis_side": -0.111304,
+        "hold_force_n_median": 0.08,
+        "of": 1,
+        "peak_at_stop_n_median": 1.95,
+        "peak_n_median": 37.82,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "axis_side": -0.110729,
+        "hold_force_n_median": 0.35,
+        "of": 1,
+        "peak_at_stop_n_median": 5.62,
+        "peak_n_median": 26.5,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.6
+      },
+      {
+        "axis_side": -0.105773,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 19.81,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.72
+      },
+      {
+        "axis_side": -0.104365,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.26,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.84
+      },
+      {
+        "axis_side": -0.102885,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.99,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.78
+      },
+      {
+        "axis_side": -0.1025,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.58,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.66
+      },
+      {
+        "axis_side": -0.101342,
+        "hold_force_n_median": 0.05,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.89,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.86
+      },
+      {
+        "axis_side": -0.099686,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 25.95,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "axis_side": -0.098773,
+        "hold_force_n_median": 0.13,
+        "of": 1,
+        "peak_at_stop_n_median": 2.32,
+        "peak_n_median": 17.35,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.52
+      },
+      {
+        "axis_side": -0.098579,
+        "hold_force_n_median": 0.02,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.05,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.9
+      },
+      {
+        "axis_side": -0.097071,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.84,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.84
+      },
+      {
+        "axis_side": -0.096142,
+        "hold_force_n_median": 0.05,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.32,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 2.14
+      },
+      {
+        "axis_side": -0.095372,
+        "hold_force_n_median": 0.15,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.3,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "axis_side": -0.09371,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.73,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "axis_side": -0.092323,
+        "hold_force_n_median": 0.23,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 27.98,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "axis_side": -0.089952,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 9.69,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "axis_side": -0.089102,
+        "hold_force_n_median": 0.07,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 11.23,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "axis_side": -0.087813,
+        "hold_force_n_median": 0.15,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 27.42,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.86
+      },
+      {
+        "axis_side": -0.086257,
+        "hold_force_n_median": 0.13,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.9,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.94
+      },
+      {
+        "axis_side": -0.08527,
+        "hold_force_n_median": 0.08,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.01,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "axis_side": -0.084565,
+        "hold_force_n_median": 0.22,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.97,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.64
+      },
+      {
+        "axis_side": -0.084467,
+        "hold_force_n_median": 0.2,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.33,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "axis_side": -0.083291,
+        "hold_force_n_median": 0.07,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 7.88,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.58
+      },
+      {
+        "axis_side": -0.082115,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 12.77,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "axis_side": -0.078255,
+        "hold_force_n_median": 0.12,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 23.42,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.94
+      },
+      {
+        "axis_side": -0.077274,
+        "hold_force_n_median": 0.14,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.71,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.76
+      },
+      {
+        "axis_side": -0.075867,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.26,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "axis_side": -0.071492,
+        "hold_force_n_median": 0.06,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 8.45,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "axis_side": -0.07086,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.03,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "axis_side": -0.070546,
+        "hold_force_n_median": 0.31,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 26.92,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "axis_side": -0.070104,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.99,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "axis_side": -0.069984,
+        "hold_force_n_median": 0.33,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 22.5,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "axis_side": -0.057139,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 23.74,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      }
+    ],
+    "by_detent_nm": [
+      {
+        "detent_nm": 0.0,
+        "hold_force_n_median": 0.145,
+        "of": 18,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.17,
+        "reasons": {
+          "ok": 16,
+          "stalled": 2
+        },
+        "success": 16,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "detent_nm": 0.2,
+        "hold_force_n_median": 0.12,
+        "of": 19,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.84,
+        "reasons": {
+          "ok": 14,
+          "stalled": 5
+        },
+        "success": 14,
+        "time_to_open_s_median": 1.84
+      }
+    ],
+    "by_door_ahead": [
+      {
+        "door_ahead": 0.509603,
+        "hold_force_n_median": 0.2,
+        "of": 1,
+        "peak_at_stop_n_median": 6.21,
+        "peak_n_median": 7.15,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.38
+      },
+      {
+        "door_ahead": 0.509806,
+        "hold_force_n_median": 0.35,
+        "of": 1,
+        "peak_at_stop_n_median": 5.62,
+        "peak_n_median": 26.5,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.6
+      },
+      {
+        "door_ahead": 0.510311,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 19.81,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.72
+      },
+      {
+        "door_ahead": 0.513943,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.99,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.78
+      },
+      {
+        "door_ahead": 0.514326,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.58,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.66
+      },
+      {
+        "door_ahead": 0.515174,
+        "hold_force_n_median": 0.09,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.98,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "door_ahead": 0.517855,
+        "hold_force_n_median": 0.08,
+        "of": 1,
+        "peak_at_stop_n_median": 1.95,
+        "peak_n_median": 37.82,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "door_ahead": 0.518632,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 2.95,
+        "peak_n_median": 10.93,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.5
+      },
+      {
+        "door_ahead": 0.524185,
+        "hold_force_n_median": 0.15,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.3,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "door_ahead": 0.531306,
+        "hold_force_n_median": 0.23,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 27.98,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "door_ahead": 0.534643,
+        "hold_force_n_median": 0.06,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 8.45,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "door_ahead": 0.541112,
+        "hold_force_n_median": 0.1,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 16.07,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "door_ahead": 0.541129,
+        "hold_force_n_median": 0.05,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.32,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 2.14
+      },
+      {
+        "door_ahead": 0.542364,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.84,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.84
+      },
+      {
+        "door_ahead": 0.54316,
+        "hold_force_n_median": 0.2,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.33,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "door_ahead": 0.547315,
+        "hold_force_n_median": 0.22,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.97,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.64
+      },
+      {
+        "door_ahead": 0.547598,
+        "hold_force_n_median": 0.13,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.9,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.94
+      },
+      {
+        "door_ahead": 0.54837,
+        "hold_force_n_median": 0.05,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.89,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.86
+      },
+      {
+        "door_ahead": 0.548463,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.26,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.84
+      },
+      {
+        "door_ahead": 0.549223,
+        "hold_force_n_median": 0.12,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 23.42,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.94
+      },
+      {
+        "door_ahead": 0.54929,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.26,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "door_ahead": 0.549687,
+        "hold_force_n_median": 0.13,
+        "of": 1,
+        "peak_at_stop_n_median": 2.32,
+        "peak_n_median": 17.35,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.52
+      },
+      {
+        "door_ahead": 0.550168,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.99,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "door_ahead": 0.552407,
+        "hold_force_n_median": 0.07,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 7.88,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.58
+      },
+      {
+        "door_ahead": 0.554694,
+        "hold_force_n_median": 0.15,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 27.42,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.86
+      },
+      {
+        "door_ahead": 0.557792,
+        "hold_force_n_median": 0.14,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.71,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.76
+      },
+      {
+        "door_ahead": 0.558229,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 9.69,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "door_ahead": 0.55865,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 25.95,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "door_ahead": 0.559652,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.03,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "door_ahead": 0.56104,
+        "hold_force_n_median": 0.02,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.05,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.9
+      },
+      {
+        "door_ahead": 0.562028,
+        "hold_force_n_median": 0.33,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 22.5,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "door_ahead": 0.562767,
+        "hold_force_n_median": 0.08,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.01,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "door_ahead": 0.563212,
+        "hold_force_n_median": 0.07,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 11.23,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "door_ahead": 0.564249,
+        "hold_force_n_median": 0.31,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 26.92,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "door_ahead": 0.566201,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.73,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "door_ahead": 0.567878,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 23.74,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "door_ahead": 0.575838,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 12.77,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      }
+    ],
+    "by_friction_nm": [
+      {
+        "friction_nm": 0.2,
+        "hold_force_n_median": 0.08,
+        "of": 12,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 12.0,
+        "reasons": {
+          "ok": 11,
+          "stalled": 1
+        },
+        "success": 11,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "friction_nm": 0.4,
+        "hold_force_n_median": 0.145,
+        "of": 13,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.84,
+        "reasons": {
+          "ok": 10,
+          "stalled": 3
+        },
+        "success": 10,
+        "time_to_open_s_median": 1.75
+      },
+      {
+        "friction_nm": 0.6,
+        "hold_force_n_median": 0.16,
+        "of": 12,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.61,
+        "reasons": {
+          "ok": 9,
+          "stalled": 3
+        },
+        "success": 9,
+        "time_to_open_s_median": 1.84
+      }
+    ],
+    "by_full_nm": [
+      {
+        "full_nm": 0.2,
+        "hold_force_n_median": 0.07,
+        "of": 5,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 8.45,
+        "reasons": {
+          "ok": 5
+        },
+        "success": 5,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "full_nm": 0.4,
+        "hold_force_n_median": 0.11,
+        "of": 13,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.97,
+        "reasons": {
+          "ok": 11,
+          "stalled": 2
+        },
+        "success": 11,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "full_nm": 0.6,
+        "hold_force_n_median": 0.15,
+        "of": 14,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.765,
+        "reasons": {
+          "ok": 11,
+          "stalled": 3
+        },
+        "success": 11,
+        "time_to_open_s_median": 1.76
+      },
+      {
+        "full_nm": 0.8,
+        "hold_force_n_median": 0.15,
+        "of": 5,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.26,
+        "reasons": {
+          "ok": 3,
+          "stalled": 2
+        },
+        "success": 3,
+        "time_to_open_s_median": 1.86
+      }
+    ],
+    "by_height": [
+      {
+        "height": 0.445,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.26,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4451,
+        "hold_force_n_median": 0.05,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.89,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.86
+      },
+      {
+        "height": 0.4452,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 2.95,
+        "peak_n_median": 10.93,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.5
+      },
+      {
+        "height": 0.4455,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.03,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4458,
+        "hold_force_n_median": 0.135,
+        "of": 2,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.785,
+        "reasons": {
+          "ok": 2
+        },
+        "success": 2,
+        "time_to_open_s_median": 1.72
+      },
+      {
+        "height": 0.4459,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 23.74,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4464,
+        "hold_force_n_median": 0.1,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 16.07,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "height": 0.4465,
+        "hold_force_n_median": 0.2,
+        "of": 1,
+        "peak_at_stop_n_median": 6.21,
+        "peak_n_median": 7.15,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.38
+      },
+      {
+        "height": 0.4466,
+        "hold_force_n_median": 0.22,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.97,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.64
+      },
+      {
+        "height": 0.447,
+        "hold_force_n_median": 0.09,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 14.98,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "height": 0.4475,
+        "hold_force_n_median": 0.21,
+        "of": 2,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.305,
+        "reasons": {
+          "ok": 2
+        },
+        "success": 2,
+        "time_to_open_s_median": 1.7
+      },
+      {
+        "height": 0.4479,
+        "hold_force_n_median": 0.02,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 13.05,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.9
+      },
+      {
+        "height": 0.4482,
+        "hold_force_n_median": 0.12,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 23.42,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.94
+      },
+      {
+        "height": 0.4493,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 19.81,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.72
+      },
+      {
+        "height": 0.4494,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.73,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4495,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.99,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4501,
+        "hold_force_n_median": 0.065,
+        "of": 2,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 21.165,
+        "reasons": {
+          "ok": 2
+        },
+        "success": 2,
+        "time_to_open_s_median": 2.01
+      },
+      {
+        "height": 0.4503,
+        "hold_force_n_median": 0.06,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 8.45,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "height": 0.4504,
+        "hold_force_n_median": 0.25,
+        "of": 2,
+        "peak_at_stop_n_median": 2.81,
+        "peak_n_median": 22.4,
+        "reasons": {
+          "ok": 2
+        },
+        "success": 2,
+        "time_to_open_s_median": 1.65
+      },
+      {
+        "height": 0.4505,
+        "hold_force_n_median": 0.07,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 11.23,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      },
+      {
+        "height": 0.4511,
+        "hold_force_n_median": 0.13,
+        "of": 1,
+        "peak_at_stop_n_median": 2.32,
+        "peak_n_median": 17.35,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.52
+      },
+      {
+        "height": 0.4513,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 25.95,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4515,
+        "hold_force_n_median": 0.16,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.26,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.84
+      },
+      {
+        "height": 0.4516,
+        "hold_force_n_median": 0.08,
+        "of": 1,
+        "peak_at_stop_n_median": 1.95,
+        "peak_n_median": 37.82,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.88
+      },
+      {
+        "height": 0.4518,
+        "hold_force_n_median": null,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 12.77,
+        "reasons": {
+          "stalled": 1
+        },
+        "success": 0,
+        "time_to_open_s_median": null
+      },
+      {
+        "height": 0.4523,
+        "hold_force_n_median": 0.13,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 24.9,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.94
+      },
+      {
+        "height": 0.4526,
+        "hold_force_n_median": 0.11,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.84,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.84
+      },
+      {
+        "height": 0.4528,
+        "hold_force_n_median": 0.2,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 18.33,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "height": 0.453,
+        "hold_force_n_median": 0.23,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 27.98,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.74
+      },
+      {
+        "height": 0.4534,
+        "hold_force_n_median": 0.14,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 17.71,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.76
+      },
+      {
+        "height": 0.4546,
+        "hold_force_n_median": 0.07,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 7.88,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.58
+      },
+      {
+        "height": 0.4548,
+        "hold_force_n_median": 0.15,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 27.42,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.86
+      },
+      {
+        "height": 0.4549,
+        "hold_force_n_median": 0.33,
+        "of": 1,
+        "peak_at_stop_n_median": 0.0,
+        "peak_n_median": 22.5,
+        "reasons": {
+          "ok": 1
+        },
+        "success": 1,
+        "time_to_open_s_median": 1.8
+      }
+    ],
+    "damaged": 0,
+    "door_peak_n_median": 0.0,
+    "engaged": 37,
+    "episodes": 37,
+    "fell": 0,
+    "foot_down": 37,
+    "force_rmse_n_median": 3.02,
+    "fr_footfall_cm_median": 0.7,
+    "hold": {
+      "active": 37,
+      "all_four": 30,
+      "err_mm_max_median": 13.48,
+      "err_mm_max_p90": 16.512,
+      "err_mm_median": 5.27,
+      "err_mm_p95_median": 6.99,
+      "grip_n_max_median": 11.24,
+      "grip_n_max_p90": 13.558,
+      "lost": 0,
+      "success_and_held": 30,
+      "tilt_deg_max_median": 8.73,
+      "unlocked_and_held": 30
+    },
+    "hold_force_n_median": 0.13,
+    "max_tilt_deg_median": 12.38,
+    "opened": 30,
+    "peak_at_stop_n_median": 0.0,
+    "peak_n_median": 18.01,
+    "peak_n_p95": 27.532,
+    "reasons": {
+      "ok": 30,
+      "stalled": 7
+    },
+    "slipped": 6,
+    "stance_max_cm_median": 17.36,
+    "stance_max_cm_p90": 19.658,
+    "stance_median_cm": 3.3,
+    "stops": {
+      "all_four_within_all": 0,
+      "episodes_over": {
+        "lead_15_deg": 36,
+        "lead_25_deg": 0,
+        "leg_fr_after_0.9_rad": 37,
+        "leg_fr_first_1.2_rad": 0,
+        "leg_sup_after_0.9_rad": 0,
+        "leg_sup_first_1.2_rad": 0,
+        "tilt_15_deg": 2
+      },
+      "episodes_within_all": 0,
+      "lead_deg_after_1s": {
+        "max": 21.508,
+        "median": 18.37,
+        "p90": 19.825
+      },
+      "lead_j4_deg_after_1s": {
+        "max": 6.612,
+        "median": 4.766,
+        "p90": 6.013
+      },
+      "lead_j6_deg_after_1s": {
+        "max": 38.598,
+        "median": 19.884,
+        "p90": 35.845
+      },
+      "leg_fr_rad_after": {
+        "max": 2.064,
+        "median": 2.005,
+        "p90": 2.053
+      },
+      "leg_fr_rad_first_s": {
+        "max": 1.168,
+        "median": 1.052,
+        "p90": 1.144
+      },
+      "leg_sup_rad_after": {
+        "max": 0.718,
+        "median": 0.651,
+        "p90": 0.704
+      },
+      "leg_sup_rad_first_s": {
+        "max": 0.949,
+        "median": 0.875,
+        "p90": 0.935
+      },
+      "max_tilt_deg": {
+        "max": 15.28,
+        "median": 12.38,
+        "p90": 14.772
+      },
+      "note": "simulated legs and the link's model: the runner's bounds, not gate4's replay of the dog's frames"
+    },
+    "success": 30,
+    "success_and_foot_down": 30,
+    "time_to_open_s_median": 1.77,
+    "time_to_unlock_s_median": 1.77,
+    "torques": {
+      "episodes_fr_calf_over_stock": 37,
+      "episodes_sup_calf_over_stock": 22,
+      "fr_calf_demand_over_stock_s": {
+        "max": 0.12,
+        "median": 0.06,
+        "p90": 0.088
+      },
+      "fr_calf_demand_peak_nm": {
+        "max": 51.8,
+        "median": 47.81,
+        "p90": 50.802
+      },
+      "fr_calf_fast_s": {
+        "max": 0.08,
+        "median": 0.04,
+        "p90": 0.08
+      },
+      "fr_calf_over_stock_s": {
+        "max": 0.12,
+        "median": 0.06,
+        "p90": 0.088
+      },
+      "fr_calf_peak_nm": {
+        "max": 44.85,
+        "median": 44.85,
+        "p90": 44.85
+      },
+      "fr_calf_speed_peak": {
+        "max": 15.69,
+        "median": 13.12,
+        "p90": 15.116
+      },
+      "fr_calf_turn_peak_nm": {
+        "max": 4.48,
+        "median": 2.07,
+        "p90": 2.428
+      },
+      "fr_hip_demand_peak_nm": {
+        "max": 7.95,
+        "median": 7.0,
+        "p90": 7.84
+      },
+      "fr_hip_peak_nm": {
+        "max": 7.95,
+        "median": 7.0,
+        "p90": 7.84
+      },
+      "fr_hip_speed_peak": {
+        "max": 5.04,
+        "median": 2.62,
+        "p90": 4.404
+      },
+      "fr_saturated_s": {
+        "max": 0.04,
+        "median": 0.02,
+        "p90": 0.02
+      },
+      "fr_thigh_demand_peak_nm": {
+        "max": 22.04,
+        "median": 19.37,
+        "p90": 20.946
+      },
+      "fr_thigh_peak_nm": {
+        "max": 20.97,
+        "median": 19.37,
+        "p90": 20.2
+      },
+      "fr_thigh_speed_peak": {
+        "max": 8.16,
+        "median": 4.55,
+        "p90": 6.224
+      },
+      "fr_thigh_turn_peak_nm": {
+        "max": 3.78,
+        "median": 2.34,
+        "p90": 3.25
+      },
+      "legs_saturated_s": {
+        "max": 0.06,
+        "median": 0.02,
+        "p90": 0.04
+      },
+      "successes": {
+        "fr_calf_peak_nm": 44.85,
+        "fr_calf_turn_peak_nm": 2.075,
+        "fr_thigh_peak_nm": 19.27,
+        "sup_calf_peak_nm": 44.85
+      },
+      "sup_calf_demand_peak_nm": {
+        "max": 53.51,
+        "median": 49.3,
+        "p90": 51.868
+      },
+      "sup_calf_over_stock_s": {
+        "max": 0.02,
+        "median": 0.02,
+        "p90": 0.02
+      },
+      "sup_calf_peak_nm": {
+        "max": 44.85,
+        "median": 44.85,
+        "p90": 44.85
+      },
+      "sup_calf_speed_peak": {
+        "max": 15.7,
+        "median": 10.63,
+        "p90": 15.688
+      },
+      "sup_hip_demand_peak_nm": {
+        "max": 18.51,
+        "median": 14.37,
+        "p90": 18.246
+      },
+      "sup_hip_peak_nm": {
+        "max": 18.51,
+        "median": 14.37,
+        "p90": 18.246
+      },
+      "sup_hip_speed_peak": {
+        "max": 19.19,
+        "median": 16.47,
+        "p90": 17.618
+      },
+      "sup_thigh_demand_peak_nm": {
+        "max": 26.03,
+        "median": 20.78,
+        "p90": 25.404
+      },
+      "sup_thigh_peak_nm": {
+        "max": 20.2,
+        "median": 20.2,
+        "p90": 20.2
+      },
+      "sup_thigh_speed_peak": {
+        "max": 15.05,
+        "median": 13.02,
+        "p90": 14.652
+      }
+    },
+    "unlocked": 30
+  },
+  "task": "leg",
+  "tool_body": "Link6",
+  "tool_offset_m": [
+    0.0,
+    0.0,
+    0.1051
+  ],
+  "wipe": null
+}

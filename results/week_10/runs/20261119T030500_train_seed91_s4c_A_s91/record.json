@@ -1,0 +1,63 @@
+{
+  "id": "20261119T030500_train_seed91_s4c_A_s91",
+  "title": "S4c-1 A seed 91 (STOPPED at about 67600 of 68600): S4b A's recipe + grasp within 2 cm + approach term + arm lead -30; the gate measured the tool against UniFP's next goal once the hold ended",
+  "notes": "Aborted 15:36 on 2026-11-19: half its diagnostic grasps closed after the goal left the handle (week 10 log, S4c-2). Replaced by s4c2_A_s91/s92.",
+  "week": 10,
+  "recorded_at": "2026-11-19T15:36:55+11:00",
+  "started_utc": "2026-11-19T03:05:00+00:00",
+  "source_dir": "logs/unifp_train/20261119T030500_train_seed91_s4c_A_s91",
+  "mode": "train",
+  "seed": 91,
+  "status": "interrupted",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 67605,
+  "final_checkpoint": {
+    "file": "model_67605.pt",
+    "sha256": "17feb3fc1cfcc5ec8705aaa9dcedbe06447785560cbf85d60c57a32aa7343cd0"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 182.98426818847656,
+      "last_step": 67605,
+      "mean_last_10": 182.35518798828124,
+      "min": 1.5509796142578125,
+      "max": 198.17095947265625,
+      "points": 1006
+    },
+    "Train/mean_episode_length": {
+      "last": 974.3200073242188,
+      "last_step": 67605,
+      "mean_last_10": 966.2840026855469,
+      "min": 12.574073791503906,
+      "max": 999.0,
+      "points": 1006
+    },
+    "Policy/mean_std": {
+      "last": 0.7176751494407654,
+      "last_step": 67605,
+      "mean_last_10": 0.7172597348690033,
+      "min": 0.5269489288330078,
+      "max": 0.7176751494407654,
+      "points": 1006
+    },
+    "Perf/total_fps": {
+      "last": 10832.0,
+      "last_step": 67605,
+      "mean_last_10": 11196.3,
+      "min": 7257.0,
+      "max": 13943.0,
+      "points": 1006
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

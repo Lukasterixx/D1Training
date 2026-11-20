@@ -36,7 +36,7 @@ from isaaclab.utils import configclass
 from unifp_isaaclab import interface
 
 from . import arm_kin, leg_cfg, observations, task_cfg
-from .keyhold import ArmGravity, bar_at, follow_turn, grip_point, hand_rotation, quat_matrix, turn_ahead
+from .keyhold import ArmGravity, bar_at, follow_turn, grip_point, hand_rotation, quat_matrix, turn_ahead, turn_behind
 from .leg_env import Go2D1LegEnv, Go2D1LegEnvCfg
 
 HOLD_ARMS = ("policy", "fixed", "ik")
@@ -73,6 +73,9 @@ class Go2D1KeyHoldEnvCfg(Go2D1LegEnvCfg):
     #: presses or holds; its progress is paid only up to the reference, and its open latch only once the reference
     #: reaches it (`keyhold.follow_turn`). 0: not used, the turn rewarded as before.
     turn_follow_weight: float = 0.0
+    #: `--key_turn_behind_weight` (per second, negative; S3): the key falling behind the reference past the same band,
+    #: priced squared (rad) while the layer presses or holds (`keyhold.turn_behind`). 0: not used (every run before S3).
+    turn_behind_weight: float = 0.0
 
 
 class Go2D1KeyHoldEnv(Go2D1LegEnv):
@@ -151,6 +154,10 @@ class Go2D1KeyHoldEnv(Go2D1LegEnv):
         if self.cfg.turn_follow_weight:
             shaping_weights["key_turn_ahead"] = self.cfg.turn_follow_weight * interface.POLICY_DT
             shaping_terms["key_turn_ahead"] = lambda s: torch.square(turn_ahead(
+                self._handle.theta, self._layer.theta_ref, self._layer.theta_start)) * s.handle_pushing
+        if self.cfg.turn_behind_weight:
+            shaping_weights["key_turn_behind"] = self.cfg.turn_behind_weight * interface.POLICY_DT
+            shaping_terms["key_turn_behind"] = lambda s: torch.square(turn_behind(
                 self._handle.theta, self._layer.theta_ref, self._layer.theta_start)) * s.handle_pushing
         self._terms.update(link_terms | shaping_terms)
         extra = leg_cfg.scaled_weights(leg_cfg.KEYHOLD_WEIGHTS) | link_weights | shaping_weights

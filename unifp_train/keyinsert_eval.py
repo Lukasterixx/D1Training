@@ -29,7 +29,13 @@ SEED = 20261113
 #: The dog runner's tilt stop, deg.
 TILT_STOP_DEG = 15.0
 FIELDS = ("alive", "ended", "phase", "ref", "loop", "fk_true_depth", "rep_err_deg", "ik_fail", "tip_depth", "tip_lateral", "seated", "inside", "force", "normal", "peak", "slip",
-          "lost", "damaged", "roll_cmd", "press_cmd", "meas_depth", "touch", "base_z", "rp", "hold_err")
+          "lost", "damaged", "roll_cmd", "press_cmd", "meas_depth", "touch", "base_z", "rp", "hold_err", "active", "give",
+          "mlat_u", "mlat_t", "rlat_u", "rlat_t", "entered_by", "probe_u", "probe_t", "refused", "locate_stage", "face")
+#: `--insert_trace_body` (2026-11-19, item 1b): the base's pose and what a leg odometry on the dog would have (UniFP's leg order,
+#: the feet's contact forces), to measure how far the base moves during an insertion and test an estimate of it.
+#: Item 1b (2026-11-19): the arm's goal as the layer asks it and the link's report (URDF rad, J1-J6), for `ArmWatch`'s lead
+#: (goal minus report) and step in contact, which the dog's runner checks before every send.
+BODY_FIELDS = ("base_x", "base_y", "base_quat", "leg_q", "foot_fz", "feet_w", "arm_goal", "arm_reported")
 
 
 #: What `--insert_eval_set name=value` may replace in every frozen lock, and the unit its value is given in.
@@ -97,7 +103,20 @@ def record_step(env, done: torch.Tensor, ended: torch.Tensor) -> dict:
            "lost": lk.lost.float(), "damaged": env._damaged.float(), "roll_cmd": ly.roll, "press_cmd": ly.force_cmd,
            "meas_depth": env._meas_depth, "touch": ly.touch_depth,
            "base_z": env._robot.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2], "rp": rp.abs().amax(dim=-1),
-           "hold_err": env._hold_err}
+           "hold_err": env._hold_err, "active": env._ins_active.float(), "give": lk.give.norm(dim=-1),
+           # S1c (2026-11-18): the tip across the estimated axis as the layer measures it, its reference, how it went in,
+           # and where its feel started, to tell a touch on the face from one inside the keyway.
+           "mlat_u": env._meas_lateral[:, 0], "mlat_t": env._meas_lateral[:, 1], "rlat_u": ly.ref_lateral[:, 0],
+           "rlat_t": ly.ref_lateral[:, 1], "entered_by": ly.entered_by, "probe_u": ly.probe_from[:, 0],
+           "probe_t": ly.probe_from[:, 1], "refused": ly.refused.float(), "locate_stage": ly.locate_stage.float(),
+           "face": ly.face_depth}
+    if getattr(env, "_trace_body", False):
+        base = env._robot.data.root_pos_w - env.scene.env_origins
+        out.update({"base_x": base[:, 0], "base_y": base[:, 1], "base_quat": env._robot.data.root_quat_w,
+                    "leg_q": env._dof()[0][:, :12], "foot_fz": env._contact_forces(env._feet_contacts)[..., 2],
+                    "feet_w": env._robot.data.body_pos_w[:, env._feet_bodies] - env.scene.env_origins.unsqueeze(1),
+                    "arm_goal": env._joint_targets[:, 12:18],
+                    "arm_reported": env._arm_link.reported if env._arm_link is not None else env._dof()[0][:, 12:18]})
     return {k: v.detach().float().cpu().numpy() for k, v in out.items()}
 
 
@@ -135,12 +154,19 @@ def score_episode(col: dict, row: dict, dt: float = interface.POLICY_DT) -> dict
            "end_lateral_mm": round(1000.0 * float(col["tip_lateral"][judge]), 2),
            "seated_at_20s": bool(col["seated"][end] > 0.5),
            "ik_fail_fraction": round(float(col["ik_fail"][end]), 3), "steps": steps}
+    if "active" in col:
+        # S1: whether the layer could start at all (the arm's start pose solved), and the key's largest give.
+        out["started"] = bool(col["active"][:steps].max() > 0.5)
+        out["give_mm_max"] = round(1000.0 * float(col["give"][:steps].max()), 3)
     if len(touched):
         # Where the layer felt the face, against where the true face was along the estimated axis.
         out["touch_err_mm"] = round(1000.0 * (float(col["touch"][touched[0]]) - row["depth_mm"] / 1000.0), 2)
+    if "refused" in col:
+        # S1c's located layer: it stopped without believing the key in (stuck short after its retries, or the face lost).
+        out["refused"] = bool(col["refused"][:steps].max() > 0.5)
     reason = ("success" if out["success"] else "fell" if fell else "damaged" if damaged else "lost" if lost
               else "false_seat" if out["false_seat"] else "seated_no_finish" if seated_end
-              else "searching" if len(touched) else "no_touch")
+              else "refused" if out.get("refused") else "searching" if len(touched) else "no_touch")
     out["reason"] = reason
     return out
 
@@ -170,18 +196,39 @@ def score(trace: dict, rows: list[dict]) -> dict:
     within = sum(1 for e in episodes if e["success"] and e["max_tilt_deg"] <= TILT_STOP_DEG)
     summary = {"episodes": n, "success": count("success"), "success_tilt15": within, "believed": count("believed"),
                "seated_end": count("seated_end"), "seated_ever": count("seated_ever"), "false_seat": count("false_seat"),
+               "refused": sum(1 for e in episodes if e.get("refused")),
                "touched": count("touched"), "damaged": count("damaged"), "lost": count("lost"), "fell": count("fell"),
                "over_20n": count("over_20n"), "peak_n_median": med("peak_n"), "peak_n_p90": q("peak_n", 0.9),
                "peak_n_max": round(max(e["peak_n"] for e in episodes), 2), "press_n_median": med("press_n_median"),
                "seat_s_median": med("seat_s"), "seat_s_p90": q("seat_s", 0.9), "touch_err_mm_median": med("touch_err_mm"),
                "max_tilt_deg_median": med("max_tilt_deg"), "ik_fail_fraction_median": med("ik_fail_fraction"),
-               "reasons": reasons,
-               "by_lateral_mm": group("lateral_mm"), "by_depth_mm": group("depth_mm"), "by_roll_deg": group("roll_deg")}
+               "reasons": reasons}
+    if "tool" in rows[0]:
+        # S1's key sets (`keytools`): the locks are drawn, not a grid, so by key, with the selection's and the paper's
+        # numbers for each.
+        summary["not_started"] = sum(1 for e in episodes if not e.get("started", True))
+        summary["by_tool"] = []
+        for name in dict.fromkeys(e["tool"] for e in episodes):
+            sub = [e for e in episodes if e["tool"] == name]
+            vals_t = lambda key: [e[key] for e in sub if e.get(key) is not None]
+            summary["by_tool"].append({
+                "tool": name, "of": len(sub), "success": sum(e["success"] for e in sub),
+                "success_tilt15": sum(1 for e in sub if e["success"] and e["max_tilt_deg"] <= TILT_STOP_DEG),
+                "false_seat": sum(e["false_seat"] for e in sub), "fell": sum(e["fell"] for e in sub),
+                "damaged": sum(e["damaged"] for e in sub), "lost": sum(e["lost"] for e in sub),
+                "not_started": sum(1 for e in sub if not e.get("started", True)),
+                "peak_n_median": round(float(np.median(vals_t("peak_n"))), 2),
+                "touch_err_mm_median": (round(float(np.median(vals_t("touch_err_mm"))), 2) if vals_t("touch_err_mm") else None),
+                "give_mm_max_median": (round(float(np.median(vals_t("give_mm_max"))), 3) if vals_t("give_mm_max") else None)})
+    else:
+        summary.update({"by_lateral_mm": group("lateral_mm"), "by_depth_mm": group("depth_mm"),
+                        "by_roll_deg": group("roll_deg")})
     return {"summary": summary, "episodes": episodes}
 
 
 def evaluate(args, env, obs, report, run_dir, rows, write_json) -> int:
     from . import eval as evaluation
+    env._trace_body = bool(getattr(args, "insert_trace_body", False))
 
     run_dir.mkdir(parents=True, exist_ok=True)
     policy = None
@@ -194,23 +241,35 @@ def evaluate(args, env, obs, report, run_dir, rows, write_json) -> int:
     report["controller"] = controller
     report["insert_rows"] = rows
     done = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
-    trace = {k: [] for k in FIELDS}
+    fields = FIELDS + (BODY_FIELDS if getattr(env, "_trace_body", False) else ())
+    trace = {k: [] for k in fields}
+    # `--insert_shadow_dump N` (read-only: the dog's numpy runner's inputs and outputs, `keyinsert_shadow`).
+    shadow = None
+    if getattr(args, "insert_shadow_dump", 0):
+        from .keyinsert_shadow import InsertShadowDump
+        shadow = InsertShadowDump(env, args.insert_shadow_dump)
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
             actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
-                       if policy is None else policy.act(obs["policy"]))
+                       if policy is None else policy.act(obs["policy"], obs.get("tool")))
+            if shadow is not None:
+                shadow.before_step(env, obs, actions, done)
             obs, _, terminated, truncated, _ = env.step(actions)
             ended = (terminated | truncated) & ~done
+            if shadow is not None:
+                shadow.after_step(env, ended)
             # Recorded before the reset's values replace the ended episodes' (the env resets inside step): the lock's
             # buffers are the step's as computed, the reset touches only the layer's phase (DONE) and the counters.
             step = record_step(env, done, ended)
-            for k in FIELDS:
+            for k in fields:
                 trace[k].append(step[k])
             done |= ended
             if bool(done.all()):
                 break
     trace = {k: np.stack(v) for k, v in trace.items()}
     np.savez_compressed(run_dir / "insert_trace.npz", **trace)
+    if shadow is not None:
+        report["insert_shadow_dump"] = shadow.save(run_dir / "insert_shadow_dump.npz")
     result = score(trace, rows)
     write_json(run_dir / "insert_eval.json", result["summary"])
     write_json(run_dir / "insert_eval_episodes.json", {"episodes": result["episodes"]})
@@ -225,8 +284,13 @@ def evaluate(args, env, obs, report, run_dir, rows, write_json) -> int:
           f"{s['press_n_median']} N, seated at {s['seat_s_median']} s (p90 {s['seat_s_p90']}), touch error "
           f"{s['touch_err_mm_median']} mm, tilt {s['max_tilt_deg_median']} deg  {s['reasons']}", flush=True)
     for key in ("by_lateral_mm", "by_depth_mm", "by_roll_deg"):
-        print("  " + "  ".join(f"{key[3:]} {list(r.values())[0]}: {r['success']}/{r['of']} (peak {r['peak_n_median']})"
-                               for r in s[key]), flush=True)
+        if key in s:
+            print("  " + "  ".join(f"{key[3:]} {list(r.values())[0]}: {r['success']}/{r['of']} (peak {r['peak_n_median']})"
+                                   for r in s[key]), flush=True)
+    for r in s.get("by_tool", []):
+        print(f"  {r['tool']:>8}: {r['success']}/{r['of']} (within 15 deg {r['success_tilt15']})  false seat "
+              f"{r['false_seat']}  fell {r['fell']}  not started {r['not_started']}  peak {r['peak_n_median']} N  touch "
+              f"error {r['touch_err_mm_median']} mm  give {r['give_mm_max_median']} mm", flush=True)
     return 0
 
 
@@ -240,7 +304,13 @@ if __name__ == "__main__":
     trace = dict(np.load(run / "insert_trace.npz"))
     args = json.loads((run / "run.json").read_text()).get("arguments", {}) if (run / "run.json").exists() else {}
     sets = dict(item.split("=", 1) for item in (args.get("insert_eval_set") or []))
-    result = score(trace, build_plan("cpu", sets)[1])
+    if args.get("insert_tool_set"):
+        from . import keytools
+        rows = keytools.build_plan("cpu", args["insert_tool_set"], args.get("insert_tool_manifest") or keytools.MANIFEST,
+                                   sets)[1]
+    else:
+        rows = build_plan("cpu", sets)[1]
+    result = score(trace, rows)
     (run / "insert_eval.json").write_text(json.dumps(result["summary"], indent=2))
     (run / "insert_eval_episodes.json").write_text(json.dumps({"episodes": result["episodes"]}, indent=2))
     s = result["summary"]
@@ -248,4 +318,7 @@ if __name__ == "__main__":
                              "damaged", "lost", "fell", "over_20n", "peak_n_median", "peak_n_p90", "press_n_median",
                              "seat_s_median", "touch_err_mm_median", "reasons")})
     for key in ("by_lateral_mm", "by_depth_mm", "by_roll_deg"):
-        print("  " + "  ".join(f"{list(r.values())[0]}: {r['success']}/{r['of']}" for r in s[key]))
+        if key in s:
+            print("  " + "  ".join(f"{list(r.values())[0]}: {r['success']}/{r['of']}" for r in s[key]))
+    for r in s.get("by_tool", []):
+        print(f"  {r['tool']}: {r['success']}/{r['of']} (within 15 deg {r['success_tilt15']}), fell {r['fell']}")

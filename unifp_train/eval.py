@@ -440,17 +440,24 @@ class EvaluablePolicy:
         from .models import UniFPActor
 
         raw = torch.load(checkpoint, map_location="cpu", weights_only=False)
-        probe = TensorDict(
-            {"policy": torch.zeros(1, interface.NUM_OBS),
-             "critic": torch.zeros(1, observations.NUM_CRITIC_OBS)}, batch_size=[1])
+        # S1: a tool-conditioned network (`keyinsert_env`'s `tool_obs`) reads a tool group after the frame stack; its
+        # width is what the encoder takes beyond the stack. 0 for every checkpoint before S1.
+        enc = raw.get("actor_state_dict", {}).get("encoder.0.weight")
+        self.num_tool_obs = int(enc.shape[1]) - interface.NUM_OBS if enc is not None else 0
+        groups = {"policy": torch.zeros(1, interface.NUM_OBS), "critic": torch.zeros(1, observations.NUM_CRITIC_OBS)}
+        actor_groups = ["policy"]
+        if self.num_tool_obs:
+            groups["tool"] = torch.zeros(1, self.num_tool_obs)
+            actor_groups.append("tool")
+        probe = TensorDict(groups, batch_size=[1])
         # The width of the action noise is the action count: 18 for UniFP's tasks, 12 for the leg task's legs-only
         # policy (`leg_env`), which has the same observation and no arm actions.
         std = raw.get("actor_state_dict", {}).get("distribution.std_param")
         self.num_actions = int(std.shape[0]) if std is not None else interface.NUM_ACTIONS
         self.actor = UniFPActor(
-            probe, {"actor": ["policy"], "critic": ["critic"]}, "actor", self.num_actions,
+            probe, {"actor": actor_groups, "critic": ["critic"]}, "actor", self.num_actions,
             distribution_cfg={"class_name": "GaussianDistribution", "init_std": 1.0,
-                              "std_type": "scalar"})
+                              "std_type": "scalar"}, num_tool_obs=self.num_tool_obs)
 
         if "actor_state_dict" in raw:
             self.actor.load_state_dict(raw["actor_state_dict"], strict=True)
@@ -470,24 +477,31 @@ class EvaluablePolicy:
         self.device = device
         self._groups = {"actor": ["policy"], "critic": ["critic"]}
 
-    def _wrap(self, stacked: torch.Tensor):
+    def _wrap(self, stacked: torch.Tensor, tool: torch.Tensor | None = None):
         from tensordict import TensorDict
 
-        return TensorDict({"policy": stacked}, batch_size=[stacked.shape[0]])
+        groups = {"policy": stacked}
+        if self.num_tool_obs:
+            # No tool group given (a caller from before S1, or an environment without `tool_obs`): zeros, which is what
+            # P3 and the specialist were trained on, and the v4 key's descriptor.
+            groups["tool"] = (tool if tool is not None
+                              else torch.zeros(stacked.shape[0], self.num_tool_obs, device=stacked.device))
+        return TensorDict(groups, batch_size=[stacked.shape[0]])
 
-    def act(self, stacked: torch.Tensor) -> torch.Tensor:
-        """Deterministic action: the distribution mean, as both stacks' play paths use."""
-        return self.actor(self._wrap(stacked))
+    def act(self, stacked: torch.Tensor, tool: torch.Tensor | None = None) -> torch.Tensor:
+        """Deterministic action: the distribution mean, as both stacks' play paths use. `tool`: the environment's
+        "tool" observation group, for a tool-conditioned checkpoint (ignored otherwise)."""
+        return self.actor(self._wrap(stacked, tool))
 
-    def sample(self, stacked: torch.Tensor) -> torch.Tensor:
+    def sample(self, stacked: torch.Tensor, tool: torch.Tensor | None = None) -> torch.Tensor:
         """A training-time action: the mean plus the checkpoint's own Gaussian noise (`std_type` scalar).
 
         For diagnosis only -- every frozen evaluation scores `act`. It shows what the policy did while it learnt, which
         is where a bias the deterministic policy carries (one learnt to compensate for its noise) comes from.
         """
-        mean = self.act(stacked)
+        mean = self.act(stacked, tool)
         return mean + self.actor.distribution.std_param * torch.randn_like(mean)
 
-    def estimate(self, stacked: torch.Tensor) -> torch.Tensor:
+    def estimate(self, stacked: torch.Tensor, tool: torch.Tensor | None = None) -> torch.Tensor:
         """The adaptation module's prediction, in the scaled units the decoder outputs."""
-        return self.actor.estimate(self._wrap(stacked))
+        return self.actor.estimate(self._wrap(stacked, tool))

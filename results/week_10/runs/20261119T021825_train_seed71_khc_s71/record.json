@@ -1,0 +1,63 @@
+{
+  "id": "20261119T021825_train_seed71_khc_s71",
+  "title": "Item 3 hold retrain: round 28's recipe force-aware from kh28_7000, seed 71, 800 it, from ki7_s62_9200's spawn-set handovers merged with the recipe's stances, widened box",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-19T15:42:24+11:00",
+  "started_utc": "2026-11-19T02:18:25+00:00",
+  "source_dir": "logs/unifp_train/20261119T021825_train_seed71_khc_s71",
+  "mode": "train",
+  "seed": 71,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 800,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 7799,
+  "final_checkpoint": {
+    "file": "model_7799.pt",
+    "sha256": "fa7e414859dba9f9e5b2ff27ffc92412605eefd9b6c2f92273b992e57f78cc0b"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 148.1016845703125,
+      "last_step": 7799,
+      "mean_last_10": 147.22259979248048,
+      "min": 3.3254246711730957,
+      "max": 151.1935577392578,
+      "points": 800
+    },
+    "Train/mean_episode_length": {
+      "last": 496.0400085449219,
+      "last_step": 7799,
+      "mean_last_10": 496.9560028076172,
+      "min": 14.309090614318848,
+      "max": 513.469970703125,
+      "points": 800
+    },
+    "Policy/mean_std": {
+      "last": 0.10062816739082336,
+      "last_step": 7799,
+      "mean_last_10": 0.10094894468784332,
+      "min": 0.10062816739082336,
+      "max": 0.15013864636421204,
+      "points": 800
+    },
+    "Perf/total_fps": {
+      "last": 5255.0,
+      "last_step": 7799,
+      "mean_last_10": 5539.7,
+      "min": 2791.0,
+      "max": 11240.0,
+      "points": 800
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "20261117T171850_train_seed82_s4_out_s82",
+  "title": "S4 (iii) T1 outcome-trained (goal only) from 66600, seed 82: D1 link, 66600's legs, tilt stop",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-18T07:15:48+11:00",
+  "started_utc": "2026-11-17T17:18:50+00:00",
+  "source_dir": "logs/unifp_train/20261117T171850_train_seed82_s4_out_s82",
+  "mode": "train",
+  "seed": 82,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 68599,
+  "final_checkpoint": {
+    "file": "model_68599.pt",
+    "sha256": "23f483e44833dd1d8632b72fa990ae8d8878e28531762c1cb61339cd4e39e0fe"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 195.6077117919922,
+      "last_step": 68599,
+      "mean_last_10": 195.2598617553711,
+      "min": 2.164689779281616,
+      "max": 206.3884735107422,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 985.280029296875,
+      "last_step": 68599,
+      "mean_last_10": 987.6670043945312,
+      "min": 12.13559341430664,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 0.8338730335235596,
+      "last_step": 68599,
+      "mean_last_10": 0.8341321408748626,
+      "min": 0.5267235636711121,
+      "max": 0.8361415863037109,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 10076.0,
+      "last_step": 68599,
+      "mean_last_10": 9849.4,
+      "min": 7152.0,
+      "max": 20360.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

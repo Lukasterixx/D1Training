@@ -93,6 +93,9 @@ class Go2D1LegEnvCfg(Go2D1PosForceEnvCfg):
     spawn_state_jitter: float = 0.03
     #: Use `spawn_states` in a frozen evaluation too (a diagnostic: the handover's stances, at rest).
     spawn_states_in_eval: bool = False
+    #: Environment i starts from `spawn_states`' state i (modulo their number), not one drawn at random: item 3's chain,
+    #: where each hold episode starts from its own insertion's end (2026-11-19). False: every run before.
+    spawn_states_ordered: bool = False
     #: A key episode's contact past this force (the plant's physics-rate peak, N) is penalised by `press_excess_weight`
     #: per cm of the overlap it takes (2026-10-21: Lukas's lever is printed PLA, its platform 2.5 mm thick). A geometric
     #: term like `door_push`, so the position variant is given it too. 0 weight: off.
@@ -939,7 +942,8 @@ class Go2D1LegEnv(Go2D1PosForceEnv):
                 pick = torch.rand(count, device=self.device) < self.cfg.spawn_states_fraction
                 if bool(pick.any()):
                     k = int(pick.sum())
-                    which = torch.randint(len(lib["z"]), (k,), device=self.device)
+                    which = (env_ids[pick.nonzero().flatten()] % len(lib["z"]) if self.cfg.spawn_states_ordered
+                             else torch.randint(len(lib["z"]), (k,), device=self.device))
                     legs = lib["legs"][which] + (2 * torch.rand(k, 12, device=self.device) - 1) * self.cfg.spawn_state_jitter
                     rows = pick.nonzero().flatten()
                     joint_pos[rows.unsqueeze(-1), self._order[:12].unsqueeze(0)] = legs

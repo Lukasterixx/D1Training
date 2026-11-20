@@ -30,6 +30,15 @@ def turn_ahead(theta: torch.Tensor, theta_ref: torch.Tensor, theta_start: torch.
     return torch.relu(theta - torch.maximum(theta_ref, theta_start) - free)
 
 
+def turn_behind(theta: torch.Tensor, theta_ref: torch.Tensor, theta_start: torch.Tensor,
+                free: float = leg_cfg.KEYHOLD_TURN_AHEAD_FREE_RAD) -> torch.Tensor:
+    """How far the key falls behind the task layer's reference, past `free` (rad, >= 0): `turn_ahead`'s other side, for
+    S3's band both ways (F-285's implication: a position-only twin that stalls short of the latch is otherwise priced
+    for nothing). While the reference descends onto the key it stands below `theta_start`, and a key at its start is
+    not behind."""
+    return torch.relu(torch.maximum(theta_ref, theta_start) - theta - free)
+
+
 def follow_turn(theta: torch.Tensor, theta_ref: torch.Tensor, theta_start: torch.Tensor, theta_latch: torch.Tensor,
                 latch_open: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """`--key_turn_follow_weight`'s progress and latch for the reward (F-283): the key's angle counted only up to the

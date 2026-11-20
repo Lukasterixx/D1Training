@@ -50,8 +50,59 @@ WARD_ANGLE_RAD = math.radians(135.0)
 #: The key's back face and the jaw centre in Link6 (`geometry.KEY_ORIGIN_LINK6`, `arm_kin.JAW_CENTRE_LINK6_M`).
 KEY_BACK_LINK6_Z_M = 0.1266
 JAW_LINK6_Z_M = 0.1051
-#: From the jaw centre to the key's tip along the shaft, as held.
+#: From the jaw centre to the key's tip along the shaft, as held: the v4 key's. Per environment since S1
+#: (`KeyLock.set_tool`, `docs/tool_paper_plan.md`); every number before that is this key, rigid and massless.
 TIP_FROM_JAW_M = KEY_BACK_LINK6_Z_M + KEY_LENGTH_M - JAW_LINK6_Z_M
+
+# --- the estimate (`keyinsert_env`) -------------------------------------------------------------------------------------
+#: The estimate's errors (training): across the axis to this radius (uniform in area), along it, the keyway's roll, the
+#: axis's tilt. The frozen set's are `keyinsert_eval`'s.
+ERR_LATERAL_M = 0.0035
+ERR_DEPTH_M = 0.008
+ERR_ROLL_RAD = math.radians(4.0)
+ERR_TILT_RAD = math.radians(0.8)
+#: The tip's reference starts this far short of the estimated face.
+START_OFF_M = (0.015, 0.020)
+
+# --- the key family (S1: tool conditioning) ---------------------------------------------------------------------------
+# A key is drawn per environment: its tip's reach beyond the jaw centre along the jaws' axis (Link6 z; the key gripped
+# further out or deeper in, or a longer neck -- the shaft and wards stay v4's, so the keyway still fits it), its shaft's
+# axis off the jaws' axis (Link6 x, y; F-224 measured 2 mm on the dog), how much it gives in the jaws (`compliance`,
+# m/N, the same along every axis; rigid before S1) and its mass (at its back face on the shaft's axis). The grip's slip
+# force stays the lock's draw (`GRIP_SLIP_N`). None of these is measured on a real key except the v4's reach and F-224's
+# offset; the ranges are the manifest's (`results/manifests/keyinsert_tools_v2.json`).
+NOMINAL_MASS_KG = 0.010
+#: The key's give relaxes toward compliance x contact force at this rate per physics step (its rate feeds the contact's
+#: dampers, `KeyLock.give_rate`). Pressed flat on the face at 0.12 mm/N (the manifest's softest key) it settles in ~10
+#: steps (50 ms); at 0.25 mm/N it creeps to its rest over ~2 s (2026-11-13, `tests/test_keylock.py`). Not a measured
+#: time constant.
+GIVE_RELAX = 0.15
+GIVE_MAX_M = 0.006
+#: The descriptor P4's actor reads (10 wide, `descriptor`): the tip's offset from the jaw centre in Link6 (x, y, z less the
+#: v4's), the shaft's axis less the jaws' (0 for every key in this family; kept for tool families with a tilted grip),
+#: the shaft's length past its back face less 10 mm (0 here, likewise), the offset's size, the compliance, the mass less
+#: the v4's; each over these scales, so the training keys sit within about +-1.5.
+DESC_OFFSET_M = 0.002
+DESC_REACH_M = 0.010
+DESC_COMPLIANCE_M_PER_N = 1e-4
+DESC_MASS_KG = 0.03
+NUM_DESCRIPTOR = 10
+
+
+def descriptor(reach: torch.Tensor, offset: torch.Tensor, compliance: torch.Tensor, mass: torch.Tensor) -> torch.Tensor:
+    """The key's descriptor (N, `NUM_DESCRIPTOR`), zero for the v4 key."""
+    d = torch.zeros(reach.shape[0], NUM_DESCRIPTOR, device=reach.device)
+    d[:, 0:2] = offset / DESC_OFFSET_M
+    d[:, 2] = (reach - TIP_FROM_JAW_M) / DESC_REACH_M
+    d[:, 7] = offset.norm(dim=-1) / DESC_OFFSET_M
+    d[:, 8] = compliance / DESC_COMPLIANCE_M_PER_N
+    d[:, 9] = (mass - NOMINAL_MASS_KG) / DESC_MASS_KG
+    return d
+
+
+def tip_offset_local(reach: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+    """The key's tip from the jaw centre in Link6's frame (N, 3): the shaft's offset across, the reach along z."""
+    return torch.cat((offset, reach.unsqueeze(-1)), -1)
 
 # --- the lock (metal), measured ---------------------------------------------------------------------------------------
 
@@ -92,11 +143,19 @@ SEATED_WITHIN_M = 0.0008
 DAMAGE_N = 50.0
 #: The press the dog should stay under (N): the reward's line.
 PRESS_LIMIT_N = 20.0
+#: The strict keyway (`KeyLock.strict_roll`, 2026-11-19, the week 10 log's item 1a): a key rolled about its shaft past the
+#: wards' clearance, atan(play / `WARD_HALF_LEN_M`) (0.8-1.9 deg over the drawn play, ~1.3 at its middle), cannot pass the
+#: edge break. The default contact lets its ward points that came in over the break switch to the wall's sideways normal
+#: below the break and slide in (F-292: keys enter 4-10 deg misrolled). Strict, until the key is in -- its tip past the
+#: break with the wards aligned, until the tip is back at the mouth -- a misrolled key's ward points that reach the break's
+#: depth keep pressing on the break's plane, continued below it, and bear together as the flat face does. Off by default.
 
 
-def key_points(key_chamfer: torch.Tensor) -> tuple[torch.Tensor, int]:
+def key_points(key_chamfer: torch.Tensor, back_z: torch.Tensor | None = None,
+               offset: torch.Tensor | None = None) -> tuple[torch.Tensor, int]:
     """The sample points (N, P, 3) in Link6's frame for keys whose tip edges are broken by `key_chamfer` (N,), and how
-    many of them lie on the tip's face (the first ones). Link6: x along the bar (u), y = -t, z along the shaft."""
+    many of them lie on the tip's face (the first ones). Link6: x along the bar (u), y = -t, z along the shaft. The key's
+    back face at Link6 z `back_z` (N,; v4's `KEY_BACK_LINK6_Z_M`), its shaft's axis `offset` (N, 2) off the jaws'."""
     n, device = key_chamfer.shape[0], key_chamfer.device
     c = key_chamfer.unsqueeze(-1)                                      # (N, 1)
     rows_u, rows_t, rows_h = [], [], []
@@ -140,7 +199,10 @@ def key_points(key_chamfer: torch.Tensor) -> tuple[torch.Tensor, int]:
         add(SHAFT_R_M * torch.cos(side).expand(n, 12), SHAFT_R_M * torch.sin(side).expand(n, 12), h.expand(n, 12))
         add(cu.expand(n, len(corners)), ct.expand(n, len(corners)), h.expand(n, len(corners)))
     u, t, h = torch.cat(rows_u, 1), torch.cat(rows_t, 1), torch.cat(rows_h, 1)
-    points = torch.stack((u, -t, KEY_BACK_LINK6_Z_M + h), dim=-1)
+    back = torch.full((n, 1), KEY_BACK_LINK6_Z_M, device=device) if back_z is None else back_z.unsqueeze(-1)
+    points = torch.stack((u, -t, back + h), dim=-1)
+    if offset is not None:
+        points[..., :2] = points[..., :2] + offset.unsqueeze(1)
     return points, face
 
 
@@ -186,9 +248,24 @@ class KeyLock:
         self.key_chamfer = torch.full((num_envs,), 0.0005, device=device)
         self.grip_slip_n = torch.full((num_envs,), 30.0, device=device)
         self.slip_m = zeros(num_envs)
+        #: The key in each hand (`set_tool`): its back face's Link6 z, its shaft's offset, its give and the give now
+        #: (Link6 frame, the key displaced in the jaws). The v4 key, rigid, until set.
+        self.back_z = torch.full((num_envs,), KEY_BACK_LINK6_Z_M, device=device)
+        self.offset = zeros(num_envs, 2)
+        self.compliance = zeros(num_envs)
+        self.give = zeros(num_envs, 3)
+        #: How fast the key moved in the jaws over the last step (m/s, Link6): the contact's dampers see it, so a key
+        #: springing back out of its give meets the metal damped, as a padded grip would.
+        self.give_rate = zeros(num_envs, 3)
         self.points, self.face_points = key_points(self.key_chamfer)
         #: Each point's contact: 0 none, 1 the face, 2 the edge break, 3 the keyway's wall, 4 its floor.
         self.mode = torch.zeros(num_envs, self.points.shape[1], dtype=torch.long, device=device)
+        #: The strict keyway (the module note "The strict keyway"): off by default. Which points are on the wards (outside the shaft's
+        #: circle), whether the key is in (its tip past the break, entered aligned), and the key's roll error.
+        self.strict_roll = False
+        self.ward_pt = self._ward_mask()
+        self.key_in = torch.zeros(num_envs, dtype=torch.bool, device=device)
+        self.roll_err = zeros(num_envs)
         self.k_point = CONTACT_K_N_PER_M / POINTS_SHARE
         self.c_point = CONTACT_C_N_S_PER_M / POINTS_SHARE
         # Outputs of the last step.
@@ -202,6 +279,18 @@ class KeyLock:
     @property
     def hole_r(self) -> torch.Tensor:
         return SHAFT_R_M + self.play
+
+    def _ward_mask(self, beyond_m: float | None = None) -> torch.Tensor:
+        """(N, P): the key's points on its wards, off the shaft's circle about the shaft's own axis (or beyond `beyond_m`)."""
+        radial = (self.points[..., :2] - self.offset.unsqueeze(1)).norm(dim=-1)
+        return radial > (SHAFT_R_M + 1e-5 if beyond_m is None else beyond_m)
+
+    def _roll_error(self, link6_rot: torch.Tensor) -> torch.Tensor:
+        """The key's roll about the keyway's axis from the lock's bar direction (N,), rad, folded to +-90 deg (the wards
+        are symmetric): Link6's x (the bar) in the lock's (u, t) plane."""
+        bar = link6_rot[:, :, 0]
+        roll = torch.atan2((bar * self.e_t).sum(-1), (bar * self.e_u).sum(-1))
+        return torch.remainder(roll + math.pi / 2, math.pi) - math.pi / 2
 
     def place(self, ids: torch.Tensor, origin, axis, e_u, play, lock_chamfer, key_chamfer, mu, grip_slip_n) -> None:
         """Mount locks for `ids`: the mouth's centre `origin`, `axis` into the lock, `e_u` the bar's way at insertion."""
@@ -217,7 +306,25 @@ class KeyLock:
         self.slip_m[ids] = 0.0
         self.peak_n[ids] = 0.0
         self.mode[ids] = 0
-        self.points[ids] = key_points(key_chamfer)[0]
+        self.give[ids], self.give_rate[ids] = 0.0, 0.0
+        self.points[ids] = key_points(key_chamfer, self.back_z[ids], self.offset[ids])[0]
+        self.ward_pt[ids] = self._ward_mask()[ids]
+        self.key_in[ids] = False
+
+    def set_tool(self, ids: torch.Tensor, reach: torch.Tensor, offset: torch.Tensor, compliance: torch.Tensor) -> None:
+        """The key in the hands of `ids`: its tip `reach` beyond the jaw centre along Link6 z, its shaft's axis `offset`
+        (N, 2) off the jaws' in Link6 x, y, its give `compliance` (m/N). Before or after `place`, either way."""
+        self.back_z[ids] = JAW_LINK6_Z_M + reach - KEY_LENGTH_M
+        self.offset[ids] = offset
+        self.compliance[ids] = compliance
+        self.give[ids], self.give_rate[ids] = 0.0, 0.0
+        self.points[ids] = key_points(self.key_chamfer[ids], self.back_z[ids], offset)[0]
+        self.ward_pt[ids] = self._ward_mask()[ids]
+
+    def tip_local(self) -> torch.Tensor:
+        """The true tip (the shaft's axis at its end) in Link6's frame (N, 3): slid back and given as it is now."""
+        tip = torch.cat((self.offset, (self.back_z + KEY_LENGTH_M - self.slip_m).unsqueeze(-1)), -1)
+        return tip + self.give
 
     def to_lock(self, p: torch.Tensor) -> torch.Tensor:
         """Env-frame points (N, ..., 3) in the lock's (u, t, depth) coordinates."""
@@ -232,9 +339,11 @@ class KeyLock:
         `link6_vel`, `link6_omega` (world): sets `force_w`, `torque_w` (about the jaw centre) and the diagnostics."""
         pts_local = self.points.clone()
         pts_local[..., 2] = pts_local[..., 2] - self.slip_m.unsqueeze(-1)       # slid back in the jaws
+        pts_local = pts_local + self.give.unsqueeze(1)                           # and given in them
         arm = torch.einsum("nij,npj->npi", link6_rot, pts_local)
         p = link6_pos.unsqueeze(1) + arm
         v = link6_vel.unsqueeze(1) + torch.cross(link6_omega.unsqueeze(1).expand_as(arm), arm, dim=-1)
+        v = v + torch.einsum("nij,nj->ni", link6_rot, self.give_rate).unsqueeze(1)
         q = self.to_lock(p)
         x, y, z = q[..., 0], q[..., 1], q[..., 2]
         d, g = keyway_sdf(x, y, self.hole_r.unsqueeze(-1), (WARD_HALF_LEN_M + self.play).unsqueeze(-1),
@@ -263,10 +372,23 @@ class KeyLock:
         mode = torch.where(metal & (mode == 2) & (z >= ch), 3, mode)
         mode = torch.where(metal & (mode == 3) & (z < ch), 2, mode)
         mode = torch.where(metal | floor, mode, 0)
+        d_break = d_eff
+        held = None
+        if self.strict_roll:
+            self.roll_err = self._roll_error(link6_rot)
+            aligned = self.roll_err.abs() <= torch.atan(self.play / WARD_HALF_LEN_M)
+            # The key is in once its tip has passed the break with the wards aligned, and stays in until the tip is back
+            # at the mouth: the wards are prisms along the key, so a key in the slot jiggled past the clearance presses
+            # the walls (the soft contact's give), and is not held by its own back end. From the last step's tip.
+            past_break = self.tip_depth >= self.lock_chamfer
+            self.key_in = (self.key_in & past_break) | (aligned & past_break)
+            held = metal & self.ward_pt & (~aligned).unsqueeze(-1) & (z >= ch) & ~self.key_in.unsqueeze(-1)
+            mode = torch.where(held, 2, mode)
+            d_break = torch.where(held, d - (ch - z), d_eff)          # the break's plane, continued below it
         self.mode = mode
         use_face, use_break, use_wall = mode == 1, mode == 2, mode == 3
         touching = mode > 0
-        pen = torch.where(use_face, z, torch.where(use_break, d_eff / math.sqrt(2.0),
+        pen = torch.where(use_face, z, torch.where(use_break, d_break / math.sqrt(2.0),
                                                   torch.where(use_wall, d, z - KEYWAY_DEPTH_M)))
         pen = torch.where(touching, pen.clamp(min=0.0), torch.zeros_like(pen))
         # Normals, in the lock's (u, t, depth) coordinates: out of the metal, into free space or the keyway.
@@ -278,7 +400,18 @@ class KeyLock:
         basis = torch.stack((self.e_u, self.e_t, self.axis), dim=1)            # (N, 3, 3): rows u, t, axis
         normal = torch.einsum("npk,nkj->npj", normal_l, basis)
         v_n = (v * normal).sum(-1)
-        f_n = (self.k_point * pen - self.c_point * v_n).clamp(min=0.0, max=POINT_MAX_N) * touching
+        if held is not None and bool(held.any()):
+            # Held ward points bear together as the flat face does: the whole contact's stiffness and damping shared
+            # among them (with the lock's stiffness scale), and their cap the face's total, so a misrolled key stops
+            # where it meets the break instead of sinking millimetres on a few soft points.
+            n_held = held.sum(-1, keepdim=True).clamp(min=1).float()
+            scale = self.k_point * POINTS_SHARE / CONTACT_K_N_PER_M
+            k = torch.where(held, scale * CONTACT_K_N_PER_M / n_held, torch.full_like(pen, self.k_point))
+            c = torch.where(held, CONTACT_C_N_S_PER_M / n_held, torch.full_like(pen, self.c_point))
+            cap = torch.where(held, POINT_MAX_N * POINTS_SHARE / n_held, torch.full_like(pen, POINT_MAX_N))
+            f_n = torch.minimum((k * pen - c * v_n).clamp(min=0.0), cap) * touching
+        else:
+            f_n = (self.k_point * pen - self.c_point * v_n).clamp(min=0.0, max=POINT_MAX_N) * touching
         v_t = v - v_n.unsqueeze(-1) * normal
         speed = v_t.norm(dim=-1, keepdim=True)
         f_t = -self.mu.view(-1, 1, 1) * f_n.unsqueeze(-1) * v_t / speed.clamp(min=FRICTION_V_REG_M_S)
@@ -297,9 +430,15 @@ class KeyLock:
         # The jaws slip under an axial push past their grip.
         excess = (self.axial_n - self.grip_slip_n).clamp(min=0.0) * on
         self.slip_m = (self.slip_m + SLIP_RATE_M_S_N * excess * dt).clamp(max=SLIP_LOST_M + 0.003)
+        # The key gives in the jaws toward its compliance times the force on it (Link6 frame), relaxed (`GIVE_RELAX`).
+        if bool((self.compliance > 0.0).any()):
+            f_local = torch.einsum("nji,nj->ni", link6_rot, self.force_w)
+            want = self.compliance.unsqueeze(-1) * f_local
+            new = (self.give + GIVE_RELAX * (want - self.give)).clamp(-GIVE_MAX_M, GIVE_MAX_M)
+            self.give_rate = (new - self.give) / dt
+            self.give = new
         # Where the tip is: the shaft's axis at the tip, in the lock's coordinates.
-        tip_local = torch.zeros(self.n, 1, 3, device=self.device)
-        tip_local[..., 2] = KEY_BACK_LINK6_Z_M + KEY_LENGTH_M - self.slip_m.unsqueeze(-1)
+        tip_local = self.tip_local().unsqueeze(1)
         tip = link6_pos.unsqueeze(1) + torch.einsum("nij,npj->npi", link6_rot, tip_local)
         tq = self.to_lock(tip)[:, 0]
         self.tip_depth = tq[:, 2]
@@ -382,6 +521,30 @@ EVAL_PRESS_N = 8.0
 HOLD_PRESS_N = 3.0
 K_AXIAL_N_PER_M = 800.0
 K_LATERAL_N_PER_M = 3000.0
+#: S1c (2026-11-18, opt-in `InsertLayer.seat_test = "located"`, `--insert_seat_test located`): the old layer measured
+#: every depth from its touch, and a key that went straight in touched the floor or a jam, never the face, so the two
+#: could not be told apart and a key stopped short after jiggling was held where it was (S1b's test: 1,615 of 4,600
+#: believed seats false, 1,454 of them through those two ways out). Located, the first touch is made with the wrist
+#: rolled `FACE_ROLL_DEG` about the shaft, where the wards cannot enter the keyway's slots (6 deg is enough with the
+#: edge breaks, `tests/test_keylock.py`; 45 clears the breaks' 25 deg and the estimate's 4), so that touch is the face.
+#: The layer backs off `LOCATE_BACK_M`, rolls back at `ROLL_RATE_DEG_S` and searches from the face; it believes a key
+#: in only once measured past the face by the keyway's depth less `SEATED_SHORT_M`, still. A key stuck short after its
+#: jiggle is searched for again `RETRIES` times, then refused (the layer stops without a hold); a key measured more than
+#: `RELOCATE_M` past the keyway's floor means the face was felt where it is not (an arm stalled in free air), and the
+#: face is located again, once.
+FACE_ROLL_DEG = 45.0
+ROLL_RATE_DEG_S = 90.0
+LOCATE_BACK_M = 0.001
+RETRIES = 1
+RELOCATE_M = 0.0015
+#: Before rolling again to relocate, the key is backed out past the keyway's depth and the roll waits this long (s), so
+#: its wards are not turned inside the keyway.
+RELOCATE_WAIT_S = 0.8
+#: The wrist held this long at its new roll before the reference moves (s); felt again at zero roll more than
+#: `STRAIGHT_M` past the face found rolled, the key went straight in (the two measurements differ by up to ~2 mm: the
+#: first located run, episode 9).
+ROLL_SETTLE_S = 0.4
+STRAIGHT_M = 0.003
 
 
 class InsertLayer:
@@ -391,6 +554,8 @@ class InsertLayer:
     def __init__(self, num_envs: int, device):
         self.n, self.device = num_envs, device
         self.light_probe = False
+        #: "old" (every number before S1c) or "located" (S1c: the face touched with the wrist rolled first).
+        self.seat_test = "old"
         zeros = lambda *shape: torch.zeros(*shape, device=device)
         self.phase = torch.full((num_envs,), DONE, dtype=torch.long, device=device)
         self.force_law = torch.zeros(num_envs, dtype=torch.bool, device=device)
@@ -410,6 +575,13 @@ class InsertLayer:
         self.touched = torch.zeros(num_envs, dtype=torch.bool, device=device)
         self.entered_by = zeros(num_envs)                     # 1: advanced, 2: held sideways
         self.max_depth = torch.full((num_envs,), KEYWAY_DEPTH_M + SLACK_M, device=device)
+        # S1c, located: 0 approaching rolled, 1 backing off and rolling back, 2 located; the face; tries used.
+        self.locate_stage = torch.zeros(num_envs, dtype=torch.long, device=device)
+        self.face_depth = zeros(num_envs)
+        self.retries, self.relocates = zeros(num_envs), zeros(num_envs)
+        self.refused = torch.zeros(num_envs, dtype=torch.bool, device=device)
+        self.roll_wait = zeros(num_envs)
+        self.settle_for = zeros(num_envs)
 
     def start(self, ids: torch.Tensor, start_depth: torch.Tensor, force_law: torch.Tensor, press_n: torch.Tensor) -> None:
         self.phase[ids] = APPROACH
@@ -432,6 +604,12 @@ class InsertLayer:
         self.lag_base[ids] = 0.0
         self.touched[ids] = False
         self.entered_by[ids] = 0.0
+        self.locate_stage[ids] = 0 if self.seat_test == "located" else 2
+        self.face_depth[ids] = 0.0
+        self.retries[ids], self.relocates[ids] = 0.0, 0.0
+        self.refused[ids] = False
+        self.roll_wait[ids] = 0.0
+        self.settle_for[ids] = 0.0
 
     def stop(self, ids: torch.Tensor) -> None:
         self.phase[ids] = DONE
@@ -452,6 +630,22 @@ class InsertLayer:
         r = b * theta
         return torch.stack((r * torch.cos(theta), r * torch.sin(theta)), -1)
 
+    def _enter_seat(self, entered: torch.Tensor, depth: torch.Tensor, lateral: torch.Tensor, by: float) -> None:
+        """Into SEAT, as the search's way in does (the located layer's straight-in key, S1c)."""
+        self.entered_by = torch.where(entered, torch.full_like(self.entered_by, by), self.entered_by)
+        self.ref_lateral = torch.where(entered.unsqueeze(-1), lateral, self.ref_lateral)
+        self.phase = torch.where(entered, torch.full_like(self.phase, SEAT), self.phase)
+        self.phase_for = torch.where(entered, torch.zeros_like(self.phase_for), self.phase_for)
+        self.still_for = torch.where(entered, torch.zeros_like(self.still_for), self.still_for)
+        seat_target = self.touch_depth + KEYWAY_DEPTH_M
+        seat_end = seat_target + torch.where(self.force_law, 0.0, PRESS_M)
+        self.seat_end = torch.where(entered, torch.maximum(seat_end, self.ref_depth), self.seat_end)
+        self.ref_depth = torch.where(entered & self.force_law, seat_target + self.free_lead(), self.ref_depth)
+        self.ref_depth = torch.where(entered & ~self.force_law, depth.maximum(self.ref_depth), self.ref_depth)
+        self.still_any = torch.where(entered, torch.zeros_like(self.still_any), self.still_any)
+        self.jiggle_for = torch.where(entered, torch.zeros_like(self.jiggle_for), self.jiggle_for)
+        self.entry_roll = torch.where(entered, self.roll, self.entry_roll)
+
     def step(self, depth: torch.Tensor, lateral: torch.Tensor, dt: float) -> None:
         """Advance with the tip measured at `depth` and `lateral` (from the arm's reported joints)."""
         active = self.phase < DONE
@@ -463,8 +657,32 @@ class InsertLayer:
         self.phase_for = torch.where(active, self.phase_for + dt, self.phase_for)
         lag = self.ref_depth - depth
         # Approach: in along the axis until the face is felt.
-        app = active & (self.phase == APPROACH)
-        v = torch.where(self.ref_depth < -FAST_UNTIL_M, torch.full_like(depth, FAST_SPEED_M_S),
+        located = self.seat_test == "located"
+        if located:
+            # Stages: 0 rolling in place, 3 approaching rolled, 1 backing off and rolling back, 4 approaching again at
+            # zero roll, 2 located. The wrist turns only while the reference stands still (stages 0 and 1): rolling it
+            # while approaching lagged the arm enough to read as a touch in free air (S1c's first located run).
+            app_now = active & (self.phase == APPROACH)
+            want = torch.where((self.locate_stage == 0) | (self.locate_stage == 3),
+                               torch.full_like(self.roll, math.radians(FACE_ROLL_DEG)), torch.zeros_like(self.roll))
+            step_r = math.radians(ROLL_RATE_DEG_S) * dt
+            turning = app_now & (((self.locate_stage == 0) & (self.phase_for >= self.roll_wait)) | (self.locate_stage == 1))
+            self.roll = torch.where(turning, self.roll + (want - self.roll).clamp(-step_r, step_r), self.roll)
+            there = (self.roll - want).abs() < 1e-4
+            self.settle_for = torch.where(turning & there, self.settle_for + dt, torch.zeros_like(self.settle_for))
+            settled = self.settle_for >= ROLL_SETTLE_S
+            rolled = app_now & (self.locate_stage == 0) & settled
+            unrolled = app_now & (self.locate_stage == 1) & settled
+            # Rolled and still: approach the face (the lag's baseline taken afresh).
+            self.locate_stage = torch.where(rolled, torch.full_like(self.locate_stage, 3), self.locate_stage)
+            # Rolled back and still: approach again slowly, the baseline kept from the rolled approach.
+            self.locate_stage = torch.where(unrolled, torch.full_like(self.locate_stage, 4), self.locate_stage)
+            self.phase_for = torch.where(rolled, torch.zeros_like(self.phase_for),
+                                         torch.where(unrolled, torch.full_like(self.phase_for, BASE_S), self.phase_for))
+            self.lag_for = torch.where(rolled | unrolled, torch.zeros_like(self.lag_for), self.lag_for)
+            self.lag_base = torch.where(rolled, torch.zeros_like(self.lag_base), self.lag_base)
+        app = active & (self.phase == APPROACH) & (self.locate_stage != 0) & (self.locate_stage != 1)
+        v = torch.where((self.ref_depth < -FAST_UNTIL_M) & (self.locate_stage != 4), torch.full_like(depth, FAST_SPEED_M_S),
                         torch.full_like(depth, SLOW_SPEED_M_S))
         self.ref_depth = torch.where(app, (self.ref_depth + v * dt).clamp(max=self.max_depth), self.ref_depth)
         early = app & (self.phase_for < BASE_S)
@@ -473,6 +691,27 @@ class InsertLayer:
         behind = (~early & (lag - self.lag_base > CONTACT_LAG_M)) | (lag > LAG_MAX_M)
         self.lag_for = torch.where(app & behind, self.lag_for + dt, torch.zeros_like(self.lag_for))
         felt = app & (self.lag_for >= CONTACT_HOLD_S)
+        if located:
+            # Felt rolled: that is the face. Back off and roll back (stage 1).
+            found = felt & (self.locate_stage == 3)
+            if bool(found.any()):
+                self.face_depth = torch.where(found, depth, self.face_depth)
+                self.touched |= found
+                self.ref_depth = torch.where(found, depth - LOCATE_BACK_M, self.ref_depth)
+                self.locate_stage = torch.where(found, torch.ones_like(self.locate_stage), self.locate_stage)
+                self.phase_for = torch.where(found, torch.zeros_like(self.phase_for), self.phase_for)
+                self.lag_for = torch.where(found, torch.zeros_like(self.lag_for), self.lag_for)
+            again = felt & (self.locate_stage == 4)
+            # Felt again at zero roll near the face: on the face; the search starts from this touch, measured as every
+            # depth after it is. Felt well past it: the key went straight in, to the floor or a jam, judged from the face.
+            straight = again & (depth > self.face_depth + STRAIGHT_M)
+            self.locate_stage = torch.where(again, torch.full_like(self.locate_stage, 2), self.locate_stage)
+            if bool(straight.any()):
+                self.touch_depth = torch.where(straight, self.face_depth, self.touch_depth)
+                self.force_cmd = torch.where(straight & self.force_law, self.press_n, self.force_cmd)
+                self.ref_depth = torch.where(straight, depth + self.free_lead(), self.ref_depth)
+                self._enter_seat(straight, depth, lateral, 1.0)
+            felt = (felt & ~found & ~straight)
         if bool(felt.any()):
             self.touch_depth = torch.where(felt, depth, self.touch_depth)
             self.touched |= felt
@@ -560,9 +799,34 @@ class InsertLayer:
             self.ref_depth = torch.where(started, self.ref_depth + 0.5 * self.press_n / K_AXIAL_N_PER_M, self.ref_depth)
             self.seat_end = torch.where(jiggling & ~self.force_law & (self.jiggle_for <= dt + 1e-6), self.seat_end + 0.001,
                                         self.seat_end)
-            seated = seat & ((self.still_for >= CONTACT_HOLD_S) | (self.jiggle_for >= JIGGLE_S)
-                             | ((self.still_any >= STILL_ANY_S) & deep)
-                             | (held_in & (self.jiggle_for >= JIGGLE_HELD_S) & (self.still_any >= CONTACT_HOLD_S)))
+            if located:
+                # Only past the face by the keyway's depth: stuck short after the jiggle is searched again, then refused.
+                seated = seat & ((self.still_for >= CONTACT_HOLD_S) | ((self.still_any >= STILL_ANY_S) & deep))
+                short = seat & ~seated & ~deep & (self.jiggle_for >= JIGGLE_S)
+                again = short & (self.retries < RETRIES)
+                give_up = short & ~again
+                if bool(again.any()):
+                    self.retries = torch.where(again, self.retries + 1.0, self.retries)
+                    self.force_cmd = torch.where(again & self.force_law, self.press_n, self.force_cmd)
+                    press = torch.where(self.force_law, torch.zeros_like(depth), torch.full_like(depth, PRESS_M))
+                    self.ref_depth = torch.where(again, self.touch_depth + press + self.free_lead(), self.ref_depth)
+                    self.phase = torch.where(again, torch.full_like(self.phase, SEARCH), self.phase)
+                    # On along the spiral from where it was, past the probe.
+                    self.phase_for = torch.where(again, torch.full_like(self.phase_for, PROBE_S + 2 * dt), self.phase_for)
+                    self.held_for = torch.where(again, torch.zeros_like(self.held_for), self.held_for)
+                    self.roll = torch.where(again, self.entry_roll, self.roll)
+                if bool(give_up.any()):
+                    # Refused: held where it is, no press (the first located run left the force-aware reference at
+                    # the press's lead past the floor, and the policy then shoved the key in at 15-28 N).
+                    self.refused |= give_up
+                    self.phase = torch.where(give_up, torch.full_like(self.phase, DONE), self.phase)
+                    self.force_cmd = torch.where(give_up, torch.zeros_like(self.force_cmd), self.force_cmd)
+                    self.ref_depth = torch.where(give_up, depth, self.ref_depth)
+                seat = seat & ~short
+            else:
+                seated = seat & ((self.still_for >= CONTACT_HOLD_S) | (self.jiggle_for >= JIGGLE_S)
+                                 | ((self.still_any >= STILL_ANY_S) & deep)
+                                 | (held_in & (self.jiggle_for >= JIGGLE_HELD_S) & (self.still_any >= CONTACT_HOLD_S)))
             if bool(seated.any()):
                 self.phase = torch.where(seated, torch.full_like(self.phase, HOLD), self.phase)
                 self.phase_for = torch.where(seated, torch.zeros_like(self.phase_for), self.phase_for)
@@ -570,5 +834,31 @@ class InsertLayer:
                                              self.force_cmd)
                 self.ref_depth = torch.where(seated, depth + torch.where(self.force_law, self.free_lead(),
                                                                          torch.zeros_like(depth)), self.ref_depth)
+        if located:
+            # Deeper than the keyway allows past the face: the face was felt where it is not. Locate it again, once.
+            lost_face = (active & ((self.phase == SEARCH) | (self.phase == SEAT)) & (self.locate_stage == 2)
+                         & (depth > self.touch_depth + KEYWAY_DEPTH_M + RELOCATE_M)) \
+                | (active & (self.phase == APPROACH) & (self.locate_stage == 4)
+                   & (depth > self.face_depth + KEYWAY_DEPTH_M + RELOCATE_M))
+            again = lost_face & (self.relocates < 1)
+            if bool(again.any()):
+                self.relocates = torch.where(again, self.relocates + 1.0, self.relocates)
+                self.locate_stage = torch.where(again, torch.zeros_like(self.locate_stage), self.locate_stage)
+                self.phase = torch.where(again, torch.full_like(self.phase, APPROACH), self.phase)
+                self.phase_for = torch.where(again, torch.zeros_like(self.phase_for), self.phase_for)
+                self.force_cmd = torch.where(again, torch.zeros_like(self.force_cmd), self.force_cmd)
+                self.ref_depth = torch.where(again, depth - KEYWAY_DEPTH_M - 2 * LOCATE_BACK_M, self.ref_depth)
+                self.ref_lateral = torch.where(again.unsqueeze(-1), lateral, self.ref_lateral)
+                self.roll_wait = torch.where(again, torch.full_like(self.roll_wait, RELOCATE_WAIT_S), self.roll_wait)
+                self.settle_for = torch.where(again, torch.zeros_like(self.settle_for), self.settle_for)
+                self.roll = torch.where(again, torch.zeros_like(self.roll), self.roll)
+                self.lag_for = torch.where(again, torch.zeros_like(self.lag_for), self.lag_for)
+                self.lag_base = torch.where(again, torch.zeros_like(self.lag_base), self.lag_base)
+            gone = lost_face & ~again
+            if bool(gone.any()):
+                self.refused |= gone
+                self.phase = torch.where(gone, torch.full_like(self.phase, DONE), self.phase)
+                self.force_cmd = torch.where(gone, torch.zeros_like(self.force_cmd), self.force_cmd)
+                self.ref_depth = torch.where(gone, depth, self.ref_depth)
         hold = active & (self.phase == HOLD) & (self.phase_for >= HOLD_S)
         self.phase = torch.where(hold, torch.full_like(self.phase, DONE), self.phase)

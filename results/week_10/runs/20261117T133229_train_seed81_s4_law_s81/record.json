@@ -1,0 +1,63 @@
+{
+  "id": "20261117T133229_train_seed81_s4_law_s81",
+  "title": "S4 (i) T1 layer in the loop (law v1) from 66600, seed 81: D1 link, 66600's legs, tilt stop",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-18T03:25:33+11:00",
+  "started_utc": "2026-11-17T13:32:29+00:00",
+  "source_dir": "logs/unifp_train/20261117T133229_train_seed81_s4_law_s81",
+  "mode": "train",
+  "seed": 81,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 68599,
+  "final_checkpoint": {
+    "file": "model_68599.pt",
+    "sha256": "623645fa430956d5e11c962f3aee729f22f6f599cecbba1f93a1aa4b7a16c22c"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 172.78004455566406,
+      "last_step": 68599,
+      "mean_last_10": 174.54264221191406,
+      "min": 1.8471940755844116,
+      "max": 210.10757446289062,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 957.6400146484375,
+      "last_step": 68599,
+      "mean_last_10": 954.4059997558594,
+      "min": 10.8125,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 1.027422547340393,
+      "last_step": 68599,
+      "mean_last_10": 1.0269533157348634,
+      "min": 0.5268797278404236,
+      "max": 1.027422547340393,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 7953.0,
+      "last_step": 68599,
+      "mean_last_10": 7832.3,
+      "min": 5632.0,
+      "max": 24781.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

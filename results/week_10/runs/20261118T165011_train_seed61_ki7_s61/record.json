@@ -1,0 +1,63 @@
+{
+  "id": "20261118T165011_train_seed61_ki7_s61",
+  "title": "ki7: insertion retrain from ki6_force_8200 with the strict keyway and the leg-odometry base, seed 61, 1500 it",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-19T07:06:51+11:00",
+  "started_utc": "2026-11-18T16:50:11+00:00",
+  "source_dir": "logs/unifp_train/20261118T165011_train_seed61_ki7_s61",
+  "mode": "train",
+  "seed": 61,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 1500,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 9699,
+  "final_checkpoint": {
+    "file": "model_9699.pt",
+    "sha256": "e38d4c1b7f79cd4fe673487d3e7399fd2a3340486c0d1542c480409dcda7690a"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 288.5259704589844,
+      "last_step": 9699,
+      "mean_last_10": 294.29156188964845,
+      "min": 2.4001567363739014,
+      "max": 322.5407409667969,
+      "points": 1500
+    },
+    "Train/mean_episode_length": {
+      "last": 859.9600219726562,
+      "last_step": 9699,
+      "mean_last_10": 879.2210021972656,
+      "min": 11.523077011108398,
+      "max": 936.1699829101562,
+      "points": 1500
+    },
+    "Policy/mean_std": {
+      "last": 0.0959344431757927,
+      "last_step": 9699,
+      "mean_last_10": 0.09584953784942626,
+      "min": 0.09569490700960159,
+      "max": 0.13990925252437592,
+      "points": 1500
+    },
+    "Perf/total_fps": {
+      "last": 8523.0,
+      "last_step": 9699,
+      "mean_last_10": 8441.0,
+      "min": 5436.0,
+      "max": 10397.0,
+      "points": 1500
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

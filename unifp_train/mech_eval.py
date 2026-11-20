@@ -32,7 +32,9 @@ from . import hook_cfg, mech_cfg, observations
 #: Per-step quantities recorded for each environment. All (steps, envs) except `arm_loads` (steps, envs, 6).
 FIELDS = ("grasped", "torn", "fallen", "released", "s", "v", "ref", "travel", "drive", "force",
           "arm_load", "arm_loads", "pitch", "height", "base_x", "base_y", "estimate_drive",
-          "arm_contact", "body_contact")
+          "arm_contact", "body_contact", "tilt_stop",
+          # S4c (2026-11-19): without these here the evaluation loop dropped them from the trace (S4c-0's first runs).
+          "tool_goal_m", "grasp_error_m", "arm_lead_deg")
 CAPACITY_FRACTION = 0.8
 
 
@@ -72,6 +74,14 @@ def record_step(env, policy_estimate: torch.Tensor | None, done: torch.Tensor, e
         "drive": m.drive_n, "force": m.force_on_tool.norm(dim=-1),
         "arm_load": arm_loads.max(dim=1).values, "pitch": roll_pitch[:, 1], "height": base[:, 2],
         "base_x": base[:, 0], "base_y": base[:, 1],
+        # S4c (2026-11-19): the tool's distance from its goal (the handle, then the held goal) from the engage step on,
+        # when a grasp may close (NaN before: the goal starts at the hand and runs to the handle), the grasp error the
+        # env recorded when the grasp closed, and J1-J5's target lead over the D1 link's report (the dog's arm watch).
+        "tool_goal_m": torch.where(env._since_reset >= env._engage_step,
+                                   (env._tip_pos() - env._goal_world()).norm(dim=-1), torch.full_like(m.s, float("nan"))),
+        "grasp_error_m": env._grasp_error,
+        "arm_lead_deg": (torch.rad2deg((env._joint_targets[:, 12:17] - env._arm_link.reported[:, :5]).abs()).amax(dim=1)
+                         if getattr(env, "_arm_link", None) is not None else torch.full_like(m.s, float("nan"))),
     }
     if policy_estimate is not None:
         start = observations.offsets()["ee_force"][0]
@@ -90,6 +100,7 @@ def record_step(env, policy_estimate: torch.Tensor | None, done: torch.Tensor, e
     ended_np = ended.cpu().numpy()
     result["torn"] = np.where(ended_np, env._term_torn.float().cpu().numpy(), np.where(blank, np.nan, 0.0))
     result["fallen"] = np.where(ended_np, env._term_fallen.float().cpu().numpy(), np.where(blank, np.nan, 0.0))
+    result["tilt_stop"] = np.where(ended_np, env._term_tilt.float().cpu().numpy(), np.where(blank, np.nan, 0.0))
     return result
 
 
@@ -105,8 +116,23 @@ def score_episode(trace: dict, env: int, dt: float = interface.POLICY_DT) -> dic
     grasp_step = _first(grasped)
     fell_step = _first(np.nan_to_num(trace["fallen"][:, env]) > 0.5)
     torn_step = _first(np.nan_to_num(trace["torn"][:, env]) > 0.5)
-    out = {"grasp_step": grasp_step, "fell_step": fell_step, "torn_step": torn_step, "opened": False,
-           "open_time_s": None}
+    tilt_step = _first(np.nan_to_num(trace["tilt_stop"][:, env]) > 0.5) if "tilt_stop" in trace else None
+    out = {"grasp_step": grasp_step, "fell_step": fell_step, "torn_step": torn_step, "tilt_step": tilt_step,
+           "opened": False, "open_time_s": None, "over_budget": False}
+    if "arm_lead_deg" in trace:
+        # S4c (2026-11-19): what the dog's runner would see. Reported, not scored: the arrival, and the arm's lead from 1 s on.
+        lead = trace["arm_lead_deg"][:, env]
+        alive = np.isfinite(lead)
+        late = alive & (np.arange(len(lead)) >= int(round(1.0 / dt)))
+        out["lead_deg_max_after_1s"] = round(float(np.nanmax(lead[late])), 2) if late.any() else None
+        out["lead_over15_share_after_1s"] = round(float(np.mean(lead[late] > 15.0)), 3) if late.any() else None
+        # The closest approach to the handle once a grasp may close, up to the grasp (after it the goal is the held one).
+        dist = trace["tool_goal_m"][:, env] if grasp_step is None else trace["tool_goal_m"][:grasp_step + 1, env]
+        out["closest_to_goal_m"] = round(float(np.nanmin(dist)), 4) if np.isfinite(dist).any() else None
+        if grasp_step is not None:
+            out["grasp_error_m"] = round(float(trace["grasp_error_m"][grasp_step, env]), 4)
+            held = alive & grasped
+            out["lead_deg_median_held"] = round(float(np.nanmedian(lead[held])), 2) if held.any() else None
     if grasp_step is None:
         return out
     full = float(np.nanmax(travel[grasped]))
@@ -142,6 +168,16 @@ def score_episode(trace: dict, env: int, dt: float = interface.POLICY_DT) -> dic
     out["peak_speed_m_s"] = round(float(np.nanmax(np.abs(trace["v"][after, env]))), 3)
     out["arm_contact_max_n"] = round(float(np.nanmax(trace["arm_contact"][after, env])), 2)
     out["body_contact_max_n"] = round(float(np.nanmax(trace["body_contact"][after, env])), 2)
+    # S4's force budget (`mech_cfg.BUDGET_*`, stated before scoring): the drive above it on 0.1 s running, from the grasp
+    # to the end (a door held against its stop counts), and the time above it.
+    over = np.nan_to_num(trace["drive"][after, env]) > mech_cfg.BUDGET_N
+    run = best = 0
+    for flag in over:
+        run = run + 1 if flag else 0
+        best = max(best, run)
+    out["over_budget"] = bool(best >= mech_cfg.BUDGET_HOLD_STEPS)
+    out["over_budget_s"] = round(float(over.sum()) * dt, 3)
+    out["peak_drive_all_n"] = round(float(np.nanmax(trace["drive"][after, env])), 2)
     return out
 
 
@@ -189,8 +225,22 @@ def score(trace: dict, kinds: list[str], levels, placements_per_level: int | Non
                 capacity = float(level)
             elif not ok:
                 broken = True
+        of_kind = [e for e in episodes if e["kind"] == kind]
         summary["kinds"][kind] = {"capacity_n": capacity, "by_level": rows,
                                   "opened": sum(r["opened"] for r in rows),
                                   "of": sum(r["of"] for r in rows),
-                                  "fell": sum(r["fell"] for r in rows), "torn": sum(r["torn"] for r in rows)}
+                                  "fell": sum(r["fell"] for r in rows), "torn": sum(r["torn"] for r in rows),
+                                  "tilt_stopped": sum(e["tilt_step"] is not None for e in of_kind),
+                                  "over_budget": sum(e["over_budget"] for e in of_kind),
+                                  "opened_in_budget": sum(e["opened"] and not e["over_budget"] for e in of_kind)}
+    # S4's totals (the selection's and the paper's numbers): opened, opened within the budget, the stops.
+    summary["totals"] = {"opened": sum(e["opened"] for e in episodes),
+                         "opened_in_budget": sum(e["opened"] and not e["over_budget"] for e in episodes),
+                         "over_budget": sum(e["over_budget"] for e in episodes),
+                         "fell": sum(e["fell_step"] is not None for e in episodes),
+                         "tilt_stopped": sum(e["tilt_step"] is not None for e in episodes),
+                         "torn": sum(e["torn_step"] is not None for e in episodes),
+                         "peak_drive_all_n_median": median([e["peak_drive_all_n"] for e in episodes
+                                                            if "peak_drive_all_n" in e]),
+                         "peak_speed_m_s_median": median([e["peak_speed_m_s"] for e in episodes if "peak_speed_m_s" in e])}
     return {"summary": summary, "episodes": episodes}

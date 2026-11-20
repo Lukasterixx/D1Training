@@ -90,6 +90,68 @@ def build_key_plan(device) -> tuple[dict, list[dict]]:
     return {"handles": {k: v.to(device) for k, v in keys.items()}}, rows
 
 
+#: S3's new key sets (`--key_eval_draw`): the frozen grid's 108 keys drawn anew, uniformly within its span, on these
+#: streams -- validation to select on, test to score once (`docs/tool_paper_plan.md` S3).
+KEY_DRAW_SEEDS = {"validation": 20261122, "test": 20261123}
+
+
+def draw_key_plan(device, name: str, n: int = 108) -> tuple[dict, list[dict]]:
+    """`build_key_plan`'s keys drawn, not gridded: every grid column uniform within the grid's span (`KEY_EVAL_*`, which
+    `--key_hold` sets to the raised box's), the door's yaw and the estimate's errors as the grid draws them, on
+    `KEY_DRAW_SEEDS[name]`'s stream."""
+    c = leg_cfg
+    g = torch.Generator().manual_seed(KEY_DRAW_SEEDS[name])
+    span = lambda vals: min(vals) + torch.rand(n, generator=g) * (max(vals) - min(vals))
+    sym = lambda a: ((2 * torch.rand(n, generator=g) - 1) * a)
+    mid = lambda r: torch.full((n,), 0.5 * (r[0] + r[1]))
+    keys = {"door_ahead": span(c.KEY_EVAL_DOOR_AHEAD_M), "axis_side": span(c.KEY_EVAL_AXIS_SIDE_M),
+            "friction": span(c.KEY_EVAL_FRICTION_NM), "detent": span(c.KEY_EVAL_DETENT_NM),
+            "height": span(c.KEY_EVAL_AXIS_HEIGHT_M), "door_yaw": sym(getattr(c, "KEY_EVAL_DOOR_YAW_RAD", 0.12)),
+            "inertia": mid(c.KEY_INERTIA_KG_M2), "damping": mid(c.KEY_DAMPING), "mu": mid(c.KEY_MU),
+            "reach": mid(c.KEY_REACH_M), "err_side": sym(c.KEY_EST_ERROR_SIDE_M), "err_up": sym(c.KEY_EST_ERROR_UP_M),
+            "err_depth": sym(c.KEY_EST_ERROR_DEPTH_M), "err_rating": sym(c.KEY_EST_ERROR_RATING),
+            "descent": mid(c.KEY_DESCENT_M), "descend_speed": mid(c.DESCEND_SPEED_M_S), "turn_speed": mid(c.TURN_SPEED_RAD_S)}
+    reach = float(keys["reach"][0])
+    rows = []
+    for i in range(n):
+        row = {k: round(float(keys[k][i]), 5) for k in ("door_ahead", "axis_side", "height", "door_yaw", "err_side",
+                                                        "err_up", "err_depth", "err_rating")}
+        row.update({"friction_nm": round(float(keys["friction"][i]), 4), "detent_nm": round(float(keys["detent"][i]), 4),
+                    "key_set": name, "theta_max_deg": round(math.degrees(c.KEY_THETA_END_RAD), 3),
+                    "latch_deg": round(math.degrees(c.KEY_THETA_UNLOCK_RAD), 3), "key": True})
+        row["full_nm"] = round(row["friction_nm"] + row["detent_nm"], 3)
+        row["required_n"] = round((row["full_nm"] - c.KEY_GRAVITY_NM * math.cos(math.radians(10.0))) / reach, 2)
+        rows.append(row)
+    return {"handles": {k: v.to(device) for k, v in keys.items()}}, rows
+
+
+def rows_key_plan(device, path: str) -> tuple[dict, list[dict]]:
+    """A key plan from a json of rows (item 3, 2026-11-19: each a hold episode starting from its insertion's end,
+    `demos/combiner_key/insert_handover.py`): every row gives `door_ahead`, `axis_side`, `height`, `door_yaw`,
+    `friction_nm`, `detent_nm` and the estimate's `err_side`, `err_up`, `err_depth`, `err_rating`; the rest is
+    `build_key_plan`'s middle values."""
+    import json
+
+    c = leg_cfg
+    rows = [dict(r) for r in json.loads(open(path).read())["rows"]]
+    n = len(rows)
+    col = lambda key: torch.tensor([float(r[key]) for r in rows], dtype=torch.float32)
+    mid = lambda r: torch.full((n,), 0.5 * (r[0] + r[1]))
+    keys = {"door_ahead": col("door_ahead"), "axis_side": col("axis_side"), "height": col("height"),
+            "door_yaw": col("door_yaw"), "friction": col("friction_nm"), "detent": col("detent_nm"),
+            "inertia": mid(c.KEY_INERTIA_KG_M2), "damping": mid(c.KEY_DAMPING), "mu": mid(c.KEY_MU),
+            "reach": mid(c.KEY_REACH_M), "err_side": col("err_side"), "err_up": col("err_up"),
+            "err_depth": col("err_depth"), "err_rating": col("err_rating"), "descent": mid(c.KEY_DESCENT_M),
+            "descend_speed": mid(c.DESCEND_SPEED_M_S), "turn_speed": mid(c.TURN_SPEED_RAD_S)}
+    reach = float(keys["reach"][0])
+    for row in rows:
+        row.update({"theta_max_deg": round(math.degrees(c.KEY_THETA_END_RAD), 3),
+                    "latch_deg": round(math.degrees(c.KEY_THETA_UNLOCK_RAD), 3), "key": True})
+        row["full_nm"] = round(row["friction_nm"] + row["detent_nm"], 3)
+        row["required_n"] = round((row["full_nm"] - c.KEY_GRAVITY_NM * math.cos(math.radians(10.0))) / reach, 2)
+    return {"handles": {k: v.to(device) for k, v in keys.items()}}, rows
+
+
 def build_plan(device) -> tuple[dict, list[dict]]:
     rows = []
     for ahead in leg_cfg.EVAL_DOOR_AHEAD_M:

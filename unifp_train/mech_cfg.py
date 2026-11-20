@@ -346,3 +346,78 @@ def test_handle_spheres() -> list[tuple[float, float, float]]:
             dz = height - hook_cfg.GOAL_CENTRE_HEIGHT_M
             out.append((math.hypot(TEST_REACH_M, dz), math.atan2(dz, TEST_REACH_M), bearing))
     return out
+
+
+#: S4 (`docs/tool_paper_plan.md`, 2026-11-18): T1 on the deployable models -- the D1 link, `66600`'s legs -- is scored
+#: on placements nobody has scored before, drawn on new streams across the development and test grids' span (height
+#: 0.20-0.60 m, bearing +-0.55 rad, reach 0.42-0.45 m from the goal sphere's centre). Validation runs at the development
+#: conditions, test at the held-out ones (`TEST_CONDITIONS`); kinds and levels are the comparisons' four and 10-80 N.
+#: Frozen in `results/manifests/mech_t1_v2.json` (`s4_manifest`, written once); the evaluator reads the file.
+S4_MANIFEST = "results/manifests/mech_t1_v2.json"
+S4_SEEDS = {"validation": 20261127, "test": 20261128}
+S4_PLACEMENTS = {"validation": 12, "test": 16}
+S4_HEIGHT_RANGE_M = (0.20, 0.60)
+S4_BEARING_RANGE_RAD = (-0.55, 0.55)
+S4_REACH_RANGE_M = (0.42, 0.45)
+#: The task's force budget (the law's cap, `FORCE_LAW_MAX_N`), and a violation of it: the drive on the handle above the
+#: budget on `BUDGET_HOLD_STEPS` consecutive policy steps (0.1 s) during the push, so a single contact spike does not
+#: count. Stated 2026-11-18 before any S4 policy was scored.
+BUDGET_N = 80.0
+BUDGET_HOLD_STEPS = 5
+
+
+def s4_draw_placements(seed: int, n: int) -> list[list[float]]:
+    """`n` (radius, pitch, yaw) placements about the goal sphere's centre on their own stream."""
+    import torch
+
+    g = torch.Generator().manual_seed(seed)
+    u = lambda lo_hi: lo_hi[0] + float(torch.rand(1, generator=g)) * (lo_hi[1] - lo_hi[0])
+    out = []
+    for _ in range(n):
+        height, bearing, reach = u(S4_HEIGHT_RANGE_M), u(S4_BEARING_RANGE_RAD), u(S4_REACH_RANGE_M)
+        dz = height - hook_cfg.GOAL_CENTRE_HEIGHT_M
+        out.append([round(math.hypot(reach, dz), 6), round(math.atan2(dz, reach), 6), round(bearing, 6)])
+    return out
+
+
+def s4_manifest() -> dict:
+    return {"name": "mech_t1_v2", "version": 2, "written": "2026-11-18",
+            "plan": "docs/tool_paper_plan.md S4 (H1, E1); code unifp_train/mech_cfg.py (s4_manifest)",
+            "supersedes": "the development grid (hook_cfg.eval_handle_spheres) and the 2026-09-25 test set "
+                          "(mech_cfg.TEST_*), both spent by F-105 to F-110",
+            "placement_units": "(radius m, pitch rad, yaw rad) about the goal sphere's centre",
+            "kinds": list(EVAL_DEFAULT_KINDS), "levels_n": list(EVAL_LEVELS_N),
+            "budget_n": BUDGET_N, "budget_hold_steps": BUDGET_HOLD_STEPS,
+            "sets": {name: {"seed": S4_SEEDS[name], "conditions": dict(DEV_CONDITIONS if name == "validation"
+                                                                       else TEST_CONDITIONS),
+                            "placements": s4_draw_placements(S4_SEEDS[name], S4_PLACEMENTS[name])}
+                     for name in ("validation", "test")}}
+
+
+def s4_set(name: str, manifest: str | None = None) -> tuple[list[tuple[float, float, float]], dict]:
+    """A frozen S4 set's placements and conditions, from the manifest file (`S4_MANIFEST`, or `S4B_MANIFEST`)."""
+    import json
+    from pathlib import Path
+
+    man = json.loads((Path(__file__).resolve().parents[1] / (manifest or S4_MANIFEST)).read_text())
+    spec = man["sets"][name]
+    return [tuple(p) for p in spec["placements"]], dict(spec["conditions"])
+
+
+#: S4b (2026-11-19, the week 10 log): a T1 policy for the dog, trained with the bleed in the loop and from the dog's stance,
+#: needs sets that F-294 and F-295 did not read. Drawn as S4's on new streams; the same counts, conditions, kinds, levels
+#: and budget. Frozen in `results/manifests/mech_t1_v3.json` (`s4b_manifest`, written once).
+S4B_MANIFEST = "results/manifests/mech_t1_v3.json"
+S4B_SEEDS = {"validation": 20261201, "test": 20261202}
+
+
+def s4b_manifest() -> dict:
+    out = s4_manifest()
+    out.update({"name": "mech_t1_v3", "version": 3, "written": "2026-11-19",
+                "plan": "S4b, the week 10 log 2026-11-19; code unifp_train/mech_cfg.py (s4b_manifest)",
+                "supersedes": "mech_t1_v2 for anything after F-295 (its test set read by F-294 and F-295)"})
+    out["sets"] = {name: {"seed": S4B_SEEDS[name], "conditions": dict(DEV_CONDITIONS if name == "validation"
+                                                                      else TEST_CONDITIONS),
+                          "placements": s4_draw_placements(S4B_SEEDS[name], S4_PLACEMENTS[name])}
+                   for name in ("validation", "test")}
+    return out

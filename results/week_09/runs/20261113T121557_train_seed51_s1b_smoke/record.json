@@ -1,0 +1,63 @@
+{
+  "id": "20261113T121557_train_seed51_s1b_smoke",
+  "title": "S1b smoke: continuous keys (v3's region), damage stops episodes, descriptor; 3 iterations at 64 envs from widened ki6_force_8200",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T23:16:17+11:00",
+  "started_utc": "2026-11-13T12:15:57+00:00",
+  "source_dir": "logs/unifp_train/20261113T121557_train_seed51_s1b_smoke",
+  "mode": "train",
+  "seed": 51,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 3,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8202,
+  "final_checkpoint": {
+    "file": "model_8202.pt",
+    "sha256": "8a2cf2aa0e40e368e2016fee7dc36995b4306dd33190718ae0daa2bd4d43e4b1"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 10.829395294189453,
+      "last_step": 8202,
+      "mean_last_10": 6.06468137105306,
+      "min": 3.6823244094848633,
+      "max": 10.829395294189453,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 49.25,
+      "last_step": 8202,
+      "mean_last_10": 27.083333333333332,
+      "min": 16.0,
+      "max": 49.25,
+      "points": 3
+    },
+    "Policy/mean_std": {
+      "last": 0.13991358876228333,
+      "last_step": 8202,
+      "mean_last_10": 0.13991781075795492,
+      "min": 0.13989654183387756,
+      "max": 0.13994330167770386,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 358.0,
+      "last_step": 8202,
+      "mean_last_10": 368.3333333333333,
+      "min": 355.0,
+      "max": 392.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

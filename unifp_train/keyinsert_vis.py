@@ -130,8 +130,11 @@ class InsertMarkers:
         x6, y6, z6 = m6[:, :, 0], m6[:, :, 1], m6[:, :, 2]
         p6 = env._robot.data.body_pos_w[:, env._link6]
         quat6 = _frame_quat(x6, y6, z6)
-        back = keylock.KEY_BACK_LINK6_Z_M - lk.slip_m
-        at = lambda bx, by, bz: p6 + bx.unsqueeze(-1) * x6 + by.unsqueeze(-1) * y6 + bz.unsqueeze(-1) * z6
+        # Each environment's own key (S1): its back face, its shaft's offset and its give in the jaws.
+        back = lk.back_z - lk.slip_m + lk.give[:, 2]
+        ox, oy = lk.offset[:, 0] + lk.give[:, 0], lk.offset[:, 1] + lk.give[:, 1]
+        at = lambda bx, by, bz: (p6 + (bx + ox).unsqueeze(-1) * x6 + (by + oy).unsqueeze(-1) * y6
+                                 + bz.unsqueeze(-1) * z6)
         zero = torch.zeros_like(back)
         length = keylock.KEY_LENGTH_M
         started = env._layer_started

@@ -1,0 +1,63 @@
+{
+  "id": "20261118T131809_train_seed90_s4b_smoke_v2",
+  "title": "S4b smoke: law v2 from 66600, 3 of 4 starts from the dog's stance, 3 iterations",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-19T00:18:29+11:00",
+  "started_utc": "2026-11-18T13:18:09+00:00",
+  "source_dir": "logs/unifp_train/20261118T131809_train_seed90_s4b_smoke_v2",
+  "mode": "train",
+  "seed": 90,
+  "status": "complete",
+  "error": null,
+  "num_envs": 512,
+  "iterations": 3,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 66602,
+  "final_checkpoint": {
+    "file": "model_66602.pt",
+    "sha256": "a30983c5dcda06f98e391d46b4f995e6fe3863feb517fd7802984a8e50497fb9"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 6.571337699890137,
+      "last_step": 66602,
+      "mean_last_10": 4.1128515402476,
+      "min": 2.1039845943450928,
+      "max": 6.571337699890137,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 35.63888931274414,
+      "last_step": 66602,
+      "mean_last_10": 22.2776091893514,
+      "min": 11.466666221618652,
+      "max": 35.63888931274414,
+      "points": 3
+    },
+    "Policy/mean_std": {
+      "last": 0.526892364025116,
+      "last_step": 66602,
+      "mean_last_10": 0.5268104275067648,
+      "min": 0.5267391800880432,
+      "max": 0.526892364025116,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 12011.0,
+      "last_step": 66602,
+      "mean_last_10": 11810.666666666666,
+      "min": 10704.0,
+      "max": 12717.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

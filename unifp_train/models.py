@@ -61,16 +61,25 @@ class UniFPActor(MLPModel):
         num_single_obs: int = interface.NUM_SINGLE_OBS,
         num_latent: int = interface.NUM_LATENT,
         estimate_dim: int = observations.NUM_ESTIMATES,
+        num_tool_obs: int = 0,
     ) -> None:
-        # Set before `super().__init__()`: it calls `_get_latent_dim()`, which needs both.
+        # Set before `super().__init__()`: it calls `_get_latent_dim()`, which needs them.
         self.num_single_obs = num_single_obs
         self.num_latent = num_latent
+        #: S1 (`keyinsert_env`'s `tool_obs`): a tool descriptor group after the frame stack (the last group named in
+        #: `obs_groups`), read once -- not per frame -- by the encoder and by the actor beside the newest frame.
+        #: 0: no such group, the trained contract of every checkpoint before S1.
+        self.num_tool_obs = num_tool_obs
         super().__init__(obs, obs_groups, obs_set, output_dim, hidden_dims, activation,
                          obs_normalization, distribution_cfg)
 
-        if self.obs_dim % num_single_obs != 0:
+        frames = self.obs_dim - num_tool_obs
+        if num_tool_obs and obs[self.obs_groups[-1]].shape[-1] != num_tool_obs:
+            raise ValueError(f"num_tool_obs {num_tool_obs}: the last actor group {self.obs_groups[-1]!r} is "
+                             f"{obs[self.obs_groups[-1]].shape[-1]} wide; the tool group must come last")
+        if frames % num_single_obs != 0:
             raise ValueError(
-                f"The actor observation is {self.obs_dim} wide, which is not a whole number of "
+                f"The actor observation is {frames} wide, which is not a whole number of "
                 f"{num_single_obs}-wide frames. The encoder reads a frame stack; check obs_groups.")
 
         self.encoder = MLP(self.obs_dim, num_latent, list(encoder_hidden_dims), activation)
@@ -80,7 +89,7 @@ class UniFPActor(MLPModel):
 
     def _get_latent_dim(self) -> int:
         """Width of `self.mlp`'s input: the newest frame, plus the latent."""
-        return self.num_single_obs + self.num_latent
+        return self.num_single_obs + self.num_latent + self.num_tool_obs
 
     def get_latent(self, obs: TensorDict, masks: torch.Tensor | None = None,
                    hidden_state: HiddenState = None) -> torch.Tensor:
@@ -89,6 +98,9 @@ class UniFPActor(MLPModel):
         # The newest frame is *last* in the stack, which is `ObsHistory`'s convention and the
         # checkpoint's. Slicing the other end would feed the policy a 32-step-old observation and
         # would not fail anywhere -- it would just train badly.
+        if self.num_tool_obs:
+            frames, tool = stacked[:, :-self.num_tool_obs], stacked[:, -self.num_tool_obs:]
+            return torch.cat((frames[:, -self.num_single_obs:], latent, tool), dim=-1)
         return torch.cat((stacked[:, -self.num_single_obs:], latent), dim=-1)
 
     # --- the adaptation module ------------------------------------------------------------------

@@ -1,0 +1,63 @@
+{
+  "id": "20261118T230136_train_seed93_s4b_A_s93",
+  "title": "S4b A: T1 law v1 + bleed 1.0 s in the loop from 66600, seed 93, 3 of 4 starts from the dog's stance",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-19T13:18:19+11:00",
+  "started_utc": "2026-11-18T23:01:36+00:00",
+  "source_dir": "logs/unifp_train/20261118T230136_train_seed93_s4b_A_s93",
+  "mode": "train",
+  "seed": 93,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 68599,
+  "final_checkpoint": {
+    "file": "model_68599.pt",
+    "sha256": "5e2d6f4d0c2fd2bb6e0e02a2c6ca2e4e8305d7f41ea9344f1f11be4eb691aaa0"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 169.94007873535156,
+      "last_step": 68599,
+      "mean_last_10": 172.2419692993164,
+      "min": 2.4902141094207764,
+      "max": 212.2803955078125,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 966.8699951171875,
+      "last_step": 68599,
+      "mean_last_10": 974.3890014648438,
+      "min": 13.849056243896484,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 1.0359452962875366,
+      "last_step": 68599,
+      "mean_last_10": 1.0355260252952576,
+      "min": 0.5267242193222046,
+      "max": 1.0359452962875366,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 7957.0,
+      "last_step": 68599,
+      "mean_last_10": 7821.5,
+      "min": 6316.0,
+      "max": 23273.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

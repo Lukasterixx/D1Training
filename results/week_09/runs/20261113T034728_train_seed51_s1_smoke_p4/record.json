@@ -1,0 +1,63 @@
+{
+  "id": "20261113T034728_train_seed51_s1_smoke_p4",
+  "title": "S1 smoke: P4 (train keys, descriptor) from widened ki6_force_8200, 3 iterations at 64 envs",
+  "notes": "",
+  "week": 9,
+  "recorded_at": "2026-11-13T14:47:37+11:00",
+  "started_utc": "2026-11-13T03:47:28+00:00",
+  "source_dir": "logs/unifp_train/20261113T034728_train_seed51_s1_smoke_p4",
+  "mode": "train",
+  "seed": 51,
+  "status": "complete",
+  "error": null,
+  "num_envs": 64,
+  "iterations": 3,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 8202,
+  "final_checkpoint": {
+    "file": "model_8202.pt",
+    "sha256": "6b6859dfe4cc4e6f42ccbc40d416a8b912f72e35c317fa1a5792468e2b144438"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 4.584441661834717,
+      "last_step": 8202,
+      "mean_last_10": 4.291749318440755,
+      "min": 3.706364631652832,
+      "max": 4.584441661834717,
+      "points": 3
+    },
+    "Train/mean_episode_length": {
+      "last": 22.600000381469727,
+      "last_step": 8202,
+      "mean_last_10": 21.150000254313152,
+      "min": 18.25,
+      "max": 22.600000381469727,
+      "points": 3
+    },
+    "Policy/mean_std": {
+      "last": 0.13998344540596008,
+      "last_step": 8202,
+      "mean_last_10": 0.13997235894203186,
+      "min": 0.13996027410030365,
+      "max": 0.13998344540596008,
+      "points": 3
+    },
+    "Perf/total_fps": {
+      "last": 1315.0,
+      "last_step": 8202,
+      "mean_last_10": 1274.0,
+      "min": 1200.0,
+      "max": 1315.0,
+      "points": 3
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

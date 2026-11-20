@@ -5044,6 +5044,14 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - Before the next hardware session, settle the shoulder height (base bottom → shoulder axis: CAD 130.8 mm, ruler
     132.3) and the forearm (Joint3 → Joint5: CAD 204.7, old model 197.9) with calipers. `d1_ik.py` now plans with the
     CAD's.
+- **Note (2026-11-20):** the kept meshes show the change in the viewer. Lukas saw the wrist bracket off its mounting
+  screws in a close-up for the week 10 update. The forearm mesh's servo horn is centred 140.0 mm along `Link4` (the
+  old Joint5, 0.14018), and Joint5 and the `Link5` bracket now turn 147.0 mm along it, so the two sit 6.8 mm apart.
+  That is F-137's forearm difference, in the visual and collision meshes only (the same STL files). The joint origins,
+  the controlled point, `d1_ik.py` and the analytic task plants (key, lock, mechanisms) all use the CAD's frames.
+  The forearm's collision shape ends 6.8 mm short of the wrist axis; self-collision is on, but adjacent links are
+  filtered. Not tested whether that clearance changes any result. The caliper reading above has still not been taken
+  (week 10 log, 2026-11-20).
 
 ### F-140 — With the shoulder and elbow at 3.33 N·m, the policies trained against a 1.7 N·m elbow over-pull: the rope policy by ~6 N at every level, and the mechanism controller falls for the first time
 
@@ -9159,6 +9167,7 @@ result that changes a conclusion gets a new entry, and the old one is marked
 - **Status:** provisional (simulation only; rounds 4-5 two seeds, round 6 one; the lock's edge breaks, friction, the grip's slip and the damage line are drawn or estimated, not measured)
 - **Week:** 9
 - **Date:** 2026-11-13
+- **Note (2026-11-17): the variant comparison is confounded, see [F-291](#f-291).** The round-6 contrast (heavy legs 61 against 4, settled 58 against 44) compared two parents. Fine-tuned from one parent into both variants (S2), heavy-leg robustness follows the parent, not the variant, and the variant-by-shift interaction is not distinguishable from zero. The insertion results themselves stand.
 - **Note (revised 10:05, before it was reported):** the 08:40 draft of this finding said force-aware led inside the tilt stop (70-71 against 32-37) and read that lead as force awareness's. Round 6 (09:00-09:58) shows the lead was the recipe's tilt price: priced at -50 past 8 deg, position-only leaned 15-20 deg and the stop cut it. Stopped at 15 deg in training, it leads at the nominal conditions.
 - **Evidence:** [Week 9 log, 2026-11-13](week_09/notes.md), "A force-aware key insertion into the cam lock". Code: `unifp_train/keylock.py` (the lock, the PLA key, the task layer; `tests/test_keylock.py`, 11 tests), `keyinsert_env.py` (`run_unifp_train.py --key_hold --key_insert`), `keyinsert_eval.py` (96 frozen locks). Scripts and checkpoints: `logs/unifp_train/keyinsert/`.
   - **The task.**
@@ -9243,3 +9252,622 @@ result that changes a conclusion gets a new entry, and the old one is marked
   - The best key-hold checkpoint that turns the key along the layer's arc is round 28's `7000` (`logs/unifp_train/keyhold/kh28_7000.pt`). It replaces round 16's `6800` as the force-aware candidate, at the same success and 4-12 fewer inside the runner's bounds. Nothing of it has run on the dog, and the key hold has no runner (F-282).
   - Training on past +200 makes the force-aware policy lean, as in F-282 and F-284. The tilt stop in training, which fixed it for the insertion (F-284's round 6), is the next thing to try. The position-only fix needs running behind priced as well (a band both ways) before the variants can be compared on a following turn.
   - F-283's open question about the staged losses is answered in the negative: they do not need the jolt. Their cause is not found.
+- **Note (2026-11-17): three seeds, in [F-290](#f-290).** The jolt's removal and force-aware's kept success hold over three seeds from one parent. The scope's "likeliest reading" of position-only's stall (running behind left unpriced) is wrong: pricing it (the band both ways) does not free the stall.
+
+### F-286 — At the key insertion's reach, the D1's Joint2 already holds 2.66 of its 3.33 N·m for the arm and the RealSense, so a held tool past about 60 g is the arm's torque limit, not a tool to condition on: a 150 g key added 0.74 N·m, the arm swung 19 cm off its goal at the spawn and the task layer felt the lock's face 29-89 mm short of it; the same keys at 10 g insert as v4 does
+
+- **Status:** provisional (simulation; the arm model's gravity at one start pose, and one diagnostic evaluation)
+- **Week:** 9
+- **Date:** 2026-11-13
+- **Evidence:** [Week 9 log, 2026-11-13](week_09/notes.md), "S1, tool conditioning on the key insertion (H4)".
+  - Gravity torques at a typical insertion start (the jaw 0.46 m ahead of the base, 0.16 m up, the env's own `keyhold.ArmGravity` with the RealSense payload), against `motor_model.D1_EFFORT_LIMIT_NM` (3.3, 3.33, 3.33, 1.7, 1.7, 1.7):
+    - the arm alone, Joint2 −2.66 N·m and Joint3 −0.80;
+    - a key at its back face adds to Joint2: 10 g, 0.05; 60 g at 24 mm, 0.30; 150 g at 45 mm, 0.74; 250 g at 55 mm, 1.23.
+  - [The parent `ki6_force_8200` on S1's v1 validation keys](#/week/9/run/20261113T034558_leg_eval_seed1_s1_smoke_parent_val_f1), 1 N·m, of 48:
+    - v4 (10 g) 34, T-short (60 g) 15, T-long (150 g) 0 (47 false seats);
+    - the jaw a median 189 mm off its goal in the first 0.8 s for T-long, 124 mm for T-short, 65 mm for v4 (the known spawn swing, settled by step 30-40);
+    - the layer felt the face a median 61 mm short of it on T-long.
+  - [The same keys at 10 g each](#/week/9/run/20261113T035023_leg_eval_seed1_s1_diag_parent_val_mass10_f1): v4 34, T-short 27, T-long 11, touch errors 2-7 mm.
+- **Scope:**
+  - Joint2's 3.33 N·m is URDF-unverified: the servo, a Fashion Star RX18-U100H-M, is published at 3.14 N·m rated, 4.9 continuous and 9.8 stall (F-142). What the firmware lets it give is not measured, so the real margin may be larger.
+  - One start pose, the key's weight as a point at its back face, no inertia.
+  - T-long's remaining loss at 10 g came partly from v1's 0.2 mm/N grip (2.7-3.5 mm of give). Its give is now damped (`KeyLock.give_rate`).
+- **Implication:**
+  - A held tool's mass belongs to a family only within Joint2's margin at that reach. S1's v2 keys are 5-60 g (`results/manifests/keyinsert_tools_v2.json`); v1 (60-250 g) is superseded and its test set never scored.
+  - For the thesis's whole-body question ([thesis direction](../docs/thesis_b_plan.md)), this is the weak arm's limit in numbers: about 0.67 N·m to spare at the lock. A heavier tool needs the body to shorten the reach or carry it.
+  - Measuring the real D1's Joint2 holding torque would turn this into a dog fact.
+
+### F-287 — S1's one-seed pilot: on six held-out keys the tool descriptor did not help a force-aware insertion (P4 136 / 154 of 288 at 1 / 2 N·m, P3 with the same network and the descriptor at zero 148 / 146, the v4 specialist 124 / 141, the unselected parent 134 / 154); on the key past every end of the training range P4 pressed too lightly and seated 3 of 48 (P3 24); and every 1,500-iteration fine-tune traded damaged keys for false seats
+
+- **Status:** pilot (simulation; one seed per arm). H4 is neither supported nor falsified.
+- **Week:** 9
+- **Date:** 2026-11-13
+- **Evidence:** [Week 9 log, 2026-11-13](week_09/notes.md), "S1, tool conditioning on the key insertion (H4)" (the design and the selection rule, stated before scoring) and "S1's pilot (seed 51)".
+  - Code: `keylock.set_tool` and `descriptor`, `keyinsert_env` (true and believed keys), `models.UniFPActor(num_tool_obs)`, `run_unifp_train.widen_tool_checkpoint`, `keytools.py`, `tests/test_tool_conditioning.py`. Scripts in `logs/unifp_train/s1tools/` (`queue_arm.sh`, `select.py`, `s1_summary.py`).
+  - The arms, from round 6's `ki6_force_8200` widened with zero columns, seed 51, 1,500 iterations of round 6's recipe on `66600`'s legs:
+    - [P4](#/week/9/run/20261113T035503_train_seed51_s1p_P4_s51): the three train keys and the believed key's descriptor;
+    - [P3](#/week/9/run/20261113T035614_train_seed51_s1p_P3_s51): the same keys and network, the descriptor held at zero;
+    - [the specialist](#/week/9/run/20261113T070053_train_seed51_s1p_SP_s51): v4 alone.
+
+    Every arm's task layer places the believed key's tip.
+  - Selected on 144 validation episodes at 1 and 2 N·m (no falls anywhere): P4 `9600` 194 of 288, P3 `8400` 167, the specialist `8400` 158; the parent 180.
+  - **The held-out keys** (288 episodes per friction, the test locks, scored once; successes inside the 15 deg stop):
+    - P4 [136](#/week/9/run/20261113T081649_leg_eval_seed1_s1p_P4_s51_9600_test_f1) / [154](#/week/9/run/20261113T082122_leg_eval_seed1_s1p_P4_s51_9600_test_f2);
+    - P3 [148](#/week/9/run/20261113T072014_leg_eval_seed1_s1p_P3_s51_8400_test_f1) / [146](#/week/9/run/20261113T072405_leg_eval_seed1_s1p_P3_s51_8400_test_f2);
+    - the specialist [124](#/week/9/run/20261113T104636_leg_eval_seed1_s1p_SP_s51_8400_test_f1) / [141](#/week/9/run/20261113T105124_leg_eval_seed1_s1p_SP_s51_8400_test_f2);
+    - the parent [134](#/week/9/run/20261113T114313_leg_eval_seed1_s1_parent_8200_test_f1) / [154](#/week/9/run/20261113T114758_leg_eval_seed1_s1_parent_8200_test_f2).
+  - Episode by episode (exact McNemar): P4 against P3, p 0.31 and 0.54; P4 against the specialist, p 0.29 and 0.28; P3 against the specialist, p 0.05 and 0.73.
+  - **H-high** (55 mm, 2.5 mm offset, 0.12 mm/N, 60 g; in descriptor units past every training key): P4 3 / 18 of 48, P3 24 / 18. At 1 N·m P4's median peak was 10.7 N (P3 18.8), and its key ended a median 0.16 mm in, on the face: 43 false seats.
+  - **The training keys on the test locks** (of 144): P4 89 / 86, P3 79 / 69, the specialist 72 / 75 (T-long, which it never trained on, 15 / 17), the parent 69 / 90. The arms were selected at different iterations.
+  - **A wrong belief** (T-long's true key):
+    - the dynamics believed v4's: P4 27 / 24, the same as told the truth (26 / 22);
+    - the geometry 3 mm short with the offset missed: P4 18 / 25, P3 24 / 26;
+    - believing it holds v4: 1-16 of 48 for every arm.
+  - **The fine-tune's trade** (validation): the parent damaged 25-28 of 144 keys with 24-31 false seats. The arms pressed more gently (peaks 18-22 N against 27-29) and damaged 4-15, with 34-80 false seats.
+    - Training's own seated fractions rose to 0.8-0.9 meanwhile.
+    - The specialist declined most (to 33 / 46 at `9400`), on its own key as well.
+- **Scope:**
+  - One seed. The keys other than v4 are a designed family, not measured keys.
+  - The penalty contact is softer than PLA on steel (F-284), and the give model is a first-order lag.
+  - The selections came at different points in training. Training does not end an episode on damage, and the frozen sets do.
+  - Nothing has run on the dog.
+- **Implication:**
+  - In this design the descriptor cannot be credited, for two reasons. The fine-tune's own drift (lighter presses, false seats) moves each arm by more than the descriptor does. And three training keys let P4 learn a label rather than a scale: it fails exactly where it must extrapolate.
+  - Before the plan's three seeds, change the design:
+    - draw training keys from a continuous range and hold out regions;
+    - end training episodes on damage, as the frozen sets do;
+    - shorten the fine-tune.
+
+    The plan's seeds 52 and 53 are not run on this design. That redesign is built and queued as S1b (week 9 log, "S1b, the pilot redesigned after F-287"), its rule stated before scoring.
+  - The paper's H4 paragraph can say only this: in a one-seed pilot, explicit descriptors did not improve held-out keys over multi-key training without them, nor over the unadapted parent; an out-of-range descriptor degraded the press.
+
+### F-288 — S1b, the pilot redesigned with continuous training keys and damage ending episodes, did not make the tool descriptor help either: on held-out keys P4 seated 163 / 87 of 288 at 1 / 2 N·m against P3's 144 / 132, the specialist's 142 / 154 and the unadapted parent's 147 / 153; P4 led at 1 N·m and collapsed at 2 N·m, pressing a median 3-7 N where it pressed 9-11, on the keys it trained on as well
+
+- **Status:** pilot (simulation; one seed per arm; seeds 52 and 53 queued)
+- **Week:** 9
+- **Date:** 2026-11-14
+- **Evidence:** [Week 9 log](week_09/notes.md): "S1b, the pilot redesigned after F-287" (the design, the rule and the criteria for support, stated before scoring) and "S1b's pilot (seed 51)".
+  - Code: `keyinsert_env.cfg.tool_ranges` and `damage_stop` (`--insert_tools continuous`, `--insert_damage_stop`), `keytools.S1B_*`, `results/manifests/keyinsert_tools_v3.json`, `tests/test_keylock.py` (`S1bKeyTests`).
+  - The arms: P4, P3 and the specialist, 600 iterations from the widened `ki6_force_8200`, seed 51.
+  - Selected on 144 validation episodes at 1 + 2 N·m: P4 `8799` 139 of 288 (101 + 38), P3 `8799` 156, the specialist `8600` 172; the parent 155.
+  - **Held-out keys** (288 per friction, scored once):
+    - P4 [163](#/week/9/run/20261114T062802_leg_eval_seed1_s1b_P4_s51_8799_test_f1) / [87](#/week/9/run/20261114T063348_leg_eval_seed1_s1b_P4_s51_8799_test_f2);
+    - P3 [144](#/week/9/run/20261114T043157_leg_eval_seed1_s1b_P3_s51_8799_test_f1) / [132](#/week/9/run/20261114T043635_leg_eval_seed1_s1b_P3_s51_8799_test_f2);
+    - the specialist [142](#/week/9/run/20261114T054219_leg_eval_seed1_s1b_SP_s51_8600_test_f1) / [154](#/week/9/run/20261114T054731_leg_eval_seed1_s1b_SP_s51_8600_test_f2);
+    - the parent [147](#/week/9/run/20261114T063138_leg_eval_seed1_s1b_parent_8200_test_f1) / [153](#/week/9/run/20261114T063725_leg_eval_seed1_s1b_parent_8200_test_f2).
+  - Paired (exact McNemar): P4 against P3, p 0.08 at 1 N·m (P4 ahead) and < 0.001 at 2 N·m (P3 ahead); P4 against the specialist, p 0.06 and < 0.001.
+  - **On the train-region keys at the test locks** (of 144): P4 95 / 45, P3 83 / 83, the specialist 81 / 89, the parent 88 / 90.
+  - The key past the region in compliance and mass (X-dyn, 0.12 mm/N and 58 g) defeats every arm: 6-17 of 48.
+  - **Damage against false seats** (validation): P3 damaged 11-22 of 144 and false-seated 37-84, the parent 41-42 and 17-32. The specialist false-seated 22-47.
+- **Scope:**
+  - One seed. The keys are a designed family.
+  - The parent was trained without the damage stop.
+  - Validation and test locks are new (v3). The numbers are not comparable with v2's.
+  - Nothing has run on the dog.
+- **Implication:**
+  - Across two designs ([F-287](#f-287) and this), the descriptor's effect is on how hard P4 presses, and the success follows the press, not the key. S1's P4 pressed too lightly on an out-of-range key, and S1b's P4 on the higher leg friction.
+  - No fine-tune beats the unadapted parent on held-out keys at both frictions. H4's comparison is therefore dominated by the fine-tune's press drift, which ending episodes on damage made worse for the multi-key arms. The fix to try is in the reward or the layer's seated judgement: false seats are the layer believing a partly inserted key is in.
+  - Seeds 52 and 53 will say whether P4's friction collapse is the seed's or the design's. The plan's falsification of H4 needs that spread.
+- **Note (2026-11-17): seeds 52 and 53 answer it, in [F-289](#f-289).** P4's collapse at 2 N·m was seed 51's (seeds 52 and 53 press 10.5 and 9.2 N and seat 169 and 144 of 288). The headline's "P4 collapses at 2 N·m" is one seed's. Its main result, that the descriptor did not help, holds over three seeds.
+
+### F-289 — Over three seeds, the tool descriptor does not help a force-aware key insertion generalize to held-out keys: P4 seats 466 / 400 of 864 at 1 / 2 N·m, P3 (the same network, the descriptor zero) 491 / 462, the v4 specialist 412 / 449; P4 is never ahead of P3 beyond chance in any seed and is behind in seed 53 (20 against 61 discordant, p < 0.001), so H4 is falsified on S1b's design; training on several keys without the descriptor beats the specialist in two seeds of three; F-288's collapse at 2 N·m was seed 51's
+
+- **Status:** provisional (simulation; three seeds per arm; one designed key family)
+- **Week:** 9
+- **Date:** 2026-11-14 (written 2026-11-17)
+- **Evidence:** [Week 9 log](week_09/notes.md): "S1b, the pilot redesigned after F-287" (the rule and the criteria, stated before scoring), "S1b's pilot (seed 51)" and "S1b's seeds 52 and 53".
+  - Script: `logs/unifp_train/s1tools/s1_summary.py --prefix s1b 51 52 53` (`s1b_summary.json`). The recipe, manifest and code are F-288's.
+  - Selected (validation, 1 + 2 N·m, of 288; no falls):
+    - seed 52: P4 `8600` 180, P3 `8400` 174, the specialist `8400` 158;
+    - seed 53: P4 `8799` 154, P3 `8799` 186, the specialist `8799` 164.
+  - **Held-out keys** (of 288 per friction, 1 / 2 N·m):
+    - seed 52: P4 [166](#/week/9/run/20261114T110704_leg_eval_seed1_s1b_P4_s52_8600_test_f1) / [169](#/week/9/run/20261114T111147_leg_eval_seed1_s1b_P4_s52_8600_test_f2), P3 [169](#/week/9/run/20261114T100633_leg_eval_seed1_s1b_P3_s52_8400_test_f1) / [167](#/week/9/run/20261114T101105_leg_eval_seed1_s1b_P3_s52_8400_test_f2), the specialist [139](#/week/9/run/20261114T115950_leg_eval_seed1_s1b_SP_s52_8400_test_f1) / [149](#/week/9/run/20261114T120102_leg_eval_seed1_s1b_SP_s52_8400_test_f2);
+    - seed 53: P4 [137](#/week/9/run/20261114T115253_leg_eval_seed1_s1b_P4_s53_8799_test_f1) / [144](#/week/9/run/20261114T115410_leg_eval_seed1_s1b_P4_s53_8799_test_f2), P3 [178](#/week/9/run/20261114T114306_leg_eval_seed1_s1b_P3_s53_8799_test_f1) / [163](#/week/9/run/20261114T114423_leg_eval_seed1_s1b_P3_s53_8799_test_f2), the specialist [131](#/week/9/run/20261114T120652_leg_eval_seed1_s1b_SP_s53_8799_test_f1) / [146](#/week/9/run/20261114T120807_leg_eval_seed1_s1b_SP_s53_8799_test_f2);
+    - seed 51 (F-288): P4 163 / 87, P3 144 / 132, the specialist 142 / 154; the unadapted parent 147 / 153.
+  - **P4 against P3, the same episodes** (exact McNemar, only P4 / only P3):
+    - 1 N·m: seed 51 62 / 43 (p 0.08), seed 52 48 / 51 (0.84), seed 53 20 / 61 (< 0.001);
+    - 2 N·m: 37 / 82 (< 0.001), 49 / 47 (0.92), 42 / 61 (0.08).
+  - **P3 against the specialist at 1 N·m:** 58 / 56 (0.93), 68 / 38 (0.005), 68 / 21 (< 0.001).
+  - **Median press at 2 N·m:** P4 7.1, 10.5 and 9.2 N; P3 8.6, 7.9 and 9.3.
+  - Train-region keys at the test locks and wrong beliefs: P4 no better than P3 in seeds 52 and 53. Seed 51's lead on W-all does not repeat.
+- **Scope:**
+  - Simulation only. One key family, designed, with the descriptor the true key: no estimated descriptor was tried.
+  - Fine-tunes of 600 iterations from one parent (`ki6_force_8200`, widened with zero columns).
+  - The parent is one checkpoint, so it has no seed spread.
+- **Implication:**
+  - **H4 as the plan states it is falsified for keys:** P4 is no better than P3 within seed spread. The paper reports it so, with the pilot's two designs.
+  - What does carry is the family: P3 trained on the continuous keys generalizes better than the single-key specialist in two seeds of three. That is the tool paper's H4 with the descriptor removed, "train on the family", not "tell the policy the tool".
+  - F-288's friction collapse was one seed's: seed 51's P4 pressed 7.1 N at 2 N·m, seeds 52 and 53 10.5 and 9.2. F-288's implication that "the descriptor moves the press" rests on S1's P4 and on that seed.
+  - False seats stay high in every multi-key arm (139-264 of 576; the parent 102). If keys are kept for the paper, the layer's seated test is the fix to try before any further descriptor work.
+- **Note (2026-11-18):** the seated test was tried ([F-292](#f-292)). A located test at evaluation time does not fix the false seats, and the simulated keyway's weak roll constraint is under both the seats and the jams. The contact needs checking against the real lock first.
+
+### F-290 — Over three seeds from one parent and on fresh test keys, paying the key's turn only up to the layer's arc (H2) removes F-283's jolt every time: without it, all 1,206 unlocked keys run ahead at 550-650 deg/s with Joint6 leading 43-45 deg; with it, 5 of 4,008 do, at 55-215 deg/s; following costs nothing in success from the dog's stance (221 / 301 of 324 against 211 / 291) and gains from the settled stance and in the staged sequence (320 against 276, 266 against 216); pricing the key falling behind as well (the band) cuts the lean at 1 N·m but costs force-aware at 2 N·m, and it does not free position-only's stall; force-aware is ahead of position-only on the turn from the dog's stance in every seed, position-only in the staged sequence
+
+- **Status:** provisional (simulation; three seeds per arm, one parent)
+- **Week:** 9
+- **Date:** 2026-11-14 (written 2026-11-17)
+- **Evidence:** [Week 9 log](week_09/notes.md): "S3, the reference against the outcome reward on the key hold" (the arms, the band and the rule, stated before scoring) and "S3's test".
+  - Code: `keyhold.turn_behind`, `--key_turn_behind_weight`, `leg_eval.draw_key_plan` (`--key_eval_draw`). Scripts: `logs/unifp_train/s1tools/queue_s3.sh`, `select3.py`, `kev.sh`, `s3_summary.py`, `s3_paired.py`.
+  - The runs: 400 iterations of round 28's recipe from round 16's force-aware `kh16_6800`, seeds 71-73:
+    - A force-aware, outcome reward;
+    - B force-aware, following (-15);
+    - C force-aware, following and the band (-15, behind -15);
+    - D position-only, following and the band;
+    - E position-only, following.
+  - Scored once on the drawn test keys (seed 20261123, 108 keys).
+  - **All four** (of 324 over the seeds; dog's stance 1 / 2 N·m, settled, staged): A 211 / 291 / 276 / 216; B 221 / 301 / 320 / 266; C 219 / 257 / 320 / 267; D 180 / 132 / 264 / 290; E 175 / 151 / 270 / 291. Per-seed runs are linked in the log.
+  - **Paired** (exact McNemar over the seeds, only first / only second):
+    - A-B: 21 / 31 (p 0.21), 22 / 32 (0.22), 3 / 47 (< 0.001), 39 / 89 (< 0.001);
+    - B-C at 2 N·m: 47 / 3 (< 0.001);
+    - D-E: 27 / 22 (0.57), 53 / 72 (0.11);
+    - C-D: 42 / 3, 145 / 20, 58 / 2 (each < 0.001), staged 20 / 43 (0.005).
+  - **Inside the runner's bounds at 1 N·m** (the 15 deg tilt stop decides it; median tilt 14.4-16.0 deg in every arm): A 103, B 67, C 113, D 117, E 32. The band: B-C 30 / 76, E-D 4 / 89.
+  - **Position-only's stall:** at 2 N·m D fails to unlock 190 of 324 keys and E 163; C fails 66.
+- **Scope:**
+  - Simulation: the analytic lock plant, the hand tied to the key by a spring, Joint6 following the key by script, `66600`'s legs (0-2 N·m, 1-4 steps) and the D1 link.
+  - The runner test is J1-J5's lead, tilt and support legs. Joint6's 43-45 deg in A is outside it, and the real wrist at 55-215 deg/s is not validated.
+  - Position-only starts from the force-aware parent and inherits its features.
+  - 400-iteration fine-tunes; the band's cost at 2 N·m may change with longer training (not tested).
+- **Implication:**
+  - **H2 holds over three seeds:** the following reward is what removes the jolt, at no success cost from the dog's stance and with gains elsewhere. [F-285](#f-285)'s one-seed result is confirmed.
+  - **F-285's reading of position-only's stall is wrong.** Pricing the key falling behind does not free it (D-E p 0.57 and 0.11). The stall is the variant's, not the reward's one-sidedness. Position-only unlocks later on the arc and fails to unlock at the higher friction.
+  - **H3 on the key turn:** force-aware wins from the dog's stance, the body shift, in every seed. Position-only wins in the staged sequence. Both variants share the force-aware parent (S2's family F caveat), so this does not separate force awareness from the parent the way S2 tries to.
+  - B (following, no band) is the key hold's best arm overall: the most successes at 2 N·m and settled, with no jolt. C trades 2 N·m success for fewer lean failures at 1 N·m.
+  - Nothing has run on the dog.
+
+### F-291 — Twins fine-tuned from one parent do not trade places on the key insertion (H3): over 12 twins, 16 conditions and 18,432 test episodes, the pre-stated contrast is +0.25 log-odds in family F and −0.02 in family P, so H3 is not supported; with the condition as the unit neither family's is distinguishable from zero (permutation p 0.23 and 0.995); position-only is level or ahead nearly everywhere; and heavy legs split by parent (31-72 of 96 against 0-25, both variants alike), so F-284's heavy-leg contrast was its two parents', not force awareness's
+
+- **Status:** provisional (simulation; two families × two variants × three seeds; one task)
+- **Week:** 10
+- **Date:** 2026-11-17
+- **Evidence:** [Week 9 log](week_09/notes.md), "S2, twins from a common parent" (the parents, the grid, the rule and the analysis, stated before scoring); [Week 10 log](week_10/notes.md), "S2's grid and analysis".
+  - Scripts: `logs/unifp_train/s1tools/queue_twin.sh`, `grid.sh`, `s2_analysis.py` (run with `logs/analysis_venv/bin/python`; `s2_analysis.json`, `s2_analysis_drop_stiff.json`). Manifest: `results/manifests/keyinsert_twins_v1.json`.
+  - The twins: 800 iterations of round 6's recipe, seeds 61-63:
+    - family F from `ki6_force_8200`, force-aware selected `8600` / `8400` / `8800`, position-only `8800` / `8400` / `8400`;
+    - family P from `ki6_pos_8600`, force-aware `9000` / `8800` / `8800`, position-only `9200` / `9200` / `9399`.
+  - The grid on 96 test locks: nominal, six body shifts, nine lock and tool shifts. Per-twin links are in the week 10 log.
+  - Nominal, mean of three seeds (of 96): F force 61.0, F position 77.3, P force 71.7, P position 73.3.
+  - Heavy legs: F force 53.3, F position 58.0, P force 8.3, P position 7.7.
+  - **The pre-stated mixed-effects logistic** (variational Bayes; seed and condition random): the contrast (position − force under tool) − (under body) is pooled +0.125 (~95% +0.03 to +0.22), family F +0.250 (+0.12 to +0.38) and family P −0.020 (−0.16 to +0.12).
+  - **The pre-stated GEE check** (clustered by condition): pooled +0.143 (p 0.28), F +0.26 (p 0.15), P +0.00 (p 0.98).
+  - **Without the ×1.5 contact:** F +0.258, P +0.014. The condition is kept: its peaks have a heavier tail at the same maximum (p90 63 against 36 N, max 104 against 101).
+  - **Post hoc, labelled:** the condition-level gaps' body against tool difference is F +0.23 (Welch p 0.31, permutation p 0.23) and P +0.00 (0.995 and 0.995). A run random effect in place of the seed's gives +0.122 (sd 0.048).
+- **Scope:**
+  - Simulation only, one task (the key insertion into the cam lock), and the twins' key is v4 (rigid and massless).
+  - Force-aware means a commanded press and a compliant target. Neither variant's latent is force-supervised in the insertion.
+  - Body conditions are on the probe legs at 15-20 ms.
+  - Two parents, so "the parent decides" rests on two.
+  - The variational fit's interval is too narrow for this design (the variant gap varies by condition). The GEE and the condition-level test are the honest uncertainty, and the second was added after seeing the first.
+- **Implication:**
+  - **H3, as the plan states it, is falsified for the insertion:** the variant-by-shift interaction is not distinguishable from zero in family P, nor in F once conditions are the unit.
+  - **[F-284](#f-284)'s "trade places" reading was confounded by the parents.** Its heavy-leg 61 against 4 compared `ki6_force_8200` with `ki6_pos_8600`. With each parent fine-tuned into both variants, heavy-leg robustness follows the parent. That is the reviewer's attack the plan anticipated, and it lands.
+  - The settled stance is the one condition where force-aware leads in both families (by 4-6 of 96, mixed per seed). It is too small to carry a claim alone.
+  - For the paper: the tool-insertion case for force awareness is not made by these policies. The key turn's case is better ([F-290](#f-290), force-aware ahead from the dog's stance in every seed), but it has only the force-aware parent.
+- **Note (2026-11-19): one more shift, the same reading, see [F-300](#f-300).** On a keyway that refuses misrolled keys, the twins' contrast is +65 in family F and −142 in family P, each family's sign the same in every seed. The variant's effect again takes the parent's sign.
+
+### F-292 — The insertion layer's false seats come from keys it cannot tell from seated: 87% of true seats go straight into the keyway and touch the floor, never the face, so a key jammed short is indistinguishable and the layer is built to finish both; a "located" seated test (the face touched first with the wrist rolled 45 deg) does not fix it at evaluation time; and the simulated keyway hardly constrains the key's roll, so both the seats and the jams rest on keys entering at rolls a real lock would refuse
+
+- **Status:** established (diagnosis, simulation); located test not validated
+- **Week:** 10
+- **Date:** 2026-11-18
+- **Evidence:** [Week 10 log](week_10/notes.md), "S1c: why the layer believes keys seated that are not". The runs:
+  - S1b's nine selected checkpoints and the parent `ki6_force_8200` on v3's validation locks (144 per run) at 1 and 2 N·m, with the old layer (20 runs) and three located revisions (17);
+  - S1b's 20 test runs' traces;
+  - `KeyLock` alone on the CPU.
+- **Scope:** simulation, one insertion task, S1b's policies (trained with the old layer), validation locks.
+  - The located test is opt-in code, not validated. S1c's test set (`keyinsert_tools_v4`) is unscored.
+  - The roll measurements are the contact model's, not the real lock's.
+- **Result:**
+  - **The diagnosis (old layer, validation):** 793 of 2,431 believed seats were false. At the touch:
+    - 1,432 of 1,638 true seats had the tip already inside the keyway;
+    - false seats: 377 inside, 336 on the face, 80 in free air.
+  - **Two exits, most false seats.** On S1b's test traces, 1,454 of 1,615 false seats came through the two exits that accept a key stopped short: the jiggle's time-out and the held-in exit.
+  - **The probe** read "held" for 10 of 568 touches inside the keyway (first seven runs). The measured tip moves 2.2 mm (median) there as the key bends in the jaws.
+  - **The located test** (successes inside 15 deg, against the old layer on the same episodes):
+
+    | revision | located | old layer | runs | false seats (located / old) |
+    |---|---|---|---|---|
+    | v1 | 241 | 397 | 5 | 105 / 248 |
+    | v2 | 212 | 629 | 8 | 308 / 397 |
+    | v3 | 222 | 351 | 4 | 112 / 137 |
+
+    The face is located to 0.4 mm when the arm behaves, but these policies push the hand 8-10 mm ahead while the wrist rolls 45 deg, so most faces are found in free air. The parent is level (64 against 70, p 0.53), with its damaged keys falling from 41 to 0.
+  - **The contact:**
+    - a key rolled 0-4 deg off goes to the floor against at most 0.4 N;
+    - at 6-10 deg the 8-12 N press sinks it several millimetres;
+    - the wards' clearance is about 1.3 deg;
+    - 62% of true seats and 75% of false ones entered more than 2 deg off the keyway's roll.
+- **Implication:**
+  - **No seated test built on the arm's reports can tell a straight-in key at the floor from one jammed short.** Only a touch known to be the face can, and that needs a policy trained with it.
+  - **More of the same is not the next step for keys.** Not more evaluation-time layer tuning, and not more descriptor work on this contact.
+  - **First, a measurement:** whether the PLA key enters the cam lock rolled 2-8 deg off, and how deep a misrolled key goes under 10 N.
+  - **Then** a contact revision that stops a misrolled key, and only then a layer trained in the loop.
+  - **F-284 to F-291's insertion numbers** all rest on this contact. Their comparisons share it, so they stand as comparisons within this model.
+
+### F-293 — The insertion policy `ki6_force_8200` runs in numpy as it runs in Isaac (actions within 2.9e-6, arm targets 1.6e-6 rad, the layer's every decision equal), and on `66600`'s four recorded stands its approach passes the replay gate stated before scoring: Joint1-5's lead at most 3.6 deg, leg targets at most 0.39 / 0.30 rad, every IK solved, no touch felt in free air
+
+- **Status:** established (simulation and replay); not run on the dog
+- **Week:** 10
+- **Date:** 2026-11-18
+- **Evidence:** [Week 10 log](week_10/notes.md), "S5: `ki6_force_8200` exported to numpy". Files:
+  - `checkpoints/insert_force_ki6_8200.npz`;
+  - `demos/combiner_key/robot/insert_policy.py`, `check_insert.py`, `insert_gate.py`;
+  - `tests/test_insert_policy.py`;
+  - the dump run and its dump-off twin (identical in all 96 episodes).
+- **Scope:**
+  - **Parity:** 8 episodes and 4,875 steps of the frozen 96 at 1 N·m, the old seated test. The located test is ported but not checked against an Isaac dump.
+  - **The gate:** the approach only, in free space, with the legs replayed open loop from `66600`'s stands. It shows nothing about the press, search or seat, the legs' answer to this policy, or the dog's own lock estimate.
+- **Result:**
+  - **Parity:** frames 2.2e-6 (the commands block, the rest ≤ 2.8e-8), actions 2.9e-6, leg targets 7.2e-8 rad, arm targets and IK reference 1.6e-6 rad, measured tip ≤ 1.8e-7 m, layer phase and decisions equal on every step.
+  - **The gate:** pass on all four stands at five placements, with yaw as recorded and with it held at zero.
+  - **Also found:**
+    - the hand runs 3-5 mm ahead of its reference by the reports;
+    - Joint2's static gravity load is 0.87-0.92 of its limit at this reach;
+    - the frozen 96 moves by about 3 of 96 under a rounding-level change (69 on 13 Nov, 72 today, same command).
+- **Implication:**
+  - The simulation side of E5's learned insertion is ready to integrate into the dog program, which is not yet done: the runner has no lock estimate from perception, and the box is not raised to the trained 0.45 m.
+  - A live run would test what the gate cannot: the press and seat against a real face, and the legs.
+  - With Joint2 near its limit just holding the arm out, the press must come from the body. That is the policy's design (F-284), never measured on the dog.
+
+### F-294 — Through the D1 link on `66600`'s legs, a policy trained with the task layer's force law in the loop opens T1's held mechanisms within the 80 N budget in 2,268 of 3,072 held-out test episodes over three seeds (615-870 of 1,024 a seed); the next best arm, the outcome-trained policy given the layer zero-shot, opens 1,049; the goal-only policy 563, `66600` with the layer 193 of 1,024, the position script 19; every per-seed paired p is below 1e-58; the layer-trained policy alone breaks the budget, in 176 episodes, 172 of them pushing on the end stop after the mechanism had opened
+
+- **Status:** established (simulation, three seeds, a frozen test set read once); not run on the dog
+- **Week:** 10
+- **Date:** 2026-11-18
+- **Evidence:** [Week 10 log](week_10/notes.md), from "S4 started" to "S4 on the test set". Files:
+  - the frozen sets in `results/manifests/mech_t1_v2.json`;
+  - the selections in `logs/unifp_train/s1tools/s4_<law|out>_s<seed>_selected.json` (rule stated before scoring);
+  - the analysis in `s1tools/s4_compare.py` and `s4_compare_test.json`;
+  - 6 trainings, 48 validation scorings and 22 test scorings, all recorded.
+- **Scope:**
+  - **The task:** simulation, T1's four invented kinds (button, door, drawer, latch) at 10-80 N, 16 held-out placements.
+  - **The models:** `66600`'s probe legs at 1 and 2 N·m; the D1 link report-locked with the Follower; the 15 deg tilt stop.
+  - **The training:** one parent (`66600`, never trained on a mechanism), 2,000 iterations an arm.
+  - **The layer:** law v1 (F-106's PI, capped at 80 N, no bleed), given the simulated handle's position.
+  - **The budget:** the drive on the handle above 80 N for 0.1 s, from the grasp to the end, a mechanism held on its stop included.
+  - Goal-only's force curriculum stalled at 35-40 N under the same rule that took (i)'s to 80 N, so the gap is that of this budget.
+- **Result:**
+
+  | arm | opened within the budget | over budget | tilt stops |
+  |---|---|---|---|
+  | (i) layer in training | 2,268 / 3,072 (870, 783, 615) | 176 | 12 |
+  | (iii)+layer zero-shot | 1,049 / 3,072 | 0 | 261 |
+  | (iii) goal only | 563 / 3,072 | 0 | 0 |
+  | (ii) `66600` + layer zero-shot | 193 / 1,024 | 0 | 18 |
+  | (iv) position script | 19 / 1,024 | 0 | 0 |
+
+  - **(i) against the others, pooled:** 1,725 / 20 episodes against (iii) and 1,281 / 62 against (iii)+layer (exact McNemar, p < 1e-296).
+  - **(i) by level:** it opens 0.99 of the 10 N mechanisms and 0.54 of the 80 N ones. Every other arm opens nothing above 60 N; the layer zero-shot reaches 20-30 N.
+  - **(i)'s violations:** 172 of 176 are after the opening, with peak drive median 108 N, max 133 N, and 157 of them are seed 81's. No episode fell or tore a handle out.
+- **Implication:**
+  - **H1 holds for T1 on the deployable models, in simulation, over three seeds.** F-105 to F-108 were the old 50 Hz arm and one seed. The plan's H1 row now has T1 on the D1 link.
+  - **Training with the layer, not adding it, is what gives the force.** The layer zero-shot helps a policy that was not trained with it (1,049 against 563) but tips the dog on doors (261 stops).
+  - **The force limit is still the layer's problem, as in F-108.** The violations are the law's integral winding up on the end stop. A bleed (`bleed_s`) or a stop on arrival is the next change to test, before any mechanism run on the dog.
+    - *2026-11-18 note:* tested at evaluation time, τ = 1.0 s fixed in advance: violations 176 → 23 on the test set, within the budget 2,268 → 2,412, opened unchanged ([F-295](#f-295)).
+  - **Not shown:**
+    - a handle seen through tags;
+    - that goal-only training catches up with a longer budget (F-107's did on the old arm, over about 2,850 iterations and two reward changes);
+    - the claw combiner demo on these models.
+  - *2026-11-19 note (scope, nothing rescored):* the grasp closes wherever the tool settles, in evaluation as in training (`mech_env._engage_due` builds the mechanism at `_tip_pos()`; the planned handle sets only the bearing). That is F-115's limit, and it was left out of the scope above. So "opened" counts the opening once attached, not reaching the handle, for every arm alike. The arrival error is not scored at evaluation. Training's grows (S4b A s91 6.8 → 12.6 cm). At S4b's evaluation it is 6-7 cm, and the arm's targets lead the D1 link by a median 53-65 deg once holding ([F-304](#f-304)); S4's arms were not measured, but trained the same way.
+
+### F-295 — The integral bleed removes most of F-294's budget violations at evaluation time: with τ = 1.0 s (fixed in advance) on the three layer-trained checkpoints, test-set violations fall from 176 to 23 of 3,072 and mechanisms opened within the 80 N budget rise from 2,268 to 2,412 (paired 164 / 20, p 2.6e-29), with as many opened (2,435 against 2,444), tilt stops 12 → 15 and no falls; so the violations were the law's wind-up, not the policy's
+
+- **Status:** established (simulation, three seeds, validation and test); not run on the dog
+- **Week:** 10
+- **Date:** 2026-11-18
+- **Evidence:** [Week 10 log](week_10/notes.md), "S4 follow-up: does the integral bleed keep (i) inside the budget?". The test was stated before scoring; 12 runs recorded (`s4_<ckpt>_bleed1_<val|test>_f<1|2>`).
+- **Scope:**
+  - F-294's (i) checkpoints, sets, legs and link.
+  - The bleed is `--force_law_bleed 1.0` (`mech_cfg.LAW_V2_BLEED_S`). It decays the law's integral while the handle is within 5 mm of its reference.
+  - The policies were trained on v1 without it.
+  - The test set is F-294's, reused for one comparison stated in advance with no parameter chosen. Validation agrees: violations 162 → 41, within the budget 1,691 → 1,813 of 2,304, p 7.5e-24.
+- **Result:**
+  - **The violations removed:** 87% of them. Most were seed 81's: 137 → 15.
+  - **Left:** 23 on the test set, 21 after opening.
+  - **Not fixed:** seed 81's validation button tears, 15 with the bleed against 18 without. A 1.5 cm button leaves the integral little time inside the 5 mm window.
+- **Implication:**
+  - For T1 the force budget is mostly a property of the layer's law, and a fixed bleed fixes most of it without retraining.
+  - A mechanism policy for the dog should run the layer with the bleed. It still needs a hard limit for what remains: a cap on the drive, or a stop on arrival, untested.
+  - F-294's comparison between arms is unchanged by this: no other arm violated the budget.
+
+### F-296 — On the dog the learned insertion needs the base's pose against the lock, and S5's gate could not show it: in simulation, with the layer and the reference taking the base where it was when the layer started (a runner with no odometry), `ki6_force_8200` seats 0 of 192 frozen keys and believes all 192 seated; a planted-feet leg odometry recovers 111, against 154 with the simulator's base; the base moves 18 mm forward and 43 mm sideways at the median after the stance settles, and the feet slide 17-74 mm while loaded
+
+- **Status:** established (simulation); the dog's own foot slip not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 1b: what the learned insertion needs on the dog". Files:
+  - the base traced in `drift_force_f1`/`f2` (`--insert_trace_body`);
+  - `demos/combiner_key/robot/base_odometry.py` and `check_odometry.py`, tested by `tests/test_base_odometry.py`;
+  - `--insert_base_source fixed|legs` (`keyinsert_env.base_source`);
+  - six frozen-96 runs, recorded.
+- **Scope:**
+  - Simulation, the frozen 96 locks, the default contact, `66600`'s probe legs at 1 and 2 N·m, the dog's stance.
+  - The odometry in simulation is exact kinematics: the true base plus the loaded feet's mean slip since each was anchored. The dog's adds the URDF's and the encoders' errors (forward kinematics against Isaac's feet: 1-2 mm).
+  - The attitude is the simulator's throughout (the IMU's on the dog).
+- **Result:**
+  - **Held fixed:** 0 / 192, 192 believed, 192 false seats (paired 72 / 0 and 82 / 0 against the true base, p < 1e-21).
+  - **Leg odometry:** 48 and 63 of 96 against 72 and 82 (paired 32 / 8 and 25 / 6, p 0.0002 and 0.0009).
+  - **The odometry's error over the press,** horizontal: 5.7-7.3 mm at the median, 14-15 at p90, 18-20 at worst.
+  - **The base after the settle:** 18-19 mm forward and 43 mm sideways at the median (47-49 and 67-69 at worst), 6-9 mm down.
+  - **The feet:** no foot leaves the ground after the first second; they slide loaded, 17-22 mm at the median.
+- **Implication:**
+  - A runner on the dog must estimate the base. A runner without one would fail every insertion while believing it had seated.
+  - The next insertion policy should train with the estimate it will have (`--insert_base_source legs`), or the lock should be tracked against the base through the press by the box's tag.
+  - Whether the dog's feet slide as the simulator's do decides how much the odometry costs there. That is the measurement to make on the first whole-body press.
+
+### F-297 — In simulation the learned insertion and the learned hold-and-turn do not chain as they score apart: of 192 frozen episodes, `ki6_force_8200` seats 154 inside the tilt stop, and `kh28_7000` started from each seated insertion's end then unlocks, keeps the key and puts the foot back inside the stop in 62 (a third of the chain); given a seated key the hold succeeds in 46% and 35% of handovers at 1 and 2 N·m, against 54% and 83% from the dog's stance on its own keys, because the insertion leaves the robot 4-8 cm further from the door and turned 2-9 deg, outside the hold's trained box range
+
+- **Status:** established (simulation, one insertion and one hold policy); provisional as a statement about the real sequence
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 3: the box sequence in simulation". Files:
+  - `demos/combiner_key/insert_handover.py`;
+  - `leg_eval.rows_key_plan` (`--key_eval_rows`) and `leg_env.spawn_states_ordered` (`--spawn_states_ordered`);
+  - `s1tools/hev.sh`;
+  - the insertion runs `drift_force_f1`/`f2` and the chain runs `chain_ki6_kh28_f1`/`f2`, recorded.
+- **Scope:**
+  - Two linked evaluations: the hold starts from the insertion's last HOLD step (the legs, the base's height, roll and pitch, and the box re-expressed from the base's pose). The joint velocities, the arm (re-solved with the key in the lock) and the key's give are not carried over.
+  - `66600`'s probe legs at 1 and 2 N·m, the D1 link.
+  - Most of the robot's displacement is the spawned dog stance sliding back in its first half second, a simulator artifact (F-296). The real chain would start nearer.
+  - No scripted draw before, no door after.
+- **Result:**
+  - **Seated inside the stop:** 72 / 82 of 96.
+  - **Then the hold and turn's `all_four` inside the stop:** 33 / 29.
+  - **At the handover,** the door is at 0.567 m at the median (0.534-0.600 at q10-q90) against the 0.495-0.525 trained, and the door yaw 0.09-0.12 rad against ±0.05.
+  - **The failures** are stalls and missed keys at 2 N·m, lost keys at 1 N·m.
+- **Implication:**
+  - G7's "validated simulated sequence" does not exist yet for the learned chain.
+  - The hold should be trained from the insertion's end states (the handovers as spawn states and boxes), or the insertion's spawn fixed so it does not slide, before the chain is scored again.
+  - On the dog, the stance and the base's drift at the end of the insertion are what the hold must start from. They are measurable on the first live insertion.
+- **Note, 2026-11-19 (later the same day):** "inside the stop" above is the tilt stop alone. Week 9 scored the hold inside the dog runner's bounds (`keyhold/runner_ok.py`): the tilt, the arm-lead bound (`gate4`, `leg_eval.STOP_LEAD_DEG`: J1-J5's goal at most 15 deg ahead of the link's report from 1 s on), the support legs, no fall; the front-right leg's bound is lifted.
+  - Scored that way, the chain keeps **3 of 192** (3 of 33 at 1 N·m, 0 of 29 at 2 N·m). The lead bound is what removes them.
+  - On its own frozen keys from the dog's stance, `kh28_7000` keeps 145 of its 148 tilt-stop successes inside those bounds (58 of 58, 87 of 90), its week 9 numbers. So the "54% and 83%" above are tilt-only too; inside the runner's bounds they are 54% and 81%, against the chain's 4% and 0% of handovers.
+  - Only 24 of the 154 handovers' holds stay within 15 deg, against 189 of 216 own-key episodes. The median lead is 17.3-17.7 deg, against 11.7-12.2.
+  - So from the insertion's end the hold also leads its arm further, besides failing more often.
+  - The lead bound is the replay gate's, not the live runner's stop (`ArmWatch`, 25 deg held 0.5 s): a dog runner for the hold does not exist. It is the bound the dog's whole-body policies must pass to run.
+  - The hold retrain (the week 10 log, "the hold from the insertion's handovers") scores the chain inside the runner's bounds.
+  - The result above stands as stated, for the tilt stop.
+
+### F-298 — The learned insertion rests on the D1 shoulder's torque limit above all: with Joint2-3 at 0.8 of the URDF's unmeasured 3.33 N·m, `ki6_force_8200` seats none of 96 frozen keys (72 at the nominal), because the arm cannot hold its reference, and the layer reads the lag as a touch 70 mm short of the face and believes 91 keys seated; at 0.9 it loses 19; a faster arm (45 ms) damages 14 keys; the simulator's settled stance costs 21; a weaker wrist and a slower arm change nothing
+
+- **Status:** established (simulation, one policy, 1 N·m); the dog's own limits not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 4: which simulated parameters `ki6_force_8200`'s insertion rests on" (the rule stated before scoring). New flag `--arm_effort_scale` (the six D1 joints' PhysX torque limits scaled, recorded in `arm_joints_loaded`). Eight runs, recorded.
+- **Scope:**
+  - The frozen 96 locks on the default contact, 1 N·m, the dog's stance, `66600`'s probe legs, the D1 link.
+  - One parameter moved per run, the policy as trained.
+  - The torque limit is PhysX's clip on the D1's implicit drive. The real servo's behaviour at its limit (stall, current limit, fault) is not modelled.
+- **Result:**
+
+  | shift | success (of 96) | paired p |
+  |---|---|---|
+  | none | 72 | |
+  | Joint2-3 ×0.8 / ×0.9 / ×1.2 | 0 / 53 / 60 | 4e-22 / 0.008 / 0.05 |
+  | Joint4-6 ×0.8 | 73 | 1 |
+  | the arm's lag 45 / 120 ms (trained 60-90) | 57 / 67 | 0.014 / 0.36 |
+  | leg friction 3 N·m | 58 | 0.054 |
+  | the simulator's settled stance | 51 | 0.006 |
+
+  At ×0.8, 91 of 96 are believed seated and none is; the median touch is 70 mm short of the face.
+- **Implication:**
+  - The first measurement for the learned insertion on the dog is Joint2's and Joint3's real torque limit at the insertion's pose. A shoulder 10-20% weaker than the URDF would turn the layer's touch detection into false seats.
+  - A runner check that the arm tracks its reference in free air before the face (S5's gate's criterion 4, live) would catch it on the dog.
+  - The stance the dog hands over is the second.
+
+
+### F-299 — In simulation the learned insertion never trips the dog runner's arm watch: pressing keys under the dog's conditions (strict keyway, leg-odometry base), `ki6_force_8200`'s arm goals lead the D1 link's report by at most 6.8 deg, on Joint2, in contact, a quarter of `ArmWatch`'s 25 deg hold limit, and no episode of 192 would be stopped; so the reach's thresholds stand for the insertion, as far as the simulated arm goes
+
+- **Status:** established (simulation, one policy); the real arm's lead while pressing not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 1b: would the dog runner's `ArmWatch` stop the insertion in contact?" (the rule stated before scoring). `demos/combiner_key/robot/check_armwatch.py` runs `reach_arm.ArmWatch.check` itself over each episode's traced goals and reports (`keyinsert_eval.BODY_FIELDS` gains `arm_goal`, `arm_reported`); `tests/test_check_armwatch.py`. Two runs, recorded: [`lead_ki6_strict_legs_f1`](#/week/10/run/20261118T165859_leg_eval_seed1_lead_ki6_strict_legs_f1), [`lead_ki6_strict_legs_f2`](#/week/10/run/20261118T170309_leg_eval_seed1_lead_ki6_strict_legs_f2).
+- **Scope:**
+  - The frozen 96 locks, 1 and 2 N·m, the dog's stance, `66600`'s probe legs, the D1 link with the Follower; the strict keyway and the leg-odometry base.
+  - The lead is the simulated arm's drive and stiffness and the link's report model. The report is always fresh here, so the report-gap stop is not tested.
+- **Result:**
+  - No `ArmWatch` stop in 192 episodes.
+  - The worst joint's lead in contact (normal force over 1 N): median 3.7-4.0 deg, 90th percentile 5.6-5.7, maximum 6.5-6.8 deg, on Joint2.
+  - The largest goal step after the grace is 3.5-4.4 deg, against the 20 deg limit.
+  - The same runs score `ki6_force_8200` under all of the dog's conditions at once: 120 of 192 seated inside the tilt stop, 45 keys damaged, 22 false seats.
+- **Implication:**
+  - `insert_live` keeps the reach's `ArmWatch` thresholds.
+  - The margin rests on the real arm's stiffness when pressing, which is unmeasured. The first contact runs on the dog should be read for it (`insert_live` records the goals and the reports).
+  - A shoulder weaker than the URDF shows up as an air touch before any press (F-298). That is the runner's air-touch stop, not `ArmWatch`.
+
+### F-300 — On a keyway that refuses misrolled keys, S2's twins split by parent, not by force awareness: the pre-stated contrast is +65 of 576 in family F (positive in every seed) and −142 in family P (negative in every seed), position-only seats more than force-aware in both families, and family P's force-aware twins break 312 of 576 keys; so H3 is still not supported, and item 1a's 80% against 32% was those two checkpoints', not the two variants'
+
+- **Status:** established (simulation, 12 twins); the strict keyway is an opt-in contact model with no lock measurement behind it
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "H3 on the strict keyway: S2's twins" (the test and the contrast stated before scoring; the result, its table and its 48 recorded runs under it). `logs/unifp_train/s1tools/tw_compare.py`, out `tw_compare.json`.
+- **Scope:**
+  - S2's twelve selected twins (F-291), on the twins' 96 test locks with the v4 key, at 1 and 2 N·m from the dog's stance, `66600`'s probe legs and the D1 link, each on the default contact and on the strict keyway (`--insert_strict_keyway`). The pairs differ only in the contact.
+  - The test set was read by S2 on the default contact. Nothing is selected on it here.
+  - Seeds are the unit for the contrast, three a family.
+- **Result:**
+  - Success inside the tilt stop, default → strict, of 576 a twin group: family F force-aware 356 → 358 (damaged 9 → 53), position-only 470 → 407 (1 → 52); family P force-aware 423 → 219 (62 → 312), position-only 415 → 353 (28 → 115).
+  - The contrast, (force-aware − position-only) of (strict − default): F +35 / +4 / +26 by seed, +65 pooled; P −30 / −48 / −64, −142 pooled. H3 predicts it negative.
+  - Paired strict against default, per twin: every family P force-aware twin loses 60-72 of 192 (p ≤ 1e-12); family F's force-aware twins lose none beyond chance (−8 to +7).
+  - Item 1a's `ki6_pos_8600` kept 32% of its seats on the frozen 96. Its position-only fine-tunes keep 85% here (353 of 415), its force-aware fine-tunes 52%.
+  - Pooled over all twins, false seats fall 525 → 425 of 2,304 and damaged keys rise 100 → 532.
+  - Exploratory (not stated before scoring): across the twelve twins, the median press force on the default contact predicts the strict keyway's cost (Spearman −0.78, permutation p 0.003, n = 12). Ff presses 11-13 N, Fp 13-15, Pp 15-19, Pf 18-19. It does not explain item 1a's pair, which press alike (14.0-14.4 against 14.7-15.4 N).
+- **Implication:**
+  - H3 stays not supported (F-291). On this shift the variant's effect takes the sign of the parent, as heavy legs did.
+  - Force awareness does not by itself protect a key from a keyway that refuses it. A force-aware fine-tune of a position-only parent presses hardest and breaks the most.
+  - The dog's insertion choice is not a variant choice. It is `ki7`'s retrain on the strict keyway (item 1) against `ki6_force_8200`, each checkpoint judged on its own.
+  - What makes a checkpoint fragile here is not identified. If the real lock refuses misrolled keys, the press force is the first thing to look at.
+
+### F-301 — Trained with the leg odometry in the loop, the insertion retrain learns to lean the body in on sliding feet, which the odometry cannot see: by its last save seed 61 slides its feet 72 mm (`ki6` 4 mm), the odometry is 18.6 mm out along the axis, the layer reads the hand ahead of its own reference and never feels the touch, and 24 of 48 keys go in under the body's push with the layer unfinished; with the true base the same checkpoint feels every touch and seats 30 of 48 against 3; the reward paid the true seat, not the layer's finish
+
+- **Status:** established (simulation, one checkpoint diagnosed, two seeds affected); the real feet's slide not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "`ki7` seeds 61 and 62 trained, and selected on validation; late checkpoints seat keys the task layer never feels". Validation runs `ki7_s61_*`, `ki7_s62_*` (eight checkpoints, 16 runs). Diagnostic runs [`ki7d_s61_9699_true_val_f1`](#/week/10/run/20261118T202504_leg_eval_seed1_ki7d_s61_9699_true_val_f1) and [`ki7d_s61_9699_legs_val_f1`](#/week/10/run/20261118T202922_leg_eval_seed1_ki7d_s61_9699_legs_val_f1) (with the body trace). `demos/combiner_key/robot/check_odometry.py`; the training logs `s1tools/ki7_s61.out`, `ki7_s62.out`.
+- **Scope:**
+  - `ki7`'s recipe (round 6's from `ki6_force_8200`, plus `--insert_strict_keyway --insert_base_source legs --insert_damage_stop`), on the ki7 validation locks at 1 N·m.
+  - The simulator's feet slide (F-296). How far the real dog's slide is not known.
+- **Result:**
+  - **Validation success falls late in training while the reward rises.** Seed 61 seats 72, 65, 59, 19 of 96 at 9000, 9200, 9400, 9699; seed 62 77, 72, 70, 53. Training's reward over the same span is 249 → 291 and its episodes run 764 → 873 steps (seed 61).
+  - **Training's own touched fraction (sampled at reset) collapses.** Seed 61: 0.94, 0.74, 0.35, 0.24 per 200 iterations from 9000. Seed 62: 0.94 to 0.84-0.88. Seed 61's seated fraction holds at 0.57-0.65 meanwhile.
+  - **Seed 61's `9699` at 1 N·m:** 4 of 48 touched, 24 seated but the layer unfinished (8.7-9.3 mm deep, 17-42 N), 16 no touch, 3 successes.
+  - **The same checkpoint, the same locks, the true base:** 48 touched, 30 successes, 11 damaged.
+  - **The feet and the odometry,** with the leg odometry: the feet slide 72 mm (median), the base goes 38 mm forward and the odometry is 18.6 mm out. With the true base: 96 mm and 57 mm. `ki6_force_8200` under the leg odometry: 4 mm, 14 mm, 1.0 mm.
+  - **The layer:** its measured depth (reported joints and the odometry's base) runs 6-12 mm deeper than the true tip and ahead of its reference, past its 22.7 mm maximum, so `CONTACT_LAG_M`'s lag never builds. The body tilts 0.15-0.18 rad.
+- **Implication:**
+  - A policy trained against an estimator learns that estimator's blind spot when the reward is paid on the truth: here the leg odometry's assumption that stance feet stay put. The validation set caught it because success needs the layer's finish, which is what the dog runner needs as well.
+  - **`ki7`'s selections** (seed 61 `9400`, seed 62 `9200`) come before most of the drift; seed 61's `9400` has 9 of 48 unfinished at 1 N·m. Their feet's slide is measured on the test (`ki7_compare.py`).
+  - **A retrain** would pay the seat only when the layer finishes and price the feet's slide (the recipe's `support_slip` weight was too small to stop 72 mm). The damage stop also made skipping the layer's press pay, since a pressless episode is never cut short.
+  - **On the dog**, a policy that leans in on sliding feet would put the key in outside the force law and leave the layer unfinished: no handover, the runner waits out its time. The measurement it needs is the real feet's slide while the body leans into a press.
+
+### F-302 — On the dog's conditions in simulation, `ki6_force_8200`'s insertion tolerates a lock estimate off by 7 mm across the keyway, 9 mm along it and 3 deg in roll; past 3 deg of roll it loses half its seats (4.5 deg: 63 of 192 against 120), the strict keyway jamming keys the layer takes for seated; within 3 deg the roll decides how a failing insertion ends, damaged keys falling from 45 to 4 as the roll error goes from 3 to 0 deg
+
+- **Status:** established (simulation, one policy, the frozen 96); the dog's tag not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 1b: how good the dog's lock estimate must be" (the shifts and the rule stated before scoring; the roll ×0 and ×0.5 follow-up stated before it ran; 20 runs recorded under it). `logs/unifp_train/s1tools/queue_lockerr.sh`, `lockerr_compare.py`, out `lockerr_ki6_force_8200.json`.
+- **Scope:**
+  - `ki6_force_8200` (the dog's insertion until item 1's test decides), the frozen 96, 1 and 2 N·m, the strict keyway, the leg-odometry base, the dog's stance, `66600`'s probe legs, the D1 link.
+  - Each lock's estimate error scaled on one axis at a time; the error is fixed through the episode. The keyway axis's direction (the door's yaw and pitch) is not varied.
+  - Training drew errors up to 3.5 mm lateral, ±8 mm depth and ±4 deg roll.
+- **Result** (success inside the tilt stop of 192, paired against the baseline's 120):
+  - lateral ×1.5 / ×2 / ×3 (5.25 / 7 / 10.5 mm): 115, 114, 92 (p 0.002);
+  - depth ×1.5 / ×2 (9 / 12 mm): 124, 103 (p 0.046);
+  - roll ×0 / ×0.5 / ×1.5 / ×2 (0 / 1.5 / 4.5 / 6 deg): 118, 136 (p 0.09), 63 (p 4e-10), 28 (p 8e-21).
+  - False seats with the roll: 70, 35, 22 (baseline), 90, 137. Damaged keys: 4, 20, 45, 40, 27.
+  - The baseline reproduces F-299's runs field for field.
+- **Implication:**
+  - The tag's estimate of the lock must be within about 7 mm across the keyway, 9 mm along it and 3 deg in roll. Roll is the one that binds.
+  - The key's roll in the jaws adds to the tag's roll error, and nothing measures it yet.
+  - Keeping keys whole needs the roll better than 3 deg. At 3 deg the strict keyway refuses the key and the layer presses it to damage. With the roll exact, the same keys stop short and the layer takes them for seated (F-292). So a better roll estimate trades damage for false seats, and the seats themselves need the layer's seated test fixed.
+  - The dog measurements: the tag's lock estimate against the box's measured keyway over several stand-ups (roll first), and the key's roll in the gripper.
+
+### F-303 — The insertion retrained with the strict keyway and the leg odometry in the loop replaces `ki6_force_8200` for the dog: by the rule stated before training, the three selected seeds pooled damage 47 keys on the dog's conditions against three times `ki6`'s 26, and seat 380 against 342; the dog's pick, `ki7_s62_9200`, seats 140 of 192 with 4 damaged against `ki6`'s 114 with 26 (paired 51 / 25, p 0.004), and passes S5's replay gate; one seed in three gains nothing and leans on sliding feet, the false seats stay, and the pick seats 21 fewer on the default contact with the true base
+
+- **Status:** established (simulation; three seeds, one arm, no matched control: a deployment choice, not a paper claim)
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "`ki7`'s test, read once" (16 runs). The design, the selection rule and the decision rule were stated before training: "Item 1, the insertion retrain (`ki7`)" and its 05:55 note. The selections: "`ki7` seeds 61 and 62 trained, and selected on validation" and "`ki7` seed 63 trained". `logs/unifp_train/s1tools/ki7_select.py`, `queue_ki7_test.sh`, `ki7_compare.py` (out `ki7_test.json`). Export `checkpoints/insert_force_ki7_s62_9200.npz`; gate `logs/unifp_train/s5gate_ki7_s62_9200/`.
+- **Scope:**
+  - Round 6's recipe from `ki6_force_8200`, 1,500 iterations, with `--insert_strict_keyway --insert_base_source legs --insert_damage_stop`; seeds 61-63, selected on 48 validation locks a friction.
+  - Tested once on 96 new locks at each of 1 and 2 N·m (`keyinsert_ki7_v1.json`), the dog's stance, `66600`'s probe legs, the D1 link, the old seated test.
+  - Two conditions: the dog's (strict keyway, leg-odometry base) and `ki6`'s training condition (default contact, true base).
+  - The gate is S5's: free-space approach on `66600`'s four recorded stands, no face modelled.
+- **Result:**
+
+  | | strict keyway, leg odometry | | default contact, true base | |
+  |---|---|---|---|---|
+  | policy | success of 192 (damaged, false seats) | vs `ki6`, p | success (damaged, false seats) | vs `ki6`, p |
+  | `ki6_force_8200` | 114 (26, 52) | | 136 (12, 43) | |
+  | `ki7_s61_9400` | 110 (25, 41) | 0.75 | 136 (1, 55) | 1.0 |
+  | `ki7_s62_9200` | **140 (4, 48)** | 0.004 | 115 (1, 77) | 0.035 |
+  | `ki7_s63_9699` | 130 (18, 44) | 0.09 | 132 (18, 42) | 0.73 |
+
+  - Pooled on the dog's conditions: paired 142 / 104, p 0.018.
+  - Feet slide (medians, the dog's conditions): `ki6` 4-5 mm, `s62` 7-8 mm, `s63` 7-10 mm, `s61` 47 mm at 1 N·m with 10 keys seated and the layer unfinished (F-301). The odometry's forward error: `s62` 1.2-1.3 mm, `s61` 10.5 mm.
+  - `ki7_s62_9200`'s export matches torch to 5.3e-6 (actions) on random stacks. On the gate it leads by 1.7-3.8 deg (bound 15), its leg targets are 0.37-0.39 / 0.24-0.28 rad, and there are no IK failures or touches short of the face.
+- **Implication:**
+  - The dog runs `checkpoints/insert_force_ki7_s62_9200.npz` with `insert_live.py`, not `ki6`'s.
+  - What the retrain bought is mostly keys left whole on a keyway that refuses misrolled ones. The false seats (F-292) are untouched, and the layer's seated test is still the next fix for the insertion.
+  - The pick is worse where `ki6` was trained, so its gain rests on the simulated keyway being strict. Whether the real keyway is strict, and how much, is the dog measurement this needs, with the feet's slide under a forward press (F-301).
+  - F-302's tolerances are `ki6`'s; the same shifts on `ki7_s62_9200` are queued.
+- **Note (2026-11-20):** a single lock's outcome is one draw of the contact, not repeatable on its own. On frozen lock
+  73, damaged by `ki6` in the 96-lock run on the dog's conditions, `ki6` alone (one environment) false-seats it, and the
+  one-robot viewer showed it seated. `ki7_s62_9200` seats it in all three, at 8.4 s or 4.7 s (week 10 log, 2026-11-20,
+  "One environment does not repeat a lock's evaluated episode"). The paired comparison above stands, since both arms
+  ran with the same environment count and layout. Per-lock claims ("`ki6` damages this key") do not.
+
+### F-304 — S4b's mechanism policies are not fit for the dog as trained: at evaluation in Isaac they grasp 6-7 cm from the handle (0-3 of 48 within the 2 cm a gripper needs), their arm targets lead the D1 link's report by a median 53-65 deg once holding (84% of steps past the runner's 15 deg), and they move the base a median 8 cm while holding, so the leg odometry is about 5 cm out and a law fed the travel through it over-commands by 20-62 N; the numpy layer and policy built for the dog reproduce Isaac to ~1e-5, and the replay gate fails both on every stand
+
+- **Status:** established (simulation; one seed's validation-selected checkpoint per arm, 48 episodes each at 1 N·m); provisional for S4b's other seeds
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 2, S4b's dog side". The build, the gate's thresholds (stated before any gate run), the dump runs and their read-only check, the parity, and the gate preview. `demos/combiner_key/robot/mech_layer.py`, `check_mech.py`, `mech_gate.py`, `unifp_train/mech_shadow.py`, `tests/test_mech_layer.py`.
+- **Scope:**
+  - `s4b_A_s91_68200` (law v1 with the bleed in training) and `s4b_B_s91_68200` (law v2), S4b validation from the dog's stance, `66600`'s probe legs, the D1 link with the Follower, the law at 80 N with the bleed.
+  - The lead is measured inside Isaac from the dump (the clamped-free targets against the link's reports, J1-J5) and in the gate's replay on `66600`'s four recorded stands. The replay replays `66600`'s legs, not these policies'.
+  - The grasp error is the tool's distance from the handle goal when the settle rule fires. In simulation the mechanism is built there whatever it is (F-115).
+- **Result:**
+
+  | | A s91 | B s91 |
+  |---|---|---|
+  | grasp error median (q10-q90) | 6.4 cm (4.2-11.6) | 6.9 cm (2.9-11.1) |
+  | within 2 cm | 0 of 48 | 3 of 48 |
+  | J1-J5 lead per step from 1 s, median (p90) | 53 deg (133) | 65 deg (134) |
+  | base moved while holding, median (q90) | 85 mm (284) | 78 mm (259) |
+  | leg odometry's error, median | 4.8 cm | 4.5 cm |
+  | law command read via odometry minus true, median | +20 N | +62 N |
+  | gate (hold mode), rows passing | 0 of 48 | 0 of 48 |
+
+  - Parity of the dog's numpy code on the same 96 episodes: actions ≤ 2.9e-6, force command ≤ 1.5e-5 N, no grasp-rule disagreement. The dump changed no episode.
+- **Implication:**
+  - Item 2 is not met by S4b. F-294's and F-295's openings were bought with a grasp anywhere, an arm running 50+ deg ahead of its report, and the legs moving under the hold, none of which the dog runner allows or measures.
+  - A dog-fit T1 policy needs, in training: a grasp that closes only at the handle (F-115's implication), the lead priced as the key hold prices it (`--arm_lead_weight`, F-255), and the travel from a source the dog has.
+  - The travel's source is a dog-side design choice: a tag on the handle read from the body, or an odometry that sees the feet move.
+  - S4b's test still answers A against B and the 40 N cap, and its pick is gated as stated.
+
+- **Note, 2026-11-19 13:32 (correction, the week 10 log "Correction to F-304").** The 15 deg above is the replay gate's bound (`mech_gate.LEAD_MAX_DEG`, F-256's), not the dog runner's. The runner's `ArmWatch` (`reach_arm.py`) stops past 25 deg held 0.5 s or past 60 deg at once, after a 1 s grace. At those thresholds, applied to the same dump, it stops 46 of 48 holds (A) and 47 of 48 (B), a median 3.0-3.1 s in, mostly on the 60 deg stop. The conclusion that the runner stops these holds stands; "every episode" is 46-47 of 48.
+- **Note, 2026-11-19 13:32 (S4c-0, the week 10 log).** With the grasp allowed only within 2 cm of the handle at evaluation, the same two policies grasp 223 and 329 of 768 and open within the budget 164 and 209, against 642 and 618 ungated. The 6-7 cm is the policies', not the settle rule's: arrival has to be trained.
+- **Note, 2026-11-19 15:40 (correction to the note above, the week 10 log "The gate measured the tool against UniFP's next goal").** That gate measured the tool against UniFP's current goal, which moves off the handle 0.5-2 s after arriving. So the 223 and 329 grasps include grasps far from the handle; grasps at the handle are at most these. The conclusion, that arrival has to be trained, stands. The gate now holds the goal on the handle until the grasp.
+
+### F-305 — For the insertion now on the dog, `ki7_s62_9200`, on the dog's conditions in simulation the lock estimate must be within 5.25 mm across the keyway, 12 mm along it and 3 deg in roll; it seats more than `ki6_force_8200` at every shift with fewer damaged keys, and its seats are not monotone in the roll error: 122 of 192 with the roll exact, 165 at 1.5 deg, 147 at 3, 94 at 4.5
+
+- **Status:** established (simulation, one policy, the frozen 96); the dog's tag not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 1b for `ki7_s62_9200`" (F-302's shifts, rule and follow-up, unchanged; 20 runs recorded under it). `logs/unifp_train/s1tools/queue_lockerr.sh`, `lockerr_compare.py`, out `lockerr_ki7_s62_9200.json`.
+- **Scope:**
+  - `ki7_s62_9200` (F-303), with the conditions, grid and scaling of F-302.
+  - Each policy is scored against its own baseline. The paired `ki7`-against-`ki6` counts on the same locks are reported beside the rule, not in it.
+- **Result** (success inside the tilt stop of 192; baseline 147 with 6 damaged and 39 false seats, against `ki6`'s 120 / 45 / 22):
+  - lateral ×1.5 / ×2 / ×3 (5.25 / 7 / 10.5 mm): 135 (p 0.065), 125 (p 0.003), 104 (p 3e-7);
+  - depth ×1.5 / ×2 (9 / 12 mm): 149, 142, neither mattering;
+  - roll ×0 / ×0.5 / ×1.5 / ×2 (0 / 1.5 / 4.5 / 6 deg): 122 (p 0.005, a loss), 165 (p 0.010, a gain), 94 (p 2e-12), 61 (p 7e-24);
+  - false seats with the roll: 69, 25, 39 (baseline), 88, 129; damaged keys: 1, 1, 6, 10, 2;
+  - against `ki6` on the same locks: more seats at every shift (p 0.0002-0.019 at seven of ten, 0.20-0.74 at the other three) and fewer damaged keys at every shift.
+- **Implication:**
+  - F-302's tolerances for the policy now on the dog: across the keyway tighter (5.25 mm against 7, against a higher baseline; at 7 mm `ki7` still seats more than `ki6` does with the grid's own errors), along it looser (12 mm against 9), roll the same 3 deg.
+  - The retrain removed most of F-302's damage at 3 deg of roll (6 against 45).
+  - A better roll estimate than 3 deg gains seats down to about 1.5 deg. A perfect one loses them to false seats, the key stopping short and the layer taking it for home (F-292). Why is not known: it may be the policy, which never trained on an exact roll, or the simulated keyway, which barely constrains roll.
+  - The dog measurements are F-302's: the tag's lock estimate against the box's measured keyway over several stand-ups, roll first, and the key's roll in the gripper.
+
+### F-306 — On legs that answer 0.17 of each target, as the dog's do (F-256), the dog's insertion `ki7_s62_9200` seats 124 of 192 on the frozen 96 against 147 on the legs it trained on (p 0.018); the loss is all on the stickier legs, 48 of 96 against 79, with the layer taking 46 jams for seats against 14, while on the less sticky legs it seats 76 against 68
+
+- **Status:** established (simulation, one policy, the frozen 96); the dog's legs' answer is F-256's measurement, their friction not measured
+- **Week:** 10
+- **Date:** 2026-11-19
+- **Evidence:** [Week 10 log](week_10/notes.md), "Item 1: the dog's insertion on legs that answer 0.17" (stated before it ran, with F-302's rule). Runs `ins017_ki7_s62_9200_f1`/`f2` against `lockerr_ki7_s62_9200_base_f1`/`f2`, paired by lock.
+- **Scope:**
+  - `ki7_s62_9200` (F-303) under the dog's conditions: strict keyway, leg-odometry base, the dog's stance, `66600`'s probe legs, the D1 link.
+  - `--leg_answer_range 0.17 0.17`: each leg target's offset from the stance scaled by 0.17 before the legs (`env._answer_legs`). The legs' joint friction is 1 or 2 N·m (f1, f2).
+  - `ki6_force_8200` was not run on this screen.
+- **Result:**
+  - Success inside the tilt stop, pooled over both frictions: 124 against 147 (only the baseline 55, only weak legs 32, exact McNemar p 0.018).
+  - At 2 N·m: 48 against 79 (40 / 9, p 9e-6); false seats 46 against 14.
+  - At 1 N·m: 76 against 68 (15 / 23, p 0.26); false seats 16 against 25.
+  - Damaged keys 6 against 6. No falls, no lost keys, no tilt stops. Peak force p90 45 N against 47.
+- **Implication:**
+  - Part of the insertion's seating rests on its legs carrying out what it asks, and how much depends on their friction. The dog's legs carry out about 0.17 (F-256), and their friction is not measured.
+  - It is S4c's finding again (the week 10 leg probe): every simulated screen before had legs that answer. The insertion's replay gate (S5) checks commands, not seats.
+  - The next insertion should train with the legs' answer drawn low (`--leg_answer_range 0.1 1`, as `6c` and `pose_s`) and be compared on this screen.
+  - A dog trial of `ki7_s62_9200` should expect more false seats than simulation's main numbers say. The layer's seated test (F-292) is what turns a jam into a false seat.
+
+### F-307 — S4c-3, trained on legs that answer 0.1-1 with the grasp gated at the handle, reaches the handle on the dog's weak legs but does not open T1's mechanisms: on legs answering 0.17 its picks grasp within 2 cm in 210-307 of 384 episodes a friction (S4c-1: 4) with the arm's lead under `ArmWatch`'s 25 deg in every episode, yet open within the budget 165 and 100 of 768 against the 482 the stated reading required
+
+- **Status:** provisional (simulation; two seeds; S4b validation, the selection's own set)
+- **Week:** 10
+- **Date:** 2026-11-20
+- **Evidence:** [Week 10 log](week_10/notes.md), "The leg probe: S4c's arrival rests on the legs; S4c-2 stopped, S4c-3 trains on legs that answer 0.1-1" (the recipe, the selection and the reading, stated before it trained) and "Last night's runs" (2026-11-20). Runs `s4c3_A_s9X_<it>_val017_f1`/`f2` and `_val_f1`; `s1tools/s4b_select.py --suffix val017`.
+- **Scope:**
+  - S4c-3: S4c-2's recipe (S4b A's from `66600`, the 2 cm grasp gate with the goal held on the handle, the approach term, the arm-lead price) plus `--leg_answer_range 0.1 1` in training; seeds 91 and 92, 2,000 iterations each.
+  - Scored on S4b validation (384 episodes a friction) with the gate, the law at 80 N with the bleed, legs answering 0.17 at 1 and 2 N·m (F-275's screen); and at 1 N·m on legs answering fully, reported.
+  - `ArmWatch` is read from the episode's lead (J1-J5's maximum after 1 s), not from the dump the reading named; the dump and the replay gate were not run, since the first condition already decides.
+- **Result:**
+  - Both seeds pick `68599`. Opened within the budget on the 0.17 screen: s91 165 of 768 (80 / 85), s92 100 (60 / 40). No falls, tilt stops, tears or budget violations.
+  - Grasped within the gate on the 0.17 screen: s91 301 and 307 of 384, s92 299 and 210; median grasp error 1.4-1.75 cm. S4c-1 (`67600`, no low-answer legs) grasped 4 of 384 there.
+  - The lead, J1-J5: median 3.8-4.8 deg while holding; the maximum after 1 s a median of 8.1-10.5 deg, none past 25 deg on the 0.17 screen. S4b's was a median 53-65 deg (F-304).
+  - The force curriculum's ceiling ended at 40 N (s91) and 35 N (s92).
+  - On legs answering fully (reported): s91 grasps 140 and opens 38 of 384; s92 grasps 366 and opens 80.
+- **Implication:**
+  - F-304's two faults (grasping 6-7 cm off the handle, the arm far ahead of the link) are trainable away on the dog's weak legs. What S4c-3 lacks is force: it holds the handle and opens few mechanisms. S4b, without the gate, opened 463-672 of 768 but was unfit.
+  - No S4c policy goes to the dog. A next run would have to raise the curriculum's force with the gate kept, for example longer from S4c-3's `68599`, with its reading stated before it trains.

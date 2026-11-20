@@ -1,0 +1,63 @@
+{
+  "id": "20261119T115636_train_seed93_s4b_B_s93",
+  "title": "S4b B: T1 law v2 (bleed, over-force price, drawn cap) from 66600, seed 93, 3 of 4 starts from the dog's stance",
+  "notes": "",
+  "week": 10,
+  "recorded_at": "2026-11-20T00:11:12+11:00",
+  "started_utc": "2026-11-19T11:56:36+00:00",
+  "source_dir": "logs/unifp_train/20261119T115636_train_seed93_s4b_B_s93",
+  "mode": "train",
+  "seed": 93,
+  "status": "complete",
+  "error": null,
+  "num_envs": 2048,
+  "iterations": 2000,
+  "steps": 100,
+  "git_commit": "3acb837a7b37db7b4b6218ce2c3752ed7f5f8e0d",
+  "git_dirty": true,
+  "articulation_mass_kg": null,
+  "last_iteration": 68599,
+  "final_checkpoint": {
+    "file": "model_68599.pt",
+    "sha256": "ff653fd3fe0b5abbd120ee826472930d3954fc712ebd579c650eef18fb86b9ae"
+  },
+  "scalar_summary": {
+    "Train/mean_reward": {
+      "last": 183.5416717529297,
+      "last_step": 68599,
+      "mean_last_10": 179.3797821044922,
+      "min": 2.4902141094207764,
+      "max": 216.45489501953125,
+      "points": 2000
+    },
+    "Train/mean_episode_length": {
+      "last": 980.6599731445312,
+      "last_step": 68599,
+      "mean_last_10": 961.468994140625,
+      "min": 13.849056243896484,
+      "max": 999.0,
+      "points": 2000
+    },
+    "Policy/mean_std": {
+      "last": 1.0001873970031738,
+      "last_step": 68599,
+      "mean_last_10": 0.9994434773921966,
+      "min": 0.5267242193222046,
+      "max": 1.0003015995025635,
+      "points": 2000
+    },
+    "Perf/total_fps": {
+      "last": 23791.0,
+      "last_step": 68599,
+      "mean_last_10": 23834.3,
+      "min": 12398.0,
+      "max": 26876.0,
+      "points": 2000
+    }
+  },
+  "copied_files": [
+    "agent.json",
+    "env.yaml",
+    "run.json"
+  ]
+}

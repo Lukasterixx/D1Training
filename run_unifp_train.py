@@ -255,8 +255,30 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--mech_test", action="store_true",
                         help="'mech_eval': the held-out test condition (mech_cfg.TEST_*: other placements, mass, "
                              "grasp stiffness, reference speed and damping), frozen before any policy was scored on it.")
+    parser.add_argument("--mech_set", choices=("s4_validation", "s4_test", "s4b_validation", "s4b_test"), default=None,
+                        help="'mech_eval': S4's frozen sets (results/manifests/mech_t1_v2.json, drawn 2026-11-18): new "
+                             "placements, validation at the development conditions, test at the held-out ones. Replaces "
+                             "the development grid and --mech_test, both spent.")
+    parser.add_argument("--mech_grasp_within_m", type=float, default=None,
+                        help="--task mechanism (S4c): the grasp closes only with the tool within this of its goal (the handle), "
+                             "the settle rule's fallback included, and never otherwise. Default: wherever the tool is (F-115).")
+    parser.add_argument("--mech_engage_max_wait_s", type=float, default=None,
+                        help="--task mechanism (S4c): the settle rule's fallback, s (default hook_cfg.ENGAGE_MAX_WAIT_STEPS, 1 s).")
+    parser.add_argument("--mech_approach_weight", type=float, default=0.0,
+                        help="--task mechanism (S4c): weight per second of a term paying the tool on the handle until the grasp, "
+                             "exp(-distance / 4 cm) (mech_env.Go2D1MechEnvCfg.approach_weight). Default 0: off.")
+    parser.add_argument("--mech_tilt_stop_deg", type=float, default=None,
+                        help="'mechanism': end an episode as a failure once the body's roll or pitch passes this (the dog "
+                             "runner's 15 deg stop; S4). Default: none, as every run before S4.")
+    parser.add_argument("--mech_budget_n", type=float, default=None,
+                        help="'mech_eval': score the force budget at this drive, N (default mech_cfg.BUDGET_N, 80, the law's "
+                             "cap). For a law capped lower with --force_law_gains, the budget is that cap.")
     parser.add_argument("--mech_levels", type=float, nargs="+", default=None,
                         help="'mech_eval': peak resistances, N (default mech_cfg.EVAL_LEVELS_N, 10-80).")
+    parser.add_argument("--mech_shadow_dump", type=int, default=0,
+                        help="'mech_eval': record, for N episodes spread over the plan, every per-step input and output "
+                             "of the dog's numpy mechanism runner (mech_shadow_dump.npz, unifp_train/mech_shadow.py), to "
+                             "check it against (demos/combiner_key/robot/check_mech.py --sim). Read-only.")
     parser.add_argument("--fixture_fraction", type=float, default=None,
                         help="'hook' only: fraction of episodes with a fixture (hook_cfg default 0.75).")
     parser.add_argument("--press_fraction", type=float, default=None,
@@ -297,11 +319,47 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--insert_tilt_stop_deg", type=float, default=None,
                         help="--key_insert: end the episode once the base tilts past this many degrees, as the dog runner "
                              "stops a whole-body run (15 there); training and frozen evaluations alike.")
+    parser.add_argument("--insert_seat_test", choices=("old", "located"), default="old",
+                        help="--key_insert: the layer's seated test (keylock.InsertLayer.seat_test). 'located' (S1c, "
+                             "2026-11-18): the first touch with the wrist rolled 45 deg so it is the face, a key believed in "
+                             "only past the face by the keyway's depth, one that stops short retried once then refused.")
     parser.add_argument("--insert_light_probe", action="store_true",
                         help="--key_insert: ease the press through the layer's feel after the touch (keylock.InsertLayer."
                              "light_probe): position-only's reference back to the touch, force-aware's press halved.")
     parser.add_argument("--insert_error_scale", type=float, default=1.0,
                         help="--key_insert, training: the estimate's drawn errors x this (keyinsert_env.ERR_*).")
+    parser.add_argument("--insert_damage_stop", action="store_true",
+                        help="--key_insert, training (S1b, F-287): end an episode once the key is damaged (keylock."
+                             "DAMAGE_N), as frozen evaluations always do.")
+    parser.add_argument("--insert_tools", choices=("train", "specialist", "continuous"), default=None,
+                        help="--key_insert, training (S1, docs/tool_paper_plan.md): the keys drawn per episode, the tool "
+                             "manifest's train keys (three) or the specialist's (v4 alone, with its mass). Default: the v4 "
+                             "key, rigid and massless, as every run before S1.")
+    parser.add_argument("--insert_tool_obs", choices=("descriptor", "zero"), default=None,
+                        help="--key_insert (S1): add the tool observation groups and widen the network for them (a "
+                             "resumed checkpoint without them gets zero columns): 'descriptor' gives the actor the believed "
+                             "key's (P4), 'zero' the same input held at zero (P3, the specialist). The critic reads the "
+                             "true key's either way.")
+    parser.add_argument("--insert_tool_set", default=None,
+                        help="--key_insert leg_eval (S1, S2): score a frozen key set of the tool manifest (unifp_train/"
+                             "keytools.py) in place of the 96 locks: a set the manifest names (S1's validation, test, "
+                             "test_train, wrong; S2's also test_reach45, test_reach24); keytools.build_plan refuses others.")
+    parser.add_argument("--insert_base_source", choices=("true", "fixed", "legs"), default="true",
+                        help="--key_insert (item 1b): the base's position the layer and the reference use: the simulator's "
+                             "(every run before), held where it was at the layer's start (a runner with no odometry), or a "
+                             "planted-feet leg odometry from then (keyinsert_env.Go2D1KeyInsertEnvCfg.base_source).")
+    parser.add_argument("--insert_trace_body", action="store_true",
+                        help="--key_insert leg_eval (item 1b): add the base's pose, the leg joints, the feet's contact forces and "
+                             "positions to insert_trace.npz (keyinsert_eval.BODY_FIELDS), to measure the base's motion.")
+    parser.add_argument("--insert_strict_keyway", action="store_true",
+                        help="--key_insert (2026-11-19): a key rolled about its shaft past the wards' clearance, atan(play / "
+                             "ward half-length), 0.8-1.9 deg, cannot pass the edge break (keylock.KeyLock.strict_roll). "
+                             "Default: the contact every run before, which lets keys in 4-10 deg misrolled (F-292).")
+    parser.add_argument("--insert_contact_k_scale", type=float, default=1.0,
+                        help="--key_insert (S2's lock-stiffness shift): the lock's penalty stiffness x this "
+                             "(keylock.CONTACT_K_N_PER_M); 1 for every run before S2.")
+    parser.add_argument("--insert_tool_manifest", default=None,
+                        help="--key_insert (S1): the tool manifest (default results/manifests/keyinsert_tools_v2.json).")
     parser.add_argument("--key_grip_k", type=float, default=None,
                         help="--key_hold: the jaws' spring to the key, N/m (default leg_cfg.KEYHOLD_GRIP_K_N_PER_M, 800). "
                              "0: the hand is not tied to the key (a reach check).")
@@ -329,6 +387,26 @@ def build_parser() -> argparse.ArgumentParser:
                              "second, negative) while the layer presses or holds, its progress paid only up to the "
                              "reference and its open latch only once the reference reaches it. 0: the turn rewarded as "
                              "before (every key-hold policy to 2026-11-13 turns the key in ~0.1 s at first contact).")
+    parser.add_argument("--key_hold_door_ahead", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--key_hold training (item 3): the door's distance ahead drawn in this range, m (default "
+                             "leg_cfg.KEYHOLD_DOOR_AHEAD_M, 0.495-0.525; the learned insertion leaves it 0.53-0.60, F-297)")
+    parser.add_argument("--key_hold_axis_side", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--key_hold training: the keyway's side drawn in this range, m (default KEYHOLD_AXIS_SIDE_M)")
+    parser.add_argument("--key_hold_door_yaw", type=float, nargs=2, default=None, metavar=("LO", "HI"),
+                        help="--key_hold training: the door's yaw drawn in this range, rad (default KEYHOLD_DOOR_YAW_RAD, +-0.05)")
+    parser.add_argument("--key_eval_rows", default=None, metavar="JSON",
+                        help="--leg_object key leg_eval (item 3): the keys from a json of rows (leg_eval.rows_key_plan), e.g. "
+                             "demos/combiner_key/insert_handover.py's, each hold episode from its insertion's end")
+    parser.add_argument("--spawn_states_ordered", action="store_true",
+                        help="with --spawn_states and --eval_spawn_states: environment i starts from state i, not a random one")
+    parser.add_argument("--key_eval_draw", choices=("validation", "test"), default=None,
+                        help="--leg_object key leg_eval (S3): the 108 keys drawn anew within the frozen grid's span on "
+                             "a new stream (leg_eval.KEY_DRAW_SEEDS) in place of the grid: validation to select on, "
+                             "test to score once.")
+    parser.add_argument("--key_turn_behind_weight", type=float, default=0.0,
+                        help="--key_hold (S3, the band both ways): the key falling behind the task layer's reference past "
+                             "the same free band priced at this weight (rad², per second, negative) while the layer presses "
+                             "or holds (keyhold.turn_behind). 0: not used, as every run before S3.")
     parser.add_argument("--hold_loss_start_iteration", type=int, default=0,
                         help="--key_hold, training: before this many iterations of the run (counted from the resume), the "
                              "key is lost only past leg_cfg.KEYHOLD_LOST_EARLY_M.")
@@ -358,6 +436,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--arm_command_hz", type=float, nargs="+", default=None, metavar="HZ",
                         help="The arm takes a command at this rate, held between; two values draw each environment's "
                              "from the range. Unset: every 50 Hz policy step.")
+    parser.add_argument("--arm_effort_scale", type=float, nargs=6, default=None, metavar=("J1", "J2", "J3", "J4", "J5", "J6"),
+                        help="Scale the D1's six joint torque limits in PhysX by these, after the robot loads (a sensitivity check: "
+                             "Joint2-3's 3.33 N·m is the URDF's, not measured). Recorded in arm_joints_loaded. Default: as loaded.")
     parser.add_argument("--arm_feedback_hz", type=float, default=None,
                         help="The actor reads the arm's angles at this rate, to --arm_quantum_deg, and its speeds as "
                              "differences of them. Unset: exact, at 50 Hz.")
@@ -398,6 +479,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Reward on the base's tilt past 8 deg, rad², the larger of roll and pitch: the dog stops at 15.")
     parser.add_argument("--leg_start_noise", type=float, default=0.0, metavar="RAD",
                         help="Leg joints start this far from default at each reset, uniform.")
+    parser.add_argument("--dog_stance_fraction", type=float, default=0.0, metavar="SHARE",
+                        help="Start this share of episodes from the dog's own arm-out stance (task_cfg.DOG_STANCE_*, 0.288 m, "
+                             "3.7 deg nose-up), not UniFP's default: 0.75 to train as the tool plan says, 1 to evaluate from it. "
+                             "Not the leg task, whose stances come from --spawn_states.")
     parser.add_argument("--leg_answer_range", type=float, nargs=2, default=None, metavar=("LOW", "HIGH"),
                         help="How much of each leg action reaches the legs, drawn per environment: the dog's answered less than any friction gives.")
     parser.add_argument("--arm_wrist_weight", type=float, default=0.0,
@@ -481,8 +566,30 @@ def build_parser() -> argparse.ArgumentParser:
                         help="leg_eval: record the first N episodes' raw robot state, commands, frames, actions and joint "
                              "targets every step (shadow_dump.npz), to check the dog's numpy policy against "
                              "(demos/combiner_key/robot/check_shadow.py --sim).")
+    parser.add_argument("--insert_shadow_dump", type=int, default=0,
+                        help="leg_eval --key_insert: record, for the first N episodes, every per-step input and output of "
+                             "the dog's numpy insertion runner (insert_shadow_dump.npz, unifp_train/keyinsert_shadow.py), "
+                             "to check it against (demos/combiner_key/robot/check_insert.py --sim). Read-only.")
     parser.add_argument("--leg_rows", type=int, nargs="+", default=None,
                         help="leg_eval: score only these rows of the frozen handle set (a subset for frames).")
+    parser.add_argument("--mech_rows", type=int, nargs="+", default=None,
+                        help="play --task mechanism: play these rows of the mech_eval plan (kind slowest, then level, then "
+                             "placement; --mech_set, --mech_kinds, --mech_levels as mech_eval), one per environment, with "
+                             "the force law as mech_eval sets it (--force_law, --force_law_bleed).")
+    parser.add_argument("--capture_dir", default=None,
+                        help="play: save the viewer camera's frames of environment 0 here as PNGs, with its task state "
+                             "per frame in frames.jsonl (unifp_train/capture.py). Headless needs --enable_cameras. "
+                             "UniFP's goal markers are left out; the task's overlay is drawn.")
+    parser.add_argument("--capture_every", type=int, default=5,
+                        help="play --capture_dir: one frame every this many policy steps (default 5: 0.1 s).")
+    parser.add_argument("--capture_episodes", type=int, default=1,
+                        help="play --capture_dir: stop once environment 0 has played this many episodes (default 1).")
+    parser.add_argument("--capture_resolution", type=int, nargs=2, default=(1920, 1080), metavar=("W", "H"),
+                        help="play --capture_dir: the frames' size in pixels (default 1920 1080).")
+    parser.add_argument("--view_eye", type=float, nargs=3, default=None, metavar=("X", "Y", "Z"),
+                        help="play: the viewer camera's eye in its origin's frame, m (overrides the task's preset).")
+    parser.add_argument("--view_lookat", type=float, nargs=3, default=None, metavar=("X", "Y", "Z"),
+                        help="play: the point the viewer camera looks at, m (overrides the task's preset).")
     parser.add_argument("--foot_push_n", type=float, default=None,
                         help="--task leg: peak per-axis force of the physical push on the foot, N (default 35; the "
                              "command channel keeps 35).")
@@ -739,6 +846,10 @@ def main() -> int:
     if args.leg_answer_range is not None:
         cfg.leg_answer_range = tuple(args.leg_answer_range)
     cfg.leg_start_noise_rad = args.leg_start_noise
+    if args.dog_stance_fraction:
+        if args.task == "leg":
+            parser.error("--dog_stance_fraction is for the base environment's tasks; the leg task uses --spawn_states")
+        cfg.dog_stance_fraction = args.dog_stance_fraction
     cfg.track_leg_chatter = args.mode != "train"
     if args.task != "leg" and args.action_rate_weight is not None:
         # UniFP's `action_rate` (the 12 leg actions' step-to-step change, -0.02), read when the environment builds its
@@ -764,6 +875,13 @@ def main() -> int:
                 c.KEY_AXIS_HEIGHT_M, c.KEY_AXIS_HEIGHT_JITTER_M = c.KEYHOLD_AXIS_HEIGHT_M, c.KEYHOLD_AXIS_HEIGHT_JITTER_M
                 c.KEY_DOOR_AHEAD_M, c.KEY_AXIS_SIDE_M = c.KEYHOLD_DOOR_AHEAD_M, c.KEYHOLD_AXIS_SIDE_M
                 c.KEY_DOOR_YAW_RAD = c.KEYHOLD_DOOR_YAW_RAD
+                # Item 3 (2026-11-19, F-297): a hold trained where the learned insertion leaves the robot needs a wider box.
+                if args.key_hold_door_ahead is not None:
+                    c.KEY_DOOR_AHEAD_M = tuple(args.key_hold_door_ahead)
+                if args.key_hold_axis_side is not None:
+                    c.KEY_AXIS_SIDE_M = tuple(args.key_hold_axis_side)
+                if args.key_hold_door_yaw is not None:
+                    c.KEY_DOOR_YAW_RAD = tuple(args.key_hold_door_yaw)
                 c.KEY_EVAL_DOOR_AHEAD_M, c.KEY_EVAL_AXIS_SIDE_M = c.KEYHOLD_EVAL_DOOR_AHEAD_M, c.KEYHOLD_EVAL_AXIS_SIDE_M
                 c.KEY_EVAL_FRICTION_NM, c.KEY_EVAL_DETENT_NM = c.KEYHOLD_EVAL_FRICTION_NM, c.KEYHOLD_EVAL_DETENT_NM
                 c.KEY_EVAL_AXIS_HEIGHT_M, c.KEY_EVAL_DOOR_YAW_RAD = c.KEYHOLD_EVAL_AXIS_HEIGHT_M, c.KEYHOLD_EVAL_DOOR_YAW_RAD
@@ -772,6 +890,7 @@ def main() -> int:
                 cfg.stance_sink_weight = args.key_stance_sink_weight
                 cfg.support_target_weight = args.key_support_target_weight
                 cfg.turn_follow_weight = args.key_turn_follow_weight
+                cfg.turn_behind_weight = args.key_turn_behind_weight
                 cfg.hold_arm = args.hold_arm
                 cfg.wrist_payload = args.payload == "physical"
                 if args.key_grip_k is not None:
@@ -818,16 +937,40 @@ def main() -> int:
                 cfg.episode_length_s = keyinsert_env.EPISODE_S
                 cfg.error_scale = args.insert_error_scale
                 cfg.light_probe = args.insert_light_probe
+                cfg.seat_test = args.insert_seat_test
+                cfg.contact_k_scale = args.insert_contact_k_scale
+                cfg.strict_keyway = args.insert_strict_keyway
+                cfg.base_source = args.insert_base_source
+                cfg.damage_stop = args.insert_damage_stop
                 if args.insert_tilt_stop_deg is not None:
                     cfg.tilt_stop_rad = math.radians(args.insert_tilt_stop_deg)
                 if args.insert_press_n is not None:
                     cfg.press_n = tuple(args.insert_press_n)
+                if args.insert_tools is not None or args.insert_tool_set is not None or args.insert_tool_obs is not None:
+                    from unifp_train import keytools
+                    man = keytools.load(args.insert_tool_manifest or keytools.MANIFEST)
+                    if args.insert_tools == "continuous" and args.mode in ("train", "play"):
+                        # S1b: the manifest's continuous training region (keytools.S1B_RANGES), not named keys.
+                        cfg.tool_ranges = tuple(float(v) for v in man["train_ranges"]["values"])
+                    elif args.insert_tools is not None and args.mode in ("train", "play"):
+                        names = tuple(man[args.insert_tools])
+                        cfg.tool_names = names
+                        cfg.tools = tuple(tuple(keytools.key_si(man["keys"][k]["mm_mm_mm_mm_per_n_g"]).values())
+                                          for k in names)
+                    cfg.tool_obs = args.insert_tool_obs
+                    if args.insert_tool_obs is None and args.insert_tool_set is not None and args.checkpoint:
+                        # A tool-conditioned checkpoint scored on a key set reads the tool groups: they follow it.
+                        from unifp_train.eval import EvaluablePolicy
+                        if EvaluablePolicy(args.checkpoint, device="cpu").num_tool_obs:
+                            parser.error("--insert_tool_set with a tool-conditioned checkpoint needs --insert_tool_obs "
+                                         "(descriptor for P4, zero for P3 and the specialist)")
             if args.spawn_states:
                 cfg.spawn_states = str(Path(args.spawn_states).resolve())
                 if args.spawn_states_fraction is not None:
                     cfg.spawn_states_fraction = args.spawn_states_fraction
                 if args.eval_spawn_states:
                     cfg.spawn_states_in_eval, cfg.spawn_states_fraction = True, 1.0
+                cfg.spawn_states_ordered = args.spawn_states_ordered
         if args.task == "leg":
             if args.key_damage_n is not None:
                 leg_cfg.DAMAGE_N = args.key_damage_n
@@ -923,10 +1066,23 @@ def main() -> int:
         if args.leg_object == "press":
             from unifp_train import foot_press_eval
             eval_plan, eval_rows = foot_press_eval.build_plan("cpu", args.plate_set)
+        elif args.key_insert and args.insert_tool_set:
+            from unifp_train import keytools
+            sets = dict(item.split("=", 1) for item in (args.insert_eval_set or []))
+            eval_plan, eval_rows = keytools.build_plan("cpu", args.insert_tool_set,
+                                                       args.insert_tool_manifest or keytools.MANIFEST, sets)
         elif args.key_insert:
             from unifp_train import keyinsert_eval
             sets = dict(item.split("=", 1) for item in (args.insert_eval_set or []))
             eval_plan, eval_rows = keyinsert_eval.build_plan("cpu", sets)
+        elif args.key_eval_rows:
+            if args.leg_object != "key":
+                parser.error("--key_eval_rows is --leg_object key's")
+            eval_plan, eval_rows = leg_eval.rows_key_plan("cpu", args.key_eval_rows)
+        elif args.key_eval_draw:
+            if args.leg_object != "key":
+                parser.error("--key_eval_draw is --leg_object key's")
+            eval_plan, eval_rows = leg_eval.draw_key_plan("cpu", args.key_eval_draw)
         else:
             eval_plan, eval_rows = (leg_eval.build_key_plan if args.leg_object == "key" else leg_eval.build_plan)("cpu")
         # One episode per handle unless --repeats is given: the policy is deterministic, so repeats measure only PhysX.
@@ -963,6 +1119,16 @@ def main() -> int:
                 setattr(cfg, name, value)
         if args.no_curriculum:
             cfg.curriculum = False
+        if args.mech_tilt_stop_deg is not None:
+            cfg.tilt_stop_rad = math.radians(args.mech_tilt_stop_deg)
+        if args.mech_grasp_within_m is not None:
+            cfg.grasp_within_m = float(args.mech_grasp_within_m)
+        if args.mech_engage_max_wait_s is not None:
+            cfg.engage_max_wait_steps = int(math.ceil(args.mech_engage_max_wait_s / interface.POLICY_DT))
+        if args.mech_approach_weight:
+            cfg.approach_weight = float(args.mech_approach_weight)
+        if args.mech_budget_n is not None:
+            mech_cfg.BUDGET_N = float(args.mech_budget_n)     # read by mech_eval.score_episode
         if args.opening_probs:
             total = sum(args.opening_probs)
             cfg.opening_probs = tuple(v / total for v in args.opening_probs)
@@ -972,20 +1138,29 @@ def main() -> int:
             cfg.offpath_weight = args.offpath_weight
         if args.lever_high and args.mode != "mech_eval":
             cfg.lever_handle_pitch_range = mech_cfg.LEVER_HANDLE_PITCH_RANGE
-        if args.force_law and args.mode != "mech_eval":
+        if args.force_law and args.mode != "mech_eval" and not (args.mode == "play" and args.mech_rows is not None):
             cfg.force_law = True
             if args.force_law_gains:
                 cfg.force_law_gains = tuple(args.force_law_gains)
             cfg.force_law_bleed_s = args.force_law_bleed
             cfg.law_variant = args.law_variant
-    if args.mode == "mech_eval":
-        # One episode per environment: every kind at every level at every placement.
+    mech_rows_play = args.mode == "play" and args.task == "mechanism" and args.mech_rows is not None
+    if args.mode == "mech_eval" or mech_rows_play:
+        # One episode per environment: every kind at every level at every placement (play: the chosen rows of it).
         mech_kinds = args.mech_kinds or list(mech_cfg.EVAL_DEFAULT_KINDS)
         levers_only = all(kind in mech_cfg.LEVER_EVAL_KINDS for kind in mech_kinds)
         mech_levels = args.mech_levels or list(mech_cfg.LEVER_EVAL_LEVELS_N if levers_only else mech_cfg.EVAL_LEVELS_N)
-        mech_placements = (mech_cfg.test_handle_spheres() if args.mech_test
-                           else mech_cfg.lever_high_handle_spheres() if args.lever_high else hook_cfg.eval_handle_spheres())
-        cfg.scene.num_envs = len(mech_placements) * len(mech_levels) * len(mech_kinds)
+        mech_conditions = mech_cfg.TEST_CONDITIONS if args.mech_test else mech_cfg.DEV_CONDITIONS
+        if args.mech_set:
+            if args.mech_test or args.lever_high:
+                parser.error("--mech_set replaces --mech_test and --lever_high's placements")
+            prefix, set_name = args.mech_set.split("_", 1)
+            mech_placements, mech_conditions = mech_cfg.s4_set(set_name, mech_cfg.S4B_MANIFEST if prefix == "s4b" else None)
+        else:
+            mech_placements = (mech_cfg.test_handle_spheres() if args.mech_test
+                               else mech_cfg.lever_high_handle_spheres() if args.lever_high else hook_cfg.eval_handle_spheres())
+        cfg.scene.num_envs = (len(args.mech_rows) if mech_rows_play
+                              else len(mech_placements) * len(mech_levels) * len(mech_kinds))
         cfg.episode_length_s = mech_cfg.EVAL_EPISODE_S
     if args.task == "hook":
         for name, value in (("fixture_fraction", args.fixture_fraction),
@@ -1084,6 +1259,8 @@ def main() -> int:
                      "they did nothing)")
     if args.key_turn_follow_weight and not getattr(args, "key_hold", False):
         parser.error("--key_turn_follow_weight is --key_hold's")
+    if args.key_turn_behind_weight and not getattr(args, "key_hold", False):
+        parser.error("--key_turn_behind_weight is --key_hold's")
     if args.tool_point == "fingertip":
         cfg.tool_body, cfg.tool_offset_m = interface.TOOL_BODY, interface.TOOL_OFFSET_M
     if args.task in ("hook", "mechanism", "insertion", "press", "wipe", "rope", "leg"):
@@ -1144,8 +1321,10 @@ def main() -> int:
         if args.arm_stall_interval_s:
             link["stall_interval_s"] = tuple(args.arm_stall_interval_s)
     if link or args.arm_servo:
-        if args.task != "unifp" and not getattr(args, "key_hold", False):
-            parser.error("the arm link is UniFP's task's and --key_hold's (the other tasks' environments build their own actions)")
+        # The mechanism task (S4, 2026-11-18) keeps UniFP's actions and calls the base's step, link and observation.
+        if args.task not in ("unifp", "mechanism") and not getattr(args, "key_hold", False):
+            parser.error("the arm link is UniFP's task's, the mechanism task's and --key_hold's (the other tasks' "
+                         "environments build their own actions)")
         cfg.arm_link, cfg.arm_servo, cfg.arm_step_weight = link or None, args.arm_servo, args.arm_step_weight
         cfg.arm_wrist_weight = args.arm_wrist_weight
         cfg.arm_lead_weight = args.arm_lead_weight
@@ -1154,7 +1333,11 @@ def main() -> int:
     cfg.robot_usd = robot_usd
     if args.force_start_iteration is not None:
         cfg.force_start_step = args.force_start_iteration * task_cfg.NUM_STEPS_PER_ENV
-    if not args.headless:
+    if args.capture_dir and args.mode != "play":
+        parser.error("--capture_dir is play's")
+    if args.capture_dir and args.headless and not args.enable_cameras:
+        parser.error("--capture_dir headless needs --enable_cameras")
+    if not args.headless or args.capture_dir:
         # Follow the robot rather than sit in the world frame: a walking quadruped leaves a fixed
         # camera within seconds. Offset from the base, slightly above and behind the right
         # shoulder, which keeps the arm and the front feet both in frame.
@@ -1189,6 +1372,18 @@ def main() -> int:
             # From the side, back far enough to hold the robot, the rope and its post 1.5 m ahead: the lean shows.
             cfg.viewer.eye = (0.75, -2.9, 0.75)
             cfg.viewer.lookat = (0.75, 0.0, 0.3)
+        if mech_rows_play:
+            # Fixed on environment 0 (the robot stands), from its front right onto the hand and the mechanism.
+            cfg.viewer.origin_type = "env"
+            cfg.viewer.eye = (1.15, -1.05, 0.80)
+            cfg.viewer.lookat = (0.40, 0.0, 0.35)
+        if args.view_eye is not None:
+            cfg.viewer.eye = tuple(args.view_eye)
+        if args.view_lookat is not None:
+            cfg.viewer.lookat = tuple(args.view_lookat)
+        if args.capture_dir:
+            cfg.viewer.resolution = tuple(args.capture_resolution)
+            cfg.unifp_markers = False
 
     env = {"hook": Go2D1HookEnv, "mechanism": Go2D1MechEnv, "insertion": Go2D1InsertEnv,
            "press": Go2D1PressEnv, "wipe": Go2D1WipeEnv, "rope": Go2D1RopeEnv,
@@ -1196,15 +1391,28 @@ def main() -> int:
                    else (Go2D1KeyHoldStagedEnv if args.key_hold_staged else Go2D1KeyInsertEnv if args.key_insert
                          else Go2D1KeyHoldEnv) if args.key_hold
                    else Go2D1LegEnv)}.get(args.task, Go2D1PosForceEnv)(cfg)
+    if args.arm_effort_scale is not None:
+        import torch
+
+        arm_ids = env._order[12:18]
+        scale = torch.tensor(args.arm_effort_scale, device=env.device, dtype=env._robot.data.joint_effort_limits.dtype)
+        env._robot.write_joint_effort_limit_to_sim(env._robot.data.joint_effort_limits[:, arm_ids] * scale, joint_ids=arm_ids)
     if args.mode == "ins_eval":
         env.set_evaluation(ins_plan)
     if args.mode in ("press_eval", "wipe_eval", "leg_eval") or (args.mode == "play" and args.task == "leg" and args.leg_rows):
         env.set_evaluation(eval_plan)
-    if args.mode == "mech_eval":
+    if args.mode == "mech_eval" or mech_rows_play:
         from unifp_train import mech_eval
 
-        env.set_evaluation(*mech_eval.build_plan(mech_kinds, mech_levels, env.device, mech_placements),
-                           conditions=mech_cfg.TEST_CONDITIONS if args.mech_test else mech_cfg.DEV_CONDITIONS)
+        plan = mech_eval.build_plan(mech_kinds, mech_levels, env.device, mech_placements)
+        if mech_rows_play:
+            import torch
+
+            rows = torch.as_tensor(args.mech_rows, dtype=torch.long, device=env.device)
+            if bool(((rows < 0) | (rows >= len(plan[0]))).any()):
+                parser.error(f"--mech_rows: the plan has {len(plan[0])} rows")
+            plan = tuple(part[rows] for part in plan)
+        env.set_evaluation(*plan, conditions=mech_conditions)
         if args.force_law:
             env.set_force_law(*(args.force_law_gains or (mech_cfg.FORCE_LAW_KP_N_PER_M, mech_cfg.FORCE_LAW_KI_N_PER_M_S,
                                                          mech_cfg.FORCE_LAW_MAX_N)), bleed_s=args.force_law_bleed)
@@ -1221,7 +1429,7 @@ def main() -> int:
                            hold_steps=round(hook_cfg.EVAL_HOLD_S / interface.POLICY_DT),
                            kind=args.fixture_kind)
     obs, _ = env.reset()
-    if not args.headless:
+    if not args.headless or args.capture_dir:
         # UniFP's overlay: the goal, the force-displaced goal the reward actually scores, the
         # tool tip, the sphere the goal is drawn on, the trajectory between start and goal, and
         # the applied and commanded force arrows. Viewer only -- headless training allocates none
@@ -1363,6 +1571,7 @@ def main() -> int:
         "knee_armature_factor": cfg.knee_armature_factor,
         "friction_range": list(cfg.leg_friction_range) if cfg.leg_friction_range is not None else None,
         "knee_friction_factor": cfg.knee_friction_factor,
+        "dog_stance_fraction": getattr(cfg, "dog_stance_fraction", 0.0),
     }
     # What the legs' joints loaded with, as PhysX holds them (UniFP's order; environment 0's, where the armature is drawn
     # per environment): the leg actuator models (`leg_actuators`) differ in these, and a group that sets no armature
@@ -1484,6 +1693,15 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
     held_steps, torn, peak_grasp, peak_speed, furthest = 0, 0, 0.0, 0.0, 0.0
     import time
 
+    capture = None
+    if getattr(args, "capture_dir", None):
+        from unifp_train.capture import FrameCapture
+
+        capture = FrameCapture(env, args.capture_dir, args.capture_every)
+        report["capture"] = {"dir": os.path.abspath(args.capture_dir), "every_steps": args.capture_every,
+                             "episodes": args.capture_episodes, "resolution": list(args.capture_resolution),
+                             "eye": list(env.cfg.viewer.eye), "lookat": list(env.cfg.viewer.lookat),
+                             "origin": env.cfg.viewer.origin_type}
     paced = time.monotonic()
     for _ in range(args.steps):
         if not simulation_app.is_running():
@@ -1494,8 +1712,13 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
         if policy is None:
             actions = torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
         else:
-            actions = policy.act(obs["policy"])
+            actions = policy.act(obs["policy"], obs.get("tool"))
         obs, reward, terminated, truncated, _ = env.step(actions)
+        if capture is not None:
+            capture.after_step(env, bool((terminated | truncated)[0]))
+            if capture.episode >= args.capture_episodes:
+                rewards_seen.append(float(reward.mean()))
+                break
         rewards_seen.append(float(reward.mean()))
         resets += int((terminated | truncated).sum())
         pushed += int((env._ee_force_w.norm(dim=-1) > 1e-6).sum())
@@ -1552,6 +1775,9 @@ def rollout(args, env, obs, report: dict, simulation_app) -> int:
                 contact_approach.append(torch.rad2deg(torch.acos(cos)))
 
     report["steps"] = len(rewards_seen)
+    if capture is not None:
+        capture.close()
+        report["capture"]["frames"] = capture.saved
     report["mean_reward_per_step"] = round(sum(rewards_seen) / max(1, len(rewards_seen)), 5)
     report["driven_by"] = "zero actions" if policy is None else os.path.basename(args.checkpoint)
     report["resets"] = resets
@@ -2169,7 +2395,7 @@ def mech_evaluate(args, env, obs, report: dict, run_dir: Path, kinds: list[str],
     import torch
 
     from unifp_isaaclab import interface
-    from unifp_train import eval as evaluation, mech_eval
+    from unifp_train import eval as evaluation, mech_cfg, mech_eval
 
     run_dir.mkdir(parents=True, exist_ok=True)
     policy = None
@@ -2182,20 +2408,31 @@ def mech_evaluate(args, env, obs, report: dict, run_dir: Path, kinds: list[str],
     report["controller"] = controller
     report["arm_contact_bodies"] = list(env._arm_contact.body_names)
     report["mech_kinds"], report["mech_levels_n"] = kinds, levels
-    report["mech_set"] = "test" if args.mech_test else "lever_high" if args.lever_high else "development"
+    report["mech_set"] = (args.mech_set or ("test" if args.mech_test else "lever_high" if args.lever_high
+                                            else "development"))
+    report["mech_budget_n"] = mech_cfg.BUDGET_N
     report["mech_conditions"] = env._evaluation["conditions"]
     report["mech_placements"] = [list(p) for p in placements]
     report["force_law"] = env._force_law
 
     done = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
     trace = {key: [] for key in mech_eval.FIELDS}
+    # `--mech_shadow_dump N` (read-only: the dog's numpy runner's inputs and outputs, `unifp_train/mech_shadow.py`).
+    shadow = None
+    if getattr(args, "mech_shadow_dump", 0):
+        from unifp_train.mech_shadow import MechShadowDump
+        shadow = MechShadowDump(env, args.mech_shadow_dump)
     with torch.inference_mode():
         for _ in range(int(env.max_episode_length) - 1):
             actions = (torch.zeros(env.num_envs, int(env.cfg.action_space), device=env.device)
                        if policy is None else policy.act(obs["policy"]))
+            if shadow is not None:
+                shadow.before_step(env, obs, actions, done)
             obs, _, terminated, truncated, _ = env.step(actions)
             estimate = None if policy is None else policy.estimate(obs["policy"])
             ended = (terminated | truncated) & ~done
+            if shadow is not None:
+                shadow.after_step(env, ended)
             step = mech_eval.record_step(env, estimate, done, ended)
             for key in mech_eval.FIELDS:
                 trace[key].append(step[key])
@@ -2204,6 +2441,8 @@ def mech_evaluate(args, env, obs, report: dict, run_dir: Path, kinds: list[str],
                 break
     trace = {key: np.stack(values) for key, values in trace.items()}
     np.savez_compressed(run_dir / "mech_trace.npz", **trace)
+    if shadow is not None:
+        report["mech_shadow_dump"] = shadow.save(run_dir / "mech_shadow_dump.npz")
     result = mech_eval.score(trace, kinds, levels, placements=placements)
     write_json(run_dir / "mech_eval.json", result["summary"])
     write_json(run_dir / "mech_eval_episodes.json", {"episodes": result["episodes"]})
@@ -2244,6 +2483,34 @@ def pad_leg_checkpoint(path: str, out_path, arm_std: float):
     actor["distribution.std_param"] = torch.cat((std, torch.full((6,), float(arm_std), dtype=std.dtype)), 0)
     out = {"actor_state_dict": actor, "critic_state_dict": ck["critic_state_dict"], "iter": ck.get("iter", 0),
            "infos": ck.get("infos")}
+    torch.save(out, out_path)
+    return out_path
+
+
+def widen_tool_checkpoint(path: str, out_path, actor_tool: int, critic_tool: int):
+    """S1: a checkpoint without tool inputs widened for them (`--insert_tool_obs`): zero columns after the frame stack on
+    the encoder's and the actor's first layers (`models.UniFPActor`'s tool group comes last in both) and after the
+    critic's stack on its first layer. With the tool input at zero the widened network computes exactly what the parent
+    did. None if it is already that wide."""
+    import torch
+
+    from unifp_isaaclab import interface
+    from unifp_train import observations
+
+    ck = torch.load(path, map_location="cpu", weights_only=False)
+    actor, critic = dict(ck["actor_state_dict"]), dict(ck["critic_state_dict"])
+    enc, act, crit = actor["encoder.0.weight"], actor["mlp.0.weight"], critic["mlp.0.weight"]
+    if enc.shape[1] == interface.NUM_OBS + actor_tool:
+        return None
+    if enc.shape[1] != interface.NUM_OBS or act.shape[1] != interface.NUM_SINGLE_OBS + interface.NUM_LATENT \
+            or crit.shape[1] != observations.NUM_CRITIC_OBS:
+        raise ValueError(f"{path}: input widths {enc.shape[1]}, {act.shape[1]}, {crit.shape[1]} are not a tool-free "
+                         f"UniFP network's ({interface.NUM_OBS}, {interface.NUM_SINGLE_OBS + interface.NUM_LATENT}, "
+                         f"{observations.NUM_CRITIC_OBS})")
+    pad = lambda w, k: torch.cat((w, torch.zeros(w.shape[0], k, dtype=w.dtype)), 1)
+    actor["encoder.0.weight"], actor["mlp.0.weight"] = pad(enc, actor_tool), pad(act, actor_tool)
+    critic["mlp.0.weight"] = pad(crit, critic_tool)
+    out = {"actor_state_dict": actor, "critic_state_dict": critic, "iter": ck.get("iter", 0), "infos": ck.get("infos")}
     torch.save(out, out_path)
     return out_path
 
@@ -2299,6 +2566,14 @@ def train(args, env, report: dict, run_dir: Path) -> int:
     if args.fixed_learning_rate is not None:
         departures["fixed_learning_rate"] = args.fixed_learning_rate
         agent_cfg["algorithm"]["fixed_learning_rate"] = args.fixed_learning_rate
+    tool_obs = getattr(env.cfg, "tool_obs", None)
+    if tool_obs is not None:
+        # S1: the actor reads the "tool" group after its frame stack, the critic the true key's after its own.
+        from unifp_train import keylock
+        agent_cfg["obs_groups"] = {"actor": ["policy", "tool"], "critic": ["critic", "tool_true"]}
+        agent_cfg["actor"]["num_tool_obs"] = keylock.NUM_DESCRIPTOR
+        departures["tool_obs"] = {"actor": tool_obs, "width": keylock.NUM_DESCRIPTOR,
+                                  "tools": list(getattr(env.cfg, "tool_names", ()))}
     report["departures_from_unifp"] = departures
 
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -2322,21 +2597,27 @@ def train(args, env, report: dict, run_dir: Path) -> int:
     runner = OnPolicyRunner(wrapped, deepcopy(agent_cfg), log_dir=str(run_dir),
                             device=str(env.device))
     if args.resume_from:
+        source, fresh = args.resume_from, bool(args.resume_fresh_optimizer)
         if getattr(args, "key_hold", False):
-            padded = pad_leg_checkpoint(args.resume_from, run_dir / "resume_padded.pt", args.hold_arm_std)
+            padded = pad_leg_checkpoint(source, run_dir / "resume_padded.pt", args.hold_arm_std)
             if padded is not None:
                 report["departures_from_unifp"]["key_hold_padded_from"] = {
                     "checkpoint": os.path.abspath(args.resume_from), "arm_rows": "zero", "arm_std": args.hold_arm_std,
                     "optimizer": "not loaded (its moments are the 12-action network's)"}
-                runner.load(str(padded), load_cfg={"actor": True, "critic": True, "optimizer": False, "iteration": True})
-            elif args.resume_fresh_optimizer:
-                runner.load(args.resume_from, load_cfg={"actor": True, "critic": True, "optimizer": False, "iteration": True})
-            else:
-                runner.load(args.resume_from)
-        elif args.resume_fresh_optimizer:
-            runner.load(args.resume_from, load_cfg={"actor": True, "critic": True, "optimizer": False, "iteration": True})
+                source, fresh = str(padded), True
+        if tool_obs is not None:
+            from unifp_train import keylock
+            widened = widen_tool_checkpoint(source, run_dir / "resume_widened.pt", keylock.NUM_DESCRIPTOR,
+                                            keylock.NUM_DESCRIPTOR)
+            if widened is not None:
+                report["departures_from_unifp"]["tool_widened_from"] = {
+                    "checkpoint": os.path.abspath(args.resume_from), "columns": "zero",
+                    "optimizer": "not loaded (its moments are the narrower network's)"}
+                source, fresh = str(widened), True
+        if fresh:
+            runner.load(source, load_cfg={"actor": True, "critic": True, "optimizer": False, "iteration": True})
         else:
-            runner.load(args.resume_from)
+            runner.load(source)
         if args.resume_fresh_optimizer:
             report["departures_from_unifp"]["resume_fresh_optimizer"] = True
         # F-082: the force curriculum lives on the environment, not in the checkpoint, and

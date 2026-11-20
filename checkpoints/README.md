@@ -457,6 +457,19 @@ no fall in 96 releases. It pulls 5–7 N over the command and still snatches onc
 10 N/s ramp). It runs Joint2 and Joint3 at their torque limits, as every pull policy here has: what a real D1 does
 under that is unmeasured. Simulation only.
 
+## The key insertion for the dog's numpy runner (2026-11-18 and 2026-11-19)
+
+Both are exports for `demos/combiner_key/robot/insert_policy.py` (`export_policy.py --task insert`); the training
+checkpoints are gitignored under `logs/unifp_train/keyinsert/`. Simulation only: neither has run on the dog.
+
+- `insert_force_ki7_s62_9200.npz` is **the dog's insertion** (F-303): `ki7_s62_9200`, retrained with the strict keyway,
+  the leg-odometry base and the damage stop. On the dog's conditions in simulation it seats 140 of 192 with 4 keys
+  damaged, against `ki6`'s 114 with 26, and passes S5's replay gate. The lock estimate must be within about 5 mm across,
+  12 mm along and 3 deg in roll (F-305). On legs answering 0.17, as the dog's do, it seats 124 of 192 against 147 (F-306).
+  Numpy against torch: actions to 5.3e-6.
+- `insert_force_ki6_8200.npz` is round 6's force-aware insertion (F-284), which it replaced. Numpy against torch:
+  actions to 2.8e-6 (F-293).
+
 ## Provenance
 
 `unifp_go2d1_isaacgym_model_48800.pt` was trained by this project using UniFP's unmodified method
